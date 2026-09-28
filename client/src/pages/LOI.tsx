@@ -1,101 +1,100 @@
-import { useState, useEffect } from "react";
+/**
+ * /loi: tell us you're interested in the cooperative.
+ *
+ * Until 2026-09-27 this page was a Letter of Intent pledge form: a pledge
+ * amount against a proposed $250,000 minimum, an investor type, an
+ * accreditation gate on the server (loi.submit) and a banner counting down to
+ * a $20M activation threshold. Under the cooperative framing (FUNDING_ENGINE_PLAN
+ * v1.2) none of that may appear anywhere, so the page now records interest and
+ * nothing more, through trpc.coop.submitInterest (server/routes/coop.ts): who
+ * someone is, which of the nine forms of capital they might bring, and consent
+ * to be written to. The old page is in git tag archive/fund-pages-2026-09-27.
+ *
+ * Every sentence about the cooperative comes from COOP in shared/fund.ts.
+ */
+import { useEffect, useState } from "react";
+import { Link } from "wouter";
 import { SEO, pageSEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { Link } from "wouter";
-import { BackButton } from "@/components/BackButton";
+import { CheckCircle2, AlertCircle, Loader2, Sprout } from "lucide-react";
 import { DataProtectionBadge } from "@/components/DataProtectionBadge";
 import { analytics } from "@/lib/analytics";
-import { FUND } from "@shared/fund";
+import { COOP } from "@shared/fund";
+import { CAPITAL_TYPES, type CapitalType } from "@shared/capitals";
+import { CAPITAL_LABELS } from "@shared/crowdpoolingTaxonomy";
 import { useAuth } from "@/_core/hooks/useAuth";
 
-export default function LOI() {
-  // This page used to redirect to /investor?returnTo=/loi and lost that on a
-  // crash fix, after which its comment said the gate lived "on the upstream
-  // /opportunity page" while /opportunity's comment said it lived here. It
-  // lived in neither, and the server had no accreditation check at all.
-  //
-  // Since 2026-08-30 the gate is real and it is on the server: loi.submit
-  // refuses a pledge from an address that has not been through /investor. The
-  // page still loads for everyone, which is the point. Redirecting the page
-  // was what crashed twice, and it guarded the wrong moment anyway.
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    organization: "",
-    role: "",
-    pledgeAmount: "",
-    investorType: "individual" as const,
-    investmentTimeline: "flexible" as const,
-    geographicPreference: "",
-    sectorInterests: "",
-    motivations: "",
-    questionsForTeam: "",
-    additionalNotes: "",
-    referralSource: "",
-  });
+type InterestKind = "land_project" | "person" | "organization" | "funder";
 
+/** The four kinds the server accepts (server/routes/coop.ts COOP_INTEREST_KINDS). */
+const KIND_OPTIONS: { value: InterestKind; label: string }[] = [
+  { value: "land_project", label: "A land project" },
+  { value: "person", label: "A person" },
+  { value: "organization", label: "An organization" },
+  { value: "funder", label: "A funder or foundation" },
+];
+
+// 16px text on every screen (the global mobile rule in index.css forces it
+// too) and a 44px minimum height, so nothing zooms on focus and every field
+// is an easy tap.
+const INPUT_CLASS =
+  "w-full min-h-[44px] px-4 py-2.5 text-base border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80 bg-white";
+const LABEL_CLASS = "block text-sm font-medium text-[#1a472a] mb-2";
+const HEADING_STYLE = { fontFamily: "var(--font-display)" } as const;
+
+export default function LOI() {
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    kind: "" as InterestKind | "",
+    organization: "",
+    location: "",
+    message: "",
+  });
+  const [capitalForms, setCapitalForms] = useState<CapitalType[]>([]);
+  const [consent, setConsent] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const [prefilledFrom, setPrefilledFrom] = useState<null | "account" | "browser">(null);
 
+  const update = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Signed in? Fill in name and email from the session so nothing is typed
+  // twice. It never overwrites what the person has already typed.
   const { user } = useAuth();
-
-  // Rye, 2026-08-30: pre-fill so nothing is typed twice. Two sources, and
-  // neither can expose one person's details to another: the server route is
-  // keyed on the session, and the browser fallback only ever reads what this
-  // same browser wrote on /investor.
-  const { data: accountPrefill } = trpc.loi.prefill.useQuery(undefined, { enabled: !!user });
-
   useEffect(() => {
-    if (prefilledFrom) return;
+    if (!user) return;
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name || (typeof user.name === "string" ? user.name : ""),
+      email: prev.email || (typeof user.email === "string" ? user.email : ""),
+    }));
+  }, [user]);
 
-    const apply = (src: Record<string, unknown>, from: "account" | "browser") => {
-      const pick = (k: string) => {
-        const v = src[k];
-        return typeof v === "string" && v.trim() ? v : undefined;
-      };
-      setFormData(prev => ({
-        ...prev,
-        fullName: pick("fullName") ?? prev.fullName,
-        email: pick("email") ?? prev.email,
-        phone: pick("phone") ?? prev.phone,
-        organization: pick("organization") ?? prev.organization,
-        role: pick("role") ?? prev.role,
-        geographicPreference: pick("geographicPreference") ?? prev.geographicPreference,
-        sectorInterests: pick("sectorInterests") ?? prev.sectorInterests,
-        motivations: pick("motivations") ?? prev.motivations,
-        questionsForTeam: pick("questionsForTeam") ?? prev.questionsForTeam,
-        referralSource: pick("referralSource") ?? prev.referralSource,
-      }));
-      setPrefilledFrom(from);
-    };
+  const toggleCapital = (capital: CapitalType) => {
+    setCapitalForms((prev) =>
+      prev.includes(capital) ? prev.filter((c) => c !== capital) : [...prev, capital],
+    );
+  };
 
-    if (accountPrefill) { apply(accountPrefill as Record<string, unknown>, "account"); return; }
-
-    // Signed out, but they may have just completed /investor in this browser.
-    try {
-      const raw = localStorage.getItem("investor_form_draft");
-      if (raw) { apply(JSON.parse(raw), "browser"); return; }
-      const email = localStorage.getItem("investor_email");
-      const name = localStorage.getItem("investor_name");
-      if (email || name) apply({ email, fullName: name }, "browser");
-    } catch {
-      // A blocked or unparseable store is not an error worth showing anybody.
-    }
-  }, [accountPrefill, prefilledFrom]);
-
-  const submitLOI = trpc.loi.submit.useMutation({
+  const submitInterest = trpc.coop.submitInterest.useMutation({
     onSuccess: () => {
       analytics.loiSubmitted();
       setSubmitted(true);
       setError("");
     },
     onError: (err) => {
-      setError(err.message || "Failed to submit LOI. Please try again.");
+      // A validation failure comes back as a JSON list of issues, which reads
+      // as noise. Anything else (the rate limit, an outage) is shown as sent.
+      const message = err.message?.trim() ?? "";
+      setError(
+        message && !message.startsWith("[")
+          ? message
+          : "Something went wrong. Check your details and try again.",
+      );
     },
   });
 
@@ -103,55 +102,50 @@ export default function LOI() {
     e.preventDefault();
     setError("");
 
-    const pledgeAmount = parseInt(formData.pledgeAmount);
-    if (isNaN(pledgeAmount) || pledgeAmount < 250000) {
-      setError("The proposed minimum is $250,000. Please enter a valid pledge amount.");
+    if (!form.kind) {
+      setError("Choose the option that fits you best.");
+      return;
+    }
+    if (!consent) {
+      setError("Tick the consent box so we can keep your details and write to you.");
       return;
     }
 
-    submitLOI.mutate({
-      ...formData,
-      pledgeAmount,
-      phone: formData.phone || undefined,
-      organization: formData.organization || undefined,
-      role: formData.role || undefined,
-      geographicPreference: formData.geographicPreference || undefined,
-      sectorInterests: formData.sectorInterests || undefined,
-      motivations: formData.motivations || undefined,
-      questionsForTeam: formData.questionsForTeam || undefined,
-      additionalNotes: formData.additionalNotes || undefined,
-      referralSource: formData.referralSource || undefined,
+    submitInterest.mutate({
+      name: form.name.trim(),
+      email: form.email.trim(),
+      kind: form.kind,
+      organization: form.organization.trim() || undefined,
+      location: form.location.trim() || undefined,
+      capitalForms,
+      message: form.message.trim() || undefined,
+      consent: true,
+      source: "loi",
     });
   };
 
   if (submitted) {
+    const firstName = form.name.trim().split(/\s+/)[0] ?? "";
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818] py-16 px-4">
-      <SEO {...pageSEO.loi} />
-      <BackButton />
+        <SEO {...pageSEO.loi} />
         <div className="container max-w-2xl mx-auto">
-          <Card className="p-8 bg-white/95 backdrop-blur-sm text-center">
-            <CheckCircle2 className="w-16 h-16 text-[#7dd87d] mx-auto mb-4" />
-            <h2 className="text-3xl font-bold text-[#1a472a] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Thank You for Your Letter of Intent
-            </h2>
-            <p className="text-[#1a472a]/80 text-lg mb-6">
-              We've received your LOI for <span className="font-bold text-[#7dd87d]">${parseInt(formData.pledgeAmount).toLocaleString()}</span>.
-            </p>
-            <p className="text-[#1a472a]/75 mb-8">
-              Our team will review your submission and reach out to you within 3-5 business days to discuss next steps.
-            </p>
+          <Card className="p-8 bg-white/95 backdrop-blur-sm text-center" role="status" aria-live="polite">
+            <CheckCircle2 className="w-16 h-16 text-[#7dd87d] mx-auto mb-4" aria-hidden="true" />
+            <h1 className="text-3xl font-bold text-[#1a472a] mb-4" style={HEADING_STYLE}>
+              {firstName ? `Thank you, ${firstName}.` : "Thank you."}
+            </h1>
+            <p className="text-[#1a472a]/80 text-lg mb-8 safe-prose">{COOP.interestPromise}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/opportunity">
-                <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
-                  View Investment Opportunity
-                </Button>
-              </Link>
-              <Link href="/">
-                <Button variant="outline" className="border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10">
-                  Return Home
-                </Button>
-              </Link>
+              <Button asChild className="bg-[#1a472a] hover:bg-[#2d5a3d] text-white min-h-[44px] px-6">
+                <Link href="/opportunity">Read the full design</Link>
+              </Button>
+              <Button
+                asChild
+                className="bg-transparent border-2 border-[#1a472a]/40 text-[#1a472a] hover:bg-[#1a472a]/10 min-h-[44px] px-6"
+              >
+                <Link href="/">Return home</Link>
+              </Button>
             </div>
           </Card>
         </div>
@@ -161,106 +155,77 @@ export default function LOI() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818] py-16 px-4">
+      <SEO {...pageSEO.loi} />
       <div className="container max-w-4xl mx-auto">
-        {/* Fund Status Notice */}
+        {/* Where the cooperative stands, before anyone types a word. */}
         <Card className="p-6 mb-8 bg-[#d4a574]/10 border-2 border-[#d4a574]">
           <div className="flex items-start gap-4">
-            <AlertCircle className="w-6 h-6 text-[#d4a574] flex-shrink-0 mt-1" />
+            <Sprout className="w-6 h-6 text-[#d4a574] flex-shrink-0 mt-1" aria-hidden="true" />
             <div>
-              <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-                Fund in Formation
+              <span className="inline-block mb-2 px-3 py-1 rounded-full bg-[#d4a574]/20 text-[#f3d9b8] text-xs font-semibold uppercase tracking-wider">
+                {COOP.statusLabel}
+              </span>
+              <h2 className="text-xl font-bold text-white mb-2" style={HEADING_STYLE}>
+                {COOP.name}
               </h2>
-              <p className="text-white/90 mb-3 safe-prose">
-                We are currently only accepting Letters of Intent (LOIs) from capital partners. The fund will activate once we reach:
-              </p>
-              <ul className="space-y-2 text-white/80">
-                <li className="flex items-start gap-2">
-                  <span className="text-[#d4a574] mt-1">•</span>
-                  <span><strong>$20M+ in LOIs</strong> from committed capital partners</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#d4a574] mt-1">•</span>
-                  <span><strong>Core fund governance and council</strong> established</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-[#d4a574] mt-1">•</span>
-                  <span><strong>13+ ideal land projects</strong> and <strong>20+ alliance partners</strong> in our network</span>
-                </li>
-              </ul>
+              <p className="text-white/90 safe-prose">{COOP.statement}</p>
             </div>
           </div>
         </Card>
 
-        <Card className="p-8 bg-white/95 backdrop-blur-sm min-w-0">
-          <h1 className="text-4xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-            Letter of Intent
+        <Card className="p-6 sm:p-8 bg-white/95 backdrop-blur-sm min-w-0">
+          <h1 className="text-3xl sm:text-4xl font-bold text-[#1a472a] mb-3" style={HEADING_STYLE}>
+            Tell us you're interested
           </h1>
-          <p className="text-[#1a472a]/75 mb-8 safe-prose">
-            Express your interest in becoming a capital partner for the ReGen Civics Fund. This is a non-binding way to tell us you're interested so we can plan accordingly.
-          </p>
+          <p className="text-[#1a472a]/75 mb-8 safe-prose">{COOP.interestPromise}</p>
 
-          {/* The gate refuses with a route to follow, not just a no. A refusal
-              that does not say what to do next reads as a broken form. */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-red-800 text-sm">{error}</p>
-                {error.includes("/investor") && (
-                  <Link href="/investor">
-                    <a className="inline-block mt-2 text-sm font-semibold text-[#1a472a] underline">
-                      Go to the investor form
-                    </a>
-                  </Link>
-                )}
-              </div>
+            <div
+              role="alert"
+              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3"
+            >
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-red-800 text-sm">{error}</p>
             </div>
           )}
 
-          {prefilledFrom && !submitted && (
-            <div className="mb-6 p-4 bg-[#f0f7f0] border border-[#1a472a]/15 rounded-lg flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-[#1a472a] flex-shrink-0 mt-0.5" />
-              <p className="text-[#1a472a] text-sm">
-                {prefilledFrom === "account"
-                  ? "Filled in from the investor form you already completed. Check it over, then all that is left is the amount."
-                  : "Filled in from the investor form you completed in this browser. Check it over, then all that is left is the amount."}
-              </p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Contact Information */}
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* About you */}
             <div className="space-y-4">
-              <h2 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                Contact Information
+              <h2 className="text-xl font-bold text-[#1a472a]" style={HEADING_STYLE}>
+                About you
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="loi-full-name" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Full Name <span className="text-red-500">*</span>
+                  <label htmlFor="interest-name" className={LABEL_CLASS}>
+                    Your name <span className="text-red-700" aria-hidden="true">*</span>
                   </label>
                   <input
-                    id="loi-full-name"
+                    id="interest-name"
                     type="text"
                     required
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
+                    maxLength={160}
+                    value={form.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    className={INPUT_CLASS}
+                    autoComplete="name"
+                    enterKeyHint="next"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="loi-email" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Email <span className="text-red-500">*</span>
+                  <label htmlFor="interest-email" className={LABEL_CLASS}>
+                    Email <span className="text-red-700" aria-hidden="true">*</span>
                   </label>
                   <input
-                    id="loi-email"
+                    id="interest-email"
                     type="email"
                     required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
+                    maxLength={320}
+                    value={form.email}
+                    onChange={(e) => update("email", e.target.value)}
+                    className={INPUT_CLASS}
                     autoComplete="email"
                     inputMode="email"
                     enterKeyHint="next"
@@ -268,236 +233,206 @@ export default function LOI() {
                 </div>
 
                 <div>
-                  <label htmlFor="loi-phone" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Phone
+                  <label htmlFor="interest-organization" className={LABEL_CLASS}>
+                    Organization or project <span className="text-[#1a472a]/80 font-normal">(optional)</span>
                   </label>
                   <input
-                    id="loi-phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                    autoComplete="tel"
-                    inputMode="tel"
+                    id="interest-organization"
+                    type="text"
+                    maxLength={200}
+                    value={form.organization}
+                    onChange={(e) => update("organization", e.target.value)}
+                    className={INPUT_CLASS}
+                    autoComplete="organization"
                     enterKeyHint="next"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="loi-organization" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Organization
+                  <label htmlFor="interest-location" className={LABEL_CLASS}>
+                    Where you are <span className="text-[#1a472a]/80 font-normal">(optional)</span>
                   </label>
                   <input
-                    id="loi-organization"
+                    id="interest-location"
                     type="text"
-                    value={formData.organization}
-                    onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label htmlFor="loi-role" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Role/Title
-                  </label>
-                  <input
-                    id="loi-role"
-                    type="text"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
+                    maxLength={200}
+                    value={form.location}
+                    onChange={(e) => update("location", e.target.value)}
+                    className={INPUT_CLASS}
+                    placeholder="Town, region or bioregion"
+                    enterKeyHint="next"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Investment Details */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                Investment Details
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="loi-pledge-amount" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Pledge Amount (USD) <span className="text-red-500">*</span>
-                    <span className="text-xs text-[#1a472a]/80 ml-1">(${FUND.proposedMinimumUsd.toLocaleString()} proposed minimum)</span>
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1a472a]/80">$</span>
-                    <input
-                      id="loi-pledge-amount"
-                      type="number"
-                      required
-                      min="250000"
-                      step="1000"
-                      value={formData.pledgeAmount}
-                      onChange={(e) => setFormData({ ...formData, pledgeAmount: e.target.value })}
-                      className="w-full pl-8 pr-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                      placeholder="250000"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="loi-investor-type" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Investor Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="loi-investor-type"
-                    required
-                    value={formData.investorType}
-                    onChange={(e) => setFormData({ ...formData, investorType: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  >
-                    <option value="individual">Individual</option>
-                    <option value="family_office">Family Office</option>
-                    <option value="foundation">Foundation</option>
-                    <option value="impact_fund">Impact Fund</option>
-                    <option value="institutional">Institutional</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label htmlFor="loi-investment-timeline" className="block text-sm font-medium text-[#1a472a] mb-2">
-                    Investment Timeline
-                  </label>
-                  <select
-                    id="loi-investment-timeline"
-                    value={formData.investmentTimeline}
-                    onChange={(e) => setFormData({ ...formData, investmentTimeline: e.target.value as any })}
-                    className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  >
-                    <option value="immediate">Immediate (Ready to invest once fund activates)</option>
-                    <option value="3_months">Within 3 months</option>
-                    <option value="6_months">Within 6 months</option>
-                    <option value="1_year">Within 1 year</option>
-                    <option value="flexible">Flexible</option>
-                  </select>
-                </div>
+            {/* Kind: required, one of the four the server accepts */}
+            <fieldset className="space-y-3">
+              <legend className="text-xl font-bold text-[#1a472a] mb-3" style={HEADING_STYLE}>
+                I'm interested as <span className="text-red-700 text-base" aria-hidden="true">*</span>
+              </legend>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {KIND_OPTIONS.map((opt) => {
+                  const selected = form.kind === opt.value;
+                  return (
+                    <label
+                      key={opt.value}
+                      className={`flex items-center gap-3 min-h-[44px] px-4 py-3 rounded-lg border-2 cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-[#7dd87d] ${
+                        selected
+                          ? "border-[#7dd87d] bg-[#7dd87d]/10"
+                          : "border-[#1a472a]/20 hover:border-[#7dd87d]/50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="interest-kind"
+                        value={opt.value}
+                        checked={selected}
+                        onChange={() => update("kind", opt.value)}
+                        required
+                        className="w-5 h-5 flex-shrink-0 accent-[#1a472a]"
+                      />
+                      <span className="text-[#1a472a] font-medium">{opt.label}</span>
+                    </label>
+                  );
+                })}
               </div>
+            </fieldset>
+
+            {/* The nine forms of capital: optional */}
+            <fieldset className="space-y-3">
+              <legend className="text-xl font-bold text-[#1a472a] mb-1" style={HEADING_STYLE}>
+                What you might bring <span className="text-[#1a472a]/80 text-base font-normal">(optional)</span>
+              </legend>
+              <p className="text-sm text-[#1a472a]/80 safe-prose">
+                The cooperative is being designed to recognize all nine forms of capital. Tick any that
+                fit.{" "}
+                <a
+                  href="/learn/nine-forms-of-capital"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#1a472a] underline underline-offset-2"
+                >
+                  About the nine forms<span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {CAPITAL_TYPES.map((capital) => {
+                  const checked = capitalForms.includes(capital);
+                  return (
+                    <label
+                      key={capital}
+                      className={`flex items-center gap-3 min-h-[44px] px-3 py-2.5 rounded-lg border-2 cursor-pointer transition-colors focus-within:ring-2 focus-within:ring-[#7dd87d] ${
+                        checked
+                          ? "border-[#7dd87d] bg-[#7dd87d]/10"
+                          : "border-[#1a472a]/20 hover:border-[#7dd87d]/50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="interest-capital"
+                        value={capital}
+                        checked={checked}
+                        onChange={() => toggleCapital(capital)}
+                        className="w-5 h-5 flex-shrink-0 accent-[#1a472a]"
+                      />
+                      <span className="text-[#1a472a] font-medium">{CAPITAL_LABELS[capital].label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            {/* Message: optional */}
+            <div>
+              <label htmlFor="interest-message" className={LABEL_CLASS}>
+                Anything else you'd like us to know{" "}
+                <span className="text-[#1a472a]/80 font-normal">(optional)</span>
+              </label>
+              <textarea
+                id="interest-message"
+                value={form.message}
+                onChange={(e) => update("message", e.target.value)}
+                rows={4}
+                maxLength={4000}
+                className={INPUT_CLASS}
+                placeholder="Your land, your work, your questions"
+              />
             </div>
 
-            {/* Preferences */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                Investment Preferences
-              </h2>
-
-              <div>
-                <label htmlFor="loi-geographic-preference" className="block text-sm font-medium text-[#1a472a] mb-2">
-                  Geographic Preference
-                </label>
+            {/* Consent: required */}
+            <div>
+              <label
+                htmlFor="interest-consent"
+                className="flex items-start gap-3 min-h-[44px] py-2 cursor-pointer"
+              >
                 <input
-                  id="loi-geographic-preference"
-                  type="text"
-                  value={formData.geographicPreference}
-                  onChange={(e) => setFormData({ ...formData, geographicPreference: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  placeholder="e.g., North America, Europe, Global"
+                  id="interest-consent"
+                  type="checkbox"
+                  required
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 flex-shrink-0 accent-[#1a472a]"
                 />
-              </div>
-
-              <div>
-                <label htmlFor="loi-sector-interests" className="block text-sm font-medium text-[#1a472a] mb-2">
-                  Sector Interests
-                </label>
-                <input
-                  id="loi-sector-interests"
-                  type="text"
-                  value={formData.sectorInterests}
-                  onChange={(e) => setFormData({ ...formData, sectorInterests: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  placeholder="e.g., Regenerative agriculture, Ecovillages, Renewable energy"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="loi-motivations" className="block text-sm font-medium text-[#1a472a] mb-2">
-                  Motivations
-                </label>
-                <textarea
-                  id="loi-motivations"
-                  value={formData.motivations}
-                  onChange={(e) => setFormData({ ...formData, motivations: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  placeholder="What motivates you to invest in regenerative land projects?"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="loi-questions-for-team" className="block text-sm font-medium text-[#1a472a] mb-2">
-                  Questions for the Team
-                </label>
-                <textarea
-                  id="loi-questions-for-team"
-                  value={formData.questionsForTeam}
-                  onChange={(e) => setFormData({ ...formData, questionsForTeam: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  placeholder="Any questions or concerns you'd like to discuss?"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="loi-additional-notes" className="block text-sm font-medium text-[#1a472a] mb-2">
-                  Additional Notes
-                </label>
-                <textarea
-                  id="loi-additional-notes"
-                  value={formData.additionalNotes}
-                  onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                  rows={3}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  placeholder="Any other information you'd like to share"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="loi-referral-source" className="block text-sm font-medium text-[#1a472a] mb-2">
-                  How did you hear about us?
-                </label>
-                <input
-                  id="loi-referral-source"
-                  type="text"
-                  value={formData.referralSource}
-                  onChange={(e) => setFormData({ ...formData, referralSource: e.target.value })}
-                  className="w-full px-4 py-2 border border-[#1a472a]/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7dd87d] text-[#1a472a] placeholder:text-[#1a472a]/80"
-                  placeholder="e.g., Referral, Conference, Website"
-                />
-              </div>
+                <span className="text-sm text-[#1a472a] safe-prose">
+                  I agree that ReGen Civics may keep these details and email me about the cooperative. I can
+                  ask to be removed at any time.{" "}
+                  <span className="text-red-700" aria-hidden="true">*</span>
+                </span>
+              </label>
+              <p className="text-xs text-[#1a472a]/80 pl-8">
+                <a
+                  href="/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2"
+                >
+                  Privacy policy<span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 pt-2">
               <Button
                 type="submit"
-                disabled={submitLOI.isPending}
-                className="flex-1 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] py-3 text-lg font-semibold"
+                disabled={submitInterest.isPending}
+                className="flex-1 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] min-h-[48px] py-3 text-lg font-semibold"
               >
-                {submitLOI.isPending ? (
+                {submitInterest.isPending ? (
                   <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Submitting...
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" aria-hidden="true" />
+                    Sending...
                   </>
                 ) : (
-                  "Submit Letter of Intent"
+                  "Send"
                 )}
               </Button>
-              <Link href="/opportunity">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1 border-[#7dd87d] text-[#7dd87d] hover:bg-[#7dd87d]/10 py-3 text-lg"
-                >
-                  View Investment Opportunity
-                </Button>
-              </Link>
+              {/* Default variant with explicit colors: the outline variant's
+                  dark:border-input wins on the dark-mode public site. */}
+              <Button
+                asChild
+                className="flex-1 bg-transparent border-2 border-[#1a472a]/40 text-[#1a472a] hover:bg-[#1a472a]/10 min-h-[48px] py-3 text-lg"
+              >
+                <Link href="/opportunity">Read the full design</Link>
+              </Button>
             </div>
-            <DataProtectionBadge compact className="mt-3 justify-center" />
+
+            <p className="text-sm text-[#1a472a]/80 safe-prose">
+              To talk it through first,{" "}
+              <Link href="/investor/contact" className="font-semibold text-[#1a472a] underline underline-offset-2">
+                write to us
+              </Link>
+              .
+            </p>
+
+            <p className="text-xs text-[#1a472a]/80 leading-relaxed border-t border-[#1a472a]/10 pt-4 safe-prose">
+              {COOP.notAnOffer}
+            </p>
           </form>
         </Card>
+
+        {/* Outside the white card: the compact badge is white text. */}
+        <DataProtectionBadge compact className="mt-4 justify-center" />
       </div>
     </div>
   );

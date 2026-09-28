@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,9 @@ import type { CapitalType, NeedKind } from "@shared/crowdpoolingTaxonomy";
 import { MAX_OFFER_HOURS, isHoursNeed, roleFillState, scaleRoleValue } from "@shared/roleCapacity";
 import { isThingKind, modesFor, needVerb, sheetCopy, toDay, todayUtc, type NeedVerb } from "@shared/crowdpoolNeedAction";
 import {
+  FOLLOW,
   GIVE_LEND,
+  LINK,
   LOAN_RISK_LINE,
   OFFER_TYPES,
   RECEIPT,
@@ -23,6 +25,7 @@ import {
 } from "@shared/crowdpoolCopy";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
+import { FollowControl } from "@/components/crowdpool/FollowControl";
 import { useReturnFocus } from "@/hooks/useReturnFocus";
 import { getReferralData } from "@/components/SharePrompt";
 import {
@@ -35,8 +38,9 @@ import {
   CheckCircle2,
   CalendarPlus,
   Share2,
-  Bell,
-  UserPlus
+  UserPlus,
+  Link2,
+  Copy
 } from "lucide-react";
 
 /** A campaign need passed in when the contributor picks Apply, Offer or Sign up on a need. */
@@ -96,10 +100,13 @@ interface ContributionModalProps {
   sharePath?: string;
   /** An example campaign: the token line is the practice line. */
   isExample?: boolean;
-  /** Whether the signed-in viewer already follows this campaign. */
-  isFollowing?: boolean;
-  /** Called after "Follow {project}" on the receipt succeeds. */
-  onFollowed?: () => void;
+  /**
+   * The project page key, for Follow on the receipt (FollowControl, build
+   * spec 2026-09-27, section 12.5). Without it the real receipt offers no Follow.
+   */
+  projectKey?: string;
+  /** Whether the signed-in viewer already follows the project (projects.getPublic viewer.followsProject). */
+  followsProject?: boolean;
 }
 
 /** This page with its hash swapped for `anchor`, as a same-site path. */
@@ -205,10 +212,20 @@ export function ContributionModal({
   completionLine,
   sharePath,
   isExample = false,
-  isFollowing = false,
-  onFollowed,
+  projectKey,
+  followsProject = false,
 }: ContributionModalProps) {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
+  // The receipt, practice or real. At 375px the form is long, so people
+  // scroll down to send; the receipt then opened at the form's old scroll
+  // offset, with "Offer sent" and "We'll email you" above the view. The
+  // sheet goes back to its top when the receipt shows (review 2026-09-28).
+  const receiptRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (step !== 'success') return;
+    const sheet = receiptRef.current?.closest<HTMLElement>('[data-slot="dialog-content"]');
+    if (sheet) sheet.scrollTop = 0;
+  }, [step]);
   const [contributionType, setContributionType] = useState<ContributionType | null>(null);
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
@@ -219,18 +236,9 @@ export function ContributionModal({
   // True when the server answered with a practice run (an example campaign):
   // the success screen is then a practice receipt.
   const [practice, setPractice] = useState(false);
-  // The practice receipt's "hear when real campaigns open" form.
-  const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [waitlistJoined, setWaitlistJoined] = useState(false);
-  const joinWaitlist = trpc.campaigns.joinWaitlist.useMutation({
-    onSuccess: () => setWaitlistJoined(true),
-    onError: () => { toast.error('Could not save your email. Try again in a moment.'); },
-  });
-  const [followed, setFollowed] = useState(false);
-  const follow = trpc.campaigns.follow.useMutation({
-    onSuccess: () => { setFollowed(true); onFollowed?.(); },
-    onError: () => { toast.error("Couldn't follow this project. Try again."); },
-  });
+  // The private status link for a signed-out offer (build spec 2026-09-27,
+  // section 10.5): '/offer#<token>'. Held only for this receipt.
+  const [statusPath, setStatusPath] = useState<string | null>(null);
 
   const project = projectName?.trim() || campaignTitle;
   const verb: NeedVerb | 'Freeform' = need ? (needVerb(String(need.kind)) ?? 'Offer') : 'Freeform';
@@ -347,9 +355,10 @@ export function ContributionModal({
     onSuccess: (result) => {
       const isPractice = result?.practice === true;
       setPractice(isPractice);
+      // A signed-out offer on a real campaign comes back with its private
+      // status link (/offer#<token>). A practice run never has one.
+      setStatusPath(result && result.practice === false && typeof result.statusPath === 'string' ? result.statusPath : null);
       setSentEmail(contributorEmail.trim());
-      setWaitlistEmail(contributorEmail.trim());
-      setWaitlistJoined(false);
       setStep('success');
       onSuccess?.({ practice: isPractice });
     },
@@ -400,17 +409,8 @@ export function ContributionModal({
     resetForm();
     setSentEmail('');
     setPractice(false);
-    setWaitlistEmail('');
-    setWaitlistJoined(false);
-    setFollowed(false);
+    setStatusPath(null);
     onClose();
-  };
-
-  const handleJoinWaitlist = (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = waitlistEmail.trim();
-    if (!email) return;
-    joinWaitlist.mutate({ email, name: contributorName.trim() || undefined });
   };
 
   /**
@@ -593,6 +593,17 @@ export function ContributionModal({
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied');
+    } catch {
+      toast.error("Couldn't copy the link.");
+    }
+  };
+
+  // The whole private link, fragment and all, for the person to keep.
+  const handleCopyStatusLink = async () => {
+    if (!statusPath || typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${statusPath}`);
+      toast.success(LINK.copied);
     } catch {
       toast.error("Couldn't copy the link.");
     }
@@ -1125,7 +1136,7 @@ export function ContributionModal({
             so there is no steward to hear back from, no account nudge and no
             thank-you to wait for. Rye, 2026-09-24 (decision B12c). */}
         {step === 'success' && practice && (
-          <div className="py-8 text-center" data-testid="practice-receipt">
+          <div ref={receiptRef} className="py-8 text-center" data-testid="practice-receipt">
             <div role="status">
               <div className="w-16 h-16 rounded-full bg-[#f0f7f0] flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-[#4a7c59]" aria-hidden="true" />
@@ -1136,47 +1147,17 @@ export function ContributionModal({
               This was an example campaign, so nothing reached a real project. The first real campaigns open soon.
             </p>
             <p className="text-sm text-[#1a472a]/85 max-w-sm mx-auto mb-5">{TOKEN_PRACTICE_LINE}</p>
-            <div className="text-left max-w-sm mx-auto mb-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4">
-              {waitlistJoined ? (
-                <p className="flex items-start gap-2 text-sm text-[#1a472a]">
-                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#4a7c59]" />
-                  You're on the list. We'll write when the first real campaigns open.
-                </p>
-              ) : (
-                <form onSubmit={handleJoinWaitlist} className="space-y-2">
-                  <Label htmlFor="practice-waitlist-email" className="text-sm text-[#1a472a]">
-                    Want to hear when they open?
-                  </Label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      id="practice-waitlist-email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      required
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="bg-white"
-                    />
-                    <Button
-                      type="submit"
-                      disabled={joinWaitlist.isPending}
-                      className="bg-[#4a7c59] hover:bg-[#1a472a] text-white whitespace-nowrap"
-                    >
-                      {joinWaitlist.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Tell me'}
-                    </Button>
-                  </div>
-                </form>
-              )}
+            {/* The one Follow control in season mode: an example project can't
+                be followed, so it offers the season waitlist, prefilled with
+                the address just used (build spec 2026-09-27, section 12.5). */}
+            <div className="text-left max-w-sm mx-auto mb-5">
+              <FollowControl mode="season" variant="receipt" heading={FOLLOW.practiceHeading} defaultEmail={sentEmail} />
             </div>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button asChild variant="outline" className="border-[#4a7c59] text-[#1a472a]">
                 <Link href="/campaigns" onClick={handleClose}>Browse campaigns</Link>
               </Button>
-              <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a]">
+              <Button onClick={handleClose} className="bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                 Close
               </Button>
             </div>
@@ -1185,7 +1166,7 @@ export function ContributionModal({
 
         {/* Step 3: the receipt (spec 10.4). It is the confirmation: no toast repeats it. */}
         {step === 'success' && !practice && (
-          <div className="py-6" data-testid="receipt">
+          <div ref={receiptRef} className="py-6" data-testid="receipt">
             <div role="status" className="text-center">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-green-700" aria-hidden="true" />
@@ -1218,21 +1199,49 @@ export function ContributionModal({
                   {RECEIPT.shareNeed}
                 </Button>
               )}
-              {isAuthenticated && !isFollowing && !followed && (
-                <Button
-                  variant="outline"
-                  onClick={() => follow.mutate({ campaignId })}
-                  disabled={follow.isPending}
-                  className="min-h-11 border-[#4a7c59] text-[#1a472a]"
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  {RECEIPT.follow(project)}
-                </Button>
+              {/* Follow the project: one tap signed in; signed out, the email
+                  follow prefilled with the address just used, sent only when
+                  they tap it (build spec 2026-09-27, section 12.5). */}
+              {projectKey && (
+                <FollowControl
+                  mode="project"
+                  variant="receipt"
+                  projectKey={projectKey}
+                  campaignId={campaignId}
+                  projectName={project}
+                  initiallyFollowing={followsProject}
+                  defaultEmail={sentEmail || undefined}
+                />
               )}
-              <Button onClick={handleClose} className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a]">
+              {/* text-white: the default text-primary-foreground drew near-black on
+                  #4a7c59, 4.04:1 (review 2026-09-28). White is 4.86:1. */}
+              <Button onClick={handleClose} className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a] text-white">
                 {RECEIPT.close}
               </Button>
             </div>
+            {/* The private status link (spec 2026-09-27, section 10.5): signed
+                out, real offers only. A plain link, so it opens as a fresh
+                page load and the app takes the token out of the address
+                before anything else runs. */}
+            {!isAuthenticated && statusPath && (
+              <div className="text-left max-w-sm mx-auto mt-5 rounded-xl border border-[#1a472a]/25 bg-white p-4 space-y-2" data-testid="receipt-status-link">
+                <p className="text-sm font-semibold text-[#1a472a]">{LINK.receiptLead}</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <a
+                    href={statusPath}
+                    className="inline-flex items-center justify-center min-h-11 rounded-md bg-[#1a472a] hover:bg-[#0f2e1a] px-4 text-sm font-semibold text-white"
+                  >
+                    <Link2 className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {LINK.receiptOpen}
+                  </a>
+                  <Button variant="outline" onClick={handleCopyStatusLink} className="min-h-11 border-[#4a7c59] text-[#1a472a]">
+                    <Copy className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {LINK.copy}
+                  </Button>
+                </div>
+                <p className="text-sm text-[#1a472a]/85">{LINK.receiptHelp}</p>
+              </div>
+            )}
             {!isAuthenticated && sentEmail && (
               <div className="text-left max-w-sm mx-auto mt-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4 space-y-2">
                 <p className="text-sm text-[#1a472a]">

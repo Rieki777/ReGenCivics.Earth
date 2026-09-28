@@ -6,7 +6,7 @@ A plain-language guide to the whole model. For campaign stewards, contributors, 
 
 ## The one-paragraph version
 
-Crowdpooling is a barn raising with a public ledger. A land project lists everything it needs to come alive: hours, roles, tools, vehicles, materials, lumber, plants, knowledge, and money. People claim the pieces they can bring. The platform tracks every non-financial contribution from pledge to delivery to thank-you, celebrates the people who show up, and grows their Living Tree in the game. Money flows through trusted partners who already do it well: Ma Earth for donations with matching grants, GoSteward for loans that investors earn a return on. We track the capital money can't buy. Our partners handle the money.
+Crowdpooling is a barn raising with a public ledger. A land project lists everything it needs to come alive: hours, roles, tools, vehicles, materials, lumber, plants, knowledge, and money. People claim the pieces they can bring. The platform tracks every non-financial contribution from pledge to delivery to thank-you, celebrates the people who show up, and grows their Living Tree in the game. Money flows through trusted partners who already do it well: Ma Earth for donations with matching grants, GoSteward for loans on terms the lender and the project agree. We track the capital money can't buy. Our partners handle the money.
 
 ## Why we built it this way
 
@@ -74,7 +74,7 @@ You are the named human at the center of the campaign. The research on every pla
 We don't process payments, hold funds, or take a cut. Financial needs on a campaign are links to partners:
 
 - **Ma Earth** (maearth.com) takes donations and matches them with grants from a shared pool. Their matching rewards many small donors over a few big ones, which means the community you gather here directly multiplies the money there. Funding runs in rounds.
-- **GoSteward** (gosteward.com) arranges loans for established regenerative businesses. Investors fund the loan and earn a return. They also help projects design their full capital stack: the right mix of loans, grants, equity, and community support. Apply for a loan with them directly; we recommend, they decide.
+- **GoSteward** (gosteward.com) arranges loans for established regenerative businesses, on terms the lender and the project agree. They also help projects design their full capital stack: the right mix of loans, grants, equity, and community support. Apply for a loan with them directly; we recommend, they decide.
 
 Your campaign page shows live totals from both, read directly from their pages, so the whole stack is visible in one place.
 

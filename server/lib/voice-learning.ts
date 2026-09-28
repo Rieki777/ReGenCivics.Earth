@@ -1,5 +1,5 @@
 /**
- * The learning loop (Harvest Phase 3; CREATION_STATION_PLAN.md v2 s6).
+ * The learning loop (Harvest Phase 3; docs/planning/CREATION_STATION_PLAN.md v2 s6).
  *
  * Safety model, in order of supremacy:
  *  1. The five hard publishing rules are immovable. Any candidate rule that

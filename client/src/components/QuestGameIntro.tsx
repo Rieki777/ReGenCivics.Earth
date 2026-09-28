@@ -49,7 +49,7 @@ const PANELS = [
   {
     id: 2,
     heading: "Do the work. Earn the tokens.",
-    body: "When you complete a quest, you earn tokens. Both to distribute the currency of the economic system we're co-creating together, and to distribute governance voice in our Infinite Game. This is your actual share of an economy built around healing, growth, and care. Your contribution is logged. Other players see it. Land projects see it. The record builds, quest by quest, person by person. This is the foundation from which we raise investment, seek donors, and bring real financial value into the movement, and build the financial systems of the future, today.",
+    body: "When you complete a quest, you earn tokens. Both to distribute the currency of the economic system we're co-creating together, and to distribute governance voice in our Infinite Game. Your contribution is logged. Other players see it. Land projects see it. The record builds, quest by quest, person by person. This record is the foundation we build the financial systems of the future on, today.",
     image: `${ART_BASE}/panel-3.webp`,
     imageAlt: "Golden seeds and motes of light rising from a harvest basket, tracing constellation lines in the dark",
     pulse: false,
@@ -376,7 +376,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         />
       ))}
 
-      {/* Skip — bottom left, lifted above the site's bottom nav. Left rather
+      {/* Skip: bottom left, lifted above the site's bottom nav. Left rather
           than right because the WizardRadialMenu FAB owns the bottom-right
           corner on phones at z-[60] and would sit on top of it. */}
       <button

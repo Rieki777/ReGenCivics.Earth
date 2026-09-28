@@ -6,7 +6,8 @@
  */
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "./_core/context";
-import { redisRateLimit, isCacheAvailable } from "./cache";
+import { redisKeyedLimit, redisRateLimit, isCacheAvailable } from "./cache";
+import { clientIp } from "./_core/client-ip";
 
 // Configuration
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
@@ -51,6 +52,18 @@ const ACTION_LIMITS: Record<string, number> = {
   // cap bounds spend and stops an accidental regenerate loop. Admin-only and
   // deliberate work, so 10 per 15 minutes is well above a real working session.
   funding_generate: 10,
+
+  // Cooperative interest form (public, no account). One submission per
+  // person is the norm; a few retries cover typos without letting a script
+  // fill the table.
+  coop_interest: 5,
+
+  // Offer status links (build spec 2026-09-27, section 10.2). Anyone holding
+  // a link can open it, so reads get room for a few reloads across devices
+  // and writes (withdraw, a note to the stewards) stay tight. A note is also
+  // capped at 5 per offer per 24 hours, counted in the database.
+  offer_status_view: 60,
+  offer_status_write: 10,
 };
 
 function maxForAction(action: string): number {
@@ -60,41 +73,51 @@ function maxForAction(action: string): number {
 // ── In-memory fallback (single-process only) ─────────────────────────────────
 interface RateLimitEntry {
   timestamps: number[];
+  /** The window this entry counts over, so the sweep keeps longer windows whole. */
+  windowMs: number;
 }
 const memoryStore = new Map<string, RateLimitEntry>();
+/** checkKeyedLimit's entries: any key (an email hash, say), any window. */
+const keyedStore = new Map<string, RateLimitEntry>();
 
-// Clean up the in-memory store every 10 minutes
-setInterval(() => {
+// Clean up the in-memory stores every 10 minutes
+const sweep = setInterval(() => {
   const now = Date.now();
-  Array.from(memoryStore.entries()).forEach(([key, entry]) => {
-    entry.timestamps = entry.timestamps.filter(
-      (ts: number) => now - ts < RATE_LIMIT_WINDOW_MS
-    );
-    if (entry.timestamps.length === 0) {
-      memoryStore.delete(key);
-    }
-  });
+  for (const store of [memoryStore, keyedStore]) {
+    Array.from(store.entries()).forEach(([key, entry]) => {
+      entry.timestamps = entry.timestamps.filter(
+        (ts: number) => now - ts < entry.windowMs
+      );
+      if (entry.timestamps.length === 0) {
+        store.delete(key);
+      }
+    });
+  }
 }, 10 * 60 * 1000);
+sweep.unref?.();
 
 function memoryRateLimit(
   key: string,
-  max: number = MAX_SUBMISSIONS_PER_WINDOW
+  max: number = MAX_SUBMISSIONS_PER_WINDOW,
+  windowMs: number = RATE_LIMIT_WINDOW_MS,
+  store: Map<string, RateLimitEntry> = memoryStore
 ): { allowed: boolean; count: number; resetAt: number } {
   const now = Date.now();
-  let entry = memoryStore.get(key);
+  let entry = store.get(key);
   if (!entry) {
-    entry = { timestamps: [] };
-    memoryStore.set(key, entry);
+    entry = { timestamps: [], windowMs };
+    store.set(key, entry);
   }
+  entry.windowMs = windowMs;
 
   entry.timestamps = entry.timestamps.filter(
-    (ts) => now - ts < RATE_LIMIT_WINDOW_MS
+    (ts) => now - ts < windowMs
   );
 
   const count = entry.timestamps.length;
   const allowed = count < max;
   const oldestTs = entry.timestamps[0] ?? now;
-  const resetAt = oldestTs + RATE_LIMIT_WINDOW_MS;
+  const resetAt = oldestTs + windowMs;
 
   if (allowed) {
     entry.timestamps.push(now);
@@ -104,15 +127,18 @@ function memoryRateLimit(
 }
 
 // ── IP extraction ─────────────────────────────────────────────────────────────
-function getClientIp(req: TrpcContext["req"]): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  if (typeof forwarded === "string") {
-    return forwarded.split(",")[0].trim();
-  }
-  if (Array.isArray(forwarded)) {
-    return forwarded[0].trim();
-  }
-  return req.socket?.remoteAddress || "unknown";
+/**
+ * The caller's address: Cloudflare's CF-Connecting-IP when the request came
+ * through Cloudflare, otherwise req.ip (server/_core/client-ip.ts explains
+ * why req.ip alone is a shared proxy address in production).
+ *
+ * This used to read the FIRST X-Forwarded-For entry, which is whatever the
+ * client sent, so changing it on each request gave a fresh counter every
+ * time and no per-IP limit held (security review 2026-09-28). Every limiter
+ * and failure blocker now reads the same helper.
+ */
+export function getClientIp(req: TrpcContext["req"]): string {
+  return clientIp(req);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -139,7 +165,7 @@ export async function checkRateLimit(
       RATE_LIMIT_WINDOW_MS
     ));
   } else {
-    ({ allowed, resetAt } = memoryRateLimit(key, max));
+    ({ allowed, resetAt } = memoryRateLimit(key, max, RATE_LIMIT_WINDOW_MS));
   }
 
   if (!allowed) {
@@ -152,6 +178,39 @@ export async function checkRateLimit(
       message: `You've reached the maximum number of submissions (${max} per 15 minutes). Please try again in about ${minutesRemaining} minute${minutesRemaining !== 1 ? "s" : ""}. If you believe this is an error, please contact us directly.`,
     });
   }
+}
+
+/**
+ * A sliding-window limit on any key (Redis when connected, else this process).
+ *
+ * For limits that are not per IP: the sign-in link counts per email address
+ * (server/_core/oauth.ts, 3 per 15 minutes), because one address can be asked
+ * for from many networks. Callers pass a key that holds no personal data (a
+ * SHA-256 of the address, never the address), since it lands in Redis.
+ *
+ * Only requests it lets through are counted, on both paths. Anyone can ask
+ * for someone else's address, so a refused request must never push the
+ * window forward, or a stranger could keep an address locked out of sign-in
+ * for good (redisKeyedLimit in server/cache.ts has the story).
+ *
+ * retryAfterMs is how long until one more request would pass: until the
+ * oldest counted request leaves the window. Never throws: a Redis error fails
+ * open, the same as checkRateLimit.
+ */
+export async function checkKeyedLimit(
+  key: string,
+  max: number,
+  windowMs: number
+): Promise<{ allowed: boolean; retryAfterMs: number }> {
+  const { allowed, resetAt } = isCacheAvailable()
+    ? await redisKeyedLimit(key, max, windowMs)
+    : memoryRateLimit(key, max, windowMs, keyedStore);
+  return { allowed, retryAfterMs: allowed ? 0 : Math.max(0, resetAt - Date.now()) };
+}
+
+/** Tests only: forget every in-process keyed limit. */
+export function __resetKeyedLimitsForTests(): void {
+  keyedStore.clear();
 }
 
 /**

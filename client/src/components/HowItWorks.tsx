@@ -3,14 +3,14 @@
  * Animated, mobile-first, with expandable steps and a visual progress indicator.
  */
 import { useState } from "react";
-import { 
-  Sprout, Users, Coins, Globe, ArrowRight, ChevronDown,
+import {
+  Sprout, Users, Globe, ArrowRight, ChevronDown,
   Leaf, Handshake, Target, Infinity
 } from "lucide-react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { FUND } from "@shared/fund";
+import { COOP } from "@shared/fund";
 
 // Each path is one of the interconnected ways people show up to ReGen
 // Civics. They are not sequential steps. The numbers and "5 steps"
@@ -29,17 +29,17 @@ const steps = [
   {
     title: "Alliance Partners Support",
     summary: "Organizations contribute expertise, technology, and services to strengthen projects.",
-    detail: "Alliance partners provide the infrastructure regenerative projects need: legal frameworks, regenerative agriculture consulting, renewable energy systems, construction expertise, and governance tools. Partners exchange services for equity and $RCivics tokens.",
+    detail: "Alliance partners provide the infrastructure regenerative projects need: legal frameworks, regenerative agriculture consulting, renewable energy systems, construction expertise, and governance tools.",
     icon: Handshake,
     color: "text-violet-400",
     bgColor: "bg-violet-400/20",
     borderColor: "border-violet-400/30",
   },
   {
-    title: "Investors Fund the Portfolio",
-    summary: "Diversified exposure to the regenerative land economy, once the fund is formed.",
-    detail: `${FUND.statement} As designed, it will pool capital across a curated portfolio of land projects and alliance organizations, so the diversification reduces risk while maximizing systemic impact. ${FUND.eligibility} The proposed minimum is $250,000.`,
-    icon: Coins,
+    title: "Designing the Cooperative",
+    summary: "A member-owned cooperative for land projects and people, now in design.",
+    detail: COOP.statement,
+    icon: Users,
     color: "text-amber-400",
     bgColor: "bg-amber-400/20",
     borderColor: "border-amber-400/30",
@@ -47,7 +47,7 @@ const steps = [
   {
     title: "Players Grow the Game",
     summary: "Anyone can play the Infinite Game, completing quests that heal land and community.",
-    detail: "The Infinite Game is open to everyone. Complete quests focused on personal health, community building, and ecological restoration. Earn tokens, build your regenerative portfolio, and contribute to a movement that grows stronger with every player.",
+    detail: "The Infinite Game is open to everyone. Complete quests focused on personal health, community building, and ecological restoration. Earn tokens, build a record of the regenerative work you do, and help the movement grow stronger with every player.",
     icon: Target,
     color: "text-rose-400",
     bgColor: "bg-rose-400/20",
@@ -56,7 +56,7 @@ const steps = [
   {
     title: "Regenerative Economic Systems",
     summary: "The land projects, organizations, and food producers create the foundations for entirely new economic systems. Welcome to the Infinite Game.",
-    detail: "Healthy land appreciates. Thriving communities generate economic activity. Food systems become local. Governance becomes participatory. Alliance services create recurring value. Together these pieces form the foundation of regenerative economies that grow stronger the more people participate.",
+    detail: "Healthy land feeds people. Thriving communities generate economic activity. Food systems become local. Governance becomes participatory. Alliance services meet real needs. Together these pieces form the foundation of regenerative economies that grow stronger the more people participate.",
     icon: Infinity,
     color: "text-[#7dd87d]",
     bgColor: "bg-[#7dd87d]/20",
@@ -183,8 +183,8 @@ export default function HowItWorks() {
               },
               {
                 icon: Handshake,
-                title: "Invest or Partner",
-                description: "Put capital to work in regenerative land projects, or bring your org into the alliance.",
+                title: "Partner With Us",
+                description: "Bring your organization into the alliance and support land projects with your skills, tools, and services.",
                 href: "/connect",
                 color: "text-amber-300",
                 border: "border-amber-500/30 hover:border-amber-500/60",

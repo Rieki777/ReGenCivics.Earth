@@ -10,6 +10,11 @@
  * dates and the one condition note, a gift says Gift. A loan the stewards
  * took on gets a Returned button (campaigns.markLoanReturned), a stamp that
  * changes no status and no counter.
+ *
+ * Notes from the offer link (build spec 2026-09-27, section 10.2): someone
+ * who offered without an account can send the stewards a short note from
+ * their private status link. The latest five show here, newest first, as
+ * plain text.
  */
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
@@ -40,7 +45,7 @@ import {
 import { decodeBasicEntities } from "@shared/htmlText";
 import { isHoursNeed } from "@shared/roleCapacity";
 import { formatShortDay, toDay } from "@shared/crowdpoolNeedAction";
-import { LOAN_ROW } from "@shared/crowdpoolCopy";
+import { LOAN_ROW, OFFER_NOTES } from "@shared/crowdpoolCopy";
 import { STEWARD_STATUS_CLASSES, STEWARD_STATUS_LABELS } from "@/lib/needDisplay";
 
 type RouterOutputs = inferRouterOutputs<AppRouter>;
@@ -98,9 +103,17 @@ export function claimCountdown(
 
 const text = (s: string | null | undefined) => decodeBasicEntities(s ?? "");
 
+/** "3 Oct, 14:05": when a note from the offer link arrived. */
+function noteTime(at: Date | string): string {
+  const d = new Date(at);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 export function ContributionCard({
   contribution,
   need,
+  notes,
   formatCurrency,
   onAction,
   onFormalize,
@@ -108,6 +121,8 @@ export function ContributionCard({
 }: {
   contribution: OwnerContribution;
   need: CampaignNeed | null;
+  /** Notes the contributor sent from their offer status link, newest first (campaigns.getOfferMessages). */
+  notes?: Array<{ body: string; createdAt: Date | string }>;
   formatCurrency: (amount: number) => string;
   onAction: (action: ContributionAction, contribution: OwnerContribution) => void;
   onFormalize: (contribution: OwnerContribution) => void;
@@ -205,6 +220,25 @@ export function ContributionCard({
               <div className="min-w-0">
                 <p className="text-xs font-medium text-blue-700 mb-1">Their note</p>
                 <p className="text-sm text-blue-700 break-words">{text(c.contributorNotes)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {notes && notes.length > 0 && (
+          <div className="bg-blue-50 rounded-lg p-3" data-testid={`offer-notes-${c.id}`}>
+            <div className="flex items-start gap-2">
+              <MessageSquare className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-blue-800 mb-1">{OFFER_NOTES.heading}</p>
+                <ul className="space-y-2">
+                  {notes.map((n, i) => (
+                    <li key={`${i}-${String(n.createdAt)}`} className="min-w-0">
+                      <p className="text-sm text-blue-800 break-words whitespace-pre-wrap">{text(n.body)}</p>
+                      <p className="text-[11px] text-blue-800/80">{noteTime(n.createdAt)}</p>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>

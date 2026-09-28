@@ -43,6 +43,26 @@ describe("notification display (bell + /notifications)", () => {
     expect(resolveNotificationLink({ type: "contribution_thanked", link: null })).toBe("/profile?tab=contributions");
   });
 
+  it("shows the build 3 notices (0264) with their own glyphs and fallbacks", () => {
+    const glyphs: Record<string, string> = {
+      offer_waiting: "⏳",
+      offer_still_waiting: "⏳",
+      campaign_opened: "🌱",
+      campaign_final_stretch: "🌱",
+      campaign_closed: "🚪",
+      contributor_reply: "💬",
+    };
+    for (const [t, glyph] of Object.entries(glyphs)) {
+      expect(CLIENT_TYPES as readonly string[], t).toContain(t);
+      expect(typeGlyph(t), t).toBe(glyph);
+    }
+    // The contributor's note lands on their contributions; the rest on the campaigns.
+    expect(legacyLink("offer_still_waiting")).toBe("/profile?tab=contributions");
+    for (const t of ["offer_waiting", "campaign_opened", "campaign_final_stretch", "campaign_closed", "contributor_reply"]) {
+      expect(legacyLink(t), t).toBe("/campaigns");
+    }
+  });
+
   it("keeps the old normalizations", () => {
     expect(resolveNotificationLink({ type: "gratitude", link: "/profile" })).toBe("/profile?tab=gratitude");
     expect(resolveNotificationLink({ type: "campaign_milestone", link: "/campaigns/7" })).toBe("/campaign/7");

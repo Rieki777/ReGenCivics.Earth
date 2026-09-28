@@ -19,6 +19,11 @@
  * `pledgedTotal` and `totalValue` on the campaign keep their meaning for
  * villages (crowdpool hub contract) and are not read here. Nothing is
  * derived by subtracting cached counters: every figure comes from rows.
+ *
+ * A campaign the close job closed without completing (status `closed`, ruling
+ * 2026-09-27) reads as state `did_not_complete`: "Crowdpooling closed on
+ * {date}. It didn't complete.", with the after-close line under it. The close
+ * rules themselves live in shared/campaignClose.ts.
  */
 import { CAPITAL_TYPES, type CapitalType } from "./capitals";
 import { DELIVERED_STATUSES, STANDING_STATUSES, isHoursNeed, roleFillState } from "./roleCapacity";
@@ -34,7 +39,7 @@ import {
   toDay,
   type NeedLike,
 } from "./crowdpoolNeedAction";
-import { ASKS_NO_MONEY } from "./crowdpoolCopy";
+import { ASKS_NO_MONEY, CLOSE } from "./crowdpoolCopy";
 
 export { STANDING_STATUSES, DELIVERED_STATUSES, MONEY_NEED_KINDS };
 
@@ -65,6 +70,10 @@ export type ProgressCampaign = {
   startedAt: Date | string | null;
   publishedAt?: Date | string | null;
   durationDays: number | null;
+  /** (0264) When the close job closed it, complete or not. */
+  closedAt?: Date | string | null;
+  /** (0264) 'complete' or 'did_not_complete' for a campaign the close job closed. */
+  closeOutcome?: string | null;
 };
 
 export type ProgressItem = NeedLike & { id: number; estimatedValue: number; quantityWanted: number };
@@ -99,7 +108,16 @@ export type ProgressRoute = {
 
 // ── Outputs ──────────────────────────────────────────────────────────────────
 
-export type ProgressState = "draft" | "open" | "money_landed" | "in_kind_landed" | "both_landed" | "complete" | "cancelled";
+export type ProgressState =
+  | "draft"
+  | "open"
+  | "money_landed"
+  | "in_kind_landed"
+  | "both_landed"
+  | "complete"
+  | "cancelled"
+  /** Status `closed`: the close date passed and the two halves had not both landed. */
+  | "did_not_complete";
 
 export type NeedStatusKey = "filled" | "waiting" | "partly" | "none";
 
@@ -127,6 +145,8 @@ export type CampaignProgress = {
   almostComplete: boolean;
   /** ISO. Null before the campaign goes live. */
   endsAt: string | null;
+  /** ISO. When the close job closed the campaign; null while open or when marked complete by hand. */
+  closedAt: string | null;
   inKind: {
     ask: number;
     confirmed: number;
@@ -176,6 +196,8 @@ export type ProgressLines = {
   inKindShort: string;
   moneyShort: string;
   stateTag: string;
+  /** Under the completion line once a campaign closed without completing (CLOSE.afterLine); null otherwise. */
+  afterClose: string | null;
 };
 
 // ── Small helpers ────────────────────────────────────────────────────────────
@@ -286,6 +308,8 @@ function stateFor(
   switch (status) {
     case "cancelled":
       return "cancelled";
+    case "closed": // set only by the close job at the close date
+      return "did_not_complete";
     case "completed":
     case "funded": // legacy status; the word is always complete
       return "complete";
@@ -504,6 +528,7 @@ export function computeCampaignProgress(input: {
   const state = stateFor(campaign.status, inKindLanded, moneyLanded, asksNone, needsTotal === 0);
   const almostComplete = state === "open" && (needsTotal === 0 || inKind.pct >= 85) && (asksNone || money.pct >= 85);
   const endsAt = campaignEndsAt(campaign);
+  const closedAt = toDate(campaign.closedAt ?? null);
 
   // ── The nine forms of capital ──
   const byCapital: CampaignProgress["byCapital"] = CAPITAL_TYPES.map((capital) => ({
@@ -544,6 +569,7 @@ export function computeCampaignProgress(input: {
     state,
     almostComplete,
     endsAt: endsAt ? endsAt.toISOString() : null,
+    closedAt: closedAt ? closedAt.toISOString() : null,
     inKind,
     money,
     open,
@@ -638,6 +664,9 @@ export function progressLines(p: AnyProgress, fmt: (n: number) => string): Progr
     completion = null;
   } else if (p.state === "complete") {
     completion = "This campaign is complete.";
+  } else if (p.state === "did_not_complete") {
+    const closedOn = p.closedAt ? new Date(p.closedAt) : endsAt;
+    completion = closedOn && !isNaN(closedOn.getTime()) ? CLOSE.completion(formatCloseDate(closedOn)) : CLOSE.completionNoDate;
   } else {
     const by = date ? `by ${date}` : "by the close date";
     if (money.asksNone) completion = `Complete means every need is confirmed ${by}.`;
@@ -645,13 +674,14 @@ export function progressLines(p: AnyProgress, fmt: (n: number) => string): Progr
     else completion = `Complete means the money half and the in-kind half both land ${by}.`;
   }
 
-  const live = p.state !== "draft" && p.state !== "complete" && p.state !== "cancelled";
+  const live = p.state !== "draft" && p.state !== "complete" && p.state !== "cancelled" && p.state !== "did_not_complete";
   const closes = !p.isExample && live && date ? `Closes ${date}` : null;
 
   let stateTag: string;
   if (p.isExample) stateTag = "Example";
   else if (p.state === "complete") stateTag = "Complete";
   else if (p.state === "cancelled") stateTag = "Cancelled";
+  else if (p.state === "did_not_complete") stateTag = CLOSE.stateTag;
   else if (p.state === "draft") stateTag = "Not live yet";
   else if (p.almostComplete) stateTag = "Almost complete";
   else stateTag = "Open for offers";
@@ -669,6 +699,7 @@ export function progressLines(p: AnyProgress, fmt: (n: number) => string): Progr
       : `In-kind: ${inKind.needsMet} of ${inKind.needsTotal} needs met`,
     moneyShort,
     stateTag,
+    afterClose: !p.isExample && p.state === "did_not_complete" ? CLOSE.afterLine : null,
   };
 }
 
@@ -768,6 +799,8 @@ export type TimelineInput = {
     completedAt?: Date | string | null;
     /** The cancel stamps updatedAt; there is no cancelledAt column. */
     updatedAt?: Date | string | null;
+    /** (0264) When the close job closed it. */
+    closedAt?: Date | string | null;
   };
   progress: Pick<AnyProgress, "endsAt" | "isExample" | "state">;
   /** campaigns.getActivity rows. Its `kind` values stay pledged / delivered / thanked for villages. */
@@ -793,7 +826,7 @@ export type TimelineInput = {
 
 export type TimelineEntry = {
   key: string;
-  kind: "closes" | "update" | "accepted" | "delivered" | "thanked" | "opened" | "complete" | "cancelled";
+  kind: "closes" | "update" | "accepted" | "delivered" | "thanked" | "opened" | "complete" | "cancelled" | "closed";
   /** ISO, or null when the source row had no date. */
   at: string | null;
   text: string;
@@ -849,6 +882,9 @@ export function buildCampaignTimeline(a: TimelineInput): TimelineEntry[] {
   }
   if (a.campaign.status === "cancelled") {
     entries.push({ key: "cancelled", kind: "cancelled", at: iso(a.campaign.updatedAt ?? null), text: "Campaign cancelled", body: null, upcoming: false });
+  }
+  if (a.campaign.status === "closed") {
+    entries.push({ key: "closed", kind: "closed", at: iso(a.campaign.closedAt ?? null), text: CLOSE.timeline, body: null, upcoming: false });
   }
 
   entries.sort((x, y) => (y.at ?? "").localeCompare(x.at ?? ""));

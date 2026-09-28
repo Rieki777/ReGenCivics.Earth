@@ -9,6 +9,13 @@
  *
  * `funded` stays in the enum for old rows. No UI offers it: the admin button
  * says "Mark complete" and sets `completed`.
+ *
+ * `closed` (0264, ruling 2026-09-27) means the close date passed and the
+ * campaign didn't complete. Only the daily close job writes it
+ * (server/lib/campaign-close.ts), with a conditional UPDATE and never
+ * through campaigns.updateStatus, so no transition into or out of `closed`
+ * is offered to anyone. The same job can move a live campaign to `completed`
+ * at its close date when both halves have landed.
  */
 
 export const CAMPAIGN_STATUSES = [
@@ -19,6 +26,7 @@ export const CAMPAIGN_STATUSES = [
   "completed",
   "cancelled",
   "rejected",
+  "closed",
 ] as const;
 
 export type CampaignStatus = (typeof CAMPAIGN_STATUSES)[number];
@@ -32,6 +40,7 @@ export const ADMIN_TRANSITIONS: Record<CampaignStatus, CampaignStatus[]> = {
   funded: ["completed"],
   completed: [],
   cancelled: [],
+  closed: [],
 };
 
 export const STEWARD_TRANSITIONS: Record<CampaignStatus, CampaignStatus[]> = {
@@ -42,6 +51,7 @@ export const STEWARD_TRANSITIONS: Record<CampaignStatus, CampaignStatus[]> = {
   funded: [],
   completed: [],
   cancelled: [],
+  closed: [],
 };
 
 export function isCampaignStatus(s: unknown): s is CampaignStatus {

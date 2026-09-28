@@ -60,7 +60,9 @@ export const KNOWN_INTENTS: Record<IntentName, IntentDescriptor> = {
     name: "fund-grant-to-deploy-funds",
     source: "fund_grant",
     formKind: "deploy_funds",
-    description: "Deploy fund tokens to a project from the ReGen Civics Fund DHO",
+    // The treasury space is the `regen-civics` DHO (.ai/docs/HYPHA-BRIDGE.md).
+    // No Hypha space carries the old fund's name, so the header names the DHO.
+    description: "Propose sending tokens from the ReGen Civics DHO treasury to a project",
   },
   "expense-reimbursement": {
     name: "expense-reimbursement",

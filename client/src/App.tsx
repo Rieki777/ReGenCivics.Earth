@@ -3,6 +3,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, Redirect, useLocation } from "wouter";
 import { lazy, Suspense, ReactNode, type ComponentType } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { captureOfferTokenFromLocation } from "./lib/offerStatusToken";
+
+// A private offer status link (/offer#<token>) leaves the address bar before
+// anything else runs: this module evaluates before main.tsx registers
+// Sentry's deferred init and before React renders, so neither Sentry's
+// location and history records nor analytics ever hold the token
+// (build spec 2026-09-27, section 10.1).
+captureOfferTokenFromLocation();
 
 /**
  * lazyWithRetry — retry a dynamic import once after a short backoff before
@@ -130,7 +138,6 @@ const ApplyStatus = lazy(() => import("./pages/ApplyStatus"));
 const MyApplications = lazy(() => import("./pages/MyApplications"));
 const AdminApplications = lazy(() => import("./pages/AdminApplications"));
 const AdminApplicationDetail = lazy(() => import("./pages/AdminApplicationDetail"));
-const InvestorJourneyForm = lazyWithRetry(() => import("./pages/InvestorForm"));
 const InvestorContact = lazy(() => import("./pages/InvestorContact"));
 const ClaimSeeds = lazy(() => import("./pages/ClaimSeeds"));
 const Connect = lazy(() => import("./pages/Connect"));
@@ -160,13 +167,14 @@ const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const ProjectPage = lazy(() => import("./pages/ProjectPage"));
 const SignIn = lazy(() => import("./pages/SignIn"));
 const CampaignUpdatesUnsubscribe = lazy(() => import("./pages/CampaignUpdatesUnsubscribe"));
+// The private status page for one offer, for people who offered without an account.
+const OfferStatus = lazy(() => import("./pages/OfferStatus"));
 const MapPage = lazy(() => import("./pages/Map"));
 const ProjectComparison = lazy(() => import("./pages/ProjectComparison"));
 const Governance = lazy(() => import("./pages/Governance"));
 const ReGenCoCreatorsGuide = lazy(() => import("./pages/ReGenCoCreatorsGuide"));
 const RegenCommunityOnboarding = lazy(() => import("./pages/RegenCommunityOnboarding"));
 const LOI = lazy(() => import("./pages/LOI"));
-const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Disclaimers = lazy(() => import("./pages/Disclaimers"));
@@ -323,8 +331,8 @@ function Router() {
       <Route path={"/tokenomics"}><EB><Tokenomics /></EB></Route>
       <Route path={"/loi"}><EB><LOI /></EB></Route>
       <Route path={"/404"}><EB><NotFound /></EB></Route>
-      <Route path={"/investmentform"}>{() => { window.location.replace('/investor'); return null; }}</Route>
-      <Route path={"/investor-form"}>{() => { window.location.replace('/investor'); return null; }}</Route>
+      <Route path={"/investmentform"}>{() => { window.location.replace('/loi'); return null; }}</Route>
+      <Route path={"/investor-form"}>{() => { window.location.replace('/loi'); return null; }}</Route>
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
       <Route path={"/season2"}><EB><Season2 /></EB></Route>
@@ -345,7 +353,7 @@ function Router() {
       <Route path={"/my-applications"}><EB><MyApplications /></EB></Route>
       <Route path={"/admin/applications"}><EB><AdminApplications /></EB></Route>
       <Route path={"/admin/application/:id"}><EB><AdminApplicationDetail /></EB></Route>
-      <Route path={"/investor"}><EB><InvestorJourneyForm /></EB></Route>
+      <Route path={"/investor"}><Redirect to="/loi" /></Route>
       <Route path={"/investor/contact"}><EB><InvestorContact /></EB></Route>
       <Route path={"/claim-seeds"}><EB><ClaimSeeds /></EB></Route>
       <Route path={"/connect"}><EB><Connect /></EB></Route>
@@ -359,6 +367,10 @@ function Router() {
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
       <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
+      <Route path={"/crowdpool"}><Redirect to="/crowd-pooling" /></Route>
+      <Route path={"/projects"}><Redirect to="/campaigns" /></Route>
+      <Route path={"/investor-contact"}><Redirect to="/investor/contact" /></Route>
+      <Route path={"/about"}><Redirect to="/team" /></Route>
       <Route path={"/compare-projects"}><EB><ProjectComparison /></EB></Route>
       <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
       <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
@@ -376,8 +388,9 @@ function Router() {
       <Route path={"/project/:key"}><EB><ProjectPage /></EB></Route>
       <Route path={"/sign-in"}><EB><SignIn /></EB></Route>
       <Route path={"/campaign-updates/unsubscribe"}><EB><CampaignUpdatesUnsubscribe /></EB></Route>
+      <Route path={"/offer"}><EB><OfferStatus /></EB></Route>
       <Route path={"/map"}><EB><MapPage /></EB></Route>
-      <Route path={"/risk-disclosure"}><EB><RiskDisclosure /></EB></Route>
+      <Route path={"/risk-disclosure"}><Redirect to="/disclaimers" /></Route>
       <Route path={"/terms-of-use"}><EB><TermsOfUse /></EB></Route>
       <Route path={"/privacy-policy"}><EB><PrivacyPolicy /></EB></Route>
       <Route path={"/disclaimers"}><EB><Disclaimers /></EB></Route>
@@ -602,7 +615,9 @@ function MainApp() {
           {!adminMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}
-          {!adminMode && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
+          {/* Not on the private offer page: someone opening their offer from an
+              email sees it first, not a first-visit welcome over it. */}
+          {!adminMode && location !== "/offer" && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>

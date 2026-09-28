@@ -1,7 +1,7 @@
 /**
  * create-land-game step: emit the foundation credit into a generated game.
  *
- * CUSTOM_GAMES_MASTER_PLAN.md B3 #17 (the scaffold) and #23 (the credit). This
+ * docs/planning/CUSTOM_GAMES_MASTER_PLAN.md B3 #17 (the scaffold) and #23 (the credit). This
  * is the credit half, written as its own runnable step so it works the day the
  * rest of the scaffold lands and does not wait on it. Deterministic, no LLM,
  * runs in under a second.

@@ -13,6 +13,12 @@
  * way in (a need's Apply, Offer or Sign up, the freeform offer, the
  * simulator's button, a ?offer= link from the Needs tab) opens the same
  * offer sheet. Its receipt is the confirmation, so no toast repeats it.
+ * The ways in show only while the campaign is live. Once it has ended
+ * (complete, cancelled, closed at its close date) the page is a record: no
+ * "What can you bring?" chips, no "Try filling a need", no token line under
+ * the needs, and the money block says it takes no more money (review
+ * 2026-09-28: a closed campaign said "Its needs above are open to you" right
+ * under "It didn't complete").
  *
  * The page adds no fixed or sticky element: the bottom navigation is always
  * on screen on a phone.
@@ -56,7 +62,7 @@ function clearOfferParam() {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-export function ProjectCampaignFront({ front, onContributed, needsAnchor, projectName, canonicalPath }: {
+export function ProjectCampaignFront({ front, onContributed, needsAnchor, projectName, canonicalPath, projectKey, followsProject }: {
   front: ProjectFront;
   onContributed: () => void;
   /** Give the needs list the #needs anchor (visitors). Stewards have #needs on their tools. */
@@ -64,6 +70,10 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
   projectName: string;
   /** The project page's canonical path, for share links. */
   canonicalPath: string;
+  /** The project page key, for Follow on the receipt. */
+  projectKey: string;
+  /** projects.getPublic viewer.followsProject. */
+  followsProject: boolean;
 }) {
   const [showModal, setShowModal] = useState(false);
   const [need, setNeed] = useState<ContributionNeed | null>(null);
@@ -72,12 +82,17 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
   const [tryOpen, setTryOpen] = useState(false);
   const formatCurrency = useMemo(() => makeCurrencyFormatter(front.currency), [front.currency]);
   const progress = front.progress;
+  // Only a live campaign takes offers. Every other status (in review,
+  // complete, cancelled, closed at its close date) hides the need buttons,
+  // which the server would refuse anyway (build spec 2026-09-27, finding F10).
   const active = front.status === "active";
-  const cancelled = front.status === "cancelled";
   // Example campaigns take practice runs: every way in works, and the server
   // writes nothing (campaigns.submitContribution returns practice:true).
   const isExample = !!front.isDemo;
   const unpublished = front.status === "draft" || front.status === "pending_review" || front.status === "rejected";
+  // Over and done: every status that is neither live nor still a steward's
+  // preview. A preview keeps the page as visitors will see it once live.
+  const ended = !active && !unpublished;
   const title = decodeBasicEntities(front.title);
   const lines = useMemo(() => progressLines(progress, formatCurrency), [progress, formatCurrency]);
 
@@ -168,28 +183,31 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
         </div>
       </section>
 
-      <BringChips
-        items={needs}
-        byNeed={progress.byNeed}
-        selected={chips}
-        onChange={setChips}
-        showMoney={progress.money.ask > 0 || progress.money.hasRoutes}
-        onMoney={() => scrollToId("money")}
-        shownCount={shownCount}
-        totalCount={needs.length}
-      />
+      {!ended && (
+        <BringChips
+          items={needs}
+          byNeed={progress.byNeed}
+          selected={chips}
+          onChange={setChips}
+          showMoney={progress.money.ask > 0 || progress.money.hasRoutes}
+          onMoney={() => scrollToId("money")}
+          shownCount={shownCount}
+          totalCount={needs.length}
+        />
+      )}
 
       <div id={needsAnchor ? "needs" : "project-needs"} className="scroll-mt-24">
         <NeedsRegistry
           items={front.items}
           campaignActive={active}
-          claimsHidden={cancelled}
+          claimsHidden={!active}
           formatCurrency={formatCurrency}
           onClaim={openNeed}
           byNeed={progress.byNeed}
           filter={chips}
           projectName={projectName}
           isExample={isExample}
+          showTokenLine={!ended}
         >
           {active && (
             <div className="rounded-2xl border border-[#4a7c59]/25 bg-gradient-to-r from-[#f0f7f0] to-[#f0f7f0]/40 p-4 md:p-5">
@@ -224,7 +242,7 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
               </div>
             </div>
           )}
-          {needs.length > 0 && (
+          {needs.length > 0 && !ended && (
             <div className="mt-4 rounded-2xl border border-[#1a472a]/10">
               <button
                 type="button"
@@ -251,7 +269,7 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
         </NeedsRegistry>
       </div>
 
-      <MoneyBlock routes={routes} money={progress.money} currency={progress.currency} />
+      <MoneyBlock routes={routes} money={progress.money} currency={progress.currency} ended={ended} />
 
       <WholeAskSheet
         open={sheetOpen}
@@ -274,8 +292,8 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
         completionLine={lines.completion}
         sharePath={sharePath}
         isExample={isExample}
-        isFollowing={!!front.isFollowing}
-        onFollowed={onContributed}
+        projectKey={projectKey}
+        followsProject={followsProject}
         onSuccess={({ practice }) => {
           // A practice run wrote nothing: no refetch. The receipt is the
           // confirmation, so there is no toast here.

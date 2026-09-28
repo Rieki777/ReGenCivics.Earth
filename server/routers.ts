@@ -7,6 +7,8 @@ import { globalSearchRouter, filesRouter, chatRouter, imagesRouter } from "./rou
 import { authRouter, statsRouter, userProfilesRouter } from "./routes/auth";
 import { applicationsRouter, applicantsForCampaignRouter, reviewsRouter, orgClaimsRouter } from "./routes/applications";
 import { investorInquiriesRouter, generalInquiriesRouter, loiRouter, reviewerEmailsRouter, contactNotesRouter, contactTagsRouter } from "./routes/investors";
+import { coopRouter } from "./routes/coop";
+import { metricsRouter } from "./routes/metrics";
 import { newsletterRouter, videoSuggestionsRouter, emailRouter } from "./routes/newsletter";
 import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRouter, savedContributionsRouter } from "./routes/campaigns";
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
@@ -69,6 +71,7 @@ import { quickNotesRouter } from "./routes/quick-notes";
 import { harvestRouter } from "./routes/harvest";
 import { outboundRouter } from "./routes/outbound";
 import { projectsRouter } from "./routes/projects";
+import { offerStatusRouter } from "./routes/offerStatus";
 import { brainRouter } from "./routes/brain";
 import { callIntelligenceRouter } from "./routes/callIntelligence";
 import { videoTutorRouter } from "./routes/videoTutor";
@@ -102,6 +105,8 @@ export const appRouter = router({
   investorInquiries: investorInquiriesRouter,
   generalInquiries: generalInquiriesRouter,
   loi: loiRouter,
+  // The member-owned cooperative in design: interest, never pledges (funding engine Phase 0)
+  coop: coopRouter,
   reviewerEmails: reviewerEmailsRouter,
   contactNotes: contactNotesRouter,
   contactTags: contactTagsRouter,
@@ -118,6 +123,9 @@ export const appRouter = router({
   savedContributions: savedContributionsRouter,
   // The public project page (/project/:key) and its steward tools.
   projects: projectsRouter,
+  // The private offer status link (/offer#<token>) for people who offered
+  // without an account: public, rate-limited, token-scoped mutations.
+  offerStatus: offerStatusRouter,
 
   // Forum / Moderation
   forum: forumRouter,
@@ -144,6 +152,8 @@ export const appRouter = router({
   adminActions: adminActionsRouter,
   adminAutomations: adminAutomationsRouter,
   adminFunding: adminFundingRouter,
+  // Canonical numbers (admin editor + the one public read), funding engine Phase 0
+  metrics: metricsRouter,
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,

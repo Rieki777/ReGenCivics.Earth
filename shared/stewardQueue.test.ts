@@ -7,6 +7,8 @@ import {
   hoursDialogNumbers,
   stewardActionDescription,
   CLOSED_STATUSES,
+  REOPEN_NOTICE_IF_OPENED,
+  REOPEN_NOTICE_ON_RAISE,
   type QueueItem,
 } from "./stewardQueue";
 
@@ -155,6 +157,23 @@ describe("hoursDialogNumbers", () => {
   });
 });
 
+describe("the reopen lines (ruling 2026-09-27: people you didn't pick hear too)", () => {
+  it("say both groups hear, in the words the dialogs show", () => {
+    expect(REOPEN_NOTICE_IF_OPENED).toBe(
+      "If this opens the role again, people with an account who are waiting on it or weren't picked hear that it has opened up. Anyone without an account won't hear, so let them know yourself.",
+    );
+    expect(REOPEN_NOTICE_ON_RAISE).toBe(
+      "People with an account who are waiting on this role or weren't picked hear that it has opened up. Anyone without an account won't hear, so let them know yourself.",
+    );
+  });
+  it("say only account holders hear, since the notice rides the spine (review 2026-09-28)", () => {
+    for (const line of [REOPEN_NOTICE_IF_OPENED, REOPEN_NOTICE_ON_RAISE]) {
+      expect(line.toLowerCase()).toContain("people with an account");
+      expect(line).toContain("Anyone without an account won't hear, so let them know yourself.");
+    }
+  });
+});
+
 describe("stewardActionDescription", () => {
   it("tells the steward to reach someone without an account when their hours change", () => {
     expect(stewardActionDescription({ action: "hours", hoursNeed: true, hasAccount: false, name: "Rosa", roleTitle: "Farm Manager" }))
@@ -166,10 +185,10 @@ describe("stewardActionDescription", () => {
     const release = stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: true, name: "Kai", heldHours: 30, roleFilled: true });
     expect(release).toBe(
       "This frees the 30 hours a week Kai holds, so someone else can take them. Kai hears about it in their notifications. "
-        + "If this opens the role, people still waiting on it hear that it has opened up.",
+        + "If this opens the role again, people with an account who are waiting on it or weren't picked hear that it has opened up. Anyone without an account won't hear, so let them know yourself.",
     );
     expect(stewardActionDescription({ action: "hours", hoursNeed: true, hasAccount: false, name: "Rosa", roleTitle: "Farm Manager", roleFilled: true }))
-      .toContain("people still waiting on it hear that it has opened up");
+      .toContain("people with an account who are waiting on it or weren't picked hear that it has opened up");
     // A role that is not filled cannot reopen, so the line stays as it was.
     expect(stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: true, name: "Kai", heldHours: 30, roleFilled: false }))
       .not.toContain("waiting");

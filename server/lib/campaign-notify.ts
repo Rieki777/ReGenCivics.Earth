@@ -1,8 +1,9 @@
 /**
  * Campaign notices on the notification spine.
  *
- * Every campaign event (an offer arrives, a steward answers, a role fills or
- * opens up again, a campaign goes live, completes or is cancelled) writes rows through
+ * Every campaign event (an offer arrives, waits, or a steward answers it, a
+ * role fills or opens up again, a campaign goes live, opens to followers,
+ * nears its close date, completes, closes or is cancelled) writes rows through
  * insertNotification (server/lib/forum-notify.ts), which drives the bell, web
  * push and the recipient's email by their campaignsEmail preference.
  *
@@ -32,6 +33,7 @@ import { isHoursNeed } from "../../shared/roleCapacity";
 import { campaignContributions } from "../../drizzle/schema";
 import { excerpt, insertNotification, type NotificationInput } from "./forum-notify";
 import { getCampaignStewardIds } from "./project-steward";
+import { ARRIVAL } from "../../shared/crowdpoolCopy";
 
 // ─── Input shapes (plain objects; routes pass drizzle rows) ─────────────────
 
@@ -156,6 +158,8 @@ export function buildProposalAccepted(args: {
   contribution: NotifyContribution;
   item?: NotifyItem | null;
   note?: string | null;
+  /** True when an arrival note resolves for this offer at accept time (build spec 2026-09-27, section 11.4). */
+  hasArrivalNote?: boolean;
   actorId?: number | null;
 }): NotificationInput[] {
   const { campaign, contribution, item } = args;
@@ -164,11 +168,12 @@ export function buildProposalAccepted(args: {
   const base = isHoursNeed(item)
     ? `You're in for ${Number(contribution.quantityPledged ?? 0)} hours a week as ${needTitleOf(item, contribution)}.`
     : `"${plain(contribution.title)}" is accepted.`;
+  const body = withNote(base, args.note);
   return [{
     userId: uid,
     type: "contribution_accepted",
     title: `${projectNameOf(campaign)} accepted your offer`,
-    body: withNote(base, args.note),
+    body: args.hasArrivalNote ? `${body} ${ARRIVAL.noticeLine}` : body,
     link: projectLink(campaign, "your-contributions"),
     actorId: args.actorId ?? null,
     campaignId: campaign.id,
@@ -244,8 +249,9 @@ function hoursAWeek(n: number): string {
 /**
  * A filled role opened up again (a release, lowered hours or more hours
  * needed). Goes to account holders who offered to the role and are still
- * waiting (pending), and to those not taken ('rejected') only when
- * ROLE_REOPENED_REACHES_DECLINED is on (notifyRoleReopened). Never the actor, never
+ * waiting (pending), and to those not taken ('rejected'), whom
+ * notifyRoleReopened passes while ROLE_REOPENED_REACHES_DECLINED is on (it is,
+ * from the ruling of 2026-09-27). Never the actor, never
  * anyone in `excludeIds` (the person just released, the person whose hours
  * changed, anyone who already holds hours on the role). Only for a live
  * campaign. One row per person per reopening: the key carries the need, the
@@ -495,12 +501,18 @@ export function buildClaimExpired(args: {
   const out: NotificationInput[] = [];
   const contributorId = recipientsOf([contribution.userId])[0];
   const needTitle = plain(contribution.title);
+  // A campaign that is no longer live (completed, closed, cancelled) takes no
+  // offers, so the need is not "open again" there (review 2026-09-28). An
+  // unknown status reads as live, as before.
+  const ended = campaign.status != null && campaign.status !== "active";
   if (contributorId) {
     out.push({
       userId: contributorId,
       type: "claim_expired",
       title: "Your place closed",
-      body: `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so the need is open again. You can offer again any time.`,
+      body: ended
+        ? `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it's closed with our thanks.`
+        : `Your place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so the need is open again. You can offer again any time.`,
       link: projectLink(campaign, "your-contributions"),
       campaignId: campaign.id,
       contributionId: contribution.id,
@@ -512,7 +524,9 @@ export function buildClaimExpired(args: {
       userId: uid,
       type: "claim_expired",
       title: "A place closed",
-      body: `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it is open again.`,
+      body: ended
+        ? `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it's closed.`
+        : `The place for "${needTitle}" on ${campaignTitleOf(campaign)} passed its delivery window, so it is open again.`,
       link: projectLink(campaign, "review"),
       campaignId: campaign.id,
       contributionId: contribution.id,
@@ -558,6 +572,287 @@ export function buildChainConfirmed(args: {
     });
   }
   return out;
+}
+
+// ─── Nudges, the opening, the final stretch and the close (2026-09-27) ──────
+// Build spec 2026-09-27, sections 8.3, 9.3 and 12.3. Every row here is one
+// person, keyed so a retried or concurrent run writes it once.
+
+/** A waiting offer, as the nudge and the "still waiting" note read it. */
+export type NudgeContribution = {
+  id: number;
+  title: string;
+  userId?: number | null;
+  contributorName?: string | null;
+  isAnonymous?: number | boolean | null;
+};
+
+function isOn(v: number | boolean | null | undefined): boolean {
+  return v === true || (typeof v === "number" && v !== 0);
+}
+
+/** "2 days ago", "a week ago" at exactly 7, "12 days ago": how long an offer has waited. */
+export function waitedAgo(days: number): string {
+  if (days === 7) return "a week ago";
+  if (days <= 1) return days === 1 ? "yesterday" : "today";
+  return `${days} days ago`;
+}
+
+/**
+ * A steward nudge about an offer still waiting on them (type offer_waiting):
+ * step 1 from 2 days, step 2 from a week. Every steward, never the
+ * contributor themselves. `Someone` when the offer is anonymous.
+ *
+ * The words say how long it really waited (`waitedDays`, whole days from
+ * submittedAt). On the daily run step 1 goes out on day 2 and step 2 on day
+ * 7, which read "2 days ago" and "a week"; after the switch was paused, or
+ * on a first run over a backlog, an offer 20 days old says 20 days, not "a
+ * week" (review 2026-09-28). Without `waitedDays` it reads 2 or 7.
+ */
+export function buildStewardNudge(args: {
+  campaign: NotifyCampaign;
+  contribution: NudgeContribution;
+  stewardIds: number[];
+  step: 1 | 2;
+  waitedDays?: number;
+}): NotificationInput[] {
+  const { campaign, contribution, step } = args;
+  const who = isOn(contribution.isAnonymous) ? "Someone" : plain(contribution.contributorName) || "Someone";
+  const offer = plain(contribution.title) || "something";
+  const camp = campaignTitleOf(campaign);
+  const days = Number.isFinite(args.waitedDays) ? Math.max(0, Math.floor(args.waitedDays as number)) : step === 1 ? 2 : 7;
+  const ago = waitedAgo(days);
+  const title = step === 1
+    ? `${who}'s offer is waiting on you`
+    : `${who} has waited ${days === 7 ? "a week" : `${days} days`} to hear back`;
+  const body = step === 1
+    ? `${who} offered "${offer}" to ${camp} ${ago}. A yes, a no or a question keeps it moving.`
+    : `${who} offered "${offer}" to ${camp} ${ago}. If it isn't a fit, a kind no frees them to offer somewhere else.`;
+  return recipientsOf(args.stewardIds, [contribution.userId]).map((uid) => ({
+    userId: uid,
+    type: "offer_waiting" as const,
+    title,
+    body,
+    link: projectLink(campaign, "review"),
+    actorId: null,
+    campaignId: campaign.id,
+    contributionId: contribution.id,
+    dedupeKey: `cp:nudge:${contribution.id}:s${step}:u${uid}`,
+  }));
+}
+
+/** The contributor's own note at 14 days (type offer_still_waiting). Account holders only. */
+export function buildStillWaiting(args: { campaign: NotifyCampaign; contribution: NudgeContribution }): NotificationInput[] {
+  const { campaign, contribution } = args;
+  const uid = recipientsOf([contribution.userId])[0];
+  if (!uid) return [];
+  const project = projectNameOf(campaign);
+  return [{
+    userId: uid,
+    type: "offer_still_waiting",
+    title: `Your offer to ${project} is still waiting`,
+    body: `The stewards of ${project} haven't answered your offer of "${plain(contribution.title) || "your help"}" yet. It stays open until they do, and you can withdraw it from Your contributions if your plans change.`,
+    link: projectLink(campaign, "your-contributions"),
+    actorId: null,
+    campaignId: campaign.id,
+    contributionId: contribution.id,
+    dedupeKey: `cp:wait:${contribution.id}:u${uid}`,
+  }];
+}
+
+/**
+ * Crowdpooling opens at a project (type campaign_opened): to its followers,
+ * never its stewards or the admin who opened it. `openLine` is the reading's
+ * open line ("12 needs still open. 5 roles, 4 things, 3 shifts.") and
+ * `closes` its "Closes {date}", each left out when there is none. One per
+ * campaign and person, so a re-approval never repeats it.
+ */
+export function buildCampaignOpened(args: {
+  campaign: NotifyCampaign;
+  followerIds: number[];
+  stewardIds: number[];
+  openLine?: string | null;
+  closes?: string | null;
+  actorId?: number | null;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const project = projectNameOf(campaign);
+  const open = plain(args.openLine);
+  const closes = plain(args.closes);
+  const body = `${project} is asking for help.${open ? ` ${open}` : ""}${closes ? ` ${closes}.` : ""}`;
+  return recipientsOf(args.followerIds, [args.actorId, ...args.stewardIds]).map((uid) => ({
+    userId: uid,
+    type: "campaign_opened" as const,
+    title: `Crowdpooling is open at ${project}`,
+    body,
+    link: projectLink(campaign, "needs"),
+    actorId: args.actorId ?? null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:opened:${campaign.id}:u${uid}`,
+  }));
+}
+
+/**
+ * Two weeks before the close (type campaign_final_stretch): up to three open
+ * needs by name and the close date. Nothing when no need is open. The job
+ * chooses the recipients (followers, minus stewards and anyone who offered).
+ */
+export function buildFinalStretch(args: {
+  campaign: NotifyCampaign;
+  recipientIds: number[];
+  needLines: string[];
+  closesOn: string;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const lines = args.needLines.map((l) => plain(l)).filter(Boolean).slice(0, 3);
+  if (lines.length === 0) return [];
+  const project = projectNameOf(campaign);
+  const body = `${lines.join("; ")}. Crowdpooling at ${project} closes on ${plain(args.closesOn)}.`;
+  return recipientsOf(args.recipientIds).map((uid) => ({
+    userId: uid,
+    type: "campaign_final_stretch" as const,
+    title: `These needs are still open at ${project}`,
+    body,
+    link: projectLink(campaign, "needs"),
+    actorId: null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:stretch:${campaign.id}:u${uid}`,
+  }));
+}
+
+/**
+ * A campaign closed at its close date without completing (type
+ * campaign_closed). Three kinds of reader, each once, in this order so a
+ * steward who also offered hears as a steward:
+ *   - stewards: how many offers the close released, and what stays with them;
+ *   - account contributors: their own lines (closeLinesFor in
+ *     shared/campaignClose.ts), then the other-needs line;
+ *   - account followers: a short note that they still follow the project.
+ */
+export function buildCampaignClosed(args: {
+  campaign: NotifyCampaign;
+  closedOn: string;
+  stewardIds: number[];
+  releasedCount: number;
+  contributors: Array<{ userId: number | null | undefined; lines: string[] }>;
+  followerIds: number[];
+  otherNeedsLine: string;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const camp = campaignTitleOf(campaign);
+  const project = projectNameOf(campaign);
+  const closedOn = plain(args.closedOn);
+  const title = `${camp} closed without completing`;
+  const row = (uid: number, body: string, anchor?: string): NotificationInput => ({
+    userId: uid,
+    type: "campaign_closed",
+    title,
+    body,
+    link: projectLink(campaign, anchor),
+    actorId: null,
+    campaignId: campaign.id,
+    dedupeKey: `cp:close:${campaign.id}:u${uid}`,
+  });
+
+  const n = Math.max(0, Math.floor(Number(args.releasedCount) || 0));
+  const released = n === 0
+    ? ""
+    : n === 1
+      ? " 1 offer that hadn't started was released with a thank-you."
+      : ` ${n} offers that hadn't started were released with a thank-you.`;
+  const stewardBody = `Crowdpooling closed on ${closedOn}.${released} Offers already underway stay with you to mark delivered or release. Help already given stays recorded in the project's token.`;
+
+  const stewards = recipientsOf(args.stewardIds);
+  const out: NotificationInput[] = stewards.map((uid) => row(uid, stewardBody, "steward-tools"));
+
+  const seen = new Set<number>(stewards);
+  const other = plain(args.otherNeedsLine);
+  for (const c of args.contributors) {
+    const uid = recipientsOf([c.userId], Array.from(seen))[0];
+    if (!uid) continue;
+    seen.add(uid);
+    const lines = c.lines.map((l) => plain(l)).filter(Boolean);
+    const lead = lines.length > 0 ? lines.join(" ") : `Crowdpooling at ${project} closed on ${closedOn} without completing.`;
+    out.push(row(uid, excerpt(other ? `${lead} ${other}` : lead, 500), "your-contributions"));
+  }
+
+  const followerBody = `Crowdpooling at ${project} closed on ${closedOn} without completing. You still follow ${project}, so you'll hear when it asks again.`;
+  for (const uid of recipientsOf(args.followerIds, Array.from(seen))) out.push(row(uid, followerBody));
+  return out;
+}
+
+/** '"a"', '"a" and "b"', '"a", "b" and 2 more'. */
+function quotedTitles(titles: string[]): string {
+  const q = titles.map((t) => `"${plain(t) || "your help"}"`);
+  if (q.length <= 1) return q[0] ?? `"your help"`;
+  if (q.length === 2) return `${q[0]} and ${q[1]}`;
+  return `${q[0]}, ${q[1]} and ${q.length - 2} more`;
+}
+
+/**
+ * A campaign completed at its close date while someone's offer was still
+ * waiting (type campaign_closed): their offer closes with thanks, then the
+ * other-needs line. One notice per person, however many offers waited.
+ */
+export function buildOfferClosedAtCompletion(args: {
+  campaign: NotifyCampaign;
+  recipients: Array<{ userId: number | null | undefined; titles: string[] }>;
+  otherNeedsLine: string;
+}): NotificationInput[] {
+  const { campaign } = args;
+  const other = plain(args.otherNeedsLine);
+  const out: NotificationInput[] = [];
+  const seen = new Set<number>();
+  for (const r of args.recipients) {
+    const uid = recipientsOf([r.userId], Array.from(seen))[0];
+    if (!uid || r.titles.length === 0) continue;
+    seen.add(uid);
+    const lead = r.titles.length === 1
+      ? `It completed before the stewards answered your offer of ${quotedTitles(r.titles)}, so your offer is closed with our thanks.`
+      : `It completed before the stewards answered your offers of ${quotedTitles(r.titles)}, so they're closed with our thanks.`;
+    out.push({
+      userId: uid,
+      type: "campaign_closed",
+      title: `${campaignTitleOf(campaign)} is complete`,
+      body: excerpt(other ? `${lead} ${other}` : lead, 500),
+      link: projectLink(campaign, "your-contributions"),
+      actorId: null,
+      campaignId: campaign.id,
+      dedupeKey: `cp:close:${campaign.id}:u${uid}`,
+    });
+  }
+  return out;
+}
+
+/**
+ * Someone who offered without an account sent the stewards a note from their
+ * offer status link (type contributor_reply; build spec 2026-09-27, section
+ * 10.2). Every steward, keyed per note and person. `Someone` when the offer
+ * is anonymous. The note is stored sanitized; the body is its first 300
+ * characters as plain text.
+ */
+export function buildContributorReply(args: {
+  campaign: NotifyCampaign;
+  contribution: NudgeContribution;
+  messageId: number;
+  message: string;
+  stewardIds: number[];
+}): NotificationInput[] {
+  const { campaign, contribution } = args;
+  const who = isOn(contribution.isAnonymous) ? "Someone" : plain(contribution.contributorName) || "Someone";
+  const body = excerpt(plain(args.message), 300);
+  if (!body) return [];
+  return recipientsOf(args.stewardIds, [contribution.userId]).map((uid) => ({
+    userId: uid,
+    type: "contributor_reply" as const,
+    title: `${who} sent a note about their offer`,
+    body,
+    link: projectLink(campaign, "review"),
+    actorId: null,
+    campaignId: campaign.id,
+    contributionId: contribution.id,
+    dedupeKey: `cp:reply:${args.messageId}:u${uid}`,
+  }));
 }
 
 // ─── Handlers (DB, never throw) ─────────────────────────────────────────────
@@ -619,10 +914,26 @@ export async function notifyProposalReceived(
 }
 
 export async function notifyProposalAccepted(
-  args: { campaign: NotifyCampaign; contribution: NotifyContribution; item?: NotifyItem | null; note?: string | null; actorId?: number | null },
+  args: {
+    campaign: NotifyCampaign;
+    contribution: NotifyContribution;
+    item?: NotifyItem | null;
+    note?: string | null;
+    hasArrivalNote?: boolean;
+    actorId?: number | null;
+  },
   deps: NotifyDeps = {},
 ): Promise<number> {
   return run("proposal accepted", async () => deliver(buildProposalAccepted(args), deps));
+}
+
+/** A note from an offer status link reaches every steward. Never throws. */
+export async function notifyContributorReply(
+  args: { campaign: NotifyCampaign; contribution: NudgeContribution; messageId: number; message: string },
+  deps: NotifyDeps = {},
+): Promise<number> {
+  return run("contributor reply", async () =>
+    deliver(buildContributorReply({ ...args, stewardIds: await safeStewards(args.campaign) }), deps));
 }
 
 export async function notifyProposalDeclined(
@@ -647,13 +958,14 @@ export async function notifyRoleFilled(
 
 /**
  * Whether a reopened role also invites back people whose offer a steward
- * declined. Off: a steward may have turned someone down for a reason (fit,
- * safety, a past problem) and has no way to stop the invitation, so only
- * people whose offer is still waiting hear. Turning this on sends the "you're
- * welcome to offer again" copy in buildRoleReopened to them too; the steward
- * dialogs (stewardActionDescription, NeedsGlance) would need to say so.
+ * declined. On since Rye's ruling of 2026-09-27: people a steward declined
+ * hear too, and the steward's dialog says so before they act
+ * (REOPEN_NOTICE_* in shared/stewardQueue.ts, read by
+ * stewardActionDescription and NeedsGlance). They get the "you're welcome to
+ * offer again" copy in buildRoleReopened; someone with a waiting offer as
+ * well hears the waiting copy only.
  */
-export const ROLE_REOPENED_REACHES_DECLINED = false;
+export const ROLE_REOPENED_REACHES_DECLINED = true;
 
 /**
  * A filled role opened up again. The route computes openHours inside the
@@ -787,6 +1099,32 @@ export async function notifyCampaignCompleted(
       contributorUserIds({ campaignId: args.campaign.id, statuses: ["accepted", "fulfilled", "thanked"] }),
     ]);
     return deliver(buildCampaignCompleted({ ...args, stewardIds, contributorIds }), deps);
+  });
+}
+
+/** Every steward of a campaign, for the daily job's notices. Never throws. */
+export async function stewardIdsOf(campaign: NotifyCampaign): Promise<number[]> {
+  return safeStewards(campaign);
+}
+
+/**
+ * Crowdpooling opened at a project: its followers hear (campaign follows and
+ * project follows, server/db.ts getCampaignFollowerUserIds), never its
+ * stewards or the actor. The route passes the reading's open line and close
+ * date, and calls this only for a real campaign.
+ */
+export async function notifyCampaignOpened(
+  args: { campaign: NotifyCampaign; openLine?: string | null; closes?: string | null; actorId?: number | null },
+  deps: NotifyDeps = {},
+): Promise<number> {
+  return run("campaign opened", async () => {
+    if (args.campaign.status && UNPUBLISHED_STATUSES.includes(args.campaign.status)) return 0;
+    const { getCampaignFollowerUserIds } = await import("../db");
+    const [followerIds, stewardIds] = await Promise.all([
+      getCampaignFollowerUserIds(args.campaign.id),
+      safeStewards(args.campaign),
+    ]);
+    return deliver(buildCampaignOpened({ ...args, followerIds, stewardIds }), deps);
   });
 }
 

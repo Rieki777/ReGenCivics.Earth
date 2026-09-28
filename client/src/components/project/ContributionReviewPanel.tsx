@@ -3,6 +3,9 @@
  * it answers, each group with tabs for Waiting, Accepted, Delivered, Thanked
  * and Closed. Stewards only; the server refuses anyone else
  * (campaigns.getContributionsForOwner and every action behind the dialog).
+ *
+ * Each card also shows the notes its contributor sent from their offer status
+ * link (campaigns.getOfferMessages, build spec 2026-09-27, section 10.2).
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -47,6 +50,8 @@ export function ContributionReviewPanel({
     { campaignId },
     { retry: false },
   );
+  // Notes people sent from their offer status links, latest 5 per offer.
+  const { data: offerMessages } = trpc.campaigns.getOfferMessages.useQuery({ campaignId }, { retry: false });
 
   const groups = useMemo(
     () => groupOffersByNeed(contributions ?? [], items),
@@ -149,6 +154,7 @@ export function ContributionReviewPanel({
                               key={c.id}
                               contribution={c}
                               need={g.item}
+                              notes={offerMessages?.[c.id]}
                               formatCurrency={formatCurrency}
                               onAction={onAction}
                               onFormalize={(fc) => { setFormalizingId(fc.id); formalizeMutation.mutate({ contributionId: fc.id }); }}

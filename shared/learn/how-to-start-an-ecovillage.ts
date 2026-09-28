@@ -11,7 +11,7 @@ export const howToStartAnEcovillage: LearnArticle = {
   author: "Rye (Rieki Cordon)",
   authorTitle: "Founder, ReGen Civics",
   published: "2026-08-01",
-  updated: "2026-08-01",
+  updated: "2026-09-27",
   sections: [
     {
       heading: "What makes it an ecovillage",
@@ -74,10 +74,10 @@ export const howToStartAnEcovillage: LearnArticle = {
     {
       heading: "Water, access, zoning: check these before you buy",
       bullets: [
-        "Water rights and actual yield. A well log and a flow test, not a seller's estimate.",
-        "Legal access. A recorded easement, not a neighbor's goodwill.",
+        "Water rights and actual yield, from a well log and a flow test.",
+        "Legal access, through a recorded easement.",
         "Dwellings permitted per parcel, and whether a second dwelling is even possible.",
-        "Septic feasibility, which a perc test settles and optimism does not.",
+        "Septic feasibility, which a perc test settles.",
         "Floodplain, wildfire, and insurance availability. Some regions are becoming uninsurable.",
         "Whether agricultural, conservation, or forestry classification changes the tax bill.",
       ],
@@ -95,21 +95,15 @@ export const howToStartAnEcovillage: LearnArticle = {
     {
       heading: "The founding group is the whole project",
       paragraphs: [
-        "If you take one thing from this page: recruit from work, not from interest. Run a season on the land with a real deadline, invite more people than you need, and watch. The people who show up in the rain on week nine are your founders. This costs three months and saves the years that a mismatched founding circle takes to unwind.",
+        "If you take one thing from this page: recruit from shared work. Run a season on the land with a real deadline, invite more people than you need, and watch. The people who show up in the rain on week nine are your founders. This costs three months and saves the years that a mismatched founding circle takes to unwind.",
         "[Community governance models](/learn/community-governance-models) covers how that group makes decisions once it exists, which is the agreement most likely to be borrowed from someone else's bylaws and least likely to survive contact with a real conflict.",
       ],
     },
     {
       heading: "What we do",
       paragraphs: [
-        "ReGen Civics runs a 13-week incubator for regenerative land projects, then invests in the ones that graduate with strong fundamentals. Projects keep ownership throughout. Season 2 began in September 2026, and anyone can follow it live.",
+        "ReGen Civics runs a 13-week incubator for regenerative land projects. Projects that graduate launch their crowdpooling campaigns together at the end of the season. Projects keep ownership throughout. Season 2 began in September 2026, and anyone can follow it live.",
       ],
-      figure: {
-        value: "42 land projects, 8 bioregional hubs",
-        label: "in the ReGen Civics network as of mid-2026",
-        source: "ReGen Civics network data",
-        sourceUrl: "/land",
-      },
     },
   ],
   faqs: [
@@ -136,7 +130,7 @@ export const howToStartAnEcovillage: LearnArticle = {
     {
       question: "Can you start an ecovillage without owning land?",
       answer:
-        "Yes, and many do. Long-term leases, ground leases from a community land trust, and partnerships with an existing landowner all work. The agreements matter more in these cases, not less, because the group is building on ground it does not hold title to.",
+        "Yes, and many do. Long-term leases, ground leases from a community land trust, and partnerships with an existing landowner all work. The agreements matter even more in these cases, because the group is building on ground it does not hold title to.",
     },
     {
       question: "Where do you find people to start an ecovillage with?",
@@ -149,7 +143,7 @@ export const howToStartAnEcovillage: LearnArticle = {
       label: "Apply to the incubator",
       href: "/apply",
       blurb:
-        "13 weeks of governance, economic design, and investor preparation with a cohort of other land projects. Season 2 starts September 2026.",
+        "13 weeks of governance, economic design, and crowdpooling preparation with a cohort of other land projects. Season 2 began in September 2026.",
     },
     {
       label: "See the land projects",

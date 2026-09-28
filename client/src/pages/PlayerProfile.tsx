@@ -102,7 +102,8 @@ const badgeDefinitions: Record<string, { name: string; icon: string; description
   'season1_participant': { name: 'Season 1 Pioneer', icon: '🌱', description: 'Participated in ReGen Civics Season 1', color: 'bg-emerald-500' },
   'season2_participant': { name: 'Season 2 Player', icon: '🎮', description: 'Active participant in Season 2', color: 'bg-blue-500' },
   'land_steward': { name: 'Land Steward', icon: '🌍', description: 'Connected to a land project', color: 'bg-amber-500' },
-  'investor': { name: 'Impact Investor', icon: '💰', description: 'Committed investment to the alliance', color: 'bg-purple-500' },
+  // Key stays 'investor' (stored badge id); the title changed 2026-09-27.
+  'investor': { name: 'Cooperative Supporter', icon: '🤝', description: 'Supports the design of the ReGen Network Cooperative', color: 'bg-purple-500' },
   'builder': { name: 'Builder', icon: '🔨', description: 'Contributed to building the infrastructure', color: 'bg-orange-500' },
   'connector': { name: 'Connector', icon: '🔗', description: 'Brought new members to the community', color: 'bg-pink-500' },
   'verified': { name: 'Verified Player', icon: '✓', description: 'Identity verified on-chain', color: 'bg-green-500' },
@@ -244,8 +245,8 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your role in this renaissance?</label>
-            <p className="text-xs text-[#1a472a]/75 mb-2">e.g. Land steward, investor, builder, artist…</p>
-            <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, investor, builder, artist…" className="border-[#1a472a]/20 min-h-[70px]" />
+            <p className="text-xs text-[#1a472a]/75 mb-2">e.g. Land steward, gardener, builder, artist…</p>
+            <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, gardener, builder, artist…" className="border-[#1a472a]/20 min-h-[70px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your soul's mission?</label>
@@ -265,7 +266,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
-            <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals rather than harms..." className="border-[#1a472a]/20 min-h-[60px]" />
+            <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals..." className="border-[#1a472a]/20 min-h-[60px]" />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
@@ -804,7 +805,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
         <textarea
           value={dreaming}
           onChange={(e) => setDreaming(e.target.value)}
-          placeholder="A food forest in the highlands, a new form of school, a way of living that heals rather than harms..."
+          placeholder="A food forest in the highlands, a new form of school, a way of living that heals..."
           rows={2}
           className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
         />
@@ -1747,7 +1748,7 @@ function ReferralStatsCard() {
       });
       trackShare.mutate({ contentType: "referral_link", platform: "native_share" });
     } catch {
-      // User cancelled or share unavailable — silent.
+      // User cancelled or share unavailable: silent.
     }
   };
 
@@ -1790,7 +1791,7 @@ function ReferralStatsCard() {
         <p className="text-white/70 text-xs italic">Sign in to get a personal invite link.</p>
       )}
 
-      {/* Stats — always shown, even at 0, so the player knows what's tracked */}
+      {/* Stats: always shown, even at 0, so the player knows what's tracked */}
       <div className="grid grid-cols-3 gap-3 text-center">
         <div>
           <p className="text-lg font-bold text-purple-300">{stats?.totalReferrals ?? 0}</p>

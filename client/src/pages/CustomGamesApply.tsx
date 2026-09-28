@@ -1,5 +1,5 @@
 /**
- * Custom Games application (Workstream C of CUSTOM_GAMES_MASTER_PLAN.md).
+ * Custom Games application (Workstream C of docs/planning/CUSTOM_GAMES_MASTER_PLAN.md).
  * Route: /custom-games/apply
  *
  * Chat-first intake: Sylva, ReGen's Game Guide, designs the applicant's game
@@ -191,7 +191,7 @@ const SECTIONS: Array<{ title: string; intro?: string; fields: FieldDef[] }> = [
       },
       { key: "applicantName", label: "Your name", kind: "text", required: true, placeholder: "Full name" },
       { key: "applicantEmail", label: "Email", kind: "text", required: true, placeholder: "you@example.com" },
-      { key: "investorGoals", label: "If you're investing: what does success for your capital look like?", kind: "longtext", placeholder: "What your capital needs to produce, and what reporting or visibility you want" },
+      { key: "investorGoals", label: "If you're funding the project: what do you need to see?", kind: "longtext", placeholder: "The reporting and visibility you want, and what success looks like to you" },
     ],
   },
   {
@@ -309,7 +309,7 @@ const SECTIONS: Array<{ title: string; intro?: string; fields: FieldDef[] }> = [
         hint: "Either way you own the game completely: code, data, keys.",
       },
       { key: "timelineHopes", label: "When are you hoping to be live?", kind: "text" },
-      { key: "budgetConfirmed", label: "I understand a custom game is a $20,000 investment, paid in milestones: half at kickoff, a quarter at first playable draft, a quarter at handoff.", kind: "checkbox", required: true },
+      { key: "budgetConfirmed", label: "I understand a custom game is a $20,000 build, paid in milestones: half at kickoff, a quarter at first playable draft, a quarter at handoff.", kind: "checkbox", required: true },
       { key: "referralSource", label: "How did you find us?", kind: "text" },
     ],
   },
@@ -348,7 +348,7 @@ const SYLVA_FIELD_KEYS = SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
 /** Trusted grounding so Sylva can answer product questions with real facts. */
 const SYLVA_CONTEXT = [
   "This is the Custom Games application on regencivics.earth. A land project gets its own coordination game: a web app on their domain, in their brand, holding their data, guiding their personas through journeys.",
-  "Facts you can share if asked: the investment is $20,000, paid in milestones (50% kickoff, 25% first playable draft, 25% handoff). They own the finished game completely: code, data, keys, no subscription required.",
+  "Facts you can share if asked: the build costs $20,000, paid in milestones (50% kickoff, 25% first playable draft, 25% handoff). They own the finished game completely: code, data, keys, no subscription required.",
   "Delivery takes 3 to 6 months depending on their team's availability; a firm estimate comes at contract. Optional full service: ReGen Civics runs hosting and AI credits for one fixed monthly price scoped at contract.",
   "After they submit: we review, then an intro call, then they receive their Blueprint doc, the rendered design of their game, and from there contract and kickoff.",
   "Amora (amora.regencivics.earth) is the first custom game and the living example.",
@@ -767,8 +767,8 @@ export default function CustomGamesApply() {
             <p className="text-[#1a472a]/70 max-w-2xl mx-auto mt-3 text-sm leading-relaxed">
               Leave anything blank that you have not decided yet. Some of these
               questions take a community months to answer, and a few of the later
-              sections are genuinely technical. Blanks are useful information, not
-              gaps, and we walk you through whatever is unclear on the intro call.
+              sections are technical. Blanks are useful information, and we walk
+              you through whatever is unclear on the intro call.
             </p>
           </div>
 

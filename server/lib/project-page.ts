@@ -19,14 +19,14 @@ import { desc, eq, inArray } from "drizzle-orm";
 import * as db from "../db";
 import { applications, campaigns as campaignsTable, type Campaign } from "../../drizzle/schema";
 import type { TrpcContext } from "../_core/context";
-import { parseProjectKey, projectPathForApplication, projectPathForCampaign, projectPathForCampaignFocus } from "../../shared/projectKey";
+import { parseProjectKey, projectPathForApplication, projectPathForCampaign, projectPathForCampaignFocus, projectRefFor } from "../../shared/projectKey";
 import { canStewardApplication, canStewardCampaign, isPublicCampaign } from "./project-steward";
 import { suggestAlternatives } from "./campaign-suggest";
 import { buildCampaignView, progressSummariesFor } from "../routes/campaigns";
 import { buildStewardQueue } from "../../shared/stewardQueue";
 
 const REVIEW_STATUSES = ["draft", "pending_review", "rejected"];
-const PAST_STATUSES = ["completed", "funded", "cancelled"];
+const PAST_STATUSES = ["completed", "funded", "cancelled", "closed"];
 
 type SessionUser = TrpcContext["user"] | undefined;
 
@@ -184,6 +184,14 @@ export async function resolveProjectPage({ key, user, focusId }: { key: string; 
     ? projectPathForApplication(app.id, app.projectName)
     : projectPathForCampaign(soleCampaign!);
 
+  // Whether the signed-in viewer follows this project (build spec
+  // 2026-09-27, section 12.2): a project follow, or a campaign follow on any
+  // campaign of the project they may see. Guests and crawlers: false.
+  const projectRef = app ? `a${app.id}` : projectRefFor(soleCampaign!);
+  const followsProject = user
+    ? await db.userFollowsProject(user.id, projectRef, visible.map((c) => c.id))
+    : false;
+
   return {
     canonicalPath,
     project: {
@@ -198,6 +206,7 @@ export async function resolveProjectPage({ key, user, focusId }: { key: string; 
     isSteward,
     stewardWaiting,
     suggestions,
+    viewer: { followsProject },
   };
 }
 

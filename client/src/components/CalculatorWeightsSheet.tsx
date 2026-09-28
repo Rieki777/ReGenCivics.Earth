@@ -177,7 +177,7 @@ const defaultCapitalWeights: CapitalType[] = [
       result: '$2,500 contribution value'
     },
     weights: [
-      { input: 'Direct financial contribution', multiplier: '1x', unit: 'per $', rationale: 'Dollar-for-dollar value of direct investment', key: 'financial_direct' },
+      { input: 'Direct financial contribution', multiplier: '1x', unit: 'per $', rationale: 'Dollar-for-dollar value of a direct financial contribution', key: 'financial_direct' },
       { input: 'Funds raised or facilitated', multiplier: '0.05x', unit: 'per $', rationale: 'Industry standard finder\'s fee for connecting projects to funding', key: 'financial_raised' },
       { input: 'Revenue generated', multiplier: '0.10x', unit: 'per $', rationale: 'Standard commission rate for sales and revenue generation', key: 'financial_revenue' },
       { input: 'Costs saved', multiplier: '0.25x', unit: 'per $', rationale: 'Portion of savings credited to the contributor', key: 'financial_saved' },

@@ -3,7 +3,7 @@
 > Last updated: March 2026. Reference this before touching anything related to events, schedule, recordings, or reminders.
 > Email copy section added, proofread and update text directly in this file, then ask Claude to push the changes.
 
-> OUTDATED SECTION: the recording flow shown below (Riverside fires a webhook) is superseded. The recording pipeline is now YouTube-poll-primary and is defined in `COORDINATION_ENGINE_WORKFLOW.md`. The Riverside webhook is kept only as a secondary ingest path. The event, reminder, and schedule parts of this doc are still accurate.
+> OUTDATED SECTION: the recording flow shown below (Riverside fires a webhook) is superseded. The recording pipeline is now YouTube-poll-primary and is defined in `docs/COORDINATION_ENGINE_WORKFLOW.md`. The Riverside webhook is kept only as a secondary ingest path, and it is off unless `RIVERSIDE_WEBHOOK_SECRET` is set (2026-09-28); every recording so far came from the YouTube pipeline, and no Zapier or Make scenario feeds the site. Skip "Register the Riverside webhook" below unless a non-YouTube source ever needs it. The event, reminder, and schedule parts of this doc are still accurate.
 
 ---
 

@@ -7,7 +7,9 @@ season, and how the people who bring it stay connected to what they built.
 Campaigns usually ask for 10 to 30 percent of the whole in money. Nothing blocks another share, and 0 is allowed.
 
 This is the human half. The machine half is `shared/crowdpoolModel.ts`, and code
-reads that one so the two cannot drift apart.
+reads that one so the two cannot drift apart. That file still carries fund-channel
+constants from before 2026-09-27; until it is brought in line, this page is the current
+one.
 
 ---
 
@@ -24,109 +26,28 @@ Two kinds of contribution, and they behave differently.
 tractor, runs a workshop, commits eight Saturdays. It goes where they put it and it
 stays there.
 
-**Money at or above the fund minimum goes to ReGen Civics.** Not to a project. This is
-the part people find surprising, so it is worth being plain: you cannot send money to
-a project through this platform. You contribute to ReGen Civics, and you tell us where
-to route it. The minimum is **CHF 250,000** at present, and it is the price of a seat.
+**Money goes through a route the project holds.** A crowdfunding platform we work with
+and do not run: Ma Earth for gifts, Steward for loans. It has its own terms, and what
+you receive there is theirs to say. The money never passes through ReGen Civics. The
+campaign page still counts it, so a project sees one total.
 
-**Money below the minimum goes to a partner platform.** A crowdfunding platform we work
-with and do not run. It has its own terms, and what you receive there is theirs to
-say. It never enters the fund, and it earns no fund tokens and no seat. The campaign
-page still counts it, so a project sees one total.
+The fund channel is being redesigned with counsel as a member-owned cooperative; its terms are not set and nothing here accepts money.
 
 ---
 
-## Below the minimum
+## Money through a project's own route
 
-Most people who back a project will do it this way, and the page should make it
-feel like the front door rather than a side entrance. A person who chooses an amount
-under the minimum is shown, plainly, that the fund starts at CHF 250,000, and is sent
-to the partner platform's page for that project with one tap. Their contribution
-shows up on the campaign page under the platform's name once the platform reports it.
+A project steward adds the project's Ma Earth or Steward link, and a ReGen Civics admin
+checks it before it shows on the project page. Each route card names who holds the
+money. This site has no field for giving an amount, and it takes no money itself.
 
-Where that money lands is not settled. The recommendation is that it goes to the
-project directly, on the platform's terms, and not into the fund: small money that
-joins the pool through an intermediary would put the people the minimum exists to
-protect right back inside the fund.
+A person who wants to give money is sent to that route's page for the project with one
+tap. Their contribution shows up on the campaign page under the platform's name once
+the platform reports it, in the money line of the campaign. Money lent through a route
+is marked as lent.
 
-**You still have a voice.** Everyone who contributed below the minimum in a season is
-in the **crowd circle**, where it is one person, one vote. The circle elects delegates
-to the fund's assembly, one seat for every CHF 250,000 the crowd has contributed
-together, and a delegate's vote counts exactly as much as anyone else's. A thousand
-people who pool CHF 250,000 hold the same seat as one person who contributes it. That
-is the point of the design: everyone has a voice relative to what they bring, and no
-single person or small group holds a disproportionate one.
-
----
-
-## What happens to money, with real numbers
-
-Someone contributes **250,000 CHF**, the minimum.
-
-**They receive 250,000 $RCivics and one seat.** One token for one franc, for their
-whole contribution. That is their standing in what the community builds. The seat is
-their voice in how it is run, and it is the same one vote whether they put in the
-minimum or ten times it.
-
-**They get to route 225,000 of it.** Ninety per cent is the current share and it is a
-setting, adjustable between fifty and ninety per cent from one season to the next.
-Routing means naming which projects they want their money to reach.
-
-Say they route **125,000 to Project A** and **100,000 to Project B**.
-
-**The remaining 25,000 goes to the community treasury**, which pays for the roles and
-the running of the platform that makes the season happen at all.
-
-**Then the projects answer.** A project that receives routed money sends back an equal
-amount of its own tokens to ReGen Civics. Project A sends back 125,000 worth. Project
-B sends back 100,000 worth.
-
-So after the season, ReGen Civics holds 125,000 of Project A, 100,000 of Project B,
-and 25,000 in the treasury. And if this person were the only member in the whole
-fund, their 250,000 $RCivics would represent all of it: every one of those holdings,
-in those proportions.
-
-**That is the point of the whole design.** You back the projects you believe in, and
-you end up holding a piece of everything the community chose together. Your judgement
-directs your money. The community's judgement shapes what you own.
-
----
-
-## Routing is a signal, not a claim
-
-The thing you use to route is a **signal to ReGen Civics**, and it is deliberately
-thin:
-
-- It **cannot be sold or transferred**. It is a message about where your share should
-  go, not something to hold or trade.
-- It is **movable** right up until a campaign closes. Changed your mind, or a project
-  you backed is nearly there and another is far off? Move it.
-- It carries **no rights of its own**. Your standing comes from your $RCivics.
-
-The reason it is movable matters. Late in a season the community can see which
-projects are close and which are not, and moving routing around is how a community
-gets more projects across the line than it otherwise would.
-
----
-
-## What a project gives back
-
-To take part, a project returns a stake to ReGen Civics of **at least ten per cent**,
-and it is **non-dilutive**: the project's own assets do not shrink. One way to do it
-is for the project to send ReGen Civics an amount equal to ten per cent of every
-distribution it makes, so the stake stays at ten per cent instead of being watered
-down over time.
-
-The swap is **value for value**. If a project's ten per cent is worth 100,000, it
-receives 100,000 worth of ReGen Civics. Nothing is taken. A slice of one project is
-converted into a holding across all of them.
-
-**And it happens only after the community has said the project is worth funding.**
-That order is the whole point. The community decides first.
-
-**The stake is not one thing.** Depending on the project it is a recorded agreement, a
-position on-chain through Hypha, or real equity in a real legal entity. It varies
-because the projects vary, and the software never assumes it is a token.
+Steward loan routes stay hidden until counsel clears them, and every money rail on this
+site stays off until then too.
 
 ---
 
@@ -137,20 +58,14 @@ threshold is met, and the close date has arrived. The close date is fixed when t
 campaign is published and does not move afterward. Nine months is the outer limit for
 any campaign's window.
 
-If a campaign never closes, everyone who routed money to it chooses what happens to
-that share:
+If a campaign does not complete (ruled 2026-09-27):
 
-1. **Route it somewhere else**, into a campaign still running.
-2. **Take it back.** Refunds are always whole. No fee is ever taken from money coming
-   back.
-3. **Let the ReGen Civics team choose** the project that most needs it.
+- hours already worked keep the tokens they earned;
+- lent things go home on the agreed date, or sooner if the lender asks;
+- accepted offers that have not started yet are released, with a thank-you and a
+  pointer to the other open needs.
 
-There is a **seven day window** to answer. If nobody answers, the third option is what
-happens, and because that is a real consequence of silence it is agreed to separately
-at the start rather than buried in a page of terms.
-
-If **none** of the projects someone routed to close, they are offered the same choice
-over their whole contribution: take it back, or let ReGen Civics direct it.
+Money given through a project's own route follows that route's own terms.
 
 ---
 
@@ -161,81 +76,57 @@ tax law "earmarking" is the precise term for what destroys a gift's standing whe
 money is directed onward to a foreign organisation, and most of these projects are
 outside the US. The word carries a meaning we do not want.
 
-**We do not say donation, donor, receipt, or tax deductible.** None of them are true
-here. A contribution to a crowdpool is not a gift: you receive $RCivics for it. The
-platform never produces anything receipt-shaped.
+**We do not say donation, donor, receipt, or tax deductible about anything on this
+site.** ReGen Civics takes no money, so it never issues receipts or makes tax claims, and
+the platform never produces anything receipt-shaped. A route such as Ma Earth sets its
+own terms, including what it calls a gift and what it gives back.
 
 `shared/crowdpoolModel.ts` carries the full list and a repo guard enforces it.
 
 ---
 
-## The two things you hold, and why they are different
+## What you hold
 
-This is the part worth reading twice, because the two are easy to confuse and they
-behave nothing alike.
+**Tokens here are contribution accounting.** They record what you pooled into a project.
+Each project designs what its token does beyond that, and every page says plainly that
+these tokens track the pooling of contributions and make no claim about their value or
+purpose. In-kind contributions earn the project's own token, and never RGVoice or
+$ReGen.
 
-**A routing signal** says where you want your share to go. It cannot be sold or
-transferred, it moves freely between projects until a campaign closes, and it carries
-no rights. It is a message to ReGen Civics. It lives in its own ledger and it is not a
-token in the sense the rest of the platform uses that word.
+**One token per project.** Each of a project's campaigns reuses it, and the site
+records which campaign each amount came from. Village-os creates the tokens: the site
+records a contribution, the village issues the token, and the village may refuse an
+issue at its cap. A refusal comes back to the site, so nobody is told they received
+tokens they did not. For a project on village-os the token is, as the norm, its `equity`
+token, which lives on Hypha on Base and is claimed through the Hypha bridge.
 
-**$RCivics** is your standing in what the community built. One token per Swiss franc
-contributed. **The franc is the unit of account at launch**, until the market prices
-the token itself.
+**Tokens for work arrive as the work is delivered**, on the project's own schedule,
+typically weekly or monthly. How a project credits labor is its own entity's decision.
+ReGen Civics sets no rate of tokens for hours.
 
-$RCivics arrives in two stages, and the first is only a record.
+**No village account yet?** Your tokens are held in escrow against your identity here
+and released to you when you join. They are never minted to an account with no person
+behind it.
 
-**At contribution** you see your $RCivics in your profile immediately. It is a
-tracking balance: **not spendable and not tradable on the platform.** It exists so you
-can see where you stand from the first day. Because it is only a record, it can be
-removed cleanly if your money is refunded.
-
-**At close**, once the deals have completed, the projects hold their own tokens and a
-refund is no longer possible, you go to Hypha and claim **the real tokens on the Base
-blockchain**. That is the moment the holding becomes a holding.
-
-Nothing about that second step is new machinery. It is the same one-way claim bridge
-the platform already uses for its other tokens: the balance is held privately here,
-you claim, the chain confirms, and the confirmation comes back.
-
----
-
-## The treasury is held, not spent
-
-The ten per cent that is not routed sits in the community treasury as a **real asset
-you have a claim on**, not a fee that disappears. Paying roles and running costs draws
-it down over time, and **that drawdown is a governance decision**, made by the fund
-assembly described below.
-
-So in the worked example, the 25,000 in the treasury is genuinely part of what that
-member's $RCivics represents. It is the smallest of the three holdings and the
-only one the community spends from directly.
+**A project's token can live in both places**, village-os and Hypha on Base, and it
+moves between them through the village-os redemption flow.
 
 ---
 
 ## Who decides
 
-The fund is governed by an assembly where **every seat has exactly one vote**. Three
-kinds of seat exist:
+**Each project's own core team confirms contributions.** ReGen Civics facilitates and
+makes open-source tools; it decides nothing for a project.
 
-- **Every land project organisation.**
-- **Every member who has put in at least CHF 250,000.**
-- **Every steward on the operational council.**
-- **Every delegate of the crowd circle**, one for every CHF 250,000 the crowd
-  contributed together.
+**A seat at a project's table comes from contributing to it**, in any form of capital,
+counted by the project's core team, for as long as the commitment lasts. Seats follow
+use and are never sized by money. This is a default each project writes into its own
+agreements, because a project's governance rights belong to the project's own entity.
+Seats start together when the Build Season opens, and each project may set its own
+calendar.
 
-Nobody holds more than one seat, however much they bring.
-
-The assembly decides how the fund is run, and above all how money is disbursed. The
-operational council carries those decisions out and has real authority inside its
-roles.
-
-Land projects vote on the disbursement plan as a whole. A project never votes on a
-single award, so it never votes on its own.
-
-The fund is infrastructure for the whole network: it exists to coordinate and resource
-every project in it, which is why the people who bring the most and the people who
-bring a little are both in the room, in proportion, and neither can outweigh the other.
+**Every village names its closing policy before it launches.** The platform default is
+proportional to tokens held on closing day, and a village may write and agree its own.
 
 ---
 
@@ -244,12 +135,11 @@ bring a little are both in the room, in proportion, and neither can outweigh the
 The needs registry is real and working: nine kinds of capital, slot counts, claims,
 delivery and thanks. That is the in-kind half, and it is the larger half.
 
-**The money half is not built.** Nothing on this platform accepts money today, and the
-contribution paths are gated off in code rather than merely hidden. The ReGen Civics
-Fund is in formation and is not yet a legal entity, so it cannot receive or hold
-anyone's money.
+**The fund channel is not built.** Nothing on this platform accepts money today, and
+the contribution paths are gated off in code. No ReGen Civics entity can receive or hold
+anyone's money yet.
 
-Before any of it opens, counsel in Liechtenstein, the chosen home, has to rule on the
-shape. The project's own research is kept out of the repository on purpose, and its
-clearest finding is that what a thing is called does not change what it legally is. Everything here is built on the assumption
+Before any of it opens, counsel has to rule on the shape. The project's own research is
+kept out of the repository on purpose, and its clearest finding is that what a thing is
+called does not change what it legally is. Everything here is built on the assumption
 that the money half is regulated, because it almost certainly is.

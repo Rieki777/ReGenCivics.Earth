@@ -7,13 +7,14 @@ import { Link } from "wouter";
 import { pageSEO } from "@/components/SEO";
 import { FileText } from "lucide-react";
 import LegalPageLayout from "@/components/LegalPageLayout";
+import { COOP } from "@shared/fund";
 
 export default function TermsOfUse() {
   return (
     <LegalPageLayout
       icon={<FileText className="w-8 h-8 text-[#7dd87d]" />}
       title="Terms of Use"
-      lastUpdated="February 2026"
+      lastUpdated="September 2026"
       seo={pageSEO.termsOfUse}
     >
       <div className="space-y-6">
@@ -25,17 +26,17 @@ export default function TermsOfUse() {
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>2. Not an Offer</h2>
-            <p>Nothing on this Site constitutes an offer to sell or solicitation to buy securities. Offers are made only through formal Private Placement Memoranda to qualified investors in accordance with applicable securities laws.</p>
+            <p>{COOP.notAnOffer}</p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>3. Accredited Investors Only</h2>
-            <p>Investment information is intended only for accredited investors. By accessing investment-related content, you represent that you are an accredited investor or are evaluating whether to become one.</p>
+            <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>3. Tokens</h2>
+            <p>{COOP.tokensNote}</p>
           </section>
 
           <section>
-            <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>4. No Investment Advice</h2>
-            <p>ReGen Civics does not provide investment, legal, or tax advice through this Site. All information is for general informational purposes only. Consult qualified professionals before making investment decisions.</p>
+            <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>4. No Financial, Legal, or Tax Advice</h2>
+            <p>ReGen Civics does not provide financial, legal, or tax advice through this Site. All information is for general informational purposes only. Consult qualified professionals before making financial or legal decisions.</p>
           </section>
 
           <section>
@@ -71,6 +72,7 @@ export default function TermsOfUse() {
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>11. Disclaimers</h2>
             <p className="uppercase text-white/60 text-xs">THE SITE IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED. REGEN CIVICS DISCLAIMS ALL WARRANTIES INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
+            <p className="mt-2">Our full notices are on the <Link href="/disclaimers" className="text-[#7dd87d] underline hover:text-[#7dd87d]/80">Disclaimers</Link> page.</p>
           </section>
 
           <section>

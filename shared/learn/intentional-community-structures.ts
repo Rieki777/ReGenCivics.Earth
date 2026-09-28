@@ -11,7 +11,7 @@ export const intentionalCommunityStructures: LearnArticle = {
   author: "Rye (Rieki Cordon)",
   authorTitle: "Founder, ReGen Civics",
   published: "2026-08-01",
-  updated: "2026-08-01",
+  updated: "2026-09-27",
   sections: [
     {
       heading: "Structure decides funding, so pick it in that order",
@@ -80,7 +80,7 @@ export const intentionalCommunityStructures: LearnArticle = {
     {
       heading: "Funding options, and what each one asks of you",
       paragraphs: [
-        "Intentional communities are funded from a small set of sources. Most projects use three or four at once, staged over years. The question is never which single source will carry the project. It is which mix your structure permits and your group can actually service.",
+        "Intentional communities are funded from a small set of sources. Most projects use three or four at once, staged over years. The useful question is which mix your structure permits and your group can actually service.",
       ],
       table: {
         caption: "Funding options for intentional communities",
@@ -133,22 +133,16 @@ export const intentionalCommunityStructures: LearnArticle = {
             "Mortgage payments and payroll",
             "Specific needs with counts and deadlines, and someone who thanks every contributor",
           ],
-          [
-            "Investment through a fund",
-            "Projects with a plan, governance, and something to show",
-            "Projects still deciding who owns what",
-            "Governance in place, honest numbers, and a real path to returning value",
-          ],
         ],
         source:
-          "ReGen Civics incubator curriculum and the funding paths used across the 42 land projects in our network",
-        sourceUrl: "/fund",
+          "ReGen Civics incubator curriculum and the funding paths land projects in our network use",
+        sourceUrl: "/season2",
       },
     },
     {
       heading: "The part groups get wrong",
       paragraphs: [
-        "Almost every community that stalls on funding stalled earlier, on exit terms. A lender wants to know what happens when a member leaves. A member buying in wants to know what they get back. A fund wants to know the project survives a founder walking away. One document answers all three, and most groups have not written it.",
+        "Almost every community that stalls on funding stalled earlier, on exit terms. A lender wants to know what happens when a member leaves. A member buying in wants to know what they get back. A grantmaker wants to know the project survives a founder walking away. One document answers all three, and most groups have not written it.",
         "Write the exit terms in the same week you write the membership terms. Price, timeline, who has the right to buy the departing share, and what happens if nobody can. It is two pages and it opens more funding conversations than a pitch deck does.",
       ],
     },
@@ -189,7 +183,7 @@ export const intentionalCommunityStructures: LearnArticle = {
     {
       question: "How much does it cost to set up the legal structure?",
       answer:
-        "Formation and a reviewed operating agreement or bylaws typically run in the low thousands in the United States, more where a land trust or securities question is involved. Selling equity to members can trigger securities law, which is the one place to spend real money on advice rather than a template.",
+        "Formation and a reviewed operating agreement or bylaws typically run in the low thousands in the United States, more where a land trust or securities question is involved. Selling equity to members can trigger securities law, which is the one place to pay for real legal advice.",
     },
   ],
   nextSteps: [
@@ -200,10 +194,10 @@ export const intentionalCommunityStructures: LearnArticle = {
         "The 13-week program builds governance and economic design with your project specifically, so the structure and the funding plan match.",
     },
     {
-      label: "See how the fund invests",
+      label: "Read about the cooperative",
       href: "/fund",
       blurb:
-        "What we screen for, how projects keep ownership, and what happens after investment.",
+        "Where the member-owned cooperative we are designing with land projects, future members and counsel stands today.",
     },
   ],
   related: [

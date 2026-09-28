@@ -5,9 +5,17 @@
  * (server/lib/project-steward.ts), so a signed-in stranger who forced this
  * open would get FORBIDDEN on every button.
  *
- * Anchors: #steward-tools, #review, #claims, #money-routes, #needs,
- * #updates-composer, #followers, #campaign-status. The steward digest and the
- * old /campaign/:id/manage links land on these.
+ * "Needed to start" marks (campaigns.getNeedMarkers) feed the needs list,
+ * where stewards set them, and the "How it's going" line.
+ *
+ * Anchors: #steward-tools, #review, #claims, #arrival-note, #money-routes,
+ * #needs, #updates-composer, #followers, #campaign-status. The steward digest
+ * and the old /campaign/:id/manage links land on these.
+ *
+ * The arrival note (ArrivalNoteCard, build spec 2026-09-27, section 11.3)
+ * sits after the offers panel. Notes people sent from their offer status
+ * links (campaigns.getOfferMessages) show on each offer card and as a row in
+ * "Waiting on you", where their spine notice (contributor_reply) lands.
  *
  * "How it's going" reads the campaign's one progress reading (front.progress,
  * shared/campaignProgress.ts), the same figures visitors see, plus the soft
@@ -28,8 +36,9 @@ import { canTransition } from "@shared/campaignStatus";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { buildStewardQueue, type OfferTab } from "@shared/stewardQueue";
 import { makeCurrencyFormatter } from "@/lib/needDisplay";
-import { WaitingOnYou } from "./WaitingOnYou";
+import { WaitingOnYou, offerNotesSummary } from "./WaitingOnYou";
 import { ContributionReviewPanel } from "./ContributionReviewPanel";
+import { ArrivalNoteCard } from "./ArrivalNoteCard";
 import { NeedsGlance } from "./NeedsGlance";
 import { CampaignUpdatesComposer } from "./CampaignUpdatesComposer";
 import { CampaignStewardStats } from "./CampaignStewardStats";
@@ -37,7 +46,8 @@ import { CancelCampaignDialog } from "./CancelCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
-import { MONEY_STEP } from "@shared/crowdpoolCopy";
+import { CLOSE, MONEY_STEP } from "@shared/crowdpoolCopy";
+import { progressLines } from "@shared/campaignProgress";
 import { takeCreatedCampaign } from "@/lib/createdNotice";
 
 /** Statuses whose stewards keep ticking the Ready to crowdpool list. Wizard campaigns start in review. */
@@ -78,7 +88,9 @@ export function StewardTools({
   const campaignId = front.id;
   const formatCurrency = useMemo(() => makeCurrencyFormatter(front.currency), [front.currency]);
   const status = front.status;
-  const closed = status === "cancelled" || status === "completed" || status === "funded";
+  // Over: cancelled, complete, or closed at its close date without completing
+  // (build spec 2026-09-27, section 9.6). None takes offers, updates or edits.
+  const closed = status === "cancelled" || status === "completed" || status === "funded" || status === "closed";
 
   const { data: contributions, isLoading: contributionsLoading } = trpc.campaigns.getContributionsForOwner.useQuery(
     { campaignId },
@@ -86,6 +98,14 @@ export function StewardTools({
   );
   const { data: followers } = trpc.campaigns.followerCounts.useQuery({ campaignId }, { retry: false });
   const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
+  const { data: needMarkers } = trpc.campaigns.getNeedMarkers.useQuery({ campaignId }, { retry: false });
+  // Marks stay as they are once a campaign is over, and examples keep none.
+  const canMark = !closed && !front.isDemo;
+  // Notes people sent from their offer links (the offers panel reads the same query).
+  const { data: offerMessages } = trpc.campaigns.getOfferMessages.useQuery({ campaignId }, { retry: false });
+  // A completed campaign still has people arriving to deliver, so its
+  // arrival note stays open; a cancelled or closed one keeps it as it is.
+  const canEditArrival = status !== "cancelled" && status !== "closed";
 
   // The wizard's "campaign created" confirmation, carried across its page load.
   useEffect(() => {
@@ -104,6 +124,7 @@ export function StewardTools({
       delivered: list.filter((c) => c.status === "fulfilled" || c.status === "thanked").length,
     };
   }, [contributions]);
+  const notes = useMemo(() => offerNotesSummary(contributions ?? [], offerMessages ?? {}), [contributions, offerMessages]);
 
   const [focus, setFocus] = useState<{ tab: OfferTab; nonce: number } | null>(null);
   const jump = (tab: OfferTab) => {
@@ -150,6 +171,7 @@ export function StewardTools({
           loading={contributionsLoading}
           onJump={jump}
           onSendForReview={() => scrollToId("campaign-status")}
+          offerNotes={notes}
         />
         <CampaignStewardStats
           campaignId={campaignId}
@@ -158,6 +180,7 @@ export function StewardTools({
           contributorsCount={front.contributorsCount ?? 0}
           counts={counts}
           formatCurrency={formatCurrency}
+          neededToStart={needMarkers?.itemIds}
         />
       </div>
 
@@ -169,6 +192,13 @@ export function StewardTools({
         onChanged={onChanged}
       />
 
+      <ArrivalNoteCard
+        campaignId={campaignId}
+        items={front.items}
+        isExample={!!front.isDemo}
+        canEdit={canEditArrival}
+      />
+
       <MoneyRoutesCard
         campaignId={campaignId}
         isExample={!!front.isDemo}
@@ -177,7 +207,14 @@ export function StewardTools({
         currencySymbol={currencySymbolFor(front.currency)}
       />
 
-      <NeedsGlance items={front.items} canEditHours={!closed} onChanged={refreshAll} />
+      <NeedsGlance
+        items={front.items}
+        canEditHours={!closed}
+        onChanged={refreshAll}
+        campaignId={campaignId}
+        markedIds={needMarkers?.itemIds}
+        canMark={canMark}
+      />
 
       <div className="grid gap-6 md:grid-cols-2 items-start">
         {!closed ? (
@@ -248,7 +285,11 @@ export function StewardTools({
         )}
         {closed && (
           <p className="text-sm text-[#1a472a]/80 mt-2">
-            {status === "cancelled" ? "This campaign is cancelled." : "This campaign is complete."}
+            {status === "cancelled"
+              ? "This campaign is cancelled."
+              : status === "closed"
+                ? (progressLines(front.progress, formatCurrency).completion ?? CLOSE.completionNoDate)
+                : "This campaign is complete."}
           </p>
         )}
         {canCancel && (

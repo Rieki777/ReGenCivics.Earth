@@ -1,9 +1,9 @@
 # ReGen Civics
 
-A fund and a game for regenerative land projects. Players do quests, earn
-tokens, and fund real-world regeneration. Land projects get capital, community,
-and coordination infrastructure. The whole thing runs on a local-food-backed
-economy with open governance.
+Tools and an in-real-life game for regenerative land projects. Players do
+quests and earn tokens that record their contributions. Land projects get
+governance tools, a seasonal incubator, crowdpooling, and a network of peers.
+Governance is open, and binding votes run on Hypha DAO on Base.
 
 Live site: [regencivics.earth](https://regencivics.earth)
 
@@ -11,17 +11,31 @@ Live site: [regencivics.earth](https://regencivics.earth)
 
 ## What this is
 
-ReGen Civics is two things running as one system:
+ReGen Civics builds the tools and runs the game that regenerative land
+projects use today.
 
-**The Fund** backs regenerative land projects with real capital, governed by
-the community through proposals and trust-weighted voting.
+**The Game** is how the community forms. Players complete quests, earn
+contribution scores and $ReGen tokens, and help build bioregional food
+economies. Tokens in ReGen Civics record contributions and carry governance
+weight in the Game. They make no claim about financial value.
 
-**The Game** is how the community forms — players complete quests, earn
-contribution scores and $ReGen tokens, and build the bioregional food
-economies that back the currency's value.
+**Crowdpooling** coordinates and accounts for what people bring to land
+projects: time, things, skills, land and money. Money goes through outside
+partners each project holds, never through ReGen Civics.
+
+**The ReGen Network Cooperative** is being designed as a member-owned
+cooperative in which land projects and people buy and steward land together,
+governed democratically by the network itself. It is not yet a legal entity
+and it accepts no money. Its canonical description lives in `shared/fund.ts`
+(`COOP`), and `scripts/check-fund-claims.mjs` keeps every public surface in
+line with it. The site carries one disclaimer, quoted here:
+
+> Nothing on this site is an offer to sell, or a request to buy, securities,
+> memberships or any other financial product. The cooperative is not formed
+> and accepts no money.
 
 The codebase covers the full platform: quest system, forum, player profiles,
-citizenship tiers, campaign/crowdfunding, event management, admin dashboard,
+citizenship tiers, crowdpooling campaigns, event management, admin dashboard,
 and the economic layer (contribution scoring, gratitude tokens, harvest
 distribution, governance proposals).
 
@@ -38,9 +52,9 @@ changes flow through a gated machine pipeline that is built, dark, and waiting
 on a community vote to activate. How much power the machine holds is itself a
 community-governed variable.
 
-**Start here: [`docs/EVOLUTION-ENGINE.md`](docs/EVOLUTION-ENGINE.md)** — the
+**Start here: [`docs/EVOLUTION-ENGINE.md`](docs/EVOLUTION-ENGINE.md)** for the
 full flow, what is live, what is dark, and the exact remaining steps to full
-autonomy. The build spec is [`ASSEMBLY_PAGE_SPEC.md`](ASSEMBLY_PAGE_SPEC.md);
+autonomy. The build spec is [`docs/planning/ASSEMBLY_PAGE_SPEC.md`](docs/planning/ASSEMBLY_PAGE_SPEC.md);
 the load-bearing decisions are ADR-27/28/29 in
 [`.ai/docs/DECISIONS.md`](.ai/docs/DECISIONS.md).
 
@@ -52,17 +66,18 @@ the load-bearing decisions are ADR-27/28/29 in
 |-------|------|
 | Frontend | React 19, Vite, TailwindCSS 4, Radix UI |
 | Backend | Express, tRPC 11, TypeScript |
-| Database | MySQL 8 (Railway), Drizzle ORM |
-| Auth | Google OAuth, Apple OAuth, JWT (jose) |
+| Database | MySQL 9.4 (Railway), Drizzle ORM |
+| Auth | Google OAuth, Apple OAuth, email magic link, JWT (jose) |
 | Email | Resend |
-| Storage | AWS S3 |
+| Storage | Cloudflare R2 (S3-compatible API) |
 | Cache | Redis |
 | AI | Anthropic Claude (content generation, admin assistant) |
 | Monitoring | Sentry |
 | Analytics | Umami |
 | Background jobs | Custom (digest, glossary, cleanup) |
 
-Full TypeScript throughout. ESM modules (`"type": "module"`). Node 20+.
+Full TypeScript throughout. ESM modules (`"type": "module"`). Node 22.19+
+(`engines` in `package.json`).
 
 ---
 
@@ -70,9 +85,10 @@ Full TypeScript throughout. ESM modules (`"type": "module"`). Node 20+.
 
 ### Prerequisites
 
-- Node 22+ (matches the Railway runtime; pinned in `.node-version`)
+- Node 22.19+ (`engines` in `package.json`; the Railway runtime is pinned in `.node-version`)
 - pnpm 10+ (the repo uses `packageManager` to pin a version via Corepack)
-- Docker + Docker Compose (recommended) OR a local MySQL 8 install
+- Docker + Docker Compose (recommended) OR a local MySQL 9.4 install (the
+  version production and CI run)
 
 ### First-time setup (Docker, recommended)
 
@@ -80,7 +96,7 @@ Full TypeScript throughout. ESM modules (`"type": "module"`). Node 20+.
 git clone https://github.com/Rieki777/ReGenCivics.Earth.git
 cd ReGenCivics.Earth
 
-# Boot MySQL 8 + Redis 7 in the background.
+# Boot MySQL and Redis in the background (versions pinned in docker-compose.yml).
 docker compose up -d
 
 # Use the example as a starting point. The values it ships with already
@@ -91,7 +107,7 @@ cp .env.example .env
 #                 JWT_SECRET=<any long random string>
 
 pnpm install
-pnpm db:push       # generate + apply the Drizzle schema to docker MySQL
+pnpm db:push       # apply every migration to docker MySQL (scripts/run-migration.ts --all)
 pnpm dev           # start the dev server on http://localhost:5000
 ```
 
@@ -106,7 +122,7 @@ via the Express dev middleware.
 ### Database
 
 The project uses Drizzle ORM with MySQL. Schema lives in `drizzle/schema.ts`.
-Migrations live in `drizzle/` (numbered `0000_...sql` through `0100_...sql`).
+Migrations live in `drizzle/` as numbered `NNNN_description.sql` files.
 
 ```bash
 # Apply all migrations (fresh DB or catch-up). Alias for run-migration.ts --all
@@ -121,10 +137,14 @@ Migrations are hand-written `drizzle/NNNN_*.sql` applied by
 `drizzle/README.md` for why). schema.ts is the type source of truth, not a
 migration driver.
 
-**Running migrations manually** (if `db:push` isn't enough for data migrations):
-Write a `.mjs` script and run it directly against the database. See
-`run_0100.mjs` for the pattern. Always strip SQL comment lines before
-splitting on semicolons — see `SKILL_regen-database-sql` for why.
+**Running one migration** (data migrations included): always use the runner,
+never an ad-hoc script. It tracks what is applied in `_migrations_applied`,
+splits SQL safely, and skips files it has already run.
+
+```bash
+npx tsx scripts/run-migration.ts drizzle/NNNN_description.sql   # one migration
+npx tsx scripts/run-migration.ts --status                      # what's applied
+```
 
 ### Running tests
 
@@ -153,7 +173,7 @@ Copy `.env.example` to `.env` and fill in:
 | `OWNER_EMAIL` | Yes | Email for the admin account |
 | `PORT` | No | Server port (default: 5000) |
 | `REDIS_URL` | No | Redis for caching (optional) |
-| `AWS_*` | No | S3 for image/file storage |
+| `AWS_*` | No | Cloudflare R2 image and file storage through its S3-compatible API (the variables keep their `AWS_` names; `AWS_ENDPOINT_URL` points at R2) |
 | `SENTRY_DSN` | No | Error monitoring |
 | `GOOGLE_MAPS_API_KEY` | No | Maps on land project pages |
 | `BUFFER_ACCESS_TOKEN` | No | Social media scheduling |
@@ -167,7 +187,7 @@ See `.env.example` for the full list.
 ```
 regen-civics/
 ├── client/src/
-│   ├── pages/          # 77 page components
+│   ├── pages/          # Route-level page components
 │   ├── components/     # Shared components + admin/ game/ profile/ ui/
 │   ├── hooks/          # Custom React hooks
 │   ├── contexts/       # React context providers
@@ -175,16 +195,16 @@ regen-civics/
 │   └── lib/            # Helper utilities
 ├── server/
 │   ├── _core/          # Express setup, auth, email, security, LLM
-│   ├── routes/         # REST routes (OG images, embeds, presence, etc.)
+│   ├── routes/         # tRPC routers, plus a few REST routes (OG images, embeds)
 │   ├── game/           # Game system logic (scoring, harvest, tiers)
 │   ├── jobs/           # Background jobs (digest, glossary, cleanup)
 │   ├── webhooks/       # Webhook handlers (Resend, Riverside)
-│   ├── db.ts           # All database queries (~113KB)
+│   ├── db.ts           # All database queries, in one large file
 │   ├── routers.ts      # tRPC router definitions
-│   ├── storage.ts      # S3 file storage
+│   ├── storage.ts      # Cloudflare R2 file storage (S3-compatible API)
 │   └── cache.ts        # Redis caching
 ├── drizzle/
-│   ├── schema.ts       # 101-table database schema
+│   ├── schema.ts       # The whole database schema, one file
 │   └── 0000_...sql     # Numbered migration files
 ├── shared/             # Types shared between client and server
 ├── scripts/            # One-off seed and data scripts
@@ -197,10 +217,10 @@ regen-civics/
 Routers are in `server/routers.ts`. Client calls via `@trpc/react-query`.
 
 **Drizzle for the database layer.** All queries in `server/db.ts`. Schema
-changes go through migrations — do not hand-edit production tables.
+changes go through migrations; do not hand-edit production tables.
 
-**Single schema file.** `drizzle/schema.ts` contains all 101 tables. Large,
-but keeps the whole data model in one place.
+**Single schema file.** `drizzle/schema.ts` contains every table. Large, but
+keeps the whole data model in one place.
 
 **Game logic is server-side.** Contribution scoring, harvest calculations,
 citizenship tier checking, and the percentile ranking system all live in
@@ -210,7 +230,7 @@ citizenship tier checking, and the percentile ranking system all live in
 
 ## Database Schema Overview
 
-101 tables across these domains:
+The tables span these domains, among others:
 
 - **Users & auth:** `users`, `userProfiles`, `emailTokens`
 - **Forum:** `forumCategories`, `forumPosts`, `forumReplies`, `forumLikes`, `postReactions`
@@ -224,7 +244,7 @@ citizenship tier checking, and the percentile ranking system all live in
 - **Admin:** `adminAuditLog`, `siteSettings`, `siteBanners`
 
 The `game_variables` table is the admin-configurable parameter store for the
-entire game system — contribution weights, citizenship requirements, harvest
+entire game system: contribution weights, citizenship requirements, harvest
 ratios, gratitude budgets. Everything tunable without a code deploy.
 
 ---
@@ -258,7 +278,7 @@ share of the seasonal Harvest.
 ### Using AI to contribute
 
 If you use Claude, Cursor, or another AI coding tool, paste the contents of
-`AI_BUILDER_PROMPT.md` into your AI before starting work. It gives the AI
+`.human/visions/AI_BUILDER_PROMPT.md` into your AI before starting work. It gives the AI
 the full context it needs to contribute well: architecture, writing rules,
 game system concepts, and what not to break.
 
@@ -272,14 +292,14 @@ client and server types.
 
 **Why MySQL over Postgres?** Railway's MySQL offering was the most reliable
 option at the time the project started. The schema is MySQL-compatible
-throughout (note: backtick-quote the `key` column in `game_variables` — it's
-a reserved word in MySQL).
+throughout (note: backtick-quote the `key` column in `game_variables`, since
+it's a reserved word in MySQL).
 
 **Why a single `db.ts` file?** All database logic in one place makes it easy
 to find queries and spot patterns. It's large but navigable with search.
 
 **Why `game_variables`?** The game needs to be tunable by admins without code
-deploys. Contribution weights, harvest ratios, tier requirements — all
+deploys. Contribution weights, harvest ratios, and tier requirements are all
 configurable via the admin dashboard. This is the mechanism.
 
 ---
@@ -289,12 +309,12 @@ configurable via the admin dashboard. This is the mechanism.
 | File | What it covers |
 |------|----------------|
 | `CONTRIBUTING.md` | How to contribute code, writing rules, PR process |
-| `AI_BUILDER_PROMPT.md` | Full context prompt for AI coding assistants |
+| `.human/visions/AI_BUILDER_PROMPT.md` | Full context prompt for AI coding assistants |
 | `docs/ARCHITECTURE.md` | System architecture diagram and data flow |
 | `docs/GLOSSARY_OF_TERMS.md` | Definitions of all project-specific terms |
-| `docs/REGEN_GAMES_SPEC_V1.md` | Complete game system spec (24 features) |
-| `docs/CITIZENSHIP_TIERS_SPEC.md` | Tier requirements, powers, DB schema |
-| `SECURITY_AUDIT_2026-04-01.md` | Pre-open-source security findings |
+| `REGEN_GAMES_SPEC_V1.md` | Complete game system spec (24 features) |
+| `docs/planning/CITIZENSHIP_TIERS_SPEC.md` | Tier requirements, powers, DB schema |
+| `archive/SECURITY_AUDIT_2026-04-01.md` | Pre-open-source security findings |
 
 ---
 

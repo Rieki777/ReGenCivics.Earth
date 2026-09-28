@@ -3,9 +3,9 @@ import { Sparkles, Send } from 'lucide-react'
 import { useReGenGuide } from '@/contexts/ReGenGuideContext'
 
 const STARTER_PROMPTS = [
-  'How does the ReGen Civics fund work?',
+  'What is the ReGen Network Cooperative?',
   'What are quests and how do I earn rewards?',
-  'How do I invest or contribute?',
+  'How can I contribute?',
   'What is the difference between the 4 paths?',
 ]
 
@@ -51,7 +51,7 @@ export function AssistTab({ onClose }: Props = {}) {
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-white">Your ReGen Guide</p>
-          <p className="text-[11px] text-white/70">Ask about quests, the Fund, or how to participate.</p>
+          <p className="text-[11px] text-white/70">Ask about quests, the cooperative, or how to participate.</p>
         </div>
       </div>
 

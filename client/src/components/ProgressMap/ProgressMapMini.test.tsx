@@ -32,7 +32,8 @@ describe('ProgressMapMini', () => {
     expect(screen.getByText('Land')).toBeDefined();
     expect(screen.getByText('Ally')).toBeDefined();
     expect(screen.getByText('Play')).toBeDefined();
-    expect(screen.getByText('Fund')).toBeDefined();
+    // The fourth path became the cooperative in design (ADR-62, 2026-09-27).
+    expect(screen.getByText('Co-op')).toBeDefined();
   });
 
   it('shows overall completion percentage', () => {

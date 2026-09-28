@@ -3,8 +3,14 @@
  * stewards. A role measured in hours a week reads in hours and can have the
  * hours it needs changed here (campaigns.setNeedHours, stewards only on the
  * server). Raising the hours is how a steward reopens a filled role.
+ *
+ * "Needed to start" (build spec 2026-09-27, section 13): a steward marks the
+ * needs the project can't begin without. Only the stewards see the mark
+ * (campaigns.setNeededToStart, stored in its own table that no public read
+ * touches). It is saved on change and rolls back with a toast if the save
+ * fails. It changes nothing about completion.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -15,6 +21,8 @@ import { CAPITAL_LABELS } from "@shared/crowdpoolingTaxonomy";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { MAX_ROLE_HOURS, fullTimeLabel, isHoursNeed, roleFillState } from "@shared/roleCapacity";
 import { REOPEN_NOTICE_ON_RAISE } from "@shared/stewardQueue";
+import { NEED_MARKER } from "@shared/crowdpoolCopy";
+import { isMoneyKind } from "@shared/crowdpoolNeedAction";
 import { KIND_CHIP_CLASSES, KIND_LABELS, capitalForItem, kindForItem, titleForItem } from "@/lib/needDisplay";
 import type { CampaignNeed } from "./ContributionCard";
 
@@ -95,12 +103,47 @@ function NeedHoursForm({ item, accepted, filled, onSaved }: {
   );
 }
 
-export function NeedsGlance({ items, canEditHours, onChanged }: {
+export function NeedsGlance({ items, canEditHours, onChanged, campaignId, markedIds, canMark = false }: {
   items: CampaignNeed[];
   /** Hours can change while the campaign is still open (not cancelled or complete). */
   canEditHours: boolean;
   onChanged: () => void;
+  /** The campaign, for the "Needed to start" marks. */
+  campaignId?: number;
+  /** Needs marked "Needed to start" (campaigns.getNeedMarkers); undefined while loading. */
+  markedIds?: number[];
+  /** Marks can change: a real campaign that isn't cancelled, complete or closed. */
+  canMark?: boolean;
 }) {
+  const utils = trpc.useUtils();
+  const setMark = trpc.campaigns.setNeededToStart.useMutation();
+  // A change shows at once and stays until the stored marks come back with it.
+  const [overrides, setOverrides] = useState<Record<number, boolean>>({});
+  const markedKey = (markedIds ?? []).join(",");
+  useEffect(() => { setOverrides({}); }, [markedKey]);
+  const stored = new Set(markedIds ?? []);
+  const isMarked = (id: number) => overrides[id] ?? stored.has(id);
+  const showMarks = canMark && campaignId != null && markedIds !== undefined;
+
+  const toggleMark = (itemId: number, next: boolean) => {
+    if (!campaignId) return;
+    setOverrides((o) => ({ ...o, [itemId]: next }));
+    setMark.mutate(
+      { campaignItemId: itemId, marked: next },
+      {
+        onSuccess: () => { void utils.campaigns.getNeedMarkers.invalidate({ campaignId }); },
+        onError: () => {
+          setOverrides((o) => {
+            const rest = { ...o };
+            delete rest[itemId];
+            return rest;
+          });
+          toast.error(NEED_MARKER.saveFailed);
+        },
+      },
+    );
+  };
+
   return (
     <section id="needs" className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl scroll-mt-24">
       <h2 className="text-xl font-bold text-[#1a472a] mb-1 flex items-center gap-2" style={{ fontFamily: "var(--font-display)" }}>
@@ -110,6 +153,9 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
       <p className="text-sm text-[#1a472a]/75 mb-4">
         Delivered fills the bar solid and accepted shows lighter. Open needs are where to point your next share.
       </p>
+      {showMarks && items.length > 0 && (
+        <p className="text-sm text-[#1a472a]/85 mb-4">{NEED_MARKER.intro}</p>
+      )}
       {items.length === 0 ? (
         <p className="text-sm text-[#1a472a]/75">This campaign has no needs listed.</p>
       ) : (
@@ -136,8 +182,13 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
                   {hours && fill.filled && (
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#4a7c59] text-white">Filled</span>
                   )}
+                  {isMarked(item.id) && (
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#1a472a] text-white" data-testid={`need-marker-chip-${item.id}`}>
+                      {NEED_MARKER.chip}
+                    </span>
+                  )}
                 </div>
-                <p className="font-medium text-[#1a472a] text-sm mb-2 break-words">{decodeBasicEntities(titleForItem(item))}</p>
+                <p id={`need-title-${item.id}`} className="font-medium text-[#1a472a] text-sm mb-2 break-words">{decodeBasicEntities(titleForItem(item))}</p>
                 <div className="w-full bg-[#1a472a]/10 rounded-full h-2 relative overflow-hidden mb-1">
                   <div className="absolute inset-y-0 left-0 bg-[#7dd87d]/50 rounded-full" style={{ width: `${takenPct}%` }} />
                   <div className="absolute inset-y-0 left-0 bg-[#4a7c59] rounded-full" style={{ width: `${deliveredPct}%` }} />
@@ -154,6 +205,18 @@ export function NeedsGlance({ items, canEditHours, onChanged }: {
                 )}
                 {hours && canEditHours && (
                   <NeedHoursForm item={item} accepted={fill.accepted} filled={fill.filled} onSaved={onChanged} />
+                )}
+                {showMarks && !isMoneyKind(String(item.kind ?? "")) && (
+                  <label className="mt-2 flex items-center gap-3 min-h-11 cursor-pointer text-sm font-medium text-[#1a472a] has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-[#1a472a] rounded-lg">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5 shrink-0 accent-[#4a7c59]"
+                      checked={isMarked(item.id)}
+                      aria-describedby={`need-title-${item.id}`}
+                      onChange={(e) => toggleMark(item.id, e.target.checked)}
+                    />
+                    {NEED_MARKER.label}
+                  </label>
                 )}
               </div>
             );

@@ -17,9 +17,18 @@ import { useLocation } from "wouter";
 import { isNewsletterSubscribed, markNewsletterSubscribed } from "@/utils/newsletter";
 import { analytics } from "@/lib/analytics";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { FUND } from "@shared/fund";
+import { COOP } from "@shared/fund";
 
 type PageContext = "investor" | "land" | "alliance" | "game" | "community" | "default";
+
+/**
+ * Pages where the popup never shows: the cooperative interest form (/loi),
+ * which is where the cooperative popup's button leads, and /investor, which
+ * redirects there.
+ */
+function isSuppressedPage(pathname: string): boolean {
+  return pathname === "/investor" || pathname === "/loi";
+}
 
 function getPageContext(pathname: string): PageContext {
   if (
@@ -46,10 +55,10 @@ const contextConfig: Record<PageContext, {
 }> = {
   investor: {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
-    headline: "Before you go: the Fund is forming.",
-    subline: `${FUND.statusLabel}, target launch ${FUND.launchTarget}`,
-    body: "The ReGen Civics Fund is in formation and is not yet accepting capital. We are gathering non-binding Letters of Intent from aligned investors. If you want a say in how it is structured, the path starts here.",
-    cta: "Learn About Investing",
+    headline: "Before you go",
+    subline: `${COOP.name}: ${COOP.statusLabel}`,
+    body: `${COOP.statementShort} ${COOP.interestPromise}`,
+    cta: "Tell us you're interested",
     successMessage: "",
   },
   land: {
@@ -88,7 +97,7 @@ const contextConfig: Record<PageContext, {
     icon: <Mail className="w-5 h-5 text-[#7dd87d]" />,
     headline: "Before You Go",
     subline: "Join the ReGenerative Renaissance",
-    body: "Stay connected with updates on the ReGen Civics Fund, Infinite Game, land projects, and community events.",
+    body: "Stay connected with updates on the Infinite Game, land projects, the cooperative design, and community events.",
     cta: "Stay Updated",
     successMessage: "Thanks for joining! We'll keep you in the loop on all things ReGen Civics.",
   },
@@ -148,9 +157,6 @@ export function ExitIntentCapture() {
     }
   }, [subscribedData?.subscribed]);
 
-  // Suppress popup entirely on /investor page, after all hooks
-  if (location === '/investor') return null;
-
   // Two-step show: mount first, then trigger CSS transition
   useEffect(() => {
     if (show) {
@@ -167,6 +173,7 @@ export function ExitIntentCapture() {
 
   const triggerModal = useCallback(() => {
     if (dismissed || show || submitted) return;
+    if (isSuppressedPage(location)) return;
     // Engagement gates: enough time on the page and enough of it read.
     if (Date.now() - mountTimeRef.current < MIN_DWELL_MS) return;
     if (maxScrollFractionRef.current < MIN_SCROLL_FRACTION) return;
@@ -181,7 +188,7 @@ export function ExitIntentCapture() {
       sessionStorage.getItem('investor_verified') === 'true';
     if (investorVerified && context === 'investor') return;
     setShow(true);
-  }, [dismissed, show, submitted, context, subscribedData?.subscribed]);
+  }, [dismissed, show, submitted, context, location, subscribedData?.subscribed]);
 
   // Desktop: detect mouse leaving viewport toward top
   useEffect(() => {
@@ -247,6 +254,9 @@ export function ExitIntentCapture() {
     newsletterMutation.mutate({ email, source: "exit_intent" });
   };
 
+  // After every hook on purpose: an early return above the hooks changed the
+  // hook count whenever the route crossed into or out of a suppressed page.
+  if (isSuppressedPage(location)) return null;
   if (!show && !dismissed) return null;
   if (!show) return null;
 
@@ -312,10 +322,10 @@ export function ExitIntentCapture() {
             {context === 'investor' ? (
               <div className="flex flex-col gap-3 mt-2">
                 <button
-                  onClick={() => { window.location.href = '/investor'; setShow(false); }}
+                  onClick={() => { window.location.href = '/loi'; setShow(false); }}
                   className="w-full py-3 px-6 rounded-full bg-[#7dd87d] text-[#1a472a] font-semibold text-sm hover:bg-[#9de89d] transition-colors"
                 >
-                  Learn About Investing
+                  {config.cta}
                 </button>
                 <button
                   onClick={() => { setShow(false); sessionStorage.setItem('exitIntentDismissed', '1'); setDismissed(true); }}

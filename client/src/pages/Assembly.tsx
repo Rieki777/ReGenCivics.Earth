@@ -13,7 +13,7 @@
  * teaches the flow. The Signal, synthesis, and lifecycle lanes land in
  * later phases.
  *
- * Spec: ASSEMBLY_PAGE_SPEC.md
+ * Spec: docs/planning/ASSEMBLY_PAGE_SPEC.md
  */
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";

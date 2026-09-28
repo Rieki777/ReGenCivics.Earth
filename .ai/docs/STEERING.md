@@ -65,7 +65,10 @@ a script that had never existed (the real one is `check`), and on Windows
 copied into 30+ prompt docs from here, and both failed silently for three months
 because each session quietly substituted a working command instead of fixing the
 source. Third trap for the list below: **a gate you must translate before running
-is a gate that eventually gets skipped.**
+is a gate that eventually gets skipped.** The `typecheck` line entered `CLAUDE.md`
+in 619190f (2026-04-18), written from assumption without checking package.json.
+`package.json` now carries a real `typecheck` alias, so the old prompt docs run as
+written. (This history moved here from `CLAUDE.md` on 2026-09-27.)
 
 Plus, for any FIXES_TO_MAKE row marked DONE / VERIFIED, the Evidence column must contain file:line, grep result, screenshot path, or script output line. No evidence = stays `CODED`.
 
@@ -109,6 +112,19 @@ From `/CLAUDE.md`. Four absolute rules for every economic feature:
 3. **Spend limit checks use PRIVATE only.** Even if user has plenty on-chain, public can't be deducted by server (one-way flow).
 4. **One-way flow private → public.** Tokens move private→public when user claims via Hypha redeem-tokens. Once on chain, they live there. No re-entry to private.
 
+Before building any earning, spending, scoring or burning feature, read this section and copy an existing `source`-tag pattern (`gratitude_received`, `harvest`, `quest_completion`, `seeds_claim`, `call_task_bounty`, `manual`, ...).
+
+Key surfaces (moved here from `CLAUDE.md` on 2026-09-27):
+- `db.creditPrivateTokens(...)`: the only legitimate write to private balances
+- `playerProfiles.getMyTokens`: total/public/private reads for the four tokens
+- `playerProfiles.requestClaim({ tokens })`: starts a claim, debits private at request time
+- `cancelClaim` / nightly `cancelStaleClaimBridges`: refund flows
+- `webhook-receiver.cascadeClaimPassed`: on-chain confirm reconciliation
+- `user_token_ledger`: append-only, source-tagged audit table
+- `player_profiles.{regen,rgvoice,rcvoice,rcivics}Private`: private cache (written by `creditPrivateTokens`)
+- `player_profiles.{rvoiceBalance,rgenBalance,rcvoicePublic,rcivicsPublic}`: public cache (written by `syncTokens`)
+- `game_variables.governance.claim_threshold_{regen,rgvoice,rcivics,rcvoice}`: per-token thresholds
+
 Token contracts on Base (chain id 8453):
 - `$REGEN`: `0x4E617cd113364193d215d107AdD6fa50418AA2E4`
 - `$RCivics`: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`
@@ -137,12 +153,16 @@ From `~/.claude/memories/cowork-vm-quirks.md`. Top issues:
 
 ---
 
-## 8. Auto-archive convention for dated docs
+## 8. Where docs live, and the auto-archive rule
 
-From working-style memory:
+- **Root:** only the standard repo files (`README.md`, `LICENSE`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`), `CLAUDE.md`, `SHIPPED_LOG.md`, and the canonical docs `CLAUDE.md` names. Code, scripts and skills read several of those canonical docs by root path, so they stay put. New docs start in `docs/planning/` or `docs/`.
+- **`docs/planning/`:** planning, spec, plan, audit, brief, research and outreach docs, flat, filenames unchanged. Active implementation prompts (`CLAUDE_CODE_PROMPT_*.md`) and fixes docs (`FIXES_TO_MAKE_*.md`) are written here too.
+- **`docs/`:** developer reference docs: setup, dev context, design system, deployment, worktrees, the image pipeline, and as-built maps such as `docs/EVOLUTION-ENGINE.md` and `docs/COORDINATION_ENGINE_WORKFLOW.md`.
+- **`archive/`:** dated implementation prompts, fixes docs, task lists and handoffs move here one week after their date (`CLAUDE_CODE_PROMPT_YYYY-MM-DD_*.md`, `FIXES_TO_MAKE_YYYY-MM-DD*.md`, `REMAINING_WORK_YYYY-MM-DD.md`). A spec that captures style direction, design rules, or canonical reference material stays in `docs/planning/` at any age. Heuristic: opens with "Generate / produce / build with these rules" → spec, keep. Opens with "READ THIS FIRST / Pick up from Push 1 / Skip nothing" → implementation prompt, archive after a week.
+- **Moving a doc:** grep the repo for its filename (skip `archive/` and applied `drizzle/*.sql`), update every reference you can reach in the same change, and list the rest in the handoff.
+- **Transitional:** the `CROWDPOOL*.md` and `CROWDPOOLING*.md` docs stay in the root while the crowdpool lane has them open, then move to `docs/planning/`.
 
-- Anything in repo root with a date in the filename (`CLAUDE_CODE_PROMPT_YYYY-MM-DD_*.md`, `FIXES_TO_MAKE_YYYY-MM-DD*.md`, `REMAINING_WORK_YYYY-MM-DD.md`) older than 1 week → moves to `archive/`.
-- **Spec / reference docs stay in root** even when older. A doc is a "spec" if it captures style direction, design rules, or canonical reference material. Heuristic: opens with "Generate / produce / build with these rules" → spec, keep. Opens with "READ THIS FIRST / Pick up from Push 1 / Skip nothing" → implementation prompt, archive.
+Changed 2026-09-27 (Rye, funding engine Phase 0): root planning docs moved to docs/planning/.
 
 ---
 
@@ -173,7 +193,7 @@ Most-used:
 - `regen-form-design`, `regen-background-design`: visual / UX work
 - `hypha-pr-workflow`: for hypha-web PR contributions
 
-Full list: see CLAUDE.md "Installed Skills" section.
+Full list: `.ai/docs/SKILLS-INDEX.md`.
 
 ---
 
@@ -194,7 +214,7 @@ Full reasoning and the decision checklist: the `regen-deterministic-first` skill
 
 ## 12. Mobile touch standard
 
-iPhone Safari is the primary platform. Every user-facing surface (main site, Ship, CORE, and every Custom Games spinoff cloned from the template) meets one bar. Adopted 2026-07-18 after the ecosystem migration; full rationale and phase history in `MOBILE_FIRST_MASTER_PLAN.md`.
+iPhone Safari is the primary platform. Every user-facing surface (main site, Ship, CORE, and every Custom Games spinoff cloned from the template) meets one bar. Adopted 2026-07-18 after the ecosystem migration; full rationale and phase history in `docs/planning/MOBILE_FIRST_MASTER_PLAN.md`.
 
 - **44px minimum touch targets on touch devices.** Anything tappable (buttons, links, menu rows, list options, chips, close controls, map pins) is at least 44x44 for a coarse pointer. This is Apple HIG 44pt / WCAG 2.5.5.
 - **Size by input capability, not viewport width.** Use Tailwind `pointer-coarse:` min-h/min-w floors on the element (`pointer-coarse:min-h-11`, plus `pointer-coarse:min-w-11` on icon-only controls). This catches iPads and touch laptops at desktop widths, which a `max-width` media query never will. Never widen or heighten with plain `h-`/`w-` when a caller might override it; floors are `min-*` so overrides and multi-line content stay safe. Desktop pointer density is left exactly as designed.

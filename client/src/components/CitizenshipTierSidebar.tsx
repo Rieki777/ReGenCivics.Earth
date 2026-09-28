@@ -1,7 +1,7 @@
 /**
  * CitizenshipTierSidebar: vertical timeline of the four tier thresholds.
  *
- * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.3.
+ * Per docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.3.
  *
  * The four rungs are Explorer, Co-Creator, Steward, Sage. The player's
  * current position glows; the next threshold is faintly visible. Each

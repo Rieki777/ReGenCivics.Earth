@@ -6,7 +6,7 @@
  * land_project, ally, shared). The tier detector and the Quest page
  * redesign both consume this.
  *
- * For Phase 1 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, the detector
+ * For Phase 1 of docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, the detector
  * only needs to know which quests count as Rites of Passage so it can
  * detect the ReGen Player Co-Creator milestone (all 14 Rites complete).
  *

@@ -1,7 +1,7 @@
 /**
  * Navigation Header Component
  * Restructured menu:
- * - "4 Paths" dropdown: Fund (Investors), Land (Projects), Ally (Alliance), Play (Players)
+ * - "4 Paths" dropdown: Cooperative (/fund), Land (Projects), Ally (Alliance), Play (Players)
  * - "Play the Game" dropdown: Game Overview, Start Questing, Crowd Pool Campaigns
  *   + Calculators: Crowd Pool Calculator, Contribution Calculator
  *   + Player Profile
@@ -98,8 +98,10 @@ export default function Navigation() {
   // Check if current location is in 4 Paths section
   const is4PathsActive = location === '/fund' || location === '/land' || location === '/ally' || location === '/play';
   
-  // Check if current location is in Play the Game section
-  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location.startsWith('/bounties') || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location.startsWith('/project/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
+  // Check if current location is in Play the Game section.
+  // /crowd-pooling-projects 301s to /campaigns, so /campaigns is the path a
+  // visitor actually lands on; the old path stays in the check harmlessly.
+  const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location.startsWith('/bounties') || location === '/campaigns' || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location.startsWith('/project/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
   
   // Check if current location is in Seasons + Schedule section
   const isSeasonsActive = location === '/seasons' || location === '/schedule';
@@ -180,8 +182,8 @@ export default function Navigation() {
                   className="text-white hover:bg-[#ffd700]/20 focus:bg-[#ffd700]/20 cursor-pointer"
                   onClick={() => window.location.href = '/fund'}
                 >
-                  <Coins className="w-5 h-5 mr-3 text-[#ffd700]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Investors</span>
+                  <Users className="w-5 h-5 mr-3 text-[#ffd700]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Cooperative</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
@@ -267,7 +269,7 @@ export default function Navigation() {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
-                  onClick={() => window.location.href = '/crowd-pooling-projects'}
+                  onClick={() => window.location.href = '/campaigns'}
                 >
                   <UsersRound className="w-5 h-5 mr-3 text-blue-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Crowd Pool Campaigns</span>
@@ -458,7 +460,7 @@ export default function Navigation() {
                   onClick={() => window.location.href = '/tokenomics'}
                 >
                   <Coins className="w-5 h-5 mr-3 text-[#d4a574]" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics <span className="text-white/65 text-xs ml-1">(the Fund)</span></span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Tokenomics</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
@@ -745,8 +747,8 @@ export default function Navigation() {
                       style={{ fontFamily: 'var(--font-accent)' }}
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Coins className="w-4 h-4 text-[#ffd700]" />
-                      Investors
+                      <Users className="w-4 h-4 text-[#ffd700]" />
+                      Cooperative
                     </Link>
                     <Link 
                       href="/land"
@@ -878,10 +880,10 @@ export default function Navigation() {
                       Bounties
                     </Link>
                     <Link
-                      href="/crowd-pooling-projects"
+                      href="/campaigns"
                       className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
-                        location === '/crowd-pooling-projects' 
-                          ? 'bg-[#7dd87d] text-[#1a472a]' 
+                        location === '/campaigns' || location === '/crowd-pooling-projects'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
                           : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
                       }`}
                       style={{ fontFamily: 'var(--font-accent)' }}
@@ -1170,7 +1172,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Coins className="w-4 h-4 text-[#d4a574]" />
-                      Tokenomics <span className="text-white/65 text-xs">(the Fund)</span>
+                      Tokenomics
                     </Link>
                     <Link
                       href="/bionomics"

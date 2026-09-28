@@ -27,6 +27,7 @@ import { ENV } from "../_core/env";
 import { timingSafeEqualStr, recordWebhookFailure, isWebhookFailureBlocked } from "../_core/security";
 import { composeRipeness, RIPENESS_THRESHOLD } from "../lib/harvest";
 import { logger } from "../_core/logger";
+import { clientIp } from "../_core/client-ip";
 
 const log = logger("harvest-bridge");
 
@@ -43,7 +44,7 @@ function isMissingTableError(err: unknown): boolean {
  * repeated probing from one ip gets blocked.
  */
 async function checkBridgeAuth(req: Request, res: Response): Promise<boolean> {
-  const ip = req.ip || "unknown";
+  const ip = clientIp(req);
   if (await isWebhookFailureBlocked(ip, "harvest-bridge")) {
     res.status(429).json({ error: "too_many_failures" });
     return false;
@@ -100,7 +101,7 @@ export function registerHarvestBridgeRoutes(app: Express) {
         .orderBy(asc(quickNotes.id))
         .limit(200);
 
-      log.info(`captures pull ip=${req.ip} since_id=${sinceId} count=${rows.length}`);
+      log.info(`captures pull ip=${clientIp(req)} since_id=${sinceId} count=${rows.length}`);
       res.json({
         captures: rows,
         latestId: rows.length > 0 ? rows[rows.length - 1].id : sinceId,
@@ -225,7 +226,7 @@ export function registerHarvestBridgeRoutes(app: Express) {
         kind: body.seed ? "seed" : "bridge",
         stats: { ideas: ideasUpserted, sources: sourcesUpserted, crossed },
       });
-      log.info(`ideas push ip=${req.ip} ideas=${ideasUpserted} sources=${sourcesUpserted} crossed=${crossed} seed=${Boolean(body.seed)}`);
+      log.info(`ideas push ip=${clientIp(req)} ideas=${ideasUpserted} sources=${sourcesUpserted} crossed=${crossed} seed=${Boolean(body.seed)}`);
       res.json({ ok: true, ideas: ideasUpserted, sources: sourcesUpserted, crossed });
     } catch (err) {
       if (isMissingTableError(err)) {
@@ -308,7 +309,7 @@ export function registerHarvestBridgeRoutes(app: Express) {
         });
         latestId = recording.id;
       }
-      log.info(`recordings pull ip=${req.ip} since_id=${sinceId} delivered=${withInsights.length}`);
+      log.info(`recordings pull ip=${clientIp(req)} since_id=${sinceId} delivered=${withInsights.length}`);
       res.json({ recordings: withInsights, latestId });
     } catch (err) {
       if (isMissingTableError(err)) {
@@ -330,7 +331,7 @@ export function registerHarvestBridgeRoutes(app: Express) {
     try {
       const { loadTopRules } = await import("../lib/voice-learning");
       const rules = await loadTopRules(ENV.ownerUserId, 50);
-      log.info(`voice-rules pull ip=${req.ip} count=${rules.length}`);
+      log.info(`voice-rules pull ip=${clientIp(req)} count=${rules.length}`);
       res.json({ rules });
     } catch (err) {
       if (isMissingTableError(err)) {
@@ -373,7 +374,7 @@ export function registerHarvestBridgeRoutes(app: Express) {
       // driver wraps it as result[0].affectedRows (same read as server/db.ts).
       const header = result as unknown as { affectedRows?: number } & Array<{ affectedRows?: number }>;
       const updated = header?.[0]?.affectedRows ?? header?.affectedRows ?? 0;
-      log.info(`mark-processed ip=${req.ip} requested=${ids.length} updated=${updated}`);
+      log.info(`mark-processed ip=${clientIp(req)} requested=${ids.length} updated=${updated}`);
       res.json({ ok: true, updated });
     } catch (err) {
       if (isMissingTableError(err)) {

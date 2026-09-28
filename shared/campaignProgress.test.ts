@@ -20,6 +20,7 @@ import {
   type ProgressRow,
 } from "./campaignProgress";
 import { CAPITAL_TYPES } from "./capitals";
+import { CLOSE } from "./crowdpoolCopy";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 const fmt = (n: number) => usd.format(n);
@@ -535,6 +536,8 @@ describe("every line stays inside the words", () => {
       compute({ campaign: { status: "cancelled" } }),
       compute({ campaign: { status: "draft", startedAt: null, publishedAt: null } }),
       compute({ items: [] }),
+      compute({ campaign: { status: "closed", closedAt: "2026-11-30T00:00:00.000Z" } }),
+      compute({ campaign: { status: "closed", startedAt: null, publishedAt: null } }),
     ];
     const texts: string[] = [];
     for (const p of scenarios) {
@@ -584,5 +587,72 @@ describe("a campaign that lists no in-kind needs", () => {
     const p = compute({ items: [], campaign: { financialTarget: 0 } });
     expect(p.state).toBe("both_landed");
     expect(progressLines(p, fmt).halves).toBeNull();
+  });
+});
+
+describe("a campaign that closed without completing (status closed, 0264)", () => {
+  it("reads did_not_complete, with its date, tag and after-close line", () => {
+    const p = compute({ campaign: { status: "closed", closedAt: "2026-12-02T09:30:00.000Z" }, routes: [route("maearth", 25000)] });
+    expect(p.state).toBe("did_not_complete");
+    expect(p.closedAt).toBe("2026-12-02T09:30:00.000Z");
+    expect(p.almostComplete).toBe(false);
+    const lines = progressLines(p, fmt);
+    expect(lines.completion).toBe("Crowdpooling closed on 2 December 2026. It didn't complete.");
+    expect(lines.stateTag).toBe("Didn't complete");
+    expect(lines.afterClose).toBe(CLOSE.afterLine);
+    expect(lines.afterClose).toBe(
+      "Help already given stays recorded in the project's token. Lent things go home on the agreed date, or sooner if you ask. Offers that hadn't started were released with our thanks.",
+    );
+    expect(lines.closes).toBeNull();
+    expect(lines.halves).toBeNull();
+  });
+
+  it("dates the line from the close date when closedAt is missing, and goes without a date when there is neither", () => {
+    expect(progressLines(compute({ campaign: { status: "closed" } }), fmt).completion).toBe(
+      "Crowdpooling closed on 30 November 2026. It didn't complete.",
+    );
+    expect(progressLines(compute({ campaign: { status: "closed", startedAt: null, publishedAt: null } }), fmt).completion).toBe(
+      "Crowdpooling closed. It didn't complete.",
+    );
+  });
+
+  it("keeps the example lines on an example whatever its status", () => {
+    const lines = progressLines(compute({ campaign: { status: "closed", isDemo: 1 } }), fmt);
+    expect(lines.completion).toBe(
+      "On a real campaign, complete means the money half and the in-kind half both land by its close date.",
+    );
+    expect(lines.stateTag).toBe("Example");
+    expect(lines.afterClose).toBeNull();
+  });
+
+  it("has no after-close line in any other state, and closedAt is null until the job closes it", () => {
+    for (const status of ["active", "completed", "cancelled", "draft"]) {
+      const p = compute({ campaign: { status } });
+      expect(progressLines(p, fmt).afterClose, status).toBeNull();
+      expect(p.closedAt, status).toBeNull();
+    }
+    // A campaign the job completed at its close date carries closedAt and reads complete.
+    const done = compute({ campaign: { status: "completed", closedAt: "2026-11-30T00:00:00.000Z", closeOutcome: "complete" } });
+    expect(done.state).toBe("complete");
+    expect(done.closedAt).toBe("2026-11-30T00:00:00.000Z");
+    expect(progressLines(done, fmt).completion).toBe("This campaign is complete.");
+  });
+
+  it("carries closedAt through the summary", () => {
+    const p = compute({ campaign: { status: "closed", closedAt: "2026-11-30T00:00:00.000Z" } });
+    expect(summarizeProgress(p, ITEMS).closedAt).toBe("2026-11-30T00:00:00.000Z");
+    expect(summarizeProgress(p, ITEMS).state).toBe("did_not_complete");
+  });
+
+  it("marks the close on the timeline, with no close date still ahead", () => {
+    const entries = buildCampaignTimeline({
+      campaign: { status: "closed", isDemo: 0, startedAt: "2026-09-01T00:00:00.000Z", closedAt: "2026-11-30T00:00:00.000Z" },
+      progress: compute({ campaign: { status: "closed", closedAt: "2026-11-30T00:00:00.000Z" } }),
+      activity: [],
+      updates: [],
+      now: new Date("2026-11-01T00:00:00.000Z"),
+    });
+    expect(entries.map((e) => e.text)).toEqual(["Crowdpooling closed. It didn't complete.", "Campaign opened"]);
+    expect(entries[0]).toMatchObject({ kind: "closed", at: "2026-11-30T00:00:00.000Z", upcoming: false });
   });
 });

@@ -10,7 +10,7 @@ The whole project is set up so Claude can read the codebase and start building i
 
 Start with one of these sources:
 
-1. Check `FIXES_TO_MAKE_*.md` files in the docs folder. These are organized by priority and ready to implement.
+1. Check the `FIXES_TO_MAKE_*.md` files in `docs/planning/`. These are organized by priority and ready to implement.
 2. Look at GitHub Issues. Issues are tagged with difficulty (`low`, `medium`, `hard`) and category.
 3. Ask in the forum if you're unsure what to work on. The community can point you toward high-impact tasks.
 
@@ -76,12 +76,12 @@ This project is built with Claude Code. The repo includes everything your Claude
 
 **Skills:** `.claude/skills/` contains project-specific skills that teach Claude how to build forms, quests, backgrounds, and more. Claude reads these automatically when it encounters a matching task.
 
-**Execution prompts:** `CLAUDE_CODE_PROMPT_*.md` files are ready-to-run build specs. Hand one to Claude Code and it executes top to bottom.
+**Execution prompts:** `CLAUDE_CODE_PROMPT_*.md` files in `docs/planning/` are ready-to-run build specs. Hand one to Claude Code and it executes top to bottom. Finished prompts move to `archive/` after a week.
 
 ### Running an execution prompt
 
 ```bash
-claude "Read and execute CLAUDE_CODE_PROMPT_2026-04-02_FORM_READABILITY.md"
+claude "Read and execute docs/planning/CLAUDE_CODE_PROMPT_<date>_<topic>.md"
 ```
 
 ### Fixing something from a screenshot
@@ -92,7 +92,7 @@ claude "Look at this screenshot. [describe the problem]. Fix it following projec
 
 ### Writing your own execution prompt
 
-A good execution prompt has: context at the top (what problem, which files), numbered steps with specific code changes, and a verification checklist at the bottom. See existing prompts in the repo for the format.
+A good execution prompt has: context at the top (what problem, which files), numbered steps with specific code changes, and a verification checklist at the bottom. See the prompts in `archive/` for the format.
 
 ### Database migrations
 
@@ -142,7 +142,7 @@ The community votes on proposals. If approved, your contributions are tracked in
 ## First-Time Contributor Tips
 
 - Start with a Low priority fix. You'll get momentum and learn the codebase at the same time.
-- Read the relevant spec before coding. Check the CLAUDE.md file to see which spec docs are active.
+- Read the relevant spec before coding. Check `.ai/docs/PROJECT-INDEX.md` to see which spec docs are active.
 - Ask in the forum or GitHub if you're stuck. We'd rather help than see you frustrated.
 - Favor small, scoped PRs. Ship, get feedback, iterate.
 - Look at existing code for patterns. We have conventions for database queries, API routes, React components. Copy the pattern, don't reinvent.
@@ -155,4 +155,8 @@ Some parts of the system are core and risky to change alone:
 - Auth flow. If you're thinking about changing how login or OAuth works, talk to the core team first.
 - Migration files. Once a migration is applied to the database, it's locked. Mistakes here are expensive.
 
-If you're unsure whether something is risky, ask. There's no penalt
+If you're unsure whether something is risky, ask. There's no penalty for caution.
+
+## Questions?
+
+Ask in the forum. That's what it's there for.

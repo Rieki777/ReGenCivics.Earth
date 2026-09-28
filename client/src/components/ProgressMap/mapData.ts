@@ -83,25 +83,28 @@ export const PATHS: MapPath[] = [
       { id: "play-7", pathId: "play", index: 6, label: "Claim a Bounty", landmark: "The Bounty Board", trigger: "visit:/bounties", href: "/bounties", x: 1110, y: 250 },
     ],
   },
+  // The cooperative path. Its id stays "fund" (node ids, colors and saved
+  // progress key off it); since 2026-09-27 it walks toward the cooperative in
+  // design, so no step involves money.
   {
     id: "fund",
-    name: "Fund",
+    name: "Co-op",
     color: COLORS.fund,
     emoji: "🔥",
     zone: "Fire",
     nodes: [
       { id: "fund-1", pathId: "fund", index: 0, label: "Learn the Vision", landmark: "Observatory", trigger: "visit:/opportunity", href: "/opportunity", x: 850, y: 650 },
       { id: "fund-2", pathId: "fund", index: 1, label: "Join a Session", landmark: "Forge Amphitheatre", trigger: "rsvp:session", href: "/schedule", x: 920, y: 570 },
-      { id: "fund-3", pathId: "fund", index: 2, label: "Explore the Portfolio", landmark: "Exchange Garden", trigger: "visit:/map", href: "/map", x: 1000, y: 500 },
-      { id: "fund-4", pathId: "fund", index: 3, label: "Express Interest", landmark: "Treasury Gate", trigger: "submit:investor-form", href: "/investor", x: 1050, y: 420 },
-      { id: "fund-5", pathId: "fund", index: 4, label: "Sign LOI", landmark: "The Forge", trigger: "submit:loi", href: "/loi", x: 980, y: 360 },
-      { id: "fund-6", pathId: "fund", index: 5, label: "Attend Fund Launch", landmark: "Great Hall", trigger: "attend:fund-launch", href: "/schedule", x: 1050, y: 300 },
-      { id: "fund-7", pathId: "fund", index: 6, label: "Invest and Grow", landmark: "Flame Garden", trigger: "invested", href: "/fund", x: 1000, y: 240 },
+      { id: "fund-3", pathId: "fund", index: 2, label: "Meet the Land Projects", landmark: "Exchange Garden", trigger: "visit:/map", href: "/map", x: 1000, y: 500 },
+      { id: "fund-4", pathId: "fund", index: 3, label: "Tell Us You're Interested", landmark: "Council Gate", trigger: "submit:interest-form", href: "/loi", x: 1050, y: 420 },
+      { id: "fund-5", pathId: "fund", index: 4, label: "Read the Design Principles", landmark: "The Forge", trigger: "visit:/fund", href: "/fund", x: 980, y: 360 },
+      { id: "fund-6", pathId: "fund", index: 5, label: "Join the Design Conversations", landmark: "Great Hall", trigger: "attend:design-conversation", href: "/schedule", x: 1050, y: 300 },
+      { id: "fund-7", pathId: "fund", index: 6, label: "Bring What You Have", landmark: "Flame Garden", trigger: "contribute:campaign", href: "/campaigns", x: 1000, y: 240 },
     ],
   },
 ];
 
-/** Shared nodes: "Join a Session" is the same physical location for Land, Ally, Fund */
+/** Shared nodes: "Join a Session" is the same physical location for Land, Ally, Co-op */
 export const SHARED_NODES = {
   session: ["land-3", "ally-3", "fund-2"],
   forum: ["play-4"],

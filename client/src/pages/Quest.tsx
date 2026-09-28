@@ -1087,7 +1087,7 @@ export default function Quest() {
       )}
 
       {/* Path Portals + Citizenship Tier Sidebar
-          Phase 3 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, sections 9.2 + 9.3.
+          Phase 3 of docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, sections 9.2 + 9.3.
           The four elemental portals filter the quest list to one path; the
           horizontal tier sidebar surfaces the player's current rung and the
           next threshold. Both components hide gracefully if the user is not

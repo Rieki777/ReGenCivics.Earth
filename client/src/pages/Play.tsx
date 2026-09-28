@@ -37,6 +37,7 @@ import AutoplayVideo from "@/components/AutoplayVideo";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { cdnImg } from "@/lib/utils";
+import { COOP } from "@shared/fund";
 
 // Action card component with token info and linked button(s)
 function ActionCard({
@@ -201,7 +202,7 @@ function TokenSystemCollapsible() {
                 </h3>
               </div>
               <p className="text-white/70 text-base leading-relaxed">
-                Our in-game currency earned through every action in the Game. Trade them, spend them in the bioregional marketplace, or use them to access premium game features. These tokens flow through the regenerative economy.
+                The Game's own token, earned through every action you take. Spend them in the bioregional marketplace or use them to open premium game features.
               </p>
               <Link href="/tokenomics" className="inline-block mt-3 text-[#7dd87d] hover:text-white underline text-sm">Explore tokenomics →</Link>
             </div>
@@ -219,7 +220,7 @@ function TokenSystemCollapsible() {
                 </h3>
               </div>
               <p className="text-white/70 text-base leading-relaxed">
-                1 RGVoice token for each action. These represent your governance voice in the ReGen Civics ecosystem. They give you voting power on fund allocation, project selection, alliance governance, and the evolution of the Game itself.
+                1 RGVoice token for each action. These represent your governance voice in the ReGen Civics ecosystem. They give you voting power on project selection, alliance governance, and the evolution of the Game itself.
               </p>
               <Link href="/governance" className="inline-block mt-3 text-[#7dd87d] hover:text-white underline text-sm">Explore governance →</Link>
             </div>
@@ -235,12 +236,12 @@ function TokenSystemCollapsible() {
               {
                 icon: Globe,
                 label: "Govern",
-                desc: "RGVoice = voting power on fund and alliance decisions",
+                desc: "RGVoice = voting power on Game and alliance decisions",
               },
               {
                 icon: Heart,
                 label: "Grow",
-                desc: "Your tokens and voice grow with participation over time",
+                desc: "Your tokens and voice build up as you take part",
               },
             ].map((item, i) => (
               <div
@@ -355,7 +356,7 @@ export default function Play() {
       {/* Hero */}
       <section className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
-          {/* Title scrim — keeps the heading + description readable against
+          {/* Title scrim: keeps the heading + description readable against
               the busy "Anyone / ReGen Players" hero illustration on mobile.
               Text shadows alone weren't cutting it once the video card sat
               right under the headline. */}
@@ -518,13 +519,13 @@ export default function Play() {
                 title="CATALYZE! A New Organization or Village"
                 description="Have a vision for a new organization or village? We have a Crowd Pooling tool that helps projects crowd pool all the resources they need to get started or grow to the next stage of their maturity! Catalyze it into existence through the ReGen Civics network."
                 tokenInfo="Co-create unique tokens by copying or creating a new Game for a new project."
-                linkTo="/crowd-pooling-projects"
+                linkTo="/campaigns"
                 linkLabel="Crowd Pool Campaigns"
                 accentColor="text-amber-400"
                 bgAccent="bg-amber-400/15"
                 borderAccent="border-amber-400/20"
                 links={[
-                  { label: "Crowd Pool Campaigns", href: "/crowd-pooling-projects", variant: "primary" },
+                  { label: "Crowd Pool Campaigns", href: "/campaigns", variant: "primary" },
                   { label: "Watch Crowd Pooling Explainer", href: "https://youtu.be/jxKR-WneJp0", isExternal: true, variant: "outline" },
                 ]}
               />
@@ -558,8 +559,9 @@ export default function Play() {
             </ReadableScrim>
             <ReadableScrim block className="max-w-lg mx-auto mb-4 text-center border border-amber-400/40">
               <p className="text-amber-300 font-bold text-base" style={{ fontFamily: "var(--font-display)" }}>
-                NOTE: These tokens are unique from the Fund tokens!
+                NOTE: These are the Game's tokens, separate from $RCivics and RCVoice.
               </p>
+              <p className="text-white/80 text-sm mt-2">{COOP.tokensNote}</p>
             </ReadableScrim>
           </AnimatedSection>
 

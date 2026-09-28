@@ -13,7 +13,7 @@ few known places. No new component code: the companion shell, voice engine,
 and picker all key off the registries below.
 
 Full architecture: ADR-44 in `.ai/docs/DECISIONS.md` and
-`VOICE_TTS_RESEARCH_2026-07-17.md`. Cost model and env flags at the bottom.
+`docs/planning/VOICE_TTS_RESEARCH_2026-07-17.md`. Cost model and env flags at the bottom.
 
 ## 1. Persona data (client-safe)
 

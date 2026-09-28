@@ -16,7 +16,7 @@ export type MenuCard = {
 };
 
 export type MenuSection = {
-  id: "play" | "learn" | "invest" | "footer";
+  id: "play" | "learn" | "coop" | "footer";
   heading: string;
   /** When true the section is collapsed by default. */
   collapsed?: boolean;
@@ -51,7 +51,7 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
     collapsed: true,
     cards: [
       { label: "Bionomics", sub: "The Game side of the bridge", href: "/bionomics", icon: "Sprout" },
-      { label: "Tokenomics", sub: "The Fund side of the bridge", href: "/tokenomics", icon: "Coins" },
+      { label: "Tokenomics", sub: "How tokens and voice work", href: "/tokenomics", icon: "Coins" },
       { label: "Governance", sub: "How decisions get made", href: "/governance", icon: "Globe" },
       { label: "Team", sub: "Who's holding this", href: "/team", icon: "Users" },
       { label: "Glossary", sub: "Terms and definitions", href: "/glossary", icon: "BookOpen" },
@@ -59,14 +59,13 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
     ],
   },
   {
-    id: "invest",
-    heading: "Invest & Apply",
+    id: "coop",
+    heading: "Apply & Cooperative",
     collapsed: true,
     cards: [
-      { label: "Fund overview", sub: "The investment thesis", href: "/fund", icon: "Coins" },
-      { label: "Investor form", sub: "Express investor interest", href: "/investor", icon: "FileText" },
       { label: "Apply", sub: "Land projects and alliance partners", href: "/apply", icon: "Sprout" },
-      { label: "Letter of Intent", sub: "Reserve your spot", href: "/loi", icon: "FileText" },
+      { label: "The Cooperative", sub: "Member-owned, now in design", href: "/fund", icon: "Users" },
+      { label: "Tell us you're interested", sub: "No money, no commitment", href: "/loi", icon: "FileText" },
     ],
   },
 ];
@@ -74,5 +73,6 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
 export const MOBILE_MENU_FOOTER = [
   { label: "Forum", href: "/community", icon: "MessageCircle" },
   { label: "Privacy", href: "/privacy-policy", icon: "Shield" },
-  { label: "Contact", href: "/contact", icon: "Mail" },
+  // /contact was never a route; /connect is the contact page.
+  { label: "Contact", href: "/connect", icon: "Mail" },
 ];

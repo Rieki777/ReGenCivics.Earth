@@ -1,5 +1,5 @@
 /**
- * Assembly tRPC router (ASSEMBLY_PAGE_SPEC.md section 11).
+ * Assembly tRPC router (docs/planning/ASSEMBLY_PAGE_SPEC.md section 11).
  *
  * The Game's community-governed pipeline: forming proposals carry the Signal
  * (one adjustable -3..+3 score per signed-in member), an AI synthesis cache,

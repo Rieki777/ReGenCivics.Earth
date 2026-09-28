@@ -1,5 +1,5 @@
 /**
- * Assembly governance notifications (ASSEMBLY_PAGE_SPEC.md section 8).
+ * Assembly governance notifications (docs/planning/ASSEMBLY_PAGE_SPEC.md section 8).
  *
  * Subscribers are people with the "Governance updates" toggle on
  * (notificationPrefs.governanceUpdates, on the player profile or, for an

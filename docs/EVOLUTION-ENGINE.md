@@ -11,7 +11,7 @@
 This document explains, for any human or LLM picking up this codebase, how a
 community decision becomes a change to the running game with no maintainer in
 the loop — what works today, what is built but dark, and exactly what remains
-before the system is fully autonomous. The full spec is `ASSEMBLY_PAGE_SPEC.md`
+before the system is fully autonomous. The full spec is `docs/planning/ASSEMBLY_PAGE_SPEC.md`
 (section 7); the load-bearing decisions are ADR-27/28/29 in
 `.ai/docs/DECISIONS.md`.
 

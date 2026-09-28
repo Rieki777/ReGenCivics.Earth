@@ -5,7 +5,7 @@
  *
  *   GET /api/ship/calendar/:token/regen-ship.ics
  *
- * Phase 1 of the Outdoorsy sync (CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md).
+ * Phase 1 of the Outdoorsy sync (archive/CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md).
  * Our calendar is the source of truth; this is how the channels find out.
  *
  * Why a raw Express route rather than tRPC: Outdoorsy fetches this with a plain

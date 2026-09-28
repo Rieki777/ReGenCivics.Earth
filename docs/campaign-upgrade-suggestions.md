@@ -4,6 +4,10 @@
 **Date:** February 2026
 **Scope:** Campaign creation, exploration, and crowd-pooling proposal workflow
 
+**Superseded (2026-09-27).** Written in February 2026, before the crowdpool model.
+ReGen Civics takes and holds no money, and several suggestions below assume it would.
+The current state is `CROWDPOOL_PLAN.md`.
+
 ---
 
 ## Overview
@@ -126,7 +130,7 @@ Expand the admin approval panel with a structured scoring rubric: team credibili
 
 ### 18. Due Diligence Document Upload
 
-Add a secure document upload section for proposals requiring due diligence: land titles, environmental impact assessments, permits, financial projections, team CVs, and letters of support. These would be visible only to admin and verified investors, not public contributors. Integrate with the existing S3 storage.
+Add a secure document upload section for proposals requiring due diligence: land titles, environmental impact assessments, permits, financial projections, team CVs, and letters of support. These would be visible only to admin and the project's reviewers, not public contributors. Integrate with the existing Cloudflare R2 storage.
 
 **Complexity:** Medium | **Impact:** High
 

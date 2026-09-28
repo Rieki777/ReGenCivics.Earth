@@ -2,7 +2,7 @@
 
 This is the living game document for ReGen Civics. It defines every player-facing system, every admin-configurable variable, every database table, and every interaction that makes up the game layer of regencivics.earth. Built to be extended season by season. Designed with SEEDS as a reference architecture, adapted for a fund-backed real-world regenerative movement.
 
-This spec replaces and supersedes PLAYER_EXPERIENCE_SPEC.md (which covered features 1-15 in draft form). All feedback from Rye has been integrated. All features reference the existing codebase schema and won't break current systems.
+This spec replaces and supersedes docs/planning/PLAYER_EXPERIENCE_SPEC.md (which covered features 1-15 in draft form). All feedback from Rye has been integrated. All features reference the existing codebase schema and won't break current systems.
 
 ---
 
@@ -351,7 +351,7 @@ createdAt: timestamp
 
 # Part 3: Living Tree Visualization
 
-Full concept approved by Rye. See LIVING_TREE_VISUALIZATION_SPEC.md for the detailed visual breakdown. Here's the implementation spec.
+Full concept approved by Rye. See docs/planning/LIVING_TREE_VISUALIZATION_SPEC.md for the detailed visual breakdown. Here's the implementation spec.
 
 ## 3.1 Life stages
 

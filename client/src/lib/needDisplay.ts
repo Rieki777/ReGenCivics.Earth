@@ -3,6 +3,7 @@
  * (CampaignDetail, NeedsRegistry, NeedCard) and the project page's steward
  * tools (NeedsGlance, ContributionReviewPanel). Pure: no React, no tRPC.
  */
+import { CLOSE } from "@shared/crowdpoolCopy";
 
 export const KIND_LABELS: Record<string, string> = {
   item: "Item",
@@ -69,6 +70,8 @@ export const CAMPAIGN_STATUS_LABELS: Record<string, string> = {
   funded: "Complete",
   completed: "Complete",
   cancelled: "Cancelled",
+  /** The close date passed and it didn't complete (build spec 2026-09-27, section 9). */
+  closed: CLOSE.stateTag,
 };
 
 export const CAMPAIGN_STATUS_CLASSES: Record<string, string> = {
@@ -79,6 +82,7 @@ export const CAMPAIGN_STATUS_CLASSES: Record<string, string> = {
   funded: "bg-purple-100 text-purple-700",
   completed: "bg-purple-100 text-purple-700",
   cancelled: "bg-gray-200 text-gray-700",
+  closed: "bg-stone-200 text-stone-800",
 };
 
 /** A contribution status as the stewards read it. */

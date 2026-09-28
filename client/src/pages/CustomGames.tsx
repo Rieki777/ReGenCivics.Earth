@@ -3,7 +3,7 @@
  * Route: /custom-games
  *
  * The product page for the Custom Games line (Workstream A of
- * CUSTOM_GAMES_MASTER_PLAN.md). Modeled on Season2.tsx: cinematic hero,
+ * docs/planning/CUSTOM_GAMES_MASTER_PLAN.md). Modeled on Season2.tsx: cinematic hero,
  * glass panels, growing scroll timeline, FAQ accordion, sticky mobile CTA.
  *
  * Amora screenshots land in /images/custom-games/ from a parallel capture
@@ -554,11 +554,10 @@ export default function CustomGames() {
                   Investors
                 </h3>
                 <p className="text-white/75 leading-relaxed">
-                  You're putting capital into a land project and you want
-                  coordination and accountability infrastructure so the
-                  investment produces value. The game gives you a live window
-                  into decisions, money, and progress, without chasing anyone
-                  for updates.
+                  You're putting money into a land project and you want
+                  coordination and accountability you can see. The game gives
+                  you a live window into decisions, money, and progress,
+                  without chasing anyone for updates.
                 </p>
               </div>
             </div>
@@ -599,14 +598,14 @@ export default function CustomGames() {
                 it sinks projects that were doing everything else right.
               </p>
               <p className="text-white text-xl font-medium" style={display}>
-                A game makes it a community endeavour in fact, not just in
-                intention.
+                A game turns that intention into a community endeavour in
+                fact.
               </p>
               <p>
                 Structure is what turns willing people into contributing people.
                 When the paths in, the decisions, and the recognition are all
-                written down and playable, the work distributes instead of
-                concentrating, and the people who started it get to stop being
+                written down and playable, the work spreads across the
+                community, and the people who started it get to stop being
                 the single point of failure.
               </p>
             </div>

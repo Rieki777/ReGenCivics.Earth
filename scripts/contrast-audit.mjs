@@ -18,12 +18,14 @@
  * the 2026-05-29 estimate).
  *
  * The checker is the same one used in the manual 2026-05-29 audit via
- * Claude in Chrome; see CONTRAST_AUDIT_2026-05-29.md for the baseline.
+ * Claude in Chrome; see docs/planning/CONTRAST_AUDIT_2026-05-29.md for the baseline.
  */
 
 import { chromium } from 'playwright';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import { COLOR_FNS_SRC } from './contrast-colors.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).map(a => {
   const [k, v] = a.replace(/^--/, '').split('=');
@@ -45,24 +47,9 @@ const PUBLIC_ROUTES = [
   '/admin',
 ];
 
-const CHECKER_SRC = `(function runContrastAudit() {
+export const CHECKER_SRC = `(function runContrastAudit() {
   const RESULTS = [];
-  function parseColor(str) {
-    if (!str) return null;
-    const m = str.match(/rgba?\\(([^)]+)\\)/);
-    if (!m) return null;
-    const parts = m[1].split(',').map(s => parseFloat(s.trim()));
-    return { r: parts[0] || 0, g: parts[1] || 0, b: parts[2] || 0, a: parts.length === 4 ? parts[3] : 1 };
-  }
-  function avgGradientColor(bgImage) {
-    if (!bgImage || bgImage === 'none') return null;
-    const rgbs = [...bgImage.matchAll(/rgba?\\(([^)]+)\\)/g)].map(m => {
-      const parts = m[1].split(',').map(s => parseFloat(s.trim()));
-      return { r: parts[0] || 0, g: parts[1] || 0, b: parts[2] || 0, a: parts.length === 4 ? parts[3] : 1 };
-    });
-    if (rgbs.length === 0) return null;
-    return { r: rgbs.reduce((s, c) => s + c.r, 0) / rgbs.length, g: rgbs.reduce((s, c) => s + c.g, 0) / rgbs.length, b: rgbs.reduce((s, c) => s + c.b, 0) / rgbs.length, a: 1 };
-  }
+  ${COLOR_FNS_SRC}
   function hasImageBg(bgImage) {
     if (!bgImage || bgImage === 'none') return false;
     return /url\\(/i.test(bgImage);
@@ -231,4 +218,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(e => { console.error(e); process.exit(1); });
+// Run only as a script, so a test can import CHECKER_SRC without starting a browser.
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(e => { console.error(e); process.exit(1); });
+}

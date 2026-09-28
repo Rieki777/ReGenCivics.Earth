@@ -13,7 +13,10 @@
  *    At least 9 projects must graduate for the shared crowdpooling launch to
  *    happen. We want all 13.
  *  - Crowdpooling is the second filter. The public decides what to pool into.
- *  - Graduated + pooled projects are the foundation of the index fund.
+ *  - 2026-09-27 (FUNDING_ENGINE_PLAN v1.2): the index-fund framing is retired.
+ *    The cohort is the start of a cooperative network of land projects, in
+ *    design, described only through COOP in shared/fund.ts. No investment,
+ *    stake, index or investability language on this page.
  *  - ORGAN METAPHOR, exact shape: ReGen Civics is the BODY. Land projects are
  *    the first organs, grown this season. The alliance of organizations that
  *    support land projects are OTHER organs, grown in a FUTURE season. Thirteen
@@ -34,7 +37,7 @@
  *  3. Concrete closing CTA (timeline + what-happens-next)
  *  4. lucide icons in place of emoji
  *  5. Season One proof block (placeholders flagged for Rye)
- *  6. Risk/legal note on the token swap (links /risk-disclosure)
+ *  6. Token note under the token swap (COOP.tokensNote, links /disclaimers)
  *  7. FAQ section (objection handling)
  *  8. Time-commitment stated up front
  *  9. Newsletter fallback for the not-ready-yet
@@ -86,8 +89,13 @@ import {
 } from "@shared/applicationWindow";
 import { SEASON_ONE as SEASON_ONE_FACTS } from "@shared/regenYear";
 import { READINESS_HREF } from "@shared/crowdpoolReadiness";
+import { COOP } from "@shared/fund";
 
 const display = { fontFamily: "var(--font-display)" } as const;
+
+/** The crowdpool lane's binding wording (Phase 0 SPEC), verbatim. */
+const CROWDPOOLING_LINE =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
 
 function prefersReducedMotion() {
   return (
@@ -398,7 +406,7 @@ const STEPS: { n: string; title: string; body: string }[] = [
   {
     n: "04",
     title: "Financial and sustainability structure",
-    body: "Business models, regenerative economics, thrivability planning. How are members' needs sustained? How does the project create returns for people, for land, for the alliance? What evidence shows this model can work?",
+    body: "Business models, regenerative economics, thrivability planning. How are members' needs sustained? How does the project give back to its people, its land, and the alliance? What evidence shows this model can work?",
   },
   {
     n: "05",
@@ -408,7 +416,7 @@ const STEPS: { n: string; title: string; body: string }[] = [
   {
     n: "06",
     title: "Co-create shared economic frameworks across the network",
-    body: "Contributions to one project become redeemable for access to another. Shared DAO/DHO infrastructure, shared game and cultural framing, interoperable tokens. This is where thirteen independent projects start to become a global network.",
+    body: "Contributions to one project can count toward access at another. Shared DAO/DHO infrastructure, shared game and cultural framing, interoperable tokens. This is where thirteen independent projects start to become a global network.",
   },
   {
     n: "07",
@@ -460,13 +468,13 @@ const GET: { icon: React.ElementType; title: string; body: string }[] = [
   },
   {
     icon: Link2,
-    title: "The $RCivics Token Swap",
-    body: "A token swap that makes every project co-invested in every other. ReGen Civics takes a minority stake, usually under 10%, sized uniquely to your project. You hold a piece of the alliance. The alliance holds a piece of you.",
+    title: "The Token Swap",
+    body: "A token swap that ties every project in the alliance to every other. We design it with each project during the season, so it fits your land and your people.",
   },
   {
     icon: Coins,
-    title: "Funding Access",
-    body: "Alliance membership opens access to funding from ReGen Civics, with member voting on which projects receive capital. Projects receive funding and provide equivalent tokens in return. Investors put money into the alliance and hold tokens backed by all projects.",
+    title: "A Shared Crowdpooling Launch",
+    body: "Graduating projects launch their crowdpooling campaigns together, so each one reaches an audience larger than its own. Money goes through outside partners each project holds, never through ReGen Civics.",
   },
   {
     icon: Scale,
@@ -509,8 +517,8 @@ const GETS_SUMMARY: { icon: React.ElementType; title: string; body: string }[] =
   },
   {
     icon: Coins,
-    title: "A route to real capital",
-    body: "A shared crowdpooling launch, then a place in the index fund, so your project raises alongside the network instead of alone.",
+    title: "A shared launch",
+    body: "One shared crowdpooling launch at the end of the season, so your project raises alongside the whole network.",
   },
 ];
 
@@ -534,7 +542,7 @@ const SELECTION: {
   },
   {
     title: "The season council selects 13 on the Equinox",
-    body: "Season Two opens on the Equinox with a selection day held in public. A season council, made up of members from previous seasons' projects, chooses the thirteen. These are operators who have played the season themselves, and they are choosing the projects they will be co-invested with. They build each cohort for range: different maturity levels, different scales, different approaches to regeneration. As the alliance grows, the wider community takes on more of this choice each season.",
+    body: "Season Two opens on the Equinox with a selection day held in public. A season council, made up of members from previous seasons' projects, chooses the thirteen. These are operators who have played the season themselves, and they are choosing the projects they will build the network with. They build each cohort for range: different maturity levels, different scales, different approaches to regeneration. As the alliance grows, the wider community takes on more of this choice each season.",
   },
   {
     title: "The season opens",
@@ -559,7 +567,7 @@ const ARC: { n: string; icon: React.ElementType; title: string; body: string }[]
     n: "02",
     icon: Users,
     title: "Built",
-    body: "Thirteen teams design their governance, legal, economic, and financial models together, reviewing each other's work against the standard an investor will actually apply.",
+    body: "Thirteen teams design their governance, legal, economic, and financial models together, reviewing each other's work against the standard the public will apply at launch.",
   },
   {
     n: "03",
@@ -571,7 +579,7 @@ const ARC: { n: string; icon: React.ElementType; title: string; body: string }[]
     n: "04",
     icon: Coins,
     title: "Pooled and funded",
-    body: "The world decides which projects to pool their money, land, equipment, and labor into. What comes through becomes the foundation of the index fund.",
+    body: "The world decides which projects to pool their money, land, equipment, and labor into. Money goes through outside partners each project holds, never through ReGen Civics.",
   },
 ];
 
@@ -606,7 +614,7 @@ export default function Season2() {
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
         title="Season Two: Show Us Your Play in the Infinite Game"
-        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort, with every community project that's ready, into one shared crowdpooling campaign. Projects that graduate become the foundation of the index fund for the ReGenerative Renaissance."
+        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort, with every community project that's ready, into one shared crowdpooling campaign. The cohort is the start of a cooperative network of land projects for the ReGenerative Renaissance, now in design."
         image="/og/season2.jpg"
       />
 
@@ -646,9 +654,9 @@ export default function Season2() {
               stage, scale, and approach to regeneration. We build your models
               together, then launch the whole cohort, with every community project
               that's ready, into one shared crowdpooling campaign where the world
-              decides what to pool into. Projects that
-              graduate become the foundation of the index fund for the
-              ReGenerative Renaissance.
+              decides what to pool into. The cohort is the start of a
+              cooperative network of land projects for the ReGenerative
+              Renaissance, now in design.
             </p>
           </ReadableScrim>
 
@@ -751,10 +759,9 @@ export default function Season2() {
 
           <p className="mt-10 text-center text-white/75 leading-relaxed max-w-2xl mx-auto">
             Getting selected puts you in the season. Graduating puts you in the
-            shared launch. What the world pools into is what becomes the
-            foundation of the fund. An investor backing one land project on its own
-            is backing a single organ, and the network around it is what makes that
-            project investable.
+            shared launch. From there the world decides what to pool into. A land
+            project on its own is a single organ, and the network around it is
+            what keeps it alive.
           </p>
         </div>
       </AnimatedSection>
@@ -770,8 +777,8 @@ export default function Season2() {
           </h2>
           <p className="text-white/80 text-lg leading-relaxed mb-4 max-w-2xl">
             No fee to apply. No fee to take part. What you bring is your team's
-            time and a token swap that makes the alliance and your project
-            co-invested in each other.
+            time and a token swap that ties your project and the alliance to
+            each other.
           </p>
           <p className="text-white/75 text-lg leading-relaxed mb-10 max-w-2xl">
             Every model, template, legal structure, and framework built during the
@@ -886,13 +893,13 @@ export default function Season2() {
               power. The ReGenerative Renaissance is the global movement to
               prototype something better. Thirteen projects at a time, each
               season, in public, with everything open-sourced so the next wave of
-              builders starts from a foundation instead of scratch.
+              builders starts from a foundation.
             </p>
             <p>
               Governments should be funding this work. They are not, yet. So we're
-              building the systems that can carry and direct the billions to
+              building the systems that can coordinate the billions to
               trillions this transition needs, and we're building them in the open
-              so they belong to the movement rather than to us.
+              so they belong to the movement.
             </p>
             <p>
               That is the actual goal: a civilizational shift, and a network of
@@ -905,7 +912,7 @@ export default function Season2() {
             </p>
           </div>
 
-          {/* Season One projects map — the thirteen that went through. */}
+          {/* Season One projects map: the thirteen that went through. */}
           <figure className="mt-12">
             <img
               src="/season2/s1-projects-map.webp"
@@ -924,7 +931,7 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
-      {/* Regenerative Renaissance — cinematic band between the story and the roadmap */}
+      {/* Regenerative Renaissance: cinematic band between the story and the roadmap */}
       <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
         <ViewportTriggeredVideo
           src="https://assets.regencivics.earth/XsPbGgILnGYjlRUh.mp4"
@@ -1127,7 +1134,7 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
-      {/* Community gathering — a celebratory band leading into who this is for */}
+      {/* Community gathering: a celebratory band leading into who this is for */}
       <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
         <img
           src="/season2/season2-gathering.webp"
@@ -1192,7 +1199,7 @@ export default function Season2() {
             What accepted projects receive
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-8" style={display}>
-            The accelerator, <span className="italic text-[#a8e6a8]">and a stake in each other.</span>
+            The accelerator, <span className="italic text-[#a8e6a8]">and each other.</span>
           </h2>
 
           <figure className="relative mb-12 rounded-2xl overflow-hidden border border-[#7dd87d]/15">
@@ -1295,16 +1302,17 @@ export default function Season2() {
                 nine forms of capital
               </Link>{" "}
               count, so someone with a decade of building experience and no money
-              can contribute as meaningfully as an investor.
+              can contribute as meaningfully as someone bringing money.
             </p>
+            <p>{CROWDPOOLING_LINE}</p>
             <p>
               <strong className="text-white font-semibold">
                 A pool is hard to fake.
               </strong>{" "}
               A pitch can be polished in a week. Two hundred people putting real
               value into your project is a market telling you the model works.
-              Projects that pool well finish the season with capital in hand, a
-              committed community, and a track record that an investor can read.
+              Projects that pool well finish the season with what they need in
+              hand, a committed community, and a track record anyone can read.
             </p>
           </div>
 
@@ -1355,15 +1363,15 @@ export default function Season2() {
       <AnimatedSection as="section" animation="slide-up" className="py-20 md:py-28 px-4 bg-[#0d2818]/50">
         <div className="max-w-2xl mx-auto">
           <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
-            How co-investment works
+            How the token swap works
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
-            Everyone becomes <span className="italic text-[#a8e6a8]">invested in each other</span>
+            Every project becomes <span className="italic text-[#a8e6a8]">part of the alliance</span>
           </h2>
           <p className="text-white/75 text-lg leading-relaxed">
             The token swap is what makes ReGen Civics an alliance. When you join
-            the season, you and ReGen Civics become co-invested, and through the
-            alliance, you become co-invested in every other project that's part of
+            the season, your project and ReGen Civics swap tokens, and through the
+            alliance your project is tied to every other project that's part of
             it.
           </p>
 
@@ -1381,11 +1389,8 @@ export default function Season2() {
           <div className="mt-8 p-6 md:p-8 rounded-xl bg-[#7dd87d]/8 border border-[#7dd87d]/22 space-y-4 text-white/75 leading-relaxed">
             <p>
               <strong className="text-[#7dd87d] font-semibold">How the swap works:</strong>{" "}
-              There is no fixed minimum. ReGen Civics sends $RCivics tokens to your
-              project, and your project sends an equivalent value in your own tokens
-              back. Neither is sold on the open market. They represent ownership and
-              alignment. The intention is for ReGen Civics to hold a minority stake
-              in your project, usually under 10%.
+              ReGen Civics and your project exchange tokens, so your project and
+              the alliance are tied to each other.
             </p>
             <p>
               <strong className="text-[#7dd87d] font-semibold">Unique to each project:</strong>{" "}
@@ -1395,11 +1400,8 @@ export default function Season2() {
               good for the land and the people it holds.
             </p>
             <p>
-              <strong className="text-[#7dd87d] font-semibold">Funding flows:</strong>{" "}
-              When ReGen Civics receives investment, alliance members vote on which
-              projects receive capital, with a preference for current season
-              projects. Projects receive funding and provide equivalent tokens in
-              return. Investors hold tokens backed by the whole alliance.
+              <strong className="text-[#7dd87d] font-semibold">About $RCivics:</strong>{" "}
+              {COOP.coopTokens.rcivics}
             </p>
           </div>
 
@@ -1410,36 +1412,33 @@ export default function Season2() {
           </p>
 
           <p className="mt-6 text-sm text-white/60 leading-relaxed">
-            The token swap describes alignment, not a financial return or
-            investment promise. Token values can move and may be illiquid.
-            Read the full{" "}
-            <Link href="/risk-disclosure" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
-              risk disclosure
+            {COOP.tokensNote} Read the{" "}
+            <Link href="/disclaimers" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+              disclaimers
             </Link>{" "}
-            before participating.
+            before taking part.
           </p>
         </div>
       </AnimatedSection>
 
-      {/* ── THE FUND: what the pooled cohort adds up to ── */}
-      <AnimatedSection as="section" animation="slide-up" id="fund" className="py-20 md:py-28 px-4">
+      {/* ── THE NETWORK: what the pooled cohort adds up to ── */}
+      <AnimatedSection as="section" animation="slide-up" id="network" className="py-20 md:py-28 px-4">
         <div className="max-w-3xl mx-auto">
           <div className="text-[#d4a574] text-xs font-semibold tracking-[0.22em] uppercase mb-4">
             Why the standard matters
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
             The cohort becomes{" "}
-            <span className="italic text-[#a8e6a8]">the fund</span>
+            <span className="italic text-[#a8e6a8]">a network</span>
           </h2>
 
           <div className="space-y-6 text-white/75 text-lg leading-relaxed">
             <p>
-              An investor putting money into a single land project is investing in
-              one organ and hoping it survives out in the world on its own. An
-              organ needs other organs. It needs circulation, a nervous system, a
-              way to get fed, and other parts around it playing their roles. This
-              is what the regenerative movement has been missing to become
-              investable.
+              A land project standing alone is one organ, hoping it survives out
+              in the world on its own. An organ needs other organs. It needs
+              circulation, a nervous system, a way to get fed, and other parts
+              around it playing their roles. The regenerative movement has been
+              missing that body.
             </p>
 
             <blockquote className="border-l-2 border-[#7dd87d] bg-[#7dd87d]/8 rounded-r-lg pl-6 pr-5 py-5 my-2">
@@ -1457,9 +1456,8 @@ export default function Season2() {
               those in a future season. Today we start with land.
             </p>
             <p>
-              Every project in the cohort becomes a more investable vehicle by
-              being part of the network. That is the whole point of doing this
-              together.
+              Every project in the cohort gets stronger by being part of the
+              network. That is the whole point of doing this together.
             </p>
             <p>
               Connecting the projects also creates paths between them. Members
@@ -1471,47 +1469,40 @@ export default function Season2() {
                 Most land projects rest on one or two people carrying everything.
               </strong>{" "}
               A network is how that weight gets shared. Founders who have already
-              carried it are compensated for what they built, and the
+              carried it can be recognized for what they built, and the
               acknowledgment systems track every kind of contribution, so the
               people holding things together stop being invisible.
             </p>
             <p>
-              We're building for both sides of this. A structure that can accept
-              serious financial capital, and a way to coordinate that reduces how
-              much we depend on money in the first place, so a project does not
-              have to wait for funding to give it permission to start.
+              We're building ways to coordinate that reduce how much a project
+              depends on money in the first place, so a project does not have to
+              wait for funding to give it permission to start.
             </p>
             <p>
-              ReGen Civics is building the index fund for the ReGenerative
-              Renaissance. The projects that graduate a season and pool real value
-              are its foundation. Each one swaps tokens with the alliance, so the
-              fund holds a piece of every project and every project holds a piece
-              of the fund.
+              The cohort is the start of a cooperative network of land projects.{" "}
+              {COOP.statement}
             </p>
             <p>
-              That structure has one consequence:{" "}
+              Playing the season together has one consequence:{" "}
               <strong className="text-white font-semibold">
                 your project's strength is now everyone's, and everyone's is
                 yours.
-              </strong>{" "}
-              An investor buying into the alliance buys the whole cohort at once,
-              and every holding in it has already been chosen by a crowd that put
-              its own money, land, and labor on the line.
+              </strong>
             </p>
             <p>
               So the season runs as a mutual qualification. Thirteen teams put
               their models in front of each other, review each other's numbers,
               legal structures, and capital plans, and hold each other to the
               standard the public will apply at launch. Everyone leaves with a
-              stronger play than they came in with. The cohort leaves able to
-              raise together.
+              stronger play than they came in with. The cohort leaves ready to
+              crowdpool together.
             </p>
             <p>
               We build each cohort for range on purpose. Thirteen projects at
               different maturity levels, at different scales, taking different
               approaches to regeneration, teach each other far more than thirteen
               versions of the same project would, and they make a stronger
-              foundation to invest in.
+              network.
             </p>
           </div>
 
@@ -1520,27 +1511,24 @@ export default function Season2() {
               <Coins className="w-6 h-6 text-[#7dd87d] shrink-0 mt-0.5" />
               <div>
                 <h3 className="text-white font-semibold text-lg mb-1.5" style={display}>
-                  Your own investors can still back you
+                  Your own supporters can still back you
                 </h3>
                 <p className="text-white/75 leading-relaxed">
-                  You keep raising personal investment the way you always could.
-                  You can also earmark investment through the ReGen Civics Fund, so
-                  someone who wants to support your project specifically can do
-                  that and get exposure to a global basket of projects that all
-                  came through the same accelerator gauntlet. Your raise gets
-                  easier, because your investor stops betting on one organ.
+                  You keep raising for your project the way you always could.
+                  Crowdpooling with the cohort adds a wider circle, and the money
+                  routes stay your project's own.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/opportunity">
+            <Link href="/fund">
               <Button
                 variant="outline"
                 className="rounded-xl px-6 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
               >
-                Read the fund thesis
+                How the cooperative is being designed
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -1554,10 +1542,12 @@ export default function Season2() {
               </Button>
             </Link>
           </div>
+
+          <p className="mt-6 text-sm text-white/60 leading-relaxed">{COOP.notAnOffer}</p>
         </div>
       </AnimatedSection>
 
-      {/* Cohort constellation — a band leading into how thirteen get chosen */}
+      {/* Cohort constellation: a band leading into how thirteen get chosen */}
       <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
         <img
           src="/season2/season2-constellation.webp"
@@ -1879,7 +1869,7 @@ export default function Season2() {
         </div>
       </AnimatedSection>
 
-      {/* Threshold — an inviting pause before the practical questions */}
+      {/* Threshold: an inviting pause before the practical questions */}
       <figure className="relative w-full h-64 md:h-[26rem] overflow-hidden">
         <img
           src="/season2/threshold.webp"
@@ -1930,9 +1920,7 @@ export default function Season2() {
               required list is the baseline we look for.
             </FaqItem>
             <FaqItem q="What is crowdpooling and when does it happen?">
-              Crowdpooling is how a project gathers all nine forms of capital at
-              once: money, land, equipment, tools, expertise, labor, relationships,
-              knowledge, and time. You design your campaign during the season, and
+              {CROWDPOOLING_LINE} You design your campaign during the season, and
               every project that graduates launches together in one shared event at
               the end of it. From there the public decides which projects to pool
               into.
@@ -1951,22 +1939,18 @@ export default function Season2() {
               clarity than it came in with, and projects that need more time keep
               going with the alliance into the next season.
             </FaqItem>
-            <FaqItem q="Can our own investors still back us directly?">
-              Yes. You keep raising personal investment the way you always could.
-              You can also earmark investment through the ReGen Civics Fund, so
-              someone who wants to back your project specifically can do that and
-              get exposure to the whole basket of projects that came through the
-              accelerator. An investor backing one land project on its own is
-              backing a single organ. The network is what makes each project
-              investable.
+            <FaqItem q="Can our own supporters still back us directly?">
+              Yes. You keep raising for your project the way you always could.
+              Crowdpooling with the cohort adds a wider circle, and the money routes
+              stay your project's own.
             </FaqItem>
-            <FaqItem q="How does this connect to the index fund?">
-              ReGen Civics is building the index fund for the ReGenerative
-              Renaissance. Projects that graduate and pool real value are its
-              foundation. Each swaps tokens with the alliance, so the fund holds a
-              piece of every project and every project holds a piece of the fund.
-              An investor buying into the alliance is buying a cohort the public
-              already chose to put money, land, and labor into.
+            <FaqItem q="How does this connect to the cooperative?">
+              The cohort is the start of a cooperative network of land projects.{" "}
+              {COOP.statement}{" "}
+              <Link href="/fund" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                See how the cooperative is being designed
+              </Link>
+              .
             </FaqItem>
             <FaqItem q="Can I still apply, and when does the season start?">
               Season Two applications closed September 11th. Shortlisted projects

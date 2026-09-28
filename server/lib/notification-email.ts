@@ -58,6 +58,14 @@ export const CAMPAIGN_NOTIFICATION_TYPES = [
   "campaign_completed",
   "campaign_milestone",
   "claim_expired",
+  // Build 3 (0264): steward nudges, the contributor's "still waiting" note,
+  // the two follower notices, the close, and notes from the status link.
+  "offer_waiting",
+  "offer_still_waiting",
+  "campaign_opened",
+  "campaign_final_stretch",
+  "campaign_closed",
+  "contributor_reply",
 ] as const;
 
 export function isCampaignNotificationType(type: string): boolean {
@@ -201,6 +209,9 @@ export function resolvePrefs(raw: unknown): NotificationPrefs {
 /** Campaign notices that go to many people at once; their email waits for the digest. */
 export const FAN_OUT_CAMPAIGN_TYPES: ReadonlyArray<string> = [
   "campaign_update", "campaign_cancelled", "campaign_completed", "role_filled", "role_reopened",
+  // Build 3 (0264): every follower hears these at once, and a close reaches
+  // stewards, contributors and followers together.
+  "campaign_opened", "campaign_final_stretch", "campaign_closed",
 ];
 
 /**

@@ -27,12 +27,17 @@
  * rows plus example rows on example campaigns, each with a status; getById
  * gains progress (shared/campaignProgress.ts).
  *
+ * Version 5 (2026-09-27): campaign status gains 'closed' (the close date
+ * passed and it didn't complete); a campaign whose two halves have both
+ * landed at its close date moves to 'completed' on its own; getById and
+ * list gain closedAt and closeOutcome (server/lib/campaign-close.ts).
+ *
  * A map rather than one number, so a later surface (the feedback relay, say)
  * can version itself without bumping crowdpool. Served by `meta.contract`.
  * A hub that predates this file is, by definition, version 1 of everything.
  */
 export const HUB_CONTRACT = {
-  crowdpool: 4,
+  crowdpool: 5,
 } as const;
 
 export type HubContract = { [K in keyof typeof HUB_CONTRACT]: number };

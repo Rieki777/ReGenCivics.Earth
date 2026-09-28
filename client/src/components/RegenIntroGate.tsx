@@ -119,7 +119,7 @@ export function RegenIntroGate() {
                 ReGen is short for Regeneration
               </p>
               <p className="text-white/75 text-sm md:text-base max-w-md mx-auto mb-2">
-                We're a fund and a game for healing land and community.
+                We're an in-real-life game for healing land and community.
               </p>
               <p className="text-white/70 text-sm max-w-md mx-auto mb-8">
                 Here's a short video that was shared with us. We think they did a beautiful job sharing what the word "regeneration" means. Or jump right on in if you already know the word.

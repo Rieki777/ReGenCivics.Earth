@@ -43,7 +43,7 @@ export const schemas = {
     url: "https://regencivics.earth",
     logo: "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
     description:
-      "A fund and an in-real-life game for regenerative land projects and the Regenerative Renaissance.",
+      "An in-real-life game for regenerative land projects and the Regenerative Renaissance.",
     sameAs: ["https://twitter.com/ReGenCivics"],
   }),
 
@@ -58,9 +58,9 @@ export const schemas = {
   // investmentFund was removed 2026-08-30. It declared a FinancialProduct,
   // named after a fund that does not exist under a name nothing else used, and
   // described as open to accredited investors, to every search engine and AI
-  // crawler that loaded /fund. The fund is in formation and is not a legal
-  // entity, so there is no financial product to describe. An unformed fund
-  // gets no schema. Facts live in shared/fund.ts.
+  // crawler that loaded /fund. Since 2026-09-27 /fund describes a cooperative
+  // in design that is not a legal entity, so there is no financial product to
+  // describe, and it gets no schema. Facts live in shared/fund.ts (COOP).
 
   faqPage: (faqs: Array<{ question: string; answer: string }>) => ({
     "@context": "https://schema.org",

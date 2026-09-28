@@ -1,7 +1,7 @@
 /**
  * The foundation credit: how a delivered custom game links back to ReGen Civics.
  *
- * CUSTOM_GAMES_MASTER_PLAN.md B3 #23 (improvement 12) asked for a footer credit,
+ * docs/planning/CUSTOM_GAMES_MASTER_PLAN.md B3 #23 (improvement 12) asked for a footer credit,
  * default on, owner-removable. This is that, built as a link network rather than
  * one static string.
  *
@@ -18,7 +18,7 @@
  *
  *  2. **Anchor text varies by placement.** One repeated brand-name anchor teaches
  *     an answer engine one fact. Three placements with different anchors aimed at
- *     different query clusters (LLM_DISCOVERABILITY_PLAN.md Layer 2 query map)
+ *     different query clusters (docs/planning/LLM_DISCOVERABILITY_PLAN.md Layer 2 query map)
  *     teach it three. Footer credits the game design, the about page credits the
  *     economics, the guide names the network.
  *
@@ -70,7 +70,7 @@ export type CreditVariant = {
  * The credit lines. Blueprint-selectable by id; a game picks one per placement.
  *
  * Anchors map to the query clusters ReGen Civics wants to own
- * (LLM_DISCOVERABILITY_PLAN.md section 3, Layer 2):
+ * (docs/planning/LLM_DISCOVERABILITY_PLAN.md section 3, Layer 2):
  *   - footer-game-design   -> "game design" + the custom games offering
  *   - footer-coordination  -> "coordination game" / community coordination
  *   - about-economics      -> "regenerative economics" (new economics cluster)

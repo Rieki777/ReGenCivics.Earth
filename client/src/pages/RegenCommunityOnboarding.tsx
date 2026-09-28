@@ -10,11 +10,12 @@
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { COOP } from "@shared/fund";
 import {
   Compass,
   Users,
   Sprout,
-  TrendingUp,
+  Trees,
   Handshake,
   Sparkles,
   ArrowRight,
@@ -40,12 +41,12 @@ const ENTRY_PATHS = [
     cta: "Apply with your project",
   },
   {
-    icon: TrendingUp,
-    title: "Investors",
-    who: "Capital allocators funding real-world regeneration.",
-    blurb: "See the structure, the projects, and the returns.",
-    href: "/investor",
-    cta: "Explore the fund",
+    icon: Trees,
+    title: "The Cooperative",
+    who: "People and organizations who want to buy and steward land together.",
+    blurb: COOP.statementShort,
+    href: "/loi",
+    cta: "Tell us you're interested",
   },
   {
     icon: Handshake,
@@ -73,7 +74,7 @@ const WELCOME_QUESTS = [
 const NEXT_STEPS = [
   {
     stage: "Arrival",
-    text: "Pick your path and take one step. One invitation, not five.",
+    text: "Pick your path and take one step.",
   },
   {
     stage: "First win",
@@ -85,7 +86,7 @@ const NEXT_STEPS = [
   },
   {
     stage: "Contribution",
-    text: "Earn a role, not just a seat. Your RGVoice becomes real votes, and Quest 10 invites you to design what comes next.",
+    text: "Earn a role. Your RGVoice becomes real votes, and Quest 10 invites you to design what comes next.",
   },
 ];
 
@@ -118,9 +119,8 @@ export default function RegenCommunityOnboarding() {
             Find your place in the Regenerative Renaissance
           </h1>
           <p className="text-white/80 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            You are not starting from scratch. You are joining something already
-            in motion. However you arrived, there is a path here for you and a
-            first step you can take today.
+            You are joining something already in motion. However you arrived,
+            there is a path here for you and a first step you can take today.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
             <Link
@@ -188,6 +188,9 @@ export default function RegenCommunityOnboarding() {
               );
             })}
           </div>
+          <p className="text-white/60 text-xs leading-relaxed mt-6 max-w-2xl">
+            {COOP.notAnOffer}
+          </p>
         </section>
 
         {/* Welcome Aboard quests */}
@@ -201,7 +204,7 @@ export default function RegenCommunityOnboarding() {
           <p className="text-white/70 mb-6 max-w-2xl leading-relaxed">
             Ten small, meaningful acts root you in the community. Each takes
             fifteen to sixty minutes: a reflection shared on the forum, and a
-            note about it to your world. Every quest is worth 33 $ReGen and 0.1
+            note about it to your world. Every quest earns 33 $ReGen and 0.1
             RGVoice. Finish all ten and you earn 330 $ReGen, 1 RGVoice, and your
             first Claim.
           </p>

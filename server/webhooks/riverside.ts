@@ -1,7 +1,14 @@
 /**
- * Riverside.fm Webhook Handler
+ * Riverside.fm Webhook Handler (secondary, off unless configured)
  *
- * Receives recording-complete events from Riverside, then:
+ * Recordings reach the site through the coordination pipeline
+ * (server/jobs/coordinationPipeline.ts), which polls the public YouTube
+ * channel feed on a cron, with no third party. This webhook is the older,
+ * secondary path: every recording so far (18 of 18 on 2026-09-28) came from
+ * the pipeline and none from here. It stays in the code for a future
+ * non-YouTube source and is OFF unless RIVERSIDE_WEBHOOK_SECRET is set.
+ *
+ * When configured, it receives recording-complete events from Riverside, then:
  *  1. Stores the recording in the DB
  *  2. Sends an email summary to all active newsletter subscribers (via Resend)
  *  3. Creates a forum post for the recording (in the "episodes" category)
@@ -9,8 +16,8 @@
  * Register the webhook URL in Riverside dashboard:
  *   Settings > Integrations > Webhooks > https://regencivics.earth/api/webhooks/riverside
  *
- * Set RIVERSIDE_WEBHOOK_SECRET in Railway env vars to the secret from Riverside dashboard.
- * If the secret is not set, signature verification is skipped (dev only).
+ * Set RIVERSIDE_WEBHOOK_SECRET in Railway env vars to the secret from Riverside dashboard
+ * to turn it on. See checkRiversideAuth below.
  */
 
 import { Express, Request, Response } from "express";
@@ -93,6 +100,36 @@ function verifySignature(rawBody: string, signature: string | undefined, secret:
   }
 }
 
+/**
+ * Who may call the webhook. This endpoint creates a forum post and emails
+ * every active newsletter subscriber (finalizeRecording), so an
+ * unauthenticated caller could send a mass mail from our domain.
+ *
+ * Only a valid x-riverside-signature HMAC over the raw body passes, and only
+ * when RIVERSIDE_WEBHOOK_SECRET is set. With no secret it is off everywhere,
+ * in every NODE_ENV. It used to skip the check whenever NODE_ENV wasn't
+ * "production", and production runs with NODE_ENV unset (measured
+ * 2026-09-28), so the live site accepted unsigned calls.
+ */
+export function checkRiversideAuth(input: {
+  rawBody: string;
+  signature?: string;
+  secret: string;
+}): { status: 200 | 401 | 503; error?: string; log?: string } {
+  const { rawBody, signature, secret } = input;
+  if (!secret) {
+    return {
+      status: 503,
+      error: "Webhook not configured",
+      log: "RIVERSIDE_WEBHOOK_SECRET is not set, so the Riverside webhook is off (recordings come from the YouTube pipeline)",
+    };
+  }
+  if (!verifySignature(rawBody, signature, secret)) {
+    return { status: 401, error: "Invalid signature", log: "Invalid signature, rejected" };
+  }
+  return { status: 200 };
+}
+
 // ── Route registration ────────────────────────────────────────────────────────
 
 export function registerRiversideWebhookRoutes(app: Express) {
@@ -104,24 +141,15 @@ export function registerRiversideWebhookRoutes(app: Express) {
       // those exact bytes; JSON.stringify(req.body) would re-serialize the
       // parsed object and never match the signature.
       const rawBody: string = (req as any).rawBody ?? JSON.stringify(req.body);
-      const signature = req.headers["x-riverside-signature"] as string | undefined;
-      // Read through ENV (single validated config surface), not process.env.
-      const secret = ENV.riversideWebhookSecret;
-
-      // This endpoint can create a forum post and email every active
-      // newsletter subscriber (finalizeRecording), so an unauthenticated
-      // caller could trigger a mass mail blast. Require the shared secret in
-      // production; only allow the unsigned path in non-prod for local testing.
-      if (secret) {
-        if (!verifySignature(rawBody, signature, secret)) {
-          log.warn("Invalid signature, rejected");
-          return res.status(401).json({ error: "Invalid signature" });
-        }
-      } else if (process.env.NODE_ENV === "production") {
-        log.error("RIVERSIDE_WEBHOOK_SECRET not set in production, rejecting");
-        return res.status(503).json({ error: "Webhook not configured" });
-      } else {
-        log.warn("RIVERSIDE_WEBHOOK_SECRET not set, skipping signature check (non-prod)");
+      const auth = checkRiversideAuth({
+        rawBody,
+        signature: req.headers["x-riverside-signature"] as string | undefined,
+        // Read through ENV (single validated config surface), not process.env.
+        secret: ENV.riversideWebhookSecret,
+      });
+      if (auth.status !== 200) {
+        log.warn(auth.log ?? "Riverside webhook rejected");
+        return res.status(auth.status).json({ error: auth.error });
       }
 
       let payload: RiversideWebhookPayload;

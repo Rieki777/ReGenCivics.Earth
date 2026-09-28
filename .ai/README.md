@@ -8,7 +8,7 @@ The pattern is borrowed from `agentic-node-starter` (MIT, by Michael Gaio / Myth
 
 When you (an agent) start a fresh session, read in this order:
 
-1. `/CLAUDE.md` (repo root): project entry point + the existing token-model + skills index. Still the primary file.
+1. `/CLAUDE.md` (repo root): project entry point and index of the docs below. Still the primary file.
 2. `.ai/docs/STEERING.md`: hard constraints, non-negotiable. Load these into working memory before code.
 3. `.ai/docs/DOMAIN-LANGUAGE.md`: canonical terminology. Reach for this when a term feels ambiguous.
 4. `.ai/docs/DECISIONS.md`: ADR-style log of architectural decisions. Read when you're about to undo or revisit a prior decision.
@@ -27,9 +27,12 @@ Memory files in `~/.claude/memories/` (working style, infra quirks) take precede
 | Skill definitions (with frontmatter triggers) | `.claude/skills/<name>/SKILL.md` |
 | Working-style preferences | `~/.claude/memories/rye-working-style.md` |
 | Infra quirks / VM weirdness | `~/.claude/memories/cowork-vm-quirks.md` |
-| Project entry point + token model | `/CLAUDE.md` (repo root) |
+| Project entry point + index | `/CLAUDE.md` (repo root) |
+| Token model rules + key surfaces | `.ai/docs/STEERING.md` section 5 |
 | Rolling shipped log | `/SHIPPED_LOG.md` |
-| Active fixes batches | `/FIXES_TO_MAKE_*.md` (root, archived after 1 week) |
+| Map of specs, plans and canonical docs | `.ai/docs/PROJECT-INDEX.md` |
+| Specs, plans, audits, active prompts + fixes batches | `docs/planning/` (dated prompts and fixes docs move to `archive/` after 1 week) |
+| Developer reference (deployment, setup, design system) | `docs/` |
 
 ## What does NOT live in `.ai/`
 

@@ -27,7 +27,7 @@ const PAGE_META: Record<string, { icon: string; label: string }> = {
   "/seasons": { icon: "Sun", label: "Seasons" },
   "/opportunity": { icon: "FileText", label: "Opportunity" },
   "/fund": { icon: "TrendingUp", label: "Fund" },
-  "/loi": { icon: "PenLine", label: "Submit LOI" },
+  "/loi": { icon: "PenLine", label: "Co-op interest" },
   "/apply": { icon: "Clipboard", label: "Apply" },
   "/ally": { icon: "Handshake", label: "Alliance" },
   // Connect uses Sparkles to differentiate from Forum/Community which
@@ -49,7 +49,7 @@ const PAGE_META: Record<string, { icon: string; label: string }> = {
 // Path affinity scores (higher = more relevant to that path)
 const PATH_AFFINITY: Record<string, Record<string, number>> = {
   investor: {
-    "/opportunity": 10, "/fund": 9, "/loi": 8, "/risk-disclosure": 7,
+    "/opportunity": 10, "/fund": 9, "/loi": 8,
     "/community": 5, "/blog": 4, "/governance": 3,
   },
   land_project: {
@@ -72,7 +72,7 @@ const PATH_DEFAULTS: Record<string, NavSlot[]> = {
     { path: "/quest", icon: "Scroll", label: "Quests" },
     { path: "/opportunity", icon: "FileText", label: "Opportunity" },
     { path: "/fund", icon: "TrendingUp", label: "Fund" },
-    { path: "/loi", icon: "PenLine", label: "Submit LOI" },
+    { path: "/loi", icon: "PenLine", label: "Co-op interest" },
   ],
   land_project: [
     { path: "/quest", icon: "Scroll", label: "Quests" },

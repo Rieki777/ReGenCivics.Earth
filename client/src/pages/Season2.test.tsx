@@ -6,8 +6,9 @@
  *  - showcase framing, and selection for RANGE across maturity/scale/approach
  *  - the graduation gate sits at the END of the season, >= 9 of 13
  *  - crowdpooling is the second filter, decided by the public
- *  - graduated + pooled projects are the foundation of the index fund
- *  - the network is what makes a single project investable (organ framing)
+ *  - the cohort is the start of a cooperative network of land projects
+ *    (2026-09-27: the fund became the cooperative in design, ADR-62)
+ *  - a land project standing alone is one organ (organ framing, no fund)
  *  - 13 weeks, and not every project graduates
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -95,14 +96,17 @@ describe("Season2 page", () => {
     expect(body()).toMatch(/nine forms of capital/i);
   });
 
-  it("connects the graduated cohort to the index fund", () => {
-    expect(screen.getByRole("heading", { name: /The cohort becomes\s+the fund/i })).toBeTruthy();
-    expect(body()).toMatch(/index fund for the ReGenerative\s+Renaissance/i);
+  it("connects the graduated cohort to the cooperative network in design", () => {
+    expect(screen.getByRole("heading", { name: /The cohort becomes\s+a network/i })).toBeTruthy();
+    expect(body()).toMatch(/The cohort is the start of a cooperative network of land projects/i);
   });
 
-  it("carries the organ framing and earmarked investment", () => {
-    expect(body()).toMatch(/investing in\s+one organ/i);
-    expect(body()).toMatch(/earmark investment through the ReGen Civics Fund/i);
+  it("carries the organ framing and no fund or investment language", () => {
+    expect(body()).toMatch(/A land project standing alone is one organ/i);
+    // fund-claims-allow: the test names the retired phrases in order to assert they are gone
+    for (const banned of [/index fund/i, /earmark/i, /investable/i, /ReGen Civics Fund/i]) {
+      expect(body()).not.toMatch(banned);
+    }
   });
 
   it("names ReGen Civics as the body, with land projects as the first organs", () => {

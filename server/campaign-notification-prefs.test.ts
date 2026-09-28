@@ -55,6 +55,19 @@ describe("cadenceFor campaign types", () => {
     }
     expect(cadenceFor("new_contribution", prefs)).toBe("immediate");
   });
+  it("sends the build 3 follower and close notices by digest, and the nudges and notes at once (0264)", () => {
+    const prefs = resolvePrefs({ campaignsEmail: "immediate" });
+    for (const t of ["campaign_opened", "campaign_final_stretch", "campaign_closed"]) {
+      expect(CAMPAIGN_NOTIFICATION_TYPES as readonly string[], t).toContain(t);
+      expect(FAN_OUT_CAMPAIGN_TYPES, t).toContain(t);
+      expect(cadenceFor(t, prefs), t).toBe("daily");
+    }
+    for (const t of ["offer_waiting", "offer_still_waiting", "contributor_reply"]) {
+      expect(CAMPAIGN_NOTIFICATION_TYPES as readonly string[], t).toContain(t);
+      expect(FAN_OUT_CAMPAIGN_TYPES, t).not.toContain(t);
+      expect(cadenceFor(t, prefs), t).toBe("immediate");
+    }
+  });
   it("lets the digest carry an immediate email the cap held, once it is an hour old", () => {
     const prefs = resolvePrefs({ campaignsEmail: "immediate" });
     const now = Date.now();
@@ -152,6 +165,10 @@ describe("push for campaign notices", () => {
     expect(pushPrefKeyFor("role_filled")).toBe("campaignsPush");
     expect(isPushableType("role_reopened")).toBe(true);
     expect(pushPrefKeyFor("role_reopened")).toBe("campaignsPush");
+    for (const t of ["offer_waiting", "offer_still_waiting", "campaign_opened", "campaign_final_stretch", "campaign_closed", "contributor_reply"]) {
+      expect(isPushableType(t), t).toBe(true);
+      expect(pushPrefKeyFor(t), t).toBe("campaignsPush");
+    }
     expect(pushPrefKeyFor("mention")).toBe("mentionsPush");
     expect(pushPrefKeyFor("forum_reply")).toBe("repliesPush");
   });

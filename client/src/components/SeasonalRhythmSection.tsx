@@ -23,7 +23,7 @@ const SEASON_EMOJI: Record<RegenSeasonKey, string> = {
  */
 const SEASON_ROLES: Record<RegenSeasonKey, string[]> = {
   winter: ["The Lantern-Keeper (Facilitator)", "Game designers", "Builders"],
-  spring: ["The Rainmaker (Facilitator)", "Storytellers", "Investors"],
+  spring: ["The Rainmaker (Facilitator)", "Storytellers", "Funders"],
   summer: ["The Barn-Raiser (Facilitator)", "Hosts", "Work crews"],
   fall: ["The Hearth-Keeper (Facilitator)", "Harvesters", "Healers"],
 };

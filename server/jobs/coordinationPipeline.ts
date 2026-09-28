@@ -2,7 +2,7 @@
  * Movement Coordination Engine: Phase 2 pipeline driver.
  *
  * One pass through the steps from
- * MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md sections 5 + 6:
+ * docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md sections 5 + 6:
  *
  *   1. Poll the public YouTube channel RSS feed (no API key, no quota).
  *   2. Diff against `recordings.youtubeVideoId` for new videos.

@@ -10,13 +10,14 @@ measured its half from its own code rather than from its documentation. **Update
 2026-09-14:** the contract now carries a version number (section 10), and the
 `pledgedTotal` defect in section 4 is fixed. **Updated 2026-09-25:** contract version 4
 adds the need window and give-or-lend fields, verified money routes and the `progress`
-reading (section 10).
+reading (section 10). **Updated 2026-09-27:** the fund-channel mechanic in sections 1, 6
+and 7 is held pending counsel (v1.2); no field, procedure or version changes.
 
 ---
 
 ## 1. Who owns what
 
-**regen-civics owns the fund, the pooling, the index and the campaign.** Every pledge
+**regen-civics owns the pooling and the campaign.** Every pledge
 is created here. Every money column lives here. Every steward decision happens here.
 
 **village-os owns what a village sees.** Its crowdpool module is a read-only bridge,
@@ -60,7 +61,12 @@ null (null means the need doesn't say). Treat a missing `acceptsGift` as 1 and a
 missing `acceptsLoan` as 0. On a
 campaign: the `items` / `images` / `coverImage` / `contributorsCount` embedding, plus
 `startedAt` and `durationDays`, from which the village derives `endsAt` because the
-hub stores no end column. Since version 4 `getById` also embeds `progress`, the
+hub stores no end column. Since version 5 that date is binding: at `endsAt` the hub
+closes the campaign itself (section 10). `status` is one of the published statuses
+`active`, `funded`, `completed`, `closed` and `cancelled` (`funded` is legacy
+and reads as `completed`), and since version 5 a campaign also carries `closedAt`
+(when the close happened, or null) and `closeOutcome` (`complete`,
+`did_not_complete`, or null for a campaign still open or marked complete by hand). Since version 4 `getById` also embeds `progress`, the
 hub's own two-line reading (`shared/campaignProgress.ts`). It is informative, not
 stable: its inner shape may grow without a bump, so read only what you need and
 tolerate missing keys.
@@ -82,8 +88,9 @@ feeds the Living Tree.
 `getPartnerLinks` and `getActivity` (and `listUpdates`, `getImages`,
 `getContributions`) return `[]` for a campaign in `draft`, `pending_review` or
 `rejected`, unless the caller stewards it. `getById` already returned `null` for
-those. Published campaigns (`active`, `funded`, `completed`, `cancelled`) are
-unchanged, so no village-visible meaning moved and this is not a bump.
+those. Published campaigns (`active`, `funded`, `completed`, `closed`,
+`cancelled`) are unchanged, so no village-visible meaning moved and this is not a
+bump. (`closed` joined the published set with version 5.)
 
 **A campaign cancelled before it ever went live stays unpublished.** Also since
 2026-09-24: `cancelled` counts as published only when the campaign has a
@@ -193,37 +200,31 @@ correct.
 
 ## 6. The money half, and why it does not cross this boundary
 
-Rye specified the money mechanic on 2026-09-04. Cash does not go to a project. It goes
-to ReGen Civics and buys a share of all thirteen projects at once, which is the index
-fund. The contributor receives 80% of their contribution back as tokens to place
-across the cohort, movable until a project closes, and 20% goes to a community
-treasury. Projects give ReGen Civics a minimum 10% non-dilutive stake, after the
-community says yes. None of it is built yet.
+The fund channel is being redesigned with counsel as a member-owned cooperative; its
+terms are not set and nothing here accepts money. The money mechanic this section
+described from 2026-09-04 is held pending counsel (v1.2, 2026-09-27), and its full text
+is kept outside the repo.
 
-**The boundary sentence, agreed with the village-os session and carried in both
-documents:** crowdpool money is raised by the hub into a fund; the village side reads
-campaign progress and never sees, holds, or moves any of it.
+**The boundary sentence, as proposed to the village-os session on 2026-09-27:** the
+village side reads campaign progress and never sees, holds, or moves any money. Money
+given through a project's own route (Ma Earth, Steward) never passes through the hub
+either. The earlier wording, agreed with that session, stays in village-os's copy until
+it adopts this one.
 
 The in-kind half stays per-project, and that is the half the bridge shows.
 
-If placement ever needs a village-side read, most likely a per-project earmark total,
-the field shape goes to the village-os session **before** it ships, not after.
+If the fund channel ever needs a village-side read, the field shape goes to the
+village-os session **before** it ships.
 
 ---
 
 ## 7. A flag from the village-os session, recorded
 
-Their economics session raised this and it belongs in the record:
-
-> A contributor getting most of their money back as tokens to place across projects,
-> movable until a project closes, is a signalling instrument that looks a great deal
-> like a vote. If placement is non-binding it is fine; the day it influences an
-> allocation it is a franchise, and it will want the same treatment as anything else
-> carrying weight: say whose weight it is, snapshot it when it counts, and refuse to
-> be moved after the moment it decides.
-
-Rye has ruled placement non-binding and movable until close. The moment that changes,
-this paragraph becomes a requirement.
+Their economics session raised a flag about member signalling on the fund channel. That
+channel's terms are held pending counsel (v1.2, 2026-09-27), and the flag's full text is
+kept with them outside the repo. Its rule stands for any signal that ever decides an
+allocation: say whose weight it is, snapshot it when it counts, and refuse to be moved
+after the moment it decides.
 
 ---
 
@@ -272,7 +273,7 @@ these two repositories.
 ## 10. The contract version
 
 `meta.contract` returns one integer per public surface a village reads, for example
-`{ "crowdpool": 4 }`. It is `publicProcedure`, no auth, no database, and it accepts
+`{ "crowdpool": 5 }`. It is `publicProcedure`, no auth, no database, and it accepts
 `{}` or no input. The numbers live in `shared/hubContract.ts`; the meanings live here,
 and `server/hub-contract.test.ts` fails if the two drift.
 
@@ -293,6 +294,7 @@ it: a hub that predates the field is by definition an older contract.
 | 2 | `pledgedTotal` sums the standing statuses: accepted, fulfilled and thanked. | `b835c28e`, 2026-09-05 |
 | 3 | On a need whose `kind` is `role` and whose new `capacityUnit` field is `hours_per_week`, `quantityWanted`, `quantityClaimed` and `quantityDelivered` count hours a week (needed, accepted, delivered), not people. Every other need, and any role need still marked `count`, counts units as before. On hours needs the hub refuses an accept past `quantityWanted` and recomputes the counters from contribution rows, so claimed and delivered never pass wanted there. Existing role needs are converted by a data migration after the deploy (`drizzle/after-deploy/0251`); where people already stood on a role past its hours, the conversion raises `quantityWanted` to what stands, so the guarantee holds for converted roles too. A role contribution offered or accepted since version 3 carries its share of the role's value by hours as `estimatedValue`; a contribution converted from slots keeps the value it had. | `198213bc`, 2026-09-24 |
 | 4 | Needs gain `neededFrom`, `neededUntil` (dates, YYYY-MM-DD), `acceptsGift`, `acceptsLoan` (0 or 1) and `workMode` (`on_site`, `remote`, `either` or null). A thing the project would take on loan is now `kind` `item` with `acceptsLoan` 1, and new needs never use `kind` `loan`; legacy `loan` rows read `acceptsGift` 0 and `acceptsLoan` 1 with their custody window copied to `neededFrom` and `neededUntil`. `getPartnerLinks` returns only rows a ReGen Civics admin verified, plus example rows on example campaigns, and each row carries `status` (`verified` or `example`); an `example` row is not a live route and should not link out. Steward (`gosteward`) rows show only while ReGen Civics has loan routes switched on. An offer on a need offered since version 4 carries the need's per-slot value times the slots as `estimatedValue`; a freeform offer keeps the contributor's own figure. `getById` gains `progress`, the hub's own two-line reading (in-kind confirmed against the in-kind ask, money through verified routes against the money ask); `pledgedTotal` and `totalValue` keep their meanings. | `999fbbaf`, 2026-09-25 |
+| 5 | Campaign `status` gains `closed`: the close date (`startedAt` plus `durationDays`) passed and the campaign didn't complete, because its two halves had not both landed. Read it as ended, like `completed` and `cancelled`; it takes no offers. A campaign whose two halves have both landed at its close date now moves to `completed` on its own, with `completedAt` set then. `getById` and `list` gain `closedAt` (when the close happened) and `closeOutcome` (`complete`, `did_not_complete`, or null for a campaign still open or marked complete by hand). At a close that didn't complete, offers still waiting move to `cancelled` and accepted offers that had not started move to `released`; delivered rows are untouched, so `pledgedTotal` keeps its meaning. Nothing about needs changes. | `c00a0500`, 2026-09-27 |
 
 Ruled by Rye on 2026-09-14, relayed by the village-os economics session: "add a
 version number, not that the history matters right now as nobody is running it, but

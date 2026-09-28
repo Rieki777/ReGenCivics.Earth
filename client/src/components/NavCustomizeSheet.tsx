@@ -22,7 +22,7 @@ const AVAILABLE_PAGES = [
   { path: "/schedule", icon: "Calendar", label: "Schedule", category: "Resources" },
   { path: "/blog", icon: "BookOpen", label: "Blog", category: "Resources" },
   { path: "/governance", icon: "Vote", label: "Governance", category: "Resources" },
-  { path: "/loi", icon: "PenLine", label: "Submit LOI", category: "Actions" },
+  { path: "/loi", icon: "PenLine", label: "Co-op interest", category: "Actions" },
   { path: "/apply", icon: "Clipboard", label: "Apply", category: "Actions" },
   { path: "/map", icon: "Globe", label: "Map", category: "Resources" },
   { path: "/", icon: "Compass", label: "Explore", category: "Resources" },

@@ -21,6 +21,10 @@ import type { Server } from "node:http";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { serveStatic } from "./_core/vite";
+import { COOP } from "../shared/fund";
+import { SEASON_ONE } from "../shared/regenYear";
+// @ts-expect-error plain .mjs module, typed loosely on purpose
+import { findRetired, findG5, findTraction } from "../scripts/check-fund-claims.mjs";
 
 // serveStatic resolves the build directory from NODE_ENV: "development" looks
 // for <repo>/dist/public, anything else for <__dirname>/public, which only
@@ -69,15 +73,54 @@ function agentVisibleText(html: string): string {
     .trim();
 }
 
+/**
+ * Only the injected crawler block: the prose crawler-content.ts writes from
+ * source. The rest of the response is the built shell, which can lag the
+ * source until the next build, so the claims checks below read this part.
+ */
+function crawlerBlock(html: string): string {
+  const m = html.match(/<div id="__crawler_content__"[^>]*>([\s\S]*?)<\/div>/);
+  return m ? m[1] : "";
+}
+
+/**
+ * The Season One (2022) record from shared/regenYear.ts may appear (Phase 0
+ * spec). It renders as "43 land projects applied", which the traction rule
+ * would otherwise flag; every other count stays banned.
+ */
+const SEASON_ONE_RECORD = new Set(
+  [SEASON_ONE.applied, SEASON_ONE.presented, SEASON_ONE.selected].map((n) => `${n} land projects`),
+);
+
+/**
+ * The gate's own checks (scripts/check-fund-claims.mjs) over what a crawler
+ * actually receives. Search engines and AI assistants read this block and
+ * repeat it; until 2026-09-27 it told them the fund targeted a return. The
+ * source scan cannot see numbers that arrive through interpolation, so the
+ * traction rule runs on the rendered HTML here.
+ */
+function expectNoFundClaims(route: string, block: string) {
+  expect(block.length, `${route}: empty crawler block`).toBeGreaterThan(200);
+  expect(findRetired(`${route}.html`, block), route).toEqual([]);
+  expect(findG5(`${route}.html`, block), route).toEqual([]);
+  const traction = findTraction(`${route}.html`, block).filter(
+    (v: { match: string }) => !SEASON_ONE_RECORD.has(v.match),
+  );
+  expect(traction, route).toEqual([]);
+}
+
 describe.skipIf(!built)("crawler content over HTTP", () => {
   it("serves the homepage prose to a client that runs no JavaScript", async () => {
     const html = await (await fetch(`${base}/`)).text();
-    // The specific sentence, not just "some text": a generic length assertion
+    // The specific sentences, not just "some text": a generic length assertion
     // would pass on the nav bar alone once someone server-renders a header.
-    expect(html).toContain("ReGen Civics is a fund in formation");
+    expect(html).toContain("ReGen Civics builds the tools and runs the in-real-life game");
+    expect(html).toContain(COOP.statement);
+    expect(html).toContain(COOP.notAnOffer);
     expect(html).toContain('id="__crawler_content__"');
     expect(html).toContain("<noscript>");
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
+    expectNoFundClaims("/", crawlerBlock(html));
   });
 
   it("still serves the routes that already worked", async () => {
@@ -85,8 +128,29 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     // the control: if this breaks, the catch-all itself regressed rather than
     // the homepage specifically.
     const html = await (await fetch(`${base}/opportunity`)).text();
-    expect(html).toContain("The investment opportunity");
+    expect(html).toContain(`Help design the ${COOP.name}`);
+    expect(html).toContain(COOP.statement);
+    expect(html).toContain(COOP.designPrinciplesNote);
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
+    expectNoFundClaims("/opportunity", crawlerBlock(html));
+  });
+
+  it("serves the cooperative, in COOP's words, at /fund and /loi", async () => {
+    for (const route of ["/fund", "/loi"]) {
+      const html = await (await fetch(`${base}${route}`)).text();
+      expect(html, route).toContain(COOP.statement);
+      expect(html, route).toContain(COOP.notAnOffer);
+      expectNoFundClaims(route, crawlerBlock(html));
+    }
+  });
+
+  it("keeps fund, return and traction language out of the token, governance, glossary and land prose", async () => {
+    // Every word of these blocks is written in crawler-content.ts itself, so a
+    // failure here is always a sentence someone wrote there.
+    for (const route of ["/land", "/tokenomics", "/governance", "/glossary", "/game", "/assembly"]) {
+      const html = await (await fetch(`${base}${route}`)).text();
+      expectNoFundClaims(route, crawlerBlock(html));
+    }
   });
 
   it("serves /schedule, which was blank to agents until 2026-09-24", async () => {

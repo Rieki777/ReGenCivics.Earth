@@ -239,7 +239,7 @@ truth for all quest data:
    table (Section 2 for Rites, Section 3 for Seasonal, Section 4 for Epic).
    Update any carousel placement notes.
 
-3. **QUEST_PROGRESSION_SPEC.md** - If the quest has special unlock conditions
+3. **docs/planning/QUEST_PROGRESSION_SPEC.md** - If the quest has special unlock conditions
    (routine, epic, etc.), verify the progression chain still matches. Update
    any unlock rules that reference specific quest IDs.
 

@@ -52,11 +52,18 @@ interface PageWrapperProps {
   className?: string;
 }
 
+// Segments whose URL outlived the page's name. /fund kept its address when the
+// fund became the cooperative in design (ADR-62), so its crumb reads the page
+// name, matching the SEO breadcrumbs in Fund.tsx.
+const SEGMENT_LABELS: Record<string, string> = {
+  fund: "The Cooperative",
+};
+
 export function PageWrapper({ children, className }: PageWrapperProps) {
   const [mounted, setMounted] = useState(false);
   const [location] = useLocation();
   const crumbs = location === "/" ? [] : location.split("/").filter(Boolean).map((seg, i, arr) => ({
-    label: seg.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+    label: SEGMENT_LABELS[seg] ?? seg.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
     href: i < arr.length - 1 ? "/" + arr.slice(0, i + 1).join("/") : undefined,
   }));
 

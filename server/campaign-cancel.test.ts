@@ -217,7 +217,7 @@ describe("cancelling", () => {
     expect((await row(f.ids.anon1)).cancelNoticedAt).not.toBeNull();
 
     const ok = vi.fn().mockResolvedValue({ id: "sent-later" });
-    const retry = await retryPendingCancellationEmails({ sendEmail: ok as any });
+    const retry = await retryPendingCancellationEmails({ sendEmail: ok as any, onlyCampaignIds: [f.campaignId] });
     expect(retry.sent).toBeGreaterThanOrEqual(1);
     const toSam = ok.mock.calls.filter((c) => String(c[0].to).toLowerCase() === "sam.anon@example.com");
     expect(toSam).toHaveLength(1);
@@ -329,6 +329,49 @@ describe("the review fixes", () => {
       expect(c[0].html).toContain("Test Cancel Admin cancels from Test Cancel Admin cancels has been cancelled.");
       expect(c[0].html).not.toContain("The stewards of");
     }
+  });
+});
+
+describe("claim, then send (build spec 2026-09-27, section 9.5)", () => {
+  it.skipIf(skipIfNoDb)("runs at once email each address once, and a held send hands its rows back", async () => {
+    const f = await busyCampaign("Claim first");
+    // The cancel's own run is held back by the hourly cap, so every row is still owed.
+    const bg = collector();
+    await cancelCampaign({ campaignId: f.campaignId, actor: ctxFor(OWNER).user }, { sendEmail: vi.fn().mockResolvedValue({ id: null }) as any, background: bg.background });
+    await bg.settle();
+    expect((await row(f.ids.anonOther)).cancelNoticedAt).toBeNull();
+    const slow = (id: string | null) => vi.fn().mockImplementation(async () => {
+      await new Promise((r) => setTimeout(r, 30));
+      return { id };
+    });
+    const a = slow("a");
+    const b = slow("b");
+    const c = slow("c");
+    await Promise.all([
+      sendPendingCancellationEmails(f.campaignId, { sendEmail: a as any }),
+      sendPendingCancellationEmails(f.campaignId, { sendEmail: b as any }),
+      retryPendingCancellationEmails({ sendEmail: c as any, onlyCampaignIds: [f.campaignId] }),
+    ]);
+    const to = [...a.mock.calls, ...b.mock.calls, ...c.mock.calls].map((call) => String(call[0].to).toLowerCase()).sort();
+    expect(to).toEqual(["pat.anon@example.com", "sam.anon@example.com"]);
+    // The cancellation wording is unchanged through the generalised run.
+    const mail = [...a.mock.calls, ...b.mock.calls, ...c.mock.calls][0][0];
+    expect(mail.subject).toBe("Test Cancel Claim first has been cancelled");
+    expect(mail.template).toBe("campaign_cancelled");
+  });
+
+  it.skipIf(skipIfNoDb)("a send that throws is handed back too, and goes on the next run", async () => {
+    const f = await busyCampaign("Claim throws");
+    const bg = collector();
+    await cancelCampaign({ campaignId: f.campaignId, actor: ctxFor(OWNER).user }, { sendEmail: vi.fn().mockResolvedValue({ id: null }) as any, background: bg.background });
+    await bg.settle();
+    const boom = vi.fn().mockRejectedValue(new Error("provider down"));
+    expect(await sendPendingCancellationEmails(f.campaignId, { sendEmail: boom as any })).toEqual({ found: 2, sent: 0 });
+    expect((await row(f.ids.anonOther)).cancelNoticedAt).toBeNull();
+    expect((await row(f.ids.anon1)).cancelNoticedAt).toBeNull();
+    const ok = vi.fn().mockResolvedValue({ id: "ok" });
+    expect(await sendPendingCancellationEmails(f.campaignId, { sendEmail: ok as any })).toEqual({ found: 2, sent: 2 });
+    expect((await row(f.ids.anon1)).cancelNoticedAt).not.toBeNull();
   });
 });
 

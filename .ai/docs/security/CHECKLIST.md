@@ -18,7 +18,7 @@ Format: each item has a status (`ok` / `open` / `n/a`) and a date of last check.
 - [x] OAuth state validation rejects `error=auth_failed` paths to prevent loop. (2026-04-25: ok per commit `cf1fb25`)
 - [x] OAuth `state` signed against login CSRF. (2026-06-30: DONE — `state` is now HMAC-SHA256 signed with `JWT_SECRET` carrying a nonce + issued-at, verified constant-time with a 15-min TTL on every Google/Apple/GitHub callback. `oauth.ts:signState/verifyState`. Follow-up: browser-bound nonce cookie (blocked on Apple cross-site `form_post` + Safari SameSite=none).)
 - [x] `auth.me` is publicProcedure (intentional). `auth.logout` is publicProcedure (allows recovery). (2026-04-25: ok)
-- [ ] Magic-link rate limit: not yet bounded per-email. (2026-04-25: open)
+- [x] Magic-link rate limit: 3 links per email per 15 minutes, keyed by a SHA-256 of the address, 429 with Retry-After, on top of 5 a minute per IP. (2026-09-27: DONE, `server/auth.email-limit.test.ts`. See OWASP-TOP10 A07, which also records the per-IP limiter key fix.)
 - [ ] Session revocation: only via cookie expiry today. No global "log out everywhere" flow. (2026-04-25: open, not blocking)
 - [x] Redis-backed CSRF token store + webhook-failure rate-limit buckets. (2026-07-01: DONE — confirmed live, `/health` shows `cache:connected`. Required both the missing `initCacheOnStartup()` wiring and a Redis container redeploy on Railway. See OWASP-TOP10 A07.)
 

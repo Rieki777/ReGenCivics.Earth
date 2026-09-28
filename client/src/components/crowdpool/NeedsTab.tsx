@@ -153,7 +153,12 @@ export function NeedsTab({
   /** campaigns.listOpenNeeds. */
   data: OpenNeedsResult | undefined;
   isLoading?: boolean;
-  /** The season waitlist form, shown when no real campaign is open yet. */
+  /**
+   * The season Follow (FollowControl in season mode, carrying
+   * id="get-notified"), shown when no real campaign is open yet. The page
+   * passes it in so exactly one sits on the page (build spec 2026-09-27,
+   * section 12.5).
+   */
   notifyForm?: ReactNode;
 }) {
   const [filter, setFilter] = useState<NeedsFilter>(EMPTY_FILTER);

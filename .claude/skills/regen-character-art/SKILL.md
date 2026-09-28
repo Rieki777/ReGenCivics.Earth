@@ -4,7 +4,7 @@ description: >
   Generate or regenerate ReGen Civics character illustrations (the 13
   stewardship roles + any new ones added each season). Wraps the
   nano-banana-pro skill with the canonical solarpunk-elven-jedi style
-  guide from CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md. Produces
+  guide from docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md. Produces
   card portraits and full scenes that match the existing 13 in style,
   palette, and energy. Triggers on: "character art", "role illustration",
   "season character", "regenerate the [role] art", "new role artwork",
@@ -143,7 +143,7 @@ diversity matrix, not duplicates.
 
 ## When generating a NEW role
 
-The 13 canonical roles are in `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md`.
+The 13 canonical roles are in `docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md`.
 Before generating a new one:
 
 1. **Read the canonical spec.** All 13 entries. Note the slug, tagline,
@@ -168,7 +168,7 @@ When Rye says "the Gardener art doesn't feel right" or similar:
 
 1. **Find the existing files.** `client/public/images/roles/[slug]-card.webp`
    and `[slug]-scene.webp`.
-2. **Read the canonical entry** in CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md.
+2. **Read the canonical entry** in docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md.
 3. **Ask Rye** what specifically isn't working. Pose? Color palette?
    Setting? Tone? (One AskUserQuestion call, max 2 questions.)
 4. **Adjust the prompt** by changing the specific element while keeping
@@ -220,7 +220,7 @@ When the skill completes, return:
 ## Cross-references
 
 - `nano-banana-pro` for the actual image generation
-- `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` for the canonical
+- `docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` for the canonical
   style guide and the 13 existing role specs
 - `regen-seasonal-roles` skill for evolving the role roster across
   seasons

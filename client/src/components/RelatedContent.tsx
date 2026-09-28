@@ -4,6 +4,12 @@
  */
 import { Link } from "wouter";
 import { ArrowRight, BookOpen } from "lucide-react";
+import { COOP } from "@shared/fund";
+
+// The first sentence of the crowdpool lane's binding wording (Phase 0 spec),
+// short enough for a two-line card.
+const CROWDPOOLING_LINE =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money.";
 
 interface RelatedPage {
   href: string;
@@ -100,26 +106,26 @@ export function RelatedContent({ pages, blog, className = "" }: RelatedContentPr
 
 // Pre-configured related content for each major page
 export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: RelatedBlog }> = {
+  // The fund and land entries used to end on two investment blog posts. They
+  // now point at the cooperative pages instead (Phase 0, 2026-09-27).
   fund: {
     pages: [
-      { href: "/opportunity", title: "Investment Thesis", description: "Read the full investment memorandum and fund structure details." },
-      { href: "/land", title: "Land Projects", description: "Explore the regenerative land projects in our portfolio pipeline." },
+      { href: "/opportunity", title: "Help Design the Cooperative", description: "How the cooperative is being designed, and the principles we are working from." },
+      { href: "/land", title: "Land Projects", description: "Meet the regenerative land projects in the ReGen Civics seasons." },
       { href: "/showcase", title: "Project Showcase", description: "See approved projects and their progress." },
     ],
-    blog: { slug: "what-makes-land-project-good-investment", title: "What Makes a Land Project a Good Investment", excerpt: "The four pillars we evaluate when selecting regenerative land projects for the fund." },
   },
   land: {
     pages: [
-      { href: "/fund", title: "For Investors", description: "Learn how the fund supports land projects with capital and resources." },
+      { href: "/fund", title: "The Cooperative", description: "A member-owned cooperative for land, now in design." },
       { href: "/game", title: "Play the Game", description: "Earn tokens and complete quests to support land projects." },
       { href: "/showcase", title: "Project Showcase", description: "See approved projects and their regenerative impact." },
     ],
-    blog: { slug: "getting-investment-through-regen-civics", title: "Getting Investment Into Your Land Project", excerpt: "A step-by-step guide to accessing capital through the ReGen Civics fund." },
   },
   ally: {
     pages: [
       { href: "/land", title: "Land Projects", description: "See the regenerative land projects your organization can support." },
-      { href: "/crowd-pooling", title: "Crowd Pooling", description: "Contribute resources and expertise to active campaigns." },
+      { href: "/crowd-pooling", title: "Crowd Pooling", description: CROWDPOOLING_LINE },
       { href: "/team", title: "Our Team", description: "Meet the people building the ReGenerative Renaissance." },
     ],
     blog: { slug: "what-if-organizations-met-needs", title: "What If Organizations Met Human Needs?", excerpt: "Reimagining organizational design through the lens of regenerative systems." },
@@ -127,15 +133,15 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   game: {
     pages: [
       { href: "/quest", title: "Start Questing", description: "Browse available quests and start earning tokens today." },
-      { href: "/crowd-pooling", title: "Crowd Pooling", description: "Pool resources with other players to fund regenerative projects." },
+      { href: "/crowd-pooling", title: "Crowd Pooling", description: CROWDPOOLING_LINE },
       { href: "/calculator", title: "Contribution Calculator", description: "Measure your full value across 9 forms of capital." },
     ],
     blog: { slug: "introducing-games-and-quests", title: "Introducing Games and Quests", excerpt: "Play your way to regeneration with our infinite game mechanics." },
   },
   opportunity: {
     pages: [
-      { href: "/fund", title: "Fund Overview", description: "See the full fund structure, treasury, and impact metrics." },
-      { href: "/risk-disclosure", title: "Risk Disclosure", description: "Review our full risk disclosures before investing." },
+      { href: "/fund", title: "The Cooperative", description: "What the cooperative is and where it stands today." },
+      { href: "/loi", title: "Tell Us You're Interested", description: COOP.interestPromise },
       { href: "/schedule", title: "Book a Session", description: "Join an open session to ask questions and meet the team." },
     ],
     blog: { slug: "what-makes-regen-civics-different", title: "What Makes ReGen Civics Different", excerpt: "7 unique features that set our regenerative platform apart." },

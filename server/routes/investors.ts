@@ -140,18 +140,14 @@ export const investorInquiriesRouter = router({
         }
       }
 
-      // Auto-send investor welcome email with deck + /opportunity link
+      // One reply: the cooperative note (server/_core/email.ts). It used to be a
+      // deck link plus a Day 3 / 7 / 14 / 30 drip that described the fund's
+      // proposed terms, with no unsubscribe link or postal address. The drip
+      // was stopped on 2026-09-27 (Phase 0): nothing is scheduled here any more,
+      // and the stated investment range is never echoed back.
       try {
         const { sendEmail, emailTemplates: emailTpl } = await import("../_core/email");
-        const rangeLabelsForEmail: Record<string, string> = {
-          "under_250k": "Under $250K (Legacy)",
-          "250k_1m": "$250K - $1M",
-          "1m_5m": "$1M - $5M",
-          "5m_10m": "$5M - $10M",
-          "over_10m": "Over $10M",
-        };
-        const investorEmailRange = input.investmentRange ? rangeLabelsForEmail[input.investmentRange] || "Not specified" : "Not specified";
-        const welcomeEmail = emailTpl.investorWelcome(input.fullName, investorEmailRange);
+        const welcomeEmail = emailTpl.investorWelcome(input.fullName);
         await sendEmail({
           to: input.email,
           subject: welcomeEmail.subject,
@@ -159,31 +155,6 @@ export const investorInquiriesRouter = router({
         });
       } catch (emailErr) {
         console.warn("Failed to send investor welcome email:", emailErr);
-      }
-
-      // Schedule investor drip sequence (Day 3, 7, 14, 30)
-      try {
-        const { emailTemplates: dripTpl } = await import("../_core/email");
-        const now = Date.now();
-        const drip = [
-          { days: 3,  template: dripTpl.investorDripDay3(input.fullName) },
-          { days: 7,  template: dripTpl.investorDripDay7(input.fullName) },
-          { days: 14, template: dripTpl.investorDripDay14(input.fullName) },
-          { days: 30, template: dripTpl.investorDripDay30(input.fullName) },
-        ];
-        for (const { days, template } of drip) {
-          const scheduledFor = new Date(now + days * 24 * 60 * 60 * 1000);
-          await db.createScheduledEmail({
-            recipientEmail: input.email,
-            recipientName: input.fullName,
-            subject: template.subject,
-            body: template.html,
-            inquiryType: "investor",
-            scheduledFor,
-          });
-        }
-      } catch (dripErr) {
-        console.warn("Failed to schedule investor drip emails:", dripErr);
       }
 
       // Notify owner of new investor inquiry
@@ -524,39 +495,6 @@ export const generalInquiriesRouter = router({
     }),
 });
 
-/**
- * Has this address been through the investor qualification step at /investor?
- *
- * This is the whole of the accreditation gate, and it is deliberately on the
- * server. Until 2026-08-30 there was no gate anywhere: /opportunity dropped its
- * redirect on 2026-04-27 (b8563c8) because it crashed on mobile, /loi dropped
- * the same redirect in the same period, and each page's comment named the other
- * as where the gate now lived. Neither did, and this file had no accreditation
- * check of any kind, so anyone could post a pledge of any size.
- *
- * Rye's ruling, 2026-08-30: verification belongs before the pledge rather than
- * before the page. The exemption the fund is likely to rely on (named once, in
- * FUND.exemptionIntent, and nowhere else) is one that permits general
- * solicitation, so a publicly readable /opportunity is not the defect. An
- * unqualified pledge is.
- *
- * Matching on email is an existence oracle: a caller can learn whether an
- * address has an inquiry. It is behind the same rate limit as submission, and
- * the alternative is refusing without saying why, which strands the honest
- * majority. Noted rather than hidden.
- */
-async function hasInvestorInquiry(email: string): Promise<boolean> {
-  const dbConn = await getDb();
-  if (!dbConn) return false;
-  const { investorInquiries: tbl } = await import("../../drizzle/schema");
-  const { eq, sql: raw } = await import("drizzle-orm");
-  const rows = await dbConn
-    .select({ id: tbl.id })
-    .from(tbl)
-    .where(eq(raw`lower(${tbl.email})`, email.trim().toLowerCase()))
-    .limit(1);
-  return rows.length > 0;
-}
 
 export const loiRouter = router({
   /**
@@ -600,90 +538,20 @@ export const loiRouter = router({
     return rows[0] ?? null;
   }),
 
-  // Submit LOI (public - no login required, but qualification IS required)
+  // Retired 2026-09-27 (ADR-62). This took a pledge amount against a proposed
+  // minimum for a fund that no longer exists. The cooperative in design takes no
+  // pledges; interest goes through coop.submitInterest (server/routes/coop.ts).
+  // Kept as a stub so an old client gets a plain message instead of a 404, and
+  // so nothing can store a pledge again.
   submit: publicProcedure
-    .input(z.object({
-      fullName: z.string().min(1),
-      email: z.string().email(),
-      phone: z.string().optional(),
-      organization: z.string().optional(),
-      role: z.string().optional(),
-      pledgeAmount: z.number().min(1),
-      investorType: z.enum(["individual", "family_office", "foundation", "impact_fund", "institutional", "other"]),
-      investmentTimeline: z.enum(["immediate", "3_months", "6_months", "1_year", "flexible"]).default("flexible"),
-      geographicPreference: z.string().optional(),
-      sectorInterests: z.string().optional(),
-      motivations: z.string().optional(),
-      questionsForTeam: z.string().optional(),
-      additionalNotes: z.string().optional(),
-      referralSource: z.string().optional(),
-    }))
-    .mutation(async ({ ctx, input }) => {
+    .input(z.object({}).passthrough())
+    .mutation(async ({ ctx }) => {
       await checkRateLimit(ctx, "letter_of_intent");
-
-      // The gate. A pledge is the point where accreditation actually matters,
-      // so qualification is checked here rather than at the page boundary.
-      if (!(await hasInvestorInquiry(input.email))) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message:
-            "Before a Letter of Intent we ask you to complete the investor form at /investor. " +
-            "It takes a couple of minutes and it pre-fills this page, so nothing is typed twice.",
-        });
-      }
-
-      const loiId = await db.createLetterOfIntent({
-        ...input,
-        phone: input.phone || null,
-        organization: input.organization || null,
-        role: input.role || null,
-        geographicPreference: input.geographicPreference || null,
-        sectorInterests: input.sectorInterests || null,
-        motivations: input.motivations || null,
-        questionsForTeam: input.questionsForTeam || null,
-        additionalNotes: input.additionalNotes || null,
-        referralSource: input.referralSource || null,
-        status: "pending",
-        // Was hardcoded null, so a signed-in investor's pledge was an orphan row.
-        userId: ctx.user?.id ?? null,
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message:
+          "The letter of intent form is retired. To tell us you're interested in the cooperative, use the form at /loi.",
       });
-
-      // Send confirmation email to the investor
-      try {
-        const { sendEmail, toAbsoluteUrl } = await import("../_core/email");
-        await sendEmail({
-          to: input.email,
-          subject: "Your Letter of Intent  -  ReGen Civics",
-          html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#1a472a">
-<h2 style="color:#1a472a">Thank you, ${input.fullName}!</h2>
-<p>We've received your Letter of Intent for <strong>$${input.pledgeAmount.toLocaleString()}</strong>. We're thrilled to have you as a potential capital partner in the regenerative transition.</p>
-<p><strong>What happens next:</strong></p>
-<ul>
-<li>We'll review your LOI and reach out within 2–3 business days.</li>
-<li>No capital moves until we reach &gt;$20M in committed LOIs  -  your pledge is non-binding until then.</li>
-</ul>
-<h3 style="color:#1a472a">Keep the momentum going</h3>
-<p>📄 <a href="${toAbsoluteUrl('/opportunity')}" style="color:#4a7c59">Read the full investment opportunity</a></p>
-<p>📅 <a href="https://calendly.com/rieki-cordon/30min" style="color:#4a7c59">Schedule a discovery call with Rieki</a></p>
-<p style="color:#666;font-size:12px;margin-top:32px">Questions? Reply to this email or <a href="${toAbsoluteUrl('/connect')}" style="color:#4a7c59">reach us through our investor contact form</a>.</p>
-<p style="color:#666;font-size:12px">ReGen Civics  -  Building the coordination layer for the regenerative transition.</p>
-</div>`,
-        });
-      } catch (e) {
-        console.warn("Failed to send LOI confirmation email:", e);
-      }
-
-      // Notify owner of new LOI (respects notification preferences)
-      try {
-        await notifyIfEnabled("loiSubmissions", {
-          title: "New Letter of Intent Submitted",
-          content: `${input.fullName} (${input.email}) has submitted an LOI for $${input.pledgeAmount.toLocaleString()}. Investor type: ${input.investorType}.`,
-        });
-      } catch (e) {
-        console.warn("Failed to send notification:", e);
-      }
-
-      return { id: loiId, success: true };
     }),
 
   // Get all LOIs (admin only)

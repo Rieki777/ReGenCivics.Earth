@@ -11,7 +11,7 @@ export const nineFormsOfCapital: LearnArticle = {
   author: "Rye (Rieki Cordon)",
   authorTitle: "Founder, ReGen Civics",
   published: "2026-08-01",
-  updated: "2026-08-01",
+  updated: "2026-09-27",
   sections: [
     {
       heading: "The eight we started from",
@@ -68,7 +68,7 @@ export const nineFormsOfCapital: LearnArticle = {
             "Infrastructure",
             "Yes",
           ],
-          ["Financial", "Money, investment, grants, liquidity", "Fundraising", "Yes"],
+          ["Financial", "Money, grants, loans, savings", "Fundraising", "Yes"],
           [
             "Living",
             "Land, soil, water, ecosystems, biodiversity",

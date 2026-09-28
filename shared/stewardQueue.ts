@@ -191,13 +191,21 @@ export function hoursDialogNumbers(
 /**
  * Added to the release and hours dialogs when the role is filled: freeing
  * hours on it sends a role_reopened notice (server/lib/campaign-notify.ts) to
- * the people still waiting on it.
+ * the people still waiting on it and, since Rye's ruling of 2026-09-27
+ * (ROLE_REOPENED_REACHES_DECLINED on), to the people the stewards didn't
+ * pick. The dialog says so before the steward acts.
+ *
+ * The notice rides the notification spine, so only people with an account
+ * get it; people without one keep their three direct emails and hear
+ * nothing. The lines say so, so a steward knows whom to tell themselves
+ * (review 2026-09-28).
  */
 export const REOPEN_NOTICE_IF_OPENED =
-  "If this opens the role, people still waiting on it hear that it has opened up.";
+  "If this opens the role again, people with an account who are waiting on it or weren't picked hear that it has opened up. Anyone without an account won't hear, so let them know yourself.";
 
 /** The same, for raising the hours a filled role needs, which always opens it. */
-export const REOPEN_NOTICE_ON_RAISE = "People still waiting on this role hear that it has opened up.";
+export const REOPEN_NOTICE_ON_RAISE =
+  "People with an account who are waiting on this role or weren't picked hear that it has opened up. Anyone without an account won't hear, so let them know yourself.";
 
 export function stewardActionDescription(args: {
   action: "accept" | "reject" | "deliver" | "thanks" | "release" | "hours" | "returned";

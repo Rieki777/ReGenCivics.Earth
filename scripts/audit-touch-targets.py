@@ -7,7 +7,7 @@ The bug class: a raw <button className="h-6 w-6"> is a 24px target. Today it
 is rescued by two global rules in client/src/index.css (the max-width:767px
 min-height:44px blanket, and the pointer:coarse ::after hit-area expander).
 The blanket rule is transitional and gets deleted in Phase 5 of
-MOBILE_FIRST_MASTER_PLAN.md, so new code must carry its own floor. The base
+docs/planning/MOBILE_FIRST_MASTER_PLAN.md, so new code must carry its own floor. The base
 ui components (components/ui/button.tsx and friends) already do, via
 pointer-coarse: utilities baked into their variants. This gate keeps raw
 elements honest.

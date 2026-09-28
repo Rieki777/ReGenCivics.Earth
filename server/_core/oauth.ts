@@ -1,5 +1,6 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { FUND } from "@shared/fund";
+import { COOP } from "@shared/fund";
+import { CROWDPOOLING_WORDING } from "../lib/content-canon";
 import { APPLICATIONS_STATUS } from "@shared/applicationWindow";
 import { SEASON_ONE } from "@shared/regenYear";
 import type { Express, Request, Response } from "express";
@@ -12,6 +13,47 @@ import { nanoid } from "nanoid";
 import { sendEmail } from "./email";
 import { linkPendingMembersByEmail } from "../routes/roleHolders";
 import { normalizeReturnTo } from "@shared/oauthReturnTo";
+import { checkKeyedLimit } from "../rate-limit";
+
+/**
+ * Sign-in links per email address (ruling 2026-09-27: about 3 every 15
+ * minutes), on top of the per-IP limit in server/_core/index.ts. It cannot
+ * count email_tokens rows: createEmailToken deletes the earlier unused tokens
+ * for an address, so the table never holds more than one live row per email.
+ */
+export const EMAIL_LINK_LIMIT_MAX = 3;
+export const EMAIL_LINK_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+
+/** The 429 message when an address has had its sign-in links for now. */
+export const EMAIL_LINK_LIMIT = (m: number) =>
+  `We've sent 3 sign-in links to this email in the last 15 minutes. Check your inbox and spam folder for the newest one, or try again in about ${m} minute${m === 1 ? "" : "s"}.`;
+
+/**
+ * The inbox an address lands in, for counting only. Case and spaces never
+ * made a new address, and neither do a "+tag" (most providers deliver
+ * name+anything to name) or the dots in a Gmail address (Gmail ignores
+ * them, and googlemail.com is the same inbox). Without this, name+1@,
+ * name+2@ and n.ame@gmail.com each got three fresh links, all to one
+ * mailbox (security review 2026-09-28). The link still goes to the address
+ * as typed; this only decides what counts as the same inbox.
+ */
+export function canonicalInboxForLimit(email: string): string {
+  const lower = email.trim().toLowerCase();
+  const at = lower.lastIndexOf("@");
+  if (at <= 0 || at === lower.length - 1) return lower;
+  let local = lower.slice(0, at);
+  let domain = lower.slice(at + 1);
+  const plus = local.indexOf("+");
+  if (plus > 0) local = local.slice(0, plus);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") local = local.replace(/\./g, "") || local;
+  return `${local}@${domain}`;
+}
+
+/** The limiter key for an address: a SHA-256 of its inbox, so no address sits in Redis or a log. */
+export function emailLinkLimitKey(email: string): string {
+  return `authmail:${crypto.createHash("sha256").update(canonicalInboxForLimit(email)).digest("hex")}`;
+}
 
 /** The longest sign-in waits for the contribution link before redirecting. */
 export const CONTRIBUTION_LINK_WAIT_MS = 3000;
@@ -56,7 +98,12 @@ async function linkContributionsBeforeRedirect(
 }
 
 // ─── Chat System Prompt (shared with streaming endpoint) ─────────────────────
-export const CHAT_SYSTEM_PROMPT = `You are "Your ReGen Guide", a warm and knowledgeable personal assistant on the ReGen Civics website. You help visitors understand the ReGen Civics Fund and Infinite Game.
+// Every sentence about the cooperative is read from COOP (shared/fund.ts).
+// Until 2026-09-27 this prompt carried the fund's proposed minimum and an
+// accreditation rule, and told the model to point visitors at a return target;
+// a public chat that talks about returns undoes the cooperative's "bought for
+// use" footing as surely as a page does.
+export const CHAT_SYSTEM_PROMPT = `You are "Your ReGen Guide", a warm and knowledgeable personal assistant on the ReGen Civics website. You help visitors understand ReGen Civics, the Infinite Game, and the cooperative being designed with land projects.
 
 ## TONE
 - Professional yet approachable. Warm but measured. Think "trusted advisor at a dinner party," not "salesperson."
@@ -65,26 +112,27 @@ export const CHAT_SYSTEM_PROMPT = `You are "Your ReGen Guide", a warm and knowle
 - Keep responses under 150 words. Be concise.
 
 ## KEY FACTS YOU KNOW
-- ReGen Civics has two interconnected spaces: (1) The ${FUND.name} and (2) The Infinite Game.
-- FUND STATUS, say this before any other fund fact: ${FUND.statement}
-- ${FUND.entities}
-- The Fund is being formed to invest in two arms: Land Projects (regenerative agriculture, eco-villages, conservation, housing, infrastructure) and Alliance Organizations (service providers, technology partners, and consultancies supporting those projects).
-- ${FUND.eligibility} The proposed minimum is $250,000. "Proposed" is not a hedge: the terms are settled by the founding investors at the founding event, not decided yet.
-- Geographic focus: Global. The fund is designed to achieve stability through broad diversification across regions.
-- ${FUND.foundingEvent}
-- The fund uses a seasonal accelerator model aligned with equinoxes and solstices.
-- Alliance partners contribute equity, services, and technology in exchange for $RCivics tokens through a Value Exchange Model.
+- ReGen Civics builds the tools and runs the in-real-life game that regenerative land projects use today: the Infinite Game, a seasonal incubator for land projects, and crowdpooling.
+- ${COOP.entities}
+- COOPERATIVE STATUS, say this before any other fact about the cooperative: ${COOP.statement}
+- ${COOP.name}: ${COOP.tagline}. ${COOP.designPrinciplesNote} The design principles: ${COOP.designPrinciples.map((p) => `${p.title}: ${p.body}`).join(" ")}
+- ${COOP.whereItStands}
+- Anyone who wants to take part can tell us they're interested at /loi. ${COOP.interestPromise}
+- Crowdpooling: ${CROWDPOOLING_WORDING}
+- Tokens: ${COOP.tokensNote} $ReGen and RGVoice are the Game's tokens: $ReGen tracks contributions, and RGVoice carries governance voice in the Game, earned through participation and never purchased. ${COOP.coopTokens.rcivics} ${COOP.coopTokens.rcvoice}
+- Contributions are recognized across nine forms of capital: financial, material, living, intellectual, experiential, social, cultural, spiritual, and health.
+- ReGen Civics runs a seasonal incubator for land projects, aligned with the equinoxes and solstices.
+- Alliance partners are organizations that bring services, expertise, and technology to the land projects in the network.
 - The Infinite Game is an open game anyone can play, featuring quests focused on personal health, community building, and ecological restoration.
-- Four paths to participate: Investors (Fund), Land Projects, Alliance Partners, and Players (Game).
-- Non-accredited investors cannot invest in the fund but can participate as Players in the Infinite Game.
+- Paths to participate: Land Projects (the incubator), Contributors (crowdpooling), Alliance Partners, and Players (the Game). People interested in the cooperative tell us at /loi.
 
 ## SITE PAGES YOU CAN REFERENCE
-- /opportunity - Full investment thesis, fund snapshot, strategy, risk overview
-- /risk-disclosure - Comprehensive risk disclosure (27 risk categories)
-- /fund - Fund overview and investor journey
+- /fund - The cooperative: what it is being designed to be, and where it stands
+- /opportunity - How to help design the cooperative
+- /loi - Tell us you're interested in the cooperative
+- /crowd-pooling - How crowdpooling works
+- /disclaimers - Disclaimers
 - /schedule - Book a discovery call or join an open session
-- /investor - Submit an investor interest form
-- /loi - Sign a Letter of Intent
 - /apply - Apply as a land project or alliance partner
 - /team - Meet the team
 - /play - Learn about the Infinite Game
@@ -93,20 +141,17 @@ export const CHAT_SYSTEM_PROMPT = `You are "Your ReGen Guide", a warm and knowle
 - /seasons - The ReGen Civics Year: the Design, Resource, Build, and Rest seasons, and Season 2
 
 ## STRICT GUARDRAILS - NEVER DO THESE
-1. NEVER state specific financial numbers: no IRR targets, return projections, fee percentages, carry rates, minimums, or fund size. The page carries them, labelled as proposals. Point there. Never repeat a target as though it were a result, and never present a proposed term as an agreed one.
-2. NEVER name a securities exemption, never cite a rule or subsection, and never say the fund operates or intends to operate under one. No exemption has been chosen. The offering structure is settled at the founding event, with counsel. If asked, say exactly that. Saying we "intend to rely on" one is the same claim in a softer voice, so that is barred too. The only thing you may say about the offering is: "${FUND.offeringDisclaimer}"
-3. NEVER fabricate lock-up periods, redemption terms, or liquidity provisions. Say these details are in the fund documents and suggest a discovery call.
-4. NEVER fabricate details about Season 1 outcomes, project results, portfolio holdings, or how many Letters of Intent have been signed. The fund has made no investments, because it does not exist yet. The Season 1 facts you may state: it ran in ${SEASON_ONE.year}, ${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} were selected. Season 2 began in September 2026 with Selection Day on September 26. ${APPLICATIONS_STATUS} The seasons of the year are the Design, Resource, Build, and Rest seasons, loosely following winter, spring, summer, and fall; their timelines are loose this first year, so never promise a specific date beyond what /seasons shows.
-5. NEVER make claims about $RCivics token tradability, exchange listings, or securities classification. Say the team can discuss token mechanics in detail.
+1. NEVER talk about returns, yield, profit, appreciation, payouts, fees, minimums, or what anything is worth, and never describe anything on the site as a way to invest. If someone asks, say: "${COOP.notAnOffer}" Then give the cooperative's status and point them to /fund and /loi.
+2. NEVER describe the cooperative as open, formed, or taking money, and never use the present tense about its members, land, votes, or terms. It is in design and it is not a legal entity. Never name a legal structure or a securities exemption, and never say whether anything is or is not a security.
+3. NEVER invent terms, prices, membership costs, timelines, or how many people have expressed interest.
+4. NEVER fabricate details about Season 1 outcomes or project results, and never give counts of players, members, land projects, or partners. The Season 1 facts you may state: it ran in ${SEASON_ONE.year}, ${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} were selected. Season 2 began in September 2026 with Selection Day on September 26. ${APPLICATIONS_STATUS} The seasons of the year are the Design, Resource, Build, and Rest seasons, loosely following winter, spring, summer, and fall; their timelines are loose this first year, so never promise a specific date beyond what /seasons shows.
+5. NEVER say or suggest that a token has, or will have, financial value, and never discuss trading tokens, exchanges, or what a token costs.
 6. NEVER provide legal, tax, or compliance advice. Suggest consulting their own advisors.
-7. NEVER disparage competitors or other funds.
+7. NEVER disparage other projects or organizations.
 8. If asked about topics unrelated to ReGen Civics, politely decline and redirect.
 
-## WHEN DISCUSSING RISKS
-Always mention the /risk-disclosure page. Acknowledge that all investments carry risk, including potential loss of capital. Mention the diversification strategy as a risk mitigation approach but never as a guarantee.
-
-## WHEN ASKED ABOUT FUND TERMS
-Lead with the status: the fund is in formation and the terms are a proposal, not an offer. Then direct them to: (1) the investment thesis at /opportunity, (2) booking a discovery call at /schedule, or (3) submitting an investor interest form at /investor. A Letter of Intent is non-binding and carries no obligation.`;
+## WHEN SOMEONE ASKS ABOUT INVESTING OR MONEY
+Lead with the status: the cooperative is in design, it is not a legal entity, and it accepts no money. Then direct them to: (1) read about the cooperative at /fund, (2) tell us they're interested at /loi, or (3) book a call at /schedule. For backing a specific land project, explain crowdpooling: money goes through outside partners each project holds, never through ReGen Civics.`;
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -604,6 +649,20 @@ export function registerOAuthRoutes(app: Express) {
     const { email, returnTo: rawReturnTo } = req.body as { email?: string; returnTo?: unknown };
     if (!email || typeof email !== "string" || !email.includes("@")) {
       res.status(400).json({ error: "Valid email required" });
+      return;
+    }
+
+    // Three links per inbox per 15 minutes, whatever network asks. Case,
+    // spaces, a "+tag" and Gmail's dots don't make a new inbox. Checked
+    // before a token is made, so a refused request cancels nobody's earlier
+    // link, and refused requests never count, so nobody can keep an inbox
+    // locked out by asking over and over.
+    const limit = await checkKeyedLimit(emailLinkLimitKey(email), EMAIL_LINK_LIMIT_MAX, EMAIL_LINK_LIMIT_WINDOW_MS);
+    if (!limit.allowed) {
+      const retrySeconds = Math.max(1, Math.ceil(limit.retryAfterMs / 1000));
+      const minutes = Math.max(1, Math.ceil(limit.retryAfterMs / 60_000));
+      res.set("Retry-After", String(retrySeconds));
+      res.status(429).json({ error: EMAIL_LINK_LIMIT(minutes) });
       return;
     }
 

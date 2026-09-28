@@ -20,7 +20,7 @@ describe("pickAudienceCta", () => {
   });
 
   it("maps investor and loi", () => {
-    expect(pickAudienceCta({ title: "Investor office hours" }).path).toBe("/investor");
+    expect(pickAudienceCta({ title: "Investor office hours" }).path).toBe("/fund");
     expect(pickAudienceCta({ title: "LOI workshop" }).path).toBe("/loi");
   });
 

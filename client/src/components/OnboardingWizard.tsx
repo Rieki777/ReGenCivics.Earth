@@ -32,9 +32,10 @@ const ROLES: { value: Role; label: string; description: string; icon: React.Reac
     icon: <Leaf className="w-5 h-5" />,
   },
   {
+    // The value stays "Investor" (saved in localStorage); only the words changed.
     value: "Investor",
-    label: "Investor",
-    description: "I want to align my capital with regenerative outcomes",
+    label: "Funder",
+    description: "I want to bring money and other resources to regenerative land projects",
     icon: <Coins className="w-5 h-5" />,
   },
   {
@@ -129,7 +130,7 @@ function StepWelcome() {
         Welcome to ReGen Civics!
       </h2>
       <p className="text-white/70 text-sm leading-relaxed max-w-sm mx-auto">
-        You have joined an Infinite Game for the ReGenerative Renaissance. A living network of land projects, investors, allies, and learners co-creating a healthier world.
+        You have joined an Infinite Game for the ReGenerative Renaissance. A living network of land projects, funders, allies, and learners co-creating a healthier world.
       </p>
       <p className="text-[#7dd87d]/80 text-xs mt-4">
         Let us take 60 seconds to personalise your experience.

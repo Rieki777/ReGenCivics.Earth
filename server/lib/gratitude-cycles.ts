@@ -1,7 +1,7 @@
 /**
  * Gratitude lunar-cycle engine.
  *
- * Implements the proportional-budget model from GRATITUDE_SYSTEM_SPEC.md:
+ * Implements the proportional-budget model from docs/planning/GRATITUDE_SYSTEM_SPEC.md:
  * each player gets a per-cycle budget (base x tier multiplier x streak
  * bonus) that splits across the unique people they acknowledge, divided by
  * AT LEAST the full-power threshold. Acknowledging fewer people than the

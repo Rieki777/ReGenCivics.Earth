@@ -9,6 +9,10 @@
  * (campaigns.getPartnerLinksForSteward), which only an admin verifies
  * (campaigns.reviewPartnerLink), and the Ready to crowdpool ticks the project
  * stored on the campaign (campaigns.getReadiness) beside the reviewer's own.
+ *
+ * Needs listed at 0 (ruling 2026-09-27: a need can't be listed at 0) are
+ * flagged above the needs, so the reviewer can ask the project to value them.
+ * New campaigns can't send one; older ones may still hold one.
  */
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
@@ -22,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   CheckCircle2, XCircle, Eye, Clock, MapPin, DollarSign, 
   Users, Calendar, Leaf, ChevronDown, ChevronUp, ExternalLink,
-  FileText, Loader2, AlertTriangle, Sparkles, ArrowRight
+  FileText, Loader2, AlertTriangle, Sparkles, ArrowRight, CalendarX
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CrowdpoolReadiness } from './CrowdpoolReadiness';
@@ -30,7 +34,14 @@ import { TwoLineBar } from './crowdpool/TwoLineBar';
 import { formatCloseDate, moneyShareNote } from '@shared/campaignProgress';
 import { kindForItem, needTitle, roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
 import { CASH_SHARE } from '@shared/crowdpoolModel';
-import { ROUTE_LABELS, ROUTE_REVIEW, STEWARD_MONEY } from '@shared/crowdpoolCopy';
+import { CLOSE, ROUTE_LABELS, ROUTE_REVIEW, STEWARD_MONEY, ZERO_VALUE } from '@shared/crowdpoolCopy';
+import { isMoneyKind } from '@shared/crowdpoolNeedAction';
+import { isListableValue } from '@shared/needRules';
+
+/** How many in-kind needs are listed at 0. Money kinds aren't needs, so they don't count. */
+export function zeroValueNeedCount(items: Array<{ kind?: string | null; estimatedValue: unknown }> | null | undefined): number {
+  return (items ?? []).filter((i) => !isMoneyKind(String(i.kind ?? '')) && !isListableValue(i.estimatedValue)).length;
+}
 
 /** A currency formatter that survives codes Intl does not know (SEEDS, USDC). */
 function currencyFormatter(currency: string | null | undefined): (n: number) => string {
@@ -220,6 +231,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
   funded: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
   completed: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
   cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-600 border-gray-200', icon: <XCircle className="w-3 h-3" /> },
+  // Set only by the close job at the close date: it didn't complete (build
+  // spec 2026-09-27, section 9). No admin action leads here or out of it.
+  closed: { label: CLOSE.stateTag, color: 'bg-stone-100 text-stone-800 border-stone-300', icon: <CalendarX className="w-3 h-3" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -292,6 +306,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
     asksNone: progress.money.asksNone,
     band: settings?.moneyShare ?? CASH_SHARE,
   });
+  const zeroNeeds = zeroValueNeedCount(campaign.items);
 
   return (
     <div className="space-y-6 max-h-[80vh] overflow-y-auto">
@@ -339,6 +354,14 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           <p className="text-lg font-bold text-[#1a472a]">{STEWARD_MONEY.days(String(campaign.durationDays || 90))}</p>
         </div>
       </div>
+
+      {/* Needs listed at 0, above the needs, so the review asks for a value */}
+      {zeroNeeds > 0 && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3" data-testid="zero-value-needs">
+          <AlertTriangle className="w-4 h-4 text-amber-700 mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <p className="text-sm font-medium text-amber-900">{ZERO_VALUE.review(zeroNeeds)}</p>
+        </div>
+      )}
 
       {/* Project Details Tabs */}
       <Tabs defaultValue="overview" className="w-full">

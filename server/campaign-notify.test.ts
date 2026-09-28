@@ -1,12 +1,31 @@
 /**
  * Campaign notices: every row of the event catalogue (spec 6.2), built by the
- * pure builders in server/lib/campaign-notify.ts. No database.
+ * pure builders in server/lib/campaign-notify.ts. No database (notifyRoleReopened
+ * reads a fake one).
  */
 import { describe, expect, it, vi } from "vitest";
+
+// notifyRoleReopened reads the role's offers through getDb. A fake database
+// hands it rows, so the flag's effect is read without a real one.
+const fakeDb = vi.hoisted(() => ({ rows: [] as Array<{ userId: number; status: string }> }));
+vi.mock("./db", async (orig) => ({
+  ...(await orig<typeof import("./db")>()),
+  getDb: vi.fn(async () => ({
+    select: () => ({ from: () => ({ where: async () => fakeDb.rows }) }),
+  })),
+}));
+
 import {
   buildCampaignApproved,
+  buildContributorReply,
   buildCampaignCancelled,
+  buildCampaignClosed,
   buildCampaignCompleted,
+  buildCampaignOpened,
+  buildFinalStretch,
+  buildOfferClosedAtCompletion,
+  buildStewardNudge,
+  buildStillWaiting,
   buildCampaignDeclined,
   buildChainConfirmed,
   buildClaimExpired,
@@ -21,9 +40,13 @@ import {
   buildThanked,
   buildUpdatePosted,
   deliver,
+  notifyRoleReopened,
   recipientsOf,
+  ROLE_REOPENED_REACHES_DECLINED,
+  waitedAgo,
 } from "./lib/campaign-notify";
 import { toNotificationRow } from "./lib/forum-notify";
+import { ARRIVAL } from "../shared/crowdpoolCopy";
 
 const campaign = { id: 7, title: "Plant 400 trees", projectName: "Seeds &amp; Soil", applicationId: 42, userId: 1 };
 const noAppCampaign = { id: 9, title: "Build the barn", projectName: "Harmony Valley", applicationId: null, userId: 1 };
@@ -80,6 +103,14 @@ describe("offer accepted and declined", () => {
   it("accepted on a count need quotes the offer", () => {
     const [row] = buildProposalAccepted({ campaign, contribution, item: countItem });
     expect(row.body).toBe('"Soil testing" is accepted.');
+  });
+  it("says the stewards left an arrival note when one resolves at accept time (section 11.4)", () => {
+    const [withNote] = buildProposalAccepted({ campaign, contribution, item: countItem, hasArrivalNote: true });
+    expect(withNote.body).toBe(`"Soil testing" is accepted. ${ARRIVAL.noticeLine}`);
+    const [withSteward] = buildProposalAccepted({ campaign, contribution, item: countItem, note: "Bring gloves", hasArrivalNote: true });
+    expect(withSteward.body).toBe(`"Soil testing" is accepted. Note from the stewards: Bring gloves ${ARRIVAL.noticeLine}`);
+    const [without] = buildProposalAccepted({ campaign, contribution, item: countItem, hasArrivalNote: false });
+    expect(without.body).toBe('"Soil testing" is accepted.');
   });
   it("nobody to tell when the contributor has no account or is the actor", () => {
     expect(buildProposalAccepted({ campaign, contribution: { ...contribution, userId: null } })).toEqual([]);
@@ -154,7 +185,7 @@ describe("role reopened", () => {
   it("sends nothing with no open hours or on a campaign that isn't live", () => {
     const base = { item: roleItem, waitingIds: [21], notSelectedIds: [23], reopenedAt: at };
     expect(buildRoleReopened({ ...base, campaign: live, openHours: 0 })).toEqual([]);
-    for (const status of ["draft", "pending_review", "rejected", "cancelled", "completed", "funded", "paused"]) {
+    for (const status of ["draft", "pending_review", "rejected", "cancelled", "completed", "funded", "closed", "paused"]) {
       expect(buildRoleReopened({ ...base, campaign: { ...campaign, status }, openHours: 10 }), status).toEqual([]);
     }
   });
@@ -164,6 +195,52 @@ describe("role reopened", () => {
     const later = buildRoleReopened({ ...args, reopenedAt: new Date(at.getTime() + 1) });
     expect(later[0].dedupeKey).not.toBe(buildRoleReopened(args)[0].dedupeKey);
     expect(buildRoleReopened(args)[0].dedupeKey.length).toBeLessThanOrEqual(191);
+  });
+});
+
+describe("role reopened reaches the people a steward declined (ruling 2026-09-27)", () => {
+  const at = new Date("2026-09-27T10:00:00Z");
+  const live = { ...campaign, status: "active" };
+
+  it("the flag is on", () => {
+    expect(ROLE_REOPENED_REACHES_DECLINED).toBe(true);
+  });
+
+  it("declined people hear with the offer-again copy; never the actor, holders or excluded ids", async () => {
+    fakeDb.rows = [
+      { userId: 21, status: "pending" },
+      { userId: 23, status: "rejected" },
+      { userId: 22, status: "rejected" },
+      { userId: 22, status: "pending" },
+      // A holder who was once declined is in, and hears nothing.
+      { userId: 30, status: "accepted" },
+      { userId: 30, status: "rejected" },
+      // The steward who acted, and the person just released.
+      { userId: 2, status: "rejected" },
+      { userId: 25, status: "rejected" },
+    ];
+    const insert = vi.fn().mockResolvedValue(true);
+    const sent = await notifyRoleReopened(
+      { campaign: live, item: roleItem, openHours: 20, excludeUserIds: [25], actorId: 2, at },
+      { insert },
+    );
+    const rows = insert.mock.calls.map((c) => c[0]);
+    expect(sent).toBe(3);
+    expect(rows.map((r) => r.userId)).toEqual([21, 22, 23]);
+    expect(rows.find((r) => r.userId === 22)!.body).toContain("Your offer is still with the stewards.");
+    expect(rows.find((r) => r.userId === 23)!.body).toBe(
+      "Soil scientist at Seeds & Soil has 20 hours a week open again. If you'd still like to give your time, you're welcome to offer again.",
+    );
+    for (const r of rows) expect(r.dedupeKey).toBe(`cp:rolereopened:50:o20:${at.getTime()}:u${r.userId}`);
+  });
+
+  it("only on a live campaign", async () => {
+    fakeDb.rows = [{ userId: 23, status: "rejected" }];
+    for (const status of ["cancelled", "completed", "closed"]) {
+      const insert = vi.fn().mockResolvedValue(true);
+      expect(await notifyRoleReopened({ campaign: { ...campaign, status }, item: roleItem, openHours: 10, at }, { insert }), status).toBe(0);
+      expect(insert).not.toHaveBeenCalled();
+    }
   });
 });
 
@@ -306,6 +383,19 @@ describe("sweep and chain notices", () => {
     });
     for (const r of rows) expect(`${r.title} ${r.body}`).not.toMatch(/\bclaim/i);
   });
+  it("claim expired on a campaign that ended never says the need is open again", () => {
+    // Review 2026-09-28: the nightly sweep ignores campaign status, and a
+    // completed or closed campaign takes no offers.
+    for (const status of ["completed", "closed", "cancelled"]) {
+      const rows = buildClaimExpired({ campaign: { ...campaign, status }, contribution, stewardIds: [1] });
+      expect(rows[0].body).toBe('Your place for "Soil testing" on Plant 400 trees passed its delivery window, so it\'s closed with our thanks.');
+      expect(rows[1].body).toBe('The place for "Soil testing" on Plant 400 trees passed its delivery window, so it\'s closed.');
+      for (const r of rows) expect(r.body).not.toMatch(/open again|offer again/);
+    }
+    // Live, the old words stay.
+    const live = buildClaimExpired({ campaign: { ...campaign, status: "active" }, contribution, stewardIds: [1] });
+    expect(live[0].body).toContain("so the need is open again");
+  });
   it("chain confirmed", () => {
     const rows = buildChainConfirmed({ campaign, contribution, stewardIds: [1, 20], txLink: "https://basescan.org/tx/0xabc" });
     expect(rows.map((r) => r.userId)).toEqual([20, 1]);
@@ -335,5 +425,249 @@ describe("delivery", () => {
   it("carries campaignId and contributionId onto the row", () => {
     const [row] = buildDelivered({ campaign, contribution });
     expect(toNotificationRow(row)).toMatchObject({ campaignId: 7, contributionId: 300 });
+  });
+});
+
+// ─── Build spec 2026-09-27: nudges, the opening, the final stretch, the close ─
+
+const waiting = { id: 410, title: "Seed &amp; tools", userId: 20, contributorName: "Ada", isAnonymous: 0 };
+type Notice = { title: string; body?: string | null };
+const noticeText = (rows: Notice[]) => rows.map((r) => `${r.title} ${r.body ?? ""}`).join("\n");
+/** Words no campaign notice uses (scripts/check-banned-terms.mjs holds the full list). */
+function expectOurWords(rows: Notice[]) {
+  const text = noticeText(rows);
+  expect(text).not.toMatch(/\b(claim|claims|claimed|pledge|pledged|funded|donation|earmark|unlock)\b/i);
+  expect(text).not.toContain(String.fromCharCode(0x2014));
+  expect(text).not.toMatch(/\bearn(ed|s)?\b/i);
+}
+
+describe("steward nudges (offer_waiting)", () => {
+  it("step 1 at 2 days goes to every steward, never the contributor, with its own key", () => {
+    const rows = buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1, 2, 20, 2], step: 1 });
+    expect(rows.map((r) => r.userId)).toEqual([1, 2]);
+    expect(rows[0]).toMatchObject({
+      type: "offer_waiting",
+      title: "Ada's offer is waiting on you",
+      body: 'Ada offered "Seed & tools" to Plant 400 trees 2 days ago. A yes, a no or a question keeps it moving.',
+      link: `${P}#review`,
+      contributionId: 410,
+      campaignId: 7,
+      dedupeKey: "cp:nudge:410:s1:u1",
+    });
+    expect(rows[1].dedupeKey).toBe("cp:nudge:410:s1:u2");
+    expectOurWords(rows);
+  });
+  it("step 2 at a week", () => {
+    const [row] = buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 2 });
+    expect(row).toMatchObject({
+      title: "Ada has waited a week to hear back",
+      body: 'Ada offered "Seed & tools" to Plant 400 trees a week ago. If it isn\'t a fit, a kind no frees them to offer somewhere else.',
+      dedupeKey: "cp:nudge:410:s2:u1",
+    });
+  });
+  it("says Someone for an anonymous offer or a missing name", () => {
+    const [anon] = buildStewardNudge({ campaign, contribution: { ...waiting, isAnonymous: 1 }, stewardIds: [1], step: 1 });
+    expect(anon.title).toBe("Someone's offer is waiting on you");
+    expect(String(anon.body).startsWith('Someone offered "Seed & tools"')).toBe(true);
+    const [nameless] = buildStewardNudge({ campaign, contribution: { ...waiting, contributorName: "  " }, stewardIds: [1], step: 2 });
+    expect(nameless.title).toBe("Someone has waited a week to hear back");
+  });
+  it("no stewards, no rows", () => {
+    expect(buildStewardNudge({ campaign, contribution: waiting, stewardIds: [], step: 1 })).toEqual([]);
+  });
+  it("says how long the offer really waited (review 2026-09-28)", () => {
+    // The daily run: day 2 and day 7 keep the spec's words.
+    expect(buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 1, waitedDays: 2 })[0].body)
+      .toBe('Ada offered "Seed & tools" to Plant 400 trees 2 days ago. A yes, a no or a question keeps it moving.');
+    expect(buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 2, waitedDays: 7 })[0].title)
+      .toBe("Ada has waited a week to hear back");
+    // After a pause, or a first run over a backlog.
+    const [five] = buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 1, waitedDays: 5 });
+    expect(five.body).toBe('Ada offered "Seed & tools" to Plant 400 trees 5 days ago. A yes, a no or a question keeps it moving.');
+    const [twenty] = buildStewardNudge({ campaign, contribution: waiting, stewardIds: [1], step: 2, waitedDays: 20 });
+    expect(twenty.title).toBe("Ada has waited 20 days to hear back");
+    expect(twenty.body).toBe('Ada offered "Seed & tools" to Plant 400 trees 20 days ago. If it isn\'t a fit, a kind no frees them to offer somewhere else.');
+    expect(`${twenty.title} ${twenty.body}`).not.toContain("week");
+    // The dedupe key never depends on the words.
+    expect(twenty.dedupeKey).toBe("cp:nudge:410:s2:u1");
+  });
+  it("words the wait in days", () => {
+    expect(waitedAgo(2)).toBe("2 days ago");
+    expect(waitedAgo(7)).toBe("a week ago");
+    expect(waitedAgo(8)).toBe("8 days ago");
+    expect(waitedAgo(1)).toBe("yesterday");
+  });
+});
+
+describe("the contributor's note at 14 days (offer_still_waiting)", () => {
+  it("goes to the account holder only, once", () => {
+    const [row, ...rest] = buildStillWaiting({ campaign, contribution: waiting });
+    expect(rest).toEqual([]);
+    expect(row).toMatchObject({
+      userId: 20,
+      type: "offer_still_waiting",
+      title: "Your offer to Seeds & Soil is still waiting",
+      body: 'The stewards of Seeds & Soil haven\'t answered your offer of "Seed & tools" yet. It stays open until they do, and you can withdraw it from Your contributions if your plans change.',
+      link: `${P}#your-contributions`,
+      dedupeKey: "cp:wait:410:u20",
+    });
+    expectOurWords([row]);
+  });
+  it("nobody without an account", () => {
+    expect(buildStillWaiting({ campaign, contribution: { ...waiting, userId: null } })).toEqual([]);
+  });
+});
+
+describe("crowdpooling opens (campaign_opened)", () => {
+  it("reaches followers, never stewards or the actor, with the open line and the close date", () => {
+    const rows = buildCampaignOpened({
+      campaign, followerIds: [1, 30, 31, 31, 99], stewardIds: [1, 2], actorId: 99,
+      openLine: "12 needs still open. 5 roles, 4 things, 3 shifts.", closes: "Closes 21 March 2027",
+    });
+    expect(rows.map((r) => r.userId)).toEqual([30, 31]);
+    expect(rows[0]).toMatchObject({
+      type: "campaign_opened",
+      title: "Crowdpooling is open at Seeds & Soil",
+      body: "Seeds & Soil is asking for help. 12 needs still open. 5 roles, 4 things, 3 shifts. Closes 21 March 2027.",
+      link: `${P}#needs`,
+      dedupeKey: "cp:opened:7:u30",
+    });
+    expectOurWords(rows);
+  });
+  it("leaves out what it doesn't have", () => {
+    const [row] = buildCampaignOpened({ campaign, followerIds: [30], stewardIds: [] });
+    expect(row.body).toBe("Seeds & Soil is asking for help.");
+  });
+});
+
+describe("two weeks before the close (campaign_final_stretch)", () => {
+  it("names up to three open needs and the close date", () => {
+    const rows = buildFinalStretch({
+      campaign, recipientIds: [30, 31, 30],
+      needLines: ["Farm manager, 20 hrs a week", "Planting day, 12 places", "Tractor, 1 Mar to 30 Jun", "Seed"],
+      closesOn: "21 March 2027",
+    });
+    expect(rows.map((r) => r.userId)).toEqual([30, 31]);
+    expect(rows[0]).toMatchObject({
+      type: "campaign_final_stretch",
+      title: "These needs are still open at Seeds & Soil",
+      body: "Farm manager, 20 hrs a week; Planting day, 12 places; Tractor, 1 Mar to 30 Jun. Crowdpooling at Seeds & Soil closes on 21 March 2027.",
+      link: `${P}#needs`,
+      dedupeKey: "cp:stretch:7:u30",
+    });
+    expectOurWords(rows);
+    // No countdown words.
+    expect(noticeText(rows)).not.toMatch(/\b(hurry|last chance|only \d+ days|countdown)\b/i);
+  });
+  it("sends nothing when no need is open", () => {
+    expect(buildFinalStretch({ campaign, recipientIds: [30], needLines: [], closesOn: "21 March 2027" })).toEqual([]);
+  });
+});
+
+describe("a close that didn't complete (campaign_closed)", () => {
+  const others = "These could use you now: Apply Farm manager at Green Hill; Offer Tractor at Blue River.";
+  const args = {
+    campaign,
+    closedOn: "21 March 2027",
+    stewardIds: [1, 2],
+    releasedCount: 3,
+    contributors: [
+      { userId: 20, lines: ['Your offer of "Seed" hadn\'t started, so it\'s released with our thanks.'] },
+      { userId: 2, lines: ["A steward who also offered hears as a steward."] },
+      { userId: 21, lines: [] },
+    ],
+    followerIds: [1, 20, 30],
+    otherNeedsLine: others,
+  };
+  it("stewards hear how many offers were released and what stays with them", () => {
+    const rows = buildCampaignClosed(args);
+    const steward = rows.find((r) => r.userId === 1)!;
+    expect(steward).toMatchObject({
+      type: "campaign_closed",
+      title: "Plant 400 trees closed without completing",
+      body: "Crowdpooling closed on 21 March 2027. 3 offers that hadn't started were released with a thank-you. Offers already underway stay with you to mark delivered or release. Help already given stays recorded in the project's token.",
+      link: `${P}#steward-tools`,
+      dedupeKey: "cp:close:7:u1",
+    });
+    expect(buildCampaignClosed({ ...args, releasedCount: 1 })[0].body).toContain(" 1 offer that hadn't started was released with a thank-you.");
+    expect(buildCampaignClosed({ ...args, releasedCount: 0 })[0].body).toBe(
+      "Crowdpooling closed on 21 March 2027. Offers already underway stay with you to mark delivered or release. Help already given stays recorded in the project's token.",
+    );
+    expectOurWords(rows);
+  });
+  it("each contributor hears their own lines then other needs; followers a short note; everyone once", () => {
+    const rows = buildCampaignClosed(args);
+    expect(rows.map((r) => r.userId)).toEqual([1, 2, 20, 21, 30]);
+    expect(new Set(rows.map((r) => r.dedupeKey)).size).toBe(rows.length);
+    const ada = rows.find((r) => r.userId === 20)!;
+    expect(ada.body).toBe(`Your offer of "Seed" hadn't started, so it's released with our thanks. ${others}`);
+    expect(ada.link).toBe(`${P}#your-contributions`);
+    // A contributor with no line of their own still hears that it closed.
+    expect(rows.find((r) => r.userId === 21)!.body).toBe(`Crowdpooling at Seeds & Soil closed on 21 March 2027 without completing. ${others}`);
+    const follower = rows.find((r) => r.userId === 30)!;
+    expect(follower.body).toBe("Crowdpooling at Seeds & Soil closed on 21 March 2027 without completing. You still follow Seeds & Soil, so you'll hear when it asks again.");
+    expect(follower.link).toBe(P);
+  });
+  it("cuts a long body to 500", () => {
+    const long = buildCampaignClosed({ ...args, contributors: [{ userId: 40, lines: ["x".repeat(700)] }], stewardIds: [], followerIds: [] });
+    expect(String(long[0].body).length).toBeLessThanOrEqual(500);
+  });
+});
+
+describe("a completion that closed waiting offers (campaign_closed)", () => {
+  it("one notice per person, worded for one offer or several", () => {
+    const rows = buildOfferClosedAtCompletion({
+      campaign,
+      recipients: [
+        { userId: 20, titles: ["Seed"] },
+        { userId: 21, titles: ["Seed", "Tools"] },
+        { userId: 22, titles: ["A", "B", "C", "D"] },
+        { userId: 20, titles: ["Again"] },
+        { userId: 23, titles: [] },
+      ],
+      otherNeedsLine: "Follow Seeds & Soil to hear when it asks again.",
+    });
+    expect(rows.map((r) => r.userId)).toEqual([20, 21, 22]);
+    expect(rows[0]).toMatchObject({
+      type: "campaign_closed",
+      title: "Plant 400 trees is complete",
+      body: 'It completed before the stewards answered your offer of "Seed", so your offer is closed with our thanks. Follow Seeds & Soil to hear when it asks again.',
+      link: `${P}#your-contributions`,
+      dedupeKey: "cp:close:7:u20",
+    });
+    expect(String(rows[1].body).startsWith('It completed before the stewards answered your offers of "Seed" and "Tools", so they\'re closed with our thanks.')).toBe(true);
+    expect(String(rows[2].body).startsWith('It completed before the stewards answered your offers of "A", "B" and 2 more,')).toBe(true);
+    expectOurWords(rows);
+  });
+});
+
+describe("a note from an offer status link (contributor_reply)", () => {
+  const offer = { id: 301, title: "Trailer", contributorName: "Bea", userId: null, isAnonymous: 0 };
+  it("goes to every steward once, keyed per note and person, and links to the review list", () => {
+    const rows = buildContributorReply({ campaign, contribution: offer, messageId: 88, message: "Can I bring it on Friday?", stewardIds: [1, 2, 2, 0] });
+    expect(rows.map((r) => r.userId)).toEqual([1, 2]);
+    expect(rows[0]).toMatchObject({
+      type: "contributor_reply",
+      title: "Bea sent a note about their offer",
+      body: "Can I bring it on Friday?",
+      link: `${P}#review`,
+      actorId: null,
+      campaignId: 7,
+      contributionId: 301,
+      dedupeKey: "cp:reply:88:u1",
+    });
+    expect(rows[1].dedupeKey).toBe("cp:reply:88:u2");
+    expectOurWords(rows);
+  });
+  it("says Someone for an anonymous offer, decodes the stored note once and keeps 300 characters", () => {
+    const [anon] = buildContributorReply({ campaign, contribution: { ...offer, isAnonymous: 1 }, messageId: 89, message: "Tea &amp; biscuits", stewardIds: [1] });
+    expect(anon.title).toBe("Someone sent a note about their offer");
+    expect(anon.body).toBe("Tea & biscuits");
+    const [long] = buildContributorReply({ campaign, contribution: offer, messageId: 90, message: "a ".repeat(400), stewardIds: [1] });
+    expect(String(long.body).length).toBeLessThanOrEqual(300);
+  });
+  it("sends nothing for an empty note or when there is no steward", () => {
+    expect(buildContributorReply({ campaign, contribution: offer, messageId: 91, message: "   ", stewardIds: [1] })).toEqual([]);
+    expect(buildContributorReply({ campaign, contribution: offer, messageId: 92, message: "Hello", stewardIds: [] })).toEqual([]);
   });
 });

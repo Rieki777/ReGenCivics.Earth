@@ -7,7 +7,13 @@ builder = "nixpacks"
 buildCommand = "npm install -g pnpm@10.4.1 && pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
-startCommand = "node dist/index.js"
+# NODE_ENV=production is set here because nothing else sets it: the esbuild
+# bundle doesn't define it and Railway's variables didn't carry it, so until
+# 2026-09-28 production ran with it unset and every `NODE_ENV === "production"`
+# branch was off (webhooks skipped their signature checks when a secret was
+# missing, tRPC errors carried stack traces, the cookie Secure fallback and the
+# daily crowdpool timer never ran). Same as package.json "start".
+startCommand = "NODE_ENV=production node dist/index.js"
 # Gate promotion on the app actually serving. Without this Railway marks a
 # deploy healthy as soon as the process starts, so a boot that binds but
 # can't serve (bad env, DB unreachable) would still go live.

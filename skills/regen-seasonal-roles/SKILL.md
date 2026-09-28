@@ -39,7 +39,7 @@ Read these files to understand the current state:
    ceremony), and the season's definition of done. This skill produces the role and
    art artifacts; the template holds the season's shape. Assemble season N+1 from it.
 1. **`SEASONS_HISTORY.md`** (in repo root) -- the master record. Read the most recent season entry to understand what exists now.
-2. **`CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md`** -- the current art prompt. Read the Style Guide section for the visual direction. The solarpunk aesthetic carries forward unless Rye says otherwise.
+2. **`docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md`** -- the current art prompt. Read the Style Guide section for the visual direction. The solarpunk aesthetic carries forward unless Rye says otherwise.
 3. **`CLAUDE_CODE_PROMPT_2026-04-02_TEAM_ROLES.md`** -- the current Team page execution prompt. Read Part A (gameRoles array) and Part B (seasons array) for the current data structure.
 
 If any of these files don't exist yet, check `references/role-data-schema.md` in this skill folder for the expected data shapes.

@@ -1,7 +1,7 @@
 /**
  * Your Paths: actionable progression hub for the Profile Quests tab.
  *
- * Phase 2 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, section 8.
+ * Phase 2 of docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md, section 8.
  *
  * Renders one block per path the player has declared. Each block has
  * three visual states:
@@ -29,9 +29,11 @@ const PATH_META: Record<PathSlug, { label: string; tagline: string; Icon: React.
     tagline: "Walk the 14 Rites of Passage",
     Icon: Flame,
   },
+  // The "investor" slug is stored in the database; since 2026-09-27 this path
+  // leads to the cooperative in design.
   investor: {
-    label: "Investor",
-    tagline: "Fund the Renaissance",
+    label: "Cooperative",
+    tagline: "Help design the cooperative",
     Icon: Droplets,
   },
   land_project: {

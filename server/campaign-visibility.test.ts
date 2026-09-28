@@ -10,7 +10,7 @@
  * Run against the SCRATCH database, never production.
  */
 import { afterAll, describe, expect, it, vi } from "vitest";
-import { inArray } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 import * as dbHelpers from "./db";
 import { campaigns, campaignContributions, campaignItems, campaignUpdates } from "../drizzle/schema";
 import {
@@ -154,5 +154,37 @@ describe("a cancelled campaign's visibility", () => {
     expect(page.front?.id).toBe(id);
     const found = await anon.globalSearch.query({ q: `Livecancel ${stamp}` });
     expect(found.campaigns.map((c) => c.id)).toContain(id);
+  });
+  it.skipIf(skipIfNoDb)("closed at its close date (didn't complete) stays public, as a past campaign", async () => {
+    const stamp = Date.now();
+    const applicationId = await createApprovedApplication(OWNER);
+    const title = `Test Visibility Closedate ${stamp}`;
+    const id = await makeCampaign(applicationId, title, true);
+    // What the close job writes (server/lib/campaign-close.ts); no transition offers it.
+    const database = await dbHelpers.getDb();
+    await database!.execute(sql`
+      UPDATE campaigns SET status = 'closed', closedAt = NOW(), closeOutcome = 'did_not_complete', closeNoticedAt = NOW()
+      WHERE id = ${id}
+    `);
+    const anon = anonCaller();
+    const view = await anon.campaigns.getById({ id });
+    expect(view).toMatchObject({ id, status: "closed", closeOutcome: "did_not_complete" });
+    expect(view!.progress.state).toBe("did_not_complete");
+    expect((await anon.campaigns.list({ status: "closed" })).map((c) => c.id)).toContain(id);
+    expect((await anon.campaigns.getItems({ campaignId: id })).length).toBe(1);
+    const page = await anon.projects.getPublic({ key: String(applicationId) });
+    expect(page.front?.id).toBe(id);
+    const found = await anon.globalSearch.query({ q: `Closedate ${stamp}` });
+    expect(found.campaigns.map((c) => c.id)).toContain(id);
+    // It takes no offers, and nobody moves it anywhere by hand.
+    await expect(anon.campaigns.submitContribution({
+      campaignId: id, contributionType: "resource", title: "Test late", estimatedValue: 10,
+      contributorName: "Late", contributorEmail: `late.vis.${stamp}@example.com`,
+    })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    for (const status of ["active", "completed", "cancelled"] as const) {
+      await expect(adminCaller().campaigns.updateStatus({ id, status })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    }
+    await expect(adminCaller().campaigns.updateStatus({ id: await makeCampaign(applicationId, `${title} two`, true), status: "closed" }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });

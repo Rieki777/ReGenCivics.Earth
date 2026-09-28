@@ -22,6 +22,13 @@ export const CAMPAIGN_NOTIFICATION_TYPES = [
   "campaign_completed",
   "campaign_milestone",
   "claim_expired",
+  // Build 3 (0264)
+  "offer_waiting",
+  "offer_still_waiting",
+  "campaign_opened",
+  "campaign_final_stretch",
+  "campaign_closed",
+  "contributor_reply",
 ] as const;
 
 export function isCampaignNotification(type: string): boolean {
@@ -44,6 +51,7 @@ export function legacyLink(type: string): string | null {
     case "claim_expired":
     case "claim_complete":
     case "claim_failed":
+    case "offer_still_waiting":
       return "/profile?tab=contributions";
     case "new_contribution":
     case "role_filled":
@@ -53,6 +61,11 @@ export function legacyLink(type: string): string | null {
     case "campaign_declined":
     case "campaign_cancelled":
     case "campaign_completed":
+    case "offer_waiting":
+    case "campaign_opened":
+    case "campaign_final_stretch":
+    case "campaign_closed":
+    case "contributor_reply":
       return "/campaigns";
     case "campaign_milestone":
       return "/crowd-pooling";
@@ -119,6 +132,12 @@ export function typeGlyph(type: string): string {
     case "campaign_cancelled": return "⊘";
     case "campaign_completed": return "🌳";
     case "claim_expired": return "⌛";
+    case "offer_waiting":
+    case "offer_still_waiting": return "⏳";
+    case "campaign_opened":
+    case "campaign_final_stretch": return "🌱";
+    case "campaign_closed": return "🚪";
+    case "contributor_reply": return "💬";
     default: return "•";
   }
 }

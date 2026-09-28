@@ -1,7 +1,7 @@
 /**
  * GratitudeTab — the profile's Gratitude hub.
  *
- * Spec: GRATITUDE_TAB_BUILD_SPEC.md (Part II). Hero band with live moon
+ * Spec: docs/planning/GRATITUDE_TAB_BUILD_SPEC.md (Part II). Hero band with live moon
  * phase, glass stat trio (power meter / received + sparkline / $ReGen
  * progress ring), and the Gratitude Wall of parchment notes. Mobile-first:
  * everything stacks in one column below `sm`.

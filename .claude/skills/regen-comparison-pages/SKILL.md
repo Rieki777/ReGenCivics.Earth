@@ -194,4 +194,4 @@ comparison pages:
 - `regen-landing-copy` for the structural patterns of the CTA section
 - `CONTEXT_THE_TWO_GAMES.md` for the Fund vs. Game distinction that
   underlies most of the substantive differences
-- `SEEDS_VISION_IMPLEMENTATION_SPEC.md` for the SEEDS-specific framing
+- `docs/planning/SEEDS_VISION_IMPLEMENTATION_SPEC.md` for the SEEDS-specific framing

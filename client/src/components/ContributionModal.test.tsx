@@ -2,17 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ContributionModal, lendDateError, type ContributionNeed } from './ContributionModal';
-import { TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
+import { FOLLOW, LINK, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
 
 const mockMutate = vi.fn();
 const mockMutateAsync = vi.fn();
 const mockJoinWaitlist = vi.fn();
-const mockFollow = vi.fn();
+const mockFollowProject = vi.fn();
+const mockUnfollowProject = vi.fn();
+const mockSubscribeByEmail = vi.fn();
 let submitOnSuccess: ((result?: unknown) => void) | null = null;
 
 vi.mock('@/lib/trpc', () => ({
   trpc: {
-    useUtils: () => ({ auth: { me: { invalidate: vi.fn() } } }),
+    useUtils: () => ({ auth: { me: { invalidate: vi.fn() } }, projects: { getPublic: { invalidate: vi.fn() } } }),
     campaigns: {
       submitContribution: {
         useMutation: (opts?: { onSuccess?: (result?: unknown) => void }) => {
@@ -23,15 +25,28 @@ vi.mock('@/lib/trpc', () => ({
       joinWaitlist: {
         useMutation: () => ({ mutate: mockJoinWaitlist, isPending: false }),
       },
-      follow: {
-        useMutation: () => ({ mutate: mockFollow, isPending: false }),
+      // The receipts' Follow is the one FollowControl (build spec 2026-09-27, section 12.5).
+      followProject: {
+        useMutation: () => ({ mutate: mockFollowProject, isPending: false }),
+      },
+      unfollowProject: {
+        useMutation: () => ({ mutate: mockUnfollowProject, isPending: false }),
+      },
+      subscribeByEmail: {
+        useMutation: () => ({ mutate: mockSubscribeByEmail, isPending: false }),
       },
     },
   },
 }));
 
 // The sheet reads the session to nudge signed-out people toward an account.
-vi.mock('@/_core/hooks/useAuth', () => ({ useAuth: () => ({ user: null, isAuthenticated: false }) }));
+// Signed out unless a test sets authState.signedIn.
+const authState = vi.hoisted(() => ({ signedIn: false }));
+vi.mock('@/_core/hooks/useAuth', () => ({
+  useAuth: () => authState.signedIn
+    ? { user: { id: 5, name: 'Ada', email: 'ada@example.com' }, isAuthenticated: true }
+    : { user: null, isAuthenticated: false },
+}));
 vi.mock('@/const', () => ({ getGoogleLoginUrl: () => '/api/auth/google', getLoginUrl: () => '/login' }));
 
 const { toastMock } = vi.hoisted(() => ({ toastMock: { success: vi.fn(), error: vi.fn() } }));
@@ -55,6 +70,7 @@ describe('ContributionModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.signedIn = false;
   });
 
   function fillContact() {
@@ -271,7 +287,7 @@ describe('ContributionModal', () => {
       expect(text).not.toMatch(/Delivery is when it counts|reviews your pledge|Claim Submitted|Contribution Submitted/);
       expect(within(receipt).getByRole('button', { name: /Share this need/ })).toBeDefined();
       expect(within(receipt).getByRole('button', { name: 'Close' })).toBeDefined();
-      // Signed out: no Follow here; the account card carries the held-token line.
+      // No project key given: no Follow. The account card carries the held-token line.
       expect(within(receipt).queryByRole('button', { name: /Follow/ })).toBeNull();
       expect(within(receipt).getByRole('button', { name: /Make my account/ })).toBeDefined();
     });
@@ -284,9 +300,119 @@ describe('ContributionModal', () => {
       expect(toastMock.success).toHaveBeenCalledWith('Link copied');
     });
 
+    it('opens at its top, so "Offer sent" and the email line are the first thing seen (review 2026-09-28)', async () => {
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      await user.type(screen.getByLabelText('Name *'), 'Ada');
+      await user.type(screen.getByLabelText('Email *'), 'ada@example.com');
+      // The person scrolled down the long form to reach Send my offer.
+      const sheet = document.querySelector<HTMLElement>('[data-slot="dialog-content"]')!;
+      let top = 543;
+      Object.defineProperty(sheet, 'scrollTop', { configurable: true, get: () => top, set: (v: number) => { top = v; } });
+      await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(top).toBe(543);
+      act(() => submitOnSuccess?.({ id: 12, success: true, practice: false }));
+      expect(screen.getByTestId('receipt')).toBeDefined();
+      expect(top).toBe(0);
+    });
+
+    it('draws Close in white on its green, the contrast that reads (review 2026-09-28: 4.04:1 before)', async () => {
+      await sendAndAnswer({ id: 12, success: true, practice: false });
+      const close = within(screen.getByTestId('receipt')).getByRole('button', { name: 'Close' });
+      expect(close.className).toContain('bg-[#4a7c59]');
+      expect(close.className).toContain('text-white');
+      expect(close.className).not.toContain('text-primary-foreground');
+    });
+
     it('raises no toast of its own: the receipt is the confirmation', async () => {
       await sendAndAnswer({ id: 12, success: true, practice: false });
       expect(toastMock.success).not.toHaveBeenCalled();
+    });
+  });
+
+  // Build spec 2026-09-27, section 10.5: the private status link.
+  describe('the status link on the receipt', () => {
+    const statusPath = `/offer#${'A'.repeat(43)}`;
+
+    it('shows above the account card when signed out, with the link, a copy button and when it works', async () => {
+      const { user } = await sendAndAnswer({ id: 12, success: true, practice: false, statusPath });
+      const block = screen.getByTestId('receipt-status-link');
+      expect(block.textContent).toContain(LINK.receiptLead);
+      expect(block.textContent).toContain(LINK.receiptHelp);
+      const link = within(block).getByRole('link', { name: LINK.receiptOpen });
+      expect(link.getAttribute('href')).toBe(statusPath);
+      // A plain link: a fresh page load, so the app clears the fragment first.
+      expect(link.getAttribute('target')).toBeNull();
+      const account = screen.getByRole('button', { name: /Make my account/ });
+      expect(block.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+      await user.click(within(block).getByRole('button', { name: LINK.copy }));
+      expect(await navigator.clipboard.readText()).toBe(`${window.location.origin}${statusPath}`);
+      expect(toastMock.success).toHaveBeenCalledWith(LINK.copied);
+    });
+
+    it('does not show when the server issued no link', async () => {
+      await sendAndAnswer({ id: 12, success: true, practice: false, statusPath: null });
+      expect(screen.queryByTestId('receipt-status-link')).toBeNull();
+    });
+
+    it('never shows on the practice receipt', async () => {
+      await sendAndAnswer({ id: null, success: true, practice: true });
+      expect(screen.getByTestId('practice-receipt')).toBeDefined();
+      expect(screen.queryByTestId('receipt-status-link')).toBeNull();
+      expect(document.body.textContent).not.toContain(LINK.receiptOpen);
+    });
+
+    it('never shows for someone signed in', async () => {
+      authState.signedIn = true;
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+      act(() => submitOnSuccess?.({ id: 12, success: true, practice: false, statusPath }));
+      expect(screen.getByTestId('receipt')).toBeDefined();
+      expect(screen.queryByTestId('receipt-status-link')).toBeNull();
+    });
+  });
+
+  // Build spec 2026-09-27, section 12.5: Follow on the real receipt follows the project.
+  describe('Follow on the real receipt', () => {
+    const statusPath = `/offer#${'B'.repeat(43)}`;
+
+    it('signed out: Follow opens the email follow prefilled with the address just used, sent only on a tap', async () => {
+      const { user } = await sendAndAnswer({ id: 12, success: true, practice: false, statusPath }, { projectKey: '12-hill-farm' });
+      const receipt = screen.getByTestId('receipt');
+      const follow = within(receipt).getByRole('button', { name: FOLLOW.followProject('Hill Farm') });
+      expect(follow).toHaveAttribute('aria-expanded', 'false');
+      // Nothing is sent until they choose to.
+      expect(mockSubscribeByEmail).not.toHaveBeenCalled();
+      await user.click(follow);
+      expect(follow).toHaveAttribute('aria-expanded', 'true');
+      expect(receipt.textContent).toContain(FOLLOW.emailIntro('Hill Farm'));
+      const email = within(receipt).getByLabelText(FOLLOW.emailLabel) as HTMLInputElement;
+      expect(email.value).toBe('ada@example.com');
+      await user.click(within(receipt).getByRole('button', { name: FOLLOW.emailSubmit }));
+      expect(mockSubscribeByEmail).toHaveBeenCalledWith({ campaignId: 1, email: 'ada@example.com' });
+      expect(mockFollowProject).not.toHaveBeenCalled();
+      // Follow sits with Share and Close, above the status link and the account card.
+      const block = screen.getByTestId('receipt-status-link');
+      const account = within(receipt).getByRole('button', { name: /Make my account/ });
+      expect(follow.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(block.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('signed in: one tap follows the project by its key', async () => {
+      authState.signedIn = true;
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} need={seedTrays} projectKey="12-hill-farm" />);
+      await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+      act(() => submitOnSuccess?.({ id: 12, success: true, practice: false }));
+      const follow = within(screen.getByTestId('receipt')).getByRole('button', { name: FOLLOW.followProject('Hill Farm') });
+      expect(follow).toHaveAttribute('aria-pressed', 'false');
+      await user.click(follow);
+      expect(mockFollowProject).toHaveBeenCalledWith({ key: '12-hill-farm' });
+      expect(within(screen.getByTestId('receipt')).getByRole('button', { name: FOLLOW.followingProject('Hill Farm') }))
+        .toHaveAttribute('aria-pressed', 'true');
+      expect(screen.queryByLabelText(FOLLOW.emailLabel)).toBeNull();
     });
   });
 
@@ -306,11 +432,31 @@ describe('ContributionModal', () => {
       expect(text).not.toMatch(/Living Tree/i);
       expect(text).not.toMatch(/thank-you/i);
 
-      // Hearing when real campaigns open joins the waitlist, email prefilled.
-      const email = screen.getByLabelText('Want to hear when they open?') as HTMLInputElement;
+      // Hearing when real campaigns open: the Follow control in season mode
+      // joins the waitlist, email prefilled with the address just used.
+      expect(within(receipt).getByText(FOLLOW.practiceHeading)).toBeDefined();
+      const email = within(receipt).getByLabelText(FOLLOW.emailLabel) as HTMLInputElement;
       expect(email.value).toBe('ada@example.com');
-      await user.click(screen.getByRole('button', { name: 'Tell me' }));
-      expect(mockJoinWaitlist).toHaveBeenCalledWith({ email: 'ada@example.com', name: 'Ada' });
+      await user.click(within(receipt).getByRole('button', { name: FOLLOW.seasonSubmit }));
+      expect(mockJoinWaitlist).toHaveBeenCalledWith({ email: 'ada@example.com' });
+      // An example project can't be followed: no project Follow on this receipt.
+      expect(within(receipt).queryByRole('button', { name: /^Follow/ })).toBeNull();
+      expect(mockSubscribeByEmail).not.toHaveBeenCalled();
+      expect(mockFollowProject).not.toHaveBeenCalled();
+    });
+
+    it('signed in, the practice receipt offers one button, with the account email', async () => {
+      authState.signedIn = true;
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} need={seedTrays} projectKey="c1-hill-farm" isExample />);
+      await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+      act(() => submitOnSuccess?.({ id: null, success: true, practice: true }));
+      const receipt = screen.getByTestId('practice-receipt');
+      expect(within(receipt).queryByLabelText(FOLLOW.emailLabel)).toBeNull();
+      expect(receipt.textContent).toContain(FOLLOW.seasonBodySignedIn('ada@example.com'));
+      await user.click(within(receipt).getByRole('button', { name: FOLLOW.seasonSignedIn }));
+      expect(mockJoinWaitlist).toHaveBeenCalledWith({ email: 'ada@example.com' });
+      expect(mockFollowProject).not.toHaveBeenCalled();
     });
 
     it('keeps the real receipt for a real result', async () => {

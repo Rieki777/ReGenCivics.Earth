@@ -45,6 +45,40 @@ export function parseProjectKey(key: string): ParsedProjectKey | null {
   return m[1] === "c" ? { kind: "campaign", id } : { kind: "application", id };
 }
 
+/**
+ * A project's follow ref (0265): `a{applicationId}` for a project with an
+ * application, `c{campaignId}` for a campaign with none. It is the targetId
+ * of a `user_follows` row with targetType 'project' and the projectRef of an
+ * email follower (campaign_followers), so a follow lasts from one season's
+ * campaign to the next. Migration 0265 writes the same refs in SQL.
+ */
+export function projectRefFor(c: { id: number; applicationId: number | null | undefined }): string {
+  return c.applicationId ? `a${c.applicationId}` : `c${c.id}`;
+}
+
+/**
+ * The follow ref for a parsed page key. An application key is `a{id}`. A
+ * campaign key is `a{applicationId}` when that campaign has an application
+ * (pass the campaign), else `c{id}`, the same ref projectRefFor gives it.
+ */
+export function projectRefFromKey(
+  parsed: ParsedProjectKey,
+  campaign?: { applicationId: number | null | undefined } | null,
+): string {
+  if (parsed.kind === "application") return `a${parsed.id}`;
+  return campaign?.applicationId ? `a${campaign.applicationId}` : `c${parsed.id}`;
+}
+
+/** The parts of a follow ref, or null for anything that isn't one. */
+export function parseProjectRef(ref: string): ParsedProjectKey | null {
+  if (typeof ref !== "string" || ref.length > 24) return null;
+  const m = /^([ac])(\d+)$/.exec(ref);
+  if (!m) return null;
+  const id = Number(m[2]);
+  if (!Number.isSafeInteger(id) || id <= 0) return null;
+  return m[1] === "a" ? { kind: "application", id } : { kind: "campaign", id };
+}
+
 export function projectPathForApplication(appId: number, name: string): string {
   return `/project/${projectKey({ applicationId: appId, campaignId: 0, name })}`;
 }

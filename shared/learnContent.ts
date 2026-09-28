@@ -1,6 +1,6 @@
 /**
  * Learn hub content: answer-first articles aimed at the query space we want
- * to be cited for (LLM_DISCOVERABILITY_PLAN.md Layer 2).
+ * to be cited for (docs/planning/LLM_DISCOVERABILITY_PLAN.md Layer 2).
  *
  * Content lives here, as data, so exactly one copy feeds three consumers:
  *   1. the React page (client/src/pages/LearnArticle.tsx),

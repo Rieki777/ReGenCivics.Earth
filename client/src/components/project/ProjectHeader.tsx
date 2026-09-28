@@ -1,19 +1,19 @@
 /**
  * The top of a project page: cover, name, place, one line about the project,
- * the Example badge for demo projects, Follow and Share. Follow acts on the
- * project's front campaign; signed out, it offers the email follow
- * (campaigns.subscribeByEmail) with a nudge to make an account. Share sends
- * the project page focused on its front campaign.
+ * the Example badge for demo projects, Follow and Share.
+ *
+ * Follow is the one FollowControl (build spec 2026-09-27, section 12.5): it
+ * follows the project, not one campaign, so it shows for signed-in viewers
+ * on a project with no live campaign too. A follow before the first campaign
+ * is how the "crowdpooling is open" notice reaches people. Signed out, it
+ * offers the email follow on the live campaign, or the season form when
+ * nothing is live; an example project always offers the season form. Share
+ * sends the project page focused on its front campaign.
  */
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Bell, BellRing, Loader2, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButtons } from "@/components/ShareButtons";
+import { FollowControl } from "@/components/crowdpool/FollowControl";
 import { cdnImg } from "@/lib/utils";
 
 export function ProjectHeader({
@@ -24,8 +24,9 @@ export function ProjectHeader({
   sharePath,
   tagline,
   coverUrl,
+  projectKey,
   followCampaignId,
-  initiallyFollowing,
+  followsProject,
   shareText,
 }: {
   name: string;
@@ -37,43 +38,14 @@ export function ProjectHeader({
   /** The front campaign description's first sentence. */
   tagline?: string | null;
   coverUrl: string | null;
+  /** The project page key (shared/projectKey.ts) Follow sends. */
+  projectKey: string;
+  /** The live campaign a signed-out email follow attaches to, or null when nothing is live. */
   followCampaignId: number | null;
-  initiallyFollowing: boolean;
+  /** projects.getPublic viewer.followsProject. */
+  followsProject: boolean;
   shareText: string;
 }) {
-  const { isAuthenticated } = useAuth();
-  const [following, setFollowing] = useState(initiallyFollowing);
-  useEffect(() => setFollowing(initiallyFollowing), [initiallyFollowing, followCampaignId]);
-  const [showEmailFollow, setShowEmailFollow] = useState(false);
-  const [email, setEmail] = useState("");
-
-  const follow = trpc.campaigns.follow.useMutation({
-    onError: () => { setFollowing(false); toast.error("Couldn't follow this project. Try again."); },
-  });
-  const unfollow = trpc.campaigns.unfollow.useMutation({
-    onError: () => { setFollowing(true); toast.error("Couldn't unfollow this project. Try again."); },
-  });
-  const subscribe = trpc.campaigns.subscribeByEmail.useMutation({
-    onSuccess: () => {
-      toast.success("You're on the list. News from this project will reach your inbox.");
-      setEmail("");
-      setShowEmailFollow(false);
-    },
-    onError: (err) => toast.error(err.message || "Couldn't add you. Try again."),
-  });
-
-  const toggleFollow = () => {
-    if (!followCampaignId) return;
-    if (!isAuthenticated) {
-      setShowEmailFollow((v) => !v);
-      return;
-    }
-    const next = !following;
-    setFollowing(next);
-    if (next) follow.mutate({ campaignId: followCampaignId });
-    else unfollow.mutate({ campaignId: followCampaignId });
-  };
-
   const place = [location, country].filter((p) => p && p.trim()).join(", ");
 
   return (
@@ -101,21 +73,17 @@ export function ProjectHeader({
         {tagline && (
           <p className="text-[#1a472a]/85 mt-2 line-clamp-2 break-words">{tagline}</p>
         )}
+        {/* Follow's form, when it opens, takes the row's last line, so Share stays beside Follow. */}
         <div className="flex flex-wrap gap-2 mt-4">
-          {followCampaignId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className={`min-h-11 ${following
-                ? "bg-[#4a7c59] text-white border-[#4a7c59] hover:bg-[#1a472a]"
-                : "border-[#4a7c59] text-[#1a472a] hover:bg-[#4a7c59] hover:text-white"}`}
-              onClick={toggleFollow}
-              aria-expanded={!isAuthenticated ? showEmailFollow : undefined}
-            >
-              {following ? <BellRing className="w-4 h-4 mr-2" /> : <Bell className="w-4 h-4 mr-2" />}
-              {following ? "Following" : "Follow"}
-            </Button>
-          )}
+          <FollowControl
+            mode="project"
+            variant="header"
+            projectKey={projectKey}
+            campaignId={followCampaignId}
+            projectName={name}
+            initiallyFollowing={followsProject}
+            isExample={isDemo}
+          />
           <ShareButtons
             className="min-h-11"
             url={sharePath}
@@ -124,38 +92,6 @@ export function ProjectHeader({
             hashtags={["ReGenCivics", "Regenerative", "CrowdPooling"]}
           />
         </div>
-        {showEmailFollow && !isAuthenticated && followCampaignId && (
-          <form
-            className="mt-4 bg-[#f0f7f0] rounded-xl p-3 sm:p-4 space-y-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              const v = email.trim();
-              if (!v || !v.includes("@")) { toast.error("Enter a valid email address"); return; }
-              subscribe.mutate({ campaignId: followCampaignId, email: v });
-            }}
-          >
-            <p className="text-sm text-[#1a472a]/85">
-              Get news from this project by email. A free account lets you follow it from your notifications too.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Input
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                aria-label="Your email for project news"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Your email"
-                className="bg-white border-[#4a7c59]/40"
-              />
-              <Button type="submit" size="sm" disabled={subscribe.isPending} className="bg-[#4a7c59] hover:bg-[#1a472a] text-white sm:self-center">
-                {subscribe.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send me news"}
-              </Button>
-            </div>
-          </form>
-        )}
       </div>
     </header>
   );

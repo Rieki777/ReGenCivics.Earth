@@ -9,19 +9,41 @@
  *
  * Keep entries stable. If something here changes quarterly, it does not
  * belong here; the verifier would start flagging correct copy.
+ *
+ * 2026-09-27 (Phase 0): the fund facts are gone. The "fund" is now a
+ * member-owned cooperative in design (shared/fund.ts COOP), and every
+ * sentence about it is read from there, so a draft that claims a fund, a
+ * return, a stake, a minimum or a formed cooperative contradicts canon and is
+ * blocked.
  */
+import { COOP } from "../../shared/fund";
+import { CROWDPOOLING_WORDING } from "../../shared/crowdpoolCopy";
+
+/**
+ * The crowdpool lane's binding wording (Phase 0 spec, 2026-09-27). Every
+ * server surface that describes crowdpooling uses it verbatim: the crawler
+ * prose, the public chat guide, the site guide. Its one copy lives in
+ * shared/crowdpoolCopy.ts so the client can use it too; it is re-exported
+ * here for the server readers.
+ */
+export { CROWDPOOLING_WORDING };
 
 export const CANON_FACTS = `
-- The Fund: venture capital structure (intentional, legibility is the point). It is IN FORMATION: not a legal entity, target launch 2027, gathering non-binding LOIs, accepting no capital. Never write about it in the present tense as an operating fund, never name a securities exemption, and label every fee, return target and minimum as proposed;
-  governance token RCVoice; economic token $RCivics; land-backed security;
-  90% Unity Model prevents governance capture; HEIST impact framework
-  (soil health, water, biodiversity, social fabric); on-chain transparency
-  via Hypha DAO on Base.
+- The cooperative: ${COOP.statement} Never write about it in the present tense as formed, operating, holding land or taking members, never name a legal structure or securities exemption, and never state a return, a price, a fee, a minimum, a stake or a payout of any kind. ${COOP.notAnOffer}
+- ${COOP.entities}
+- ReGen Civics builds the tools and runs the game land projects use today: the quest game, the seasonal incubator, crowdpooling, and on-chain governance via Hypha DAO on Base.
 - The Game: governance token RGVoice (EARNED through participation, never
   purchased); economic token $ReGen; entry via quests, forum, seasons.
-- Token pairs must never be swapped: RCVoice/$RCivics belong to the Fund,
-  RGVoice/$ReGen belong to the Game.
-- Fund I/II take minority stakes (20-40%) in operating land projects.
-- The four paths: Investors (Fund the Renaissance), Land Projects (Evolve
-  Your Project), Alliance Partners (Join the Alliance), Players (Play the Game).
+  ${COOP.tokensNote}
+- $RCivics and RCVoice: ${COOP.coopTokens.rcivics} ${COOP.coopTokens.rcvoice}
+- Token pairs must never be swapped: RGVoice/$ReGen belong to the Game;
+  RCVoice/$RCivics come from the earlier fund design.
+- Crowdpooling: ${CROWDPOOLING_WORDING}
+- Contributions are recognized across nine forms of capital: financial,
+  material, living, intellectual, experiential, social, cultural, spiritual,
+  and health.
+- HEIST impact framework (soil health, water, biodiversity, social fabric).
+- The paths in: Land Projects (Evolve Your Project), Contributors
+  (crowdpooling), Alliance Partners (Join the Alliance), Players (Play the
+  Game). People interested in the cooperative tell us at /loi.
 `.trim();

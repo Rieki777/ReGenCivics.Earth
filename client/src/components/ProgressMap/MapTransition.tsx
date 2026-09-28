@@ -18,7 +18,6 @@ const routeMap: Record<string, () => Promise<unknown>> = {
   "/ally": () => import("@/pages/Ally"),
   "/play": () => import("@/pages/Play"),
   "/opportunity": () => import("@/pages/Opportunity"),
-  "/investor": () => import("@/pages/InvestorForm"),
   "/community": () => import("@/pages/Community"),
   "/schedule": () => import("@/pages/Schedule"),
   "/profile": () => import("@/pages/PlayerProfile"),

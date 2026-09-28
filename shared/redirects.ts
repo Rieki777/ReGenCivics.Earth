@@ -40,8 +40,18 @@ export const ROUTE_REDIRECTS: RouteRedirect[] = [
   { from: "/form", to: "/connect" },
   { from: "/church", to: "https://core.regencivics.earth" },
   { from: "/ship/honeymoon", to: "/blog/more-than-one-honeymoon" },
-  { from: "/investmentform", to: "/investor" },
-  { from: "/investor-form", to: "/investor" },
+  { from: "/investmentform", to: "/loi" },
+  { from: "/investor-form", to: "/loi" },
+  // Funding engine Phase 0 (2026-09-27): the investor pages became the
+  // cooperative interest form, and the fund risk disclosure folded into
+  // /disclaimers. Old pages: git tag archive/fund-pages-2026-09-27.
+  { from: "/investor", to: "/loi" },
+  { from: "/risk-disclosure", to: "/disclaimers" },
+  // The four addresses that 404ed (plan P0-8).
+  { from: "/crowdpool", to: "/crowd-pooling" },
+  { from: "/projects", to: "/campaigns" },
+  { from: "/investor-contact", to: "/investor/contact" },
+  { from: "/about", to: "/team" },
   { from: "/crowd-pooling-projects", to: "/campaigns" },
   { from: "/community/decisions", to: "/assembly" },
   { from: "/community/lessons", to: "/community/tag/lesson" },

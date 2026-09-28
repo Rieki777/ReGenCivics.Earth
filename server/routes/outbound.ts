@@ -42,7 +42,9 @@ const sourceZ = z.enum([
 
 /**
  * A list audience (2026-09-24): one campaign's email followers, everyone
- * following a campaign by email, or a season's crowdpool waitlist. When set
+ * following a campaign by email, a season's crowdpool waitlist, or (since
+ * 2026-09-27) a season digest: every email follower plus that season's
+ * waitlist, optionally leaving out people who already offered. When set
  * it replaces `sources`. Resolved at preview and again at send by
  * server/lib/outboundAudience.ts, with each person's token stop link.
  */
@@ -50,6 +52,11 @@ const listZ = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("campaign"), campaignId: z.number().int().positive() }),
   z.object({ kind: z.literal("all_campaigns") }),
   z.object({ kind: z.literal("waitlist"), seasonNumber: z.number().int().min(1) }),
+  z.object({
+    kind: z.literal("season_digest"),
+    seasonNumber: z.number().int().min(1),
+    excludeOffered: z.boolean().default(true),
+  }),
 ]);
 
 const audienceZ = z.object({
@@ -179,7 +186,8 @@ export const outboundRouter = router({
   // The list audiences Outbound can send to, with counts from the same
   // resolver the send uses: each campaign with email followers (cancelled
   // ones included, so Rye can tell them), everyone following a campaign by
-  // email, and each season's crowdpool waitlist.
+  // email, each season's crowdpool waitlist, and the season digest for the
+  // current and next season (with and without people who already offered).
   listAudiences: adminProcedure.query(async () => {
     return await listAudienceCounts();
   }),

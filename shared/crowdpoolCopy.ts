@@ -16,15 +16,34 @@
  * checking its readers.
  */
 
+// ── What crowdpooling is, in one sentence ──────────────────────────────────
+
+/**
+ * The binding description of crowdpooling (agreed with the funding lane,
+ * 2026-09-27). Every surface that describes crowdpooling uses it verbatim:
+ * server/lib/content-canon.ts re-exports it for the crawler prose, the chat
+ * guides and the site guide, so it cannot drift into calling crowdpooling an
+ * investment.
+ */
+export const CROWDPOOLING_WORDING =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. " +
+  "Money goes through outside partners each project holds, never through ReGen Civics. " +
+  "The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
+
 // ── Tokens (R33). Copy only: this build issues no tokens. ────────────────────
 
-/** The project's own campaign token, earned as help is delivered. Never RGVoice or $ReGen. */
+/**
+ * The project's own campaign token, where delivered help is recorded. Never RGVoice or $ReGen.
+ * "Recorded", never "earns": ReGen Civics sets no hours-to-token rate, and each project's
+ * own entity decides how it credits labor (CROWDPOOL_PLAN.md 2a, v1.2 reconciliation).
+ */
 export const TOKEN_LINE = (project: string) =>
   // banned-terms-allow: "no claim about value" is the token disclaimer, not the claim verb
-  `Your help earns ${project}'s token as you deliver it. The token tracks what you pooled. It makes no claim about value.`;
+  `Your help is recorded in ${project}'s token as you deliver it. The token tracks what you pooled. It makes no claim about value.`;
 export const TOKEN_HELD_LINE = "We hold your tokens until you make an account.";
-export const TOKEN_PRACTICE_LINE = "Practice run. Real campaigns issue the project's token as you deliver.";
-export const LOAN_INTEREST_LINE = "Loans earn interest. They earn no tokens.";
+export const TOKEN_PRACTICE_LINE = "Practice run. Real campaigns record your help in the project's token as you deliver.";
+/** Loans follow the route's own terms; ReGen Civics promises no upside (CROWDPOOL_PLAN.md 2a). */
+export const LOAN_INTEREST_LINE = "Steward sets each loan's terms. Loans are not recorded in the project's token.";
 
 // ── Give or lend (section 6) ────────────────────────────────────────────────
 
@@ -59,6 +78,9 @@ export const STRIP = {
   noMoneyHere: "No money moves through this site yet.",
   maEarthEitherWay: "Gifts through Ma Earth go to the project either way.",
   stewardsAnswer: "Stewards are asked to answer every offer and post what happens.",
+  /** The strip's fourth row while a campaign is live, examples included (ruling 2026-09-27, question 1). */
+  ifNotComplete:
+    "If it doesn't complete, help already given stays recorded in the project's token, lent things go home on the agreed date or sooner if you ask, and offers that haven't started are released with our thanks.",
 };
 
 export const PAGE = {
@@ -121,6 +143,8 @@ export const MONEY_BLOCK = {
   loading: "Loading the ways to put money in.",
   asksNone: "This project asks for no money. Its needs above are where you can help.",
   noRoute: "This project has no money route yet. Its needs above are open to you.",
+  /** A campaign that has ended (complete, cancelled, closed) takes nothing new. */
+  ended: "This campaign has ended, so it takes no more money.",
   maearth: {
     title: "Give through Ma Earth",
     body: "Ma Earth pools gifts and can match them with grant money, so a small gift grows.",
@@ -129,7 +153,7 @@ export const MONEY_BLOCK = {
   },
   gosteward: {
     title: "Lend through Steward",
-    body: "Steward arranges loans that the project pays back with interest.",
+    body: "Steward arranges loans to the project on Steward's own terms.",
     button: "Lend through Steward",
     raised: (amount: string) => `${amount} lent so far`,
   },
@@ -187,7 +211,7 @@ export const HOW_IT_WORKS = [
   {
     title: "It counts once accepted",
     // banned-terms-allow: "no claim about value" is the token disclaimer, not the claim verb
-    body: "An offer counts toward the campaign once the stewards accept it. It earns the project's token as you deliver it. The token tracks what you pooled and makes no claim about value.",
+    body: "An offer counts toward the campaign once the stewards accept it. It is recorded in the project's token as you deliver it. The token tracks what you pooled and makes no claim about value.",
   },
   { title: "Both halves, by the close date", body: "A campaign is complete when both halves are confirmed by the close date." },
 ];
@@ -412,4 +436,289 @@ export const STEWARD_MONEY = {
   landValue: "Land value",
   duration: "Duration",
   days: (n: string) => `${n} days`,
+} as const;
+
+// ═══ Build 3 (build spec 2026-09-27, section 15) ═══════════════════════════
+// Rye's rulings of 2026-09-27: no need at 0, the binding close date, nudges,
+// the status link, the arrival note, Follow, "Needed to start" and the
+// default opening day. Where these mention tokens they say help "stays
+// recorded" in the project's token, never that tokens are earned for hours.
+
+/** No need at 0 (ruling 2026-09-27). The rule is isListableValue in shared/needRules.ts. */
+export const ZERO_VALUE = {
+  field: "Add what this need is worth. A need can't be listed at 0.",
+  server: (title: string) => `"${title}" is listed at 0. Give it a value above 0 so it counts toward the whole ask.`,
+  review: (n: number) =>
+    Number(n) === 1
+      ? "1 need is listed at 0. Ask the project to give it a value."
+      : `${n} needs are listed at 0. Ask the project to give each one a value.`,
+  /** The value field a listed need at 0 opens on its row in the wizard (lane 2 addition). */
+  valueLabel: (currencySymbol: string) => `What it's worth (${currencySymbol})`,
+} as const;
+
+/** The nine-month cap on new campaigns (ruling 2026-09-04, enforced from 2026-09-27). */
+export const DURATION = {
+  intro: "How long should your campaign run? Up to nine months, 273 days.",
+  tooLong: "A campaign runs nine months at most, 273 days.",
+} as const;
+
+/** The wizard's day field and the end of its range (lane 2 additions beside DURATION). */
+export const DURATION_FIELD = {
+  daysLabel: "Days the campaign runs",
+  rangeEnd: "9 months",
+} as const;
+
+/** One need on another project, offered when a campaign closes, an offer is declined or a place is released. */
+export type OtherNeedLine = { verb: string; title: string; projectName: string };
+
+/**
+ * The close date (sections 9.1, 9.3, 9.4, 9.7). The per-person lines are put
+ * together by closeLinesFor in shared/campaignClose.ts.
+ */
+export const CLOSE = {
+  /** Under the completion line on a campaign that closed without completing. */
+  afterLine:
+    "Help already given stays recorded in the project's token. Lent things go home on the agreed date, or sooner if you ask. Offers that hadn't started were released with our thanks.",
+  completion: (date: string) => `Crowdpooling closed on ${date}. It didn't complete.`,
+  completionNoDate: "Crowdpooling closed. It didn't complete.",
+  stateTag: "Didn't complete",
+  timeline: "Crowdpooling closed. It didn't complete.",
+  lines: {
+    releasedAtClose: (title: string) => `Your offer of "${title}" hadn't started, so it's released with our thanks.`,
+    waitingClosed: (title: string) => `Your offer of "${title}" was still waiting, so it's closed with our thanks.`,
+    lendHome: (title: string, until: string) => `Your ${title} goes home on ${until}, or sooner if you ask the stewards.`,
+    lendHomeNoDate: (title: string) => `Your ${title} goes home when you and the stewards agree, or sooner if you ask.`,
+    placeStays: (title: string) => `Your place in ${title} stays with the stewards, who will mark it delivered or release it.`,
+    givenRecorded: (title: string, project: string) => `What you gave for "${title}" stays recorded in ${project}'s token.`,
+    more: (n: number) =>
+      Number(n) === 1
+        ? "And 1 more offer is on your contributions page."
+        : `And ${n} more offers are on your contributions page.`,
+  },
+  /** Up to two other open needs. With none, use followInstead. */
+  otherNeeds: (list: OtherNeedLine[]) =>
+    `These could use you now: ${list.map((n) => `${n.verb} ${n.title} at ${n.projectName}`).join("; ")}.`,
+  followInstead: (project: string) => `Follow ${project} to hear when it asks again.`,
+} as const;
+
+/** The private status link for people who offered without an account (section 10). */
+export const LINK = {
+  receiptLead: "Keep this link to check or change your offer.",
+  receiptOpen: "Check or change this offer",
+  copy: "Copy link",
+  copied: "Link copied",
+  receiptHelp:
+    "You can withdraw it with this link until the stewards accept it. The link works for 180 days, and each email from the stewards brings a fresh one.",
+  title: (project: string) => `Your offer to ${project}`,
+  forCampaign: (offerTitle: string, campaignTitle: string) => `${offerTitle}, for ${campaignTitle}`,
+  seeProject: "See the project",
+  stewardNote: "A note from the stewards",
+  othersHeading: "These could use you now",
+  withdraw: "Withdraw this offer",
+  withdrawTitle: "Withdraw this offer?",
+  withdrawBody: "The stewards see that you withdrew it. You can offer again any time the campaign is open.",
+  withdrawConfirm: "Withdraw",
+  withdrawKeep: "Keep it",
+  withdrawn: "You withdrew this offer.",
+  replyLabel: "Send the stewards a note",
+  replyHelp: "Up to 1,000 characters. They see it with your offer.",
+  replySend: "Send note",
+  replySent: "Sent. The stewards see it with your offer.",
+  replyLimit: "You've sent a few notes today. The stewards will see them, and you can send more tomorrow.",
+  linked: "This offer is on your account now. Sign in to see it with the rest of your contributions.",
+  linkedAction: "This offer is on your account now. Sign in to change it.",
+  signIn: "Sign in",
+  makeAccountLead: "Make a free account with the email you used, and this offer joins Your contributions.",
+  makeAccount: "Make my account",
+  /** The NOT_FOUND message for a wrong, unknown or expired link: one answer for all three. */
+  bad: "This link has expired or isn't right.",
+  badTitle: "This link has expired or isn't right",
+  badBody:
+    "Each email from the stewards brings a fresh link. You can also make an account with the email you used to see every offer you've made.",
+  notPendingHere: "The stewards already answered this offer, so it can't be withdrawn here.",
+  // Lane 4 additions: the page's own small words and the reply refusals.
+  loading: "Opening your offer...",
+  loadFailed: "We couldn't open this offer just now. Try again in a moment.",
+  tryAgain: "Try again",
+  seeLive: "See live campaigns",
+  otherNeed: (verb: string, title: string, project: string) => `${verb} ${title} at ${project}`,
+  stepsHeading: "Where it stands",
+  stepDone: "Done",
+  stepNow: "Now",
+  lending: (from: string, until: string) => `Lending ${from} to ${until}`,
+  lendingUntil: (until: string) => `Lending until ${until}`,
+  expiresOn: (date: string) => `This link works until ${date}. Each email from the stewards brings a fresh one.`,
+  replyEmpty: "Write a note before sending it.",
+  replyWithdrawn: "You withdrew this offer, so notes can't be sent from here.",
+  replyExample: "Example campaigns keep their example records.",
+  replyFailed: "That note didn't send. Try again in a moment.",
+  withdrawFailed: "That didn't go through. Try again in a moment.",
+} as const;
+
+/** The step line for one offer (section 10.3). offerSteps in shared/offerStatus.ts puts it together. */
+export const OFFER_STEPS = {
+  steps: {
+    sent: "Sent",
+    reviewing: "Stewards reviewing",
+    accepted: "Accepted",
+    acceptedHours: (h: number) => (Number(h) === 1 ? "Accepted for 1 hour a week" : `Accepted for ${h} hours a week`),
+    underway: "Underway",
+    lent: "Lent",
+    delivered: "Delivered",
+    thanked: "Thanked",
+  },
+  endings: {
+    rejected: "Not this time",
+    withdrawn: "You withdrew",
+    campaignCancelled: "Campaign cancelled",
+    closedWithCampaign: "Closed when the campaign closed",
+    releasedAtClose: "Released with thanks when the campaign closed",
+    released: "Released by the stewards",
+    expired: "The place closed",
+    returned: "Returned to you",
+  },
+  stepLine: {
+    pending: "Waiting on the stewards. You can withdraw it until they accept it.",
+    accepted: "Accepted. The stewards will be in touch about the details.",
+    fulfilled: "Delivered. Thank you.",
+    thanked: "Delivered and thanked.",
+  },
+} as const;
+
+/** The arrival note (section 11): the steward's card and the contributor's view. */
+export const ARRIVAL = {
+  title: "Arrival note",
+  intro:
+    "What someone needs to know once you accept them. Only people whose offer you accepted see it: in their contributions, on their offer link and in the acceptance email.",
+  whoFor: "Who it's for",
+  everyone: "Everyone you accept",
+  onlyFor: (needTitle: string) => `Only people accepted for ${needTitle}`,
+  needHelp: "Anything you leave blank here comes from the note for everyone.",
+  /** Field labels on the steward's card. */
+  fields: {
+    whereToGo: "Where to go",
+    whatToBring: "What to bring",
+    askFor: "Who to ask for",
+    meals: "Meals",
+    beds: "Beds",
+    gettingThere: "Parking or transit",
+  },
+  placeholderWhere: "Address or meeting point",
+  save: "Save arrival note",
+  saved: "Arrival note saved.",
+  clear: "Clear this note",
+  empty: "Add at least one line before saving.",
+  exampleOnly: "Example campaigns keep their example records.",
+  closedCampaign: "This campaign is closed, so its notes stay as they are.",
+  /** What the contributor sees. */
+  viewHeading: "Before you arrive",
+  viewLabels: {
+    whereToGo: "Where to go",
+    whatToBring: "What to bring",
+    askFor: "Ask for",
+    meals: "Meals",
+    beds: "Beds",
+    gettingThere: "Getting there",
+  },
+  needsYou: (title: string) => `Needs you: read the arrival note for ${title}`,
+  noticeLine: "The stewards left an arrival note for you in Your contributions.",
+  // Lane 4 additions: the steward's card and the contributor's toggle.
+  cleared: "Arrival note cleared.",
+  saveFailed: "Couldn't save that. Try again.",
+  loading: "Loading the note...",
+  count: (n: number, max: number) => `${n} of ${max} characters`,
+  show: "Read the arrival note",
+  hide: "Hide the arrival note",
+  // Clear asks first (review 2026-09-28): one tap used to delete the note
+  // for everyone accepted, with no way back.
+  clearConfirm: "Clear this note? The people you accepted stop seeing it straight away.",
+  clearYes: "Clear it",
+  clearKeep: "Keep it",
+} as const;
+
+/** Withdraw in Your contributions (build spec 2026-09-27, section 10.6). The dialog reuses LINK's words. */
+export const YOUR_OFFERS = {
+  withdraw: "Withdraw",
+  withdrawLabel: (title: string) => `Withdraw your offer of ${title}`,
+} as const;
+
+/** Notes people sent the stewards from their offer link, as the stewards see them. */
+export const OFFER_NOTES = {
+  heading: "Notes from their offer link",
+  row: (n: number) =>
+    Number(n) === 1
+      ? "1 offer has a note from the person who offered. Read it with the offer."
+      : `${n} offers have notes from the people who offered. Read them with each offer.`,
+} as const;
+
+/** One Follow control (section 12.5). A follow is on the project, so it lasts across seasons. */
+export const FOLLOW = {
+  follow: "Follow",
+  following: "Following",
+  followProject: (project: string) => `Follow ${project}`,
+  emailIntro: (project: string) =>
+    `Get news from ${project} by email. News comes in the season letters from the ReGen Civics team, and a free account brings it to your notifications too.`,
+  emailLabel: "Your email",
+  emailSubmit: "Send me news",
+  emailDone: (project: string) => `You're on the list for news from ${project}.`,
+  invalidEmail: "Enter a valid email address.",
+  error: "Couldn't save that. Try again.",
+  seasonHeading: "Hear when crowdpooling opens",
+  seasonBody: "Leave your email and we'll write when real campaigns open.",
+  seasonSignedIn: "Tell me when it opens",
+  seasonSubmit: "Tell me",
+  seasonDone: "You're on the list. We'll write when real campaigns open.",
+  practiceHeading: "Want to hear when real campaigns open?",
+  bannerButton: "Hear when it opens",
+  exampleRefused: "Example projects can't be followed. You can hear when real campaigns open instead.",
+  // Lane 5 additions: the receipt button once pressed, and the season body
+  // for someone signed in, who gives no email because we have theirs.
+  followingProject: (project: string) => `Following ${project}`,
+  seasonBodySignedIn: (email: string) => `We'll write to ${email} when real campaigns open.`,
+  // On a real project with nothing live, the same season form sits behind
+  // Follow. "Real campaigns" there read as if this project weren't real, so
+  // it speaks of the season (review 2026-09-28). "Real campaigns" stays for
+  // the gallery, examples and the practice receipt, where only examples show.
+  seasonBodyProject: "Leave your email and we'll write when crowdpooling opens for the season.",
+  seasonBodyProjectSignedIn: (email: string) => `We'll write to ${email} when crowdpooling opens for the season.`,
+  seasonDoneProject: "You're on the list. We'll write when crowdpooling opens for the season.",
+} as const;
+
+/** "Needed to start", a steward-only mark on needs (section 13). */
+export const NEED_MARKER = {
+  intro: "Mark the needs your project can't begin without. Only your stewards see this mark.",
+  label: "Needed to start",
+  statsLine: (met: number, n: number) => `Needed to start: ${met} of ${n} met.`,
+  moneyRefused: "Money isn't a need, so it can't be marked.",
+  saveFailed: "Couldn't save that. Try again.",
+  /** Refusals from campaigns.setNeededToStart (lane 2 additions). */
+  stewardsOnly: "Only this project's stewards can mark its needs.",
+  exampleRefused: "Example campaigns keep their example records.",
+  closedRefused: "This campaign is closed, so its marks stay as they are.",
+  /** The chip on a marked need in the steward's needs list. */
+  chip: "Needed to start",
+} as const;
+
+/**
+ * The default opening day and "What we look for" on /campaigns (section 14).
+ * Both are defaults: each project can choose its own day (ruling 2026-09-24).
+ * The day comes from defaultCrowdpoolOpening in shared/crowdpoolCalendar.ts.
+ */
+export const SEASON_DEFAULTS = {
+  upcoming: (date: string, seasonNumber: number) =>
+    `Default opening day: ${date}. Season ${seasonNumber} crowdpooling opens together at the December solstice, when the Resource Season opens on the Year wheel. Each project can choose its own day.`,
+  open: (date: string, seasonNumber: number) =>
+    `Season ${seasonNumber} crowdpooling opened on ${date}, the default opening day on the Year wheel. Each project can choose its own day.`,
+  lookForLead: "What we look for, by default: ",
+  lookForLink: "the Ready to crowdpool list",
+  /** The block's name for screen readers (lane 2 addition). */
+  label: "Season defaults",
+} as const;
+
+/** The Outbound season digest audience for email-only followers (section 12.4). */
+export const OUTBOUND_DIGEST = {
+  group: "Season digest",
+  choice: (seasonNumber: number, count: number) => `Season ${seasonNumber}: email followers and the waitlist (${count})`,
+  exclude: "Leave out people who already offered on a live campaign",
+  footer: "You asked for news about crowdpooling on regencivics.earth.",
 } as const;

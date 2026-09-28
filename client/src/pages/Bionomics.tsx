@@ -57,6 +57,12 @@ import {
 import { LandscapeSVG } from "@/components/backgrounds/LandscapeSVG";
 import { RiverDivider } from "@/components/dividers/RiverDivider";
 import { getBionomicsCopy } from "@/content/bionomicsContent";
+import { COOP } from "@shared/fund";
+
+// Binding crowdpooling wording from the crowdpool lane (Phase 0 spec). Used
+// verbatim wherever this page describes crowdpooling.
+const CROWDPOOLING_LINE =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
 
 /* ─── Color tokens ────────────────────────────────────────────────────── */
 
@@ -493,9 +499,9 @@ const TIMELINE: TimelineNode[] = [
   },
   {
     year: "2025",
-    title: "The Fund takes shape (Winter)",
+    title: "The design takes shape (Winter)",
     body:
-      "$RCivics and $ReGen dynamics. The Game and Bionomics. Tier system, gratitude protocol, Game Mechanics, and the foundations of what you see on the site, designed and ready to build.",
+      "Token designs for the Game and the earlier fund design. The Game and Bionomics. Tier system, gratitude protocol, Game Mechanics, and the foundations of what you see on the site, designed and ready to build.",
   },
   {
     year: "Early 2026",
@@ -622,7 +628,7 @@ export default function Bionomics() {
     <PageWrapper>
       <SEO
         title="Bionomics | The Living Economy of ReGen Civics"
-        description="Bionomics is the Game side of ReGen Civics: $ReGen, bioregional financing, local food systems, gratitude, and the Index Fund for the ReGenerative Renaissance. Built on the BioFi framework and the SEEDS lineage."
+        description="Bionomics is the Game side of ReGen Civics: $ReGen, bioregional financing, local food systems, gratitude, and the cooperative network we are designing with land projects. Built on the BioFi framework and the SEEDS lineage."
         image="/og/bionomics.webp"
         url="/bionomics"
       />
@@ -736,7 +742,7 @@ export default function Bionomics() {
           <div className="container px-4 max-w-4xl mx-auto">
             <TLDR points={[
               "Bionomics is the living-economy framework behind ReGen Civics",
-              "It bridges regenerative land projects with aligned capital through the Fund",
+              "It connects regenerative land projects with the people, skills and resources they need",
               "Every quest, contribution, and governance action feeds back into the system",
             ]} />
           </div>
@@ -793,7 +799,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Two Sides"
                 title="Two sides of one bridge"
-                blurb="The Fund draws capital from the current Games (capitalism and everything downstream of it). The Game grows the new economies that capital is flowing toward. They need each other."
+                blurb="Tokenomics covers the tokens and the cooperative we are designing to work within the current Games (capitalism and everything downstream of it). The Game grows the new economies we are moving toward. They need each other."
                 titleClassName="story-grow"
               />
 
@@ -820,11 +826,11 @@ export default function Bionomics() {
                       </h3>
                     </div>
                     <ul className="space-y-2 text-white/80 text-sm md:text-base">
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> The Fund</li>
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> $RCivics</li>
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Capital from the current economic systems</li>
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Investment, fundraising, financial returns</li>
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> How money moves into regenerative work</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> The cooperative, in design</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> $RCivics and RCVoice, under review with counsel</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Tokens as records of contribution</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Law, land and membership in the current systems</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> How land projects and people could buy and steward land together</li>
                     </ul>
                     <div
                       className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold group-hover:gap-2.5 transition-all"
@@ -897,12 +903,15 @@ export default function Bionomics() {
             </div>
           </section>
 
-          {/* ════ 5. THE INDEX FUND ═════════════════════════════════ */}
+          {/* ════ 5. THE COOPERATIVE NETWORK ════════════════════════ */}
+          {/* Until 2026-09-27 this section framed the work as an index fund
+              holding "positions". The fund is now the cooperative in design;
+              its sentences come from COOP in shared/fund.ts. */}
           <section className="px-4 py-10 md:py-16" style={{ background: "rgba(0,0,0,0.18)" }}>
             <div className="container max-w-4xl">
               <SectionHeading
                 eyebrow="The Frame"
-                title="The Index Fund for the ReGenerative Renaissance"
+                title="A Cooperative Network for the ReGenerative Renaissance"
                 accent={C.gold}
               />
               <div
@@ -910,24 +919,22 @@ export default function Bionomics() {
                 style={{ background: "rgba(13,40,24,0.55)" }}
               >
                 <p className="text-white/90 text-base md:text-lg leading-relaxed">
-                  We are investing in local food, regenerative land, community, and the
-                  organizations that support them. It is a full-suite investment into the
+                  We tend local food, regenerative land, community, and the
+                  organizations that support them. Together they make up the{" "}
                   <Concept>ReGenerative Renaissance</Concept> and the cultures growing inside it.
                 </p>
                 <p className="text-white/85 text-base leading-relaxed">
-                  Generally funds pick a single thesis and ride it. Our thesis is simply
-                  that we must invest in the foundations for regenerative civilizations,
-                  for a myriad of reasons. For this reason, we look to fund the whole
-                  portfolio of practices and infrastructures that a regenerative
-                  civilization needs to take root. Land projects. Food producers. Tools.
-                  Governance experiments. Bioregional organizing. Stories. Each one is a
-                  position in the index. Together we are the ReGenerative Renaissance.
-                  Because the mission is so big, we need to have the governance be
-                  decentralized and democratic to play this vital role of our future
-                  civilizations.
+                  A regenerative civilization needs many practices and infrastructures
+                  to take root. Land projects. Food producers. Tools. Governance
+                  experiments. Bioregional organizing. Stories. Because the mission is
+                  so big, the governance has to be decentralized and democratic to play
+                  this vital role in our future civilizations.
+                </p>
+                <p className="text-white/85 text-base leading-relaxed">
+                  {COOP.statement}
                 </p>
                 <p className="text-white text-base md:text-lg font-semibold">
-                  Think of it as the index fund for Regenerative Civilizations.
+                  Think of it as {COOP.tagline.toLowerCase()}.
                 </p>
                 <div className="pt-2 flex flex-wrap gap-5">
                   <Link
@@ -935,7 +942,7 @@ export default function Bionomics() {
                     className="inline-flex items-center gap-1.5 text-sm font-semibold hover:gap-2.5 transition-all"
                     style={{ color: C.amber }}
                   >
-                    See how the Fund works on Tokenomics <ArrowRight className="w-4 h-4" />
+                    See the tokens and the cooperative on Tokenomics <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     href="/governance"
@@ -945,6 +952,9 @@ export default function Bionomics() {
                     See how we make decisions in Governance <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
+                <p className="text-white/55 text-xs leading-relaxed border-t border-white/10 pt-4">
+                  {COOP.notAnOffer}
+                </p>
               </div>
             </div>
           </section>
@@ -1025,7 +1035,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="How We Measure"
                 title="The 4 Returns Framework"
-                blurb="The BioFi framework organizes regenerative success around four kinds of return: Inspiration, Ecological, Social, and Economic-Financial. Bionomics is built around all four. Here is what each one looks like inside the Game."
+                blurb="The BioFi framework organizes regenerative success around four kinds of return: Inspiration, Ecological, Social, and Economic. Bionomics is built around all four. Here is what each one looks like inside the Game."
                 accent={C.greenSoft}
               />
               <div className="mycelium-grid grid sm:grid-cols-2 gap-4 md:gap-5">
@@ -1048,9 +1058,9 @@ export default function Bionomics() {
                   accent={C.teal}
                 />
                 <ReturnCard
-                  title="Economic-Financial Return"
+                  title="Economic Return"
                   icon={<Wallet className="w-5 h-5" />}
-                  body="Patient capital that earns honest returns inside a regenerative thesis. Held inside the Index Fund for the ReGenerative Renaissance and circulated through $RCivics and $ReGen. Explore the Fund and Opportunity pages for more on this."
+                  body="Livelihoods for the people doing the work: land stewards who can make a living, food producers trading close to home, and land projects that can sustain themselves. Money for land projects goes through outside partners each project holds, never through ReGen Civics."
                   accent={C.amber}
                 />
               </div>
@@ -1059,7 +1069,7 @@ export default function Bionomics() {
                   href="/game-mechanics"
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#7dd87d] hover:gap-2.5 transition-all"
                 >
-                  See how returns are measured in the Game <ArrowRight className="w-4 h-4" />
+                  See how the Game measures all four <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
@@ -1104,18 +1114,18 @@ export default function Bionomics() {
                   year or next, as soon as a bioregion is ready to receive the Game.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={2} title="Long-term and patient" status="Building">
-                  The Fund is structured for multi-season cycles, not quarterly returns.
-                  Land projects we incubate are evaluated on five to twenty year horizons.
+                  The Game runs in multi-season cycles. Land projects we incubate are
+                  evaluated on five to twenty year horizons.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={3} title="Participatory governance" status="Building">
                   All participants get a voice. Voices are tiered and weighted based on
                   contribution, trust, and citizenship tier so that influence reflects
-                  engagement and care, not capital alone.
+                  engagement and care.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={4} title="Holistic and 4 Returns oriented" status="Building">
-                  Inspiration, ecological, social, and economic-financial returns are
-                  tracked through quests, harvests, and the Living Tree visualization on
-                  every player profile.
+                  Inspiration, ecological, social, and economic health are tracked
+                  through quests, harvests, and the Living Tree visualization on every
+                  player profile.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={5} title="Catalytic and connective" status="Building">
                   The Game's whole job is to connect regenerators to capital, attention,
@@ -1123,8 +1133,7 @@ export default function Bionomics() {
                   connective tissue.
                 </BFFAttributeRow>
                 <BFFAttributeRow num={6} title="Blended capital structures" status="Experimenting">
-                  The Fund mixes philanthropic, investment, and community capital. $RCivics
-                  and $ReGen are two complementary capital flows.
+                  Land projects draw on many kinds of capital at once. {CROWDPOOLING_LINE}
                 </BFFAttributeRow>
                 <BFFAttributeRow num={7} title="Innovative financial instruments" status="Experimenting">
                   Gratitude tokens as eco-credits, seasonal harvests as a form of
@@ -1167,7 +1176,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Four Forms"
                 title="The 4 BFF Types, mapped to our work"
-                blurb="The BioFi ebook describes four BFF types. Each has its own way of raising and allocating capital. ReGen Civics gestures toward all four. Here is where each one shows up in our work."
+                blurb="The BioFi ebook describes four BFF types. Each has its own way of raising and allocating capital. Here is how each one relates to our work."
                 accent={C.amber}
               />
               <div className="grid sm:grid-cols-2 gap-4 md:gap-5">
@@ -1175,7 +1184,7 @@ export default function Bionomics() {
                   title="Bioregional Trust"
                   icon={<Mountain className="w-6 h-6" />}
                   oneLiner="Stewardship across generations."
-                  expression="Holding land, culture, and commons across generations. ReGen Civics expression: the Land Project incubator, the Steward citizenship tier, the long-horizon governance councils, and the relationships we hold with the projects in our portfolio."
+                  expression="Holding land, culture, and commons across generations. ReGen Civics expression: the Land Project incubator, the Steward citizenship tier, the long-horizon governance councils, and the relationships we hold with the land projects we work with."
                   link="/land"
                   linkLabel="See Land Projects"
                   accent={C.green}
@@ -1184,25 +1193,25 @@ export default function Bionomics() {
                   title="Bioregional Venture Studio"
                   icon={<Hammer className="w-6 h-6" />}
                   oneLiner="Designing and launching new ventures."
-                  expression="ReGen Civics expression: the quest system as a way to incubate new ideas, Crowdpooling as the financing primitive for venture launches, and the Game roles that produce the people who can run them."
-                  link="/crowd-pooling-projects"
+                  expression="ReGen Civics expression: the quest system as a way to incubate new ideas, Crowdpooling as the way land projects gather what they need to launch, and the Game roles that produce the people who can run them."
+                  link="/campaigns"
                   linkLabel="See Crowdpool Campaigns"
                   accent={C.amber}
                 />
                 <BFFTypeCard
                   title="Bioregional Investment Company"
                   icon={<Wallet className="w-6 h-6" />}
-                  oneLiner="Patient capital, blended portfolio."
-                  expression="ReGen Civics expression: the Fund itself, the Index Fund for the ReGenerative Renaissance framing, $RCivics, and the investor cultivation work on the Tokenomics side of the bridge."
-                  link="/tokenomics"
-                  linkLabel="See Tokenomics"
+                  oneLiner="Long-term capital for a bioregion's ventures."
+                  expression="ReGen Civics does not run one. Bioregions that want to build one are welcome to fork and adapt our open-source tools."
+                  link="/tools"
+                  linkLabel="See the Tools"
                   accent={C.gold}
                 />
                 <BFFTypeCard
                   title="Bioregional Bank"
                   icon={<Coins className="w-6 h-6" />}
-                  oneLiner="Day-to-day circulation of value."
-                  expression="ReGen Civics expression: $ReGen, the gratitude protocol, the food economy circulation through LocalScale, and the bioregional vouchers and obligation clearing experiments to come."
+                  oneLiner="Day-to-day circulation."
+                  expression="ReGen Civics expression: the gratitude protocol, $ReGen as the Game's record of contributions, the food economy work with LocalScale, and the bioregional vouchers and obligation clearing experiments to come."
                   link="/game-mechanics"
                   linkLabel="See Game Mechanics"
                   accent={C.teal}
@@ -1261,10 +1270,9 @@ export default function Bionomics() {
                     accent={C.amber}
                   >
                     <p>
-                      The body that moves capital. We support BFFs through the Fund,
-                      $RCivics, $ReGen, the Crowdpool primitive, the Tokenomics page, and
-                      the connective tissue that links bioregional BFFs into a global
-                      movement.
+                      The body that moves capital. We support BFFs with open tools: the
+                      Crowdpool primitive, the gratitude protocol, and the connective
+                      tissue that links bioregional BFFs into a global movement.
                     </p>
                   </Accordion>
                 </div>
@@ -1325,10 +1333,10 @@ export default function Bionomics() {
                   <p>
                     Organizations that facilitate local food trade earn higher contribution
                     multipliers. A food co-op earns tokens every time members transact
-                    through the system. The economy pays you to grow and distribute good
-                    food. Transactions are free. You save the 3 to 30 percent that payment
-                    processors normally take, and you earn on top of that. Better design,
-                    better outcome.
+                    through the system, so the Game recognizes the people who grow and
+                    distribute good food. Transactions are free, so you keep the 3 to 30
+                    percent that payment processors normally take. Better design, better
+                    outcome.
                   </p>
                 </Accordion>
                 <Accordion title="For food producers" icon={<Sprout className="w-5 h-5" />}>
@@ -1360,15 +1368,16 @@ export default function Bionomics() {
                   </Link>
                 </Accordion>
                 <Accordion
-                  title="The food backed currency idea"
+                  title="The 2017 question today"
                   icon={<Coins className="w-5 h-5" />}
                   accent={C.amber}
                 >
                   <p>
-                    The 2017 question is alive in the Game today. $ReGen circulates with
-                    food. Producers earn it. Eaters spend it. Bioregions grow with it.
-                    Every variable that decides how the currency moves is open and tunable.
+                    The 2017 question is still alive in the Game. We are designing $ReGen
+                    to recognize the people who grow, cook, and share local food. Every
+                    variable that decides how it moves is open and tunable.
                   </p>
+                  <p>{COOP.tokensNote}</p>
                   <Link
                     href="/game-mechanics"
                     className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#d4a574] hover:gap-2.5 transition-all mt-2"
@@ -1456,8 +1465,8 @@ export default function Bionomics() {
                   grow its own BFF. We are open to connect with bioregions that are
                   actively organizing. If that is you, the door is open. We aim to play
                   the global connective tissue that helps land projects, bioregions, and
-                  the organizations that support them rally around a shared fund and
-                  raise shared capital for our efforts.
+                  the organizations that support them work together and share what they
+                  have.
                 </p>
                 <Link href="/community">
                   <Button
@@ -1522,7 +1531,7 @@ export default function Bionomics() {
                   { icon: <Mountain className="w-5 h-5" />, label: "I have land", href: "/land", color: C.green },
                   { icon: <Wheat className="w-5 h-5" />, label: "I grow food", href: "/bionomics#local-food-economies", color: C.greenSoft },
                   { icon: <Sprout className="w-5 h-5" />, label: "I want to play", href: "/game", color: C.gold },
-                  { icon: <Wallet className="w-5 h-5" />, label: "I want to invest", href: "/tokenomics", color: C.amber },
+                  { icon: <HandHeart className="w-5 h-5" />, label: "I'm curious about the co-op", href: "/fund", color: C.amber },
                 ].map((cta) => (
                   <Link key={cta.label} href={cta.href}>
                     <div
@@ -1594,14 +1603,14 @@ export default function Bionomics() {
                     For players <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </Link>
-                <Link href="/tokenomics">
+                <Link href="/loi">
                   <Button
                     size="lg"
                     variant="outline"
                     className="w-full rounded-2xl border-2 border-[#d4a574]/60 text-[#d4a574] hover:bg-[#d4a574]/15 font-bold"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
-                    For investors <ArrowRight className="w-4 h-4 ml-1" />
+                    For future co-op members <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </Link>
               </div>

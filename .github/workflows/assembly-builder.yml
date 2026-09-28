@@ -1,4 +1,4 @@
-# The Evolution Engine's builder agent (Rung 3, ASSEMBLY_PAGE_SPEC.md 7.3).
+# The Evolution Engine's builder agent (Rung 3, docs/planning/ASSEMBLY_PAGE_SPEC.md 7.3).
 #
 # DARK BY DEFAULT, three independent locks:
 #   1. This workflow only fires on issues labeled governance-approved, and the

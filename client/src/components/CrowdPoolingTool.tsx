@@ -1183,7 +1183,7 @@ export default function CrowdPoolingTool() {
                 <strong>Ready to submit your contribution?</strong> Browse active crowd pooling projects and submit your proposal directly to their DAO.
               </p>
               <a
-                href="/crowd-pooling-projects"
+                href="/campaigns"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <Users className="w-4 h-4" />

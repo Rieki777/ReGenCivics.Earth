@@ -3,7 +3,10 @@ name: Contrast Audit
 # WCAG 2.x color-contrast audit. Runs on every PR against main. Posts
 # the diff against main as a PR comment. The collect step writes the
 # report even when the site is still above the old 2026-05-29 cap of 5
-# residual failures (the public pages currently report ~100). The job
+# residual failures. The public pages reported ~100 until 2026-09-27, when
+# the checker learned to read oklab()/oklch() colors (Tailwind 4 opacity
+# modifiers and theme tokens); it had been skipping that text, so the count
+# rose to ~200 without the site changing. The job
 # fails when this PR adds failures on routes that both reports crawled.
 # A newly added route (for example /admin) is reported and does not
 # fail the job on first appearance. Do not bump a number to hide a

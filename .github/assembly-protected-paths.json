@@ -1,5 +1,5 @@
 {
-  "_comment": "Paths the Evolution Engine's builder agent (Rung 3) may NEVER modify, regardless of a proposal's declared scopePaths. Enforced in CI by scripts/check-protected-paths.mjs, which fails-closed. Editing this file is itself a human-only PR (it lives under .github, which is protected). Spec: ASSEMBLY_PAGE_SPEC.md section 7.3.",
+  "_comment": "Paths the Evolution Engine's builder agent (Rung 3) may NEVER modify, regardless of a proposal's declared scopePaths. Enforced in CI by scripts/check-protected-paths.mjs, which fails-closed. Editing this file is itself a human-only PR (it lives under .github, which is protected). Spec: docs/planning/ASSEMBLY_PAGE_SPEC.md section 7.3.",
   "protectedGlobs": [
     "server/_core/**",
     "server/lib/hypha-bridge/**",
