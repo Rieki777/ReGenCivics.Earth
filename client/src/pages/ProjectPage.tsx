@@ -38,6 +38,7 @@ import { makeCurrencyFormatter } from "@/lib/needDisplay";
 import { campaignViewInput } from "@/lib/campaignTracking";
 import { keepAnchorInPlace } from "@/lib/keepAnchorInPlace";
 import { StewardTools, type ProjectFront } from "@/components/project/StewardTools";
+import { ProjectFundingSection } from "@/components/project/ProjectFundingSection";
 
 const CANCEL_UPDATE_TITLE = "This campaign has been cancelled";
 
@@ -376,6 +377,11 @@ export default function ProjectPage() {
               onChanged={refreshAll}
               onCancelled={(msg) => { setCancelNotice(msg); refreshAll(); }}
             />
+          )}
+
+          {/* Grants the project can apply to (funding engine Phase 5). Stewards only; the server checks again. */}
+          {isSteward && data.project.applicationId && (
+            <ProjectFundingSection applicationId={data.project.applicationId} projectName={name} />
           )}
         </div>
       </div>

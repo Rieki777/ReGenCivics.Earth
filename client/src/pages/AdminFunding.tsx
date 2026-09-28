@@ -43,6 +43,7 @@ import { KernelPanel } from "@/components/admin/funding/KernelPanel";
 import { CoopInterestPanel } from "@/components/admin/funding/CoopInterestPanel";
 import { ApplicationKitPanel } from "@/components/admin/funding/ApplicationKitPanel";
 import { AnswerBankPanel } from "@/components/admin/funding/AnswerBankPanel";
+import { ProjectMatchesPanel } from "@/components/admin/funding/ProjectMatchesPanel";
 import { StageFields } from "@/components/admin/funding/StageFields";
 import { DEADLINE_TONE_CLASS, daysLeftText, describeDeadline } from "@/components/admin/funding/deadlineFormat";
 import type { FundingTrack } from "@shared/fundingStages";
@@ -165,6 +166,7 @@ const VIEWS = [
   { id: "pipeline", label: "Pipeline" },
   { id: "applications", label: "Applications" },
   { id: "answers", label: "Answer bank" },
+  { id: "projects", label: "Project matches" },
   { id: "metrics", label: "Metrics" },
   { id: "kernel", label: "Kernel" },
   { id: "interest", label: "Co-op interest" },
@@ -440,6 +442,7 @@ export default function AdminFunding() {
 
         {view === "applications" && <ApplicationKitPanel />}
         {view === "answers" && <AnswerBankPanel />}
+        {view === "projects" && <ProjectMatchesPanel />}
         {view === "metrics" && <MetricsPanel />}
         {view === "kernel" && <KernelPanel />}
         {view === "interest" && <CoopInterestPanel />}

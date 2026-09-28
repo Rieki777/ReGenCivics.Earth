@@ -21,6 +21,8 @@ import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { ApplicationKitPanel, PacketView } from "@/components/admin/funding/ApplicationKitPanel";
 import { AnswerBankPanel } from "@/components/admin/funding/AnswerBankPanel";
+import { ProjectMatchesPanel } from "@/components/admin/funding/ProjectMatchesPanel";
+import { ProjectFundingSection } from "@/components/project/ProjectFundingSection";
 
 export type Story = {
   title: string;
@@ -308,7 +310,94 @@ const KIT_ANSWERS = {
   ],
 };
 
+// ── Funding engine Phase 5: grants a land project can apply to ──────────────
+const GRANTS_PROFILE = {
+  legalWrapper: "llc", faithBased: false, isProducer: true, country: "US", region: "OR",
+  activities: ["agriculture", "agroforestry"], matchCapacity: "under_10k", technicalAdvisor: "none",
+  partnerCount: 1, eligibilityFlags: [], consentAt: "2026-09-28T00:00:00Z", updatedAt: "2026-09-28T00:00:00Z",
+};
+
+function grantsProgram(over: Record<string, unknown>) {
+  return {
+    name: "", instrument: "grant", link: "https://example.org/program", deadlineAt: null, deadline: null,
+    callOpen: true, amountMin: null, amountMax: null, currency: "USD", statusVerifiedAt: "2026-09-27", ...over,
+  };
+}
+
+const GRANTS_MATCHES = [
+  {
+    pipelineId: 21, status: "pursuing", outcome: "match", unmetCriterion: null, amountAwarded: null, awardedAt: null,
+    met: ["Open to farm and ranch producers", "Open in US", "Open in OR"], unmet: [],
+    program: grantsProgram({ name: "NRCS EQIP (FY2027)", deadlineAt: "2026-11-13T08:00:00.000Z", amountMax: 450000 }),
+  },
+  {
+    pipelineId: 22, status: "suggested", outcome: "match", unmetCriterion: null, amountAwarded: null, awardedAt: null,
+    met: ["Open to an LLC or company", "Open in US"], unmet: [],
+    program: grantsProgram({ name: "Kiva US", instrument: "loan", amountMin: 1000, amountMax: 15000 }),
+  },
+  {
+    pipelineId: 23, status: "suggested", outcome: "near", unmetCriterion: "Needs a technical advisor who is independent of the project",
+    amountAwarded: null, awardedAt: null, met: ["Open to farm and ranch producers", "Open in OR"], unmet: ["Needs a technical advisor who is independent of the project"],
+    program: grantsProgram({ name: "Western SARE Farmer/Rancher", deadlineAt: "2026-10-28T07:00:00.000Z", amountMax: 35000 }),
+  },
+  {
+    pipelineId: 24, status: "suggested", outcome: "near", unmetCriterion: "Open only to public bodies, tribes and nonprofits: apply with a partner or sponsor who is one",
+    amountAwarded: null, awardedAt: null, met: ["Open in US"], unmet: ["Open only to public bodies, tribes and nonprofits: apply with a partner or sponsor who is one"],
+    program: grantsProgram({ name: "Community Forest Program (FY2026)", deadlineAt: "2026-10-13T07:00:00.000Z", amountMax: 600000 }),
+  },
+];
+
 export const STORIES: Record<string, Story> = {
+  /** Phase 5: a steward's first visit, the seven-question funding profile. */
+  "project-grants-form": {
+    title: "/project/:key#grants, the funding profile (first visit)",
+    setup: () => {
+      mockData["projectFunding.get"] = { profile: null, matches: [] };
+    },
+    render: () => (
+      <div className="-m-6 bg-[#1a472a] p-4 md:p-6">
+        <div className="max-w-3xl mx-auto">
+          <ProjectFundingSection applicationId={41} projectName="Harmony Valley" />
+        </div>
+      </div>
+    ),
+  },
+
+  /** Phase 5: the matches, a program being pursued, and two near misses with the one thing each would take. */
+  "project-grants-matches": {
+    title: "/project/:key#grants, matched programs",
+    setup: () => {
+      mockData["projectFunding.get"] = { profile: GRANTS_PROFILE, matches: GRANTS_MATCHES };
+    },
+    render: () => (
+      <div className="-m-6 bg-[#1a472a] p-4 md:p-6">
+        <div className="max-w-3xl mx-auto">
+          <ProjectFundingSection applicationId={41} projectName="Harmony Valley" />
+        </div>
+      </div>
+    ),
+  },
+
+  /** Phase 5: the admin view of every profiled project. */
+  "funding-project-matches": {
+    title: "/admin/funding, Project matches",
+    setup: () => {
+      mockData["projectFunding.overview"] = {
+        programs: 34,
+        openPrograms: 28,
+        projects: [
+          { applicationId: 41, projectName: "Harmony Valley", updatedAt: "2026-09-28T00:00:00Z", matches: 2, nearMisses: 2, pursuing: 1, awarded: 0 },
+          { applicationId: 42, projectName: "Cedar Commons", updatedAt: "2026-09-28T00:00:00Z", matches: 5, nearMisses: 1, pursuing: 0, awarded: 0 },
+        ],
+      };
+    },
+    render: () => (
+      <div className="-m-6 bg-[#f0ebe3] p-4 md:p-6">
+        <ProjectMatchesPanel />
+      </div>
+    ),
+  },
+
   /** Funding engine Phase 1: every program with its deadline and packet counts. */
   "funding-applications": {
     title: "/admin/funding, Applications: programs by deadline",
