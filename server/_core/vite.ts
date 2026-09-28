@@ -1,5 +1,6 @@
 import express, { type Express } from "express";
 import { COOP } from "../../shared/fund";
+import { SITE_DESCRIPTION } from "../../shared/siteCopy";
 import fs from "fs";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
@@ -281,7 +282,7 @@ export function serveStatic(app: Express) {
   const BASE_URL = "https://regencivics.earth";
   const DEFAULT_META = {
     title: "ReGen Civics: Infinite Game for the ReGenerative Renaissance",
-    description: "An in-real-life game for regenerative land projects, and a cooperative network in design. Do quests, earn tokens, and support real-world regeneration.",
+    description: SITE_DESCRIPTION,
     image: `${BASE_URL}/og-default.jpg`,
   };
   // The crowdpool lane's binding wording (Phase 0 spec), verbatim wherever a

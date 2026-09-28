@@ -25,6 +25,7 @@
 import * as db from "../db";
 import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib/team-user";
 import { COOP, COOP_LINEAGE_HEADING } from "../../shared/fund";
+import { NEEDS_SECTION, SITE_TAGLINE } from "../../shared/siteCopy";
 import { CROWDPOOLING_WORDING } from "../lib/content-canon";
 import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/regenYear";
 import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
@@ -112,6 +113,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>ReGen Civics: tools and a game for the Regenerative Renaissance</h1>
+        <p>${escapeHtml(SITE_TAGLINE)} ${escapeHtml(NEEDS_SECTION.body)}</p>
         <p>ReGen Civics builds the tools and runs the in-real-life game that regenerative land projects use today: ecovillages, regenerative farms, intentional communities, and restoration projects healing their land and bioregions. We run a 13-week incubator, coordinate crowdpooling for land projects, and operate a quest-based game where anyone can contribute to real-world regeneration and earn tokens for verified work.</p>
         <p>Founded in 2023, ReGen Civics grew out of the SEEDS regenerative economy movement. It starts from one idea: healthier lands lead to healthier people.</p>
         <h2>Four ways in</h2>

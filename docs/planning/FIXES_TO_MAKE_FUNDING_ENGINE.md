@@ -74,6 +74,8 @@ One live check reads as a miss and is not: "43 land projects" on /opportunity is
 | C-6 | Project funding profiles and a rules-based grant matcher over the 23 applicant projects | planned by Oct 16 |
 | C-7 | Rename the five fund roles with explicit slugs (after the deadlines, with your OK) | planned |
 | C-8 | Contrast audit reads oklab and oklch colors; /loi asterisks; /fund breadcrumb (P0-15) | DONE: merged as 9ee3f77a (PR #166); CI's audit on both sides with the fixed parser: PR 241 against main 247, 6 resolved, none added |
+| C-9 | The website carries Rye's framing of 2026-09-28 (his picks: hero line A, the needs section, the land-projects-first search description). One copy module, `shared/siteCopy.ts`, feeds the homepage hero, a new needs section, the meta, Open Graph and Twitter descriptions, the Organization JSON-LD, the crawler text and the llms files; `server/site-copy.test.ts` holds the static copies to it | CODED |
+| C-10 | Name the company on the site once Clerky confirms it (Rye ruling 2026-09-28: after filing): "Built by ReGen Civics Labs, Inc." in the footer, llms.txt and About | waiting on R-1 |
 
 ### WAITING ON YOU before Claude Code can proceed
 

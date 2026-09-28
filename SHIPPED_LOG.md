@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-28 (funding engine): ReGen Civics Labs, and Rye's coordination-games framing on the site
+
+- **The company is ReGen Civics Labs** (Rye, 2026-09-28): the Delaware C-corp that builds the tools real estate and land projects use to coordinate, and the funding engine's first user. Delaware needs a designator, so the filing name is ReGen Civics Labs, Inc. The glossary gains an Entities section and CLAUDE.md names it (#175). The site names the company only after filing (Rye's ruling).
+- **The framing leads the homepage**: "In the age of AI and potential upheavals in our economy, we make games that help people meet their needs together, from refugee camps to HOAs." A new section under the welcome video names the seven needs (housing, food, water, air, joy, meaning, and purpose). Rye picked each line from options that passed the fund-claims gate.
+- **One copy module**: `shared/siteCopy.ts` feeds the hero, the needs section, the meta, Open Graph and Twitter descriptions, the Organization JSON-LD, the crawler text, the llms files and the onboarding header. Five files had each kept their own description, and they had drifted into three different sentences. `server/site-copy.test.ts` holds index.html and the llms files to the module.
+- **Present tense stays true**: the game runs with regenerative land projects today and is "built for" any community that shares land or housing. HOAs and refugee camps don't use it yet.
+- Private, outside the repo: plan v1.4, the positioning kernel (production v3), the answer bank seed and Cowork's kit carry the same framing and name.
+
 ## 2026-09-28, night (seasons): The vote picks the next session; each project counts once, shown as a share
 
 - **The next session is up to the vote** (ADR-66): no session this Saturday. On Thursday, October 1 at 5pm Pacific the time most projects picked wins at once and moves every session that has not started, the next one included. Everyone on the sessions' reminder list gets the result by email, also when Saturday wins and nothing moves. After that the Season follows the vote as ADR-65 set out.

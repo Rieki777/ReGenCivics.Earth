@@ -1,6 +1,6 @@
 /**
  * ReGen Civics Homepage - Biofi-style continuous background
- * Sections: Banner, Hero+Video, 4 Paths, Scarcity to Regeneration,
+ * Sections: Banner, Hero+Video, Needs, 4 Paths, Scarcity to Regeneration,
  * Who Are You, Stats, Cooperative+Game, Video Overview, Intro Videos, Newsletter, Footer
  * Mobile-first, enchanted forest aesthetic with glass panels
  */
@@ -23,12 +23,19 @@ import {
   Sparkles,
   Eye,
   ChevronDown,
+  House,
+  Wheat,
+  Droplets,
+  Wind,
+  Smile,
+  Compass,
 } from "lucide-react";
 import { COOP } from "@shared/fund";
+import { LOCAL_NEEDS, NEEDS_SECTION, SITE_TAGLINE, type LocalNeed } from "@shared/siteCopy";
 import PageBackground from "@/components/PageBackground";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AnimatedSection } from "@/components/AnimatedSection";
-import { HeroTypewriter } from "@/components/HeroTypewriter";
+import { HeroTypewriter, segmentsFromLine } from "@/components/HeroTypewriter";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -50,6 +57,24 @@ import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { cdnImg } from "@/lib/utils";
 import { AmbientParticles } from "@/components/AmbientParticles";
 import { ReadableScrim } from "@/components/ReadableScrim";
+
+// The hero types out SITE_TAGLINE word for word (Rye's framing, 2026-09-28);
+// these phrases keep the accent colors the old hero line had.
+const HERO_SEGMENTS = segmentsFromLine(SITE_TAGLINE, [
+  ["games", "font-medium text-amber-200"],
+  ["meet their needs together", "font-medium text-[#9de89d]"],
+  ["refugee camps to HOAs", "font-medium text-[#9de89d]"],
+]);
+
+const NEED_ICONS: Record<LocalNeed, typeof Target> = {
+  Housing: House,
+  Food: Wheat,
+  Water: Droplets,
+  Air: Wind,
+  Joy: Smile,
+  Meaning: Compass,
+  Purpose: Target,
+};
 
 // Path card data
 const pathCards = [
@@ -310,26 +335,7 @@ export default function Home() {
                   }}
                   durationMs={4500}
                   startDelayMs={900}
-                  segments={[
-                    { text: "An " },
-                    { text: "in-real-life game", className: "font-medium text-amber-200" },
-                    { text: " and " },
-                    { text: "alliance", className: "font-medium text-amber-200" },
-                    { text: " helping " },
-                    {
-                      text: "regenerative land projects",
-                      className: "font-medium text-[#9de89d]",
-                    },
-                    {
-                      text:
-                        " pool resources, grow their economies, and co-create ",
-                    },
-                    {
-                      text: "thriving communities",
-                      className: "font-medium text-[#9de89d]",
-                    },
-                    { text: "." },
-                  ]}
+                  segments={HERO_SEGMENTS}
                 />
               </div>
             </AnimatedSection>
@@ -346,6 +352,45 @@ export default function Home() {
                 thumbnailUrl="/images/clip-01-poster.webp"
                 thumbnailAlt="Welcome to the ReGenerative Renaissance"
               />
+            </AnimatedSection>
+          </div>
+        </section>
+
+        {/* The needs the games are for (Rye's framing, 2026-09-28). Copy
+            lives in shared/siteCopy.ts with the hero line, so the two stay
+            one story. */}
+        <section className="relative py-8 md:py-12" aria-labelledby="home-needs-heading">
+          <div className="container max-w-4xl">
+            <AnimatedSection animation="fade-in">
+              <ReadableScrim block className="text-center space-y-5 px-5 py-7 md:px-10 md:py-9">
+                <h2
+                  id="home-needs-heading"
+                  className="text-3xl md:text-4xl font-bold text-white leading-tight text-shadow-strong"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {NEEDS_SECTION.heading}
+                </h2>
+                <p
+                  className="text-white/90 text-base md:text-lg max-w-2xl mx-auto leading-relaxed"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {NEEDS_SECTION.body}
+                </p>
+                <ul className="flex flex-wrap justify-center gap-2 md:gap-3 pt-1" aria-label="The needs the games are for">
+                  {LOCAL_NEEDS.map((need) => {
+                    const Icon = NEED_ICONS[need];
+                    return (
+                      <li
+                        key={need}
+                        className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/30 px-3.5 py-1.5 text-sm md:text-base text-white"
+                      >
+                        <Icon className="w-4 h-4 text-[#9de89d]" aria-hidden="true" />
+                        {need}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </ReadableScrim>
             </AnimatedSection>
           </div>
         </section>
