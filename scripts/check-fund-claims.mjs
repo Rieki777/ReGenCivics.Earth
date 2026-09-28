@@ -50,6 +50,7 @@
  * Usage: node scripts/check-fund-claims.mjs
  * Wired into scripts/gate.mjs and .github/workflows/ci.yml.
  */
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -346,8 +347,40 @@ function walk(dir, out = []) {
   return out;
 }
 
+/**
+ * Every file git would publish: tracked files plus new files .gitignore does
+ * not exclude, deleted files left out. Gitignored files never reach the public
+ * repo or the site, and walking them made a local gate fail where CI passed:
+ * old QA crawl output (.claude/skills/regen-qa-crawl/runs/, ignored by its own
+ * .gitignore) still quotes the retired fund copy. Null outside a git checkout.
+ */
+export function gitListedFiles(root = REPO) {
+  try {
+    const out = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], {
+      cwd: root,
+      encoding: "utf8",
+      maxBuffer: 256 * 1024 * 1024,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    return out.split("\0").filter((f) => f && existsSync(path.join(root, f)));
+  } catch {
+    return null;
+  }
+}
+
 export function scannedFiles(root = REPO) {
   const files = new Set();
+  const listed = gitListedFiles(root);
+  if (listed) {
+    for (const f of listed) {
+      const inRoot = SEARCH_ROOTS.some((d) => f.startsWith(`${d}/`));
+      const skipped = f.split("/").some((seg) => SKIP_DIRS.has(seg));
+      if (inRoot && !skipped && SEARCH_EXT.some((e) => f.endsWith(e))) files.add(f);
+    }
+    for (const f of SEARCH_FILES) if (listed.includes(f)) files.add(f);
+    return [...files].sort();
+  }
+  // Not a git checkout (an exported tarball): walk the tree.
   for (const d of SEARCH_ROOTS) for (const f of walk(path.join(root, d))) files.add(toPosix(path.relative(root, f)));
   for (const f of SEARCH_FILES) if (existsSync(path.join(root, f))) files.add(f);
   return [...files].sort();
