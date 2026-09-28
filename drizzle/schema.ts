@@ -6173,6 +6173,60 @@ export const networkGrantMatches = mysqlTable("network_grant_matches", {
 ]));
 export type NetworkGrantMatchRow = typeof networkGrantMatches.$inferSelect;
 
+/**
+ * People at funders and in the field (drizzle/0280; funding engine Phase 4).
+ * warmth: 0 cold, 1 met, 2 warm, 3 champion. doNotContact is honored wherever
+ * a follow-up could surface.
+ */
+export const fundingContacts = mysqlTable("funding_contacts", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  organization: varchar("organization", { length: 200 }),
+  role: varchar("role", { length: 160 }),
+  pipelineId: int("pipelineId"),
+  email: varchar("email", { length: 320 }),
+  linkedinUrl: varchar("linkedinUrl", { length: 500 }),
+  warmth: tinyint("warmth").notNull().default(1),
+  /** us, eu, uk, ca or other: which privacy rules apply to outreach. */
+  region: varchar("region", { length: 8 }),
+  /** GDPR and UK: legitimate_interest or consent. */
+  lawfulBasis: varchar("lawfulBasis", { length: 40 }),
+  doNotContact: boolean("doNotContact").notNull().default(false),
+  /** Where we met: "The Gathering 2026". */
+  source: varchar("source", { length: 120 }),
+  lastTouchAt: timestamp("lastTouchAt"),
+  notes: text("notes"),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("funding_contacts_pipeline_idx").on(table.pipelineId),
+  index("funding_contacts_email_idx").on(table.email),
+  index("funding_contacts_last_touch_idx").on(table.lastTouchAt),
+]));
+export type FundingContactRow = typeof fundingContacts.$inferSelect;
+
+/** Every conversation with a contact, and its follow-up (drizzle/0280). The app never sends. */
+export const fundingTouches = mysqlTable("funding_touches", {
+  id: int("id").autoincrement().primaryKey(),
+  contactId: int("contactId").notNull(),
+  pipelineId: int("pipelineId"),
+  channel: mysqlEnum("channel", ["email", "linkedin", "call", "meeting", "form", "event"]).notNull(),
+  direction: mysqlEnum("direction", ["inbound", "outbound", "both"]).notNull().default("both"),
+  summary: text("summary").notNull(),
+  nextStep: varchar("nextStep", { length: 500 }),
+  /** YYYY-MM-DD both ways (string mode), so a laptop's time zone cannot shift the day. */
+  followUpAt: date("followUpAt", { mode: "string" }),
+  followUpDoneAt: timestamp("followUpDoneAt"),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("funding_touches_contact_idx").on(table.contactId, table.occurredAt),
+  index("funding_touches_follow_up_idx").on(table.followUpAt),
+]));
+export type FundingTouchRow = typeof fundingTouches.$inferSelect;
+
 /** Every stage move on a funder row, for the funnel (drizzle/0277). */
 export const fundingStageHistory = mysqlTable("funding_stage_history", {
   id: int("id").autoincrement().primaryKey(),

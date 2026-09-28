@@ -60,6 +60,16 @@ Plan v1.3 section 9: "a steward completes the seven-field form and sees each mat
 | N-2 | Deadline pings for programs a land project is pursuing or drafting, once per project; programs nobody is working on are never pinged | CODED | `server/funding-deadlines.test.ts` 8 (including one program pinged once per project), and the integration suites above; a funder row deleted mid-run is skipped instead of failing the tick |
 | N-3 | After the Phase 5 deploy: apply 0279 and load the 34 programs | SCRIPTS READY | `npx tsx scripts/run-migration.ts drizzle/0279_network_grant_engine.sql`, then `npx tsx scripts/seed-grant-programs.ts --write` (dry-runs first without `--write`) |
 
+## Phase 4: event capture
+
+Plan v1.3 section 9: "Rye logs a conversation on his phone in under a minute at The Gathering, and every due follow-up shows as an Open in Gmail link", by Oct 14 (follow-ups by Oct 19; both are in this slice). Stacked on Phase 5.
+
+| # | Fix | Status | Evidence |
+|---|---|---|---|
+| E-1 | `funding_contacts` and `funding_touches` (migration 0280); a phone-first quick add in /admin/funding, Contacts (bookmark `/admin/funding?view=contacts`): name, what you talked about, warmth and follow-up as one-tap chips; a second conversation with the same email lands on the same person | CODED | `server/funding-contacts.test.ts` 6 (input rules, the admin gate on every procedure), `server/funding-contacts.integration.test.ts` 3 against scratch; harness story funding-contacts renders clean on a phone |
+| E-2 | Due follow-ups as Open in Gmail links with the address, a subject and a starting note Rye edits; do-not-contact contacts never appear; Done clears one. The app never sends, and nothing touches LinkedIn beyond a stored link | CODED | same tests: the link carries only what Rye would type, and a do-not-contact contact drops out of the list |
+| E-3 | After the Phase 4 deploy: apply 0280 | SCRIPTS READY | `npx tsx scripts/run-migration.ts drizzle/0280_funding_contacts.sql` |
+
 ---
 
 ## Handoff Breakdown: Who Does What
@@ -93,7 +103,7 @@ Plan v1.3 section 9: "a steward completes the seven-field form and sees each mat
 | C-2 | Apply migration 0276 and the roles copy sync after the deploy; verify the live site | VERIFIED |
 | C-3 | Application kit: shared rulebook, question and answer tables, packet view with live counts, answer bank, scripts (plan v1.3 Phase 1) | CODED; merge and production seeding after Oct 5 (K-5) |
 | C-4 | Deadline pings on the hourly admin-automations cron (Telegram, 21/7/2 days) | CODED (D-1); merges after Phase 1; fires only once R-15 fixes the cron's auth |
-| C-5 | Event quick-add for The Gathering (contacts and touches) | planned by Oct 14 |
+| C-5 | Event quick-add for The Gathering (contacts and touches), and follow-ups as Open in Gmail links | CODED (E-1, E-2); merges after Phases 1, 2 and 5 |
 | C-6 | Project funding profiles and a rules-based grant matcher over the 23 applicant projects | CODED (N-1, N-2); merges after Phases 1 and 2; production steps in N-3 |
 | C-7 | Rename the five fund roles with explicit slugs (after the deadlines, with your OK) | planned |
 | C-8 | Contrast audit reads oklab and oklch colors; /loi asterisks; /fund breadcrumb (P0-15) | DONE: merged as 9ee3f77a (PR #166); CI's audit on both sides with the fixed parser: PR 241 against main 247, 6 resolved, none added |

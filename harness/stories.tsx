@@ -22,6 +22,7 @@ import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { ApplicationKitPanel, PacketView } from "@/components/admin/funding/ApplicationKitPanel";
 import { AnswerBankPanel } from "@/components/admin/funding/AnswerBankPanel";
 import { ProjectMatchesPanel } from "@/components/admin/funding/ProjectMatchesPanel";
+import { ContactsPanel } from "@/components/admin/funding/ContactsPanel";
 import { ProjectFundingSection } from "@/components/project/ProjectFundingSection";
 
 export type Story = {
@@ -348,6 +349,36 @@ const GRANTS_MATCHES = [
 ];
 
 export const STORIES: Record<string, Story> = {
+  /** Phase 4: logging a conversation at The Gathering, and working the follow-ups. */
+  "funding-contacts": {
+    title: "/admin/funding?view=contacts, log a conversation and follow up",
+    setup: () => {
+      mockData["fundingContacts.followUps"] = [
+        {
+          touchId: 1, followUpAt: "2026-10-19", nextStep: "Send the one-pager and the Season 2 schedule.",
+          summary: "Program officer at a soil-health foundation. Interested in the readiness camp.",
+          contact: { id: 1, name: "Ana Rivera", organization: "A soil foundation", email: "ana@example.org", linkedinUrl: null },
+          gmailUrl: "https://mail.google.com/mail/?view=cm&fs=1&to=ana%40example.org",
+        },
+        {
+          touchId: 2, followUpAt: "2026-10-20", nextStep: null,
+          summary: "Runs a CDFI loan fund for farms.",
+          contact: { id: 2, name: "Sam Okafor", organization: "A farm loan fund", email: null, linkedinUrl: "https://www.linkedin.com/in/example" },
+          gmailUrl: null,
+        },
+      ];
+      mockData["fundingContacts.list"] = [
+        { id: 1, name: "Ana Rivera", organization: "A soil foundation", warmth: 2, doNotContact: false, lastTouch: { summary: "Interested in the readiness camp." } },
+        { id: 3, name: "Lee Park", organization: null, warmth: 1, doNotContact: true, lastTouch: { summary: "Asked not to be emailed." } },
+      ];
+    },
+    render: () => (
+      <div className="-m-6 bg-[#f0ebe3] p-4 md:p-6">
+        <ContactsPanel />
+      </div>
+    ),
+  },
+
   /** Phase 5: a steward's first visit, the seven-question funding profile. */
   "project-grants-form": {
     title: "/project/:key#grants, the funding profile (first visit)",
