@@ -1,8 +1,9 @@
 /**
- * TractionStrip — a row of living numbers that count up when scrolled into
+ * TractionStrip: a row of living numbers that count up when scrolled into
  * view. Built to show honest movement momentum (projects mapped, quests done,
- * bioregions touched, community members), not fund performance, since the
- * fund is in formation.
+ * bioregions touched, community members), never financial performance.
+ * Public pages show no traction numbers until Rye marks them public (ruling
+ * 2026-09-27), so today it renders only on the admin analytics page.
  *
  * Fully config-driven via `stats`. Count-up respects prefers-reduced-motion
  * (it snaps to the final value). Live values should be passed in from real

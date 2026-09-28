@@ -4,7 +4,7 @@ Use this template when generating the CHARACTER_ART execution prompt for Claude 
 
 ## File Structure
 
-The execution prompt should be saved as: `CLAUDE_CODE_PROMPT_[DATE]_CHARACTER_ART.md`
+The execution prompt should be saved as: `docs/planning/CLAUDE_CODE_PROMPT_[DATE]_CHARACTER_ART.md` (docs live where `.ai/docs/STEERING.md` section 8 says)
 
 Archive the previous season's art prompt first (move to `archive/`).
 

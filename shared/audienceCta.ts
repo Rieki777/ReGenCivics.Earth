@@ -54,16 +54,16 @@ export function pickAudienceCta(event?: AudienceCtaEvent): AudienceCta {
 
   if (blob.includes("investor") || blob.includes("investment")) {
     return {
-      path: "/investor",
-      label: "Investor path",
-      url: absoluteSiteUrl("/investor"),
+      path: "/fund",
+      label: "The cooperative",
+      url: absoluteSiteUrl("/fund"),
     };
   }
 
   if (blob.includes("loi") || blob.includes("letter of intent")) {
     return {
       path: "/loi",
-      label: "Share a letter of intent",
+      label: "Tell us you're interested",
       url: absoluteSiteUrl("/loi"),
     };
   }

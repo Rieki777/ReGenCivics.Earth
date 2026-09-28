@@ -146,7 +146,7 @@ async function startServer() {
   // it, and a 503 to a bot leaves no trace in any surface we watch. The AI
   // crawler telemetry below logs the hit, not the status.
   //
-  // The removal is the decision already on record: LLM_DISCOVERABILITY_PLAN.md
+  // The removal is the decision already on record: docs/planning/LLM_DISCOVERABILITY_PLAN.md
   // Layer 0 says own the rendering ourselves rather than paying Prerender.io
   // (deterministic-first, STEERING section 11), and we do. `crawler-content.ts`
   // injects real HTML bodies at request time for every route that matters, and
@@ -469,7 +469,9 @@ async function startServer() {
       { loc: '/network',                 changefreq: 'weekly',  priority: '0.6' },
       { loc: '/marketplace',             changefreq: 'weekly',  priority: '0.6' },
       { loc: '/crowd-pooling',           changefreq: 'weekly',  priority: '0.7' },
-      { loc: '/crowd-pooling-projects',  changefreq: 'weekly',  priority: '0.7' },
+      // /crowd-pooling-projects answers a 301 here (shared/redirects.ts), and a
+      // sitemap must not list urls that redirect.
+      { loc: '/campaigns',               changefreq: 'weekly',  priority: '0.7' },
       { loc: '/compare-projects',        changefreq: 'weekly',  priority: '0.5' },
       { loc: '/calculator',              changefreq: 'monthly', priority: '0.5' },
       { loc: '/showcase',                changefreq: 'weekly',  priority: '0.6' },
@@ -480,10 +482,10 @@ async function startServer() {
       { loc: '/community/members',       changefreq: 'daily',   priority: '0.6' },
       { loc: '/community/guidelines',    changefreq: 'monthly', priority: '0.4' },
       { loc: '/connect',                 changefreq: 'monthly', priority: '0.6' },
-      { loc: '/investor',                changefreq: 'weekly',  priority: '0.7' },
+      // /investor redirects to /loi and /risk-disclosure to /disclaimers
+      // (Phase 0 route contract), so only the destinations are listed.
       { loc: '/loi',                     changefreq: 'weekly',  priority: '0.7' },
       { loc: '/newsletter',              changefreq: 'monthly', priority: '0.5' },
-      { loc: '/risk-disclosure',         changefreq: 'monthly', priority: '0.3' },
       { loc: '/terms-of-use',            changefreq: 'monthly', priority: '0.3' },
       { loc: '/privacy-policy',          changefreq: 'monthly', priority: '0.3' },
       { loc: '/disclaimers',             changefreq: 'monthly', priority: '0.3' },
@@ -537,7 +539,7 @@ async function startServer() {
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
       ...staticUrls.map(u => urlTag(u.loc, u.changefreq, u.priority)),
       ...blogSlugs.map(slug => urlTag(`/blog/${slug}`, 'monthly', '0.6')),
-      // Learn hub (LLM_DISCOVERABILITY_PLAN.md Layer 2). Answer-first pages
+      // Learn hub (docs/planning/LLM_DISCOVERABILITY_PLAN.md Layer 2). Answer-first pages
       // aimed at the query space the visibility panel showed us missing from.
       // Each URL serves full prose + FAQPage JSON-LD via crawler-content.ts.
       ...LEARN_SLUGS.map(slug => urlTag(`/learn/${slug}`, 'monthly', '0.8')),
@@ -604,8 +606,8 @@ async function startServer() {
     res.flushHeaders();
 
     const PATH_GREETINGS: Record<string, string> = {
-      investor: "This user is an Investor interested in funding regenerative land projects. Tailor responses to highlight investment opportunities, returns, and project due diligence.",
-      land_project: "This user has a Land Project and wants to build a regenerative community. Tailor responses to highlight how to list their project, connect with investors, and use the platform's tools.",
+      investor: "This user came in through the old investor path and wants to support regenerative land projects. Never discuss returns, investing, prices, or terms, and never describe anything on the site as an investment. Describe the cooperative only with the facts above, point them to /fund to read about it and /loi to tell us they're interested, and explain that crowdpooling is how people back a specific land project today.",
+      land_project: "This user has a Land Project and wants to build a regenerative community. Tailor responses to highlight how to list their project, find grants and supporters, crowdpool what they need, and use the platform's tools.",
       ally: "This user is an Alliance Partner  -  an organization supporting regenerative projects. Tailor responses to partnership opportunities, co-creation, and how to contribute expertise or resources.",
       player: "This user is a Player who wants to do Quests and co-create the Infinite Game. Tailor responses to quests, game mechanics, contribution opportunities, and community participation.",
     };
@@ -747,7 +749,7 @@ async function startServer() {
   // Fifteen minutes rather than matching Outdoorsy's two-hour pull, because the
   // window where a cancellation still reads as booked on our side is dead
   // inventory, and this direction is cheap.
-  // Spec: CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md section 6.
+  // Spec: archive/CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md section 6.
   app.post("/api/cron/outdoorsy-sync", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
@@ -909,7 +911,7 @@ async function startServer() {
   // and inserts proposed bounty rows for the admin gate.
   // Idempotent on `recordings.youtubeVideoId`. Set CRON_SECRET env var;
   // pass as Bearer token in the cron job command.
-  // Spec: MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md sections 5 + 6.
+  // Spec: docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md sections 5 + 6.
   app.post("/api/cron/coordination-pipeline", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
     if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
@@ -954,7 +956,7 @@ async function startServer() {
   // detector. Idempotent: existing tier_events rows short-circuit
   // criteria that already fired, so re-running has no extra cost beyond
   // the read pass. See server/lib/tierDetector.ts and
-  // QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 7.
+  // docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 7.
   // Set CRON_SECRET env var; pass as Bearer token in the cron job command.
   app.post("/api/cron/tier-detector", express.json(), async (req, res) => {
     const secret = process.env.CRON_SECRET;
@@ -1055,7 +1057,7 @@ async function startServer() {
   // deployments where we cannot edit them later. The Learn hub shipped six
   // articles and that is not one of them, so the slug resolves by 301 to the
   // page that does answer the query (nine forms of capital, the "new economics"
-  // cluster in LLM_DISCOVERABILITY_PLAN.md section 3). Equity passes through,
+  // cluster in docs/planning/LLM_DISCOVERABILITY_PLAN.md section 3). Equity passes through,
   // and no crawler following a credit link ever sees a 404.
   //
   // A real Learn article always wins: LEARN_SLUGS is checked first, so writing
@@ -1435,7 +1437,9 @@ async function startServer() {
     { prefix: "/api/trpc/glossary.list", maxAge: 3600 },            // 1 hr , glossary is static
     { prefix: "/api/trpc/seasons.list", maxAge: 3600 },             // 1 hr , seasons change rarely
     { prefix: "/api/trpc/applications.mapData", maxAge: 120 },      // 2 min, map data is near-real-time
-    { prefix: "/api/trpc/system.getPublicStats", maxAge: 300 },     // 5 min, dashboard stats
+    // No entry for stats.getPublicStats: live counts are admin-only now
+    // (Rye's ruling 2026-09-27), and an admin-only response must never carry
+    // a public Cache-Control. The old entry named a path that never existed.
     { prefix: "/api/trpc/orgClaims.list", maxAge: 600 },            // 10 min, org list
   ];
   app.use("/api/trpc", (req, res, next) => {

@@ -5,8 +5,17 @@
 
 import { useEffect } from 'react';
 import { APPLICATIONS_SHORT } from "@shared/applicationWindow";
+import { COOP } from "@shared/fund";
 
 const BASE_URL = 'https://regencivics.earth';
+
+// The crowdpool lane's binding wording (Phase 0 spec). Verbatim wherever a
+// surface describes crowdpooling; client/index.html carries a pasted copy.
+const CROWDPOOLING =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: " +
+  "time, things, skills, land and money. Money goes through outside partners each " +
+  "project holds, never through ReGen Civics. The campaigns shown today are " +
+  "examples; real campaigns open when Season 2 starts crowdpooling.";
 
 // Organization schema
 const organizationSchema = {
@@ -16,7 +25,7 @@ const organizationSchema = {
   "alternateName": "ReGen Civics",
   "url": BASE_URL,
   "logo": "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
-  "description": "A venture fund and alliance helping regenerative land projects pool resources, grow their economies, attract investment, and co-create thriving communities.",
+  "description": "An in-real-life game and alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities.",
   "foundingDate": "2023",
   "sameAs": [
     "https://www.youtube.com/@SEEDSRegenerativeEconomies",
@@ -31,8 +40,8 @@ const organizationSchema = {
   "areaServed": "Worldwide",
   "knowsAbout": [
     "Regenerative Agriculture",
-    "Impact Investing",
-    "Sustainable Finance",
+    "Cooperatives",
+    "Regenerative Economics",
     "Ecovillages",
     "Land Conservation",
     "Community Development",
@@ -45,7 +54,7 @@ const organizationSchema = {
   },
   "about": [
     { "@type": "Thing", "name": "Regenerative Agriculture" },
-    { "@type": "Thing", "name": "Impact Investing" },
+    { "@type": "Thing", "name": "Cooperatives" },
     { "@type": "Thing", "name": "Land Conservation" },
     { "@type": "Thing", "name": "Community Governance" },
     { "@type": "Thing", "name": "Ecovillages" }
@@ -63,7 +72,7 @@ const websiteSchema = {
   "@type": "WebSite",
   "name": "ReGen Civics",
   "url": BASE_URL,
-  "description": "An Infinite Game for the ReGenerative Renaissance. Join the movement to fund and support regenerative land projects worldwide.",
+  "description": "An Infinite Game for the ReGenerative Renaissance. Do quests, earn tokens, and support regenerative land projects worldwide.",
   "potentialAction": {
     "@type": "SearchAction",
     "target": {
@@ -107,19 +116,19 @@ const siteNavigationSchema = {
     {
       "@type": "SiteNavigationElement",
       "name": "Crowd Pooling",
-      "description": "Pool capital with aligned contributors to fund regenerative land projects directly.",
+      "description": CROWDPOOLING,
       "url": `${BASE_URL}/crowd-pooling`
     },
     {
       "@type": "SiteNavigationElement",
-      "name": "The Fund",
-      "description": "The ReGen Civics venture fund for regenerative land projects. Real land, diversified portfolio, community governed.",
+      "name": "The Cooperative",
+      "description": COOP.statementShort,
       "url": `${BASE_URL}/fund`
     },
     {
       "@type": "SiteNavigationElement",
       "name": "Community",
-      "description": "The ReGen Civics forum where players, investors, land stewards, and builders connect and coordinate.",
+      "description": "The ReGen Civics forum where players, land stewards, allies, and builders connect and coordinate.",
       "url": `${BASE_URL}/community`
     }
   ]
@@ -133,9 +142,10 @@ const siteNavigationSchema = {
 // entity, and a feesAndCommissionsSpecification for fees nobody has agreed.
 // JsonLD.tsx carried a second, differently named schema for the same thing.
 //
-// The fund is in formation and is not a legal entity. There is nothing to
-// describe as a financial product. The Organization schema for ReGen Civics
-// below stays: that one is true. Facts live in shared/fund.ts.
+// Since 2026-09-27 the fund is a cooperative in design, and it is not a legal
+// entity. There is nothing to describe as a financial product. The
+// Organization schema for ReGen Civics above stays: that one is true. Facts
+// about the cooperative live in shared/fund.ts (COOP).
 
 // FAQ schema for common questions
 const faqSchema = {
@@ -147,15 +157,23 @@ const faqSchema = {
       "name": "What is ReGen Civics?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "ReGen Civics is a platform and alliance helping regenerative land projects pool resources, grow their economies, attract investment, and co-create thriving communities. We connect impact investors with ecovillages, regenerative farms, and sustainable communities worldwide. The ReGen Civics Fund is in formation and is not yet a legal entity."
+        "text": `ReGen Civics builds the tools and runs the in-real-life game that regenerative land projects use today. Its year turns through four seasons: land projects design their games, crowdpool what they need, build on the land, and rest. ${COOP.entities}`
       }
     },
     {
       "@type": "Question",
-      "name": "How can I invest in regenerative land projects?",
+      "name": `What is the ${COOP.name}?`,
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "The ReGen Civics Fund is in formation and is not yet accepting capital. You can sign a non-binding Letter of Intent, or invest directly in specific projects today through crowd pooling. Visit our Opportunity page for the thesis and the proposed terms."
+        "text": `${COOP.statement} You can tell us you're interested at regencivics.earth/loi. ${COOP.interestPromise}`
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I support regenerative land projects?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": `Play the Game, join a season, or bring what you have to a land project through crowdpooling. ${CROWDPOOLING}`
       }
     },
     {
@@ -171,7 +189,7 @@ const faqSchema = {
       "name": "How do I join ReGen Civics?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "You can join by attending our community sessions, completing quests, or applying to become a land project in our portfolio. Visit our Team page to learn about open roles, or check the Schedule page for upcoming events."
+        "text": "You can join by attending our community sessions, completing quests, or applying to bring your land project into the next season. Visit our Team page to learn about open roles, or check the Schedule page for upcoming events."
       }
     },
     {
@@ -179,7 +197,7 @@ const faqSchema = {
       "name": "What are ReGen Civics tokens?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "ReGen Civics uses two token systems: utility tokens ($Regen and $RCivics) for tracking contributions and rewards, and governance tokens (RGVoice and Fund Voice) for participating in decision-making. These tokens help coordinate our decentralized organization."
+        "text": `The Game has two tokens: $ReGen, earned for contributions like quests and bounties, and RGVoice, which carries governance voice in the Game. ${COOP.tokensNote} ${COOP.coopTokens.rcivics} ${COOP.coopTokens.rcvoice}`
       }
     }
   ]

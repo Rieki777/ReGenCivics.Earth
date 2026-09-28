@@ -117,6 +117,6 @@ for (const [hex, hits] of sorted) {
 
 console.log("");
 console.log("Migrate each offender to a token from client/src/lib/design-tokens.ts.");
-console.log("See DESIGN_SYSTEM.md and FIXES_TO_MAKE_VISUAL_AUDIT.md for the map.");
+console.log("See docs/DESIGN_SYSTEM.md and archive/FIXES_TO_MAKE_VISUAL_AUDIT.md for the map.");
 
 process.exit(WARN_ONLY ? 0 : 1);

@@ -11,7 +11,7 @@ Generates the bird's-eye village ProgressMap art:
 - 1 map canvas (1200x800-ish village aerial view)
 - 23 landmark illustrations (1 per node in mapData.ts)
 
-Style: solarpunk-elven-jedi per CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md.
+Style: solarpunk-elven-jedi per docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md.
 Saves PNG, converts to WebP at quality 85, removes PNG.
 
 Usage:

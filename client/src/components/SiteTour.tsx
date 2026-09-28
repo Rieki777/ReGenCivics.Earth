@@ -15,25 +15,25 @@ interface Message {
 }
 
 const STARTER_PROMPTS = [
-  "How does the ReGen Civics fund work?",
+  "What is the ReGen Network Cooperative?",
   "What are quests and how do I earn rewards?",
-  "How do I invest or contribute?",
+  "How can I contribute?",
   "What is the difference between the 4 paths?",
 ];
 
 const PAGE_LABELS: Record<string, string> = {
   "/": "Home",
-  "/fund": "Fund page",
+  "/fund": "Cooperative page",
   "/land": "Land Projects page",
   "/ally": "Alliance Orgs page",
   "/play": "Play/Players page",
   "/quest": "Quests page",
   "/game": "Game Overview page",
-  "/opportunity": "Opportunity page",
+  "/opportunity": "Cooperative design page",
   "/governance": "Governance page",
   "/tokenomics": "Tokenomics page",
   "/crowd-pooling": "Crowd Pooling page",
-  "/crowd-pooling-projects": "Crowd Pooling Projects page",
+  "/campaigns": "Crowd Pool Campaigns page",
   "/map": "Map page",
   "/calculator": "Calculator page",
   "/blog": "Blog",
@@ -72,7 +72,7 @@ export function SiteTour() {
           {
             role: "assistant",
             content:
-              "Hi! I'm your ReGen Civics guide. I can explain how the fund works, how to earn quest rewards, how to invest, and anything else about the platform. What would you like to know?",
+              "Hi! I'm your ReGen Civics guide. I can explain how the Game works, how to earn quest rewards, the cooperative we are designing, and anything else about the platform. What would you like to know?",
           },
         ]);
       }

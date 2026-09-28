@@ -1,5 +1,5 @@
 /**
- * SignalControl + SignalReadout (ASSEMBLY_PAGE_SPEC.md section 4)
+ * SignalControl + SignalReadout (docs/planning/ASSEMBLY_PAGE_SPEC.md section 4)
  *
  * The Signal: one adjustable -3..+3 score per signed-in member per proposal.
  * A 7-segment pill row; one tap sets, tapping another moves. Optimistic for

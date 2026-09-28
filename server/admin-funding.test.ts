@@ -7,12 +7,15 @@ import {
   buildFunderContext,
   buildPositioningUserMessage,
   funderSlug,
-  COWORK_PROMPT_TEMPLATE,
-  POSITIONING_SYSTEM_PROMPT,
+  FALLBACK_COWORK_TEMPLATE,
+  FALLBACK_POSITIONING_PROMPT,
   POSITIONING_OUTPUT_SCHEMA,
   stripBannedDashes,
   type FunderRowForPrompt,
 } from "./funding/positioning-kernel";
+import { getActivePrompt } from "./funding/prompts";
+// @ts-expect-error plain .mjs module, typed loosely on purpose
+import { findG5 } from "../scripts/check-fund-claims.mjs";
 
 /**
  * Funding pipeline portal + application engine tests.
@@ -202,24 +205,36 @@ describe("adminFunding: positioning parser accepts only a usable generation", ()
 });
 
 // ── The kernel and the Cowork prompt ────────────────────────────────────────
-describe("positioning kernel: grounding and the schema", () => {
-  it("carries the entity rule that shapes every application", () => {
-    expect(POSITIONING_SYSTEM_PROMPT).toContain("NEVER position the Fund vehicle as the applicant");
-    expect(POSITIONING_SYSTEM_PROMPT).toContain("Game DAO on Base");
-    expect(POSITIONING_SYSTEM_PROMPT).toContain("the first check determines the wrapper");
+const EM_DASH = String.fromCharCode(0x2014);
+
+describe("positioning kernel: the public fallback holds no strategy", () => {
+  // The real kernel is private and lives in funding_prompts (plan P0-7,
+  // 2026-09-27). What stays in this public file is a neutral fallback, so these
+  // tests pin what it must NOT carry as much as what it must.
+  it("names no funder and no internal strategy", () => {
+    for (const name of ["DRK", "Draper", "Ceniarth", "Mission Driven", "Iroquois", "Wefunder", "Steward"]) {
+      expect(FALLBACK_POSITIONING_PROMPT).not.toContain(name);
+    }
+    expect(FALLBACK_POSITIONING_PROMPT).not.toMatch(/in the background/i);
+    expect(FALLBACK_POSITIONING_PROMPT).not.toMatch(/Fund I(?![A-Za-z])/);
   });
 
-  it("frames survival as commitment and structure, never a doom percentage", () => {
-    expect(POSITIONING_SYSTEM_PROMPT).toContain("Sosis and Bressler");
-    expect(POSITIONING_SYSTEM_PROMPT).toContain("median of 25 years versus 5");
-    // The doom statistic appears exactly once, inside the instruction banning it.
-    expect(POSITIONING_SYSTEM_PROMPT).toContain('Do not write "80% of communities fail"');
-    expect(POSITIONING_SYSTEM_PROMPT.match(/80%/g)).toHaveLength(1);
+  it("carries no upside language, by the same rules the site gate uses", () => {
+    expect(findG5("server/funding/positioning-kernel.ts", FALLBACK_POSITIONING_PROMPT)).toEqual([]);
+    expect(findG5("server/funding/positioning-kernel.ts", FALLBACK_COWORK_TEMPLATE)).toEqual([]);
+  });
+
+  it("tells the model the kernel is missing, so thin positioning is labeled", () => {
+    expect(FALLBACK_POSITIONING_PROMPT).toContain("kernel_not_seeded");
+  });
+
+  it("keeps the never-submit sentence the server checks for", () => {
+    expect(FALLBACK_COWORK_TEMPLATE).toContain("Do not submit anything yourself");
   });
 
   it("obeys the writing rules it is asking the model to obey", () => {
-    expect(POSITIONING_SYSTEM_PROMPT).not.toContain("—");
-    expect(COWORK_PROMPT_TEMPLATE).not.toContain("—");
+    expect(FALLBACK_POSITIONING_PROMPT).not.toContain(EM_DASH);
+    expect(FALLBACK_COWORK_TEMPLATE).not.toContain(EM_DASH);
   });
 
   it("requires every field the router reads", () => {
@@ -230,6 +245,29 @@ describe("positioning kernel: grounding and the schema", () => {
       "flags",
       "coworkPrompt",
     ]);
+  });
+
+  it("falls back cleanly when no database is configured", async () => {
+    const active = await getActivePrompt("positioning_kernel", "fallback text");
+    expect(active.isFallback).toBe(true);
+    expect(active.body).toBe("fallback text");
+    expect(active.version).toBeNull();
+  });
+});
+
+describe("adminFunding: the kernel editor is admin-only", () => {
+  it("rejects anonymous and non-admin callers", async () => {
+    for (const user of [null, PLAYER]) {
+      const caller = appRouter.createCaller(makeCtx(user));
+      await expect(caller.adminFunding.getPrompt({ key: "positioning_kernel" })).rejects.toThrow();
+      await expect(caller.adminFunding.savePrompt({ key: "positioning_kernel", body: "x" })).rejects.toThrow();
+      await expect(caller.adminFunding.activatePrompt({ key: "positioning_kernel", version: 1 })).rejects.toThrow();
+    }
+  });
+
+  it("rejects an unknown prompt key", async () => {
+    const caller = appRouter.createCaller(makeCtx(ADMIN));
+    await expect(caller.adminFunding.getPrompt({ key: "secret_plan" as never })).rejects.toThrow();
   });
 });
 
@@ -324,7 +362,6 @@ describe("positioning kernel: Cowork prompt builder", () => {
   it("keeps all five process steps and the never-submit boundary", () => {
     for (const step of ["1.", "2.", "3.", "4.", "5."]) expect(built).toContain(`\n${step} `);
     expect(built).toContain("Do not submit anything yourself");
-    expect(built).toContain("APPLICATION_DRK_2026-07-24.md");
   });
 
   it("names the delivered file with the funder slug and today's date", () => {

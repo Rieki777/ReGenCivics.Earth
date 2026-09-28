@@ -19,6 +19,10 @@ vi.mock('resend', () => ({
 
 // Import after mocking
 import { sendEmail, emailTemplates, testEmailConnection } from './_core/email';
+import { COOP } from '../shared/fund';
+import { escapeHtml } from '../shared/htmlText';
+// @ts-expect-error plain .mjs module, typed loosely on purpose
+import { findRetired, findG5 } from '../scripts/check-fund-claims.mjs';
 
 describe('Email Service', () => {
   beforeEach(() => {
@@ -100,10 +104,12 @@ describe('Email Service', () => {
 
     it('should generate investorWelcome template', () => {
       const template = emailTemplates.investorWelcome('Michael Investor', '$250k - $1M');
-      
-      expect(template.subject).toContain('Investor Deck');
+
+      expect(template.subject).toContain('ReGen Civics');
+      expect(template.subject).not.toContain('Deck');
       expect(template.html).toContain('Michael Investor');
-      expect(template.html).toContain('$250k - $1M');
+      // The stated range is never echoed back: that would be a pledge amount.
+      expect(template.html).not.toContain('$250k - $1M');
     });
 
     it('should generate newsletterWelcome template', () => {
@@ -156,69 +162,60 @@ describe('Email Service', () => {
  * the whole time, because they only ever checked that sending worked.
  *
  * These pin the content instead. scripts/check-fund-claims.mjs covers the same
- * strings repo-wide; this covers the rendered output, which is the thing that
+ * phrases repo-wide; this covers the rendered output, which is the thing that
  * actually reaches a person.
+ *
+ * 2026-09-27 (Phase 0): the fund became the ReGen Network Cooperative, in
+ * design (shared/fund.ts COOP). Every investor email now renders one short
+ * cooperative note, the drip is stopped, and these tests run the gate's own
+ * retired-claim and G5 checks over the rendered HTML, so a returning phrase
+ * fails here as well as in the repo scan.
  */
-describe('investor emails: formation-stage honesty', () => {
-  // Each line carries fund-claims-allow because this list IS the retired
-  // claims: scripts/check-fund-claims.mjs bans them repo-wide, and a test that
-  // asserts their absence has to name them to do it.
-  const RETIRED = [
-    'Alliance Fund', // fund-claims-allow: the string under test
-    '506(c)', // fund-claims-allow: the string under test
-    'Reg D', // fund-claims-allow: the string under test
-    'Regulation D', // fund-claims-allow: the string under test
-    'fund is open', // fund-claims-allow: the string under test
-    'first in line when the fund opens', // fund-claims-allow: the string under test
-    'Offered pursuant', // fund-claims-allow: the string under test
-  ];
-
+describe('investor emails: the cooperative, and nothing that prices upside', () => {
   const rendered = () => [
     ['investorWelcome', emailTemplates.investorWelcome('Testname', '$250,000 - $1,000,000')],
+    ['coopInterestNote', emailTemplates.coopInterestNote('Testname')],
     ['investorDripDay3', emailTemplates.investorDripDay3('Testname')],
     ['investorDripDay7', emailTemplates.investorDripDay7('Testname')],
     ['investorDripDay14', emailTemplates.investorDripDay14('Testname')],
     ['investorDripDay30', emailTemplates.investorDripDay30('Testname')],
   ] as const;
 
-  it('carries no retired claim in any investor template', () => {
+  it('carries no retired claim and no G5 phrase in any investor template', () => {
     for (const [name, tpl] of rendered()) {
-      for (const claim of RETIRED) {
-        expect(`${name}: ${tpl.subject} ${tpl.html}`).not.toContain(claim);
-      }
+      const text = `${tpl.subject}\n${tpl.html}`;
+      expect(findRetired(`${name}.html`, text), name).toEqual([]);
+      expect(findG5(`${name}.html`, text), name).toEqual([]);
     }
   });
 
-  it('never restates the term sheet in an email', () => {
-    // The numbers live on the page, labelled proposed. An email that carries
-    // its own copy is how two surfaces start disagreeing.
-    const day3 = emailTemplates.investorDripDay3('Testname').html;
-    expect(day3).not.toContain('Minimum commitment:');
-    expect(day3).not.toContain('Carried interest:');
-    expect(day3).not.toContain('Management fee:');
-    expect(day3).not.toContain('Preferred return:');
+  it('describes the cooperative in the COOP sentences, with the disclaimer', () => {
+    const html = emailTemplates.investorWelcome('Testname', '').html;
+    expect(html).toContain(escapeHtml(COOP.statement));
+    expect(html).toContain(escapeHtml(COOP.interestPromise));
+    expect(html).toContain(escapeHtml(COOP.notAnOffer));
+    expect(html).toContain('/loi');
   });
 
-  it('says the fund is in formation where it introduces the fund', () => {
-    for (const name of ['investorWelcome', 'investorDripDay3'] as const) {
-      const tpl = name === 'investorWelcome'
-        ? emailTemplates.investorWelcome('Testname', '')
-        : emailTemplates.investorDripDay3('Testname');
-      expect(tpl.html).toContain('is in formation');
-      expect(tpl.html).toContain('not yet a legal entity');
-      expect(tpl.html).toContain('2027');
+  it('sends no deck, no amount and no terms', () => {
+    const html = emailTemplates.investorWelcome('Testname', '$250,000 - $1,000,000').html;
+    expect(html).not.toContain('$250,000');
+    expect(html).not.toContain('cloudfront.net');
+    expect(html.toLowerCase()).not.toContain('deck');
+    expect(html.toLowerCase()).not.toContain('letter of intent');
+  });
+
+  it('escapes the name a stranger typed into the public form', () => {
+    const html = emailTemplates.investorWelcome('<img src=x onerror=alert(1)>', '').html;
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+
+  it('keeps every retired drip key on the same cooperative note', () => {
+    const note = emailTemplates.coopInterestNote('Testname');
+    for (const [, tpl] of rendered()) {
+      expect(tpl.subject).toBe(note.subject);
+      expect(tpl.html).toBe(note.html);
     }
-  });
-
-  it('keeps the honest Day 14 answer about when capital is accepted', () => {
-    const day14 = emailTemplates.investorDripDay14('Testname').html;
-    expect(day14).toContain('will not accept capital');
-    expect(day14).toContain('$20M');
-    expect(day14).toContain('non-binding');
-  });
-
-  it('describes the deck as a pre-formation draft', () => {
-    const welcome = emailTemplates.investorWelcome('Testname', '').html;
-    expect(welcome).toContain('July 2026 draft, pre-formation');
   });
 });

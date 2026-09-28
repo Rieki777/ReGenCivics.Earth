@@ -1,6 +1,6 @@
 // server/routes/gratitude.ts
 // Gratitude acknowledgments on the lunar-cycle proportional model
-// (GRATITUDE_SYSTEM_SPEC.md + GRATITUDE_TAB_BUILD_SPEC.md).
+// (docs/planning/GRATITUDE_SYSTEM_SPEC.md + docs/planning/GRATITUDE_TAB_BUILD_SPEC.md).
 //
 // Economy cutover 2026-07-03: sends no longer credit a flat 5 $ReGen.
 // A send is a free acknowledgment; recipients earn $ReGen at cycle close,

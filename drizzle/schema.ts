@@ -779,7 +779,7 @@ export type InsertUserTokenLedgerEntry = typeof userTokenLedger.$inferInsert;
  * Profile). Tracks earned + claimed timestamps for Co-Creator and
  * Steward tiers. Sage is cross-path and lives in tier_events only.
  *
- * See QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md sections 3, 6.
+ * See docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md sections 3, 6.
  */
 export const playerPaths = mysqlTable("player_paths", {
   id: int("id").autoincrement().primaryKey(),
@@ -2087,7 +2087,7 @@ export type CommunityAgreementVote = typeof communityAgreementVotes.$inferSelect
 /**
  * Gratitude Log
  * Simple record of "thank you" messages between users. The lunar-cycle gratitude
- * budget and $ReGen distribution batch jobs come later (see GRATITUDE_SYSTEM_SPEC.md).
+ * budget and $ReGen distribution batch jobs come later (see docs/planning/GRATITUDE_SYSTEM_SPEC.md).
  */
 export const gratitudeLog = mysqlTable("gratitudeLog", {
   id: int("id").autoincrement().primaryKey(),
@@ -3568,7 +3568,7 @@ export const proposalVotes = mysqlTable("proposal_votes", {
 ]));
 export type ProposalVote = typeof proposalVotes.$inferSelect;
 
-// ─── Assembly: the Signal + AI synthesis cache (ASSEMBLY_PAGE_SPEC.md) ─────
+// ─── Assembly: the Signal + AI synthesis cache (docs/planning/ASSEMBLY_PAGE_SPEC.md) ─────
 // One adjustable -3..+3 signal per member per proposal. Aggregate-only:
 // individual scores are never shown to anyone. moveNote is stored only for
 // negative scores ("what would move you") and surfaces unattributed.
@@ -4563,7 +4563,7 @@ export type BountyEvent = typeof bountyEvents.$inferSelect;
 // bounties of this kind go unclaimed and falls gently when they are claimed
 // fast; `precedentMedian` is the median amount of completed bounties in the
 // rolling window. computeBountyAmount reads both. See
-// BOUNTY_VALUATION_ENGINE_SPEC.md, "the self-learning loop".
+// docs/planning/BOUNTY_VALUATION_ENGINE_SPEC.md, "the self-learning loop".
 export const bountyDemandFactors = mysqlTable("bounty_demand_factors", {
   id: int("id").autoincrement().primaryKey(),
   circle: varchar("circle", { length: 128 }).notNull(),
@@ -4733,7 +4733,7 @@ export type ElderCorpusChunk = typeof elderCorpusChunks.$inferSelect;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ReGen Ship (CORE program). The regenerative pirate ship + ReGen Fleet.
-// See CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md and ADR entries for
+// See archive/CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md and ADR entries for
 // ReGen Ship. Loose-FK convention: nullable int columns reference other tables
 // by id without an enforced constraint, matching the rest of this schema.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -5977,6 +5977,89 @@ export const fundingApplications = mysqlTable("funding_applications", {
 ]));
 export type FundingApplication = typeof fundingApplications.$inferSelect;
 export type InsertFundingApplication = typeof fundingApplications.$inferInsert;
+
+/**
+ * The one source for every number ReGen Civics states about itself (funding
+ * engine Phase 0, drizzle/0275). A row with computedFrom set is a live count
+ * the server recomputes (server/funding/metrics.ts). Every row starts private
+ * and unconfirmed: Rye's ruling of 2026-09-27 keeps live counts in admin until
+ * they are meaningful, so nothing public reads a row until isPublic is set and
+ * confirmedAt is stamped.
+ */
+export const metrics = mysqlTable("metrics", {
+  id: int("id").autoincrement().primaryKey(),
+  metricKey: varchar("metricKey", { length: 80 }).notNull(),
+  label: varchar("label", { length: 160 }).notNull(),
+  definition: text("definition"),
+  valueNumeric: double("valueNumeric"),
+  displayValue: varchar("displayValue", { length: 60 }),
+  unit: varchar("unit", { length: 24 }).notNull().default("count"),
+  computedFrom: varchar("computedFrom", { length: 80 }),
+  computedAt: timestamp("computedAt"),
+  asOf: date("asOf"),
+  source: varchar("source", { length: 500 }),
+  isPublic: boolean("isPublic").notNull().default(false),
+  confirmedBy: int("confirmedBy"),
+  confirmedAt: timestamp("confirmedAt"),
+  notes: text("notes"),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("metrics_key_uq").on(table.metricKey),
+  index("metrics_public_idx").on(table.isPublic),
+]));
+export type MetricRow = typeof metrics.$inferSelect;
+
+/**
+ * Versioned system prompts for the application engine (drizzle/0275). The
+ * positioning kernel moved here from a TypeScript constant in the public repo.
+ * One active version per promptKey; older versions stay for comparison.
+ * Content arrives through scripts/seed-funding-prompts.ts from a gitignored
+ * file and is edited in /admin/funding.
+ */
+export const fundingPrompts = mysqlTable("funding_prompts", {
+  id: int("id").autoincrement().primaryKey(),
+  promptKey: varchar("promptKey", { length: 80 }).notNull(),
+  version: int("version").notNull(),
+  body: mediumtext("body").notNull(),
+  isActive: boolean("isActive").notNull().default(false),
+  note: varchar("note", { length: 500 }),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("funding_prompts_key_version_uq").on(table.promptKey, table.version),
+  index("funding_prompts_active_idx").on(table.promptKey, table.isActive),
+]));
+export type FundingPromptRow = typeof fundingPrompts.$inferSelect;
+
+/**
+ * "Tell us you're interested" in the member-owned cooperative in design
+ * (shared/fund.ts COOP, drizzle/0275). Replaces the letter-of-intent pledge
+ * form: no amounts, no minimums, no accreditation. Interest is its own record
+ * and its own act, never a membership and never a contribution.
+ */
+export const coopInterest = mysqlTable("coop_interest", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  kind: mysqlEnum("kind", ["land_project", "person", "organization", "funder"]).notNull(),
+  organization: varchar("organization", { length: 200 }),
+  location: varchar("location", { length: 200 }),
+  capitalForms: json("capitalForms").$type<string[]>(),
+  message: text("message"),
+  source: varchar("source", { length: 60 }),
+  userId: int("userId"),
+  status: mysqlEnum("status", ["new", "contacted", "in_conversation", "archived"]).notNull().default("new"),
+  consentAt: timestamp("consentAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("coop_interest_email_idx").on(table.email),
+  index("coop_interest_status_idx").on(table.status),
+  index("coop_interest_created_idx").on(table.createdAt),
+]));
+export type CoopInterestRow = typeof coopInterest.$inferSelect;
 
 /* ════════════════════════════════════════════════════════════════════
  * Governance fork relay (ADR-46): the hub runs ONE Alchemy listener for

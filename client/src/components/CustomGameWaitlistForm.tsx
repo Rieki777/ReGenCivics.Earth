@@ -55,7 +55,7 @@ const COMMUNITY_STAGE_OPTIONS = [
 const TIMELINE_OPTIONS = [
   "ASAP",
   "Within 3 months",
-  "3–6 months",
+  "3 to 6 months",
   "6+ months / flexible",
 ];
 
@@ -80,7 +80,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.budgetConfirmed) {
-      toast.error("Please confirm the investment amount to continue.");
+      toast.error("Please confirm the price to continue.");
       return;
     }
     submitMutation.mutate({
@@ -247,7 +247,7 @@ export function CustomGameWaitlistForm({ onClose }: { onClose?: () => void }) {
           className="mt-1 accent-[#7dd87d] flex-shrink-0"
         />
         <span className="text-white/70 text-sm leading-relaxed group-hover:text-white/90 transition-colors">
-          I understand the Custom Land Game investment is $20,000 USD, and I'm ready to have a conversation about it. *
+          I understand a Custom Land Game build is $20,000 USD, and I'm ready to have a conversation about it. *
         </span>
       </label>
 

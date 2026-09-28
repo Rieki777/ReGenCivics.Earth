@@ -3,6 +3,11 @@
  * Contains all blog post content for the ReGen Civics blog
  */
 import { cdnImg } from "@/lib/utils";
+import { COOP } from "@shared/fund";
+
+/** The crowdpool lane's binding wording (Phase 0 SPEC, 2026-09-27), verbatim. */
+const CROWDPOOLING_LINE =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
 
 export interface BlogPost {
   id: string;
@@ -79,7 +84,7 @@ Strip capitalism down to its function and it's a coordination game: a way for mi
 
 And nobody knows what replaces it. That's the honest part. Which means the work of this moment is building infrastructure for the people who want to design new economic systems and trial them for real: many games, run on real land, with real needs, until we learn what actually works. Scroll the comments under that interview and you can watch the demand surface, thousands of people saying some version of the same thing: this worldview is a game I no longer want my life spent inside.
 
-Supplying those new games is what ReGen Civics exists to do. We are a fund and a game. The Fund speaks the old game's language so that capital can cross the bridge. The Game grows the new ones. And a candidate system, one whole vision for how a community meets its needs, is what we call a Play.
+Supplying those new games is what ReGen Civics exists to do. We build the tools and run the Game that land projects use today, and we are designing a member-owned cooperative with land projects, future members and counsel. And a candidate system, one whole vision for how a community meets its needs, is what we call a Play.
 
 ## The test every new game has to pass
 
@@ -93,9 +98,9 @@ That is the rating system for new games. Any Play worth trialing should be able 
 
 A Play is a vision for how a community meets its needs. Which needs it honors and how it weighs them. How it measures whether they're truly met. How it coordinates people and resources to meet them. And how it counts the needs of the more-than-human world alongside our own.
 
-So much of a human life is spent inside its economic reality. Change the play a community runs, and you change what a life inside it can be. We're open-sourcing the search for the plays worth running: a public library where anyone can study them, land projects can adopt them, and the best ones earn their place through trials instead of theory.
+So much of a human life is spent inside its economic reality. Change the play a community runs, and you change what a life inside it can be. We're open-sourcing the search for the plays worth running: a public library where anyone can study them, land projects can adopt them, and the best ones earn their place through trials.
 
-And a play on our shelf doesn't stay theory. An approved play can launch a Crowdpooling campaign on the spot, pooling the land, labor, expertise, and funds its trial needs. The village projects moving through our incubator will each finish the season by uploading their play and opening its pool. Envisioned, then in trial, then practiced. That's the pipeline.
+And a play on our shelf doesn't stay theory. An approved play can open a Crowdpooling campaign for the land, labor, expertise, and money its trial needs. ${CROWDPOOLING_LINE} The village projects moving through our incubator will each finish the season by uploading their play and opening its pool. Envisioned, then in trial, then practiced. That's the pipeline.
 
 That library needs designers. Here's the quest.
 
@@ -131,7 +136,7 @@ The pay is a flat two hundred dollars per turnover. It is honest pay for a real 
 
 Every first-time crew begins with a two-hour orientation, and you run it. You walk the whole ship with them, hands on, and teach her systems: the slides, the leveling, the water doctrine, the spring pump, the generator, the driving. You cover the pre-sail checklist together and run it once, side by side.
 
-No captain sails her without the handing of the keys. We mean that literally: a booking cannot become an active voyage until you mark the orientation complete. You are the person who decides that a crew is ready to captain a forty-foot ship, and that judgment protects them, protects everyone on the road, and protects her. It is the cheapest insurance we have, and it is a ceremony, not a form.
+No captain sails her without the handing of the keys. We mean that literally: a booking cannot become an active voyage until you mark the orientation complete. You are the person who decides that a crew is ready to captain a forty-foot ship, and that judgment protects them, protects everyone on the road, and protects her. It is the cheapest insurance we have, and it is a ceremony.
 
 ## Counting her treasures
 
@@ -139,7 +144,7 @@ The platform coverage protects the vehicle. What protects the e-bike, the paddle
 
 ## Keeping her healthy
 
-You also hold her long-term health. Every voyage leaves a maintenance log, and you read across it, so the ship has a continuous history instead of a series of forgotten small things. When a crew has a problem, they can ask the Shipwright, her maintainer companion, and you are one of the two people, with Rye, who approve what a resolved case teaches the next crew. Bad advice never compounds on its own, because a human who knows her signs off first. And when something is unsafe, propane, brakes, steering, a burning smell, you are the hotline. The crews are told, plainly and often: if anything feels unsafe, stop and call your Keeper.
+You also hold her long-term health. Every voyage leaves a maintenance log, and you read across it, so the ship keeps a continuous history and small things never get lost. When a crew has a problem, they can ask the Shipwright, her maintainer companion, and you are one of the two people, with Rye, who approve what a resolved case teaches the next crew. Bad advice never compounds on its own, because a human who knows her signs off first. And when something is unsafe, propane, brakes, steering, a burning smell, you are the hotline. The crews are told, plainly and often: if anything feels unsafe, stop and call your Keeper.
 
 ## Who this is for
 
@@ -213,7 +218,7 @@ Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, te
 
 She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.
 
-You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
+You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
 
 ![Feet resting over a canyon river at a Cascadia overlook](/images/ship/ship-canyon-overlook.jpg)
 
@@ -297,7 +302,7 @@ Here is what a farmer who finds ReGen Civics today actually does, in order:
 3. Connect to your nearest bioregion node. We list active land projects on the map. Find the one closest to you. Send a message.
 4. Complete the Welcome Aboard quest. Ten short steps. Each one teaches you a piece of how the system works.
 5. List your first offering. Could be a CSA share, a market day, a single jar of honey. The size doesn't matter.
-6. Receive your first gratitude. Someone will thank you in the forum or on your profile. That's not just a nice gesture. It writes to the gratitude log and counts toward the season harvest.
+6. Receive your first gratitude. Someone will thank you in the forum or on your profile. It also writes to the gratitude log and counts toward the season harvest.
 7. Appear on the Living Tree. Once you have a few completed quests and one offering listed, your project shows up on the visualization that maps the whole network.
 
 ## Three days, three people
@@ -340,8 +345,8 @@ This is how a regenerative economy actually anchors. One meal at a time.`,
     id: '1',
     slug: 'what-makes-regen-civics-different',
     title: 'What Makes ReGen Civics Different: 7 Unique Features of Our Regenerative Platform',
-    excerpt: 'When we set out to build ReGen Civics, we knew we were not just creating another investment platform. Here are seven features that set our approach apart.',
-    content: `When we set out to build ReGen Civics, we knew we were not just creating another investment platform or another incubator program. We were designing an entirely new way for humans to organize, fund, and grow regenerative land projects together.
+    excerpt: 'When we started building ReGen Civics, we were designing a new way for people to organize, support, and grow regenerative land projects together. Here are seven features that set our approach apart.',
+    content: `When we started building ReGen Civics, we were designing a new way for people to organize, support, and grow regenerative land projects together.
 
 Here are seven features that set ReGen Civics apart from anything else in the regenerative space.
 
@@ -351,13 +356,15 @@ Most programs have a beginning and an end. You apply, you participate, you gradu
 
 We designed our platform around the concept of an "Infinite Game," inspired by James P. Carse's philosophy. In finite games, players compete to win and the game ends. In infinite games, players play to keep playing, and the goal is to continue the game forever evolving into growing diversity of more beautiful and regenerative societies.
 
-## 2. Dual Token Economy: Voice and Value
+## 2. Two Tokens: Voice and Contribution
 
-Traditional investment models force a false choice: either you have money and therefore power, or you contribute time and energy but have no say. ReGen Civics solves this with our dual token system.
+In most organizations, money and power travel together: the people with money get the say, and the people who give time and energy often get none. ReGen Civics separates the two with two tokens.
 
-**RVoice Tokens** represent your voice in governance. You earn them by showing up, contributing, completing quests, and participating in the community.
+**RGVoice** is your voice in governance. You earn it by showing up, contributing, completing quests, and taking part in the community.
 
-**ReGen Tokens** represent regenerative value creation. These flow to projects and participants who demonstrate measurable positive impact on land, community, and ecosystems.
+**$ReGen** records contribution. It goes to projects and players who show measurable positive impact on land, community, and ecosystems.
+
+${COOP.tokensNote}
 
 ## 3. Seasonal Rhythm Aligned with Nature
 
@@ -367,19 +374,19 @@ Season 2 began at the September Equinox 2026 with the Design Season: 13 weeks of
 
 ## 4. Quest-Based Learning and Contribution
 
-Instead of passive webinars or one-way content delivery, ReGen Civics uses a quest system inspired by role-playing games. Each quest is a real-world challenge that advances both your personal growth and your project's development.
+ReGen Civics uses a quest system inspired by role-playing games. Each quest is a real-world challenge that advances both your personal growth and your project's development.
 
 ## 5. Alliance Network Architecture
 
-ReGen Civics is not a single organization but an alliance of interconnected entities including Land Projects, Alliance Partners, Impact Investors, and ReGen Players.
+ReGen Civics is an alliance of interconnected groups: land projects, alliance partners, supporters, and ReGen players.
 
 ## 6. Transparent, Participatory Governance
 
-Every decision in ReGen Civics happens through our Decentralized Human Organization (DHO). This is not governance theater; it is real participatory democracy.
+Decisions in ReGen Civics happen through our Decentralized Human Organization (DHO), where members propose, debate, and vote in the open.
 
 ## 7. SEEDS Legacy Recognition & 10+ Years
 
-Many of our community members participated in the SEEDS ecosystem before ReGen Civics emerged. We believe that contribution should be honored, not forgotten. We learned a lot on that journey that started June Solstice 2017. Explore more about this journey in the next blog post!
+Many of our community members participated in the SEEDS ecosystem before ReGen Civics emerged. We believe that contribution should be honored. We learned a lot on that journey that started June Solstice 2017. Explore more about this journey in the next blog post!
 
 Welcome to the Infinite Game.`,
     author: 'ReGen Civics Team',
@@ -441,7 +448,7 @@ At its peak, SEEDS had thousands of members across dozens of countries. People w
 
 ## Our Renewed Focus
 
-Rather than abandoning the mission, the SEEDS community evolved. We shifted to the foundations, once SEEDS had built the tools we needed to ground those tools in the "on the ground" communities that needed them most and that's where we come in. The lessons learned became the foundation for ReGen Civics. The relationships built became the network. The vision refined itself through failure.
+The SEEDS community kept the mission and evolved. We shifted to the foundations, once SEEDS had built the tools we needed to ground those tools in the "on the ground" communities that needed them most and that's where we come in. The lessons learned became the foundation for ReGen Civics. The relationships built became the network. The vision refined itself through failure.
 
 ## The Continuation
 
@@ -479,13 +486,13 @@ Some might wonder: why does a regenerative land project alliance need blockchain
 
 Base is a Layer 2 blockchain built by Coinbase, one of the most trusted names in cryptocurrency. Here is why it is perfect for ReGen Civics:
 
-**Low Fees**: Layer 2 technology means transaction costs are a fraction of what they would be on Ethereum mainnet. This makes participation accessible to everyone, not just those who can afford high gas fees.
+**Low Fees**: Layer 2 technology means transaction costs are a fraction of what they would be on Ethereum mainnet. That keeps participation within reach for people who could never afford high gas fees.
 
-**Speed**: Transactions settle in seconds, not minutes. When you vote on a proposal or submit a contribution, you see the results immediately.
+**Speed**: Transactions settle in seconds. When you vote on a proposal or submit a contribution, you see the results immediately.
 
 **Security**: Base inherits Ethereum's security while adding Coinbase's institutional-grade infrastructure. Your governance tokens and treasury funds are protected by battle-tested technology.
 
-**Mainstream Bridge**: Coinbase's involvement means easier onboarding for newcomers. It provides a direct path from national currencies into the currencies of our ReGenerative Renaissance.
+**Mainstream Bridge**: Coinbase's involvement means easier onboarding for newcomers, with wallets and tools many people already know.
 
 ## How Hypha Makes It Work
 
@@ -494,19 +501,19 @@ Hypha DAO provides the governance layer that sits on top of Base. Think of it as
 Through Hypha, you can:
 
 - **Submit Proposals**: Have an idea for improving ReGen Civics? Write it up and submit it for community review.
-- **Vote on Decisions**: Use your RVoice tokens to support or oppose proposals. Every voice matters.
-- **Track Treasury**: See exactly where funds are flowing, from investor contributions to land project support.
+- **Vote on Decisions**: Use your RGVoice tokens to support or oppose proposals. Every voice matters.
+- **Track the Treasury**: See every movement of the DAO treasury on-chain.
 - **Earn Recognition**: Your contributions are recorded on-chain, building a permanent record of your participation.
 
 ## The 90% Unity Threshold
 
-One unique aspect of our governance is the 90% unity requirement for major decisions. This is not about majority rule; it is about building genuine (near)consensus.
+One unique aspect of our governance is the 90% unity requirement for major decisions. It sets the bar at near-consensus.
 
-When 90% of active participants agree on a direction, we know we have achieved something close to collective wisdom. This high bar ensures that decisions truly serve the whole community, not just a vocal minority.
+When 90% of active participants agree on a direction, we know we have reached something close to collective wisdom. The high bar means a decision has to work for nearly the whole community.
 
 ## What This Means for You
 
-Whether you are an investor, a land project steward, an alliance partner, or a ReGen player, blockchain governance means:
+Whether you are a land project steward, an alliance partner, a supporter, or a ReGen player, blockchain governance means:
 
 - Your voice is heard and recorded
 - Your contributions are recognized permanently
@@ -553,7 +560,7 @@ Let's take these one at a time.
 
 Needs are the most simple starting point because, objectively, humans share a set of biological needs. We can start with this universal list and augment it to meet the specific nuances of each group.
 
-Now the group can visualize and identify what their actual needs are and what they are working to meet together. This is not about profit margins or market share. It is about water, food, shelter, belonging, purpose, and growth.
+Now the group can visualize and identify what their actual needs are and what they are working to meet together: water, food, shelter, belonging, purpose, and growth.
 
 When needs are visible, they become addressable. When they are hidden, they fester.
 
@@ -563,7 +570,7 @@ One powerful tool here is the "8/9/10 forms of capital" framework, where financi
 
 Consider the full spectrum:
 
-- **Financial Capital**: Money, investments, credit
+- **Financial Capital**: Money, savings, credit
 - **Material Capital**: Tools, buildings, land, infrastructure
 - **Living Capital**: Soil, water, ecosystems, biodiversity
 - **Social Capital**: Relationships, trust, community connections
@@ -571,12 +578,13 @@ Consider the full spectrum:
 - **Experiential Capital**: Wisdom from lived experience
 - **Spiritual Capital**: Meaning, purpose, connection to something greater
 - **Cultural Capital**: Traditions, stories, shared practices
+- **Health Capital**: Vitality, movement, rest, care
 
 Now the group can visualize a much fuller extent of the resources they share together. Suddenly, the person who "only" brings deep community connections is recognized as wealthy. The elder who "only" brings decades of wisdom is seen as a vital resource.
 
 ## 3. POTENTIAL: Dreams Made Visible
 
-What are the unique skills, passions, and dreams each member brings? What could this group become if everyone's potential was nurtured and expressed?
+What are the unique skills, passions, and dreams each member brings? What could this group become if everyone's potential had room to grow?
 
 This is where the magic happens. When needs are clear and resources are mapped, potential becomes achievable. Dreams stop being fantasies and start being plans.
 
@@ -584,15 +592,15 @@ This is where the magic happens. When needs are clear and resources are mapped, 
 
 This needs-based approach is exactly what we are building at ReGen Civics. Our Contribution Calculator recognizes nine forms of capital. Our governance ensures every voice is heard. Our seasonal structure creates space for both doing and being.
 
-We are not just funding land projects. We are prototyping a new way of organizing human activity, one that starts with what people actually need and builds from there.
+We are prototyping a new way of organizing human activity, one that starts with what people actually need and builds from there.
 
 ## The Invitation
 
-What would your organization look like if it started with needs instead of profits? What resources does your community already have that go unrecognized? What potential is waiting to be unlocked?
+What would your organization look like if it started with needs instead of profits? What resources does your community already have that go unrecognized? What potential is waiting to come out?
 
-These are not rhetorical questions. They are design prompts for a different kind of future.
+Treat them as design prompts for a different kind of future.
 
-The ReGenerative Renaissance begins when we remember that organizations exist to serve people, not the other way around.`,
+The ReGenerative Renaissance begins when we remember that organizations exist to serve people.`,
     author: 'Rieki Cordon',
     date: 'Jan 31, 2025',
     readTime: '5 min read',
@@ -650,7 +658,7 @@ Nature is billions of years of perfected evolution. Human egos like to think the
 
 Here is the beautiful part: restoration is possible. The American Chestnut Foundation and other organizations are working to bring back blight-resistant chestnuts. Beaver reintroduction programs are restoring watersheds. Salmon runs are being revived.
 
-And regenerative land projects, like those in the ReGen Civics alliance, are demonstrating that humans can work WITH nature instead of against it.
+And regenerative land projects, like those in the ReGen Civics alliance, are demonstrating that humans can work WITH nature.
 
 ## What This Means for ReGen Civics
 
@@ -686,7 +694,7 @@ Watch the video above to discover how we have transformed regenerative action in
 
 ## What Are ReGen Games?
 
-ReGen Games is not just a metaphor. It is a fully designed game system where your actions in the real world earn you recognition, tokens, and influence in our regenerative alliance.
+ReGen Games is a fully designed game system where your actions in the real world earn you recognition, tokens, and influence in our regenerative alliance.
 
 Think of it like a role-playing game, but instead of fighting dragons, you are:
 
@@ -829,13 +837,13 @@ We look forward to learning about your project!`,
     slug: 'how-to-use-contribution-calculator',
     title: 'How to Use the Contribution Calculators: Measure Your Full Value',
     excerpt: 'Learn how to use our 9 Forms of Capital calculator to measure and communicate your complete contribution potential beyond just money.',
-    content: `The Contribution Calculator helps you recognize and quantify all the ways you contribute value, not just financial capital.
+    content: `The Contribution Calculator helps you recognize and quantify all the ways you contribute value, across all nine forms of capital.
 
 ## Why 9 Forms of Capital?
 
 Traditional economics only recognizes financial capital. But humans contribute value in many forms:
 
-1. **Financial Capital** - Money, investments, credit
+1. **Financial Capital** - Money, savings, credit
 2. **Material Capital** - Tools, equipment, buildings, land
 3. **Living Capital** - Soil health, water, ecosystems, biodiversity
 4. **Social Capital** - Relationships, networks, trust, community connections
@@ -1040,343 +1048,138 @@ See you in the game!
     isVideo: false
   },
   {
+    // Slug kept from the earlier investment post so its URL keeps working.
+    // Rewritten 2026-09-27 (FUNDING_ENGINE_PLAN v1.2): no investment framing.
     id: '11',
     slug: 'getting-investment-through-regen-civics',
-    title: 'Getting Investment Into Your Land Project Through ReGen Civics',
-    excerpt: 'Instead of investors doing all the due diligence themselves, ReGen Civics performs this function while giving investors the safety of diversification.',
-    content: `## Win Win Win
+    title: 'How Land Projects Get Support Through ReGen Civics',
+    excerpt: 'Seasons, the Game, crowdpooling, and the alliance: how ReGen Civics supports land projects today, and where the cooperative we are designing fits.',
+    content: `ReGen Civics supports land projects in four ways today: seasons, the Game, crowdpooling, and the alliance. A fifth, the cooperative, is in design. Here is how each one works.
 
-Investors get a better investment while also supporting the project they care about! Land projects get a broader support network, and support in preparing their project to receive additional capital.
+## Seasons
 
-With ReGen Civics we also remove the challenges that come from minority groups (investors) holding large equity or debt stakes in your land project.
+Each season, a cohort of thirteen land projects spends thirteen weeks designing its governance, legal structure, economics, and crowdpooling campaign together. The projects review each other's work every week and hold each other to the standard the public will apply at launch. Everything built during the season gets open-sourced, so the next cohort starts further along.
 
-## The Traditional Challenge
+[Apply for the next season](/apply), or [follow the current season live](/schedule).
 
-When an investor considers putting money into a land project, they face significant hurdles:
+## The Game
 
-- **Due Diligence Burden**: Investors must verify land ownership, assess environmental conditions, evaluate the team, review financials, and understand local regulations. This takes months and costs thousands in legal and consulting fees.
+Every land project can design its own Infinite Game: the roles, quests, circles, and acknowledgment systems that turn the work a project needs into something a person can pick up, finish, and be recognized for. Players earn the Game's tokens as they contribute.
 
-- **High Risk, Single Project**: Putting all their capital into one project means if that project fails, they lose everything.
+${COOP.tokensNote}
 
-- **Limited Expertise**: Most investors are not experts in regenerative agriculture, community governance, or sustainable development. They cannot properly evaluate what makes a regenerative project successful.
+## Crowdpooling
 
-## How ReGen Civics Changes the Game
+${CROWDPOOLING_LINE}
 
-ReGen Civics offers a fundamentally different approach. Instead of each investor doing their own due diligence on individual projects, we perform this function collectively.
+Projects that graduate a season launch their campaigns together, so each project reaches an audience larger than its own. [See how crowdpooling works](/crowd-pooling).
 
-### Here is How It Works
+## The alliance
 
-**Step 1: Investor Contributes to the Fund**
+Alliance partners bring what land projects keep needing: legal structuring, regenerative design, governance frameworks, technology, and more. Projects get matched with partners based on what they need. [Meet the alliance](/ally).
 
-An impact investor puts capital into the ReGen Civics fund. For example, let us say an investor contributes $1,000,000.
+## The cooperative, in design
 
-**Step 2: Earmarking for Specific Projects**
+${COOP.statement}
 
-The investor can earmark up to 90% of their contribution to support a specific land project they care about. Perhaps they have a personal connection to a project in Costa Rica, or they are passionate about a particular bioregion.
+[See how the cooperative is being designed](/fund).
 
-**Step 3: ReGen Civics Performs Due Diligence**
+${COOP.notAnOffer}
 
-Our team of experienced regenerative practitioners evaluates the land project across multiple dimensions:
+## Where to start
 
-- **Land Ownership**: Is the title clear? Are there any encumbrances?
-- **Location Quality**: Is the land in a stable real estate market?
-- **Regenerative Potential**: Can this land be restored and enhanced?
-- **Game Structure**: Does the project have a clear Minimum Viable Economy?
-- **Team Assessment**: Are the right people in place?
-- **Legal Framework**: Is the governance structure sound?
-- **Community Readiness**: Are quality participants ready to engage?
+**Land projects**: [Apply for the next season](/apply) and bring your play.
 
-**Step 4: Verification of the "Game"**
-
-We ensure the land project has all the pieces of their Infinite Game in place. This means:
-
-- Clear organizational structure
-- Transparent economics and financials
-- Proper legal entities
-- Governance mechanisms that work
-- A pathway to sustainability
-
-**Step 5: Council Vote & Fund Release**
-
-Even if the land project passes all of our verifications listed above, the final check is passing the collective intelligence of our network. Our fund only makes investment decisions if a project receives a 90%+ vote from the council, which is governed by representatives of other successful land projects and alliance organizations. This brings the collective wisdom to assess project potential.
-
-If the project passes both our due diligence and the council vote, we release 90% of the earmarked funds to the project in exchange for equity. The remaining 10% stays in the diversified fund. If not, we return the majority of the funds to the potential investor (keeping either 3% or $20,000 whichever is less as a fee for our due diligence work).
-
-## Benefits for Investors
-
-### Safety Through Diversification
-
-Even when supporting a specific project, investors receive equity in the broader ReGen Civics fund. This means:
-
-- If their preferred project struggles, they still have exposure to the success of other projects in the alliance
-- The fund spreads risk across multiple land projects, regions, and approaches
-- Professional management of the overall portfolio
-
-### Professional Due Diligence
-
-Investors benefit from:
-
-- Our years of experience evaluating regenerative projects
-- Established criteria and evaluation frameworks
-- Ongoing monitoring and support for funded projects
-- Network effects from connecting projects together
-
-### Direct Impact
-
-Unlike traditional diversified funds where you have no say in where money goes, ReGen Civics lets investors:
-
-- Support specific projects they care about
-- See direct impact from their contribution
-- Build relationships with land stewards
-- Visit and engage with their supported projects
-
-## Benefits for Land Projects
-
-### Reduced Fundraising Burden
-
-Instead of pitching to dozens of individual investors, land projects can:
-
-- Focus on building their project rather than constant fundraising
-- Access capital through a single relationship with ReGen Civics
-- Benefit from our investor network and credibility
-
-### Credibility and Validation
-
-Passing our due diligence process signals to the broader community that:
-
-- The project has been professionally evaluated
-- The fundamentals are sound
-- The team is capable
-- The vision is achievable
-
-### Ongoing Support
-
-Funded projects receive:
-
-- Connection to the alliance network
-- Access to shared resources and knowledge
-- Mentorship from experienced land stewards
-- Visibility through our platform
-
-## Not a Traditional Fund
-
-Unlike traditional venture funds with a managing partner making investment decisions, ReGen Civics is fundamentally different. We are not a traditional fund with centralized decision-making.
-
-Instead, all major funding decisions require a 90%+ approval vote from the council of projects that govern the fund. This council is made up of representatives from other successful land projects and alliance organizations.
-
-This means:
-
-- Funding decisions reflect collective wisdom, not individual judgment
-- Projects are evaluated by peers who deeply understand regenerative work
-- The network maintains high standards through collective intelligence
-- Accountability is built into the system through distributed governance
-- Every voice in the alliance has a say in where capital flows
-
-## Ready to Explore?
-
-Whether you are an investor looking to support regenerative land projects with reduced risk, or a land project seeking funding with less friction, ReGen Civics offers a path forward.
-
-**For Investors**: [Schedule a call](/schedule) to discuss how you can contribute to the fund while supporting specific projects you care about.
-
-**For Land Projects**: [Apply for the next season](/apply) to begin the evaluation process and potentially access funding through our network.
-
-The ReGenerative Renaissance needs capital to flow to the land. ReGen Civics is building the infrastructure to make that happen safely and effectively.
-
-[Access Investment Thesis](/investor)`,
+**Everyone else**: [Tell us you're interested in the cooperative](/loi), or [start a quest](/quest).`,
     author: 'ReGen Civics Team',
-    date: 'Feb 5, 2026',
-    readTime: '8 min read',
+    date: 'Sep 27, 2026',
+    readTime: '4 min read',
     image: cdnImg('https://assets.regencivics.earth/AMrdBIATsoXcSZbO.jpg'),
-    tags: ['Investment', 'Land Projects', 'Due Diligence', 'Fund Structure', 'Foundation'],
+    tags: ['Land Projects', 'Seasons', 'Crowdpooling', 'Cooperative', 'Foundation'],
     featured: false,
     isVideo: false
   },
   {
+    // Slug kept from the earlier investment post so its URL keeps working.
+    // Rewritten 2026-09-27: what makes a project last, with no investment framing.
     id: '12',
     slug: 'what-makes-land-project-good-investment',
-    title: 'What Makes a Land Project a Good Investment: The Four Pillars',
-    excerpt: 'Before investing in any regenerative land project, we look for four essential elements. Here is what makes the difference between a good investment and a risky one.',
-    content: `Not all land projects are created equal. Some will thrive and generate returns for decades. Others will struggle and eventually fail. At ReGen Civics, we have learned to identify the difference.
+    title: 'What Makes a Land Project Resilient and Ready for Support',
+    excerpt: 'Five things we see in land projects that last: a clear structure, shared purpose, clear decisions, pathways through conflict, and livelihoods.',
+    content: `Some land projects last for generations. Others come apart in their first few years. After years of working with regenerative land projects, we keep seeing the same five things in the ones that last. They are also what makes a project ready for support, from a season cohort, a crowdpool, or anyone else who wants to help.
 
-After years of working with regenerative land projects around the world, we have identified four essential pillars that separate good investments from risky ones.
+## 1. A clear structure
 
-## Pillar 1: Own the Land in a Good Market
+A resilient project has its structure in writing. Who holds the land, and under what legal form? How does a person join, and how do they leave? What happens to the land if a founder walks away?
 
-This might seem obvious, but it is the foundation everything else builds upon.
+Written agreements protect the land, the members, and the mission. A project that has settled these questions can welcome new people without either side taking on risk they cannot see.
 
-### Clear Ownership
+**Questions to ask yourself:**
+- Who holds title to the land, and can it be sold out from under the group?
+- Are membership and exit terms written down and signed?
+- Does the legal structure fit how the project plans to be funded?
 
-The project must have clear, unencumbered title to the land. This means:
+## 2. Shared purpose
 
-- No disputed ownership claims
-- No hidden liens or mortgages
-- Proper legal documentation
-- Clear chain of title
+The strongest projects can say what they are for in a sentence or two, and every member would say roughly the same thing. Food, housing, restoration, retreat, education: a project can hold several, as long as the group agrees on the order.
 
-We have seen promising projects derailed by ownership disputes that emerged years after initial investment. Due diligence on title is non-negotiable.
+When purpose is shared, hard choices get easier, because there is something to weigh them against.
 
-### Good Real Estate Market
+**Questions to ask yourself:**
+- Could every member describe the project's purpose in the same words?
+- Is there a stated order of priority when purposes compete?
 
-The land should be in a traditionally strong real estate market. This information is readily available online through:
+## 3. Clear decisions
 
-- Regional real estate reports
-- Land value trends
-- Development patterns
-- Economic indicators
+Every project makes decisions. The resilient ones know how. Some decisions need everyone, some need a small circle, and some need one person with a clear role. Writing that down saves a full meeting for every small choice.
 
-Why does this matter for regenerative projects? Because even if the primary goal is regeneration, the underlying land value provides a safety net. If the project needs to pivot or wind down, the land itself retains value.
+**Questions to ask yourself:**
+- Which decisions need the whole group, and which do not?
+- Who holds which roles, and how do roles change hands?
+- How does the group change its own rules?
 
-**Key Questions:**
-- Is the land in a region with stable or growing property values?
-- Are there comparable sales that establish fair market value?
-- What are the long-term development trends in the area?
+## 4. Pathways through conflict
 
-## Pillar 2: Land is Being Regenerated
+Conflict comes to every community. The projects that last agreed on how to work through it before they needed to. That means a named process, people who can hold it, and a way for someone to leave well if it comes to that.
 
-A regenerative land project should be actively improving the land, not just maintaining it.
+**Questions to ask yourself:**
+- What happens, step by step, when two members disagree?
+- Who can people turn to when a conflict stalls?
+- How does someone leave, and what do they take with them?
 
-### Growing in Value
+## 5. Livelihoods
 
-Regeneration means the land becomes more valuable over time through:
+A project stays alive when the people in it can meet their needs. That can come from food production, enterprises on the land, services, or work that members bring with them. It also comes from everything that never touches money: shared meals, shared tools, and time given freely.
 
-- **Soil Health**: Building topsoil, increasing organic matter, improving water retention
-- **Biodiversity**: More species, healthier ecosystems, natural pest control
-- **Water Systems**: Restored watersheds, clean water, proper drainage
-- **Carbon Sequestration**: Trees, perennial plants, healthy soil storing carbon
-- **Productive Capacity**: More food, fiber, or other outputs per acre
+The [nine forms of capital](/learn/nine-forms-of-capital) are a good map here. A project that can see all nine can see how its people are actually being supported.
 
-### Measurable Progress
+**Questions to ask yourself:**
+- How do the people carrying the project meet their needs?
+- What does the project produce, and who is it for?
+- Which of the nine forms of capital does the project already hold, and which is it missing?
 
-Good projects track their regenerative impact with:
+## A self-check
 
-- Baseline assessments before starting
-- Regular monitoring and measurement
-- Third-party verification when possible
-- Clear metrics for success
-
-**Key Questions:**
-- What was the land condition when the project started?
-- What measurable improvements have been made?
-- What is the plan for continued regeneration?
-- How is progress being tracked and verified?
-
-## Pillar 3: A ReGen Infinite Game Structure
-
-This is where many projects fail. They have good land and good intentions, but they lack the organizational infrastructure to succeed long-term.
-
-### The Complete Game
-
-A well-structured project has clarity in:
-
-**Organization**
-- Clear roles and responsibilities
-- Decision-making processes that work
-- Succession planning for key positions
-- Conflict resolution mechanisms
-
-**Economics**
-- Multiple revenue streams
-- Realistic financial projections
-- Cash flow management
-- Path to sustainability
-
-**Financials**
-- Transparent bookkeeping
-- Regular financial reporting
-- Proper accounting practices
-- Audit readiness
-
-**Legal**
-- Appropriate entity structure
-- Clear contracts and agreements
-- Regulatory compliance
-- Risk management
-
-### Why "Infinite Game"?
-
-We use this term deliberately. A finite game has winners and losers, and then it ends. An Infinite Game is designed to continue indefinitely, adapting and evolving as needed.
-
-Land projects should be built to last generations, not just until the founders burn out or move on.
-
-**Key Questions:**
-- Is the organizational structure documented and functional?
-- Are the economics realistic and sustainable?
-- Is financial management transparent and professional?
-- Is the legal framework appropriate and compliant?
-
-## Pillar 4: Quality Participants Can Join
-
-A land project is only as strong as the people involved. The best projects attract and retain quality participants.
-
-### Open to the Right People
-
-This means:
-
-- Clear pathways for new participants to join
-- Fair and transparent selection processes
-- Onboarding systems that work
-- Culture that welcomes contribution
-
-### Network Recommendations
-
-When a project meets our standards, we can confidently recommend it to our network. This means:
-
-- Directing potential residents, workers, and contributors to the project
-- Connecting the project with complementary skills and resources
-- Building the community the project needs to thrive
-
-**Key Questions:**
-- How do new participants join the project?
-- What skills and contributions are needed?
-- Is there a clear value proposition for participants?
-- Does the culture support collaboration and growth?
-
-## The 90% Council Vote
-
-Even if a project meets all four criteria, investment is not automatic. All funding decisions require a 90% approval vote from the council of projects that govern the ReGen Civics fund.
-
-This means:
-
-- **Collective Wisdom**: Decisions reflect the judgment of experienced land stewards, not just our evaluation team
-- **Peer Review**: Projects are assessed by others who understand the challenges and opportunities
-- **High Standards**: The network maintains quality by being selective
-- **Accountability**: Everyone has a stake in funding decisions
-
-## Self-Assessment for Land Projects
-
-If you are considering applying for investment through ReGen Civics, honestly assess your project against these four pillars:
-
-| Pillar | Question | Your Answer |
+| Pillar | Question | Your answer |
 |--------|----------|-------------|
-| 1. Land Ownership | Do you have clear title in a good market? | |
-| 2. Regeneration | Is the land measurably improving? | |
-| 3. Game Structure | Are organization, economics, financials, and legal clear? | |
-| 4. Participants | Can quality people easily join your project? | |
+| 1. Structure | Is it clear who holds the land and how people join and leave? | |
+| 2. Purpose | Would every member describe the project the same way? | |
+| 3. Decisions | Does everyone know how each kind of decision gets made? | |
+| 4. Conflict | Is there an agreed way through disagreement? | |
+| 5. Livelihoods | Can the people carrying the project meet their needs? | |
 
-If you can answer "yes" to all four, you may be a good candidate for our fund.
+No project has all five finished, and that is normal. The season exists to help land projects build the ones they are missing, alongside twelve other projects doing the same.
 
-## Next Steps
+## Next steps
 
-**For Land Projects Ready to Apply:**
-
-1. Review your project against the four pillars
-2. Gather documentation for due diligence
-3. [Apply for the next season](/apply) to begin the evaluation process
-
-**For Investors Seeking Quality Projects:**
-
-1. Understand that we only fund projects meeting these criteria
-2. [Schedule a call](/schedule) to discuss investment opportunities
-3. [Access our Investment Thesis](/investor) for detailed fund information
-
-The ReGenerative Renaissance needs strong foundations. These four pillars ensure that the projects we support have what it takes to succeed for generations.
-
-[Apply for the next season](/apply)`,
+1. Review your project against the five pillars
+2. [Apply for the next season](/apply) to build them with a cohort
+3. Read [how land projects get support through ReGen Civics](/blog/getting-investment-through-regen-civics)`,
     author: 'ReGen Civics Team',
-    date: 'Feb 5, 2026',
-    readTime: '10 min read',
+    date: 'Sep 27, 2026',
+    readTime: '5 min read',
     image: cdnImg('https://assets.regencivics.earth/yFrwKokjZNoFvXuz.jpg'),
-    tags: ['Investment', 'Land Projects', 'Due Diligence', 'Evaluation Criteria', 'Foundation'],
+    tags: ['Land Projects', 'Resilience', 'Governance', 'Self-Assessment', 'Foundation'],
     featured: false,
     isVideo: false
   },
@@ -1447,15 +1250,13 @@ This post is specific to our roots in SEEDS. You can watch a quick mini-document
 
 This is all part of the foundations of what we are building now, and we intend to start by recognizing and inviting those foundations in.
 
-ReGen Civics is building the infrastructure to account for all these unaccounted and historical contributions. Something like a shared record of what the movement has already put in, visible and available to all of us, backing the tokens we are distributing now.
+ReGen Civics is building the infrastructure to account for all these unaccounted and historical contributions. Something like a shared record of what the movement has already put in, visible and available to all of us, and recorded in the tokens we are distributing now.
 
-This way we can collectively raise funds, donations, investments, etc. that recognize all of our shared work and have the shared center to begin coordinating more effectively around.
+This way our shared work gets recognized, and we have a shared center to begin coordinating more effectively around.
 
 ## What do we mean by contributions?
 
-We are not only talking about financial contributions (though they are the easiest to track!)
-
-We work with the nine forms of capital:
+Financial contributions count, and they are the easiest to track. They are one of the nine forms of capital we work with:
 
 [NINE_FORMS_OF_CAPITAL]
 
@@ -1469,7 +1270,7 @@ We've created a draft calculator to try and quantify these contributions. Use th
 
 ## How it works
 
-The token is called $ReGen. For every $ReGen token we give out, we are committed to receiving an equal amount of value pooled here in documented contributions. This is what backs the token: not speculation, not promises, but the actual work the movement has already done and continues to do, tracked on-chain for all investors, donors, etc. to see.
+The token is called $ReGen. Every $ReGen token we give out is tied to a documented contribution pooled here: the actual work the movement has already done and continues to do, tracked on-chain for anyone to see. ${COOP.tokensNote}
 
 ### To bring your contributions in, you make a historical proposal.
 
@@ -1487,7 +1288,7 @@ For all value you're claiming you need to provide proof of impact (what was deli
 
 **Step 3: Submit through Hypha.** Bring your proposal to [hypha.earth](https://app.hypha.earth/en/dho/regen-games/agreements/create/propose-contribution) for community review. The ReGen Civics community votes on proposals and $ReGen tokens are distributed on approval.
 
-**Step 4: Your contributions live here.** After approval, your contributions become part of the shared record. They are accessible, visible, and they back the tokens circulating in the movement. Your work becomes part of the foundation and as we grow your value grows with us. Welcome to the team!
+**Step 4: Your contributions live here.** After approval, your contributions become part of the shared record. They are accessible and visible, and the tokens circulating in the movement record them. Your work becomes part of the foundation. Welcome to the team!
 
 [FRAUD_WARNING]
 
@@ -1503,9 +1304,9 @@ If you have SEEDS contribution records you want to bring into ReGen Civics, brin
 
 ## What this is building toward
 
-Every token we give out should be backed by something real that our movement values. Not promises. Not projected future value. The actual work, relationships, knowledge, land stewardship, and culture that people in this movement have been building for years.
+Every token we give out should stand for something real that our movement values: the actual work, relationships, knowledge, land stewardship, and culture that people in this movement have been building for years.
 
-When the token has that backing, it means something. When you hold $ReGen, you are holding a piece of a shared record of what this movement has built together. That is what we are co-creating. Then on top of these foundations we can build new economic and financial systems to serve our movement.
+When the token stands for that, it means something. When you hold $ReGen, you are holding a piece of a shared record of what this movement has built together. That is what we are co-creating. Then on top of these foundations we can build new economic systems to serve our movement.
 
 Come to the forum. Bring your contributions. They have always been worth something. Now we are building the infrastructure to say so out loud.
 
@@ -1513,11 +1314,9 @@ Come to the forum. Bring your contributions. They have always been worth somethi
 
 $SEEDS: a global permissionless currency, continuing its path toward interconnected financial protocols as a fully decentralised protocol
 
-$ReGen: the currency of this new network, designed for regenerative land projects and the organisations that support them, less decentralised, more focused and more connected to land projects
+$ReGen: the currency of this new network, designed for regenerative land projects and the organisations that support them
 
-$RCivics: equity in the ReGen Fund, the bridge foundation that connects regenerative vision to real capital deployment
-
-"Think of ReGen Civics as a bridge. $RCivics is one foundation on the ground, rooted in the tools of capital of the current dominant Games. $ReGen is the other foundation, rooted in the future we're building together, the new Games we're co-creating." Rieki Cordon
+$RCivics: ${COOP.coopTokens.rcivics}
 
 [Join the contributions discussion](/community/post/635)
 

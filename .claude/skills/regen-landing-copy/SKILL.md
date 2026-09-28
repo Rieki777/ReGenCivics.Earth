@@ -52,8 +52,8 @@ in under 5 seconds.
 ### Headline patterns that work for us
 
 - **Inviting + concrete.** "Help land projects regenerate their bioregions
-  through real participation, real capital, and real games."
-- **Two-game framing.** "A fund and an in-real-life game for the
+  through real participation, real tools, and real games."
+- **Tools-and-game framing.** "Tools and an in-real-life game for the
   Regenerative Renaissance."
 - **Direct address.** "You can play a part in healing the earth. Here's
   one way to start."
@@ -74,11 +74,11 @@ in under 5 seconds.
 The subheadline does the work the headline can't. Make it concrete and
 load-bearing:
 
-- Names the audience directly ("for land stewards, investors, and movement
-  builders")
+- Names the audience directly ("for land stewards, contributors, and
+  movement builders")
 - Names the next action ("apply for the next incubator season" or "join
   the Welcome Aboard Quests")
-- Names the proof anchor ("13 stewardship roles. 1 fund. Many games.")
+- Names the proof anchor ("13 stewardship roles. One network. Many games.")
 
 ### Hero CTA
 
@@ -95,9 +95,12 @@ This is where the page earns trust quickly. Pick one real, current,
 specific anchor:
 
 - A live deadline: "Season 2 applications close on [date]"
-- A live number: "1,247 quests completed across 47 projects this season"
 - A live event: "Earth Day 2026 Convergence is in 4 days"
-- A live shift: "We just launched the four-token economy on Base"
+- A live shift: "Season 2's shared crowdpool launches at the December
+  solstice"
+- A live number, only once Rye has marked it public in the admin metrics
+  table. Public pages show no counts of players, members, land projects,
+  partners, hectares or dollars until then (ruling 2026-09-27).
 
 Anchor the page in time. Generic always-on copy reads as ad copy.
 
@@ -114,9 +117,10 @@ For ReGen Civics, the ladder by audience:
 | Audience          | What you get                   | What you become                     | What changes                        |
 | ----------------- | ------------------------------ | ----------------------------------- | ----------------------------------- |
 | Player            | Quests, badges, $ReGen tokens  | A Citizen with a Field Guide        | A bioregional movement networks    |
-| Land project      | Fund access, season cohort     | A funded project with peers         | Bioregional regeneration scales    |
-| Investor          | Land-backed equity, governance | An LP in a real regen fund          | Mainstream capital flows to land   |
-| Movement partner  | Coordination, joint quests     | A node in a wider field             | Movement coheres, doesn't fracture |
+| Land project      | Tools, season cohort, a crowdpool | A project with peers and a plan  | Bioregional regeneration scales    |
+| Contributor       | A way to bring time, things, skills, land and money to a project | Part of a project's crew | Land projects get what they need |
+| Future member     | An invitation into the cooperative's design conversations | A co-designer of the cooperative | Say only what `COOP` says (it is in design) |
+| Movement partner  | Coordination, joint quests     | A node in a wider field             | The movement holds together        |
 
 Render as three short paragraphs or a 3-column grid. Don't render as a
 9-bullet list.
@@ -132,7 +136,7 @@ Good:
 
 > 1. Apply to a season as a player or a land project.
 > 2. Earn $ReGen by completing quests and contributing.
-> 3. Vote on proposals using RGVoice (game) or RCVoice (fund).
+> 3. Vote on Game proposals using RGVoice.
 > 4. Watch the bioregional results land in real soil.
 
 ## Section 5: Social proof
@@ -141,8 +145,11 @@ Real names. Real quotes. Real numbers. No stock photos. No fake
 testimonials.
 
 If we don't have enough real testimonials yet for a specific page, use
-specific numbers instead: "47 land projects in the season. 13 stewardship
-roles filled. 1,247 quests completed."
+program facts instead: "13 land projects per season cohort. 13 stewardship
+roles." Program design facts and the Season One (2022) record in
+`shared/regenYear.ts` may appear. Counts of players, members, land
+projects, partners, hectares or dollars may not, until Rye marks them public
+in the admin metrics table.
 
 If we don't have either, skip the section. An empty social-proof block
 is worse than no social-proof block.
@@ -153,8 +160,11 @@ is worse than no social-proof block.
 | ----------------------------------- | ---------------------------------------------- |
 | Land steward quote                  | Project / incubator pages                     |
 | Player quote                        | Game / quest / community pages                 |
-| Investor / fund-LP quote            | Fund / investment thesis pages                 |
+| Contributor or future member quote  | Crowdpooling and cooperative pages (/fund, /opportunity, /loi) |
 | Movement partner quote              | Comparison / alongside pages                   |
+
+A quote on a cooperative page never mentions money coming back, what a
+membership is worth, or anything the cooperative will pay out.
 
 Each quote: 15-40 words. Name + role + bioregion or organization.
 
@@ -166,7 +176,7 @@ Common pairings:
 
 | Page type           | Primary CTA                         | Secondary CTA                      |
 | ------------------- | ----------------------------------- | ---------------------------------- |
-| Investor            | Schedule a call                     | Read the Investment Thesis         |
+| Cooperative         | Tell us you're interested (/loi)    | Read about the cooperative (/fund) |
 | Land project        | Apply to next season                | Read the Field Guide               |
 | Player              | Start the Welcome Aboard Quests     | Browse all quests                  |
 | Movement partner    | Schedule a 30-minute conversation   | Read the alongside page            |
@@ -195,7 +205,7 @@ FAQ patterns we should always include:
   ends]?"
 - **Trust:** "Who's behind this? What's their track record?"
 - **Differentiation:** "How is this different from [SEEDS / Hypha /
-  other regen fund]?" (link to comparison page)
+  other regen projects]?" (link to comparison page)
 - **Practicality:** "How much time / money does this require from me?"
 
 Skip "is this for me?". That's a vibe a good page communicates without
@@ -209,12 +219,13 @@ A trust-builder section. Pattern:
 >
 > - This is early. We're running our first incubator seasons; not every
 >   piece is polished.
-> - The four-token economy adds cognitive load. Most projects use one
->   token. We use four because each does a different job.
-> - The fund is a real venture capital structure. That comes with real
->   legal and timing constraints.
-> - You're committing to participation, not just investment. Quests,
->   forum, seasons. If you want a hands-off allocation, this isn't it.
+> - The Game's tokens add cognitive load. We explain each one where it
+>   appears, and none of them makes a claim about financial value.
+> - The cooperative is in design. It is not yet a legal entity, it accepts
+>   no money, and its terms will be set with counsel and the founding
+>   members.
+> - You're committing to participation: quests, forum, seasons. Membership
+>   is for the land projects and people who use the cooperative.
 
 If you're doing it right, this section grows the conversion rate by
 filtering for the right people earlier.
@@ -224,12 +235,12 @@ filtering for the right people earlier.
 When asked to "give me 3-5 variant headlines for this hero," vary along
 these axes:
 
-- **Direct address vs. third person.** "You can plant capital..." vs.
-  "Land projects need..."
-- **Concrete number vs. principle.** "47 projects, 13 roles, 1 fund"
-  vs. "A real venture fund for land projects."
-- **Two-game framing vs. single framing.** "A fund and a game" vs. "A
-  game that funds the regeneration."
+- **Direct address vs. third person.** "You can plant a food forest..."
+  vs. "Land projects need..."
+- **Program fact vs. principle.** "13 land projects per cohort, 13 roles"
+  vs. "Tools a land project keeps."
+- **Two-part framing vs. single framing.** "Tools and a game" vs. "A game
+  that grows regeneration."
 - **Stakes vs. invitation.** "The Regenerative Renaissance needs..." vs.
   "Come help us..."
 
@@ -258,6 +269,31 @@ These ride on top of the project Writing Rules. Specific to landing copy:
 - **Concrete actions beat abstract aspirations.** "Plant a food forest
   on 5 acres" beats "regenerate landscapes."
 
+### Money, the cooperative and tokens (plan v1.2, Gate G5)
+
+- **The cooperative:** describe it only with the fields of `COOP` in
+  `shared/fund.ts`, verbatim (`COOP.statement`, `COOP.designPrinciples`
+  introduced by `COOP.designPrinciplesNote`, `COOP.interestPromise`), and
+  render `COOP.notAnOffer` once on any page that describes it. It is in
+  design and accepts no money. Never use the present tense about its
+  members, land, votes or terms.
+- **Never promise or price upside.** A purchasing cooperative keeps its
+  "bought for use" footing only while nothing in the funnel promises a
+  return. `node scripts/check-fund-claims.mjs` fails the build on:
+<!-- fund-claims-allow: this line names the G5-banned phrases so agents can avoid them -->
+  returns of any kind, IRR, ROI, yield, appreciation, distributions or dividends, exchange listings, token prices, "index fund", portfolio, "invest in land projects", direct investment, accredited investors, minimums, carry, LPs, and any fund terms.
+- **Crowdpooling** uses the binding wording: "Crowdpooling coordinates and
+  accounts for what people bring to land projects: time, things, skills,
+  land and money. Money goes through outside partners each project holds,
+  never through ReGen Civics. The campaigns shown today are examples; real
+  campaigns open when Season 2 starts crowdpooling."
+- **Tokens:** $ReGen and RGVoice are the Game's tokens. `COOP.tokensNote`
+  is the general line; $RCivics and RCVoice appear only as
+  `COOP.coopTokens` says.
+- **Nine forms of capital,** never eight (`shared/capitals.ts`).
+- **"Invest"** survives only in the everyday sense with no money nearby
+  ("invest your time in the quest"). When in doubt, cut the sentence.
+
 ## Cross-references
 
 - `regen-fundraising-copy` for the narrative voice that fills these
@@ -265,5 +301,7 @@ These ride on top of the project Writing Rules. Specific to landing copy:
 - `regen-comparison-pages` for the "alongside" page structure
 - `regen-form-design` for any form embedded in a CTA section
 - `regen-seo-audit` for the meta tags and OG image of the page
-- `CONTEXT_THE_TWO_GAMES.md` for Fund vs. Game framing
-- `SOCIAL_SHARING_SPEC.md` for share preview optimization
+- `CONTEXT_THE_TWO_GAMES.md` for the two-sided framing (where it describes
+  the Fund side, the cooperative replaces it, in `COOP`'s words)
+- `shared/fund.ts` (`COOP`) for every sentence about the cooperative
+- `docs/planning/SOCIAL_SHARING_SPEC.md` for share preview optimization

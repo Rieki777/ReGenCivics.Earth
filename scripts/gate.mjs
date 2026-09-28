@@ -89,7 +89,7 @@ if (existsSync(TAP_AUDIT)) {
 // pointer-coarse: floors in their variants; raw <button>/[role=button]
 // elements are currently rescued by a transitional max-width:767px
 // min-height blanket in index.css that Phase 5 of
-// MOBILE_FIRST_MASTER_PLAN.md deletes. This gate keeps new raw elements
+// docs/planning/MOBILE_FIRST_MASTER_PLAN.md deletes. This gate keeps new raw elements
 // self-sufficient so that deletion stays safe. STRONG findings fail the
 // gate; WARN findings are informational. Suppress a reviewed finding with a
 // `touch-ok` comment on or up to 2 lines above the element, only for a

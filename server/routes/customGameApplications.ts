@@ -1,6 +1,6 @@
 /**
  * customGameApplications router: the Sylva intake pipeline for the Custom Games
- * product line (CUSTOM_GAMES_MASTER_PLAN.md, Workstream C).
+ * product line (docs/planning/CUSTOM_GAMES_MASTER_PLAN.md, Workstream C).
  *
  * `submit` is the public write from /custom-games/apply: it validates the
  * progressive blueprint draft (shared/customGameBlueprint.ts) and the Sylva

@@ -1,27 +1,27 @@
-# ReGen Civics: Comprehensive Information for AI Language Models
+# ReGen Civics: Full Information for AI Language Models
 # https://regencivics.earth
-# Last updated: August 2026
+# Last updated: September 2026
 # For a summary version, see /llms.txt
 
 ## Organization Overview
 
-ReGen Civics is a fund in formation and an infinite game that is live now, both for regenerative land projects. We help ecovillages, regenerative farms, and sustainable communities succeed through capital, governance tools, and a global support network.
+ReGen Civics builds the tools and runs the in-real-life game that regenerative land projects use today: a quest game that is live now, a seasonal incubator, and crowdpooling. We help ecovillages, regenerative farms, and sustainable communities succeed through governance tools, games, and a global support network.
 
-The ReGen Civics Fund is in formation. It is not yet a legal entity. We are gathering non-binding Letters of Intent. When they reach critical mass, the founding investors meet to agree the legal structure together, and the fund is formed. Target launch: 2027. Until then no capital is accepted and no money moves.
+The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. It is not yet a legal entity and it accepts no money. We are designing it now with land projects, future members and counsel.
 
-Founded in 2023, ReGen Civics evolved from the SEEDS regenerative economy movement. We connect impact investors with regenerative land projects worldwide. Our approach integrates ecology, finance, development, regenerative agriculture, restoration ecology, impact auditing, and systems thinking.
+Founded in 2023, ReGen Civics evolved from the SEEDS regenerative economy movement. We work with regenerative land projects worldwide. Our approach integrates ecology, development, regenerative agriculture, restoration ecology, impact auditing, and systems thinking.
 
-Healthier lands lead to healthier people and increasing real-world value. That is the thesis.
+Healthier lands lead to healthier people. That is the idea everything here starts from.
+
+Church of the Regenerative Earth (CORE) is the church and operating entity. ReGen Civics is the platform and alliance; it is not the church. The ReGen Network Cooperative is in design; it is not part of CORE and is not yet an entity.
 
 ## Four Paths Into ReGen Civics
 
-### Investor Path
-Two ways to put capital to work in the regenerative transition. The ReGen Civics Fund (a diversified portfolio of land projects) is in formation, target launch 2027, and is not accepting capital; when formed it will be open to accredited investors only, and today you can sign a non-binding Letter of Intent. Crowd pooling (direct investment in specific projects through community-centered economic cooperatives) is live now.
-
-This is not an offer to sell securities. An offering will only be made through a confidential private placement memorandum to accredited investors in compliance with applicable securities laws.
-
 ### Land Project Path
-Regenerative land projects apply for the 13-week incubator program. Projects build governance structures, design their economic game, access alliance support, and attract investment. Season 2 began in September 2026. Its applications closed September 11, 2026. Anyone can follow Season 2 live, and land projects that are ready can join its community crowdpooling round with the cohort, which has room for far more than 13 projects. Land projects can apply anytime; each year's applications are reviewed from the June solstice to about September 10, for the Season that opens at the September equinox.
+Regenerative land projects apply for the 13-week incubator program. Projects build governance structures, design their economic game, access alliance support, and launch a crowdpool with their cohort. Season 2 began in September 2026. Its applications closed September 11, 2026. Anyone can follow Season 2 live, and land projects that are ready can join its community crowdpooling round with the cohort, which has room for far more than 13 projects. Land projects can apply anytime; each year's applications are reviewed from the June solstice to about September 10, for the Season that opens at the September equinox.
+
+### Contributor Path
+Contributors back land projects through crowdpooling. Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.
 
 ### Alliance Partner Path
 Organizations join the network of groups co-creating the ReGenerative Renaissance. Alliance partners contribute expertise, resources, and connections across the network.
@@ -29,13 +29,33 @@ Organizations join the network of groups co-creating the ReGenerative Renaissanc
 ### Player Path
 Players complete quests that move healing into the world. Each quest addresses a real regenerative action: gut health, food forests, community building, ecological restoration, knowledge sharing. Players earn tokens for completed work.
 
+## The ReGen Network Cooperative
+
+A cooperative regenerative society. Status: in design.
+
+The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. It is not yet a legal entity and it accepts no money. We are designing it now with land projects, future members and counsel.
+
+These are the design principles we are working from. The legal form, bylaws and terms will be set with counsel and adopted by the founding members.
+- Owned by its members: Land projects and the people who work with them own the cooperative together and govern it one member, one vote.
+- Every form of capital counts: Members' contributions are recognized across all nine forms of capital, from money to time, skills, tools and relationships.
+- Membership stays with the member: A membership can't be sold or traded. There is no market for it.
+- No managing partners: Members elect a small board that rotates. The network hires the people who run the day-to-day work.
+- Land held for the long term: The leading design is the one community land trusts use: the cooperative holds land and leases it long term to member projects. Counsel will confirm the structure.
+- Built for use: People join to use and care for shared land, tools and services. Membership is for the land projects and people who use the cooperative.
+
+We are designing the cooperative now with land projects, future members and counsel. Its legal form, bylaws and terms are not set. When they are, the founding members will adopt them together.
+
+Land projects, people, organizations and funders can tell us they're interested at https://regencivics.earth/loi. Telling us you're interested is not a commitment and involves no money. We'll keep you posted as the cooperative takes shape and invite you into the design conversations.
+
+Nothing on this site is an offer to sell, or a request to buy, securities, memberships or any other financial product. The cooperative is not formed and accepts no money.
+
 ## Core Philosophy
 
 ### The Infinite Game
-Unlike finite games played to win, infinite games are played to continue playing. We design systems for lasting positive impact that compounds across generations. This is not about extracting value; it is about embedding value deeper into the living systems that sustain us.
+Unlike finite games played to win, infinite games are played to continue playing. We design systems for lasting positive impact that compounds across generations, and we keep that impact rooted in the living systems that sustain us.
 
 ### ReGenerative Renaissance
-A cultural and economic shift where human systems work with natural systems. Unlike sustainability (which maintains the status quo), regeneration actively rebuilds and restores degraded systems. We are cultivating a movement where communities steward thriving ecosystems, not just minimize harm.
+A cultural and economic shift where human systems work with natural systems. Where sustainability maintains the status quo, regeneration actively rebuilds and restores degraded systems. We are cultivating a movement where communities steward thriving ecosystems.
 
 ### HEIST Framework
 Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating projects:
@@ -49,7 +69,7 @@ Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating projects:
 At the intersection of what you love, what you're good at, what the world needs, and what you can be paid for lies your regenerative ikigai. Our tools help individuals and projects find their unique contribution to the planetary restoration effort.
 
 ### Nine Forms of Capital
-We measure success beyond financial returns. The first eight are Ethan Roland
+We measure success across nine forms of capital. The first eight are Ethan Roland
 and Gregory Landua's 8 Forms of Capital (2011, expanded in Regenerative
 Enterprise, 2013), used unchanged. The ninth, Health, was added by ReGen Civics
 because the original eight have no place for physical and emotional vitality:
@@ -67,16 +87,17 @@ https://regencivics.earth/learn/nine-forms-of-capital
 8. Experiential: Memories, skills, and lived wisdom
 9. Health: Body vitality, wellness, movement, rest, and care (added by ReGen Civics)
 
-### Crowd Pooling (CCECs)
-Community-Centered Economic Cooperatives allow groups to pool capital and collectively invest in regenerative projects they believe in. This democratizes access to land-based investment and aligns financial returns with community values.
+### Crowd Pooling
+Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.
 
 ## How It Works - The Technical Architecture
 
 ### The Token System
-- $ReGen (utility): For tracking contributions in the ReGen Game
-- RGVoice (governance): For decision-making in the ReGen Game
-- $RCivics (utility): For contributions to the Alliance and Fund
-- Fund Voice (governance): For fund investment decisions
+Tokens in ReGen Civics record contributions and carry governance weight in the Game. They make no claim about financial value.
+- $ReGen: For tracking contributions in the ReGen Game
+- RGVoice (governance): For decision-making in the ReGen Game, earned through participation and never purchased
+- $RCivics: $RCivics comes from the earlier fund design. Its role, if any, in the cooperative is being reviewed with counsel.
+- RCVoice: RCVoice comes from the earlier fund design. The cooperative is designed to vote one member, one vote, and how RCVoice relates to that is being reviewed with counsel.
 
 Tokens operate on the Base network (Coinbase's L2 blockchain) via the Hypha DAO framework. This provides security and decentralization while keeping gas fees minimal.
 
@@ -91,7 +112,7 @@ Quests are structured actions that produce measurable regenerative impact:
 7. Contributions compound over time
 
 ### Gratitude System
-Gratitude is quantified and tracked as a form of social proof. When someone thanks a contributor, that increases their reputation and future token earnings. It's not just "nice to do"; it's fundamental to how value flows through the network.
+Gratitude is quantified and tracked as a form of social proof. When someone thanks a contributor, that increases their reputation and future token earnings. Gratitude is part of how contribution is recognized across the network.
 
 ### Living Tree Visualization
 A real-time map of the entire regenerative network. Each node represents a contributor, project, or action. Connections show relationships and value flows. It's both a dashboard and a storytelling tool.
@@ -101,15 +122,15 @@ A real-time map of the entire regenerative network. Each node represents a contr
 ### The ReGen Civics Year
 The year turns through four seasons named for what they are for, loosely following winter, spring, summer, and fall:
 - Design Season: land projects design their games in the 13-week incubator; we build the tools
-- Resource Season: crowdpooling, investor conversations, onboarding roles
+- Resource Season: land projects launch their crowdpools and welcome people into roles
 - Build Season: on the land, planting, building, festivals
 - Rest Season: harvest gatherings, rest, and village life
 Each solstice and equinox holds a recap and passoff; the September one is the Handoff Festival. Timelines are loose in this first full turn. Details: https://regencivics.earth/seasons
 
 ### Season 2 Incubator (September to December 2026)
-The 13-week Design Season for regenerative land projects: Selection Day; the incubator overview; game and organisation co-creation; Game Guides and economic systems; growing your village; the ReGen Civics ecosystem and the Fund; tokenomics; legal structures; coordination and minimum viable economies; and, in week 13, the shared crowdpool launch, which community projects that are ready can join too. Anyone can follow the sessions live. Land projects can apply anytime; applications are reviewed from the June solstice to about September 10.
+The 13-week Design Season for regenerative land projects: Selection Day; the incubator overview; game and organisation co-creation; Game Guides and economic systems; growing your village; the ReGen Civics ecosystem; tokenomics; legal structures; coordination and minimum viable economies; and, in week 13, the shared crowdpool launch, which community projects that are ready can join too. Anyone can follow the sessions live. Land projects can apply anytime; applications are reviewed from the June solstice to about September 10.
 
-Projects receive mentorship, technical support, and pathways to funding.
+Projects receive mentorship, technical support, and help preparing their crowdpools.
 
 ### Monthly Community Calls
 Virtual gatherings where the network connects, shares updates, and coordinates. Recorded and archived for asynchronous access.
@@ -124,25 +145,6 @@ Transparent rewards for specific regenerative actions:
 
 Anyone can claim a bounty and earn $ReGen tokens for verified work.
 
-## Real-World Economics
-
-### Revenue Model
-ReGen Civics earns revenue through:
-- Management fees on the investment fund, once it is formed (proposed, performance-based)
-- Success fees when projects secure funding
-- Premium features in the coordination tools
-- Licensing the platform to other movements
-- Merchandise and educational materials
-
-### Distribution Model
-All profits are reinvested in the movement:
-- 40% back into the regenerative projects themselves
-- 30% for platform development and maintenance
-- 20% for community growth and education
-- 10% for research and ecosystem development
-
-This creates a virtuous cycle where success funds more success.
-
 ## Technical Infrastructure
 
 ### Technology Stack
@@ -156,7 +158,7 @@ Storage: Cloudflare R2 for scalable image delivery
 Authentication: Google OAuth 2.0 + Sign in with Apple + Email magic links
 Authorization: JWT tokens in HttpOnly cookies with CSRF protection
 Data Protection: AES-256 encryption at rest, TLS 1.3 in transit
-Auditing: All financial transactions recorded immutably
+Auditing: contributions recorded in an append-only, source-tagged ledger
 
 ### Performance Characteristics
 Core pages load in under 1.5s on 3G connections
@@ -181,8 +183,8 @@ Blog posts represent the evolving thinking of the movement:
 
 ### Practical Guides
 - How to Apply for Season 2: Step-by-step onboarding
-- Getting Investment Through ReGen Civics: Funding pathways
-- What Makes a Land Project a Good Investment: Evaluation criteria
+- Getting support into your land project: How land projects prepare to bring in the people, skills, tools and money they need
+- What makes a land project strong: The four pillars we look for
 - Claim Your Land Project or Organisation: Registration process
 
 ### Vision and Storytelling
@@ -191,26 +193,32 @@ Blog posts represent the evolving thinking of the movement:
 
 ## Frequently Asked Questions (Expanded)
 
-### For Investors
-Q: What returns can I expect?
-A: Target returns of 8-12% annually, with emphasis on blended financial + impact returns. Performance varies by project maturity.
+### About the Cooperative
+Q: What is the ReGen Network Cooperative?
+A: The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. It is not yet a legal entity and it accepts no money. We are designing it now with land projects, future members and counsel.
 
-Q: How is risk managed?
-A: Diversification across projects, bioregions, and risk profiles. Due diligence teams, insurance where possible, and reserve funds.
+Q: Can I put money in?
+A: No. The cooperative is not formed and accepts no money. You can tell us you're interested at https://regencivics.earth/loi. Telling us you're interested is not a commitment and involves no money. We'll keep you posted as the cooperative takes shape and invite you into the design conversations.
+
+Q: How is it being designed?
+A: These are the design principles we are working from. The legal form, bylaws and terms will be set with counsel and adopted by the founding members. The principles are listed under The ReGen Network Cooperative above.
+
+Q: How can I back a specific land project today?
+A: Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.
 
 ### For Land Projects
 Q: What support do you provide?
-A: Governance frameworks, token economics design, investor prep, marketing support, legal templates, and community access.
+A: Governance frameworks, token economics design, crowdpool preparation, marketing support, legal templates, and community access.
 
 Q: Do I retain ownership?
-A: Yes. We facilitate funding and support but projects remain independently owned and operated.
+A: Yes. We provide tools and support, and projects remain independently owned and operated.
 
 ### For Contributors
 Q: How do I earn tokens?
 A: Complete quests, participate in governance, contribute through bounties, refer projects, or help with documentation.
 
 Q: What can I do with tokens?
-A: Exchange for USD, stake for governance rights, access premium features, or donate back to the movement.
+A: $ReGen records your contributions in the Game, and RGVoice gives you a voice in the Game's governance. Tokens in ReGen Civics record contributions and carry governance weight in the Game. They make no claim about financial value.
 
 ### For Developers
 Q: Is the code open source?
@@ -219,29 +227,23 @@ A: Core coordination tools are AGPLv3 licensed. Smart contracts are MIT licensed
 Q: How can I contribute?
 A: Through GitHub, bounty programs, or joining as a technical partner.
 
-## Community Statistics (as of Q2 2026)
-- 847 active players globally
-- $2.3M total regenerative value tracked
-- 42 land projects in the network
-- 15 alliance partner organizations
-- 8 bioregional hubs established
-- 3723 quests completed
-- $187K in bounties awarded
-
 ## Key Pages and Navigation Paths
 
 All URLs below exist and are open to crawlers. Every page serves title, description, canonical, and JSON-LD in the initial HTML; key pages also serve full text content without JavaScript.
 
 ### Main Entry Points
 - Homepage: https://regencivics.earth/
-- The Fund: https://regencivics.earth/fund
-- Investment Opportunity: https://regencivics.earth/opportunity
+- The ReGen Network Cooperative: https://regencivics.earth/fund
+- Help Design the Cooperative: https://regencivics.earth/opportunity
+- Tell Us You're Interested: https://regencivics.earth/loi
 - Apply to Join: https://regencivics.earth/apply
 
 ### For Land Projects
 - Project Directory: https://regencivics.earth/land
 - Season Information: https://regencivics.earth/seasons
 - Incubator Application: https://regencivics.earth/apply
+- Crowd Pooling: https://regencivics.earth/crowd-pooling
+- Campaigns: https://regencivics.earth/campaigns
 
 ### For Community Members
 - Community Forum: https://regencivics.earth/community
@@ -272,8 +274,8 @@ All URLs below exist and are open to crawlers. Every page serves title, descript
 
 ## Keywords for Classification and Discovery
 
-regenerative investing, impact investing, land projects, ecovillages, sustainable finance, regenerative economy, land-backed investment, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowd pooling, CCEC, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, venture fund, land conservation, community governance, blockchain integration, Base network, Hypha DAO, ecological restoration, food systems, community currency, sustainable communities, intentional communities, cohousing, permaculture, biodynamic farming, carbon sequestration, biodiversity conservation, social impact bonds, environmental finance, conscious capitalism, collaborative economy, distributed ledger technology, cryptographic tokens, decentralized organizations, community currencies, alternative economics, circular economy, biomimicry, resilience thinking, systems theory, integral ecology, conscious business, purpose-driven organizations, triple-bottom-line investing, ESG investing, stakeholder capitalism, transition movement, degrowth economics, doughnut economics, commons-based peer production, platform cooperativism, solidarity economy, participatory economics, gift economy, sharing economy, collaborative consumption, sustainable development goals, climate action, zero waste, clean energy, regenerative design, living systems, complexity science, emergence theory
+regenerative land projects, ecovillages, intentional communities, regenerative economy, member-owned cooperative, community land trust, community development, regenerative agriculture, DAO governance, token economics, infinite game, ReGenerative Renaissance, crowdpooling, holacracy, HEIST framework, regenerative ikigai, nine forms of capital, land conservation, community governance, blockchain integration, Base network, Hypha DAO, ecological restoration, food systems, community currency, sustainable communities, cohousing, permaculture, biodynamic farming, carbon sequestration, biodiversity conservation, collaborative economy, distributed ledger technology, decentralized organizations, community currencies, alternative economics, circular economy, biomimicry, resilience thinking, systems theory, integral ecology, purpose-driven organizations, transition movement, degrowth economics, doughnut economics, commons-based peer production, platform cooperativism, solidarity economy, participatory economics, gift economy, sharing economy, collaborative consumption, sustainable development goals, climate action, zero waste, clean energy, regenerative design, living systems, complexity science, emergence theory
 
 ## Update Frequency Note
 
-This file is updated monthly with new content and refreshed statistics. The canonical source of information is https://regencivics.earth.
+This file is updated monthly with new content. The canonical source of information is https://regencivics.earth.

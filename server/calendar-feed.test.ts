@@ -271,7 +271,7 @@ describe("Curriculum", () => {
   it("renders the canonical titles, not the ones the feed used to carry", () => {
     const ics = unfold(renderFeed(catalogFallbackRows(NOW), "season2"));
     expect(ics).toContain("Week 6: Growing Your Village");
-    expect(ics).toContain("Week 7: The ReGen Civics Ecosystem & the Fund");
+    expect(ics).toContain("Week 7: The ReGen Civics Ecosystem & the Cooperative");
     expect(ics).toContain("Week 13: Crowd Pooling & Resourcing Our Projects");
     // The three variants that were live at once.
     expect(ics).not.toContain("Intro to the ReGen Civics DHO");

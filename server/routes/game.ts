@@ -210,7 +210,7 @@ export const gameRouter = router({
   // an `amount` per send in gratitude_transactions, and an immediate flat
   // +5 $ReGen minted to the recipient on every send.
   //
-  // That contradicts the lunar model (ADR-30, GRATITUDE_SYSTEM_SPEC.md),
+  // That contradicts the lunar model (ADR-30, docs/planning/GRATITUDE_SYSTEM_SPEC.md),
   // where gratitude is a signal that never enters the ledger and $ReGen is
   // distributed once per cycle from a capped pool. Both were live at the
   // same time and reachable from the bounty board. Use gratitudeRouter

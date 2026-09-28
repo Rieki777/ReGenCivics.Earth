@@ -6,7 +6,7 @@
  * of hard-coded hex values.
  *
  * Palette anchored in actual codebase usage (top 12 colors by count as of
- * 2026-04-17). See `DESIGN_SYSTEM.md` for rationale and migration guidance.
+ * 2026-04-17). See `docs/DESIGN_SYSTEM.md` for rationale and migration guidance.
  */
 
 // ============================================================================

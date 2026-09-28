@@ -156,7 +156,7 @@ jobs:
       - name: Integration tests
         run: pnpm test:all
 
-  # ── Evolution Engine machine gates (ASSEMBLY_PAGE_SPEC.md section 7.3) ──
+  # ── Evolution Engine machine gates (docs/planning/ASSEMBLY_PAGE_SPEC.md section 7.3) ──
   # Runs ONLY for PRs whose head branch is assembly/<proposalId>: the branches
   # the Rung 3 builder agent opens. Verifies the diff against the ratified
   # scope fetched from the PRODUCTION SERVER (never from a file on the branch

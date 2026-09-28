@@ -4,11 +4,11 @@
  * The ship is a CORE (Church of the Regenerative Earth) program. Every
  * env-dependent feature is gated by an isConfigured guard so the whole system
  * ships and each piece lights up when its Railway var lands (see the ship ADRs
- * and CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md).
+ * and archive/CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md).
  *
  * Money numbers live here as the single source of truth so the pricing display,
  * the emails, and the admin surfaces all agree. These are trial-year defaults;
- * Rye edits pricing windows and policy in admin (see SHIP_VARIABLES.md).
+ * Rye edits pricing windows and policy in admin (see docs/SHIP_VARIABLES.md).
  */
 import { ENV } from "../_core/env";
 import { isZeffyConfigured } from "./zeffy";
@@ -49,7 +49,7 @@ export const TRIAL_TOTAL_VOYAGE_USD = TRIAL_TOTAL_NIGHTLY_USD * VOYAGE_NIGHTS; /
  * Year two sails at her full rate: double the trial (~$4,200 per voyage, near
  * the $600/night anchor). Applied as a base multiplier to any week on or after
  * the year-2 boundary, composed with seasonal windows. See §3 of
- * CLAUDE_CODE_PROMPT_2026-07-11_SHIP_MAINTAINER_INVENTORY.md.
+ * archive/CLAUDE_CODE_PROMPT_2026-07-11_SHIP_MAINTAINER_INVENTORY.md.
  */
 export const YEAR2_PRICE_MULTIPLIER = 2;
 /**

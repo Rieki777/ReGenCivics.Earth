@@ -71,7 +71,7 @@ export function LOIManager() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-[#7dd87d]/10 to-[#7dd87d]/5 border-2 border-[#7dd87d]/30">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Total Pledged</CardTitle>
+            <CardTitle className="text-sm font-medium text-[#1a472a]/75">Total pledged (legacy)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -120,40 +120,22 @@ export function LOIManager() {
         </Card>
       </div>
 
-      {/* Fund Activation Progress */}
+      {/* Legacy notice. This card used to track "Fund Activation Progress"
+          toward a $20M LOI target plus land project and alliance counts. The
+          fund design and its activation targets were retired on 2026-09-27;
+          /loi now records cooperative interest (trpc.coop.submitInterest). */}
       <Card className="bg-gradient-to-r from-[#d4a574]/10 to-[#d4a574]/5 border-2 border-[#d4a574]">
         <CardHeader>
-          <CardTitle className="text-[#1a472a]">Fund Activation Progress</CardTitle>
-          <CardDescription>Track progress toward fund activation requirements</CardDescription>
+          <CardTitle className="text-[#1a472a]">Legacy letters of intent</CardTitle>
+          <CardDescription>
+            These letters were sent under the retired fund design. The /loi page now records interest in
+            the cooperative, so no new letters arrive here.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-[#1a472a]">LOI Target: $20M</span>
-              <span className="text-sm font-bold text-[#7dd87d]">
-                ${(stats?.totalAmount || 0).toLocaleString()} / $20,000,000
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
-              <div
-                className="bg-gradient-to-r from-[#7dd87d] to-[#4a7c59] h-3 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(((stats?.totalAmount || 0) / 20000000) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-[#1a472a]/80 mt-1">
-              {((stats?.totalAmount || 0) / 20000000 * 100).toFixed(1)}% of target reached
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <span className="text-sm text-[#1a472a]/75">Core governance & council establishment</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-yellow-500" />
-              <span className="text-sm text-[#1a472a]/75">13+ land projects & 20+ alliance partners</span>
-            </div>
-          </div>
+        <CardContent>
+          <p className="text-sm text-[#1a472a]/75">
+            The fund's activation targets were retired with it on 2026-09-27. These records are history.
+          </p>
         </CardContent>
       </Card>
 
@@ -161,7 +143,7 @@ export function LOIManager() {
       <Card className="bg-white border-2 border-[#1a472a]/10">
         <CardHeader>
           <CardTitle className="text-[#1a472a]">Letters of Intent</CardTitle>
-          <CardDescription>All submitted LOIs from capital partners</CardDescription>
+          <CardDescription>Every letter submitted under the retired fund design</CardDescription>
         </CardHeader>
         <CardContent>
           {!lois || lois.length === 0 ? (
@@ -299,7 +281,7 @@ export function LOIManager() {
                   <EmailTemplateSelector
                     recipientEmail={selectedLOI.email}
                     recipientName={selectedLOI.fullName}
-                    contextSubject={`LOI - $${selectedLOI.pledgeAmount?.toLocaleString() || '0'}`}
+                    contextSubject="Your letter of intent"
                     inquiryType="investor"
                     className="flex-1"
                   />

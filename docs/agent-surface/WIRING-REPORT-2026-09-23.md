@@ -54,7 +54,7 @@ open questions are already answered in code.**
    `get_upcoming_sessions` between them.
 
 6. **The site layer has a prior plan that is half executed.**
-   `LLM_DISCOVERABILITY_PLAN.md` (2026-07-15) is a researched, audited version
+   `docs/planning/LLM_DISCOVERABILITY_PLAN.md` (2026-07-15) is a researched, audited version
    of the spec's citation strategy and phase 4, with five layers and a gap
    list. Its finding 1 is the same one the phase -2 crawl measured two months
    later: the SPA body is invisible to non-executing agents. Still 46%.

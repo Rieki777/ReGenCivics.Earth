@@ -1,34 +1,19 @@
 import { useState, useCallback } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useThrottledScroll } from '@/hooks/useThrottledScroll';
+import type { TocSection } from '@/components/MobileTableOfContents';
 
-interface TOCSection {
-  id: string;
-  title: string;
-  level: number;
+interface TableOfContentsProps {
+  /**
+   * The sections to list, in page order. Each id must match an element on the
+   * page. The page passes the same list to MobileTableOfContents, so the two
+   * can't drift apart; pass a stable (module-level) array, because the scroll
+   * handler re-subscribes whenever it changes.
+   */
+  sections: TocSection[];
 }
 
-const sections: TOCSection[] = [
-  { id: 'what-is-alliance', title: 'What Is The Alliance?', level: 0 },
-  { id: 'fund-snapshot', title: 'Fund Snapshot', level: 0 },
-  { id: 'governance', title: 'Why On-Chain Governance?', level: 0 },
-  { id: 'carried-interest', title: 'How Carried Interest Works', level: 0 },
-  { id: 'fund-structure', title: 'Fund Structure: Perpetual Alliance', level: 0 },
-  { id: 'opportunity', title: 'The Opportunity', level: 0 },
-  { id: 'investment-thesis', title: 'Investment Thesis', level: 0 },
-  { id: 'risk-factors', title: 'What Could Go Wrong?', level: 0 },
-  { id: 'impact-framework', title: 'Impact Framework', level: 0 },
-  { id: 'strategy-deep-dive', title: 'Investment Strategy Deep Dive', level: 0 },
-  { id: 'team', title: 'Team & Operating Model', level: 0 },
-  { id: 'competitive', title: 'Competitive Positioning', level: 0 },
-  { id: 'portfolio', title: 'Portfolio Overview', level: 0 },
-  { id: 'is-right', title: 'Is This Right For You?', level: 0 },
-  { id: 'investment-process', title: 'Investment Process', level: 0 },
-  { id: 'faq', title: 'Frequently Asked Questions', level: 0 },
-  { id: 'vision-2040', title: 'The Vision: 2040', level: 0 },
-];
-
-export function TableOfContents() {
+export function TableOfContents({ sections }: TableOfContentsProps) {
   const [activeSection, setActiveSection] = useState<string>('');
 
   const handleScroll = useCallback(() => {
@@ -43,7 +28,7 @@ export function TableOfContents() {
         }
       }
     }
-  }, []);
+  }, [sections]);
 
   useThrottledScroll(handleScroll);
 
@@ -63,7 +48,7 @@ export function TableOfContents() {
         <h2 className="text-sm font-bold text-[#7dd87d] mb-4 uppercase tracking-wide">
           On This Page
         </h2>
-        
+
         <nav className="space-y-2">
           {sections.map((section) => (
             <button

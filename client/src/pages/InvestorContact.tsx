@@ -1,24 +1,23 @@
 /**
- * /investor/contact
+ * /investor/contact: "Talk with us", for land projects, partners, funders and
+ * foundations.
  *
- * Dedicated follow-up form for investors who already submitted the
- * InvestorForm and got access to /opportunity. Pre-populates name +
- * email + organization from the localStorage cache the InvestorForm
- * writes on successful submit, so the investor only has to type their
- * question.
+ * Until 2026-09-27 this was a follow-up form for "verified investors": it
+ * redirected anyone without the investor_verified marker (set by the old
+ * /investor accreditation form) back to /investor, then showed their name and
+ * email locked. /investor now redirects to /loi and the cooperative has no
+ * investors, so the gate would have sent every visitor to the interest form.
+ * The gate is gone and every field is editable. The submit path is unchanged:
+ * investorInquiries.submitFollowUp (server/routes/investors.ts), public and
+ * rate limited, which needs no prior inquiry. The route keeps its old path
+ * because other pages and emails link to it.
  *
- * Submits to investorInquiries.submitFollowUp which creates a new
- * investor_inquiries row tagged with referralSource = "opportunity_followup",
- * so admin sees it threaded with the investor's original inquiry by
- * email rather than as a generic Connect inquiry.
- *
- * If localStorage is missing the verified-investor markers (first-time
- * visitor or different device), we redirect them through /investor with
- * returnTo=/investor/contact so they sign the form first.
+ * Prefill, so nothing is typed twice: the signed-in account first, then what
+ * this same browser saved on the old /investor form, if anything.
  */
 
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,114 +25,111 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { COOP } from "@shared/fund";
 import { ArrowLeft, CheckCircle2, Mail, Loader2 } from "lucide-react";
 
-const INVESTOR_LS_KEY = "investor_form_draft";
-
-type CachedInvestorContext = {
-  fullName: string;
-  email: string;
-  organization?: string;
-  role?: string;
-};
-
-function loadCachedInvestor(): CachedInvestorContext | null {
-  if (typeof window === "undefined") return null;
-  const verified =
-    localStorage.getItem("investor_verified") === "true" ||
-    sessionStorage.getItem("investor_verified") === "true";
-  if (!verified) return null;
-
-  const email = localStorage.getItem("investor_email") ?? "";
-  const fullName = localStorage.getItem("investor_name") ?? "";
-  if (!email || !fullName) return null;
-
-  // The full draft object holds organization + role too. It's keyed
-  // INVESTOR_LS_KEY and may be cleared after submission, so don't
-  // rely on it being there.
-  let organization: string | undefined;
-  let role: string | undefined;
+/** What the retired /investor form left in this browser, if anything. */
+function loadSavedContact(): { fullName: string; email: string; organization: string } {
+  const empty = { fullName: "", email: "", organization: "" };
+  if (typeof window === "undefined") return empty;
   try {
-    const raw = localStorage.getItem(INVESTOR_LS_KEY);
+    let organization = "";
+    const raw = localStorage.getItem("investor_form_draft");
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       if (typeof parsed.organization === "string") organization = parsed.organization;
-      if (typeof parsed.role === "string") role = parsed.role;
     }
+    return {
+      fullName: localStorage.getItem("investor_name") ?? "",
+      email: localStorage.getItem("investor_email") ?? "",
+      organization,
+    };
   } catch {
-    /* ignore corrupt JSON */
+    // Blocked storage or corrupt JSON: start with empty fields.
+    return empty;
   }
-
-  return { fullName, email, organization, role };
 }
 
+const FIELD_CLASS = "bg-white/5 border-white/15 text-white placeholder:text-white/60 mt-1";
+
 export default function InvestorContact() {
-  const [, setLocation] = useLocation();
-  const [investor, setInvestor] = useState<CachedInvestorContext | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [organization, setOrganization] = useState("");
   const [message, setMessage] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [sentTo, setSentTo] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const { user } = useAuth();
+
+  // Fill empty fields once: the account, then this browser's saved details.
+  // Never overwrites anything the person has typed.
+  useEffect(() => {
+    const saved = loadSavedContact();
+    const accountName = typeof user?.name === "string" ? user.name : "";
+    const accountEmail = typeof user?.email === "string" ? user.email : "";
+    setFullName((prev) => prev || accountName || saved.fullName);
+    setEmail((prev) => prev || accountEmail || saved.email);
+    setOrganization((prev) => prev || saved.organization);
+  }, [user]);
 
   const submit = trpc.investorInquiries.submitFollowUp.useMutation({
     onSuccess: () => {
-      setSubmitted(true);
+      setSentTo(email.trim());
       setMessage("");
     },
     onError: (err) => {
-      setSubmitError(err.message ?? "Could not send. Try again in a moment.");
+      // A validation failure arrives as a JSON list of issues; show a plain
+      // sentence for that and the server's own words for anything else.
+      const text = err.message?.trim() ?? "";
+      setSubmitError(
+        text && !text.startsWith("[") ? text : "Could not send. Check your details and try again.",
+      );
     },
   });
 
-  useEffect(() => {
-    const cached = loadCachedInvestor();
-    if (!cached) {
-      setLocation(
-        `/investor?returnTo=${encodeURIComponent("/investor/contact")}`,
-      );
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+    if (!fullName.trim() || !email.trim() || !message.trim()) {
+      setSubmitError("Add your name, your email and a message, then send.");
       return;
     }
-    setInvestor(cached);
-  }, [setLocation]);
+    submit.mutate({
+      fullName: fullName.trim(),
+      email: email.trim(),
+      message: message.trim(),
+      organization: organization.trim() || undefined,
+    });
+  };
 
-  if (!investor) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-[#7dd87d] animate-spin" />
-      </div>
-    );
-  }
-
-  if (submitted) {
+  if (sentTo) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] flex items-center justify-center p-4">
-        <SEO title="Message sent | ReGen Civics" description="Your investor follow-up has been received." />
-        <Card className="w-full max-w-lg bg-white/5 border-[#7dd87d]/30">
+        <SEO title="Message sent | ReGen Civics" description="Your message has reached the ReGen Civics team." />
+        <Card className="w-full max-w-lg bg-white/5 border-[#7dd87d]/30" role="status" aria-live="polite">
           <CardHeader className="text-center">
-            <CheckCircle2 className="w-14 h-14 text-[#7dd87d] mx-auto mb-3" />
+            <CheckCircle2 className="w-14 h-14 text-[#7dd87d] mx-auto mb-3" aria-hidden="true" />
             <CardTitle className="text-white text-2xl" style={{ fontFamily: "var(--font-display)" }}>
               Message received.
             </CardTitle>
             <CardDescription className="text-white/70 mt-2">
-              Our investor team has it in the queue and will follow up
-              from <strong className="text-white">{investor.email}</strong>.
+              Someone on the team will write back to <strong className="text-white">{sentTo}</strong>.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-3">
-            <p className="text-white/60 text-sm">
-              Want to send another? Reload this page. Otherwise, you can
-              head back to the opportunity overview.
-            </p>
-            <div className="flex gap-3 justify-center pt-2">
-              <Link href="/opportunity">
-                <Button variant="outline" className="border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10">
-                  Back to Opportunity
-                </Button>
-              </Link>
-              <Link href="/">
-                <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
-                  Home
-                </Button>
-              </Link>
+            <p className="text-white/60 text-sm">To send another, reload this page.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+              <Button
+                asChild
+                className="bg-transparent border-2 border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/10 min-h-[44px]"
+              >
+                <Link href="/fund">Back to the cooperative</Link>
+              </Button>
+              <Button asChild className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] min-h-[44px]">
+                <Link href="/">Home</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -144,119 +140,144 @@ export default function InvestorContact() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a] py-12 px-4">
       <SEO
-        title="Contact our investor team | ReGen Civics"
-        description="Send a follow-up question to the ReGen Civics investor team."
+        title="Talk with us | ReGen Civics"
+        description="Land projects, partners, funders and foundations can send the ReGen Civics team a message here."
       />
       <div className="max-w-2xl mx-auto">
         <Link
-          href="/opportunity"
-          className="inline-flex items-center gap-2 text-[#7dd87d]/80 hover:text-[#7dd87d] text-sm mb-6"
+          href="/fund"
+          className="inline-flex items-center gap-2 min-h-[44px] text-[#7dd87d]/80 hover:text-[#7dd87d] text-sm mb-4"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Opportunity
+          <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          Back to the cooperative
         </Link>
 
         <Card className="bg-white/5 border-[#7dd87d]/30">
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
-              <Mail className="w-5 h-5 text-[#7dd87d]" />
+              <Mail className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />
               <CardTitle className="text-white text-2xl" style={{ fontFamily: "var(--font-display)" }}>
-                Contact our investor team
+                Talk with us
               </CardTitle>
             </div>
             <CardDescription className="text-white/70">
-              We've already got your investor profile from your earlier
-              submission. Add your question below and our team will follow
-              up. Replies route to admin alongside your original inquiry.
+              For land projects, partners, funders and foundations. Tell us who you are and what you'd
+              like to talk about, and someone on the team will write back.
             </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {/* Identity (locked, since they already verified) */}
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-white/80 text-sm">Name</Label>
-                <Input
-                  value={investor.fullName}
-                  readOnly
-                  className="bg-white/5 border-white/10 text-white mt-1 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <Label className="text-white/80 text-sm">Email</Label>
-                <Input
-                  value={investor.email}
-                  readOnly
-                  className="bg-white/5 border-white/10 text-white mt-1 cursor-not-allowed"
-                />
-              </div>
-            </div>
-
-            {investor.organization && (
-              <div>
-                <Label className="text-white/80 text-sm">Organization</Label>
-                <Input
-                  value={investor.organization}
-                  readOnly
-                  className="bg-white/5 border-white/10 text-white mt-1 cursor-not-allowed"
-                />
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="message" className="text-white/80 text-sm">
-                Your question
-              </Label>
-              <Textarea
-                id="message"
-                value={message}
-                onChange={(e) => {
-                  setMessage(e.target.value);
-                  if (submitError) setSubmitError(null);
-                }}
-                placeholder="What would you like to know? Returns, structure, timeline, due-diligence access..."
-                rows={8}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/60 mt-1"
-                maxLength={4000}
-              />
-              <p className="text-white/60 text-xs mt-1 text-right">
-                {message.length}/4000
-              </p>
-            </div>
-
-            {submitError && (
-              <p className="text-red-300 text-sm bg-red-900/20 border border-red-500/30 rounded p-3">
-                {submitError}
-              </p>
-            )}
-
-            <Button
-              className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] w-full sm:w-auto disabled:opacity-50"
-              disabled={!message.trim() || submit.isPending}
-              onClick={() =>
-                submit.mutate({
-                  fullName: investor.fullName,
-                  email: investor.email,
-                  message: message.trim(),
-                  organization: investor.organization,
-                  role: investor.role,
-                })
-              }
-            >
-              {submit.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                "Send question"
-              )}
-            </Button>
-
-            <p className="text-white/70 text-xs leading-relaxed">
-              We don't respond from a personal inbox. Your message lands
-              directly in our admin alongside your investor profile, and a
-              team member follows up within a few business days.
+            <p className="text-white/70 text-sm pt-1">
+              To tell us you're interested in the cooperative,{" "}
+              <Link href="/loi" className="text-[#7dd87d] underline underline-offset-2 hover:text-[#9de89d]">
+                use the interest form
+              </Link>
+              .
             </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="contact-name" className="text-white/80 text-sm">
+                    Your name
+                  </Label>
+                  <Input
+                    id="contact-name"
+                    value={fullName}
+                    onChange={(e) => {
+                      setFullName(e.target.value);
+                      if (submitError) setSubmitError(null);
+                    }}
+                    required
+                    maxLength={255}
+                    autoComplete="name"
+                    className={FIELD_CLASS}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contact-email" className="text-white/80 text-sm">
+                    Email
+                  </Label>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (submitError) setSubmitError(null);
+                    }}
+                    required
+                    autoComplete="email"
+                    inputMode="email"
+                    className={FIELD_CLASS}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="contact-organization" className="text-white/80 text-sm">
+                  Organization or project <span className="text-white/60">(optional)</span>
+                </Label>
+                <Input
+                  id="contact-organization"
+                  value={organization}
+                  onChange={(e) => setOrganization(e.target.value)}
+                  maxLength={255}
+                  autoComplete="organization"
+                  className={FIELD_CLASS}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="contact-message" className="text-white/80 text-sm">
+                  Your message
+                </Label>
+                <Textarea
+                  id="contact-message"
+                  value={message}
+                  onChange={(e) => {
+                    setMessage(e.target.value);
+                    if (submitError) setSubmitError(null);
+                  }}
+                  required
+                  placeholder="Tell us about your land project, your organization or what you'd like to talk through."
+                  rows={8}
+                  className={FIELD_CLASS}
+                  maxLength={4000}
+                />
+                <p className="text-white/60 text-xs mt-1 text-right">
+                  {message.length}/4000
+                </p>
+              </div>
+
+              {submitError && (
+                <p
+                  role="alert"
+                  className="text-red-300 text-sm bg-red-900/20 border border-red-500/30 rounded p-3"
+                >
+                  {submitError}
+                </p>
+              )}
+
+              <Button
+                type="submit"
+                className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] w-full sm:w-auto min-h-[44px] disabled:opacity-50"
+                disabled={submit.isPending}
+              >
+                {submit.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" aria-hidden="true" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send message"
+                )}
+              </Button>
+
+              <p className="text-white/70 text-xs leading-relaxed">
+                Your message goes straight to the ReGen Civics team. Someone writes back within a few
+                business days.
+              </p>
+              <p className="text-white/60 text-xs leading-relaxed">{COOP.notAnOffer}</p>
+            </form>
           </CardContent>
         </Card>
       </div>

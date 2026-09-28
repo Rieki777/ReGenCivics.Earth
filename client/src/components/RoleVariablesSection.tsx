@@ -1,19 +1,26 @@
 /**
- * RoleVariablesSection - Seed/Harvest explanation + compensation bands table + tracking summary.
+ * RoleVariablesSection - Seed/Harvest explanation + role award bands table + tracking summary.
  * Placed after role cards grid on Team page.
+ *
+ * Token amounts only. Until 2026-09-27 this table carried a USD column and the
+ * line "$ReGen is currently valued at $0.01 each", which priced the token on a
+ * public page. Tokens make no claim about financial value (COOP.tokensNote),
+ * so no surface converts a token amount into dollars.
  */
 import { useState } from "react";
+import { COOP } from "@shared/fund";
 import { gameRoles } from "@/data/gameRoles";
 import { characterLabel } from "@shared/regenYear";
 
+// max = base plus the 30% Seed + Harvest bonus, in $ReGen.
 const bands = [
-  { band: 7, base: "900,000", usd: "$9,000", max: "$11,700", roles: "Grand Builder, and the four Season Organizers (Design, Resource, Build, Rest)" },
-  { band: 6, base: "800,000", usd: "$8,000", max: "$10,400", roles: "Game Designer, Security Reviewer" },
-  { band: 5, base: "700,000", usd: "$7,000", max: "$9,100", roles: "Skills Builder, Season Facilitator" },
-  { band: 4, base: "600,000", usd: "$6,000", max: "$7,800", roles: "Alliance Weaver, Treasury Steward" },
-  { band: 3, base: "500,000", usd: "$5,000", max: "$6,500", roles: "Storyteller, Incubator Guide, Tool Curator" },
-  { band: 2, base: "400,000", usd: "$4,000", max: "$5,200", roles: "Quest Steward, Outreach Writer, Assembly Steward" },
-  { band: 1, base: "300,000", usd: "$3,000", max: "$3,900", roles: "Forum Gardener" },
+  { band: 7, base: "900,000", max: "1,170,000", roles: "Grand Builder, and the four Season Organizers (Design, Resource, Build, Rest)" },
+  { band: 6, base: "800,000", max: "1,040,000", roles: "Game Designer, Security Reviewer" },
+  { band: 5, base: "700,000", max: "910,000", roles: "Skills Builder, Season Facilitator" },
+  { band: 4, base: "600,000", max: "780,000", roles: "Alliance Weaver, Treasury Steward" },
+  { band: 3, base: "500,000", max: "650,000", roles: "Storyteller, Incubator Guide, Tool Curator" },
+  { band: 2, base: "400,000", max: "520,000", roles: "Quest Steward, Outreach Writer, Assembly Steward" },
+  { band: 1, base: "300,000", max: "390,000", roles: "Forum Gardener" },
 ];
 
 export function RoleVariablesSection() {
@@ -60,7 +67,7 @@ export function RoleVariablesSection() {
             onClick={() => setExpanded(!expanded)}
             className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors text-sm group"
           >
-            <span>{expanded ? "Hide details" : "See compensation bands and what we track"}</span>
+            <span>{expanded ? "Hide details" : "See role award bands and what we track"}</span>
             <svg
               className={`w-4 h-4 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
@@ -73,18 +80,18 @@ export function RoleVariablesSection() {
         <div
           className={`overflow-hidden transition-all duration-500 ease-in-out ${expanded ? "max-h-[2000px] opacity-100 mt-6" : "max-h-0 opacity-0 mt-0"}`}
         >
-          {/* Compensation bands */}
+          {/* Role award bands */}
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-            <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>Compensation Bands</h3>
-            <p className="text-white/70 text-sm mb-4">7 bands. 3:1 ratio from top to bottom. $ReGen is currently valued at $0.01 each. All role holders know exactly where they stand.</p>
+            <h3 className="text-lg font-bold text-white mb-4" style={{ fontFamily: "var(--font-display)" }}>Role Award Bands</h3>
+            <p className="text-white/70 text-sm mb-2">7 bands. 3:1 ratio from top to bottom. Role awards are paid in $ReGen tokens, which record contributions. All role holders know exactly where they stand.</p>
+            <p className="text-white/60 text-xs mb-4">{COOP.tokensNote}</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-white/65 text-xs uppercase tracking-wider border-b border-white/10">
                     <th className="text-left py-3 px-2">Band</th>
                     <th className="text-left py-3 px-2">$ReGen/Season</th>
-                    <th className="text-left py-3 px-2">USD Value</th>
-                    <th className="text-left py-3 px-2">Max w/ Bonus</th>
+                    <th className="text-left py-3 px-2">Max w/ Bonus ($ReGen)</th>
                     <th className="text-left py-3 px-2 hidden md:table-cell">Roles</th>
                   </tr>
                 </thead>
@@ -93,8 +100,7 @@ export function RoleVariablesSection() {
                     <tr key={row.band} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                       <td className="py-3 px-2"><span className="bg-[#7dd87d]/20 text-[#7dd87d] text-xs font-bold px-2 py-0.5 rounded-full">{row.band}</span></td>
                       <td className="py-3 px-2 font-mono text-[#7dd87d]">{row.base}</td>
-                      <td className="py-3 px-2">{row.usd}</td>
-                      <td className="py-3 px-2 text-[#d4a574]">{row.max}</td>
+                      <td className="py-3 px-2 font-mono text-[#d4a574]">{row.max}</td>
                       <td className="py-3 px-2 text-white/70 hidden md:table-cell">{row.roles}</td>
                     </tr>
                   ))}

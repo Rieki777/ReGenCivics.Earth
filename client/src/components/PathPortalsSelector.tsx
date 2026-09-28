@@ -1,7 +1,7 @@
 /**
  * PathPortalsSelector: four elemental portals at the top of /quest.
  *
- * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.2:
+ * Per docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.2:
  *   - Four portal icons in a row (fire / water / earth / air mapped
  *     to ReGen Player / Investor / Land Project / Alliance Partner).
  *   - Tap a portal to filter the quest list to that path.

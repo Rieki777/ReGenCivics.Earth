@@ -45,8 +45,9 @@ describe('AI Accessibility Files Content', () => {
     // Should contain expanded FAQ
     expect(content).toContain('Frequently Asked Questions');
 
-    // Should contain community statistics
-    expect(content).toContain('Community Statistics');
+    // Hardcoded community statistics were removed (Rye's ruling 2026-09-27:
+    // live counts stay in the admin metrics table until they are meaningful).
+    expect(content).not.toContain('Community Statistics');
 
     // Should contain key ReGen Civics concepts
     expect(content).toContain('Infinite Game');

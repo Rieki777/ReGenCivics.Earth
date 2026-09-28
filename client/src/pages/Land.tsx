@@ -205,7 +205,7 @@ export default function Land() {
     >
       <SEO
         title="Land Projects - ReGen Civics"
-        description="Design your economic game, build governance, access alliance support, and attract investment for your regenerative land project."
+        description="Design your economic game, build governance, access alliance support, and get ready to crowdpool for your regenerative land project."
         image="/og/land.webp"
         url="/land"
         breadcrumbs={[{ name: "Home", url: "/" }, { name: "Land Projects", url: "/land" }]}
@@ -265,7 +265,7 @@ export default function Land() {
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 We help you design the economic, financial, and governance game your land project needs to
-                thrive and access capital from the regenerative fund.
+                thrive, then gather all nine forms of capital through crowdpooling with your season cohort.
               </p>
             </ReadableScrim>
           </AnimatedSection>
@@ -353,11 +353,13 @@ export default function Land() {
             </AnimatedSection>
 
             <AnimatedSection animation="slide-up" delay={300}>
-              <CollapsibleSection title="Investment Readiness" icon={Wallet}>
+              <CollapsibleSection title="Crowdpooling Readiness" icon={Wallet}>
                 <p>
-                  We prepare your project to attract investment through economic modeling, impact
-                  metrics, legal structure, and governance design. Our fund and investor network are
-                  ready to deploy capital to projects that meet our criteria.
+                  We help you get ready to raise support through economic modeling, impact metrics,
+                  legal structure, and governance design. Graduating projects launch their crowdpooling
+                  campaigns together at the end of the season, where people bring time, things, skills,
+                  land and money. Money goes through outside partners each project holds, never through
+                  ReGen Civics.
                 </p>
               </CollapsibleSection>
             </AnimatedSection>
@@ -377,7 +379,7 @@ export default function Land() {
                 <p>
                   Our Holistic Ecosystemic Impact and Sustainability Tracking framework measures your
                   project's impact across ecological, social, economic, and cultural dimensions. This
-                  data attracts investors and demonstrates your contribution to planetary healing.
+                  data shows supporters and partners what your project contributes to planetary healing.
                 </p>
               </CollapsibleSection>
             </AnimatedSection>
@@ -558,19 +560,19 @@ export default function Land() {
                   </ul>
                 </div>
 
-                {/* Network Investment */}
+                {/* Network commitment */}
                 <div className="mt-6 pt-6 border-t border-white/10">
                   <h4 className="font-bold text-white mb-3 flex items-center gap-2 text-lg">
                     <Handshake className="w-5 h-5 text-[#7dd87d]" />
-                    Network Investment
+                    Network Commitment
                   </h4>
                   <ul className="space-y-2 text-white/70 text-base">
                     <li className="flex items-start gap-2">
                       <span className="text-[#7dd87d] mt-1">✓</span>
                       <span>
-                        <strong className="text-white">Equity/Token/Access Swap:</strong> Projects
-                        exchange ownership or access with the network to become co-invested in the
-                        alliance
+                        <strong className="text-white">Token or Access Swap:</strong> Projects
+                        swap tokens or access with the network, designed with each project, so every
+                        project is tied to the alliance
                       </span>
                     </li>
                   </ul>
@@ -620,20 +622,20 @@ export default function Land() {
                 <CollapsibleSection title="Already established and ready for alliance membership" icon={CheckCircle2}>
                   <p className="mb-3">
                     Already established and ready for alliance membership, advanced organisational and
-                    financial tools, and further funding opportunities.
+                    financial tools, and a place in the shared crowdpooling launch.
                   </p>
                   <ul className="space-y-2 text-base">
                     <li className="flex items-start gap-2">
                       <span className="text-[#7dd87d] mt-1">✓</span>
-                      Direct funding access
+                      A place in the shared crowdpooling launch
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[#7dd87d] mt-1">✓</span>
-                      Alliance co-ownership benefits
+                      Alliance membership benefits
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[#7dd87d] mt-1">✓</span>
-                      Potential to co-steward fund
+                      A voice in how the alliance grows
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[#7dd87d] mt-1">✓</span>
@@ -667,8 +669,8 @@ export default function Land() {
                 </div>
                 <CollapsibleSection title="Building foundations and getting ready to thrive" icon={Sprout}>
                   <p className="mb-3">
-                    Building your foundations and getting ready to thrive. We help you become
-                    investment-ready and community-strong.
+                    Building your foundations and getting ready to thrive. We help you get ready to
+                    crowdpool and grow a strong community.
                   </p>
                   <ul className="space-y-2 text-base">
                     <li className="flex items-start gap-2">
@@ -988,7 +990,7 @@ export default function Land() {
                       icon={Eye}
                       title="Vision & Purpose"
                       summary='What are we co-creating? Where is it? What is it? Defining the dream.'
-                      expanded="This foundational step helps you articulate your project's core identity. We explore questions like: What transformation do you want to create? Who is this for? What makes your vision unique? Through guided exercises, you'll craft a compelling narrative that attracts aligned collaborators and investors."
+                      expanded="This foundational step helps you articulate your project's core identity. We explore questions like: What transformation do you want to create? Who is this for? What makes your vision unique? Through guided exercises, you'll craft a compelling narrative that attracts aligned collaborators and supporters."
                     />
 
                     {/* 2. Patterns of Co-Creation */}
@@ -1024,17 +1026,17 @@ export default function Land() {
                       icon={Users}
                       title="Membership & Conflict Evolution"
                       summary="Who is a member? What are their Rites of Passage to enter? How do we evolve through conflict? How do people leave amicably?"
-                      expanded="Define clear pathways for joining, growing within, and gracefully exiting your community. We design 'Rites of Passage' that ensure alignment and commitment. Conflict is reframed as an opportunity for evolution, with clear processes for resolution that strengthen rather than fracture relationships."
+                      expanded="Define clear pathways for joining, growing within, and gracefully exiting your community. We design 'Rites of Passage' that ensure alignment and commitment. Conflict is reframed as an opportunity for evolution, with clear processes for resolution that strengthen relationships."
                     />
 
                     {/* 6. Crowd Pooling */}
                     <MilestoneCard
                       icon={Coins}
                       title="Crowd Pooling"
-                      summary="Can we pool resources together to co-create our projects dramatically reducing our dependence on financial capital? Can we access low interest Regenerative Development Loans to further dramatically reduce financial investor requirements?"
+                      summary="Can we pool resources together to co-create our projects and depend far less on money? Can low-interest Regenerative Development Loans cover part of the money a project still needs?"
                       videoLabel="Explore Video on Crowd Pooling"
                       videoUrl="https://youtu.be/jxKR-WneJp0?si=V89eEKkLecPQPvBf"
-                      expanded="Explore innovative funding mechanisms that go beyond traditional investment. Crowd pooling allows communities to contribute resources (time, skills, materials, money) in exchange for access, ownership, or future benefits. Combined with Regenerative Development Loans, this can dramatically reduce the need for conventional investors."
+                      expanded="Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling. Low-interest Regenerative Development Loans can cover part of the money a project still needs, and each loan follows its lender's own terms."
                     />
                   </div>
 

@@ -2,7 +2,7 @@
  * Shape guards for the Learn hub content.
  *
  * These pages exist to be cited by answer engines, and the citation research
- * behind LLM_DISCOVERABILITY_PLAN.md section 2 is specific about the shape:
+ * behind docs/planning/LLM_DISCOVERABILITY_PLAN.md section 2 is specific about the shape:
  * a direct 40 to 60 word answer, a sourced table or figure, visible author
  * and dates, a next step. Those are all checkable, so they get checked here
  * rather than trusted to whoever writes the next article.

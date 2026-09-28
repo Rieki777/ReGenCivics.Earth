@@ -24,7 +24,8 @@
  */
 import * as db from "../db";
 import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib/team-user";
-import { FUND } from "../../shared/fund";
+import { COOP, COOP_LINEAGE_HEADING } from "../../shared/fund";
+import { CROWDPOOLING_WORDING } from "../lib/content-canon";
 import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/regenYear";
 import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
@@ -87,38 +88,64 @@ export function wrapForInjection(innerHtml: string): string {
 // ── Static page prose ────────────────────────────────────────────────────────
 // Answer-first: the opening sentences answer "what is this page" directly.
 // Written to match the live site copy and llms-full.txt. Plain language.
+//
+// Every sentence about the cooperative comes from COOP (shared/fund.ts), and a
+// page that describes it carries COOP.notAnOffer once. Until 2026-09-27 this
+// block described a fund with a return target, which search engines and AI
+// assistants read and repeated; scripts/check-fund-claims.mjs now fails the
+// build if that language comes back here.
+
+/** The crowdpool lane's binding wording, used verbatim wherever this prose describes crowdpooling. */
+const CROWDPOOLING = CROWDPOOLING_WORDING;
+
+/** "A cooperative regenerative society" reads as a subtitle after a colon. */
+const COOP_TAGLINE_LOWER = COOP.tagline.charAt(0).toLowerCase() + COOP.tagline.slice(1);
+
+const COOP_PRINCIPLES_HTML = `<ul>
+          ${COOP.designPrinciples
+            .map((p) => `<li><strong>${escapeHtml(p.title)}.</strong> ${escapeHtml(p.body)}</li>`)
+            .join("\n          ")}
+        </ul>`;
+
 const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
   "/": {
     html: `
       <article>
-        <h1>ReGen Civics: a fund and a game for the Regenerative Renaissance</h1>
-        <p>ReGen Civics is a fund in formation and an in-real-life game that is live now, both supporting regenerative land projects: ecovillages, regenerative farms, intentional communities, and restoration projects healing their land and bioregions. We connect impact investors with land projects, run a 13-week incubator, and operate a quest-based game where anyone can contribute to real-world regeneration and earn tokens for verified work.</p>
-        <p>Founded in 2023, ReGen Civics grew out of the SEEDS regenerative economy movement. The thesis is simple: healthier lands lead to healthier people and increasing real-world value.</p>
+        <h1>ReGen Civics: tools and a game for the Regenerative Renaissance</h1>
+        <p>ReGen Civics builds the tools and runs the in-real-life game that regenerative land projects use today: ecovillages, regenerative farms, intentional communities, and restoration projects healing their land and bioregions. We run a 13-week incubator, coordinate crowdpooling for land projects, and operate a quest-based game where anyone can contribute to real-world regeneration and earn tokens for verified work.</p>
+        <p>Founded in 2023, ReGen Civics grew out of the SEEDS regenerative economy movement. It starts from one idea: healthier lands lead to healthier people.</p>
         <h2>Four ways in</h2>
         <ul>
-          <li><a href="/investor">Investors</a> put capital to work through the fund or through crowd pooling into specific projects.</li>
-          <li><a href="/apply">Land projects</a> apply to the incubator for governance tools, economic design, and pathways to funding.</li>
+          <li><a href="/apply">Land projects</a> apply to the incubator for governance tools, economic design, and a crowdpool launch with their cohort.</li>
+          <li><a href="/crowd-pooling">Contributors</a> back land projects through crowdpooling. ${escapeHtml(CROWDPOOLING)}</li>
           <li><a href="/ally">Alliance partners</a> join the network of organizations co-creating the Regenerative Renaissance.</li>
           <li><a href="/quest">Players</a> complete quests that move healing into the world and earn $ReGen tokens.</li>
         </ul>
-        <p>As of mid-2026 the network includes 42 land projects, 15 alliance partner organizations, 8 bioregional hubs, and over 800 active players who have completed more than 3,700 quests. Explore <a href="/fund">the fund</a>, <a href="/game">the game</a>, <a href="/community">the community forum</a>, and <a href="/glossary">the glossary</a>.</p>
+        <h2>The cooperative, in design</h2>
+        <p>${escapeHtml(COOP.statement)}</p>
+        <p>Land projects, people and organizations can <a href="/loi">tell us they're interested</a>. ${escapeHtml(COOP.interestPromise)}</p>
+        <p>${escapeHtml(COOP.notAnOffer)}</p>
+        <p>Explore <a href="/fund">the cooperative</a>, <a href="/game">the game</a>, <a href="/community">the community forum</a>, and <a href="/glossary">the glossary</a>.</p>
       </article>
     `,
   },
   "/fund": {
     html: `
       <article>
-        <h1>The ReGen Civics Fund: invest in regenerative land</h1>
-        <p>${FUND.statement}</p>
-        <p>Once formed, the ${FUND.name} will pool capital to invest in regenerative land projects: ecovillages, regenerative farms, agroforestry operations, and community land ventures that restore ecosystems while building durable local economies. The design gives investors a diversified portfolio of land-backed projects, screened through our HEIST framework (Holistic Ecosystemic Impact and Sustainability Toolkit) and supported by our incubator so their odds of success rise after investment.</p>
-        <h2>How it works</h2>
-        <p>Projects enter through the incubator, where they build governance structures, design their economics, and prepare for investment. The fund will invest in projects that graduate with strong fundamentals. Community members can also invest directly in specific projects through crowd pooling: community-centered economic cooperatives (CCECs) that democratize access to land-based investment.</p>
-        <h2>Questions investors ask</h2>
-        <p><strong>What returns are targeted?</strong> A modelled target of ${FUND.targetNetIrr} net IRR, blended financial plus impact returns, varying by project maturity. That is a target, not a projection of results, and the fund has no track record because it has made no investments.</p>
-        <p><strong>How is risk managed?</strong> Diversification across projects, bioregions, and risk profiles, plus due diligence, insurance where possible, and reserve funds.</p>
-        <p><strong>Do projects keep ownership?</strong> Yes. We facilitate funding and support; projects remain independently owned and operated.</p>
-        <p>${FUND.offeringDisclaimer}</p>
-        <p>Start with the <a href="/opportunity">investment opportunity overview</a>, the <a href="/investor">investor journey</a>, or submit a non-binding <a href="/loi">letter of intent</a>. Full <a href="/risk-disclosure">risk disclosure here</a>.</p>
+        <h1>The ${escapeHtml(COOP.name)}: ${escapeHtml(COOP_TAGLINE_LOWER)}</h1>
+        <p><strong>${escapeHtml(COOP.statusLabel)}.</strong> ${escapeHtml(COOP.statement)}</p>
+        <h2>How it is being designed to work</h2>
+        <p>${escapeHtml(COOP.designPrinciplesNote)}</p>
+        ${COOP_PRINCIPLES_HTML}
+        <h2>Where it stands</h2>
+        <p>${escapeHtml(COOP.whereItStands)}</p>
+        <p>${escapeHtml(COOP.entities)}</p>
+        <h2>Tokens</h2>
+        <p>${escapeHtml(COOP.tokensNote)} ${escapeHtml(COOP.coopTokens.rcivics)} ${escapeHtml(COOP.coopTokens.rcvoice)}</p>
+        <h2>Tell us you're interested</h2>
+        <p>Land projects, people, organizations and funders can <a href="/loi">tell us they're interested</a> and which of the nine forms of capital they might bring. ${escapeHtml(COOP.interestPromise)}</p>
+        <p>${escapeHtml(COOP.notAnOffer)}</p>
+        <p>Read <a href="/opportunity">how you can help design it</a>, <a href="/learn/nine-forms-of-capital">the nine forms of capital</a>, and <a href="/disclaimers">the disclaimers</a>.</p>
       </article>
     `,
   },
@@ -126,7 +153,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>The Infinite Game: play for the Regenerative Renaissance</h1>
-        <p>The ReGen Civics game is a real-world game where completing quests produces measurable regenerative impact: growing food, restoring soil, building community, sharing knowledge, healing land and people. Players earn $ReGen tokens for verified contributions, and those contributions compound into reputation, governance voice, and real economic participation.</p>
+        <p>The ReGen Civics game is a real-world game where completing quests produces measurable regenerative impact: growing food, restoring soil, building community, sharing knowledge, healing land and people. Players earn $ReGen tokens for verified contributions, and those contributions compound into reputation and governance voice in the Game.</p>
         <p>Unlike finite games played to win, infinite games are played to continue playing. We design systems for lasting positive impact that compounds across generations.</p>
         <h2>How to play</h2>
         <ul>
@@ -142,10 +169,16 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
   "/opportunity": {
     html: `
       <article>
-        <h1>The investment opportunity</h1>
-        <p>${FUND.statement}</p>
-        <p>Regenerative land projects produce real assets: healthy soil, food systems, housing, tourism, timber, carbon, and thriving communities. ReGen Civics is building two ways to put capital behind that value: the fund (a diversified portfolio, in formation) and crowd pooling (direct investment in specific projects, live now). Both are anchored in land, screened through the HEIST framework, and supported by an incubator that raises project success rates after investment.</p>
-        <p>The regenerative transition is one of the largest reallocation opportunities of this generation: capital moving from extractive systems into systems that rebuild the living world while returning blended financial and impact value. Read the <a href="/fund">fund overview</a>, meet <a href="/land">the land projects</a>, or begin the <a href="/investor">investor journey</a>.</p>
+        <h1>Help design the ${escapeHtml(COOP.name)}</h1>
+        <p>${escapeHtml(COOP.statement)}</p>
+        <p>${escapeHtml(COOP.whereItStands)} Land projects, people, organizations and funders can <a href="/loi">tell us they're interested</a>. ${escapeHtml(COOP.interestPromise)}</p>
+        <h2>${escapeHtml(COOP_LINEAGE_HEADING)}</h2>
+        <p>ReGen Civics grew out of the SEEDS regenerative economy movement. The Game's governance runs on Hypha DAO on the Base network. Season 1 was the first incubator, in ${SEASON_ONE.year}: ${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} were selected. Season 2 opened at the September 2026 equinox. The cooperative itself has no record yet, because it does not exist yet.</p>
+        <h2>The design principles</h2>
+        <p>${escapeHtml(COOP.designPrinciplesNote)}</p>
+        ${COOP_PRINCIPLES_HTML}
+        <p>${escapeHtml(COOP.notAnOffer)}</p>
+        <p>Read <a href="/fund">the cooperative overview</a>, meet <a href="/land">the land projects</a>, or see <a href="/seasons">how the seasons work</a>.</p>
       </article>
     `,
   },
@@ -153,7 +186,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Governance: voice rooted in land and contribution</h1>
-        <p>ReGen Civics uses voice-based governance: decision power flows from verified contribution, not from capital alone. Two governance tokens exist. RGVoice governs the ReGen Game (quests, community, game economics), which is live. Fund Voice is designed to govern fund investment decisions once the fund is formed; there are no fund investment decisions yet. Both operate through the Hypha DAO framework on the Base network, so decisions are recorded transparently on chain.</p>
+        <p>ReGen Civics uses voice-based governance: decision power in the Game flows from verified contribution. RGVoice is the Game's governance token. It governs the ReGen Game (quests, community, game economics), and it is earned through participation, never purchased. Decisions run through the Hypha DAO framework on the Base network, so they are recorded on chain. ${escapeHtml(COOP.coopTokens.rcvoice)}</p>
         <p>Members raise proposals, the community deliberates in the <a href="/community">forum</a>, and ratified decisions execute through our machine governance pipeline. Anyone can review <a href="/proposals">community proposals</a> or the live <a href="/assembly">assembly</a>. The result is governance that stays accountable to the people doing the regenerative work and to the land itself.</p>
       </article>
     `,
@@ -161,15 +194,15 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
   "/tokenomics": {
     html: `
       <article>
-        <h1>Tokenomics: four tokens, two games</h1>
-        <p>ReGen Civics runs on four tokens across two connected systems: the Fund (anchored in existing finance) and the Game (anchored in regenerative contribution).</p>
+        <h1>Tokenomics: the four ReGen Civics tokens</h1>
+        <p>ReGen Civics has four tokens. Two belong to the Game and are in use today. Two come from the earlier fund design. ${escapeHtml(COOP.tokensNote)}</p>
         <ul>
-          <li><strong>$ReGen</strong> (utility): tracks contributions in the ReGen Game. Earned through quests, bounties, and verified regenerative work.</li>
-          <li><strong>RGVoice</strong> (governance): decision-making voice in the ReGen Game.</li>
-          <li><strong>$RCivics</strong> (utility): tracks contributions to the Alliance and Fund.</li>
-          <li><strong>Fund Voice / RCVoice</strong> (governance): voice in fund investment decisions.</li>
+          <li><strong>$ReGen</strong>: tracks contributions in the ReGen Game. Earned through quests, bounties, and verified regenerative work.</li>
+          <li><strong>RGVoice</strong>: governance voice in the ReGen Game. Earned through participation, never purchased.</li>
+          <li><strong>$RCivics</strong>: ${escapeHtml(COOP.coopTokens.rcivics)}</li>
+          <li><strong>RCVoice</strong>: ${escapeHtml(COOP.coopTokens.rcvoice)}</li>
         </ul>
-        <p>Tokens operate on the Base network (Coinbase's L2) via the Hypha DAO framework, keeping fees minimal. Contributions are recorded in an append-only ledger, and private balances bridge one way to public on-chain tokens through a claim process. See the <a href="/game">game</a>, <a href="/governance">governance</a>, and <a href="/bionomics">bionomics</a> for how value flows through the system.</p>
+        <p>Tokens operate on the Base network (Coinbase's L2) via the Hypha DAO framework, keeping fees minimal. Contributions are recorded in an append-only ledger, and private balances bridge one way to public on-chain tokens through a claim process. See the <a href="/game">game</a>, <a href="/governance">governance</a>, and <a href="/bionomics">bionomics</a> for how the Game's tokens work.</p>
       </article>
     `,
   },
@@ -187,14 +220,14 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       <article>
         <h1>Glossary: the vocabulary of the Regenerative Renaissance</h1>
         <p><strong>Regenerative Renaissance:</strong> a cultural and economic shift where human systems work with natural systems. Where sustainability maintains the status quo, regeneration actively rebuilds and restores degraded ecosystems, communities, and economies.</p>
-        <p><strong>Infinite Game:</strong> a game played to continue playing rather than to win. ReGen Civics designs its fund, game, and governance for impact that compounds across generations.</p>
+        <p><strong>Infinite Game:</strong> a game played to continue playing rather than to win. ReGen Civics designs its game, tools, and governance for impact that compounds across generations.</p>
         <p><strong>Ecovillage:</strong> an intentional community designed around ecological regeneration, shared governance, and local economy, typically on rural land with food production and shared infrastructure.</p>
         <p><strong>Intentional community:</strong> a group of people who choose to live together or share resources around common values, spanning ecovillages, cohousing, land cooperatives, and community land trusts.</p>
         <p><strong>Bioregion:</strong> a geographic area defined by natural boundaries such as watersheds and ecosystems rather than political lines. Bioregionalism organizes economy and governance at this scale.</p>
-        <p><strong>Regenerative finance (ReFi):</strong> financial systems designed to fund the restoration of ecosystems and communities, aligning returns with ecological and social health.</p>
+        <p><strong>Regenerative finance (ReFi):</strong> financial systems designed to fund the restoration of ecosystems and communities.</p>
         <p><strong>HEIST framework:</strong> Holistic Ecosystemic Impact and Sustainability Toolkit, our method for evaluating land projects across whole systems, interconnections, measurable outcomes, and long-term viability.</p>
         <p><strong>Nine forms of capital:</strong> financial, social, intellectual, material, living, cultural, spiritual, experiential, and health. The first eight come from Ethan Roland and Gregory Landua's 8 Forms of Capital (2011). ReGen Civics added health capital, meaning body vitality, wellness, movement, rest, and care. See <a href="/learn/nine-forms-of-capital">why we added a ninth</a>.</p>
-        <p><strong>Crowd pooling (CCEC):</strong> community-centered economic cooperatives that let groups pool capital and collectively invest in regenerative projects they believe in.</p>
+        <p><strong>Crowdpooling:</strong> ${escapeHtml(CROWDPOOLING)}</p>
         <p><strong>Quest:</strong> a structured action producing measurable regenerative impact, completed by players, verified by peers, and rewarded in $ReGen tokens.</p>
         <p><strong>Gratitude economy:</strong> a system where thanks is tracked as social proof, raising the reputation and future earnings of contributors.</p>
         <p><strong>Regenerative ikigai:</strong> the intersection of what you love, what you are good at, what the world needs, and what you can be paid for, applied to planetary restoration.</p>
@@ -215,7 +248,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         { "@type": "DefinedTerm", name: "HEIST framework", description: "Holistic Ecosystemic Impact and Sustainability Toolkit for evaluating regenerative land projects." },
         { "@type": "DefinedTerm", name: "Nine forms of capital", description: "Financial, social, intellectual, material, living, cultural, spiritual, experiential, and health capital. The first eight are Ethan Roland and Gregory Landua's 8 Forms of Capital; ReGen Civics added health capital, meaning body vitality, wellness, movement, rest, and care.", url: `${SITE}/learn/nine-forms-of-capital` },
         { "@type": "DefinedTerm", name: "Health capital", description: "The physical and emotional vitality a person holds, and the work that builds it in others: movement, rest, bodywork, nutrition, recovery, and care. The ninth form of capital, added by ReGen Civics to the standard eight.", url: `${SITE}/learn/nine-forms-of-capital` },
-        { "@type": "DefinedTerm", name: "Crowd pooling (CCEC)", description: "Community-centered economic cooperatives that pool capital to invest in regenerative projects." },
+        { "@type": "DefinedTerm", name: "Crowdpooling", description: CROWDPOOLING },
         { "@type": "DefinedTerm", name: "Quest", description: "A structured action producing measurable regenerative impact, verified by peers and rewarded in tokens." },
         { "@type": "DefinedTerm", name: "Gratitude economy", description: "A system where thanks is tracked as social proof, raising contributor reputation and earnings." },
         { "@type": "DefinedTerm", name: "Regenerative ikigai", description: "The intersection of what you love, what you are good at, what the world needs, and what you can be paid for, applied to planetary restoration." },
@@ -226,7 +259,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>The Assembly: community governance for the Game</h1>
-        <p>The Assembly is the community-governed space of the ReGen Civics Game. Anyone in the community can raise a proposal, signal where they stand, and help decide what advances to an on-chain vote on <a href="/governance">Hypha on Base</a>. The Fund is governed separately; this page governs the Game.</p>
+        <p>The Assembly is the community-governed space of the ReGen Civics Game. Anyone in the community can raise a proposal, signal where they stand, and help decide what advances to an on-chain vote on <a href="/governance">Hypha on Base</a>.</p>
         <h2>How a proposal moves</h2>
         <ul>
           <li>Forming: the idea gathers signals and a synthesized read of the forum conversation.</li>
@@ -244,12 +277,12 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Apply to the ReGen Civics incubator</h1>
-        <p>The incubator (also called the Season 2 accelerator) is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and pathways to investment. Season 2 began in September 2026. ${escapeHtml(APPLICATIONS_STATUS)}</p>
+        <p>The incubator (also called the Season 2 accelerator) is a 13-week program for regenerative land projects: ecovillages, farms, restoration projects, and intentional communities that want governance structures, economic design, and a crowdpool launch with their cohort. Season 2 began in September 2026. ${escapeHtml(APPLICATIONS_STATUS)}</p>
         <h2>What the program covers</h2>
         <ul>
           ${SEASON2_CURRICULUM.map((ep) => `<li>Week ${ep.week}: ${escapeHtml(ep.title)}.</li>`).join("\n          ")}
         </ul>
-        <p><strong>What support do projects get?</strong> Governance frameworks, token economics design, investor preparation, marketing support, legal templates, and access to the alliance network. <strong>Do projects retain ownership?</strong> Yes, always. Read <a href="/seasons">how seasons work</a> and <a href="/blog/how-to-apply-for-season-2">the application guide</a>, then apply on this page.</p>
+        <p><strong>What support do projects get?</strong> Governance frameworks, token economics design, crowdpool preparation, marketing support, legal templates, and access to the alliance network. <strong>Do projects retain ownership?</strong> Yes, always. Read <a href="/seasons">how seasons work</a> and <a href="/blog/how-to-apply-for-season-2">the application guide</a>, then apply on this page.</p>
       </article>
     `,
   },
@@ -275,18 +308,21 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Land projects in the ReGen Civics network</h1>
-        <p>ReGen Civics supports regenerative land projects around the world: ecovillages, regenerative farms, agroforestry projects, watershed restoration efforts, and intentional communities. As of mid-2026 the network includes 42 land projects across 8 bioregional hubs, each working to heal soil, water, biodiversity, and community while building a durable local economy.</p>
-        <p>If you have land and want to build community or regenerate it, the incubator exists for exactly that: <a href="/apply">apply for the next season</a>. Explore projects on the <a href="/map">living map</a> or support one directly through <a href="/crowd-pooling">crowd pooling</a>.</p>
+        <p>ReGen Civics supports regenerative land projects around the world: ecovillages, regenerative farms, agroforestry projects, watershed restoration efforts, and intentional communities, each working to heal soil, water, biodiversity, and community while building a durable local economy.</p>
+        <p>If you have land and want to build community or regenerate it, the incubator exists for exactly that: <a href="/apply">apply for the next season</a>. Explore projects on the <a href="/map">living map</a> or back one through <a href="/crowd-pooling">crowdpooling</a>. ${escapeHtml(CROWDPOOLING)}</p>
       </article>
     `,
   },
-  "/investor": {
+  // /investor redirects here (Phase 0 route contract), so the interest page
+  // carries the prose the old investor journey did.
+  "/loi": {
     html: `
       <article>
-        <h1>The investor journey</h1>
-        <p>Investing in ReGen Civics means putting capital into regenerative land projects with support structures that raise their odds of success. Start by understanding the <a href="/fund">fund</a> and the <a href="/opportunity">opportunity</a>, review the <a href="/risk-disclosure">risk disclosure</a>, then submit a non-binding <a href="/loi">letter of intent</a>. From there we talk through fit: fund participation for diversified exposure, or crowd pooling for direct investment into specific projects you believe in.</p>
-        <p>${FUND.statement}</p>
-        <p>The modelled target is ${FUND.targetNetIrr} net IRR, blended financial and impact returns. It is a target, not a promise. Once the fund is formed, Fund Voice governance tokens are designed to give participating investors a say in fund decisions.</p>
+        <h1>Tell us you're interested in the ${escapeHtml(COOP.name)}</h1>
+        <p>${escapeHtml(COOP.statement)}</p>
+        <p>Land projects, people, organizations and funders can use this page to tell us they're interested and which of the nine forms of capital they might bring. ${escapeHtml(COOP.interestPromise)}</p>
+        <p>${escapeHtml(COOP.notAnOffer)}</p>
+        <p>Read about <a href="/fund">the cooperative</a>, <a href="/learn/nine-forms-of-capital">the nine forms of capital</a>, and <a href="/seasons">the seasons</a>.</p>
       </article>
     `,
   },
@@ -502,14 +538,14 @@ function getLearnIndexContent(): CrawlerContent {
   const inner = `
     <article>
       <h1>Learn: practical answers for land projects and communities</h1>
-      <p>Plain answers to the questions people ask before starting a community, funding a land project, or choosing how a group makes decisions. Written from what we run: a 13-week incubator for regenerative land projects, a fund that invests in them, and a game that tracks contribution across nine forms of capital.</p>
+      <p>Plain answers to the questions people ask before starting a community, funding a land project, or choosing how a group makes decisions. Written from what we run: a 13-week incubator for regenerative land projects, crowdpooling that accounts for what people bring to them, and a game that tracks contribution across nine forms of capital.</p>
       <ul>
         ${LEARN_ARTICLES.map(
           (a) =>
             `<li><a href="/learn/${a.slug}">${escapeHtml(a.title)}</a>: ${escapeHtml(stripInline(a.answer))}</li>`,
         ).join("\n")}
       </ul>
-      <p>Start with <a href="/apply">the incubator</a>, <a href="/fund">the fund</a>, or <a href="/community">the community forum</a>.</p>
+      <p>Start with <a href="/apply">the incubator</a>, <a href="/crowd-pooling">crowdpooling</a>, or <a href="/community">the community forum</a>.</p>
     </article>
   `;
   return {

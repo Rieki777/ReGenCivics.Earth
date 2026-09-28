@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
+import { COOP } from '@shared/fund';
 import { gameRoles } from '@/data/gameRoles';
 import { trpc } from '@/lib/trpc';
 import { RolePortalCard } from '@/components/RolePortalCard';
@@ -60,7 +61,7 @@ const archetypes = [
     emoji: "🛠️", 
     title: "Building & Developing", 
     description: "Creating tools, systems, and infrastructure that serve the regenerative movement.",
-    examples: ["Building out our Game platform", "Creating infrastructure for our portfolio of land projects", "Developing governance tools", "Building dashboards and tracking systems"]
+    examples: ["Building out our Game platform", "Creating infrastructure for the land projects we work with", "Developing governance tools", "Building dashboards and tracking systems"]
   },
   { 
     emoji: "🔬", 
@@ -78,7 +79,7 @@ const archetypes = [
     emoji: "🔗", 
     title: "Catalyzing & Connecting", 
     description: "Weaving relationships, building bridges, and sparking new possibilities.",
-    examples: ["Helping onboard new land projects", "Making key introductions to alliances", "Connecting investors with projects", "Building partnership networks"]
+    examples: ["Helping onboard new land projects", "Making key introductions to alliances", "Connecting allies and funders with land projects", "Building partnership networks"]
   },
   { 
     emoji: "📖", 
@@ -149,16 +150,16 @@ const openRoles = [
     assignment: "Filled"
   },
   {
-    title: "Investment Relations Lead",
-    purpose: "Build and maintain relationships with investors and alliance partners",
+    title: "Alliance Relations Lead",
+    purpose: "Build and keep relationships with alliance partners and the funders who support land projects",
     circle: "Alliance Circle",
-    accountability: "Investor communications, partnership development, funding pipeline management",
-    domain: "Investor relations strategy and alliance onboarding",
+    accountability: "Partner communications, partnership development, alliance onboarding",
+    domain: "Alliance relations and onboarding",
     assignment: "Open"
   },
   {
     title: "Land Project Liaison",
-    purpose: "Support land projects in navigating the ReGen Civics ecosystem",
+    purpose: "Support land projects as they find their way around the ReGen Civics ecosystem",
     circle: "Projects Circle",
     accountability: "Onboard new projects, connect them with resources, track their needs",
     domain: "Project intake process and support coordination",
@@ -464,7 +465,7 @@ export default function Team() {
           </p>
 
           <p className="text-base text-white/60 max-w-2xl mx-auto mb-8 leading-relaxed safe-prose">
-            Over 150 people have helped build this infrastructure. No single face is more important than another, so we list none.
+            Many people have helped build this infrastructure. No single face is more important than another, so we list none.
           </p>
 
           <a
@@ -562,7 +563,7 @@ export default function Team() {
                     : 'text-white/75 hover:text-white hover:bg-white/5'
                 }`}
               >
-                <span className="mr-1.5">🏛️</span>Fund Roles
+                <span className="mr-1.5">🏛️</span>Cooperative Roles
               </button>
               <button
                 role="tab"
@@ -585,7 +586,7 @@ export default function Team() {
               <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#7dd87d]/30 rounded-2xl p-4 md:p-5 text-center">
                 <p className="text-white/85 text-sm md:text-base leading-relaxed">
                   These roles coordinate the <span className="font-bold text-[#7dd87d]">ReGen Infinite Game</span>.
-                  They steward quests, players, the forum, and the Living Game economy. Compensated in $ReGen.
+                  They steward quests, players, the forum, and the Living Game economy. Role awards are paid in $ReGen tokens, which record contributions.
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -601,8 +602,8 @@ export default function Team() {
             <div className="mb-6">
               <div className="max-w-3xl mx-auto mb-6 bg-[#0d2818]/60 border border-[#d4a574]/40 rounded-2xl p-4 md:p-5 text-center">
                 <p className="text-white/85 text-sm md:text-base leading-relaxed">
-                  These roles coordinate the <span className="font-bold text-[#d4a574]">ReGen Civics Fund</span>.
-                  They steward capital, due diligence, and investor relationships. Compensated in $RCivics.
+                  These roles serve the <span className="font-bold text-[#d4a574]">{COOP.name}</span>, which is {COOP.statusLabel.toLowerCase()}.
+                  They carry the design work with land projects, future members and counsel. Their titles come from the earlier fund design. How these roles are rewarded will be set with counsel.
                 </p>
               </div>
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -666,7 +667,7 @@ export default function Team() {
             </h2>
           </div>
 
-          {/* The Narrative Story, always visible, explains how Game and Fund weave together */}
+          {/* The Narrative Story, always visible, explains how the Game and the cooperative in design weave together */}
           <div className="max-w-4xl mx-auto mb-10 space-y-5 text-white/85 leading-relaxed safe-prose">
             <p>
               ReGen Civics runs on two sides of one bridge. The{' '}
@@ -681,31 +682,31 @@ export default function Team() {
                 onClick={() => setViewAndUrl('fund')}
                 className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors"
               >
-                ReGen Civics Fund
+                {COOP.name}
               </button>{' '}
-              is where capital meets land and regeneration gets paid for. Each side has its own roles, its own token, its own rhythm. They hand things to each other across the middle.
+              is being designed so land projects and people can buy and steward land together. It is in design today, it is not yet a legal entity, and it accepts no money. Each side has its own roles and its own rhythm. They hand things to each other across the middle.
             </p>
 
             <p>
-              Every investment flows through the same spine. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Due Diligence Lead</button>{' '}
-              visits the land, reads the team, and writes the memo. The{' '}
+              The cooperative roles carry the design work. Their titles come from the earlier fund design, and each one now serves the cooperative. The{' '}
               <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Fund Steward</button>{' '}
-              drafts the Hypha DAO proposal. The committee (Steward, Diligence Lead, Capital Weaver, and Portfolio Tender once seated) reviews it together. The Hypha DAO casts its weighted $RCivics voice and the call is made.
+              keeps the cooperative's design moving with counsel and future members. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Structure Keeper</button>{' '}
+              holds its legal design and documents with counsel. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Capital Weaver</button>{' '}
+              builds relationships with land projects, allies, and the funders who support land projects. The{' '}
+              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Due Diligence Lead</button>{' '}
+              designs how the cooperative would assess land and teams before any purchase.
             </p>
 
             <p>
-              After deployment, the{' '}
+              The{' '}
               <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Portfolio Tender</button>{' '}
-              walks beside the project month to month. The{' '}
+              stays close to the land projects shaping the design and carries their needs into it. The{' '}
               <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Impact Witness</button>{' '}
-              measures what is actually happening on the ground. The{' '}
+              designs how the network will measure what happens on the ground. The{' '}
               <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Fund Treasurer</button>{' '}
-              tracks the money and keeps the fund audit-ready. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Structure Keeper</button>{' '}
-              makes sure every step lives inside a real legal vessel. The{' '}
-              <button onClick={() => setViewAndUrl('fund')} className="text-[#d4a574] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#d4a574] transition-colors">Capital Weaver</button>{' '}
-              is the loop back to investors, narrating the whole cycle.
+              keeps the design records and will keep the member registry once the cooperative forms. No treasury is held today.
             </p>
 
             <p>
@@ -715,7 +716,7 @@ export default function Team() {
               <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Design Season Organizer</button>{' '}
               facilitates the incubator weeks with each new cohort. The{' '}
               <button onClick={() => setViewAndUrl('game')} className="text-[#7dd87d] font-semibold underline decoration-dotted underline-offset-4 hover:text-[#9de89d] transition-colors">Storyteller</button>{' '}
-              holds the public narrative of what the fund and the Game are building together. Different waters, same river. Game roles are compensated in $ReGen. Fund roles are compensated in $RCivics.
+              holds the public narrative of what the Game and the cooperative are building together. Different waters, same river. Game role awards are paid in $ReGen. How cooperative roles are rewarded will be set with counsel.
             </p>
           </div>
         </div>
@@ -833,7 +834,7 @@ export default function Team() {
               <Lightbulb className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-bold text-white mb-1">Members Don't Sell Their Time</h3>
-                <p className="text-white/60">We contribute value, not hours. Compensation is based on impact and outcomes, not time spent.</p>
+                <p className="text-white/60">We contribute value. Compensation follows impact and outcomes.</p>
               </div>
             </div>
             
@@ -841,7 +842,7 @@ export default function Team() {
               <Users className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-bold text-white mb-1">Power-With, Not Power-Over</h3>
-                <p className="text-white/60">We practice collaborative leadership where influence comes from contribution and wisdom, not position.</p>
+                <p className="text-white/60">We practice collaborative leadership where influence comes from contribution and wisdom.</p>
               </div>
             </div>
             

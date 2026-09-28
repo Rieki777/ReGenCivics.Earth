@@ -1,5 +1,5 @@
 /**
- * The Harvest drafting core (Phase 2; CREATION_STATION_PLAN.md v2 s1-s3).
+ * The Harvest drafting core (Phase 2; docs/planning/CREATION_STATION_PLAN.md v2 s1-s3).
  *
  * Deterministic-first: ripeness composes from the components the vault
  * computed locally (zero LLM); model spend goes only to drafting ripe items.

@@ -5,8 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { useGameMechanics } from "@/hooks/useGameMechanics";
-// State for Why Games dropdown
+import { COOP } from "@shared/fund";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
@@ -108,32 +107,43 @@ function GameWayCard({
 }
 
 // Token Info Card Component
-function TokenInfoCard({ 
-  iconSrc, 
-  title, 
+// A card takes either a logo image (iconSrc) or a plain icon. The two tokens
+// from the earlier fund design use an icon: their logos carry the old fund
+// name baked into the art.
+function TokenInfoCard({
+  iconSrc,
+  icon: Icon,
+  title,
   subtitle,
-  description, 
-  features,
+  description,
+  features = [],
   color,
   ctaLink,
   ctaLabel
-}: { 
-  iconSrc: string; 
+}: {
+  iconSrc?: string;
+  icon?: React.ComponentType<{ className?: string }>;
   title: string;
   subtitle: string;
   description: string;
-  features: string[];
+  features?: string[];
   color: string;
   ctaLink?: string;
   ctaLabel?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   return (
     <div className={`bg-white p-6 rounded-xl border-3 ${color} shadow-lg`}>
       <div className="flex items-start gap-4 mb-4">
         <div className="w-16 h-16 flex-shrink-0">
-          <img src={iconSrc} alt={title} className="w-full h-full object-contain" width={64} height={64} loading="lazy" />
+          {iconSrc ? (
+            <img src={iconSrc} alt={title} className="w-full h-full object-contain" width={64} height={64} loading="lazy" />
+          ) : Icon ? (
+            <div className="w-full h-full rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center" aria-hidden="true">
+              <Icon className="w-8 h-8 text-amber-700" />
+            </div>
+          ) : null}
         </div>
         <div>
           <h3 className="font-bold text-[#1a472a] text-xl" style={{ fontFamily: 'var(--font-display)' }}>
@@ -145,23 +155,25 @@ function TokenInfoCard({
       <p className="text-[#1a472a]/80 mb-4 leading-relaxed">
         {description}
       </p>
-      
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger className="flex items-center gap-2 text-[#4a7c59] font-semibold hover:text-[#7dd87d] transition-colors text-sm">
-          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          How to Earn
-        </CollapsibleTrigger>
-        <CollapsibleContent className="mt-4">
-          <ul className="space-y-2">
-            {features.map((feature, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm text-[#1a472a]/75">
-                <Sparkles className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
-                <span>{feature}</span>
-              </li>
-            ))}
-          </ul>
-        </CollapsibleContent>
-      </Collapsible>
+
+      {features.length > 0 && (
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <CollapsibleTrigger className="flex items-center gap-2 text-[#4a7c59] font-semibold hover:text-[#7dd87d] transition-colors text-sm">
+            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            How to Earn
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-4">
+            <ul className="space-y-2">
+              {features.map((feature, index) => (
+                <li key={index} className="flex items-start gap-2 text-sm text-[#1a472a]/75">
+                  <Sparkles className="w-4 h-4 text-[#7dd87d] mt-0.5 flex-shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+      )}
       {ctaLink && (
         <Link href={ctaLink} className="inline-flex items-center gap-2 mt-4 text-[#4a7c59] font-semibold hover:text-[#7dd87d] transition-colors text-sm">
           {ctaLabel || 'Learn More'} <ArrowRight className="w-4 h-4" />
@@ -246,8 +258,6 @@ function TypewriterText({ className }: { className?: string }) {
 }
 
 export default function Game() {
-  const { mechanics } = useGameMechanics();
-  const seedsRegenPerUsd = mechanics?.rewards.seedsRegenPerUsd ?? 10;
   const [whatIsGameOpen, setWhatIsGameOpen] = useState(false);
   const [whyOpen, setWhyOpen] = useState(false);
   const [infiniteOpen, setInfiniteOpen] = useState(false);
@@ -266,7 +276,7 @@ export default function Game() {
         <div className="container flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 text-center md:text-left">
           <span className="text-2xl">🌱</span>
           <p className="text-sm md:text-base font-medium">
-            <strong>SEEDS Contributors:</strong> Your past investments can be recognized in the ReGen Game!
+            <strong>SEEDS Contributors:</strong> Your past contributions can be recognized in the ReGen Game!
           </p>
           <a 
             href="#seeds-legacy" 
@@ -401,7 +411,7 @@ export default function Game() {
                   </p>
                   <p>That's why we have 2 distinct spaces.</p>
                   <p>
-                    The ReGen Civics Fund is designed to be deeply rooted in the old Games, working to master that Game through using the most powerful coordination structures, a Fund, to ensure we have the capability to coordinate in that Game.
+                    The first space sits on the old Games' side of the bridge, in a form their laws already know: a cooperative. {COOP.statement}
                   </p>
                   <p>
                     The ReGen Game is deeply rooted on the other side, the Games we're moving into. It's a continuation of the work started in SEEDS back in 2017: taking a decade of learning and weaving it into this new structure to help us co-create a growing number of new financial and economic systems better suited for Regenerative Civilizations.
@@ -784,19 +794,19 @@ export default function Game() {
                 <CollapsibleContent>
                   <div className="text-[#1a472a]/80 max-w-2xl mx-auto space-y-4 text-left mt-4">
                     <p>
-                      If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, and cultural!
+                      If you have been contributing to a regenerative mission and haven't been paid or otherwise given financial or equal capital in return, we are building the ecosystem to track and account for those contributions. Every form of capital counts: social, material, financial, living, intellectual, experiential, spiritual, cultural, and health!
                     </p>
                     <p>
-                      As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is to form an ecosystem that represents us all, helps us coordinate, raise capital, and move together as a whole.
+                      As you join this movement, you can make a historical proposal for your contributions and bring those contributions here. The point is to form an ecosystem that represents us all, helps us coordinate, and lets us move together as a whole.
                     </p>
                     <p>
-                      For every token we give out, we receive an equal amount of value pooled here - so as you claim tokens you offer up your contribution to the whole. This could be in the form of a video on the lessons you learned (starting a community garden for example) or free access to tools and templates you've created.
+                      When you claim tokens for past work, you also offer something from that work to the whole. This could be in the form of a video on the lessons you learned (starting a community garden for example) or free access to tools and templates you've created.
                     </p>
                     <p className="font-medium text-[#1a472a]">
                       If you have something of value for the movement, we want to track it, share it, and coordinate new civilizations with it.
                     </p>
                     <p>
-                      Our collective contributions are the real value backing our tokens.
+                      {COOP.tokensNote}
                     </p>
                     <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
                       💛 If you contributed to SEEDS or other regenerative projects before finding ReGen Civics, those contributions count here too.
@@ -810,7 +820,7 @@ export default function Game() {
                   className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:shadow-[0_0_30px_rgba(245,158,11,0.6)]"
                 >
                   <Coins className="w-5 h-5" />
-                  Claim Financial Contributions
+                  Claim Your SEEDS Contributions
                 </a>
                 <a
                   href="https://docs.google.com/spreadsheets/d/1Z6V3DSRHpA7fIjE2JYi4L5L2-vH6TbOIYKXHYJp_mHY/"
@@ -843,11 +853,11 @@ export default function Game() {
                     <h4 className="font-bold text-[#1a472a]">Financial Contributions</h4>
                   </div>
                   <p className="text-sm text-[#1a472a]/80 mb-3">
-                    Make a proposal showing how much USD value you contributed to SEEDS or our movement.
+                    Make a proposal showing how much you contributed to SEEDS or our movement.
                   </p>
                   <div className="bg-white p-3 rounded-lg border border-amber-300">
                     <p className="text-sm font-semibold text-amber-700">
-                      💰 Receive <span className="text-lg">{seedsRegenPerUsd} tokens</span> per $1 contributed
+                      📝 Recognized in $ReGen once the community proposal passes
                     </p>
                   </div>
                 </div>
@@ -860,7 +870,7 @@ export default function Game() {
                     <h4 className="font-bold text-[#1a472a]">Other Contributions</h4>
                   </div>
                   <p className="text-sm text-[#1a472a]/80 mb-3">
-                    Make a clear proposal for the USD value of your contribution and how it serves ReGen Civics goals.
+                    Make a clear proposal for the value of your contribution and how it serves ReGen Civics goals.
                   </p>
                   <div className="bg-white p-3 rounded-lg border border-amber-300">
                     <p className="text-sm font-semibold text-amber-700">
@@ -1013,7 +1023,7 @@ export default function Game() {
                   {tokenSystemOpen ? <ChevronUp className="w-6 h-6 inline ml-2 text-[#7dd87d]" /> : <ChevronDown className="w-6 h-6 inline ml-2 text-[#7dd87d] animate-bounce" />}
                 </h2>
                 <p className="text-white/70 max-w-2xl mx-auto">
-                  Two complementary spaces, each with their own governance and utility/currency tokens. Both are earned through contributions, giving tokens to those who add value.
+                  The Game's two tokens are earned through contributions. Two more come from the earlier fund design.
                 </p>
               </div>
             </CollapsibleTrigger>
@@ -1049,64 +1059,54 @@ export default function Game() {
               <TokenInfoCard
                 iconSrc={cdnImg("https://assets.regencivics.earth/ZWOtkRNjdCWfFFed.png")}
                 title="$ReGen"
-                subtitle="Game Utility Token"
-                description="$ReGen is our tradable utility token representing economic participation in the Game."
+                subtitle="The Game's Token"
+                description="$ReGen is the Game's token. It records what you contribute to the Game and the movement."
                 features={[
                   "Earn $ReGen per quest",
                   "Create historical and current contribution proposals",
                   "Help grow our movement",
-                  "Tradable with other players & secondary markets when available"
+                  "Receive it as gratitude from other players"
                 ]}
                 color="border-[#7dd87d]/50"
               />
             </div>
           </div>
 
-          {/* Alliance & Fund Space */}
+          {/* Tokens from the earlier fund design */}
           <div>
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-3 bg-amber-500/20 px-6 py-3 rounded-full border border-amber-500/40 mb-4">
                 <Building2 className="w-6 h-6 text-amber-400" />
                 <h3 className="text-xl font-bold text-amber-400" style={{ fontFamily: 'var(--font-display)' }}>
-                  Alliance & Fund Space
+                  From the Earlier Fund Design
                 </h3>
               </div>
               <p className="text-white/60 text-sm max-w-xl mx-auto">
-                Invest in land projects, join the alliance, and help govern the fund
+                Two tokens from the earlier fund design. Neither one is part of the Game.
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
               <TokenInfoCard
-                iconSrc={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png")}
+                icon={Vote}
                 title="RCVoice"
-                subtitle="Fund Governance Token"
-                description="RCVoice governs fund decisions. Council holds 40% voice; Land Projects, Alliance Orgs, and Investors each hold 20%. Voice evolves over time as the community matures."
-                features={[
-                  "Council 40% / Others 20% each at launch",
-                  "Vote on investment decisions & proposals",
-                  "Non-tradable, can delegate to other members"
-                ]}
+                subtitle="Earlier fund design"
+                description={COOP.coopTokens.rcvoice}
                 ctaLink="/governance"
                 ctaLabel="Explore Governance Model"
                 color="border-amber-500/50"
               />
               <TokenInfoCard
-                iconSrc={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png")}
+                icon={Coins}
                 title="$RCivics"
-                subtitle="Rewards & Returns Token"
-                description="$RCivics is your claim on fund returns. Portfolio distributions are sent proportionally to $RCivics holders - separate from governance voice."
-                features={[
-                  "Acquired through investment or equity swap",
-                  "Proportional claim on returns",
-                  "Tradable on secondary markets when available"
-                ]}
-                ctaLink="/governance"
-                ctaLabel="Learn How to Acquire"
+                subtitle="Earlier fund design"
+                description={COOP.coopTokens.rcivics}
+                ctaLink="/tokenomics"
+                ctaLabel="Read About the Tokens"
                 color="border-amber-500/50"
               />
             </div>
           </div>
-          
+
           <div className="mt-12 text-center">
             <div className="inline-block bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
               <p className="text-white/90 text-lg mb-2">
@@ -1116,6 +1116,9 @@ export default function Game() {
                 Food Foresting Quest: <span className="text-[#7dd87d] font-bold">+33 $Regen</span> + <span className="text-purple-400 font-bold">+1 RGVoice</span>
               </p>
             </div>
+            <p className="text-white/60 text-sm mt-6 max-w-2xl mx-auto">
+              {COOP.tokensNote}
+            </p>
           </div>
 
             </CollapsibleContent>
@@ -1168,14 +1171,14 @@ export default function Game() {
                       <BookOpen className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
                         <h4 className="font-bold text-[#1a472a] mb-1">Grow & Learn Together</h4>
-                        <p className="text-sm text-[#1a472a]/75">Share our journey and insights with communities. This is the VALUE we add in exchange for tokens.</p>
+                        <p className="text-sm text-[#1a472a]/75">Share our journey and insights with communities. This is the contribution our tokens record.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
                       <Vote className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
-                        <h4 className="font-bold text-[#1a472a] mb-1">Distribute Ownership & Governance</h4>
-                        <p className="text-sm text-[#1a472a]/75">More quests = more tokens = greater Voice impact. Our game is owned and governed by Players and Allies.</p>
+                        <h4 className="font-bold text-[#1a472a] mb-1">Share Governance</h4>
+                        <p className="text-sm text-[#1a472a]/75">More quests = more RGVoice = greater Voice impact. Players and Allies govern the Game together.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
@@ -1231,7 +1234,7 @@ export default function Game() {
             <PhilosophyCard
               icon={Layers}
               title="Rules Can Change"
-              description="Players collectively evolve the rules through governance. The Game adapts to serve the players, not the other way around."
+              description="Players collectively evolve the rules through governance. The Game adapts to serve the players."
             />
           </div>
           
@@ -1598,9 +1601,9 @@ export default function Game() {
                       <div className="w-10 h-10 rounded-full bg-[#7dd87d] flex items-center justify-center">
                         <Coins className="w-5 h-5 text-[#1a472a]" />
                       </div>
-                      <h3 className="font-bold text-[#7dd87d] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Crowd Pooling</h3>
+                      <h3 className="font-bold text-[#7dd87d] text-lg" style={{ fontFamily: 'var(--font-display)' }}>Crowdpooling</h3>
                     </div>
-                    <p className="text-white/80 text-base leading-relaxed">Can we pool resources together to co-create our projects, dramatically reducing our dependence on financial capital?</p>
+                    <p className="text-white/80 text-base leading-relaxed">Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.</p>
                     <a href="https://youtu.be/cGjQj8vbYNY" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 mt-2 text-[#7dd87d] text-sm hover:underline">
                       <Play className="w-3 h-3" /> Watch Video
                     </a>
@@ -1645,7 +1648,7 @@ export default function Game() {
             </AnimatedSection>
 
             <div className="space-y-4">
-              {/* RVoice */}
+              {/* RGVoice */}
               <Collapsible>
                 <CollapsibleTrigger className="w-full">
                   <div className="bg-white border-2 border-purple-200 rounded-2xl p-5 flex items-center justify-between hover:border-purple-400 transition-colors cursor-pointer group">
@@ -1655,7 +1658,7 @@ export default function Game() {
                       </div>
                       <div>
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
-                          RVoice: Governance Token
+                          RGVoice: Governance Token
                         </h3>
                         <p className="text-sm text-[#1a472a]/80">Earned through participation, used to vote</p>
                       </div>
@@ -1666,12 +1669,12 @@ export default function Game() {
                 <CollapsibleContent>
                   <div className="bg-white border-2 border-t-0 border-purple-200 rounded-b-2xl p-5 -mt-1">
                     <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">
-                      RVoice represents how much weight your voice carries in decisions. The more you contribute, the more you earn, and the more your votes count. It is not transferable. It stays tied to your own participation and cannot be bought or sold.
+                      RGVoice represents how much weight your voice carries in decisions. The more you contribute, the more you earn, and the more your votes count. It is not transferable. It stays tied to your own participation and cannot be bought or sold.
                     </p>
                     <ul className="space-y-2">
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                        <span>Complete quests to earn RVoice tokens</span>
+                        <span>Complete quests to earn RGVoice tokens</span>
                       </li>
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
@@ -1700,7 +1703,7 @@ export default function Game() {
                       </div>
                       <div>
                         <h3 className="font-bold text-[#1a472a] text-lg" style={{ fontFamily: "var(--font-display)" }}>
-                          ReGen Token: Economic Token
+                          $ReGen: The Game's Token
                         </h3>
                         <p className="text-sm text-[#1a472a]/80">Earned through verified impact contributions</p>
                       </div>
@@ -1711,7 +1714,7 @@ export default function Game() {
                 <CollapsibleContent>
                   <div className="bg-white border-2 border-t-0 border-[#7dd87d]/50 rounded-b-2xl p-5 -mt-1">
                     <p className="text-[#1a472a]/80 text-sm leading-relaxed mb-4">
-                      The ReGen Token represents a share of the regenerative economy. It is earned through verified contributions to land projects, the community, and the Game. It can be used to participate in fund distributions as the ecosystem grows.
+                      $ReGen is the Game's token, earned through verified contributions to land projects, the community, and the Game. {COOP.tokensNote}
                     </p>
                     <ul className="space-y-2">
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
@@ -1724,7 +1727,7 @@ export default function Game() {
                       </li>
                       <li className="flex items-start gap-2 text-sm text-[#1a472a]/75">
                         <Sparkles className="w-4 h-4 text-[#4a7c59] mt-0.5 flex-shrink-0" />
-                        <span>Tradable with other players when secondary markets are available</span>
+                        <span>Received as gratitude from other players</span>
                       </li>
                     </ul>
                   </div>
@@ -1753,16 +1756,16 @@ export default function Game() {
                   <div className="bg-white border-2 border-t-0 border-amber-200 rounded-b-2xl p-5 -mt-1">
                     <ul className="space-y-3">
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-purple-600 font-bold text-xs">V</span>
+                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-amber-600 font-bold text-xs">+</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Complete a quest</strong>: earn RVoice</span>
+                        <span><strong className="text-[#1a472a]">Complete a quest</strong>: earn RGVoice and $ReGen</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
                         <div className="w-6 h-6 rounded-full bg-[#7dd87d]/30 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-[#4a7c59] font-bold text-xs">R</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Fund a campaign</strong>: earn ReGen Token</span>
+                        <span><strong className="text-[#1a472a]">Receive gratitude from other players</strong>: earn $ReGen</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
                         <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -1771,14 +1774,14 @@ export default function Game() {
                         <span><strong className="text-[#1a472a]">Contribute a skill to a project</strong>: earn both</span>
                       </li>
                       <li className="flex items-start gap-3 text-sm text-[#1a472a]/80">
-                        <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-amber-600 font-bold text-xs">+</span>
+                        <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-purple-600 font-bold text-xs">V</span>
                         </div>
-                        <span><strong className="text-[#1a472a]">Participate in community sessions</strong>: earn RVoice</span>
+                        <span><strong className="text-[#1a472a]">Participate in community sessions</strong>: earn RGVoice</span>
                       </li>
                     </ul>
                     <p className="text-xs text-[#1a472a]/80 mt-4 italic">
-                      Token amounts vary per quest and contribution type. No financial returns are guaranteed.
+                      Token amounts vary per quest and contribution type. {COOP.tokensNote}
                     </p>
                   </div>
                 </CollapsibleContent>

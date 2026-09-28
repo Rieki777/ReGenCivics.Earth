@@ -1,7 +1,7 @@
 /**
  * Player Paths router.
  *
- * Phase 2 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md.
+ * Phase 2 of docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md.
  *
  * Exposes the per-path tier progression state to the Profile UI:
  *   - getMyPaths: returns each declared path with its current tier
@@ -284,13 +284,17 @@ function buildCoCreatorSteps(
           actionLabel: "View Rites",
         },
       ];
+    // The "investor" path now leads to the cooperative in design (ADR-62).
+    // Labels changed in Phase 0; the path id and the tier mechanics stay until
+    // the cooperative's membership design is set with counsel. A legacy signed
+    // letter of intent still counts as this step done.
     case "investor":
       return [
         {
-          label: "Sign the LOI",
+          label: "Tell us you're interested in the cooperative",
           done: facts.loiSigned,
           actionRoute: "/loi",
-          actionLabel: "Sign LOI",
+          actionLabel: "Tell us",
         },
       ];
     case "land_project":
@@ -342,16 +346,16 @@ function buildStewardSteps(
     case "investor":
       return [
         {
-          label: "Send an investment",
+          label: "Help design the cooperative",
           done: facts.investmentSent,
           actionRoute: "/opportunity",
-          actionLabel: "View opportunity",
+          actionLabel: "Read the design",
         },
         {
-          label: "Vote in a Fund decision",
+          label: "Vote in a governance decision",
           done: facts.fundVoteCast,
           actionRoute: "/governance",
-          actionLabel: "View Fund decisions",
+          actionLabel: "View proposals",
         },
       ];
     case "land_project":

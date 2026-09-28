@@ -17,7 +17,7 @@
  * `computeBountyAmount` loads the live weights, the learned demand factor, and
  * the remaining season budget, then calls the pure core.
  *
- * See BOUNTY_VALUATION_ENGINE_SPEC.md. Everything pays $ReGen for now; the
+ * See docs/planning/BOUNTY_VALUATION_ENGINE_SPEC.md. Everything pays $ReGen for now; the
  * `token` field is carried so another token can be added later without a
  * schema change, but nothing branches on it.
  */

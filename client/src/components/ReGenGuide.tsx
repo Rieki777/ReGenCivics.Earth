@@ -14,16 +14,16 @@ import { guidePortraitUrl, guideArchetype } from "@shared/guide";
 import { useSpeech, useSilentPreference, useVoicePreference } from "@/components/companion/useVoice";
 
 const PATH_WELCOMES: Record<string, string> = {
-  investor: "Welcome back! I'm your personal ReGen Guide, here to walk you through the Fund: the investment thesis, the seasonal accelerator, or your next step. What's on your mind?",
-  land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project journey: showcasing your work, connecting with investors, or making the most of the accelerator. Where would you like to start?",
+  investor: "Welcome back! I'm your personal ReGen Guide, here to walk you through the cooperative we are designing, the seasonal accelerator, or your next step. What's on your mind?",
+  land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project journey: showcasing your work, crowdpooling what your project needs, or making the most of the accelerator. Where would you like to start?",
   ally: "Welcome back! I'm here to help you find where your organisation fits in the ReGen Civics ecosystem: understanding alliance partnerships, the value exchange model, or how to get involved. What would you like to explore?",
   player: "Welcome back, Player! I'm your guide to Quests, the Infinite Game, and all the ways you can contribute and co-create in the regenerative movement. What would you like to know?",
 };
 
 const STARTER_PROMPTS = [
-  "How does the ReGen Civics fund work?",
+  "What is the ReGen Network Cooperative?",
   "What are quests and how do I earn rewards?",
-  "How do I invest or contribute?",
+  "How can I contribute?",
   "What is the difference between the 4 paths?",
 ];
 
@@ -53,7 +53,7 @@ export default function ReGenGuide() {
   const welcomeMessage =
     userPath && PATH_WELCOMES[userPath]
       ? PATH_WELCOMES[userPath]
-      : "Hi! I'm Your ReGen Guide, here to help you find your footing in the regenerative ecosystem. Whether you're curious about the Fund, the Infinite Game, or just figuring out where you fit, I've got you. What would you like to explore?";
+      : "Hi! I'm Your ReGen Guide, here to help you find your footing in the regenerative ecosystem. Whether you're curious about the Infinite Game, the cooperative we are designing, or just figuring out where you fit, I've got you. What would you like to explore?";
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -262,7 +262,7 @@ export default function ReGenGuide() {
         messages={messages}
         onSendMessage={handleSendMessage}
         isLoading={isStreaming}
-        placeholder="Ask about the Fund, Game, or how to participate..."
+        placeholder="Ask about the Game, the cooperative, or how to participate..."
         height={320}
         className="border-0 rounded-none"
       />

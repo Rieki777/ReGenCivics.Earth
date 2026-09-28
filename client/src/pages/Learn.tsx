@@ -38,8 +38,8 @@ export default function Learn() {
             <p className="text-white/60 text-base md:text-lg max-w-2xl mx-auto safe-prose">
               Plain answers to the questions people ask before starting a community, funding a
               land project, or choosing how a group makes decisions. Written from what we run: a
-              13-week incubator for regenerative land projects, a fund that invests in them, and a
-              game that tracks contribution across nine forms of capital.
+              13-week incubator for regenerative land projects and a game that tracks contribution
+              across nine forms of capital.
             </p>
           </div>
         </section>
@@ -77,7 +77,7 @@ export default function Learn() {
               </Link>
               ,{" "}
               <Link href="/fund" className="text-[#7dd87d] hover:underline">
-                the fund
+                the cooperative we're designing
               </Link>
               , or{" "}
               <Link href="/community" className="text-[#7dd87d] hover:underline">

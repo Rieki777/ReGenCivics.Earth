@@ -1,5 +1,5 @@
 /**
- * The Evolution Engine, Rung 1 (ASSEMBLY_PAGE_SPEC.md section 7).
+ * The Evolution Engine, Rung 1 (docs/planning/ASSEMBLY_PAGE_SPEC.md section 7).
  *
  * Ratified variable changes apply themselves. The community votes on Hypha
  * (the human confirmation lives there, per ADR-8 and AI-AUTOMATION-RISKS

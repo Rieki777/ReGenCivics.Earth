@@ -43,12 +43,12 @@ describe('Email Admin Features', () => {
       expect(template.html).toContain('John Doe');
     });
 
-    it('should generate investorWelcome template with investment range', () => {
+    it('should generate investorWelcome as the cooperative note, never echoing an investment range', () => {
       const template = emailTemplates.investorWelcome('Michael Investor', '$100k - $250k');
-      
-      expect(template.subject).toContain('Investor');
+
+      expect(template.subject).toContain('ReGen Civics');
       expect(template.html).toContain('Michael Investor');
-      expect(template.html).toContain('$100k - $250k');
+      expect(template.html).not.toContain('$100k - $250k');
     });
 
     it('should generate newsletterWelcome template', () => {

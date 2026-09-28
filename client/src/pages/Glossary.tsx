@@ -15,6 +15,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
+import { COOP } from "@shared/fund";
 
 interface GlossaryEntry {
   term: string;
@@ -35,7 +36,7 @@ const glossaryEntries: GlossaryEntry[] = [
   },
   {
     term: "Infinite Game",
-    definition: "A concept from James P. Carse's philosophy. Unlike finite games (played to win), infinite games are played to continue playing. ReGen Civics is designed as an infinite game where the goal is perpetual regeneration, not extraction.",
+    definition: "A concept from James P. Carse's philosophy. Unlike finite games (played to win), infinite games are played to continue playing. ReGen Civics is designed as an infinite game where the goal is perpetual regeneration.",
     category: "Core Concepts",
     relatedLink: "/game",
     relatedLabel: "Game Overview",
@@ -65,39 +66,42 @@ const glossaryEntries: GlossaryEntry[] = [
     category: "Core Concepts",
   },
 
-  // Fund & Investment
+  // The Cooperative (2026-09-27: the fund and investment terms are retired;
+  // every sentence about the cooperative comes from COOP in shared/fund.ts)
   {
     term: "Crowd-Pooling",
-    definition: "A mechanism where community members pool resources (money, skills, materials, time) to collectively fund and support regenerative land projects. Similar to crowdfunding but includes non-financial contributions.",
-    category: "Fund & Investment",
+    definition: "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.",
+    category: "Program & Community",
     relatedLink: "/crowd-pooling",
     relatedLabel: "Crowd Pooling Tool",
   },
   {
-    term: "Impact Investing",
-    definition: "Investments made with the intention to generate positive, measurable social and environmental impact alongside a financial return. ReGen Civics focuses on land-backed impact investments.",
-    category: "Fund & Investment",
-    relatedLink: "/opportunity",
-    relatedLabel: "Investment Thesis",
-  },
-  {
-    term: "Land-Backed Investment",
-    definition: "Investment secured by real land assets, providing tangible collateral. ReGen Civics invests in regenerative land projects where the land itself serves as the underlying asset.",
-    category: "Fund & Investment",
+    term: COOP.name,
+    definition: COOP.statement,
+    category: "The Cooperative",
     relatedLink: "/fund",
-    relatedLabel: "Fund Overview",
+    relatedLabel: "How it is being designed",
   },
   {
-    term: "De-risked Vehicle",
-    definition: "A financial structure designed to reduce investment risk through diversification, collateral, governance safeguards, and staged capital deployment. The ReGen Civics fund uses multiple de-risking strategies.",
-    category: "Fund & Investment",
-  },
-  {
-    term: "Treasury",
-    definition: "The collective financial resources managed by the ReGen Civics fund, including invested capital, returns, and community contributions. Governed transparently through DAO mechanisms.",
-    category: "Fund & Investment",
+    term: "One Member, One Vote",
+    definition: "A cooperative principle: every member has one vote, whatever they bring. The ReGen Network Cooperative is being designed to govern itself this way.",
+    category: "The Cooperative",
     relatedLink: "/fund",
-    relatedLabel: "Treasury Dashboard",
+    relatedLabel: "The cooperative",
+  },
+  {
+    term: "Community Land Trust",
+    definition: "A way of holding land for the long term: the trust holds the land and leases it long term to the people and projects who live and work on it. It is the leading land design for the ReGen Network Cooperative, and counsel will confirm the structure.",
+    category: "The Cooperative",
+    relatedLink: "/learn/intentional-community-structures",
+    relatedLabel: "Community structures",
+  },
+  {
+    term: "Capital Account",
+    definition: "The record a cooperative keeps of what each member contributes. The ReGen Network Cooperative is being designed to recognize contributions across all nine forms of capital, from money to time, skills, tools and relationships.",
+    category: "The Cooperative",
+    relatedLink: "/learn/nine-forms-of-capital",
+    relatedLabel: "The nine forms of capital",
   },
 
   // Governance & Technology
@@ -157,7 +161,7 @@ const glossaryEntries: GlossaryEntry[] = [
   },
   {
     term: "The Gathering Grove",
-    definition: "The community forum within ReGen Civics where players, investors, land projects, and alliance partners connect, discuss, and collaborate.",
+    definition: "The community forum within ReGen Civics where players, land projects, supporters, and alliance partners connect, discuss, and collaborate.",
     category: "Program & Community",
     relatedLink: "/community",
     relatedLabel: "Community Forum",
@@ -171,7 +175,7 @@ const glossaryEntries: GlossaryEntry[] = [
   // Land & Ecology
   {
     term: "Ecovillage",
-    definition: "An intentional community designed to be socially, economically, and ecologically sustainable. Ecovillages are a primary investment target for the ReGen Civics fund.",
+    definition: "An intentional community designed to be socially, economically, and ecologically sustainable. Many of the land projects in ReGen Civics seasons are ecovillages.",
     category: "Land & Ecology",
     relatedLink: "/land",
     relatedLabel: "Land Projects",
@@ -375,6 +379,7 @@ export default function Glossary() {
                 </div>
               </AnimatedSection>
             ))}
+            <p className="pt-6 text-white/60 text-xs leading-relaxed safe-prose">{COOP.notAnOffer}</p>
           </div>
         </section>
       </div>

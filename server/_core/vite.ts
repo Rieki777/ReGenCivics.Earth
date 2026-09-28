@@ -1,5 +1,5 @@
 import express, { type Express } from "express";
-import { FUND } from "../../shared/fund";
+import { COOP } from "../../shared/fund";
 import fs from "fs";
 import { type Server } from "http";
 import { nanoid } from "nanoid";
@@ -281,27 +281,36 @@ export function serveStatic(app: Express) {
   const BASE_URL = "https://regencivics.earth";
   const DEFAULT_META = {
     title: "ReGen Civics: Infinite Game for the ReGenerative Renaissance",
-    description: "A fund and a game for regenerative land projects. Do quests, earn tokens, fund real-world regeneration.",
+    description: "An in-real-life game for regenerative land projects, and a cooperative network in design. Do quests, earn tokens, and support real-world regeneration.",
     image: `${BASE_URL}/og-default.jpg`,
   };
+  // The crowdpool lane's binding wording (Phase 0 spec), verbatim wherever a
+  // surface describes crowdpooling.
+  const CROWDPOOLING =
+    "Crowdpooling coordinates and accounts for what people bring to land projects: " +
+    "time, things, skills, land and money. Money goes through outside partners each " +
+    "project holds, never through ReGen Civics. The campaigns shown today are " +
+    "examples; real campaigns open when Season 2 starts crowdpooling.";
+  const INTEREST_META = { title: "Tell Us You're Interested: ReGen Civics", description: COOP.interestPromise };
+  const DISCLAIMERS_META = { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics website and platform." };
   const ROUTE_META: Record<string, { title: string; description: string; image?: string }> = {
-    "/fund":        { title: "The ReGen Civics Fund: in formation", description: FUND.statementShort, image: `${BASE_URL}/og/fund.jpg` },
+    "/fund":        { title: `${COOP.name}: ${COOP.statusLabel}`, description: COOP.statementShort, image: `${BASE_URL}/og/fund.jpg` },
     "/game":        { title: "The Infinite Game: ReGen Civics", description: "A real-world game for the ReGenerative Renaissance. Complete quests, earn $ReGen tokens, and help build the world we all want to live in.", image: `${BASE_URL}/og/game.jpg` },
     "/quest":       { title: "Quests: ReGen Civics", description: "Rites of passage, seasonal practices, and community challenges. Complete quests, earn tokens, and deepen your regenerative path.", image: `${BASE_URL}/og/quest.jpg` },
     "/schedule":    { title: "Events & Sessions: ReGen Civics", description: "Live community sessions, open calls, and events. Connect with fellow regenerators and participate in the Infinite Game.", image: `${BASE_URL}/og/schedule.jpg` },
     "/community":   { title: "Community: ReGen Civics", description: "A growing network of regenerators, land projects, and organizations building the ReGenerative Renaissance together.", image: `${BASE_URL}/og/community.jpg` },
     "/governance":  { title: "Governance: ReGen Civics", description: "Voice-based governance rooted in land and contribution. How ReGen Civics makes decisions, and who has a say.", image: `${BASE_URL}/og/governance.jpg` },
     "/map":         { title: "Regenerative Land Map: ReGen Civics", description: "Explore a living map of regenerative land projects and organizations across the globe.", image: `${BASE_URL}/og/map.jpg` },
-    "/opportunity": { title: "Opportunities: ReGen Civics", description: "Discover opportunities to contribute, collaborate, and grow within the ReGen Civics ecosystem.", image: `${BASE_URL}/og/opportunity.jpg` },
+    "/opportunity": { title: `Help design the ${COOP.name} | ReGen Civics`, description: COOP.statementShort, image: `${BASE_URL}/og/opportunity.jpg` },
     "/blog":        { title: "Blog: ReGen Civics", description: "Insights, stories, and updates from the ReGenerative Renaissance." },
     "/connect":     { title: "Connect: ReGen Civics", description: "Join the conversation. Find us on WhatsApp, Discord, and beyond.", image: `${BASE_URL}/og/connect.jpg` },
     "/apply":       { title: "Apply: ReGen Civics Incubator", description: "Apply to have your land project supported through the ReGen Civics incubator.", image: `${BASE_URL}/og/apply.jpg` },
-    "/tokenomics":  { title: "Tokenomics: ReGen Civics", description: "How $ReGen and RGVoice tokens work. Contribution-based rewards and regenerative governance.", image: `${BASE_URL}/og/tokenomics.jpg` },
+    "/tokenomics":  { title: "Tokenomics: ReGen Civics", description: COOP.tokensNote, image: `${BASE_URL}/og/tokenomics.jpg` },
     "/land":        { title: "Land Projects: ReGen Civics", description: "Regenerative land projects healing soils, communities, and bioregions.", image: `${BASE_URL}/og/land.jpg` },
     "/ally":        { title: "Allies & Partners: ReGen Civics", description: "Organizations and individuals working alongside ReGen Civics to build the ReGenerative Renaissance." },
     "/seasons":     { title: "Seasons: The ReGen Civics Year", description: "The ReGen Civics year turns through four seasons: land projects design their games in winter, crowdpool in spring, build on the land in summer, and rest in fall.", image: `${BASE_URL}/og/seasons.jpg` },
     "/team":        { title: "Team: ReGen Civics", description: "The people behind ReGen Civics. Community builders, developers, land stewards, and movement catalysts.", image: `${BASE_URL}/og/team.jpg` },
-    "/crowd-pooling": { title: "Crowd Pooling: ReGen Civics", description: "Pool capital with the community to directly fund regenerative land projects.", image: `${BASE_URL}/og/crowd-pooling.jpg` },
+    "/crowd-pooling": { title: "Crowd Pooling: ReGen Civics", description: CROWDPOOLING, image: `${BASE_URL}/og/crowd-pooling.jpg` },
     "/economy":     { title: "The Regenerative Economy: ReGen Civics", description: "A real economic system built through gameplay. Contribution scores, gratitude tokens, seasonal harvests.", image: `${BASE_URL}/og/economy.jpg` },
     "/proposals":   { title: "Community Proposals: ReGen Civics", description: "Shape the direction of ReGen Civics. Submit proposals, signal your support, help the community decide.", image: `${BASE_URL}/og/proposals.jpg` },
     "/game-mechanics": { title: "Game Mechanics: ReGen Civics", description: "See every variable that powers the game. Simulate changes. Export proposals.", image: `${BASE_URL}/og/game-mechanics.jpg` },
@@ -311,13 +320,16 @@ export function serveStatic(app: Express) {
     "/marketplace": { title: "Connection Hub: ReGen Civics", description: "Share what you can offer and find help with what you need. A space for regenerators to connect." },
     "/calculator":  { title: "Contribution Calculator: ReGen Civics", description: "Calculate the value of your contributions to regenerative land projects." },
     "/newsletter":  { title: "Newsletter: ReGen Civics", description: "Stay updated on the ReGenerative Renaissance. Community news, season updates, and quest announcements." },
-    "/crowd-pooling-projects": { title: "Crowd Pooling Projects: ReGen Civics", description: "Browse active crowd pooling campaigns for regenerative land projects." },
+    // /crowd-pooling-projects answers a 301 to /campaigns before this handler
+    // runs (shared/redirects.ts), so the meta lives on the real route.
+    "/campaigns":   { title: "Crowd Pool Campaigns: ReGen Civics", description: CROWDPOOLING, image: `${BASE_URL}/og/crowd-pooling.jpg` },
     "/co-creators-guide": { title: "Co-Creators Guide: ReGen Civics", description: "A guide for co-creators building the ReGenerative Renaissance together." },
     "/claim-seeds": { title: "Claim SEEDS: ReGen Civics", description: "Former SEEDS token holders can claim their $ReGen allocation here." },
-    "/risk-disclosure": { title: "Risk Disclosure: ReGen Civics", description: `Full risk disclosure for the ${FUND.name}.` },
+    // /risk-disclosure redirects to /disclaimers (Phase 0); mirror it meanwhile.
+    "/risk-disclosure": DISCLAIMERS_META,
     "/terms-of-use": { title: "Terms of Use: ReGen Civics", description: "Terms governing use of the ReGen Civics platform." },
     "/privacy-policy": { title: "Privacy Policy: ReGen Civics", description: "How ReGen Civics handles your data." },
-    "/disclaimers": { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics platform and fund." },
+    "/disclaimers": DISCLAIMERS_META,
     "/glossary":    { title: "Glossary: ReGen Civics", description: "Key terms and concepts in the ReGen Civics ecosystem." },
     // Prefix match, so /learn/:slug inherits this when the crawler-content
     // lookup fails. Normally crawler-content.ts overrides title + description
@@ -326,8 +338,12 @@ export function serveStatic(app: Express) {
     "/features":    { title: "Feature Suggestions: ReGen Civics", description: "Suggest and vote on new features for the ReGen Civics platform.", image: `${BASE_URL}/og/features.jpg` },
     "/bionomics":   { title: "Bionomics: ReGen Civics", description: "A living economy modelled on ecosystems. How ReGen Civics builds bioregional value flows.", image: `${BASE_URL}/og/bionomics.jpg` },
     "/hymn-book":   { title: "Hymn Book: ReGen Civics", description: "Songs of the ReGenerative Renaissance. A growing collection of hymns from the movement.", image: `${BASE_URL}/og/hymn-book.jpg` },
-    "/investor":    { title: "Investor Journey: ReGen Civics", description: "Begin your journey as a regenerative investor. Explore the fund and connect with land projects." },
-    "/loi":         { title: "Letter of Intent: ReGen Civics", description: "Submit a letter of intent to invest in the ReGen Civics Fund." },
+    // /investor redirects to /loi, the cooperative interest form (Phase 0).
+    // /investor/contact stays as a general partner contact page, and it would
+    // otherwise inherit the /investor entry by prefix, so it gets its own.
+    "/investor":    INTEREST_META,
+    "/investor/contact": { title: "Partner Contact: ReGen Civics", description: "Get in touch with the ReGen Civics team about partnerships." },
+    "/loi":         INTEREST_META,
     "/tools":       { title: "Regen Civilization Tools Library", description: "Every tool the ReGenerative Renaissance needs. Software, hardware, governance, currency, food systems.", image: `${BASE_URL}/og/tools.jpg` },
     "/heal-the-land": { title: "Heal the Land, Heal Ourselves | Church of the Regenerative Earth", description: "A community healing ministry offering free food, gardening days, and land residency. For land project sponsors: free Game Building." },
     "/ship":        { title: "The ReGen Ship: Sail Cascadia, Plant As You Go", description: "Visiting the most beautiful places on earth in reverence and regeneration.", image: `${BASE_URL}/images/ship/ship-zion-redrock-hero.jpg` },

@@ -1,35 +1,52 @@
-import { Shield, Users, Vote, TrendingUp, Zap, Globe, CheckCircle2, Zap as ZapIcon } from "lucide-react";
+/**
+ * Governance Page - ReGen Civics
+ *
+ * Two spaces: the Game, governed today by RGVoice on Hypha, and the ReGen
+ * Network Cooperative, in design, meant to vote one member, one vote.
+ *
+ * Rewritten 2026-09-27 (Phase 0, FUNDING_ENGINE_PLAN v1.2). The fund side of
+ * this page described a weighted voice split with an investor seat, success
+ * fees and profit shares to token holders, a fee split and a countdown to a
+ * dashboard date that had passed. The fund is now a cooperative in design, so
+ * every sentence about it comes from COOP in shared/fund.ts. The two fund token
+ * logos were dropped too: both carry the old fund name baked into the art, and
+ * one reads "Invest in Regenerative Futures". The old page is tagged
+ * archive/fund-pages-2026-09-27.
+ */
+import { Users, Globe, CheckCircle2, Zap as ZapIcon, Landmark, Coins } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
-import { useEffect, useRef, useState } from "react";
-import { AnimatedSection } from "@/components/AnimatedSection";
+import { useState } from "react";
 import { PageWrapper } from "@/components/PageWrapper";
 import { SEO, pageSEO } from "@/components/SEO";
-import { JsonLD, schemas } from "@/components/JsonLD";
+import { JsonLD } from "@/components/JsonLD";
 import { cdnImg } from "@/lib/utils";
 import { Pullquote } from "@/components/Pullquote";
 import { TLDR } from "@/components/TLDR";
 import { MobileTableOfContents, type TocSection } from "@/components/MobileTableOfContents";
 import { WhoHoldsVoteChart } from "@/components/governance/WhoHoldsVoteChart";
 import { StarsDivider } from "@/components/dividers/StarsDivider";
+import { COOP } from "@shared/fund";
 
 const GOVERNANCE_SECTIONS: TocSection[] = [
-  { id: 'gov-comparison', title: 'Fund vs Game' },
+  { id: 'gov-comparison', title: 'Cooperative and Game' },
   { id: 'gov-tokens', title: 'Two Tokens, Two Powers' },
-  { id: 'gov-fund-structure', title: 'Fund Governance' },
+  { id: 'gov-coop-design', title: 'Cooperative Design' },
   { id: 'gov-game-structure', title: 'Game Governance' },
   { id: 'gov-why-matters', title: 'Why It Matters' },
   { id: 'gov-infrastructure', title: 'Movement Infrastructure' },
-  { id: 'gov-dashboard', title: 'Live Dashboard' },
+  { id: 'gov-dashboard', title: 'Governance on Hypha' },
   { id: 'gov-cta', title: 'Get Involved' },
 ];
 
-// Fund vs Game RCVoice Toggle Component
-function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game') => void }) {
-  const [activeMode, setActiveMode] = useState<'fund' | 'game'>('fund');
+type Space = 'game' | 'coop';
 
-  const handleModeChange = (mode: 'fund' | 'game') => {
+// Game vs Cooperative voice toggle
+function VoiceToggle({ onModeChange }: { onModeChange?: (mode: Space) => void }) {
+  const [activeMode, setActiveMode] = useState<Space>('game');
+
+  const handleModeChange = (mode: Space) => {
     setActiveMode(mode);
     onModeChange?.(mode);
   };
@@ -37,20 +54,11 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
   return (
     <div className="space-y-6">
       {/* Toggle */}
-      <div className="flex gap-3 justify-center">
-        <button
-          onClick={() => handleModeChange('fund')}
-          className={`px-7 py-3 rounded-xl font-bold text-base transition-all ${
-            activeMode === 'fund'
-              ? 'bg-[#d4a574] text-[#1a472a] shadow-lg shadow-[#d4a574]/30'
-              : 'bg-[#1a472a]/60 border-2 border-[#d4a574]/40 text-[#d4a574] hover:border-[#d4a574]/60'
-          }`}
-        >
-          Fund Governance
-        </button>
+      <div className="flex flex-wrap gap-3 justify-center">
         <button
           onClick={() => handleModeChange('game')}
-          className={`px-7 py-3 rounded-xl font-bold text-base transition-all ${
+          aria-pressed={activeMode === 'game'}
+          className={`px-7 py-3 min-h-[44px] rounded-xl font-bold text-base transition-all ${
             activeMode === 'game'
               ? 'bg-purple-700 text-white shadow-lg shadow-purple-700/30'
               : 'bg-[#1a472a]/60 border-2 border-purple-500/40 text-purple-400 hover:border-purple-500/60'
@@ -58,69 +66,18 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
         >
           Game Governance
         </button>
+        <button
+          onClick={() => handleModeChange('coop')}
+          aria-pressed={activeMode === 'coop'}
+          className={`px-7 py-3 min-h-[44px] rounded-xl font-bold text-base transition-all ${
+            activeMode === 'coop'
+              ? 'bg-[#d4a574] text-[#1a472a] shadow-lg shadow-[#d4a574]/30'
+              : 'bg-[#1a472a]/60 border-2 border-[#d4a574]/40 text-[#d4a574] hover:border-[#d4a574]/60'
+          }`}
+        >
+          The Cooperative
+        </button>
       </div>
-
-      {/* Fund Mode */}
-      {activeMode === 'fund' && (
-        <div className="bg-gradient-to-br from-[#d4a574]/15 to-[#1a472a]/60 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <img
-              src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png")}
-              alt="RCVoice Fund Token"
-              width="96"
-              height="96"
-              className="w-24 h-24 object-contain flex-shrink-0"
-              loading="lazy"
-            />
-            <div>
-              <h3 className="text-2xl font-bold text-[#d4a574] mb-2">RCVoice: Fund Governance</h3>
-              <p className="text-white/80 leading-relaxed">
-                In the ReGen Civics Fund, RCVoice is distributed across four stakeholder groups based on their role and contribution. Voice is non-tradable and tied to active participation in fund operations.
-              </p>
-            </div>
-          </div>
-
-          {/* Who Holds the Vote: inline SVG pie chart */}
-          <h4 className="text-lg font-bold text-[#d4a574] mb-3 text-center">Fund Governance: Who Holds the Vote</h4>
-          <WhoHoldsVoteChart />
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="bg-[#0d2818]/60 rounded-xl p-5 border border-[#d4a574]/30">
-              <p className="text-[#d4a574] font-bold text-lg mb-3">How It's Distributed</p>
-              <div className="space-y-2">
-                {[
-                  { label: 'Council of Domain Experts', pct: '40%', color: 'bg-[#d4a574]' },
-                  { label: 'Land Projects', pct: '20%', color: 'bg-[#7dd87d]' },
-                  { label: 'Alliance Organizations', pct: '20%', color: 'bg-[#4a9f9f]' },
-                  { label: 'Investors', pct: '20%', color: 'bg-amber-400' },
-                ].map(({ label, pct, color }) => (
-                  <div key={label} className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-white/70">{label}</span>
-                        <span className="text-white font-bold">{pct}</span>
-                      </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                        <div className={`h-full ${color} rounded-full`} style={{ width: pct }} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-[#0d2818]/60 rounded-xl p-5 border border-[#d4a574]/30">
-              <p className="text-[#d4a574] font-bold text-lg mb-3">Key Traits</p>
-              <ul className="space-y-2 text-sm text-white/80">
-                <li className="flex items-start gap-2"><span className="text-[#d4a574] mt-0.5">✦</span> Structured allocation across 4 stakeholder groups</li>
-                <li className="flex items-start gap-2"><span className="text-[#d4a574] mt-0.5">✦</span> Council holds 40% voice to ensure expert-led decisions</li>
-                <li className="flex items-start gap-2"><span className="text-[#d4a574] mt-0.5">✦</span> Non-tradable: tied to your role in the fund</li>
-                <li className="flex items-start gap-2"><span className="text-[#d4a574] mt-0.5">✦</span> Governs investment decisions, funding proposals, and strategic direction</li>
-                <li className="flex items-start gap-2"><span className="text-[#d4a574] mt-0.5">✦</span> Separate from $RCivics reward distributions</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Game Mode */}
       {activeMode === 'game' && (
@@ -137,7 +94,7 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             <div>
               <h3 className="text-2xl font-bold text-purple-400 mb-2">RGVoice: Game Governance</h3>
               <p className="text-white/80 leading-relaxed">
-                In the ReGen Game, RGVoice works differently. It is earned through completing quests and contributing to the Game ecosystem. Voice decays 3% monthly, ensuring governance always stays with those who are currently active and engaged.
+                In the ReGen Game, RGVoice is earned through completing quests and contributing to the Game ecosystem. Voice decays 3% monthly, ensuring governance always stays with those who are currently active and engaged.
               </p>
             </div>
           </div>
@@ -155,11 +112,11 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
             <div className="bg-[#0d2818]/60 rounded-xl p-5 border border-purple-500/30">
               <p className="text-purple-400 font-bold text-lg mb-3">Key Traits</p>
               <ul className="space-y-2 text-sm text-white/80">
-                <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Merit-based: earned through activity, not purchased</li>
+                <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Merit-based: earned through activity, never purchased</li>
                 <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> <strong className="text-purple-300">3% monthly decay</strong> keeps governance with active players</li>
-                <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Non-tradable: your voice, not a commodity</li>
+                <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Non-tradable: your voice stays yours</li>
                 <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Governs game rules, quest design, and seasonal decisions</li>
-                <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Paired with $Regen utility token for in-game economy</li>
+                <li className="flex items-start gap-2"><span className="text-purple-400 mt-0.5">✦</span> Paired with $ReGen, the Game's token, which records contributions</li>
               </ul>
             </div>
           </div>
@@ -171,40 +128,55 @@ function RCVoiceToggle({ onModeChange }: { onModeChange?: (mode: 'fund' | 'game'
           </div>
         </div>
       )}
+
+      {/* Cooperative Mode */}
+      {activeMode === 'coop' && (
+        <div className="bg-gradient-to-br from-[#d4a574]/15 to-[#1a472a]/60 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className="w-24 h-24 rounded-full bg-[#d4a574]/15 border-2 border-[#d4a574]/50 flex items-center justify-center flex-shrink-0">
+              <Landmark className="w-12 h-12 text-[#d4a574]" aria-hidden="true" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-[#d4a574] mb-2">The Cooperative: {COOP.statusLabel}</h3>
+              <p className="text-white/80 leading-relaxed">{COOP.statement}</p>
+            </div>
+          </div>
+
+          <h4 className="text-lg font-bold text-[#d4a574] mb-3 text-center">How the Cooperative Is Designed to Vote</h4>
+          <WhoHoldsVoteChart />
+
+          <div className="bg-[#0d2818]/60 rounded-xl p-5 border border-[#d4a574]/30">
+            <p className="text-[#d4a574] font-bold text-lg mb-2">Where RCVoice Stands</p>
+            <p className="text-sm text-white/80 leading-relaxed">{COOP.coopTokens.rcvoice}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // Two Tokens Section with linked toggle state
 function TwoTokensSection() {
-  const [rewardsMode, setRewardsMode] = useState<'fund' | 'game'>('fund');
+  const [mode, setMode] = useState<Space>('game');
 
   return (
     <>
-      {/* RCVoice Fund vs Game Toggle */}
       <div className="mb-8">
-        <h3 className="text-xl font-bold text-white/90 mb-2 text-center">Voice operates differently in each space</h3>
-        <p className="text-white/60 text-center text-sm mb-6">Click to explore how governance voice works in the Fund vs the Game</p>
-        <RCVoiceToggle onModeChange={setRewardsMode} />
+        <h3 className="text-xl font-bold text-white/90 mb-2 text-center">Voice works differently in each space</h3>
+        <p className="text-white/60 text-center text-sm mb-6">Click to explore how voice works in the Game and how the cooperative is designed to vote</p>
+        <VoiceToggle onModeChange={setMode} />
       </div>
 
-      {/* Dynamic rewards token box */}
-      {rewardsMode === 'fund' ? (
+      {/* Token box that follows the toggle */}
+      {mode === 'coop' ? (
         <div className="bg-[#1a472a]/60 rounded-xl p-6 border-l-4 border-[#d4a574] transition-all">
           <div className="flex items-center gap-4 mb-3">
-            <img
-              src={cdnImg("https://assets.regencivics.earth/MhyYoMLbeOhEHQLm.png")}
-              alt="$RCivics Token"
-              width="48"
-              height="48"
-              className="w-12 h-12 object-contain flex-shrink-0"
-              loading="lazy"
-            />
-            <h3 className="text-xl font-bold text-[#d4a574]">$RCivics - Rewards Token</h3>
+            <div className="w-12 h-12 rounded-full bg-[#d4a574]/20 border border-[#d4a574]/40 flex items-center justify-center flex-shrink-0">
+              <Coins className="w-6 h-6 text-[#d4a574]" aria-hidden="true" />
+            </div>
+            <h3 className="text-xl font-bold text-[#d4a574]">$RCivics</h3>
           </div>
-          <p className="text-white/80 leading-relaxed">
-            Your claim on fund returns and rewards. When the portfolio generates returns from Land Projects, Alliance Organizations, or other fund activities, distributions flow proportionally to $RCivics holders. $RCivics distributes rewards: it is your stake in the abundance the network creates together.
-          </p>
+          <p className="text-white/80 leading-relaxed">{COOP.coopTokens.rcivics}</p>
         </div>
       ) : (
         <div className="bg-[#0d2818]/70 rounded-xl p-6 border-l-4 border-[#7dd87d] transition-all">
@@ -217,27 +189,13 @@ function TwoTokensSection() {
               className="w-12 h-12 object-contain flex-shrink-0"
               loading="lazy"
             />
-            <h3 className="text-xl font-bold text-[#7dd87d]">$ReGen - Rewards Token</h3>
+            <h3 className="text-xl font-bold text-[#7dd87d]">$ReGen: The Game's Token</h3>
           </div>
-          <p className="text-white/80 leading-relaxed mb-5">
-            Your claim on Game returns and rewards. Part of our Infinite Game is creating value for our token. How we do this is up for all of us to co-create.
+          <p className="text-white/80 leading-relaxed">
+            $ReGen records contributions to the Game: quests, gratitude and seasonal harvests. What else it does inside the Game is ours to co-create. Players propose its uses and decide them together through governance.
           </p>
-          <div className="space-y-3">
-            {[
-              { letter: 'a', text: 'Donors sponsoring the Game and the positive outcomes we\'re creating.' },
-              { letter: 'b', text: 'Using $ReGen for a medium of exchange in our communities and apps like LocalScale, creating real world value and utility for buying food, housing, services, and more.' },
-              { letter: 'c', text: 'Accepting a % of all fees in $ReGen at our land projects, businesses, and communities.' },
-              { letter: 'd', text: 'Giving discounts for different tiers of $ReGen holdings.' },
-              { letter: 'e', text: 'Anything else we can co-create and imagine together.' },
-            ].map(({ letter, text }) => (
-              <div key={letter} className="flex items-start gap-3">
-                <span className="w-6 h-6 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/50 text-[#7dd87d] text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">{letter}</span>
-                <p className="text-white/75 text-sm leading-relaxed">{text}</p>
-              </div>
-            ))}
-          </div>
           <div className="mt-5 bg-[#7dd87d]/10 rounded-lg p-4 border border-[#7dd87d]/20">
-            <p className="text-[#7dd87d] text-sm font-semibold text-center">This is an open invitation. The value of $ReGen grows with every player, every quest, and every community that joins the game.</p>
+            <p className="text-[#7dd87d] text-sm font-semibold text-center">{COOP.tokensNote}</p>
           </div>
         </div>
       )}
@@ -245,497 +203,43 @@ function TwoTokensSection() {
   );
 }
 
-// Interactive Returns Flow Toggle Component
-function HowReturnsFlowToggle() {
-  const [activeTab, setActiveTab] = useState<'profits' | 'fees'>('profits');
-
-  return (
-    <div className="space-y-8">
-      {/* Toggle Buttons */}
-      <div className="flex gap-4 justify-center flex-wrap">
-        <button
-          onClick={() => setActiveTab('profits')}
-          className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
-            activeTab === 'profits'
-              ? 'bg-[#7dd87d] text-[#1a472a] shadow-lg shadow-[#7dd87d]/30'
-              : 'bg-[#1a472a]/60 border-2 border-[#7dd87d]/40 text-[#7dd87d] hover:border-[#7dd87d]/60'
-          }`}
-        >
-          Profits & Distributions
-        </button>
-        <button
-          onClick={() => setActiveTab('fees')}
-          className={`px-8 py-4 rounded-xl font-bold text-lg transition-all ${
-            activeTab === 'fees'
-              ? 'bg-[#d4a574] text-[#1a472a] shadow-lg shadow-[#d4a574]/30'
-              : 'bg-[#1a472a]/60 border-2 border-[#d4a574]/40 text-[#d4a574] hover:border-[#d4a574]/60'
-          }`}
-        >
-          Fund Fees
-        </button>
-      </div>
-
-      {/* Content Panels */}
-      {activeTab === 'profits' && (
-        <div className="bg-gradient-to-br from-[#7dd87d]/20 to-[#4a9f9f]/20 rounded-2xl p-8 border border-[#7dd87d]/40 space-y-6">
-          <h3 className="text-2xl font-bold text-[#7dd87d] text-center">Success Fees to $RCivics Holders</h3>
-          <p className="text-white/80 text-center text-lg leading-relaxed">
-            When Land Projects and Alliance Organizations generate returns, success fees are distributed proportionally to all $RCivics token holders. Own 10% of $RCivics, receive 10% of all profit distributions.
-          </p>
-          <div className="grid sm:grid-cols-2 gap-4 mt-6">
-            <div className="bg-[#1a472a]/60 rounded-xl p-4 border border-[#7dd87d]/30">
-              <p className="text-[#7dd87d] font-bold mb-2">Land Projects</p>
-              <p className="text-white/70 text-sm">Generate returns through regenerative land use, agriculture, and community development</p>
-            </div>
-            <div className="bg-[#1a472a]/60 rounded-xl p-4 border border-[#4a9f9f]/30">
-              <p className="text-[#4a9f9f] font-bold mb-2">Alliance Orgs</p>
-              <p className="text-white/70 text-sm">Generate revenue by providing specialized services to Land Projects, keeping resources in the network</p>
-            </div>
-          </div>
-          <p className="text-[#7dd87d] text-center font-semibold text-lg pt-4">All contributors who conduct equity swaps receive $RCivics and share in profits</p>
-        </div>
-      )}
-
-      {activeTab === 'fees' && (
-        <div className="bg-gradient-to-br from-[#d4a574]/20 to-[#d4a574]/20 rounded-2xl p-8 border border-[#d4a574]/40 space-y-6">
-          <h3 className="text-2xl font-bold text-[#d4a574] text-center">Management Fees Split (proposed)</h3>
-          <div className="grid sm:grid-cols-2 gap-6 mt-6">
-            <div className="bg-[#1a472a]/60 rounded-xl p-6 border-2 border-[#d4a574]/40">
-              <p className="text-[#d4a574] font-bold text-lg mb-3">Council (50%)</p>
-              <p className="text-white/80 mb-4">As proposed, the Council of Domain Experts would receive 50% of management fees for overseeing fund operations and governance. The fund is in formation, so no fees exist yet.</p>
-              <p className="text-white/60 text-sm">Part of Council fees fund worker proposals to ReGen Civics for ongoing operations and development.</p>
-            </div>
-            <div className="bg-[#1a472a]/60 rounded-xl p-6 border-2 border-[#d4a574]/40">
-              <p className="text-[#d4a574] font-bold text-lg mb-3">RCVoice Holders (50%)</p>
-              <p className="text-white/80 mb-4">As proposed, the other 50% would be distributed proportionally to all RCVoice holders across all four groups.</p>
-              <p className="text-white/60 text-sm">This rewards those actively governing the fund with a share of management revenue.</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-            <div className="bg-[#1a472a]/40 rounded-lg p-4 text-center border border-[#d4a574]/20">
-              <p className="text-[#d4a574] font-bold mb-1">🌳 Council</p>
-              <p className="text-white/60 text-xs">40% Voice</p>
-            </div>
-            <div className="bg-[#1a472a]/40 rounded-lg p-4 text-center border border-[#4a7c59]/20">
-              <p className="text-[#7dd87d] font-bold mb-1">🌱 Land Projects</p>
-              <p className="text-white/60 text-xs">20% Voice</p>
-            </div>
-            <div className="bg-[#1a472a]/40 rounded-lg p-4 text-center border border-[#4a9f9f]/20">
-              <p className="text-[#4a9f9f] font-bold mb-1">🍄 Alliance Orgs</p>
-              <p className="text-white/60 text-xs">20% Voice</p>
-            </div>
-            <div className="bg-[#1a472a]/40 rounded-lg p-4 text-center border border-[#d4a574]/20">
-              <p className="text-[#d4a574] font-bold mb-1">🌾 Investors</p>
-              <p className="text-white/60 text-xs">20% Voice</p>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Animated Rewards Distribution Component
-function RewardsFlowAnimation() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animFrameRef = useRef<number>(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setIsVisible(true);
-      },
-      { threshold: 0.3 }
-    );
-    if (containerRef.current) observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const ctx = canvas.getContext("2d")!;
-
-    const W = canvas.width;
-    const H = canvas.height;
-    const cx = W / 2;
-    const cy = H / 2;
-
-    // Groups around the center
-    const groups = [
-      { label: "Council", sublabel: "40% Voice", color: "#d4a574", angle: -90, icon: "🌳" },
-      { label: "Land Projects", sublabel: "20% Voice", color: "#4a7c59", angle: 0, icon: "🌱" },
-      { label: "Alliance Orgs", sublabel: "20% Voice", color: "#4a9f9f", angle: 90, icon: "🍄" },
-      { label: "Investors", sublabel: "20% Voice", color: "#d4a574", angle: 180, icon: "🌾" },
-    ];
-
-    const radius = Math.min(W, H) * 0.32;
-
-    // Particles
-    interface Particle {
-      x: number;
-      y: number;
-      tx: number;
-      ty: number;
-      progress: number;
-      speed: number;
-      color: string;
-      size: number;
-      alpha: number;
-      groupIdx: number;
-      trail: { x: number; y: number }[];
-    }
-
-    const particles: Particle[] = [];
-    let tick = 0;
-
-    function spawnParticle() {
-      // Spawn from center, heading to a random group
-      const gIdx = Math.floor(Math.random() * groups.length);
-      const g = groups[gIdx];
-      const rad = (g.angle * Math.PI) / 180;
-      const tx = cx + Math.cos(rad) * radius;
-      const ty = cy + Math.sin(rad) * radius;
-
-      // Slight random spread at destination
-      const spread = 18;
-      particles.push({
-        x: cx + (Math.random() - 0.5) * 10,
-        y: cy + (Math.random() - 0.5) * 10,
-        tx: tx + (Math.random() - 0.5) * spread,
-        ty: ty + (Math.random() - 0.5) * spread,
-        progress: 0,
-        speed: 0.008 + Math.random() * 0.006,
-        color: g.color,
-        size: 3 + Math.random() * 3,
-        alpha: 1,
-        groupIdx: gIdx,
-        trail: [],
-      });
-    }
-
-    function easeInOut(t: number) {
-      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-    }
-
-    function drawNode(
-      x: number,
-      y: number,
-      label: string,
-      sublabel: string,
-      color: string,
-      icon: string,
-      pulse: number
-    ) {
-      const nodeR = 44;
-      // Pulse glow
-      ctx.save();
-      ctx.globalAlpha = 0.18 + 0.12 * Math.sin(pulse);
-      ctx.beginPath();
-      ctx.arc(x, y, nodeR + 10 + 6 * Math.sin(pulse), 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.restore();
-
-      // Circle
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(x, y, nodeR, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.restore();
-
-      // Icon
-      ctx.save();
-      ctx.font = `${nodeR * 0.7}px serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(icon, x, y - 6);
-      ctx.restore();
-
-      // Label
-      ctx.save();
-      ctx.font = "bold 11px 'Nunito', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      ctx.fillStyle = "#fff";
-      ctx.fillText(label, x, y + nodeR + 6);
-      ctx.font = "10px 'Nunito', sans-serif";
-      ctx.fillStyle = color;
-      ctx.fillText(sublabel, x, y + nodeR + 20);
-      ctx.restore();
-    }
-
-    function drawCenter(pulse: number) {
-      const r = 52;
-      // Outer glow rings
-      for (let i = 3; i > 0; i--) {
-        ctx.save();
-        ctx.globalAlpha = 0.06 * i + 0.04 * Math.sin(pulse + i);
-        ctx.beginPath();
-        ctx.arc(cx, cy, r + i * 14 + 4 * Math.sin(pulse), 0, Math.PI * 2);
-        ctx.fillStyle = "#7dd87d";
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Main circle
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-      grad.addColorStop(0, "#2a6b3a");
-      grad.addColorStop(1, "#1a472a");
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.shadowColor = "#7dd87d";
-      ctx.shadowBlur = 20;
-      ctx.fill();
-      ctx.restore();
-
-      // Center text
-      ctx.save();
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = "#7dd87d";
-      ctx.font = "bold 12px 'Quicksand', sans-serif";
-      ctx.fillText("ReGen", cx, cy - 14);
-      ctx.fillText("Portfolio", cx, cy);
-      ctx.font = "10px 'Nunito', sans-serif";
-      ctx.fillStyle = "#d4a574";
-      ctx.fillText("$RCivics", cx, cy + 16);
-      ctx.restore();
-    }
-
-    function drawConnectors() {
-      groups.forEach((g) => {
-        const rad = (g.angle * Math.PI) / 180;
-        const nx = cx + Math.cos(rad) * radius;
-        const ny = cy + Math.sin(rad) * radius;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(nx, ny);
-        ctx.strokeStyle = g.color + "33";
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 6]);
-        ctx.stroke();
-        ctx.restore();
-      });
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, W, H);
-
-      // Background
-      const bgGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, W * 0.6);
-      bgGrad.addColorStop(0, "#0d2818");
-      bgGrad.addColorStop(1, "#060f0a");
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
-
-      tick += 0.025;
-
-      drawConnectors();
-
-      // Spawn particles
-      if (Math.random() < 0.22) spawnParticle();
-
-      // Update & draw particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.progress = Math.min(1, p.progress + p.speed);
-        const t = easeInOut(p.progress);
-        p.x = cx + (p.tx - cx) * t + (Math.random() - 0.5) * 0.5;
-        p.y = cy + (p.ty - cy) * t + (Math.random() - 0.5) * 0.5;
-
-        p.trail.push({ x: p.x, y: p.y });
-        if (p.trail.length > 8) p.trail.shift();
-
-        // Draw trail
-        for (let j = 0; j < p.trail.length - 1; j++) {
-          const alpha = (j / p.trail.length) * 0.5;
-          ctx.save();
-          ctx.globalAlpha = alpha;
-          ctx.beginPath();
-          ctx.moveTo(p.trail[j].x, p.trail[j].y);
-          ctx.lineTo(p.trail[j + 1].x, p.trail[j + 1].y);
-          ctx.strokeStyle = p.color;
-          ctx.lineWidth = p.size * 0.5;
-          ctx.stroke();
-          ctx.restore();
-        }
-
-        // Draw particle
-        if (p.progress < 1) {
-          ctx.save();
-          ctx.globalAlpha = p.alpha * (1 - p.progress * 0.3);
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = p.color;
-          ctx.shadowColor = p.color;
-          ctx.shadowBlur = 8;
-          ctx.fill();
-          ctx.restore();
-        }
-
-        if (p.progress >= 1) {
-          // Burst at destination
-          for (let b = 0; b < 3; b++) {
-            ctx.save();
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath();
-            const bx = p.tx + (Math.random() - 0.5) * 20;
-            const by = p.ty + (Math.random() - 0.5) * 20;
-            ctx.arc(bx, by, 2, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.fill();
-            ctx.restore();
-          }
-          particles.splice(i, 1);
-        }
-      }
-
-      // Draw group nodes
-      groups.forEach((g, idx) => {
-        const rad = (g.angle * Math.PI) / 180;
-        const nx = cx + Math.cos(rad) * radius;
-        const ny = cy + Math.sin(rad) * radius;
-        drawNode(nx, ny, g.label, g.sublabel, g.color, g.icon, tick + idx * 1.2);
-      });
-
-      drawCenter(tick);
-
-      animFrameRef.current = requestAnimationFrame(draw);
-    }
-
-    draw();
-    return () => cancelAnimationFrame(animFrameRef.current);
-  }, [isVisible]);
-
-  return (
-    <div ref={containerRef} className="relative">
-      <canvas
-        ref={canvasRef}
-        width={560}
-        height={420}
-        className="w-full max-w-xl mx-auto block rounded-2xl"
-        style={{ maxHeight: "420px" }}
-      />
-      {/* Legend below canvas */}
-      <div className="mt-4 flex flex-wrap justify-center gap-3 text-xs text-white/70">
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-[#7dd87d] inline-block" />
-          <span>Portfolio generates returns</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-[#d4a574] inline-block" />
-          <span>$RCivics distributes rewards</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="w-3 h-3 rounded-full bg-[#4a9f9f] inline-block" />
-          <span>Alliance Orgs serve Land Projects</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// September Equinox Countdown + Governance Dashboard Placeholder
-// Targets the Season 2 launch at the September 2026 equinox.
-function EarthDayCountdown() {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const target = new Date("2026-09-22T15:19:00Z");
-    const tick = () => {
-      const now = new Date();
-      const diff = target.getTime() - now.getTime();
-      if (diff <= 0) {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
-      }
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      setTimeLeft({ days, hours, minutes, seconds });
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
+// Governance on Hypha. Undated on purpose: the countdown this replaced pointed
+// at a launch date that had already passed.
+function HyphaGovernancePanel() {
   return (
     <div className="bg-[#0d2818]/70 rounded-2xl border border-[#7dd87d]/30 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-[#1a472a] to-[#0d2818] p-6 border-b border-[#7dd87d]/20 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/40 mb-3">
-          <span className="w-2 h-2 rounded-full bg-[#7dd87d] animate-pulse" />
-          <span className="text-[#7dd87d] text-sm font-semibold">Going Live at the September Equinox</span>
+          <span className="w-2 h-2 rounded-full bg-[#7dd87d]" />
+          <span className="text-[#7dd87d] text-sm font-semibold">Dashboard in progress</span>
         </div>
-        <h3 className="text-2xl font-bold text-white mb-2">Live Governance Dashboard</h3>
-        <p className="text-white/60 text-sm">Real-time voice distribution and active proposals from Hypha DAO</p>
+        <h3 className="text-2xl font-bold text-white mb-2">Live Governance on Hypha</h3>
+        <p className="text-white/60 text-sm">Voice and active proposals already live on Hypha. We are building the dashboard that brings them onto this page.</p>
       </div>
 
-      {/* Countdown */}
       <div className="p-4 sm:p-8">
-        <p className="text-center text-white/60 text-sm mb-6">Dashboard launches in:</p>
-        <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-10">
-          {[{ label: "Days", value: timeLeft.days }, { label: "Hours", value: timeLeft.hours }, { label: "Minutes", value: timeLeft.minutes }, { label: "Seconds", value: timeLeft.seconds }].map(({ label, value }) => (
-            <div key={label} className="bg-[#1a472a]/60 rounded-xl p-2 sm:p-4 text-center border border-[#7dd87d]/20 min-w-0">
-              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#7dd87d] tabular-nums">{String(value).padStart(2, "0")}</p>
-              <p className="text-white/70 text-xs mt-1">{label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Preview wireframe */}
-        <div className="opacity-40 pointer-events-none select-none max-w-full overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div className="bg-[#1a472a]/50 rounded-xl p-5 border border-[#7dd87d]/20">
-              <p className="text-[#7dd87d] font-semibold text-sm mb-3">Voice Distribution</p>
-              <div className="space-y-2">
-                {[{ label: "Council of Experts", pct: 40, color: "#d4a574" }, { label: "Land Projects", pct: 20, color: "#4a7c59" }, { label: "Alliance Orgs", pct: 20, color: "#4a9f9f" }, { label: "Investors", pct: 20, color: "#d4a574" }].map(g => (
-                  <div key={g.label}>
-                    <div className="flex justify-between text-xs text-white/60 mb-1">
-                      <span className="min-w-0 truncate">{g.label}</span>
-                      <span className="flex-shrink-0">{g.pct}%</span>
-                    </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${g.pct}%`, backgroundColor: g.color }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-[#1a472a]/50 rounded-xl p-5 border border-[#7dd87d]/20">
-              <p className="text-[#7dd87d] font-semibold text-sm mb-3">Active Proposals</p>
-              <div className="space-y-2">
-                {["Q2 Portfolio Allocation", "New Alliance Partner: EcoLegal", "Seasonal Festival Agenda"].map(p => (
-                  <div key={p} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-                    <span className="w-2 h-2 rounded-full bg-[#7dd87d] flex-shrink-0" />
-                    <span className="text-white/60 text-xs min-w-0 truncate">{p}</span>
-                  </div>
-                ))}
-              </div>
+        {/* Preview wireframe: example proposals, not live data */}
+        <div className="opacity-60 pointer-events-none select-none max-w-md mx-auto">
+          <div className="bg-[#1a472a]/50 rounded-xl p-5 border border-[#7dd87d]/20">
+            <p className="text-[#7dd87d] font-semibold text-sm mb-3">Example proposals</p>
+            <div className="space-y-2">
+              {["Season 2 Quest Themes", "New Alliance Partner: EcoLegal", "Seasonal Festival Agenda"].map(p => (
+                <div key={p} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
+                  <span className="w-2 h-2 rounded-full bg-[#7dd87d] flex-shrink-0" />
+                  <span className="text-white/60 text-xs min-w-0 truncate">{p}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
         <div className="text-center mt-6">
-          <a href="https://app.hypha.earth/en/dho/regen-civics/agreements" target="_blank" rel="noopener noreferrer">
-            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
-              Preview on Hypha Now →
+          <a href="https://app.hypha.earth/en/dho/regen-games/agreements" target="_blank" rel="noopener noreferrer">
+            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold min-h-[44px]">
+              Open the Game Space on Hypha →
             </Button>
           </a>
-          <p className="text-white/60 text-xs mt-3">Full dashboard integration launches April 22, 2026 (Earth Day)</p>
         </div>
       </div>
     </div>
@@ -766,11 +270,11 @@ export default function Governance() {
               <Globe className="w-5 h-5" />
               <span>Governance as Coordination Infrastructure</span>
             </div>
-            
+
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-display)' }}>
               How We Govern Regenerative Systems
             </h1>
-            
+
             <p className="text-xl text-white/90 leading-relaxed safe-prose">
               ReGen Civics coordinates through Gratitude and Proposals. Internal signaling happens here. Formal governance and binding votes happen on <a href="https://app.hypha.earth" target="_blank" rel="noopener noreferrer" className="text-[#7dd87d] hover:underline">Hypha</a>, where vote weight comes from RGVoice held.
             </p>
@@ -781,13 +285,13 @@ export default function Governance() {
       {/* TLDR */}
       <div className="container max-w-4xl mx-auto px-4 mt-8">
         <TLDR points={[
-          "Two governance tokens serve two purposes: RCVoice for Fund decisions, RGVoice for Game decisions",
-          "Four actor classes hold voice over Fund governance: Council, Investors, Land Projects, Alliance Partners",
+          "RGVoice carries vote weight in the Game. Players earn it through quests, and it wanes 3% a month.",
+          `The ${COOP.name} is in design. It is designed to vote one member, one vote.`,
           "Proposals start in the community forum, move to the ReGen Gov app for voting, then formalize on Hypha",
         ]} />
       </div>
 
-      {/* Three Coordination Tools */}
+      {/* Coordination Tools */}
       <section data-reveal className="py-12 px-4">
         <div className="container">
           <div className="max-w-4xl mx-auto">
@@ -816,13 +320,16 @@ export default function Governance() {
 
       <Pullquote>Two spaces, two governance systems, one shared mission. Voice is earned, and it stays with the people doing the work.</Pullquote>
 
-      {/* Fund vs Game Governance Comparison Chart - moved to top */}
+      {/* Cooperative vs Game Governance Comparison Chart */}
       <section id="gov-comparison" data-reveal className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Fund vs Game: Governance at a Glance</h2>
-            <p className="text-white/80 text-lg leading-relaxed mb-12 text-center max-w-3xl mx-auto safe-prose">
-              Two spaces, two governance systems, one shared mission. Here's how they compare side by side.
+            <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">The Cooperative and the Game: Governance at a Glance</h2>
+            <p className="text-white/80 text-lg leading-relaxed mb-4 text-center max-w-3xl mx-auto safe-prose">
+              Two spaces, two ways of deciding, one shared mission. The Game runs today. The cooperative is in design.
+            </p>
+            <p className="text-white/60 text-sm leading-relaxed mb-10 text-center max-w-3xl mx-auto safe-prose">
+              {COOP.designPrinciplesNote}
             </p>
 
             {/* Comparison Table */}
@@ -833,16 +340,11 @@ export default function Governance() {
                     <th className="text-left py-4 px-4 text-white/70 font-medium w-1/3">Dimension</th>
                     <th className="py-4 px-4 w-1/3">
                       <div className="flex flex-col items-center gap-2">
-                        <img
-                          src={cdnImg("https://assets.regencivics.earth/cSiqeQzVeKFgrJHp.png")}
-                          alt="RCVoice"
-                          width="40"
-                          height="40"
-                          className="w-10 h-10 object-contain"
-                          loading="lazy"
-                        />
-                        <span className="text-[#d4a574] font-bold text-base">ReGen Civics Fund</span>
-                        <span className="text-white/70 text-xs">Capital &amp; Governance</span>
+                        <div className="w-10 h-10 rounded-full bg-[#d4a574]/15 border border-[#d4a574]/50 flex items-center justify-center">
+                          <Landmark className="w-5 h-5 text-[#d4a574]" aria-hidden="true" />
+                        </div>
+                        <span className="text-[#d4a574] font-bold text-base">The Cooperative</span>
+                        <span className="text-white/70 text-xs">{COOP.statusLabel}</span>
                       </div>
                     </th>
                     <th className="py-4 px-4 w-1/3">
@@ -864,73 +366,66 @@ export default function Governance() {
                 <tbody className="divide-y divide-white/10">
                   {[
                     {
-                      dimension: 'Governance Token',
-                      fund: 'RCVoice',
-                      game: 'RGVoice',
-                      fundColor: 'text-[#d4a574]',
+                      dimension: 'How Decisions Are Made',
+                      coop: 'One member, one vote',
+                      game: 'Votes weighted by RGVoice',
+                      coopColor: 'text-[#d4a574]',
                       gameColor: 'text-purple-400',
                     },
                     {
-                      dimension: 'Utility Token',
-                      fund: '$RCivics (rewards)',
-                      game: '$Regen (in-game economy)',
-                      fundColor: 'text-[#7dd87d]',
-                      gameColor: 'text-[#7dd87d]',
+                      dimension: 'Who Takes Part',
+                      coop: 'Land projects and the people who work with them',
+                      game: 'Players, Quest Creators, Community Builders',
+                      coopColor: 'text-white/80',
+                      gameColor: 'text-white/80',
                     },
                     {
-                      dimension: 'How Voice is Earned',
-                      fund: 'Role-based allocation (Council 40%, others 20% each)',
+                      dimension: 'How Voice Is Held',
+                      coop: "Through membership, which can't be sold or traded",
                       game: 'Merit-based: complete quests, contribute to community',
-                      fundColor: 'text-white/80',
+                      coopColor: 'text-white/80',
                       gameColor: 'text-white/80',
                     },
                     {
                       dimension: 'Voice Decay',
-                      fund: 'No decay: tied to your stakeholder role',
+                      coop: 'Not part of the design: one member, one vote',
                       game: '3% monthly decay: keeps governance with active players',
-                      fundColor: 'text-white/80',
+                      coopColor: 'text-white/80',
                       gameColor: 'text-purple-300',
                     },
                     {
-                      dimension: 'Tradability',
-                      fund: 'RCVoice: non-tradable / $RCivics: tradable',
-                      game: 'RGVoice: non-tradable / $Regen: tradable',
-                      fundColor: 'text-white/80',
+                      dimension: 'Leadership',
+                      coop: 'A small elected board that rotates. The network hires the people who run the day-to-day work.',
+                      game: 'No voting committee. Anyone can earn voice.',
+                      coopColor: 'text-white/80',
                       gameColor: 'text-white/80',
                     },
                     {
                       dimension: 'What It Governs',
-                      fund: 'Investment decisions, funding proposals, alliance strategy',
+                      coop: 'Shared land, tools and services that members use',
                       game: 'Quest design, game rules, seasonal decisions',
-                      fundColor: 'text-white/80',
+                      coopColor: 'text-white/80',
                       gameColor: 'text-white/80',
                     },
                     {
-                      dimension: 'Primary Participants',
-                      fund: 'Council, Land Projects, Alliance Orgs, Investors',
-                      game: 'Players, Quest Creators, Community Builders',
-                      fundColor: 'text-white/80',
+                      dimension: 'Tokens',
+                      coop: 'RCVoice and $RCivics come from the earlier fund design. Their role, if any, is being reviewed with counsel.',
+                      game: 'RGVoice (voice) and $ReGen (the Game\'s token)',
+                      coopColor: 'text-white/80',
                       gameColor: 'text-white/80',
                     },
                     {
-                      dimension: 'Governance Platform',
-                      fund: 'Hypha DHO (on-chain)',
-                      game: 'Hypha DHO (on-chain)',
-                      fundColor: 'text-white/80',
-                      gameColor: 'text-white/80',
-                    },
-                    {
-                      dimension: 'Financial Returns',
-                      fund: 'As designed, $RCivics holders will receive proportional portfolio returns and $RCVoice holders a share of success and management fees, once the fund is formed',
-                      game: '$Regen earned through quests, tradable in-game',
-                      fundColor: 'text-[#d4a574]',
+                      dimension: 'Where It Stands',
+                      coop: 'In design. Not yet a legal entity, and it accepts no money.',
+                      game: 'Running today, with binding votes on Hypha DHO (on-chain)',
+                      coopColor: 'text-[#d4a574]',
                       gameColor: 'text-purple-300',
                     },
-                  ].map(({ dimension, fund, game, fundColor, gameColor }) => (
+                  ].map(({ dimension, coop, game, coopColor, gameColor }) => (
                     <tr key={dimension} className="hover:bg-white/5 transition-colors">
                       <td className="py-4 px-4 text-white/60 font-medium">{dimension}</td>
                       <td className="py-4 px-4 text-center">
-                        <span className={fundColor}>{fund}</span>
+                        <span className={coopColor}>{coop}</span>
                       </td>
                       <td className="py-4 px-4 text-center">
                         <span className={gameColor}>{game}</span>
@@ -944,19 +439,19 @@ export default function Governance() {
             {/* Bottom note */}
             <div className="mt-8 grid sm:grid-cols-2 gap-4">
               <div className="bg-[#d4a574]/10 rounded-xl p-5 border border-[#d4a574]/30 text-center">
-                <p className="text-[#d4a574] font-bold mb-2">Fund Governance</p>
-                <p className="text-white/70 text-sm safe-prose">Structured for institutional trust and long-term capital deployment. Designed to be credible to investors and regulators while remaining community-led.</p>
-                <a href="https://app.hypha.earth/en/dho/regen-civics/agreements" target="_blank" rel="noopener noreferrer" className="inline-block mt-3">
-                  <Button size="sm" className="bg-[#d4a574] text-[#1a472a] hover:bg-[#c49060] font-bold">
-                    Explore Fund Governance &rarr;
+                <p className="text-[#d4a574] font-bold mb-2">The Cooperative</p>
+                <p className="text-white/70 text-sm safe-prose">{COOP.whereItStands}</p>
+                <Link href="/fund" className="inline-block mt-3">
+                  <Button size="sm" className="bg-[#d4a574] text-[#1a472a] hover:bg-[#c49060] font-bold min-h-[44px]">
+                    About the Cooperative &rarr;
                   </Button>
-                </a>
+                </Link>
               </div>
               <div className="bg-purple-900/20 rounded-xl p-5 border border-purple-500/30 text-center">
                 <p className="text-purple-400 font-bold mb-2">Game Governance</p>
                 <p className="text-white/70 text-sm safe-prose">Designed for active community participation. The 3% decay rule ensures governance always belongs to those who are currently playing and contributing.</p>
                 <a href="https://app.hypha.earth/en/dho/regen-games/agreements" target="_blank" rel="noopener noreferrer" className="inline-block mt-3">
-                  <Button size="sm" className="bg-purple-700 text-white hover:bg-purple-800 font-bold">
+                  <Button size="sm" className="bg-purple-700 text-white hover:bg-purple-800 font-bold min-h-[44px]">
                     Explore Game Governance &rarr;
                   </Button>
                 </a>
@@ -974,171 +469,61 @@ export default function Governance() {
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Two Tokens, Two Powers</h2>
             <p className="text-white/80 text-lg leading-relaxed mb-10 text-center max-w-3xl mx-auto safe-prose">
-              ReGen Civics uses two distinct tokens, each serving a fundamentally different purpose. Voice governs decisions. Tokens distribute rewards. These two systems are designed to be complementary.
+              The Game uses two tokens. RGVoice governs decisions. $ReGen records contributions. The two are designed to work together.
             </p>
             <div className="flex justify-center mb-8">
               <img
                 src="/images/governance/two-tokens-bridge.webp"
-                alt="Two rivers meeting at a living bridge: the Fund (RCVoice) and the Game (RGVoice) coordinating systemic regeneration"
+                alt="Two rivers meeting at a living bridge, one carrying coins and scales, the other carrying seeds, wreaths and open hands"
                 width="1200"
                 height="675"
                 className="w-full rounded-xl shadow-2xl"
                 loading="lazy"
               />
             </div>
-            {/* RCVoice Fund vs Game Toggle + dynamic rewards token box */}
+            {/* Voice toggle + the token box that follows it */}
             <TwoTokensSection />
           </div>
         </div>
       </section>
 
-      {/* Fund Governance Structure */}
-      <section id="gov-fund-structure" className="py-16 px-4 bg-[#0d2818]/50">
+      {/* Cooperative Design */}
+      <section id="gov-coop-design" className="py-16 px-4 bg-[#0d2818]/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 flex items-center gap-3 min-w-0">
               <Users className="w-8 h-8 flex-shrink-0" />
-              <span className="min-w-0">ReGen Civics Fund: Four Voice-Holder Groups</span>
+              <span className="min-w-0">{COOP.name}: How It Is Being Designed</span>
             </h2>
-            
-            <p className="text-white/90 text-lg leading-relaxed mb-12 safe-prose">
-              The ReGen Civics Fund is governed by four distinct groups, each bringing unique perspectives and expertise. Together, they make strategic decisions about capital allocation, land project selection, and alliance partnerships.
+
+            <p className="text-white/90 text-lg leading-relaxed mb-8 safe-prose">
+              {COOP.statement}
             </p>
-            
-            {/* Fund Governance Structure Diagram (image first, SVG fallback below) */}
-            <div className="mb-12 flex justify-center">
-              <img
-                src="/images/governance/voice-holders-diagram.png"
-                alt="Four voice-holder groups connected to the ReGen Civics Fund: Council of Domain Experts, Land Project Stewards, Alliance Partners, Investor Voice"
-                className="w-full max-w-2xl rounded-xl"
-                loading="lazy"
-                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-              />
+
+            <p className="text-white/70 text-base leading-relaxed mb-6 safe-prose">
+              {COOP.designPrinciplesNote}
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-4 mb-10 safe-prose">
+              {COOP.designPrinciples.map((p) => (
+                <div key={p.title} className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#d4a574]">
+                  <h3 className="text-lg font-bold text-[#d4a574] mb-2">{p.title}</h3>
+                  <p className="text-white/80 text-sm leading-relaxed">{p.body}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Fallback: inline SVG version (kept for accessibility + when image is missing) */}
-            <div className="hidden mb-12 flex justify-center">
-              <svg
-                viewBox="0 0 600 420"
-                className="w-full max-w-2xl rounded-xl shadow-2xl bg-[#0d2818]"
-                role="img"
-                aria-label="ReGen Civics Fund Governance Structure: four voice-holder groups around the Fund"
-              >
-                <defs>
-                  <radialGradient id="fundCenter" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stopColor="#ffd700" stopOpacity="0.95" />
-                    <stop offset="60%" stopColor="#d4a574" stopOpacity="0.55" />
-                    <stop offset="100%" stopColor="#1a472a" stopOpacity="0" />
-                  </radialGradient>
-                </defs>
-                {/* Connecting lines */}
-                <line x1="300" y1="210" x2="120" y2="80" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
-                <line x1="300" y1="210" x2="480" y2="80" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
-                <line x1="300" y1="210" x2="120" y2="340" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
-                <line x1="300" y1="210" x2="480" y2="340" stroke="#7dd87d" strokeOpacity="0.35" strokeWidth="1.5" />
-                {/* Center: The Fund */}
-                <circle cx="300" cy="210" r="80" fill="url(#fundCenter)" />
-                <circle cx="300" cy="210" r="58" fill="#1a472a" stroke="#ffd700" strokeWidth="2" />
-                <text x="300" y="200" textAnchor="middle" fill="#ffd700" fontFamily="serif" fontSize="14" fontWeight="700">ReGen Civics</text>
-                <text x="300" y="220" textAnchor="middle" fill="#ffd700" fontFamily="serif" fontSize="14" fontWeight="700">Fund</text>
-                <text x="300" y="240" textAnchor="middle" fill="#7dd87d" fontFamily="sans-serif" fontSize="10">$RCivics</text>
-                {/* 4 voice-holder nodes */}
-                {[
-                  { cx: 120, cy: 80, label1: 'Council of', label2: 'Domain Experts', accent: '#d4a574' },
-                  { cx: 480, cy: 80, label1: 'Land Project', label2: 'Stewards', accent: '#7dd87d' },
-                  { cx: 120, cy: 340, label1: 'Alliance', label2: 'Partners', accent: '#4a9f9f' },
-                  { cx: 480, cy: 340, label1: 'Investor', label2: 'Voice', accent: '#ffd700' },
-                ].map((n) => (
-                  <g key={`${n.cx}-${n.cy}`}>
-                    <circle cx={n.cx} cy={n.cy} r="50" fill="#0d2818" stroke={n.accent} strokeWidth="2" />
-                    <text x={n.cx} y={n.cy - 4} textAnchor="middle" fill={n.accent} fontFamily="sans-serif" fontSize="11" fontWeight="700">{n.label1}</text>
-                    <text x={n.cx} y={n.cy + 12} textAnchor="middle" fill={n.accent} fontFamily="sans-serif" fontSize="11" fontWeight="700">{n.label2}</text>
-                  </g>
-                ))}
-              </svg>
-            </div>
-            
-            {/* Four Voice-Holder Groups */}
-            <div className="space-y-6 mb-12 safe-prose">
-              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#d4a574]">
-                <h3 className="text-xl font-bold text-[#d4a574] mb-3">1. Council of Domain Experts</h3>
-                <p className="text-white/80 mb-3"><strong>Role:</strong> Operational leadership and strategic guidance</p>
-                <ul className="text-white/70 text-sm space-y-1 ml-4 mb-3">
-                  <li>• Evaluate land project applications for funding</li>
-                  <li>• Assess alliance partner fit, impact, and deal structure</li>
-                  <li>• Guide fund strategy, risk management, and draft seasonal funding proposals</li>
-                  <li>• Mentor emerging leaders in the regenerative movement</li>
-                  <li>• Vote on proposals through the lens of domain expertise and long-term regenerative strategy</li>
-                </ul>
-                <p className="text-white/60 text-sm"><strong>Voice Share (Phase 1):</strong> 40%</p>
-                <p className="text-white/60 text-sm"><strong>Selection:</strong> Domain experts selected by all voice holders</p>
-              </div>
-              
-              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#4a7c59]">
-                <h3 className="text-xl font-bold text-[#4a7c59] mb-3">2. Land Project Representatives</h3>
-                <p className="text-white/80 mb-3"><strong>Role:</strong> Ground-truth perspective on regenerative implementation</p>
-                <ul className="text-white/70 text-sm space-y-1 ml-4 mb-3">
-                  <li>• Provide feedback on fund mechanisms and support structures</li>
-                  <li>• Share learnings from on-the-ground implementation</li>
-                  <li>• Propose new alliance partnerships and collaborations</li>
-                  <li>• Vote on proposals through the lens of on-the-ground regenerative impact</li>
-                </ul>
-                <p className="text-white/60 text-sm"><strong>Voice Share (Phase 1):</strong> 20%</p>
-                <p className="text-white/60 text-sm"><strong>Selection:</strong> One representative per active land project in the fund</p>
-              </div>
-              
-              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#7dd87d]">
-                <h3 className="text-xl font-bold text-[#7dd87d] mb-3">3. Alliance Organizations</h3>
-                <p className="text-white/80 mb-3"><strong>Role:</strong> Ecosystem integration, movement building, and service delivery</p>
-                <p className="text-white/70 text-sm mb-3 leading-relaxed">
-                  Alliance Organizations provide the specialized services that Land Projects need - from regenerative agriculture expertise to legal, financial, and infrastructure support. By prioritizing Alliance Organizations as service providers, Land Projects keep resources circulating within the regenerative network rather than flowing out to conventional providers.
-                </p>
-                <ul className="text-white/70 text-sm space-y-1 ml-4 mb-3">
-                  <li>• Connect fund to broader regenerative networks</li>
-                  <li>• Deliver specialized services to Land Projects, keeping resources in the network</li>
-                  <li>• Propose collaborative initiatives and partnerships</li>
-                  <li>• Vote on proposals through the lens of ecosystem integration and service delivery</li>
-                </ul>
-                <p className="text-white/60 text-sm"><strong>Voice Share (Phase 1):</strong> 20%</p>
-                <p className="text-white/60 text-sm"><strong>Selection:</strong> One representative per active alliance partner</p>
-              </div>
-              
-              <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#d4a574]">
-                <h3 className="text-xl font-bold text-[#d4a574] mb-3">4. Investors</h3>
-                <p className="text-white/80 mb-3"><strong>Role:</strong> Capital stewardship and financial accountability</p>
-                <ul className="text-white/70 text-sm space-y-1 ml-4 mb-3">
-                  <li>• Ensure fund sustainability and ROI on regenerative impact</li>
-                  <li>• Propose investment strategies and risk management</li>
-                  <li>• Vote on proposals through the lens of capital stewardship and financial sustainability</li>
-                  <li>• Share insights on market opportunities</li>
-                </ul>
-                <p className="text-white/60 text-sm"><strong>Voice Share (Phase 1):</strong> 20%</p>
-                <p className="text-white/60 text-sm"><strong>Selection:</strong> Proportional to capital contributed (with minimum thresholds)</p>
-              </div>
+            <div className="bg-[#0d2818]/50 rounded-lg p-6 border border-[#7dd87d]/30 text-center">
+              <p className="text-white/80 text-sm leading-relaxed mb-4 safe-prose">{COOP.whereItStands}</p>
+              <Link href="/loi">
+                <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold min-h-[44px]">
+                  Tell us you're interested
+                </Button>
+              </Link>
+              <p className="text-white/60 text-xs mt-3 max-w-xl mx-auto safe-prose">{COOP.interestPromise}</p>
             </div>
 
-            {/* Seasonal Voting Process */}
-            <div className="mb-12">
-              <h3 className="text-2xl font-bold text-white mb-6 text-center">Seasonal Voting Process</h3>
-              <p className="text-white/80 text-sm mb-8 text-center">
-                Every season, the ReGen Civics community gathers to propose, discuss, and vote on initiatives that shape the fund's direction and impact.
-              </p>
-              <div className="flex justify-center mb-8">
-                <img
-                  src="/images/governance/seasonal-cycle.webp"
-                  alt="Seasonal cycle showing the four seasons and the Seasonal Ceremony that begins each new cycle"
-                  className="w-full max-w-2xl rounded-xl"
-                  loading="lazy"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                />
-              </div>
-              <div className="bg-[#0d2818]/50 rounded-lg p-6 border border-[#7dd87d]/30">
-                <p className="text-white/60 text-sm text-center">
-                  <strong>Voting Threshold:</strong> 90% approval required for major decisions (fund strategy, distributions, governance changes)
-                </p>
-              </div>
-            </div>
-
+            <p className="text-white/50 text-xs mt-6 text-center safe-prose">{COOP.notAnOffer}</p>
           </div>
         </div>
       </section>
@@ -1151,11 +536,11 @@ export default function Governance() {
               <ZapIcon className="w-8 h-8 flex-shrink-0" />
               <span className="min-w-0">ReGen Game: By the Players, For the Players</span>
             </h2>
-            
+
             <p className="text-white/90 text-lg leading-relaxed mb-12 safe-prose">
-              The ReGen Game operates on a fundamentally different principle: <strong>governance by active participation</strong>. Players earn voice through Quest completion and contributions, ensuring that those who are most engaged in the Game's mission have the greatest say in its direction.
+              The ReGen Game runs on <strong>governance by active participation</strong>. Players earn voice through Quest completion and contributions, ensuring that those who are most engaged in the Game's mission have the greatest say in its direction.
             </p>
-            
+
             {/* How Player Voice Works */}
             <div className="space-y-6 mb-12">
               <div className="bg-[#1a472a]/50 rounded-lg p-6 border-l-4 border-[#7dd87d]">
@@ -1180,6 +565,23 @@ export default function Governance() {
               </div>
             </div>
 
+            {/* Seasonal Voting Process */}
+            <div className="mb-12">
+              <h3 className="text-2xl font-bold text-white mb-6 text-center">Seasonal Voting Process</h3>
+              <p className="text-white/80 text-sm mb-8 text-center">
+                Every season, the ReGen Civics community gathers to propose, discuss, and vote on what shapes the Game and its direction.
+              </p>
+              <div className="flex justify-center">
+                <img
+                  src="/images/governance/seasonal-cycle.webp"
+                  alt="Seasonal cycle showing the four seasons and the Seasonal Ceremony that begins each new cycle"
+                  className="w-full max-w-2xl rounded-xl"
+                  loading="lazy"
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
+            </div>
+
             {/* Why This Model Works */}
             <div className="mb-12">
               <h3 className="text-2xl font-bold text-white mb-6">Why?</h3>
@@ -1190,21 +592,21 @@ export default function Governance() {
                     No single player or group can dominate governance. Voice is earned through participation and naturally redistributes through monthly waning. The Game remains decentralized and responsive to the active community.
                   </p>
                 </div>
-                
+
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                   <h4 className="text-lg font-bold text-[#7dd87d] mb-3">Meritocratic and Inclusive</h4>
                   <p className="text-white/80">
                     There's no gatekeeping or voting committee. Anyone can participate and earn voice. New players can quickly gain influence by engaging deeply with quests and contributing to the community.
                   </p>
                 </div>
-                
+
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                   <h4 className="text-lg font-bold text-[#7dd87d] mb-3">Aligned with Regeneration</h4>
                   <p className="text-white/80">
                     Governance power flows to those who are most committed to personal and collective regeneration. The Game's direction is shaped by players who are actively healing themselves and contributing to the movement.
                   </p>
                 </div>
-                
+
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                   <h4 className="text-lg font-bold text-[#7dd87d] mb-3">Future-Proof</h4>
                   <p className="text-white/80">
@@ -1213,7 +615,7 @@ export default function Governance() {
                 </div>
               </div>
             </div>
-            
+
             {/* Game Governance in Action */}
             <div className="bg-[#1a472a]/50 rounded-lg p-6 border border-[#7dd87d]/30">
               <h3 className="text-xl font-bold text-[#7dd87d] mb-4">Game Governance in Action</h3>
@@ -1227,7 +629,7 @@ export default function Governance() {
                 </li>
                 <li className="flex gap-2">
                   <CheckCircle2 className="w-5 h-5 text-[#7dd87d] flex-shrink-0" />
-                  <span>Vote on Quest completion proposals submitted by other Players, verifying that quests were genuinely completed and the work created real value</span>
+                  <span>Vote on Quest completion proposals submitted by other Players, confirming each quest was completed and the work did what it set out to do</span>
                 </li>
                 <li className="flex gap-2">
                   <CheckCircle2 className="w-5 h-5 text-[#7dd87d] flex-shrink-0" />
@@ -1259,33 +661,33 @@ export default function Governance() {
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-12 text-center">
               Why Collective Governance Matters
             </h2>
-            
+
             <div className="space-y-6">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                 <h3 className="text-xl font-bold text-[#7dd87d] mb-3">Building Trust Through Participation</h3>
                 <p className="text-white/80">
-                  When people have a voice in decisions that affect them, they become invested in outcomes. Collective governance transforms stakeholders into stewards.
+                  When people have a voice in decisions that affect them, they come to care about the outcomes. Collective governance turns stakeholders into stewards.
                 </p>
               </div>
-              
+
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                 <h3 className="text-xl font-bold text-[#7dd87d] mb-3">Distributed Wisdom</h3>
                 <p className="text-white/80">
-                  No single perspective holds all the answers. By bringing together domain experts, land projects, alliance organizations, investors, and eventually the people living in these communities, we access diverse wisdom and reduce blind spots.
+                  No single perspective holds all the answers. By bringing together land projects, domain experts, alliance organizations, players, and the people living in these communities, we access diverse wisdom and reduce blind spots.
                 </p>
               </div>
-              
+
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                 <h3 className="text-xl font-bold text-[#7dd87d] mb-3">Regenerative Alignment</h3>
                 <p className="text-white/80">
-                  Governance structures that reflect regenerative principles - distributed, adaptive, inclusive, and growth-oriented - will naturally produce regenerative outcomes.
+                  Governance structures that reflect regenerative principles (distributed, adaptive, inclusive, and growth-oriented) will naturally produce regenerative outcomes.
                 </p>
               </div>
-              
+
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-[#7dd87d]/30">
                 <h3 className="text-xl font-bold text-[#7dd87d] mb-3">Movement Infrastructure</h3>
                 <p className="text-white/80">
-                  ReGen Civics governance is more than just making decisions; it's about building the infrastructure for a regenerative movement. We're modeling what collective governance can look like at scale and exploring diverse strategies to achieve our goals.
+                  ReGen Civics governance builds the infrastructure for a regenerative movement. We're modeling what collective governance can look like at scale and trying diverse strategies to reach our goals.
                 </p>
               </div>
             </div>
@@ -1300,11 +702,11 @@ export default function Governance() {
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-8 text-center">
               Governance as Movement Infrastructure
             </h2>
-            
+
             <p className="text-white/90 text-lg leading-relaxed mb-8 text-center safe-prose">
               The governance systems we build today become the templates for tomorrow's regenerative societies. By creating transparent, participatory, and adaptive governance structures, we're demonstrating what's possible when we trust people to make wise decisions about their own futures.
             </p>
-            
+
             <p className="text-white/90 text-lg leading-relaxed text-center safe-prose">
               The ReGenerative Renaissance requires governance that evolves with our understanding, includes those most affected by decisions, and aligns incentives toward collective wellbeing. ReGen Civics governance is designed to do exactly that.
             </p>
@@ -1312,15 +714,15 @@ export default function Governance() {
         </div>
       </section>
 
-      {/* Live Governance Dashboard - Earth Day Countdown */}
+      {/* Governance on Hypha */}
       <section id="gov-dashboard" className="py-16 px-4">
         <div className="container">
           <div className="max-w-4xl mx-auto">
-            <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Live Governance Dashboard</h2>
+            <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">Governance on Hypha</h2>
             <p className="text-white/80 text-lg leading-relaxed mb-10 text-center max-w-3xl mx-auto safe-prose">
-              Real-time voice distribution and active proposals from Hypha, live for all to see.
+              Voice and active proposals live on Hypha, open for all to see.
             </p>
-            <EarthDayCountdown />
+            <HyphaGovernancePanel />
           </div>
         </div>
       </section>
@@ -1340,7 +742,7 @@ export default function Governance() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="https://app.hypha.earth/en/dho/regen-civics/agreements" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">
-                  Explore Fund Governance →
+                  ReGen Civics on Hypha →
                 </Button>
               </a>
               <a href="https://app.hypha.earth/en/dho/regen-games/agreements" target="_blank" rel="noopener noreferrer">

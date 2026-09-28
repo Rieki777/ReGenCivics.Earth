@@ -1,7 +1,7 @@
 /**
  * useActivePathHash: cross-section path filter state, synced via URL hash.
  *
- * Phase 3.2 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md. The portals at
+ * Phase 3.2 of docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md. The portals at
  * the top of /quest tap into this; downstream sections (EpicQuestSection,
  * seasonal sections) read it to filter their content. URL hash chosen
  * over context so:

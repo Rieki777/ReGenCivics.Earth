@@ -25,8 +25,8 @@ export default function Donate() {
           <h1>Giving is worship</h1>
           <p className="lead center">
             Pooling our resources to heal land and communities is one of the most sacred things we do.
-            Every gift is a vote for a world that regenerates rather than extracts. Not for profit, not
-            for power, only for a life that gets better and better and better.
+            Every gift is a vote for a world that regenerates, and for a life that gets better and
+            better and better.
           </p>
         </div>
       </section>
@@ -79,7 +79,7 @@ export default function Donate() {
         <div className="wrap">
           <h2>Ready to plant a seed?</h2>
           <p className="lead center">
-            Giving flows through our home at ReGen Civics, alongside the fund and the wider movement.
+            Giving flows through our home at ReGen Civics, alongside the wider movement.
             Step in to make your gift and see the work it joins.
           </p>
           <div className="btn-row">

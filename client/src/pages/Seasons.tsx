@@ -13,7 +13,8 @@
  * timelines are loose this first year; Season 2 applications are closed.
  * The seasons now come from shared/regenYear.ts, Season 2's weeks from
  * shared/season2Curriculum.ts, its dates from shared/sessionClock.ts, and every
- * word about the Fund from shared/fund.ts. Nothing on this page restates them.
+ * word about the cooperative from COOP in shared/fund.ts (the old FUND export
+ * was retired 2026-09-27). Nothing on this page restates them.
  */
 
 import { useMemo, useState } from "react";
@@ -62,7 +63,7 @@ import {
   regenSeasonSpan,
   type RegenSeasonKey,
 } from "@shared/regenYear";
-import { FUND } from "@shared/fund";
+import { COOP } from "@shared/fund";
 import { APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
 import { ApplicationsNotice } from "@/components/ApplicationsNotice";
 
@@ -211,8 +212,8 @@ const JOURNEY: Stop[] = [
       "Tokenomics and the two tokens of the Game, designed",
       "Quests, Games, and crowdpooling built out",
       "Hypha DAO governance, implemented and refined",
-      "The Fund designed and Letters of Intent opened",
-      "Legal and regulatory research for the Fund",
+      "An earlier fund design, now being redesigned as a member-owned cooperative",
+      "Legal and regulatory research for the cooperative",
     ],
   },
   {
@@ -238,8 +239,8 @@ const JOURNEY: Stop[] = [
     at: [2, "spring"],
     items: [
       "The cohort and every ready community project crowdpool together",
-      "Roles filled, tools lent, time and materials pledged",
-      `Letters of Intent build toward the Fund's founding event (target launch ${FUND.launchTarget})`,
+      "Roles filled, tools lent, time and materials offered",
+      `Design of the ${COOP.name} continues with land projects, future members and counsel`,
     ],
   },
   {
@@ -570,7 +571,7 @@ export default function Seasons() {
                   "Construction, housing, energy, and infrastructure providers",
                   "Organizational, economic, and ecological design wisdom",
                   "Legal, governance, or technology expertise",
-                  "Funding, investment, or financial services",
+                  "Grants, lending, or financial services",
                   "Any other support for regenerative land projects",
                 ],
               },
@@ -906,10 +907,13 @@ export default function Seasons() {
           </ol>
 
           <p className="text-center text-sm text-white/65 max-w-2xl mx-auto safe-prose">
-            {FUND.statementShort}{" "}
+            {COOP.statementShort}{" "}
             <Link href="/fund" className="underline underline-offset-4 hover:text-white">
-              How the Fund works
+              How the cooperative is being designed
             </Link>
+          </p>
+          <p className="mt-3 text-center text-xs text-white/60 max-w-2xl mx-auto safe-prose">
+            {COOP.notAnOffer}
           </p>
         </div>
       </section>
@@ -921,7 +925,7 @@ export default function Seasons() {
             Find your <span className="text-[#7dd87d]">season</span>
           </h2>
           <p className="text-lg text-white/80 mb-8 safe-prose">
-            Land projects start in the Design Season. Investors and allies come in through the
+            Land projects start in the Design Season. Contributors and allies come in through the
             Resource Season. Everyone is welcome on the land in the Build Season and at the harvest
             in the Rest Season.
           </p>

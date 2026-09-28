@@ -1,6 +1,6 @@
 /**
  * The one shared path for recording a Hypha ratification outcome and running
- * the Evolution Engine dispatcher (ASSEMBLY_PAGE_SPEC.md section 7).
+ * the Evolution Engine dispatcher (docs/planning/ASSEMBLY_PAGE_SPEC.md section 7).
  *
  * Two callers, same rules:
  *  - assembly.confirmRatification: the admin relay (human records the outcome)

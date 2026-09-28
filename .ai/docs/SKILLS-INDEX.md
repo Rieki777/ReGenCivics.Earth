@@ -10,7 +10,7 @@ Project skills live in `.claude/skills/` (committed with the repo). Cross-projec
 
 ## Workflow + verification
 
-- `regen-fixes-handoff` — produce `FIXES_TO_MAKE_*.md` docs with the canonical Handoff Breakdown table format and status vocabulary. Use whenever a fix is too complex for inline work.
+- `regen-fixes-handoff` — produce `FIXES_TO_MAKE_*.md` docs (in `docs/planning/`) with the canonical Handoff Breakdown table format and status vocabulary. Use whenever a fix is too complex for inline work.
 - `regen-ship-gate` — the audit-truncation + className grep + typecheck protocol that must pass before any "VERIFIED" or "DONE" claim.
 - `regen-do-everything` — autonomous end-to-end fix execution: diagnose, code, build-check, commit, push, verify live, report.
 - `regen-database-sql` — patterns for MySQL on Railway, Drizzle ORM, seed scripts, migrations.

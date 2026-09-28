@@ -13,7 +13,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { blogPosts } from "@/data/blogPosts";
 import {
   Coins, Sprout, Handshake, Heart, Users, Calendar,
-  BookOpen, Globe, FileText, Shield, AlertTriangle, Map, MessageCircle,
+  BookOpen, Globe, FileText, Shield, Map, MessageCircle,
   Layers, Search, X, Sparkles, Scroll, Wrench,
 } from "lucide-react";
 
@@ -28,19 +28,18 @@ type PageEntry = {
 
 const PAGES: PageEntry[] = [
   // 4 Paths
-  { label: "Investors", description: "Fund overview and investor journey", href: "/fund", icon: <Coins className="w-4 h-4 text-[#ffd700]" />, group: "4 Paths" },
+  { label: "Cooperative", description: "The ReGen Network Cooperative, in design", href: "/fund", icon: <Users className="w-4 h-4 text-[#ffd700]" />, group: "4 Paths", keywords: "cooperative co-op members fund" },
   { label: "Land Projects", description: "Apply as a regenerative land project", href: "/land", icon: <Sprout className="w-4 h-4 text-[#7dd87d]" />, group: "4 Paths" },
   { label: "Alliance Network", description: "Become an alliance partner", href: "/ally", icon: <Handshake className="w-4 h-4 text-cyan-400" />, group: "4 Paths" },
   { label: "ReGen Players", description: "Play the Infinite Game", href: "/play", icon: <Heart className="w-4 h-4 text-pink-400" />, group: "4 Paths" },
-  // Invest
-  { label: "Investment Memorandum", description: "Full opportunity overview", href: "/opportunity", icon: <FileText className="w-4 h-4 text-[#ffd700]" />, group: "Invest", keywords: "opportunity thesis fund" },
-  { label: "Letter of Intent", description: "Secure your investor spot", href: "/loi", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Invest" },
-  { label: "Investor Form", description: "Submit investor interest", href: "/investor", icon: <Coins className="w-4 h-4 text-[#ffd700]" />, group: "Invest" },
+  // Cooperative
+  { label: "Help Design the Cooperative", description: "How the cooperative is being designed", href: "/opportunity", icon: <FileText className="w-4 h-4 text-[#ffd700]" />, group: "Cooperative", keywords: "cooperative co-op design principles opportunity" },
+  { label: "Cooperative Interest Form", description: "Tell us you're interested in the cooperative", href: "/loi", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Cooperative", keywords: "interest cooperative co-op" },
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <Scroll className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Bounties", description: "Earn $ReGen for real work", href: "/bounties", icon: <Sparkles className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
-  { label: "Crowd Pool Campaigns", description: "Browse active campaigns", href: "/crowd-pooling-projects", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
+  { label: "Crowd Pool Campaigns", description: "Browse land project campaigns", href: "/campaigns", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Schedule", description: "Book a call or join a session", href: "/schedule", icon: <Calendar className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   // Community
   { label: "Community Forum", description: "Join the discussion", href: "/community", icon: <MessageCircle className="w-4 h-4 text-[#7dd87d]" />, group: "Community" },
@@ -52,8 +51,7 @@ const PAGES: PageEntry[] = [
   { label: "Seasons", description: "Seasonal accelerator model", href: "/seasons", icon: <Layers className="w-4 h-4 text-[#7dd87d]" />, group: "Seasons" },
   // Apply
   { label: "Apply", description: "Apply as land project or alliance", href: "/apply", icon: <Sprout className="w-4 h-4 text-[#7dd87d]" />, group: "Apply" },
-  // Legal
-  { label: "Risk Disclosure", href: "/risk-disclosure", icon: <AlertTriangle className="w-4 h-4 text-red-400" />, group: "Legal" },
+  // Legal (Risk Disclosure was removed: /risk-disclosure redirects to /disclaimers)
   { label: "Privacy Policy", href: "/privacy-policy", icon: <Shield className="w-4 h-4 text-[#7dd87d]" />, group: "Legal" },
   { label: "Terms of Use", href: "/terms-of-use", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Legal" },
   { label: "Disclaimers", href: "/disclaimers", icon: <Shield className="w-4 h-4 text-[#ffd700]" />, group: "Legal" },

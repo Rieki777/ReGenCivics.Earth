@@ -51,6 +51,11 @@ const ACTION_LIMITS: Record<string, number> = {
   // cap bounds spend and stops an accidental regenerate loop. Admin-only and
   // deliberate work, so 10 per 15 minutes is well above a real working session.
   funding_generate: 10,
+
+  // Cooperative interest form (public, no account). One submission per
+  // person is the norm; a few retries cover typos without letting a script
+  // fill the table.
+  coop_interest: 5,
 };
 
 function maxForAction(action: string): number {

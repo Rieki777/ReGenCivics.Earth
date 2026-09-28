@@ -382,7 +382,7 @@ interface DoerRow {
  * paid) and a bounded demand factor that rises when bounties go unclaimed and
  * eases down when they are claimed fast. It also flags hard-to-fill bounties
  * (unfilled past the unclaimed threshold) with priorityBoost. The valuation
- * engine reads both. See BOUNTY_VALUATION_ENGINE_SPEC.md.
+ * engine reads both. See docs/planning/BOUNTY_VALUATION_ENGINE_SPEC.md.
  */
 export async function runDemandPrecedentAgent(): Promise<DemandPrecedentReport> {
   const db = await getDb();
