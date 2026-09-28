@@ -34,7 +34,9 @@ import { and, asc, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
-import { fundingPipeline, fundingApplications } from "../../drizzle/schema";
+import { fundingPipeline, fundingApplications, fundingStageHistory } from "../../drizzle/schema";
+import { FUNDING_TRACKS } from "../../shared/fundingStages";
+import { planStageChange } from "../funding/kit";
 import { checkRateLimit } from "../rate-limit";
 import { invokeLLM, extractJsonObject, isLLMConfigured } from "../_core/llm";
 import {
@@ -261,19 +263,56 @@ export const adminFundingRouter = router({
           .nullable()
           .optional(),
         notes: z.string().max(20000).nullable().optional(),
+        // Phase 1 (drizzle/0277). Stages are validated per track by
+        // shared/fundingStages.ts; a stage move sets appStatus from the stage.
+        track: z.enum(FUNDING_TRACKS).nullable().optional(),
+        stage: z.string().max(40).nullable().optional(),
+        cycle: z.string().max(40).nullable().optional(),
+        deadlineAt: z.string().datetime({ offset: true }).nullable().optional(),
+        loiDeadlineAt: z.string().datetime({ offset: true }).nullable().optional(),
+        deadlineSource: z.string().max(500).nullable().optional(),
+        reapplyAt: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+          .nullable()
+          .optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = await requireDb();
-      const { id, ...rest } = input;
+      const { id, track, stage, appStatus, deadlineAt, loiDeadlineAt, ...rest } = input;
+
+      const [current] = await db.select().from(fundingPipeline).where(eq(fundingPipeline.id, id)).limit(1);
+      if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Funder row not found" });
 
       const patch: Record<string, unknown> = { lastTouch: new Date() };
       for (const [key, value] of Object.entries(rest)) {
         if (value === undefined) continue;
         patch[key] = typeof value === "string" && value.trim() === "" ? null : value;
       }
+      if (deadlineAt !== undefined) patch.deadlineAt = deadlineAt ? new Date(deadlineAt) : null;
+      if (loiDeadlineAt !== undefined) patch.loiDeadlineAt = loiDeadlineAt ? new Date(loiDeadlineAt) : null;
 
-      await db.update(fundingPipeline).set(patch).where(eq(fundingPipeline.id, id));
+      const plan = planStageChange(
+        { track: current.track, stage: current.stage, appStatus: current.appStatus },
+        { track, stage, appStatus },
+      );
+      if (!plan.ok) throw new TRPCError({ code: "BAD_REQUEST", message: plan.reason });
+      Object.assign(patch, plan.patch);
+
+      await db.transaction(async (tx) => {
+        await tx.update(fundingPipeline).set(patch).where(eq(fundingPipeline.id, id));
+        if (plan.history) {
+          await tx.insert(fundingStageHistory).values({
+            pipelineId: id,
+            track: plan.history.track,
+            fromStage: plan.history.fromStage,
+            toStage: plan.history.toStage,
+            actor: "rye",
+            actorUserId: ctx.user.id,
+          });
+        }
+      });
 
       const [row] = await db
         .select()

@@ -5916,12 +5916,30 @@ export const fundingPipeline = mysqlTable("funding_pipeline", {
   eligibility: text("eligibility"),
   accessStatus: varchar("accessStatus", { length: 255 }),
   deadline: varchar("deadline", { length: 160 }),
+  /**
+   * The deadline as a real instant (drizzle/0277). `deadline` keeps the research
+   * text; only an exact date becomes deadlineAt (shared/fundingDeadlines.ts), and
+   * a date with no time is read as the start of that day, Pacific.
+   */
+  deadlineAt: timestamp("deadlineAt"),
+  loiDeadlineAt: timestamp("loiDeadlineAt"),
+  /**
+   * Where the deadline was read, and the day it was checked there. The two
+   * DATE columns here use string mode (YYYY-MM-DD both ways): a Date would be
+   * written in the machine's local time and land a day early from a laptop.
+   */
+  deadlineSource: varchar("deadlineSource", { length: 500 }),
+  deadlineVerifiedAt: date("deadlineVerifiedAt", { mode: "string" }),
+  /** Accelerators: when to apply again after a no. */
+  reapplyAt: date("reapplyAt", { mode: "string" }),
   fit: varchar("fit", { length: 120 }),
   /** Which ReGen vehicle applies here. Never the Fund where funds are excluded. */
   regenEntity: varchar("regenEntity", { length: 255 }),
   link: varchar("link", { length: 500 }),
   notes: text("notes"),
   priority: mysqlEnum("priority", ["P1", "P2", "P3", "ADV", "ALLY"]).notNull().default("P2"),
+  /** What kind of money this is (shared/fundingStages.ts FUNDING_TRACKS). */
+  track: mysqlEnum("track", ["grant", "accelerator", "investor", "public_goods", "fiscal_sponsor", "credits", "network"]),
   appStatus: mysqlEnum("appStatus", [
     "not_started",
     "researching",
@@ -5933,6 +5951,13 @@ export const fundingPipeline = mysqlTable("funding_pipeline", {
     "declined",
     "parked",
   ]).notNull().default("not_started"),
+  /**
+   * Where we are with this funder, by track (validated by shared/fundingStages.ts).
+   * appStatus is derived from it, so the coarse funnel and the stage agree.
+   */
+  stage: varchar("stage", { length: 40 }),
+  /** The application cycle being worked: "W27", "Batch 37", "Spring 2027". */
+  cycle: varchar("cycle", { length: 40 }),
   owner: varchar("owner", { length: 120 }),
   nextAction: varchar("nextAction", { length: 500 }),
   nextActionDate: date("nextActionDate"),
@@ -5946,9 +5971,123 @@ export const fundingPipeline = mysqlTable("funding_pipeline", {
   index("funding_pipeline_status_idx").on(table.appStatus),
   index("funding_pipeline_category_idx").on(table.category),
   index("funding_pipeline_next_action_date_idx").on(table.nextActionDate),
+  index("funding_pipeline_deadline_at_idx").on(table.deadlineAt),
+  index("funding_pipeline_track_idx").on(table.track),
 ]));
 export type FundingPipelineRow = typeof fundingPipeline.$inferSelect;
 export type InsertFundingPipelineRow = typeof fundingPipeline.$inferInsert;
+
+/**
+ * One program cycle's application questions, with the portal's limits and the
+ * draft answer tailored to each (funding engine Phase 1, drizzle/0277).
+ * Seeded by scripts/seed-app-questions.ts from the gitignored
+ * docs/private/app_questions_seed.json; the seed never touches answerDraft.
+ */
+export const appQuestions = mysqlTable("app_questions", {
+  id: int("id").autoincrement().primaryKey(),
+  pipelineId: int("pipelineId").notNull(),
+  /** The seed's key for this cycle: "pearx_w27", "500global_b37". */
+  programKey: varchar("programKey", { length: 60 }).notNull(),
+  cycle: varchar("cycle", { length: 40 }).notNull(),
+  questionOrder: int("questionOrder").notNull(),
+  section: varchar("section", { length: 160 }),
+  questionText: text("questionText").notNull(),
+  /** short_text, long_text, select, url, number, file_upload, video. */
+  fieldType: varchar("fieldType", { length: 40 }).notNull().default("long_text"),
+  /** null when the portal does not say. */
+  isRequired: boolean("isRequired"),
+  charLimit: int("charLimit"),
+  wordLimit: int("wordLimit"),
+  /** The answer-bank entry this draft started from, if any. */
+  answerId: int("answerId"),
+  answerDraft: text("answerDraft"),
+  draftUpdatedAt: timestamp("draftUpdatedAt"),
+  draftUpdatedBy: int("draftUpdatedBy"),
+  /** Read from the live portal, rather than a secondary list. */
+  verified: boolean("verified").notNull().default(false),
+  sourceUrl: varchar("sourceUrl", { length: 500 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("app_questions_program_order_uq").on(table.programKey, table.questionOrder),
+  index("app_questions_pipeline_cycle_idx").on(table.pipelineId, table.cycle),
+  index("app_questions_answer_idx").on(table.answerId),
+]));
+export type AppQuestionRow = typeof appQuestions.$inferSelect;
+
+/**
+ * Canonical reusable answers in four lengths (drizzle/0277). Draft until Rye
+ * approves; editing an approved body sends it back to draft. projectId 0 is
+ * ReGen Civics itself; a land project's own answers carry its applications.id.
+ */
+export const answerBank = mysqlTable("answer_bank", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("projectId").notNull().default(0),
+  slug: varchar("slug", { length: 120 }).notNull(),
+  canonicalQuestion: varchar("canonicalQuestion", { length: 500 }).notNull(),
+  tags: json("tags").$type<string[]>(),
+  /** About 50 characters. */
+  bodyShort: varchar("bodyShort", { length: 255 }),
+  /** About 150 characters: one or two sentences. */
+  body150: varchar("body150", { length: 1000 }),
+  /** About 500 characters. */
+  body500: text("body500"),
+  bodyLong: text("bodyLong"),
+  /** Metric keys and documents the answer rests on. */
+  sourceRefs: json("sourceRefs").$type<string[]>(),
+  status: mysqlEnum("status", ["draft", "approved", "stale"]).notNull().default("draft"),
+  approvedAt: timestamp("approvedAt"),
+  approvedBy: int("approvedBy"),
+  verifiedAt: timestamp("verifiedAt"),
+  usedCount: int("usedCount").notNull().default(0),
+  wonCount: int("wonCount").notNull().default(0),
+  notes: text("notes"),
+  sortOrder: int("sortOrder").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("answer_bank_project_slug_uq").on(table.projectId, table.slug),
+  index("answer_bank_status_idx").on(table.status),
+]));
+export type AnswerBankRow = typeof answerBank.$inferSelect;
+
+/**
+ * Every saved body of an answer-bank entry or a question draft (drizzle/0277).
+ * Exactly one of answerId and questionId is set (server/funding/kit.ts).
+ */
+export const answerVersions = mysqlTable("answer_versions", {
+  id: int("id").autoincrement().primaryKey(),
+  answerId: int("answerId"),
+  questionId: int("questionId"),
+  /** Which body: short, 150, 500, long, or draft for a question. */
+  field: varchar("field", { length: 20 }).notNull().default("draft"),
+  version: int("version").notNull(),
+  body: text("body").notNull(),
+  source: mysqlEnum("source", ["rye", "llm", "cowork", "import", "seed"]).notNull().default("rye"),
+  note: varchar("note", { length: 500 }),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("answer_versions_answer_uq").on(table.answerId, table.field, table.version),
+  unique("answer_versions_question_uq").on(table.questionId, table.version),
+]));
+export type AnswerVersionRow = typeof answerVersions.$inferSelect;
+
+/** Every stage move on a funder row, for the funnel (drizzle/0277). */
+export const fundingStageHistory = mysqlTable("funding_stage_history", {
+  id: int("id").autoincrement().primaryKey(),
+  pipelineId: int("pipelineId").notNull(),
+  track: varchar("track", { length: 20 }),
+  fromStage: varchar("fromStage", { length: 40 }),
+  toStage: varchar("toStage", { length: 40 }),
+  /** rye, agent or seed. */
+  actor: varchar("actor", { length: 20 }).notNull().default("rye"),
+  actorUserId: int("actorUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("funding_stage_history_pipeline_idx").on(table.pipelineId, table.createdAt),
+]));
 
 /**
  * One row per positioning run from the application engine
