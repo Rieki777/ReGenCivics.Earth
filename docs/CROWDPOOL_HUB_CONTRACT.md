@@ -199,10 +199,11 @@ terms are not set and nothing here accepts money. The money mechanic this sectio
 described from 2026-09-04 is held pending counsel (v1.2, 2026-09-27), and its full text
 is kept outside the repo.
 
-**The boundary sentence, agreed with the village-os session and carried in both
-documents, reworded here on 2026-09-27:** the village side reads campaign progress and
-never sees, holds, or moves any money. Money given through a project's own route (Ma
-Earth, Steward) never passes through the hub either.
+**The boundary sentence, as proposed to the village-os session on 2026-09-27:** the
+village side reads campaign progress and never sees, holds, or moves any money. Money
+given through a project's own route (Ma Earth, Steward) never passes through the hub
+either. The earlier wording, agreed with that session, stays in village-os's copy until
+it adopts this one.
 
 The in-kind half stays per-project, and that is the half the bridge shows.
 

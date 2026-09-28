@@ -76,8 +76,10 @@ tax law "earmarking" is the precise term for what destroys a gift's standing whe
 money is directed onward to a foreign organisation, and most of these projects are
 outside the US. The word carries a meaning we do not want.
 
-**We do not say donation, donor, receipt, or tax deductible.** None of them are true
-here. The platform never produces anything receipt-shaped.
+**We do not say donation, donor, receipt, or tax deductible about anything on this
+site.** ReGen Civics takes no money, so it never issues receipts or makes tax claims, and
+the platform never produces anything receipt-shaped. A route such as Ma Earth sets its
+own terms, including what it calls a gift and what it gives back.
 
 `shared/crowdpoolModel.ts` carries the full list and a repo guard enforces it.
 

@@ -30,7 +30,7 @@ the held rulings is kept outside the repo.
 | The fund channel | Not open | Being redesigned with counsel as a member-owned cooperative. Its terms are not set, and nothing here accepts money. | Not set |
 | Money routes | Anyone | A route the project holds outside ReGen Civics: Ma Earth for gifts, Steward for loans. The money never passes through ReGen Civics. | Whatever the route offers. No fund tokens |
 | In kind | Everyone | One project, through the needs registry | That project's own token, one per project. Never RGVoice or $ReGen, never $RCivics |
-| Money loans | Lenders | The project, to meet its money ask up front (who borrows and through what is open) | Interest. No tokens of any kind |
+| Money loans | Lenders | The project, to meet its money ask up front (who borrows and through what is open) | The loan route's own terms. No tokens of any kind |
 
 ---
 
@@ -123,7 +123,7 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | 2026-09-24 | **In-kind earns that campaign's own tokens.** What the token is, what it carries, who issues it and when are open. |
 | 2026-09-24 | Held pending counsel (v1.2, 2026-09-27): which contributions earn $RCivics. |
 | 2026-09-24 | Held pending counsel (v1.2, 2026-09-27): whether one proposal can mix money, equipment and committed time to reach a fund-channel minimum. |
-| 2026-09-24 | **Money loans can meet a campaign's money ask.** Loan money is value the project receives up front. Lenders earn interest, not tokens. Who borrows, who lends and on what terms are open. |
+| 2026-09-24 | **Money loans can meet a campaign's money ask.** Loan money is value the project receives up front. Lenders receive no tokens; what a lender receives is set by the loan route and the project, never by ReGen Civics. Who borrows, who lends and on what terms are open. (Worded to section 2a on 2026-09-27.) |
 | 2026-09-24 | **The in-kind half has landed when confirmed value reaches 100% of the in-kind ask** by close; delivery is tracked afterwards. Narrows locked decision 4 of 2026-07-17 for the close test only. Who confirms is open. |
 | 2026-09-24 | The pledge simulator keeps "Fill a need" with a real Apply, Offer or Sign up button; "Offer time" goes. |
 | 2026-09-24 | The open questions these answers raise (89 for Rye, 15 for counsel) are listed with options and recommendations in `legal-research/Crowdpool_questions_2026-09-24.md`, kept out of git beside the legal research. |
@@ -201,9 +201,10 @@ entity and the cooperative is not yet formed, so neither can receive anyone's mo
 1. **The DECIMAL sweep.** Every currency-like column moves to `DECIMAL(18,2)`. See
    section 6 for why the method matters more than the change.
 2. **Compliance fields at contribution time.** Jurisdiction, residency attestation,
-   accreditation status and its evidence reference, affiliate flag, and the version of
-   the disclosure the member actually saw. Near-free now, expensive to retrofit, and
-   correct under every structure being considered.
+   affiliate flag, and the version of the disclosure the member actually saw. Near-free
+   now and expensive to retrofit. The table also carries accreditation columns from
+   before 2026-09-27; v1.2 has no investor-member class at launch, so whether they stay
+   waits on counsel.
 3. **Per-rail switches.** Rye's ruling: build the rails so each can be turned on or off
    as counsel clears it. Every money-touching path is gated on a named switch, default
    OFF, enforced at the route rather than hidden in the UI.
@@ -312,10 +313,10 @@ rulings held on 2026-09-27 is kept outside the repo with it.
 
 ## 9. Open questions
 
-1. **Which partner platform, and of what kind?** Reward-based platforms take backers
-   worldwide and give no financial return. Platforms licensed under the EU crowdfunding
-   regulation are EEA-only, regulated, and can offer loans or securities in a single
-   project. The choice decides what a small contributor gets and who may contribute.
+1. **Which other outside money routes may a project add, beyond Ma Earth and Steward?**
+   Reward-based platforms take backers worldwide. Platforms licensed under the EU
+   crowdfunding regulation are EEA-only and regulated. The kind of route decides who may
+   contribute through it, and its terms are always the route's own.
 2. **Stewards vote on what they then carry out.** They should abstain on their own roles,
    pay and discharge.
 3. **The hub contract has no version field.** village-os sets its "pledged total is
@@ -354,7 +355,7 @@ are held pending counsel with it.
 | `shared/crowdpoolModel.ts` | the mechanic, for code (its fund-channel constants are still to be brought in line, section 9) |
 | `docs/CROWDPOOL_HUB_CONTRACT.md` | the contract village-os reads |
 | `CROWDPOOLING_GAP_ANALYSIS_2026-09-04.md` | what was built vs the mechanic, with evidence |
-| `legal-research/` | own due diligence, US, Swiss and Liechtenstein. **GITIGNORED, not committed**, at Rye's request: it is working material for a conversation with counsel, not a statement of the project's legal position. Start at its `README_START_HERE.md`. |
+| `legal-research/` | own legal due diligence. **GITIGNORED, not committed**, at Rye's request: it is working material for a conversation with counsel, not a statement of the project's legal position. Start at its `README_START_HERE.md`. |
 | `server/crowdpool-adversarial.test.ts` | the adversarial suite |
 | `server/crowdpool-restricted-claim.test.ts` | the restricted-balance guard |
 | `CROWDPOOLING_PLATFORM_SPEC.md` | the July 2026 spec, needs its decision #1 amendment |
