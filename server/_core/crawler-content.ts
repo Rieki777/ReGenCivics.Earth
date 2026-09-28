@@ -431,6 +431,45 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       </article>
     `,
   },
+
+  "/play": {
+    html: `
+      <article>
+        <h1>Play the Infinite Game: ways in for five minutes or five years</h1>
+        <p>Everyone can play. Whether you have five minutes or five years, there is a way to participate in regenerating civilization, and the level is yours to choose. Quests can be browsed without an account; signing in is what lets you earn $ReGen and submit deliverables.</p>
+        <h2>Easy mode: low dedication, high impact</h2>
+        <ul>
+          <li><strong>Quest.</strong> Complete games and tasks.</li>
+          <li><strong>Trade.</strong> Take part as a bioregional merchant.</li>
+          <li><strong>Claim.</strong> Record the contributions you have already made.</li>
+        </ul>
+        <h2>High dedication</h2>
+        <p>For people who want to build, lead, or root in: <strong>join</strong> an existing organization or village, or <strong>catalyze</strong> a new one.</p>
+        <h2>Two tokens, and they are not the Fund's</h2>
+        <p>ReGen Game tokens are the in-game currency and RGVoice tokens carry governance. These are distinct from the Fund tokens; the two sides are explained in <a href="/bionomics">the living economy</a> and <a href="/tokenomics">tokenomics</a>.</p>
+        <p>If you are not sure where to start, <a href="/schedule">join an open session first</a>, or go straight to <a href="/quest">the quest board</a>. The mechanics are published in full at <a href="/game-mechanics">game mechanics</a>.</p>
+      </article>
+    `,
+  },
+
+  "/ally": {
+    html: `
+      <article>
+        <h1>The Alliance Network: for organizations supporting land projects</h1>
+        <p>An alliance of organizations weaving a support network for regenerative land projects worldwide. Each organization brings something the others cannot, and pooled, that becomes real capacity for land projects. Instead of searching for clients one at a time, a partner reaches a pipeline of regenerative land projects that need what they already offer.</p>
+        <h2>What joining gives an organization</h2>
+        <ul>
+          <li>Connection to land projects across the network.</li>
+          <li>Fundraising alongside the alliance rather than alone.</li>
+          <li>Shared infrastructure.</li>
+          <li>Governance and voice in how the alliance runs.</li>
+        </ul>
+        <h2>How to join</h2>
+        <p>Five steps: apply, onboard, collaborate, agree an equity, service or token swap, then grow together. The alliance is looking for organizations across every domain needed to support regenerative land projects.</p>
+        <p>See <a href="/network">the land projects your organization could support</a>, <a href="/crowd-pooling">crowd pooling</a>, <a href="/tools">the tools directory</a>, or <a href="/team">the people building this</a>.</p>
+      </article>
+    `,
+  },
 };
 
 export function getStaticPageContent(reqPath: string): CrawlerContent | null {

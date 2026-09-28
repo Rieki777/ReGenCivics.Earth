@@ -109,6 +109,8 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     ["/crowd-pooling", "money, land, skills, time and knowledge"],
     ["/game-mechanics", "visible and tunable"],
     ["/connect", "which path calls to you"],
+    ["/play", "five minutes or five years"],
+    ["/ally", "weaving a support network"],
   ])("serves prose on %s", async (path, phrase) => {
     const html = await (await fetch(`${base}${path}`)).text();
     expect(html.toLowerCase()).toContain(phrase.toLowerCase());
