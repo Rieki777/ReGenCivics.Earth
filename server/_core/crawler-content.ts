@@ -30,7 +30,6 @@ import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/rege
 import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
 import { getNetworkFeed } from "../lib/network-feed";
-import { getLegalPage } from "@shared/legalContent";
 import { serverCurrencyFormatter } from "../lib/currency-format";
 import { decodeBasicEntities } from "../../shared/htmlText";
 import { progressLines } from "../../shared/campaignProgress";
@@ -401,18 +400,18 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     html: `
       <article>
         <h1>Season Two: thirteen seats, selected on the Equinox</h1>
-        <p>Season Two selects thirteen regenerative land projects across every stage, scale, and approach to regeneration. The cohort builds its models together, then launches, with every community project that is ready, into one shared crowdpooling campaign where the world decides what to pool into. Projects that graduate become the foundation of the index fund for the ReGenerative Renaissance.</p>
+        <p>Season Two selects thirteen regenerative land projects across every stage, scale, and approach to regeneration. The cohort builds its models together, then launches, with every community project that is ready, into one shared crowdpooling campaign where the world decides what to pool into. Projects that graduate become the foundation of what the cooperative is being designed to steward.</p>
         <p><strong>Season Two applications are closed.</strong> You can follow along live, and you can apply for the next season at any time: applications are held, and no emails go out about them until the next season is closer.</p>
         <h2>How a season works</h2>
         <ul>
           <li><strong>Selected.</strong> A season council of players from past seasons picks thirteen projects on the Equinox, built for range across maturity, scale, and approach.</li>
           <li><strong>Built.</strong> Thirteen teams design their governance, legal, economic and financial models together, reviewing each other's work against the standard an investor will actually apply.</li>
           <li><strong>Graduated.</strong> After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and the aim is all thirteen. Community projects that are ready join them.</li>
-          <li><strong>Pooled and funded.</strong> The world decides which projects to pool money, land, equipment and labor into. What comes through becomes the foundation of the index fund.</li>
+          <li><strong>Pooled and funded.</strong> The world decides which projects to pool money, land, equipment and labor into. What comes through becomes the foundation of what the cooperative is being designed to steward.</li>
         </ul>
         <h2>What it costs</h2>
         <p>No fee to apply and no fee to take part. What a project brings is its team's time and a token swap that makes the alliance and the project co-invested in each other. Every model, template, legal structure and framework built during the season is open-sourced, because charging admission to the on-ramp would work against growing the ReGenerative Renaissance.</p>
-        <p>Thirteen weeks of accelerator covering governance, legal structure, economics and financing, designed alongside twelve other projects. A network that carries some of what usually falls on one or two founders. A shared crowdpooling launch, then a place in the index fund, so a project raises alongside the network rather than alone.</p>
+        <p>Thirteen weeks of accelerator covering governance, legal structure, economics and financing, designed alongside twelve other projects. A network that carries some of what usually falls on one or two founders. A shared crowdpooling launch, so a project raises alongside the network rather than alone.</p>
         <p>See <a href="/apply">how to apply for the next season</a>, <a href="/schedule">the upcoming sessions</a>, or <a href="/crowd-pooling">how crowd pooling works</a>.</p>
       </article>
     `,
@@ -464,7 +463,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
           <li><strong>Role in ReGen Civics.</strong> Apply for a role directly.</li>
           <li><strong>Something else.</strong> A unique way to contribute.</li>
         </ul>
-        <p>If you already have an account you can continue an existing application. See also <a href="/apply">applying to the incubator</a>, <a href="/opportunity">the investment opportunity</a> and <a href="/schedule">the upcoming sessions</a>.</p>
+        <p>If you already have an account you can continue an existing application. See also <a href="/apply">applying to the incubator</a>, <a href="/loi">the cooperative in design</a> and <a href="/schedule">the upcoming sessions</a>.</p>
       </article>
     `,
   },
@@ -594,19 +593,13 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
     `,
   },
 
-  "/loi": {
-    html: `
-      <article>
-        <h1>The ReGen Network Cooperative: tell us you are interested</h1>
-        <p><strong>In design.</strong> The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. <strong>It is not yet a legal entity and it accepts no money.</strong> It is being designed now with land projects, future members and counsel.</p>
-        <p>Telling us you are interested is not a commitment and involves no money. It means being kept posted as the cooperative takes shape, and invited into the design conversations.</p>
-        <h2>Who can register interest</h2>
-        <p>A land project, a person, an organization, or a funder or foundation. The cooperative is being designed to recognise all nine forms of capital: intellectual, social, material, financial, living, cultural, spiritual, experiential and health.</p>
-        <p><strong>Nothing on this site is an offer to sell, or a request to buy, securities, memberships or any other financial product. The cooperative is not formed and accepts no money.</strong></p>
-        <p>Background reading: <a href="/opportunity">the investment opportunity</a>, <a href="/fund">the fund</a>, and the full <a href="/risk-disclosure">risk disclosure</a>.</p>
-      </article>
-    `,
-  },
+  // No "/loi" here on purpose. One landed on main first (see the entry above,
+  // near the other fund pages) and it is the better of the two: it builds every
+  // sentence from COOP in shared/fund.ts, so the cooperative's disclaimers
+  // cannot drift between the page and the crawler. Mine hardcoded the same
+  // sentences, which is exactly the drift that constants module exists to
+  // prevent. Two lanes wrote this route on the same day and the duplicate key
+  // failed CI with TS1117.
 
   "/calculator": {
     html: `
@@ -1377,34 +1370,21 @@ export async function getBountiesListContent(): Promise<CrawlerContent | null> {
   });
 }
 
-// ── The legal pages, served verbatim ─────────────────────────────────────────
-// Every other blank route in this work got prose condensed from the live page.
-// These four deliberately do not. A summarised privacy policy that an agent
-// quotes, or that a directory reviewer reads AS the policy, is worse than no
-// policy: the summary becomes the thing people rely on and it is not the
-// agreement. So the real text goes out, extracted from the components by
-// scripts/extract-legal-content.mjs and checked for drift in CI.
+// The legal pages are NOT served here, and that is a finding rather than an
+// omission. See docs/agent-surface/LEGAL-PAGES-BLOCKED.md.
 //
-// This also unblocks phase 9. The ChatGPT and Muse submissions both require a
-// public privacy policy url, and a reviewer fetching ours found an empty shell.
-export function getLegalContent(slug: string): CrawlerContent | null {
-  const page = getLegalPage(slug);
-  if (!page) return null;
-  const dated = page.lastUpdated
-    ? `<p>Last updated: ${escapeHtml(page.lastUpdated)}.</p>`
-    : "";
-  const inner = `
-      <article>
-        <h1>${escapeHtml(page.title)}</h1>
-        ${dated}
-        ${page.html}
-      </article>
-    `;
-  return {
-    title: page.title,
-    bodyHtml: wrapForInjection(inner),
-  };
-}
+// scripts/extract-legal-content.mjs works and pulled 31 KB of verbatim policy
+// text out of the four components. Wiring it up failed the fund-claims guard,
+// which is right: the pages describe a Regulation D offering to accredited  fund-claims-allow: naming the retired claim is the whole point of this note; see docs/agent-surface/LEGAL-PAGES-BLOCKED.md
+// investors, with a Private Placement Memorandum, preferred returns, token
+// listings and secondary markets. On 2026-09-27 the fund became a cooperative
+// in design, and that guard exists because "a purchasing cooperative keeps its
+// bought-for-use footing only while nothing in the funnel promises upside".
+//
+// Publishing those pages to agents would re-assert, in the most quotable place
+// on the site, the securities story the project retired the day before. The
+// pages need rewriting by Rye and counsel first; the extractor is ready for
+// them the moment they do.
 
 /**
  * /community/guidelines: the community agreements, from rows.
@@ -1473,8 +1453,6 @@ export async function getGuidelinesContent(): Promise<CrawlerContent | null> {
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
   if (reqPath === "/schedule") return getScheduleContent();
   if (reqPath === "/community/guidelines") return getGuidelinesContent();
-  const legal = reqPath.match(/^\/(privacy-policy|terms-of-use|risk-disclosure|disclaimers)$/);
-  if (legal) return getLegalContent(legal[1]);
   if (reqPath === "/campaigns") return getCampaignsListContent();
   if (reqPath === "/bounties") return getBountiesListContent();
   if (reqPath === "/learn") return getLearnIndexContent();

@@ -22,6 +22,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { serveStatic } from "./_core/vite";
 import { COOP } from "../shared/fund";
+import { escapeHtml } from "./_core/crawler-content";
 import { SEASON_ONE } from "../shared/regenYear";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
 import { findRetired, findG5, findTraction } from "../scripts/check-fund-claims.mjs";
@@ -178,13 +179,6 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     ["/ship/book", "Fleetwood Revolution"],
     ["/ship/terms", "Voyage Covenant"],
     ["/ship/guide", "Mindful, Careful, Slow"],
-    // Served verbatim rather than condensed, so the assertion is a clause from
-    // the actual document. Phase 9's submissions need a real policy at a real
-    // url, and a reviewer fetching ours previously got an empty shell.
-    ["/privacy-policy", "respects your privacy"],
-    ["/terms-of-use", "Acceptance of Terms"],
-    ["/risk-disclosure", "READ THIS CAREFULLY BEFORE INVESTING"],
-    ["/disclaimers", "NOT AN OFFER TO SELL SECURITIES"],
     ["/custom-games", "fail on coordination long before"],
     ["/calculator", "nine forms of capital"],
     ["/marketplace", "Connection Hub"],
@@ -201,13 +195,18 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     // explore_investment_thesis never quotes terms and never implies an offer.
     // An agent that reads a summary with the disclaimers trimmed off would
     // describe a cooperative taking money, which is the opposite of true.
+    //
+    // Asserted against COOP rather than against literals on purpose. This
+    // route was written by two lanes on the same day; the version that landed
+    // builds every sentence from shared/fund.ts so the disclaimers cannot
+    // drift between the page and the crawler, and a test carrying its own copy
+    // of the sentences would reintroduce exactly that drift.
     const html = await (await fetch(`${base}/loi`)).text();
-    expect(html).toContain("not yet a legal entity and it accepts no money");
-    expect(html).toContain("not a commitment and involves no money");
-    expect(html).toContain(
-      "Nothing on this site is an offer to sell, or a request to buy",
-    );
-    expect(html).toContain("The cooperative is not formed and accepts no money");
+    for (const claim of [COOP.statement, COOP.interestPromise, COOP.notAnOffer]) {
+      expect(html, `/loi is missing a COOP disclaimer: ${claim.slice(0, 60)}`).toContain(
+        escapeHtml(claim),
+      );
+    }
   });
 
   it.each(["/campaigns", "/bounties"])(
