@@ -4,7 +4,7 @@
  * real tree, so upside language landing on any public surface fails here as
  * well as in gate 1d and CI.
  */
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
@@ -136,6 +136,34 @@ describe("scope", () => {
       expect(files).toContain(f);
     }
     expect(files.some((f) => f.startsWith("client/src/pages/"))).toBe(true);
+  });
+});
+
+describe("which files the gate reads", () => {
+  const root = path.resolve(__dirname, "..");
+
+  it("skips gitignored files, which never reach the repo or the site", () => {
+    // Old QA crawl output sits under a directory the skill's own .gitignore
+    // excludes. Walking it made a local gate fail where CI, on a clean
+    // checkout, passed.
+    const dir = path.join(root, ".claude", "skills", "regen-qa-crawl", "runs", "gate-test");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(path.join(dir, "fund.txt"), "The ReGen Civics Fund is open.");
+    try {
+      expect(scannedFiles() as string[]).not.toContain(".claude/skills/regen-qa-crawl/runs/gate-test/fund.txt");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("reads a new file before it is committed", () => {
+    const file = path.join(root, "shared", "gate-test-untracked.ts");
+    writeFileSync(file, "export const x = 1;\n");
+    try {
+      expect(scannedFiles() as string[]).toContain("shared/gate-test-untracked.ts");
+    } finally {
+      rmSync(file, { force: true });
+    }
   });
 });
 
