@@ -9,6 +9,7 @@ import { applicationsRouter, applicantsForCampaignRouter, reviewsRouter, orgClai
 import { investorInquiriesRouter, generalInquiriesRouter, loiRouter, reviewerEmailsRouter, contactNotesRouter, contactTagsRouter } from "./routes/investors";
 import { coopRouter } from "./routes/coop";
 import { metricsRouter } from "./routes/metrics";
+import { fundingKitRouter } from "./routes/fundingKit";
 import { newsletterRouter, videoSuggestionsRouter, emailRouter } from "./routes/newsletter";
 import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRouter, savedContributionsRouter } from "./routes/campaigns";
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
@@ -154,6 +155,8 @@ export const appRouter = router({
   adminFunding: adminFundingRouter,
   // Canonical numbers (admin editor + the one public read), funding engine Phase 0
   metrics: metricsRouter,
+  // The application kit: packets, drafts, answer bank (funding engine Phase 1)
+  fundingKit: fundingKitRouter,
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,

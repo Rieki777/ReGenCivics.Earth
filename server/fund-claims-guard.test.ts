@@ -8,7 +8,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
-import { SUMMARY_SURFACES, findG5, findRetired, findTraction, g5Applies, scannedFiles } from "../scripts/check-fund-claims.mjs";
+import { SELF, SUMMARY_SURFACES, findG5, findRetired, findTraction, g5Applies, scannedFiles } from "../scripts/check-fund-claims.mjs";
 
 type Finding = { line: number; claim: string; match?: string; text: string };
 
@@ -170,12 +170,22 @@ describe("which files the gate reads", () => {
 describe("the real tree", () => {
   const root = path.resolve(__dirname, "..");
   const TEST_FILE = /\.(test|spec)\.[cm]?[jt]sx?$/;
-  const SELF = new Set(["shared/fund.ts", "scripts/check-fund-claims.mjs", "server/fund-claims-guard.test.ts"]);
+
+  it("exempts only the files that define the rules", () => {
+    // The gate's own list, imported: a second copy here drifted the first time
+    // the rules moved to shared/g5Rules.mjs.
+    expect([...(SELF as Set<string>)].sort()).toEqual([
+      "scripts/check-fund-claims.mjs",
+      "server/fund-claims-guard.test.ts",
+      "shared/fund.ts",
+      "shared/g5Rules.mjs",
+    ]);
+  });
 
   it("carries no retired claim and no G5 phrase on any scanned surface", () => {
     const problems: string[] = [];
     for (const rel of scannedFiles() as string[]) {
-      if (SELF.has(rel)) continue;
+      if ((SELF as Set<string>).has(rel)) continue;
       const text = readFileSync(path.join(root, rel), "utf8");
       for (const v of findRetired(rel, text) as Finding[]) problems.push(`${rel}:${v.line} retired ${v.claim}`);
       if (TEST_FILE.test(rel) || !g5Applies(rel)) continue;

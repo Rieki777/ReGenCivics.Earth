@@ -19,6 +19,8 @@ import Seasons from "@/pages/Seasons";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
+import { ApplicationKitPanel, PacketView } from "@/components/admin/funding/ApplicationKitPanel";
+import { AnswerBankPanel } from "@/components/admin/funding/AnswerBankPanel";
 
 export type Story = {
   title: string;
@@ -202,7 +204,157 @@ function BlockedMicStory() {
   );
 }
 
+// ── Funding engine Phase 1: the application kit ─────────────────────────────
+const KIT_NOW = Date.now();
+const kitInDays = (d: number) => new Date(KIT_NOW + d * 86_400_000).toISOString();
+const KIT_EM_DASH = String.fromCharCode(0x2014);
+
+const KIT_FUNDER = {
+  id: 7, name: "PearX", category: "Accelerator (tech wedge)", track: "accelerator", stage: "drafting",
+  appStatus: "preparing", cycle: "W27", deadline: "The Regular Deadline is October 4th at 11:59PM PST.",
+  deadlineAt: kitInDays(6), deadlineSource: "https://pear.vc/pearx-application/", deadlineVerifiedAt: "2026-09-27",
+  link: "https://pear.vc/pearx-application/", priority: "P1",
+};
+
+let kitQuestionId = 100;
+function kitQuestion(over: Record<string, unknown>) {
+  kitQuestionId += 1;
+  return {
+    id: kitQuestionId, pipelineId: 7, programKey: "pearx_w27", cycle: "W27", questionOrder: kitQuestionId - 100,
+    section: "Company", questionText: "", fieldType: "long_text", isRequired: true, charLimit: null, wordLimit: null,
+    answerId: null, answerDraft: null, draftUpdatedAt: null, draftUpdatedBy: null, verified: true, sourceUrl: null,
+    notes: null, createdAt: "2026-09-27T00:00:00Z", updatedAt: "2026-09-27T00:00:00Z", lint: null, ...over,
+  };
+}
+
+const KIT_PACKET = {
+  programKey: "pearx_w27",
+  cycle: "W27",
+  funder: KIT_FUNDER,
+  confirmedNumbers: [],
+  summary: { questions: 8, required: 7, answered: 6, requiredMissing: 1, overLimit: 1, withErrors: 2, withWarnings: 2 },
+  questions: [
+    kitQuestion({ questionText: "Company name", fieldType: "short_text", answerDraft: "ReGen Civics" }),
+    kitQuestion({
+      questionText: "One-line description of the company", fieldType: "short_text", charLimit: 280,
+      answerDraft: "ReGen Civics helps regenerative land projects design structures that hold together, then connects them into a network funders can trust.",
+    }),
+    kitQuestion({
+      section: "Pitch", questionText: "What are you building, and why?", charLimit: 2000,
+      answerDraft: "Land projects fail in known ways: money disputes, founder burnout, unclear decision rights, no path to owning the land. We qualify projects against those patterns, help them design the structures that prevent them, and count every form of capital members bring, from money to time, skills, tools and relationships. Our tools are free and open. We earn fees for structure design and onboarding work.",
+    }),
+    kitQuestion({
+      section: "Pitch", questionText: "What unique insight do you have into this problem?", charLimit: 2000,
+      answerDraft: "We build tools" + KIT_EM_DASH + "fast. Target returns of 8% annually keep members in.",
+    }),
+    kitQuestion({
+      section: "Pitch", questionText: "What traction do you have?", charLimit: 500,
+      answerDraft: "66 land projects have applied across two seasons with no paid marketing. We run a 13-week public incubator cohort this fall.",
+    }),
+    kitQuestion({
+      section: "Founders", questionText: "Tell us about a time you tackled a problem in a novel way.", charLimit: 300,
+      answerDraft: "When our first community fractured over who had contributed what, we stopped arguing about fairness and started counting. We built a ledger that recorded time, skills, tools and relationships beside money, and let the group see it. The arguments stopped once the record was shared, because people could finally see their own contributions counted.",
+    }),
+    kitQuestion({ section: "Founders", questionText: "Founder video (1 minute)", fieldType: "video", notes: "Unlisted YouTube or Loom link." }),
+    kitQuestion({ section: "Other", questionText: "Anything else we should know?", isRequired: false, charLimit: 1000 }),
+  ],
+};
+
+const KIT_PROGRAMS = [
+  {
+    programKey: "500global_b37", cycle: "Batch 37",
+    funder: { ...KIT_FUNDER, id: 6, name: "500 Global", cycle: "Batch 37", deadlineAt: kitInDays(2), stage: "drafting" },
+    summary: { questions: 66, required: 48, answered: 41, requiredMissing: 7, overLimit: 2, withErrors: 3, withWarnings: 9 },
+  },
+  { programKey: "pearx_w27", cycle: "W27", funder: KIT_FUNDER, summary: KIT_PACKET.summary },
+  {
+    programKey: "yc_w27", cycle: "W27",
+    funder: { ...KIT_FUNDER, id: 1, name: "Y Combinator", deadlineAt: kitInDays(36), stage: "qualified", link: "https://apply.ycombinator.com/home" },
+    summary: { questions: 49, required: 0, answered: 0, requiredMissing: 0, overLimit: 0, withErrors: 0, withWarnings: 0 },
+  },
+  {
+    programKey: "emergent_ventures", cycle: "rolling",
+    funder: { ...KIT_FUNDER, id: 9, name: "Emergent Ventures", track: "grant", stage: null, cycle: "rolling", deadlineAt: null },
+    summary: { questions: 23, required: 14, answered: 0, requiredMissing: 14, overLimit: 0, withErrors: 0, withWarnings: 0 },
+  },
+];
+
+function kitAnswer(over: Record<string, unknown>) {
+  return {
+    id: 1, projectId: 0, slug: "", canonicalQuestion: "", tags: null, bodyShort: null, body150: null, body500: null,
+    bodyLong: null, sourceRefs: null, status: "draft", approvedAt: null, approvedBy: null, verifiedAt: null,
+    usedCount: 0, wonCount: 0, notes: null, sortOrder: 0, createdAt: "2026-09-27T00:00:00Z",
+    updatedAt: "2026-09-27T00:00:00Z", lint: {}, ...over,
+  };
+}
+
+const KIT_ANSWERS = {
+  confirmedNumbers: [],
+  answers: [
+    kitAnswer({
+      id: 1, slug: "what-we-do", canonicalQuestion: "What does your company do?", status: "approved", usedCount: 3,
+      bodyShort: "Operating system for regenerative villages",
+      body500: "ReGen Civics is coordination and diligence software for regenerative land projects like ecovillages and community farms. We qualify projects, help them pool the land, labor, expertise and cash they need, and run the governance systems that keep contributors aligned.",
+    }),
+    kitAnswer({
+      id: 2, slug: "traction", canonicalQuestion: "What is your traction?", sortOrder: 30,
+      bodyLong: "66 land projects have applied across two seasons (43 in 2022, 23 since February 2026), with no paid marketing [VERIFY: the definition of applied and both counts].",
+    }),
+    kitAnswer({
+      id: 3, slug: "raise", canonicalQuestion: "How much are you raising and what for?", sortOrder: 90,
+      bodyLong: "[DECIDE] $X on a post-money SAFE to reach [N] paying projects within 18 months.",
+      notes: "Rye sets the ask (plan v1.3 section 2).",
+    }),
+  ],
+};
+
 export const STORIES: Record<string, Story> = {
+  /** Funding engine Phase 1: every program with its deadline and packet counts. */
+  "funding-applications": {
+    title: "/admin/funding, Applications: programs by deadline",
+    setup: () => {
+      mockData["fundingKit.programs"] = KIT_PROGRAMS;
+    },
+    render: () => (
+      <div className="-m-6 bg-[#f0ebe3] p-4 md:p-6">
+        <ApplicationKitPanel />
+      </div>
+    ),
+  },
+
+  /**
+   * One packet with every state worth seeing: a clean answer, one over its
+   * limit, a dash and a G5 phrase, an unconfirmed number, a required video
+   * still empty, and an optional question left blank.
+   */
+  "funding-packet": {
+    title: "/admin/funding, Applications: the PearX W27 packet",
+    setup: () => {
+      mockData["fundingKit.packet"] = KIT_PACKET;
+      mockData["fundingKit.answers"] = KIT_ANSWERS;
+      mockData["fundingKit.draftHistory"] = [];
+    },
+    render: () => (
+      <div className="-m-6 bg-[#f0ebe3] p-4 md:p-6">
+        <PacketView programKey="pearx_w27" onBack={() => undefined} />
+      </div>
+    ),
+  },
+
+  /** The answer bank: an approved answer, and two drafts that cannot be approved yet. */
+  "funding-answer-bank": {
+    title: "/admin/funding, Answer bank",
+    setup: () => {
+      mockData["fundingKit.answers"] = KIT_ANSWERS;
+      mockData["fundingKit.answerHistory"] = [];
+    },
+    render: () => (
+      <div className="-m-6 bg-[#f0ebe3] p-4 md:p-6">
+        <AnswerBankPanel />
+      </div>
+    ),
+  },
+
   /**
    * The first-run quest intro over the bottom nav. Two things to check:
    * nothing scrolls horizontally, and the Next / Skip controls clear the bar.
