@@ -111,12 +111,28 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     ["/connect", "which path calls to you"],
     ["/play", "five minutes or five years"],
     ["/ally", "weaving a support network"],
+    ["/ship/book", "Fleetwood Revolution"],
+    ["/ship/terms", "Voyage Covenant"],
+    ["/ship/guide", "Mindful, Careful, Slow"],
   ])("serves prose on %s", async (path, phrase) => {
     const html = await (await fetch(`${base}${path}`)).text();
     expect(html.toLowerCase()).toContain(phrase.toLowerCase());
     expect(html).toContain('id="__crawler_content__"');
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
   });
+
+  it.each(["/campaigns", "/bounties"])(
+    "serves the %s listing, even with nothing to list",
+    async (path) => {
+      // With no DATABASE_URL these render their empty-state copy. That is the
+      // right assertion here: this test asks whether the route reaches its
+      // builder at all. crawler-lists.test.ts mocks the rows and checks what
+      // a populated listing says.
+      const html = await (await fetch(`${base}${path}`)).text();
+      expect(html).toContain('id="__crawler_content__"');
+      expect(html).toContain('"@type":"ItemList"');
+    },
+  );
 
   it("leaves a route with no authored content empty, so the check can fail", async () => {
     // The known negative. Without one, every assertion above would also pass

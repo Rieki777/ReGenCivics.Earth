@@ -4042,3 +4042,18 @@ export async function getUpcomingEventsSnapshot(limit = 12) {
     .orderBy(asc(schemaTables.events.startTime))
     .limit(limit);
 }
+
+// Read-only fetch for the crawler content injector: the open bounties a
+// non-executing agent can see. Paired with getUpcomingEventsSnapshot; both
+// exist because /bounties and /schedule were empty shells to every AI crawler
+// until 2026-09-28. Open work only, newest first.
+export async function getOpenBountiesSnapshot(limit = 15) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(schemaTables.bounties)
+    .where(eq(schemaTables.bounties.workStatus, "open"))
+    .orderBy(desc(schemaTables.bounties.createdAt))
+    .limit(limit);
+}

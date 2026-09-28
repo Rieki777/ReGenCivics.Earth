@@ -470,6 +470,75 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       </article>
     `,
   },
+
+  // ── The Ship ─────────────────────────────────────────────────────────────
+  // A real, bookable offering, and every sub-page of it was invisible to an
+  // agent. Someone asking an assistant "where can I rent an RV in southern
+  // Oregon" or "is there a sober, plant-based road trip I can book" was being
+  // answered from everything except us.
+  //
+  // The rates below carry their own expiry ("through early April 2027")
+  // exactly as the page states it, so a reader can tell for themselves whether
+  // the number is still current. A price with no condition attached is the
+  // kind of claim that goes stale silently and sends someone at a number that
+  // no longer exists.
+
+  "/ship/book": {
+    html: `
+      <article>
+        <h1>Book a voyage aboard the ReGen Ship</h1>
+        <p>The Ship is a 2006 Fleetwood Revolution, 40 feet, with solar, battery, water and propane systems. Her home anchorage is Ashland, Oregon. Voyages board Monday at 5pm and return the following Monday at 11am, and up to four weeks can be chained for a longer sail.</p>
+        <h2>What it costs</h2>
+        <p>Her full rate is 600 US dollars a night. Through early April 2027 that is 50 percent off, so 300 dollars a night, which is 2,100 dollars for a voyage week against a full rate of 4,200. Plus applicable taxes. Multi-week savings stack on top: 5 percent off two weeks, 10 percent off three, 15 percent off a month.</p>
+        <p>The discount is a trial year, and it is discounted because she is twenty years old and carries her quirks honestly.</p>
+        <h2>The turnover</h2>
+        <p>The Keeper resets her on the Monday turnover between 11am and 5pm, topping up propane and water before the next crew boards. Tanks reset on every turnover, including between chained weeks.</p>
+        <p>Read the <a href="/ship/terms">Voyage Covenant and rental terms</a> before booking: crew size, travel radius, included miles and the clean-vessel rules are all stated there. The <a href="/ship/guide">voyage guide</a> covers what to pack and how she drives.</p>
+      </article>
+    `,
+  },
+
+  "/ship/terms": {
+    html: `
+      <article>
+        <h1>Voyage Covenant and rental terms</h1>
+        <p>Version 1.0, effective 16 July 2026. These terms apply to every voyage aboard the ReGen Ship. The agreement is between the Church of the Regenerative Earth, also doing business as ReGen Civics, and the person who books plus every approved driver and guest aboard.</p>
+        <h2>The voyage at a glance</h2>
+        <ul>
+          <li><strong>Voyage window.</strong> Monday 5pm to Monday 11am. Whole weeks, chain up to four.</li>
+          <li><strong>Travel radius.</strong> 500 miles from Ashland, up to 1,250 miles on a four-week sail. Farther needs written permission first.</li>
+          <li><strong>Miles included.</strong> 1,000 road miles, then 50 cents a mile.</li>
+          <li><strong>Drivers.</strong> 25 or older, licensed, approved on Outdoorsy. Never drive after cannabis.</li>
+          <li><strong>Crew size.</strong> Up to 4 aboard, or 5 when at least 3 are children.</li>
+          <li><strong>Clean vessel.</strong> Meat, alcohol and smoke free inside, the whole voyage, unless agreed otherwise.</li>
+          <li><strong>Pets.</strong> Not allowed as a rule. Exceptions need written approval and a pet fee.</li>
+          <li><strong>Security deposit.</strong> 1,500 US dollars, refundable, held on Outdoorsy and returned after inspection.</li>
+          <li><strong>Late return.</strong> 50 dollars an hour for the first 12 hours, then 600 dollars a day.</li>
+          <li><strong>Her quirks.</strong> Rented as she is. A 2006; the leveling jacks are partly manual.</li>
+        </ul>
+        <p>The box above is the quick read. The full agreement on the page is what governs, and it should be read before sailing. Booking and current rates are at <a href="/ship/book">book a voyage</a>.</p>
+      </article>
+    `,
+  },
+
+  "/ship/guide": {
+    html: `
+      <article>
+        <h1>The voyage guide: everything you need to sail her well</h1>
+        <h2>Before you arrive</h2>
+        <p>Pack light and pack clean. The Ship stocks her own soaps, cleaning materials, linens, towels and cookware, so most of that can stay at home. Bring clothes, a food plan and an open week. Read the water doctrine before packing a single toiletry, because it shapes what can and cannot come aboard.</p>
+        <h2>The two-hour orientation</h2>
+        <p>Every first-time crew starts with a two-hour orientation with the Ship Keeper: a walk of the whole ship, her systems hands-on, and the water doctrine, driving and turnover. Nothing in it is hard. The orientation is how it becomes second nature before you pull away.</p>
+        <h2>Driving her: you are the captain</h2>
+        <p>She is 40 feet long. The ship language exists to break the "just another car" mindset, because that mindset is dangerous in an RV. Wide turns, steer toward the center. The driver must be 25 or older, hold a valid license, be verified before the voyage, and be capable of driving a 40-foot vehicle on the chosen route. Staying on main roads and using the bikes around towns is strongly advised.</p>
+        <p><strong>MCS: Mindful, Careful, Slow.</strong> Mindful is your full mind aware and present. Careful is your heart centered: never take the captain's seat angry, anxious or overwhelmed. Slow is taking it easy, because an accident causes far more traffic than going gently ever will.</p>
+        <p><strong>The cannabis rule, plainly.</strong> She sails Oregon, Washington and California, where the sacrament is legal, and driving after partaking is never okay. You are liable for damages and the insurance deductible. Arrive, set up fully, confirm the Ship will not move again that day, and then enjoy what you enjoy.</p>
+        <h2>Her quirks, honestly</h2>
+        <p>She is twenty-plus years old and has the quirks of any ship her age. One leveling jack currently needs manual operation, and the jacks are a comfort rather than a requirement. Quirks like these are exactly why the trial year is discounted.</p>
+        <p>See the <a href="/ship/terms">Voyage Covenant and rental terms</a> and <a href="/ship/book">open weeks and rates</a>.</p>
+      </article>
+    `,
+  },
 };
 
 export function getStaticPageContent(reqPath: string): CrawlerContent | null {
@@ -1067,8 +1136,159 @@ export async function getScheduleContent(): Promise<CrawlerContent | null> {
   return value;
 }
 
+// ── /campaigns and /bounties: the two list routes ────────────────────────────
+// Built from rows rather than written as prose, for the same reason /schedule
+// is. A hand-written sentence about "active campaigns" goes stale the week a
+// campaign closes, and a stale listing sends someone at something that is over.
+// The rows are already public on the rendered page; this puts them where an
+// agent that does not run JavaScript can read them.
+//
+// Both are deliberately thin. Only what a person needs to decide whether to
+// look further, and a link to the page that holds the rest. No contact
+// details, no internal ids.
+const LIST_CACHE_TTL_MS = 10 * 60 * 1000;
+const listCache = new Map<string, { at: number; value: CrawlerContent | null }>();
+
+async function cachedList(
+  key: string,
+  build: () => Promise<CrawlerContent | null>,
+): Promise<CrawlerContent | null> {
+  const hit = listCache.get(key);
+  if (hit && Date.now() - hit.at < LIST_CACHE_TTL_MS) return hit.value;
+  let value: CrawlerContent | null = null;
+  try {
+    value = await build();
+  } catch {
+    value = null;
+  }
+  listCache.set(key, { at: Date.now(), value });
+  return value;
+}
+
+/** ItemList wrapper, the shape a browsing agent extracts a listing from. */
+function itemList(name: string, url: string, items: object[]): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    url,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item,
+    })),
+  };
+}
+
+export async function getCampaignsListContent(): Promise<CrawlerContent | null> {
+  return cachedList("campaigns", async () => {
+    const rows = await db.listCampaigns("active");
+    const url = `${SITE}/campaigns`;
+
+    const money = (n: unknown, currency: string | null) => {
+      const v = Number(n ?? 0);
+      if (!Number.isFinite(v) || v <= 0) return null;
+      return `${currency || "USD"} ${v.toLocaleString("en-US")}`;
+    };
+
+    const sections = rows
+      .map((c: any) => {
+        const target = money(c.financialTarget, c.currency);
+        const pledged = money(c.pledgedTotal, c.currency);
+        const where = c.location ? ` in ${escapeHtml(c.location)}` : "";
+        // Pledged is stated only alongside the target. A raised figure with
+        // nothing to compare it to reads as bigger or smaller than it is.
+        const progress =
+          target && pledged ? `<p>Pledged so far: ${escapeHtml(pledged)} of ${escapeHtml(target)}.</p>` : target ? `<p>Target: ${escapeHtml(target)}.</p>` : "";
+        return `
+        <section>
+          <h3><a href="${SITE}/campaign/${c.id}">${escapeHtml(c.title ?? c.projectName ?? "Campaign")}</a></h3>
+          <p>${escapeHtml(c.projectName ?? "")}${where}.</p>
+          ${c.description ? textToHtml(String(c.description).slice(0, 600)) : ""}
+          ${progress}
+        </section>`;
+      })
+      .join("\n");
+
+    const lead = rows.length
+      ? `${rows.length} land project ${rows.length === 1 ? "campaign is" : "campaigns are"} open for contributions right now.`
+      : `No campaigns are open for contributions right now. New ones are announced in the newsletter and at the open sessions.`;
+
+    const inner = `
+      <article>
+        <h1>Land project campaigns open for contributions</h1>
+        <p>${lead} Crowd pooling means a campaign accepts land, money, equipment, skills, time and knowledge, not money alone, so there is a way in that does not depend on what you can spend. Each campaign below links to its own page with the full detail.</p>
+        ${sections || ""}
+        <p>How the mechanism works: <a href="${SITE}/crowd-pooling">crowd pooling</a>. To value a non-financial contribution: <a href="${SITE}/calculator">the contribution calculator</a>. Next dated call: <a href="${SITE}/schedule">the schedule</a>.</p>
+      </article>
+    `;
+
+    const jsonld = itemList(
+      "Land project campaigns open for contributions",
+      url,
+      rows.map((c: any) => ({
+        "@type": "Project",
+        name: c.title ?? c.projectName ?? "Campaign",
+        description: c.description ? String(c.description).slice(0, 300) : undefined,
+        url: `${SITE}/campaign/${c.id}`,
+        ...(c.location ? { location: { "@type": "Place", name: c.location } } : {}),
+      })),
+    );
+
+    return { title: "Land project campaigns", bodyHtml: wrapForInjection(inner), jsonld };
+  });
+}
+
+export async function getBountiesListContent(): Promise<CrawlerContent | null> {
+  return cachedList("bounties", async () => {
+    const rows = await db.getOpenBountiesSnapshot(15);
+    const url = `${SITE}/bounties`;
+
+    const sections = rows
+      .map((b: any) => {
+        const tier = b.tier ? `<p>Tier: ${escapeHtml(String(b.tier))}.</p>` : "";
+        return `
+        <section>
+          <h3>${escapeHtml(b.title ?? "Bounty")}</h3>
+          ${b.body ? textToHtml(String(b.body).slice(0, 500)) : ""}
+          ${tier}
+        </section>`;
+      })
+      .join("\n");
+
+    const lead = rows.length
+      ? `${rows.length} ${rows.length === 1 ? "bounty is" : "bounties are"} open for claiming.`
+      : `No bounties are open right now. New ones are posted as the work appears.`;
+
+    const inner = `
+      <article>
+        <h1>Open bounties: paid work in the Infinite Game</h1>
+        <p>${lead} A bounty is a named piece of work the community needs, with a token reward attached. Bounties can be browsed without an account, and most can be done remotely, so this is one of the ways to contribute without relocating.</p>
+        ${sections || ""}
+        <p>How valuation works is published at <a href="${SITE}/game-mechanics">game mechanics</a>. Other ways in that need no relocation: <a href="${SITE}/play">the player paths</a> and <a href="${SITE}/quest">the quest board</a>.</p>
+      </article>
+    `;
+
+    const jsonld = itemList(
+      "Open bounties",
+      url,
+      rows.map((b: any) => ({
+        "@type": "CreativeWork",
+        name: b.title ?? "Bounty",
+        description: b.body ? String(b.body).slice(0, 300) : undefined,
+        url,
+      })),
+    );
+
+    return { title: "Open bounties", bodyHtml: wrapForInjection(inner), jsonld };
+  });
+}
+
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
   if (reqPath === "/schedule") return getScheduleContent();
+  if (reqPath === "/campaigns") return getCampaignsListContent();
+  if (reqPath === "/bounties") return getBountiesListContent();
   if (reqPath === "/learn") return getLearnIndexContent();
   const learnMatch = reqPath.match(/^\/learn\/([a-z0-9-]+)$/);
   if (learnMatch) return getLearnContent(learnMatch[1]);
