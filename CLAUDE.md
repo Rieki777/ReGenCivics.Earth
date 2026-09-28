@@ -46,7 +46,7 @@ Skills under `.claude/skills/` cover process (how to do work). `.ai/docs/` cover
 
 ## What this project is
 
-regen-civics is a platform and an in-real-life game for regenerative land projects and the Regenerative Renaissance, a movement to heal ourselves, our earth, our communities, and our bioregions. We create quests and games that help people heal, and in doing so build new financial, economic, and governance systems that support and network land projects across the movement.
+regen-civics is a platform and an in-real-life game for regenerative land projects and the Regenerative Renaissance, a movement to heal ourselves, our earth, our communities, and our bioregions. We create quests and games that help people heal, and in doing so build new financial, economic, and governance systems that support and network land projects across the movement. The company that builds it is ReGen Civics Labs, a Delaware C-corp (filing in progress; the venture lane's applicant, see `.ai/docs/DOMAIN-LANGUAGE.md`).
 
 The fund side is being designed as the ReGen Network Cooperative: a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. It is not yet a legal entity and it accepts no money. Every surface that describes it reads its sentences from `shared/fund.ts` (`COOP`), and `scripts/check-fund-claims.mjs` enforces that in CI.
 
