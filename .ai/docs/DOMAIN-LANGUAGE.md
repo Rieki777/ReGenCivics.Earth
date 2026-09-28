@@ -367,10 +367,22 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 ## Funding engine (added 2026-09-27)
 
-**G5** (gate 5). The upside-language gate from the funding engine plan. Public copy never promises or prices upside: no returns, ROI, IRR, yield, appreciation, exchange listings, secondary markets, "index fund", "direct investment", "invest in land projects through us", accredited-investor gates, fund terms (carry, preferred return, management fee, LP, NAV, tender offers) or distributions to holders. Enforced on every public surface by `scripts/check-fund-claims.mjs` in CI; drafts that touch these topics route to Rye and are logged for counsel.
+**G5** (gate 5). The upside-language gate from the funding engine plan. Public copy never promises or prices upside: no returns, ROI, IRR, yield, appreciation, exchange listings, secondary markets, "index fund", "direct investment", "invest in land projects through us", accredited-investor gates, fund terms (carry, preferred return, management fee, LP, NAV, tender offers) or distributions to holders. The rules live in one file, `shared/g5Rules.mjs`, read by the site gate (`scripts/check-fund-claims.mjs`, blocking in CI), the application draft linter and the admin packet view, so a phrase banned on the site is banned in every draft. Drafts that touch these topics route to Rye and are logged for counsel.
 
 **Metrics** (canonical numbers). The `metrics` table: the one place every number ReGen Civics states about itself lives, with a definition, a source and an as-of date. Live counts recompute from the database (`server/funding/metrics.ts`); others are entered by hand. Nothing reaches a public page until Rye confirms it and marks it public. Never type a traction number into a page.
 
 **Cooperative interest**. A "tell us you're interested" record (`coop_interest`) from the /loi form: who someone is, what forms of capital they might bring, and consent to be contacted. No amounts, no pledges. It is never a membership and never a contribution (two records, two acts).
 
 **Positioning kernel**. The private grounding the application engine reads before a funder row. Lives only in the `funding_prompts` table (versioned, edited in /admin/funding), never in the repo.
+
+**Track** (funding). What kind of money a funder row is: grant, accelerator, investor, public goods, fiscal sponsor, credits or network (`shared/fundingStages.ts`). Not a Game track or a season track.
+
+**Stage** (funding). Where we are with a funder, from the list for its track: a grant has an LOI and reporting, an accelerator an interview and a reapply date, an investor meetings and diligence. The server refuses a stage its track does not have and sets the coarse `appStatus` from the stage.
+
+**Program** (application kit). One application cycle of one funder, keyed like `pearx_w27` or `500global_b37`: its questions, their portal limits, and our draft for each. A funder row can hold several programs over the years.
+
+**Packet**. A program's questions with every draft, its live count against the portal limit and its lint, in /admin/funding (Applications). Rye reads and fixes it there, and copies each answer into the portal himself. Nothing in the packet submits anything.
+
+**Answer bank**. The canonical answers every application draws from, each in up to four lengths (about 50, 150 and 500 characters, and long). Draft until Rye approves; approval is refused while an answer carries a G5 phrase, a dash or a placeholder, and editing an approved answer sends it back to draft. `projectId` 0 is ReGen Civics; a land project's own answers carry its application id.
+
+**Placeholder** (in a draft). A marker that a fact or choice is still open: `[VERIFY ...]`, `[DECIDE]`, `[TODO]`, `$X`, `[N]`. The draft linter fails an answer that still carries one, so it can never reach a portal.
