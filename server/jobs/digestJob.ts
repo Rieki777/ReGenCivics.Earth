@@ -12,19 +12,23 @@ import {
   HOLOS_REGEN_CIVICS_URL,
 } from "../../shared/communityLinks";
 import { ENV } from "../_core/env";
+import { COOP } from "../../shared/fund";
 
 const DIGEST_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 // Extra guard: if a digest was sent within the last 2 hours, treat it as a duplicate
 // (covers Railway redeploy race conditions where two instances both start up)
 const DUPLICATE_GUARD_MS = 2 * 60 * 60 * 1000; // 2 hours
 
-// Curated blog posts for fallback sections — rotated by week so each digest
+// Curated blog posts for fallback sections, rotated by week so each digest
 // surfaces different content. Keep this list in sync with blogPosts.ts.
-const BLOG_HIGHLIGHTS = [
+// `path` overrides the /blog/<slug> link. The two investment posts
+// (getting-investment-through-regen-civics, what-makes-land-project-good-investment)
+// are being rewritten, so until then the digest sends readers to the
+// cooperative page instead, as one entry so a single digest never lists it twice.
+const BLOG_HIGHLIGHTS: Array<{ title: string; slug: string; path?: string }> = [
   { title: "What Makes ReGen Civics Different: 7 Unique Features", slug: "what-makes-regen-civics-different" },
   { title: "Introducing Games and Quests: Play Your Way to Regeneration", slug: "introducing-games-and-quests" },
-  { title: "Getting Investment Into Your Land Project Through ReGen Civics", slug: "getting-investment-through-regen-civics" },
-  { title: "What Makes a Land Project a Good Investment: The Four Pillars", slug: "what-makes-land-project-good-investment" },
+  { title: `The ${COOP.name}: where the design stands`, slug: "cooperative", path: "/fund" },
   { title: "How to Apply for Season 2: Complete Application Guide", slug: "how-to-apply-for-season-2" },
   { title: "The Great American Chestnut: A Story of Abundance Lost and Hope Restored", slug: "great-american-chestnut-abundance" },
   { title: "What If Organizations Were Actually Designed to Meet Human Needs?", slug: "what-if-organizations-met-needs" },
@@ -39,7 +43,7 @@ const SITE_HIGHLIGHTS = [
   { label: "The Regenerative Land Map", url: "/map", desc: "Explore land projects from across the globe in an interactive map." },
   { label: "The Bionomics Page", url: "/bionomics", desc: "The economic principles behind how regenerative land projects work." },
   { label: "The Tokenomics Page", url: "/tokenomics", desc: "How $ReGen and RGVoice tokens flow through the system." },
-  { label: "The Fund Page", url: "/fund", desc: "The ReGen Civics Fund, which is in formation, and how to take part." },
+  { label: "The Cooperative Page", url: "/fund", desc: COOP.statementShort },
   { label: "The Games and Quests Page", url: "/play", desc: "Complete real-world quests, earn tokens, and contribute to regenerative projects." },
   { label: "The Apply Page", url: "/apply", desc: "Apply anytime to bring your land project into the next season's incubator." },
   { label: "Feature Suggestions", url: "/features", desc: "Suggest and vote on new features. Your input shapes what gets built." },
@@ -58,7 +62,7 @@ function rotatePick<T>(arr: T[], n: number, weekOffset: number): T[] {
   return result;
 }
 
-/** ISO week number — used to rotate content so each digest is fresh. */
+/** ISO week number, used to rotate content so each digest is fresh. */
 function isoWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -74,13 +78,13 @@ export async function runDigestJob() {
       // Hard duplicate guard: skip if sent in the last 2 hours (Railway restart protection)
       if (age < DUPLICATE_GUARD_MS) {
         const minsAgo = Math.round(age / 60000);
-        console.log(`[DigestJob] Skipping — last digest was ${minsAgo}m ago (duplicate guard).`);
+        console.log(`[DigestJob] Skipping: last digest was ${minsAgo}m ago (duplicate guard).`);
         return;
       }
       // Weekly interval guard
       if (age < DIGEST_INTERVAL_MS) {
         const hoursAgo = Math.round(age / (60 * 60 * 1000));
-        console.log(`[DigestJob] Skipping — last digest was ${hoursAgo}h ago (< 7 days).`);
+        console.log(`[DigestJob] Skipping: last digest was ${hoursAgo}h ago (< 7 days).`);
         return;
       }
     }
@@ -94,7 +98,7 @@ export async function runDigestJob() {
     let digestContent = "";
 
     if (threads.length >= 3) {
-      // Enough live activity — generate LLM digest from forum threads
+      // Enough live activity: generate LLM digest from forum threads
       const threadData = threads
         .map(t => `Title: ${t.title}\nContent: ${t.content.slice(0, 300)}\nReplies: ${t.replyCount}`)
         .join("\n\n---\n\n");
@@ -106,7 +110,7 @@ export async function runDigestJob() {
     }
 
     if (!digestContent) {
-      digestContent = "(Blog edition — see email for featured reading.)";
+      digestContent = "(Blog edition. See the email for featured reading.)";
     }
 
     await db.saveDigest({
@@ -181,10 +185,10 @@ async function sendDigestEmails(
           </a>
         </div>`;
     } else {
-      // Not enough live forum activity — fall back to blog suggestions
+      // Not enough live forum activity: fall back to blog suggestions
       const blogPicks = rotatePick(BLOG_HIGHLIGHTS, 3, weekNum);
       const blogRows = blogPicks.map(b => {
-        const url = `${APP_BASE_URL}/blog/${b.slug}?utm_source=email&utm_medium=digest&utm_campaign=weekly`;
+        const url = `${APP_BASE_URL}${b.path ?? `/blog/${b.slug}`}?utm_source=email&utm_medium=digest&utm_campaign=weekly`;
         return `
           <tr>
             <td style="padding: 14px 0; border-bottom: 1px solid #e8e4de;">

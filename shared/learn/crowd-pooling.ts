@@ -2,16 +2,16 @@ import type { LearnArticle } from "../learnContent";
 
 export const crowdPooling: LearnArticle = {
   slug: "crowd-pooling",
-  title: "Crowd pooling: community investment in land, beyond cash",
-  metaTitle: "Crowd Pooling: Community Investment in Land Beyond Cash",
+  title: "Crowd pooling: everything a land project needs, beyond cash",
+  metaTitle: "Crowd Pooling: Everything a Land Project Needs, Beyond Cash",
   metaDescription:
     "Crowd pooling is crowdfunding for hours, tools, materials, equipment loans, skills, and knowledge. How the ReGen Civics needs registry, claim lifecycle, and nine-capital tracking work, and where the money actually goes.",
   answer:
-    "Crowd pooling is crowdfunding for everything money is not: hours, tools, materials, equipment loans, skills, and knowledge. A land project lists exact needs with counts and deadlines, people claim the pieces they can bring, and nothing counts until it is delivered. ReGen Civics tracks that capital and routes cash to partners.",
+    "Crowd pooling is crowdfunding for everything money is not: hours, tools, materials, equipment loans, skills, and knowledge. A land project lists exact needs with counts and deadlines, people claim the pieces they can bring, and nothing counts until it is delivered. Money goes through outside partners each project holds, never through ReGen Civics.",
   author: "Rye (Rieki Cordon)",
   authorTitle: "Founder, ReGen Civics",
   published: "2026-08-01",
-  updated: "2026-08-01",
+  updated: "2026-09-27",
   sections: [
     {
       heading: "A barn raising with a public ledger",
@@ -21,7 +21,7 @@ export const crowdPooling: LearnArticle = {
       ],
     },
     {
-      heading: "A need is a slot, not a wish",
+      heading: "Every need is a slot with a count and a date",
       paragraphs: [
         "Requests without a count, a deadline, and a state quietly die. That is the failure mode of every volunteer board and mutual aid thread. So on a campaign, every need says exactly what, how many, and by when.",
       ],
@@ -55,7 +55,7 @@ export const crowdPooling: LearnArticle = {
           [
             "Thanked",
             "The steward closes the loop with a note or a photo of the contribution in use",
-            "Required, not optional. It is the single strongest driver of people coming back",
+            "Always required. It is the single strongest driver of people coming back",
           ],
         ],
         source: "ReGen Civics crowd pooling platform, needs registry and claim lifecycle",
@@ -66,7 +66,7 @@ export const crowdPooling: LearnArticle = {
       heading: "Nothing of value moves on a promise",
       paragraphs: [
         "Delivery is the moment that counts. A pledge earns nobody anything, moves no solid progress bar, and creates no obligation. Claims that do not land simply expire and the slot reopens for someone else.",
-        "This is the rule that keeps the ledger honest, and it is why a crowd pooling page can be read as a factual record of what a community actually built rather than as a record of what it meant to.",
+        "This is the rule that keeps the ledger honest, and it is why a crowd pooling page can be read as a factual record of what a community actually built.",
       ],
     },
     {
@@ -85,8 +85,9 @@ export const crowdPooling: LearnArticle = {
     {
       heading: "Where the money goes, and why we never touch it",
       paragraphs: [
+        "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.",
         "We do not process payments, hold funds, or take a cut. Financial needs on a campaign are links to partners who already run those rails well.",
-        "Ma Earth takes donations and matches them with grants from a shared pool, weighted so that many small donors multiply the match more than a few large ones do. GoSteward arranges loans for established regenerative businesses, where investors fund the loan and earn a return, and helps projects design a full capital stack across grants, loans, equity, and community support.",
+        "Ma Earth takes donations and matches them with grants from a shared pool, weighted so that many small donors multiply the match more than a few large ones do. GoSteward arranges loans for established regenerative businesses, and each loan follows its lender's own terms. GoSteward also helps projects plan a full capital stack across grants, loans, and community support.",
         "A campaign page reads live totals from both, so the whole capital stack sits on one page: given in kind through us, donated and matched through Ma Earth, loaned through GoSteward. That combined view does not exist anywhere else that we know of.",
       ],
     },
@@ -119,7 +120,7 @@ export const crowdPooling: LearnArticle = {
     {
       question: "What is crowd pooling?",
       answer:
-        "Pooling everything a project needs, not only money. A land project lists exact needs with counts and deadlines, covering hours, roles, tools, equipment loans, materials, and knowledge. People claim the pieces they can bring, and each contribution is tracked from pledge through delivery to a thank-you.",
+        "Pooling everything a project needs, money included. A land project lists exact needs with counts and deadlines, covering hours, roles, tools, equipment loans, materials, and knowledge. People claim the pieces they can bring, and each contribution is tracked from pledge through delivery to a thank-you.",
     },
     {
       question: "How is crowd pooling different from crowdfunding?",
@@ -142,9 +143,9 @@ export const crowdPooling: LearnArticle = {
         "The claim expires and the slot reopens automatically for someone else. No score, no capital, and no record of contribution is created, because nothing of value moves on a promise. Stewards get a weekly digest of unfilled needs and expiring claims so nothing sits silently.",
     },
     {
-      question: "Can a project raise actual investment through crowd pooling?",
+      question: "Can a project raise money through crowd pooling?",
       answer:
-        "Investment runs through the fund and through partner platforms, not through the pooling registry. A well-run campaign is often what makes a project investable, because it demonstrates a community that shows up. Start at [the fund page](/fund) for the investment side.",
+        "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.",
     },
   ],
   nextSteps: [
@@ -158,7 +159,7 @@ export const crowdPooling: LearnArticle = {
       label: "Apply to the incubator",
       href: "/apply",
       blurb:
-        "Campaigns grow out of incubator applications. Season 2 starts September 2026.",
+        "Campaigns grow out of incubator applications. Season 2 began in September 2026.",
     },
   ],
   related: [

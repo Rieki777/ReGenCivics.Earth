@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
-  Leaf, Users, Building2, TrendingUp, Home, Briefcase, Sparkles,
+  Leaf, Users, Building2, Home, Briefcase, Sparkles,
   ArrowRight, ArrowLeft, Check, Loader2, Mail, Globe, Heart,
   TreePine, Handshake, Rocket, Star, MapPin
 } from "lucide-react";
@@ -24,6 +24,7 @@ import { PageWrapper } from "@/components/PageWrapper";
 import { FormCompanion } from "@/components/companion";
 import { markNewsletterSubscribed } from "@/utils/newsletter";
 import { cdnImg } from "@/lib/utils";
+import { COOP } from "@shared/fund";
 
 // Path types matching the database enum
 type PathType = "land_partner" | "create_with_regens" | "alliance" | "finance" | "live" | "role" | "something_else";
@@ -61,11 +62,13 @@ const paths = [
     iconColor: "text-[#1a472a]",
   },
   {
+    // The id stays "finance" (database enum); the path now leads to the
+    // cooperative interest form (2026-09-27, FUNDING_ENGINE_PLAN v1.2).
     id: "finance" as PathType,
-    title: "Finance the Renaissance",
-    subtitle: "Invest",
-    description: "I represent a Fund/Institution interested in Systemic ReGeneration",
-    icon: TrendingUp,
+    title: "The Cooperative",
+    subtitle: "Tell us you're interested",
+    description: `I, or an organization I represent, want to help design the ${COOP.name}`,
+    icon: TreePine,
     color: "from-[#d4a574] to-[#ffd700]",
     iconBg: "bg-[#ffd700]",
     iconColor: "text-[#1a472a]",
@@ -136,19 +139,6 @@ const landProjects = [
   { id: "other", name: "OTHER - Specify below", location: "", size: "", focus: "" },
 ];
 
-// Project progress checkboxes
-const projectProgressOptions = [
-  "Team of 3+ committed core members",
-  "Land under a structure with team having 100% authority",
-  "Vision, Mission, Purpose, Values, etc clearly defined",
-  "Governance, legal and economic system designed",
-  "3+ Families living on the land",
-  "Producing 50%+ of own food",
-  "Producing 50%+ own utilities",
-  "Masterplan completed",
-  "$1M+ USD invested",
-];
-
 // Role archetypes
 const roleArchetypes = [
   { id: "builder", name: "Builder", icon: "🔨", description: "Creates tools, systems, and infrastructure" },
@@ -162,9 +152,9 @@ const roleArchetypes = [
   { id: "other", name: "Other", icon: "✨", description: "A unique archetype" },
 ];
 
-// 9 Forms of Capital (based on regenerative economics)
+// 9 Forms of Capital, matching shared/capitals.ts CAPITAL_TYPES
 const formsOfCapital = [
-  { id: "financial", name: "Financial Capital", icon: "💰", description: "Money, investments, savings" },
+  { id: "financial", name: "Financial Capital", icon: "💰", description: "Money, savings, credit" },
   { id: "material", name: "Material Capital", icon: "🏗️", description: "Physical resources, tools, equipment" },
   { id: "living", name: "Living Capital", icon: "🌱", description: "Land, ecosystems, biodiversity" },
   { id: "intellectual", name: "Intellectual Capital", icon: "🧠", description: "Knowledge, ideas, expertise" },
@@ -172,7 +162,7 @@ const formsOfCapital = [
   { id: "social", name: "Social Capital", icon: "🤝", description: "Relationships, networks, trust" },
   { id: "cultural", name: "Cultural Capital", icon: "🎭", description: "Traditions, art, shared practices" },
   { id: "spiritual", name: "Spiritual Capital", icon: "✨", description: "Purpose, meaning, connection" },
-  { id: "time", name: "Time Capital", icon: "⏰", description: "Hours, availability, dedication" },
+  { id: "health", name: "Health Capital", icon: "💚", description: "Vitality, movement, rest, care" },
 ];
 
 // Combined Organisation Role and Support options (merged, no duplicates)
@@ -182,7 +172,7 @@ const orgRoleAndSupportOptions = [
   { id: "Infrastructure", name: "Infrastructure", icon: "🏗️", description: "Physical systems, buildings, utilities" },
   { id: "Nourishment", name: "Nourishment", icon: "🍎", description: "Food systems, agriculture, nutrition" },
   { id: "Legal", name: "Legal", icon: "⚖️", description: "Legal structures, land trusts, compliance" },
-  { id: "Funding", name: "Funding", icon: "💰", description: "Grants, flow funding, investment" },
+  { id: "Funding", name: "Funding", icon: "💰", description: "Grants, flow funding, lending" },
   { id: "Growth/Media", name: "Growth/Media", icon: "📢", description: "Marketing, communications, storytelling" },
   { id: "Events", name: "Events", icon: "🎪", description: "Festivals, gatherings, retreats" },
   { id: "Education", name: "Education", icon: "📚", description: "Training, learning, knowledge sharing" },
@@ -351,9 +341,9 @@ export default function Connect() {
   
   const handlePathSelect = (pathId: PathType) => {
     setSelectedPath(pathId);
-    // For finance path, redirect to investor form
+    // The finance path goes to the cooperative interest form
     if (pathId === "finance") {
-      window.location.href = "/investor";
+      window.location.href = "/loi";
       return;
     }
     // For land_partner, redirect to full application

@@ -42,6 +42,7 @@ import { SocialLinks } from "@/components/SocialLinks";
 import { SEO } from "@/components/SEO";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { cdnImg } from "@/lib/utils";
+import { COOP } from "@shared/fund";
 
 function CollapsibleSection({
   title,
@@ -107,7 +108,7 @@ const allianceCategories = [
   {
     icon: Target,
     title: "Financial Services",
-    desc: "Impact investing, community currencies, financial modeling, accounting",
+    desc: "Community finance, community currencies, financial modeling, accounting",
   },
   {
     icon: Lightbulb,
@@ -202,9 +203,8 @@ export default function Ally() {
               className="text-lg md:text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed max-w-3xl mx-auto text-shadow-subtle safe-prose"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              Your organization already does important work. Together, we can do what none of us
-              can do alone. Join a growing alliance weaving a support network for regenerative land
-              projects worldwide.
+              Your organization already does important work. Join a growing alliance weaving a
+              support network for regenerative land projects worldwide.
             </p>
           </AnimatedSection>
 
@@ -260,8 +260,8 @@ export default function Ally() {
               <CollapsibleSection title="Amplify Your Impact" icon={Zap} defaultOpen={true}>
                 <p>
                   As part of the ReGen Civics Alliance, your work reaches more projects, more
-                  communities, and more land. Instead of searching for clients one by one, you gain
-                  access to a pipeline of regenerative land projects that need exactly what you offer.
+                  communities, and more land. You gain access to a pipeline of regenerative land
+                  projects that need exactly what you offer.
                 </p>
               </CollapsibleSection>
             </AnimatedSection>
@@ -280,9 +280,10 @@ export default function Ally() {
             <AnimatedSection animation="slide-up" delay={300}>
               <CollapsibleSection title="Fundraise Together" icon={Target}>
                 <p>
-                  Through the alliance, we pursue collaborative funding opportunities, pool resources
-                  for shared infrastructure, and create collective impact reports that attract larger
-                  funders. Your fundraising capacity grows because you are part of something bigger.
+                  Through the alliance, we pursue collaborative funding opportunities such as joint
+                  grant applications, pool resources for shared infrastructure, and write collective
+                  impact reports that larger funders can read. A shared story reaches funders that
+                  one organization alone would miss.
                 </p>
               </CollapsibleSection>
             </AnimatedSection>
@@ -301,8 +302,8 @@ export default function Ally() {
               <CollapsibleSection title="Governance and Voice" icon={Globe}>
                 <p>
                   Alliance partners have a voice in how ReGen Civics evolves. Participate in
-                  governance decisions, shape the direction of the fund, influence which projects get
-                  supported, and help design the systems that serve the broader movement.
+                  governance decisions, shape the direction of the alliance, influence which projects
+                  get supported, and help design the systems that serve the broader movement.
                 </p>
               </CollapsibleSection>
             </AnimatedSection>
@@ -385,8 +386,8 @@ export default function Ally() {
               },
               {
                 step: "04",
-                title: "Equity, Service and/or Token Swap",
-                desc: "Swap products, services, equity and/or tokens with ReGen Civics so that you're co-invested with everyone else in the network. Every alliance organisation is invested in ReGen Civics, which is invested in every alliance organisation and land project. This way we tie all our interests together and create a single vehicle to fundraise for us all.",
+                title: "Service and/or Token Swap",
+                desc: `Swap products, services and/or tokens with ReGen Civics, so your organization, the land projects and the other alliance organizations stay tied to one another. We design each swap together with the organization. ${COOP.tokensNote}`,
                 icon: Network,
               },
               {

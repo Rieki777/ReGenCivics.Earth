@@ -47,7 +47,7 @@ export function useContextualCTA({ user, userPath }: UseContextualCTAParams): Ct
     // Check if LOI submitted - if no applications with type containing "loi" or "investor"
     const hasLoi = myApps?.some((a: any) => a.type === "loi" || a.type === "investor");
     if (!hasLoi) {
-      return { path: "/loi", icon: "PenLine", label: "Submit LOI" };
+      return { path: "/loi", icon: "PenLine", label: "Co-op interest" };
     }
   }
 

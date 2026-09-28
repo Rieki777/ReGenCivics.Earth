@@ -11,7 +11,7 @@ export const startACommunityOnYourLand: LearnArticle = {
   author: "Rye (Rieki Cordon)",
   authorTitle: "Founder, ReGen Civics",
   published: "2026-08-01",
-  updated: "2026-08-01",
+  updated: "2026-09-27",
   sections: [
     {
       heading: "The six decisions that come before anything else",
@@ -73,7 +73,7 @@ export const startACommunityOnYourLand: LearnArticle = {
       },
     },
     {
-      heading: "Start with a season, not a settlement",
+      heading: "Start with a season before a settlement",
       paragraphs: [
         "The most common expensive mistake is inviting people to move in before anyone has worked together. Housing is the biggest commitment in the whole arrangement and it is the first one people reach for.",
         "Run a season instead. Pick one real project on the land with a deadline: a food forest going in before the rains, a water system, a barn, a market garden. Invite eight to fifteen people to commit to that one thing for three months. You will learn who follows through, who disappears when it rains, and who quietly becomes the person everyone asks. Those are your founding members, and now you know it from evidence.",
@@ -81,7 +81,7 @@ export const startACommunityOnYourLand: LearnArticle = {
       ],
     },
     {
-      heading: "Money comes after structure, and it is not only cash",
+      heading: "Money comes after structure, and cash is only part of it",
       paragraphs: [
         "Once title and membership are settled, funding gets much simpler, because a lender, a grantor, or a member buying in can all see what they are joining. Before that, they cannot, and most will pass.",
         "The other half of the money question is that most of what a land project needs was never money. It is hours, tools, a tractor for a weekend, a survey, an excavator operator, plants, lumber, a person who knows septic. Communities that only count cash tend to conclude they are broke while standing in a valley full of people who would help.",
@@ -111,8 +111,8 @@ export const startACommunityOnYourLand: LearnArticle = {
     {
       heading: "What ReGen Civics does with landowners",
       paragraphs: [
-        "We are a fund and a game for regenerative land projects. Land stewards come through our 13-week incubator to build governance, design how value moves through the project, and prepare for funding. Projects keep full ownership. We support and we invest, we do not take your land.",
-        "As of mid-2026 the network holds 42 land projects across 8 bioregional hubs, and the people doing this work are reachable in [the community forum](/community) without applying to anything.",
+        "ReGen Civics builds the tools and runs the game land projects use today. Land stewards come through our 13-week incubator to build governance, design how value moves through the project, and get ready to crowdpool with their cohort. Projects keep full ownership of their land.",
+        "The people doing this work are reachable in [the community forum](/community) without applying to anything.",
       ],
     },
   ],
@@ -140,7 +140,7 @@ export const startACommunityOnYourLand: LearnArticle = {
     {
       question: "How long before people can live on the land?",
       answer:
-        "Legally, that depends on your county's rules for dwellings, septic, and occupancy, and those rules vary enormously. Practically, plan on a year between first conversation and first residency, and use that year for a season project and the written agreements rather than for waiting.",
+        "Legally, that depends on your county's rules for dwellings, septic, and occupancy, and those rules vary enormously. Practically, plan on a year between first conversation and first residency, and use that year for a season project and the written agreements.",
     },
     {
       question: "What is the most common reason these fail?",
@@ -153,13 +153,13 @@ export const startACommunityOnYourLand: LearnArticle = {
       label: "Apply to the incubator",
       href: "/apply",
       blurb:
-        "13 weeks with a cohort of land projects, building governance, economic design, and a path to funding. Season 2 starts September 2026.",
+        "13 weeks with a cohort of land projects, building governance, economic design, and a crowdpooling campaign. Season 2 began in September 2026.",
     },
     {
-      label: "Read how the fund works",
+      label: "Read about the cooperative",
       href: "/fund",
       blurb:
-        "How capital reaches land projects, what we screen for, and what investors receive.",
+        "Where the member-owned cooperative we are designing with land projects, future members and counsel stands today.",
     },
   ],
   related: [

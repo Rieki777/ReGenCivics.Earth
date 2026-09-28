@@ -141,11 +141,11 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     pattern: "Spring",
     headline: "We spring to life.",
     summary:
-      "The designs are done, so we open the doors. Each project launches its crowdpool and asks for everything it needs to come alive: hands, roles, tools, materials, and money. We talk with investors, welcome people into roles, and receive the energy and resources that flow in.",
+      "The designs are done, so we open the doors. Each project launches its crowdpool and asks for everything it needs to come alive: hands, roles, tools, materials, and money. We talk with funders, welcome people into roles, and receive the energy and resources that flow in.",
     happens: [
       "The cohort and every ready community project launch their crowdpools together",
       "People claim roles, lend tools, and pledge time and materials",
-      "We talk with investors and gather Letters of Intent for the Fund",
+      "We talk with funders, and people tell us they're interested in the cooperative taking shape",
       "Stories go out wide so the right people find each project",
     ],
     flow: "Outward",
@@ -158,7 +158,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     play: [
       { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
       { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: "/crowd-pooling#ready", label: "What ready means" },
-      { who: "Investors", what: "Tell us what you'd back with a non-binding Letter of Intent for the Fund.", href: "/loi", label: "Send a Letter of Intent" },
+      { who: "Funders and future members", what: "Tell us you're interested in the cooperative taking shape. No money and no commitment.", href: "/loi", label: "Tell us you're interested" },
     ],
     cta: { label: "How crowdpooling works", href: "/crowd-pooling" },
   },

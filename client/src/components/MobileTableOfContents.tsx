@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { ChevronUp, Compass, X, Calendar, FileText } from 'lucide-react';
+import { ChevronUp, Compass, X } from 'lucide-react';
 import { useThrottledScroll } from '@/hooks/useThrottledScroll';
 
 export interface TocSection {
@@ -14,34 +14,18 @@ export interface TocAction {
   external?: boolean;
 }
 
-// Default sections for the Opportunity page (backward compat)
-const OPPORTUNITY_SECTIONS: TocSection[] = [
-  { id: 'what-is-alliance', title: 'What Is The Alliance?' },
-  { id: 'fund-snapshot', title: 'Fund Snapshot' },
-  { id: 'governance', title: 'Why On-Chain Governance?' },
-  { id: 'carried-interest', title: 'How Carried Interest Works' },
-  { id: 'fund-structure', title: 'Fund Structure' },
-  { id: 'opportunity', title: 'The Opportunity' },
-  { id: 'investment-thesis', title: 'Investment Thesis' },
-  { id: 'risk-factors', title: 'What Could Go Wrong?' },
-  { id: 'impact', title: 'Impact Framework' },
-  { id: 'strategy', title: 'Investment Strategy' },
-  { id: 'team', title: 'Team & Operating Model' },
-  { id: 'competitive', title: 'Competitive Positioning' },
-  { id: 'portfolio', title: 'Portfolio Overview' },
-  { id: 'is-right', title: 'Is This Right For You?' },
-  { id: 'investment-process', title: 'Investment Process' },
-  { id: 'faq', title: 'Frequently Asked Questions' },
-  { id: 'vision-2040', title: 'The Vision: 2040' },
-];
-
 interface MobileTableOfContentsProps {
-  sections?: TocSection[];
+  /**
+   * The sections to list, in page order. Required: every page passes its own.
+   * Until 2026-09-27 this fell back to a hardcoded list of the old fund page's
+   * sections, so a page that forgot it silently showed another page's contents.
+   */
+  sections: TocSection[];
   fallbackTitle?: string;
   actions?: TocAction[];
 }
 
-export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbackTitle = 'Sections', actions }: MobileTableOfContentsProps) {
+export function MobileTableOfContents({ sections, fallbackTitle = 'Sections', actions }: MobileTableOfContentsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string>('');
 
@@ -78,8 +62,9 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
     <>
       {/* Sticky Current Section Pill - Mobile Only.
           Actions stack below the Sections pill on their own row so a
-          page-level floating CTA (e.g. Submit LOI on /opportunity)
-          can't collide with the pill or get cut off at the right edge. */}
+          page-level floating CTA (e.g. "Tell us you're interested" on
+          /opportunity) can't collide with the pill or get cut off at the
+          right edge. */}
       <div
         className="fixed left-0 right-0 z-40 md:hidden bg-[#0d2818]/95 backdrop-blur-sm border-b border-[#7dd87d]/20"
         style={{ top: "calc(env(safe-area-inset-top, 0px) + var(--top-nav-height, 56px))" }}
@@ -133,9 +118,10 @@ export function MobileTableOfContents({ sections = OPPORTUNITY_SECTIONS, fallbac
               <h2 className="text-lg font-bold text-white">Jump to Section</h2>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                aria-label="Close"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-white/10 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-5 h-5 text-white" aria-hidden="true" />
               </button>
             </div>
 

@@ -351,10 +351,19 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                 Compensation
               </h4>
               <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                {/* Cooperative (kind "fund") roles carry "Set with counsel" as
+                    their award (Phase 0, 2026-09-27): show it whole, with no
+                    token or per-season suffix, since no award is set. */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#7dd87d] font-bold text-lg">{role.tokenAward.split(" ")[0]}</span>
-                    <span className="text-white/70 text-sm">{role.kind === "fund" ? "$RCivics" : "$ReGen"} / season</span>
+                    {role.kind === "fund" ? (
+                      <span className="text-white/85 text-sm font-semibold">{role.tokenAward}</span>
+                    ) : (
+                      <>
+                        <span className="text-[#7dd87d] font-bold text-lg">{role.tokenAward.split(" ")[0]}</span>
+                        <span className="text-white/70 text-sm">$ReGen / season</span>
+                      </>
+                    )}
                   </div>
                   <span className="bg-[#7dd87d]/20 text-[#7dd87d] text-xs font-semibold px-2 py-1 rounded-full">
                     Band {role.band}
@@ -362,7 +371,7 @@ export function RolePortalCard({ role }: { role: GameRole }) {
                 </div>
                 <div className="flex items-center justify-between text-xs text-white/65">
                   <span>~{role.hoursPerWeek} hrs/week</span>
-                  <span>Up to {role.maxTokenAward.split(" ")[0]} with Seed + Harvest</span>
+                  {role.kind !== "fund" && <span>Up to {role.maxTokenAward.split(" ")[0]} with Seed + Harvest</span>}
                 </div>
               </div>
             </div>

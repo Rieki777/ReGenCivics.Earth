@@ -71,8 +71,8 @@ export default function Transparency() {
           <p className="eyebrow center">Governance</p>
           <h2 className="center">Governed by the people</h2>
           <p className="lead center">
-            This church is not about a founding council. It belongs to the people who gather in it. It
-            holds no ruling class and no unilateral authority. Its governance and powers rest with the
+            This church belongs to the people who gather in it. It holds no ruling class and no
+            unilateral authority. Its governance and powers rest with the
             community, exercised through the shared, transparent tools at ReGen Civics and Hypha.
           </p>
           <div className="grid grid-3 reveal" style={{ marginTop: 32 }}>

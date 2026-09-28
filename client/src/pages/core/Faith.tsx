@@ -178,7 +178,7 @@ export default function Faith() {
           </div>
           <p className="lead center" style={{ marginTop: 26 }}>
             These eight values, drawn from the SEEDS Constitution we adopt as our constitutional home,
-            are the navigational compass of the church. They shape every gathering, every song, and
+            are the compass of the church. They shape every gathering, every song, and
             every quest.
           </p>
         </div>

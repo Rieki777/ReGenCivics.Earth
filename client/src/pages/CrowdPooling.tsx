@@ -102,7 +102,7 @@ export default function CrowdPooling() {
             </p>
             <p className="mt-3 text-[#1a472a]/75 text-sm max-w-xl mx-auto">
               {pageCopy.crowdPooling.browseCampaigns}{" "}
-              <Link href="/crowd-pooling-projects" className="text-[#4a7c59] font-medium hover:underline">
+              <Link href="/campaigns" className="text-[#4a7c59] font-medium hover:underline">
                 {pageCopy.crowdPooling.browseCampaignsLink}
               </Link>
             </p>
@@ -199,7 +199,7 @@ export default function CrowdPooling() {
                   {pageCopy.crowdPooling.submit.submitLabel}
                 </Button>
               </a>
-              <Link href="/crowd-pooling-projects">
+              <Link href="/campaigns">
                 <Button className="bg-white/10 hover:bg-white/20 text-white border border-[#7dd87d]/40 text-lg py-3 px-6 w-full sm:w-auto">
                   <Users className="w-5 h-5 mr-2" />
                   {pageCopy.crowdPooling.submit.viewProjectsLabel}

@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 type PageInfo = { title: string; description?: string; image?: string };
 
 const PAGE_MANIFEST: Record<string, PageInfo> = {
-  "/fund": { title: "The Fund", description: "Land-backed investments in systemic regeneration" },
+  "/fund": { title: "The Cooperative", description: "A member-owned cooperative for land, now in design" },
   "/quest": { title: "Quests", description: "Earn tokens and heal the Earth through regenerative actions" },
   "/community": { title: "Community", description: "Join the conversation" },
   "/governance": { title: "Governance", description: "How decisions get made" },

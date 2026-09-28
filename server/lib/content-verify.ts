@@ -72,8 +72,11 @@ For each claim, check it against the source material and the canon facts:
 - Not present in source or canon at all (plausible but untraceable)
   -> severity "warn".
 
-Pay special attention to token mix-ups: RCVoice and $RCivics belong to the
-Fund; RGVoice and $ReGen belong to the Game. Any swap is a "block".
+Pay special attention to token mix-ups: RCVoice and $RCivics come from the
+earlier fund design (their role in the cooperative is under review with
+counsel); RGVoice and $ReGen belong to the Game. Any swap is a "block".
+Any sentence that gives a token financial value, a price or a market is a
+"block" too.
 
 Do not flag a claim merely for being vague or badly written. That is the
 voice grader's job, not yours. Only factual accuracy.

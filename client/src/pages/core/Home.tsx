@@ -72,8 +72,8 @@ export default function Home() {
           <h2 className="center">A church and its living tools</h2>
           <p className="lead center">
             CORE is the spiritual purpose at the center of everything. It is why we do this. ReGen
-            Civics is the ecosystem around that center: the tools, the structures, the games, and the
-            fund that carry our spiritual path into the world and hold it steady.
+            Civics is the ecosystem around that center: the tools, the structures, and the games that
+            carry our spiritual path into the world and hold it steady.
           </p>
           <div className="grid grid-2 reveal" style={{ marginTop: 36 }}>
             <div className="card">
@@ -89,9 +89,8 @@ export default function Home() {
               <span className="icon" aria-hidden="true">🛠️</span>
               <h3>ReGen Civics holds the how</h3>
               <p>
-                The platform, the quests, the community, and the fund that support land projects and
-                the wider movement. Practical structures in service of the spiritual path, not the
-                other way around.
+                The platform, the quests, and the community that support land projects and the wider
+                movement. Practical structures in service of the spiritual path.
               </p>
             </div>
           </div>

@@ -25,7 +25,8 @@ import { cdnImg } from "@/lib/utils";
 const howToCategories = [
   { id: 'how_to_play', label: 'How to Play the Game', icon: '🎮' },
   { id: 'how_to_participate', label: 'How to Participate', icon: '🤝' },
-  { id: 'how_to_invest', label: 'How to Invest', icon: '💰' },
+  // id stays 'how_to_invest' (stored category key); the label changed 2026-09-27.
+  { id: 'how_to_invest', label: 'How to Support Land Projects', icon: '🌳' },
   { id: 'how_to_apply', label: 'How to Apply', icon: '📝' },
   { id: 'how_to_contribute', label: 'How to Contribute', icon: '🌱' },
   { id: 'other', label: 'Other Topics', icon: '💡' },

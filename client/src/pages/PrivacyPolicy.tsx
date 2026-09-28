@@ -12,36 +12,37 @@ export default function PrivacyPolicy() {
     <LegalPageLayout
       icon={<Shield className="w-8 h-8 text-[#7dd87d]" />}
       title="Privacy Policy"
-      lastUpdated="February 2026"
+      lastUpdated="September 2026"
       seo={pageSEO.privacyPolicy}
     >
       <div className="space-y-6">
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>1. Introduction</h2>
-            <p>ReGen Civics ("we," "us," "our") respects your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or engage with our investment opportunities.</p>
+            <p>ReGen Civics ("we," "us," "our") respects your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, create an account, or send us a form.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>2. Information We Collect</h2>
             <p className="font-semibold text-white/90 mb-2">Information You Provide:</p>
-            <p>Name, address, email, phone number; financial information for accredited investor verification; tax identification numbers; employment and income information; investment preferences and experience; and communications with us.</p>
+            <p>Your name, email address, and any other contact details you choose to give us, such as a phone number or location; what you write in our forms, such as season applications, interest forms, contact requests, and crowdpooling offers; your player profile, quest submissions, and forum posts; and your communications with us.</p>
+            <p className="mt-2">Some earlier forms on this site asked for more financial detail than we ask for now. We hold those records under this policy, and you can ask us to delete them.</p>
             
             <p className="font-semibold text-white/90 mt-3 mb-2">Automatically Collected Information:</p>
             <p>IP address, browser type, device information; pages visited, time spent, referring URLs; cookies and similar tracking technologies.</p>
             
             <p className="font-semibold text-white/90 mt-3 mb-2">Information from Third Parties:</p>
-            <p>Accredited investor verification services, background check providers (if applicable), and public records.</p>
+            <p>The sign-in provider you choose, such as Google or Apple, shares your name and email address with us when you sign in.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>3. How We Use Information</h2>
-            <p>We use information to verify accredited investor status, process investment applications, provide information about investment opportunities, comply with legal and regulatory requirements, communicate with you, improve our website and services, prevent fraud and enhance security, and analyze website usage.</p>
+            <p>We use information to run your account and player profile, process season applications, interest forms, and contact requests, keep you posted on what you asked to hear about, comply with legal and regulatory requirements, communicate with you, improve our website and services, prevent fraud and enhance security, and analyze website usage.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>4. Disclosure of Information</h2>
-            <p>We may share information with third-party verification services, legal and compliance advisors, tax advisors and auditors, service providers (hosting, analytics, etc.), law enforcement or regulators (when required), and successors in event of merger or sale.</p>
+            <p>We may share information with land projects and alliance organizations you ask us to connect you with, legal and compliance advisors, tax advisors and auditors, service providers (hosting, email, analytics, etc.), law enforcement or regulators (when required), and successors in event of merger or sale.</p>
             <p className="mt-2 font-semibold text-white/90">We do not sell your personal information to third parties.</p>
           </section>
 
@@ -71,7 +72,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-lg font-bold text-[#7dd87d] mb-3" style={{ fontFamily: 'var(--font-display)' }}>8. Data Retention</h2>
-            <p>We retain information as long as necessary for providing services, legal and regulatory compliance (typically 7+ years for investment records), resolving disputes, and enforcing agreements.</p>
+            <p>We retain information as long as necessary for providing services, legal and regulatory compliance, resolving disputes, and enforcing agreements.</p>
           </section>
 
           <section>

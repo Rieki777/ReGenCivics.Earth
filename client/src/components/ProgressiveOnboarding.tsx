@@ -6,28 +6,29 @@
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { ArrowRight, Coins, Sprout, Handshake, Globe, ChevronDown, Scroll, MessageSquare, TrendingUp, Zap } from 'lucide-react';
+import { ArrowRight, Users, Sprout, Handshake, Globe, ChevronDown, Scroll, MessageSquare, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { PathCardImage } from '@/components/PathCardImage';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { cdnImg } from "@/lib/utils";
-import { FUND } from "@shared/fund";
+import { COOP } from "@shared/fund";
 
 const VISIT_KEY = 'regen_civics_visit_count';
 const ONBOARDING_DISMISSED_KEY = 'regen_civics_onboarding_dismissed';
 
 const pathCards = [
   {
+    // The id stays "fund": it keys the card art and the /fund route.
     id: "fund",
-    title: "Investors",
-    tagline: "Fund the Renaissance",
-    shortDesc: "Land-backed investments in systemic regeneration",
-    details:
-      `${FUND.statement} It is being formed to back regenerative land projects and the alliance organizations that support them, with capital flowing in seasonal cohorts aligned with equinoxes and solstices. Returns are designed to come from land value appreciation, revenue sharing, and token economics. ${FUND.eligibility} The proposed minimum is $250,000.`,
+    title: "The Cooperative",
+    tagline: COOP.statusLabel,
+    shortDesc: "A member-owned cooperative for land, now in design",
+    // The one disclaimer renders here, where this view describes the cooperative.
+    details: `${COOP.statement} ${COOP.notAnOffer}`,
     href: "/fund",
-    icon: Coins,
+    icon: Users,
     borderColor: "border-amber-400/40",
     glowColor: "shadow-amber-400/20",
     iconColor: "text-amber-300",
@@ -41,7 +42,7 @@ const pathCards = [
     tagline: "Evolve Your Project",
     shortDesc: "Access expertise, resources, and a global network",
     details:
-      "If you steward land or run a regenerative project, ReGen Civics is your accelerator. Each season we take in a small cohort of land projects and provide capital, mentorship, on-the-ground community labor, and a global network of alliance partners. Apply to join the next season.",
+      "If you steward land or run a regenerative project, ReGen Civics is your accelerator. Each season we take in a small cohort of land projects. We provide mentorship, on-the-ground community labor, and a global network of alliance partners, and we help you crowdpool what your project needs. Apply to join the next season.",
     href: "/land",
     icon: Sprout,
     borderColor: "border-[#7dd87d]/40",
@@ -57,7 +58,7 @@ const pathCards = [
     tagline: "Join the Alliance",
     shortDesc: "Support regenerative projects with your org.",
     details:
-      "Service organizations, technology partners, and consultancies bring expertise to land projects in the cohort. Alliance Partners contribute equity, services, or technology in exchange for $RCivics tokens through our Value Exchange Model. If your work supports the regenerative movement, this is your seat at the table.",
+      "Service organizations, technology partners, and consultancies bring expertise to land projects in the cohort. If your work supports the regenerative movement, this is your seat at the table.",
     href: "/ally",
     icon: Handshake,
     borderColor: "border-blue-400/40",
@@ -159,7 +160,8 @@ function PersonalizedCards() {
     cards.push({ id: 'community', title: 'Back to the Forum', subtitle: 'Continue the conversation', href: '/community', image: '/images/return-cards/community.webp', accentColor: '#7dd87d', icon: MessageSquare });
   }
   if (profile.path === 'investor' && (profile as any).investorFormSubmitted) {
-    cards.push({ id: 'opportunity', title: 'Investor Dashboard', subtitle: 'View the opportunity', href: '/opportunity', image: '/images/return-cards/opportunity.webp', accentColor: '#a78bfa', icon: TrendingUp });
+    // Not opportunity.webp: that art shows a fund dashboard with rising value charts.
+    cards.push({ id: 'cooperative', title: 'The Cooperative', subtitle: 'Follow the cooperative design', href: '/fund', image: '/images/return-cards/schedule.webp', accentColor: '#a78bfa', icon: Users });
   }
   if (profile.path === 'land_project') {
     cards.push({ id: 'accelerator', title: 'Seasonal Accelerator', subtitle: 'Grow your project', href: '/apply', image: '/images/return-cards/accelerator.webp', accentColor: '#34d399', icon: Zap });
@@ -264,7 +266,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
           </h1>
           <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto text-shadow-subtle">
             {isNewcomer
-              ? "A fund in formation and an alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities. Pick a path to start."
+              ? "An in-real-life game and alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities. Pick a path to start."
               : "Where would you like to go?"}
           </p>
         </div>

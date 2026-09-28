@@ -130,7 +130,6 @@ const ApplyStatus = lazy(() => import("./pages/ApplyStatus"));
 const MyApplications = lazy(() => import("./pages/MyApplications"));
 const AdminApplications = lazy(() => import("./pages/AdminApplications"));
 const AdminApplicationDetail = lazy(() => import("./pages/AdminApplicationDetail"));
-const InvestorJourneyForm = lazyWithRetry(() => import("./pages/InvestorForm"));
 const InvestorContact = lazy(() => import("./pages/InvestorContact"));
 const ClaimSeeds = lazy(() => import("./pages/ClaimSeeds"));
 const Connect = lazy(() => import("./pages/Connect"));
@@ -166,7 +165,6 @@ const Governance = lazy(() => import("./pages/Governance"));
 const ReGenCoCreatorsGuide = lazy(() => import("./pages/ReGenCoCreatorsGuide"));
 const RegenCommunityOnboarding = lazy(() => import("./pages/RegenCommunityOnboarding"));
 const LOI = lazy(() => import("./pages/LOI"));
-const RiskDisclosure = lazy(() => import("./pages/RiskDisclosure"));
 const TermsOfUse = lazy(() => import("./pages/TermsOfUse"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Disclaimers = lazy(() => import("./pages/Disclaimers"));
@@ -323,8 +321,8 @@ function Router() {
       <Route path={"/tokenomics"}><EB><Tokenomics /></EB></Route>
       <Route path={"/loi"}><EB><LOI /></EB></Route>
       <Route path={"/404"}><EB><NotFound /></EB></Route>
-      <Route path={"/investmentform"}>{() => { window.location.replace('/investor'); return null; }}</Route>
-      <Route path={"/investor-form"}>{() => { window.location.replace('/investor'); return null; }}</Route>
+      <Route path={"/investmentform"}>{() => { window.location.replace('/loi'); return null; }}</Route>
+      <Route path={"/investor-form"}>{() => { window.location.replace('/loi'); return null; }}</Route>
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
       <Route path={"/season2"}><EB><Season2 /></EB></Route>
@@ -345,7 +343,7 @@ function Router() {
       <Route path={"/my-applications"}><EB><MyApplications /></EB></Route>
       <Route path={"/admin/applications"}><EB><AdminApplications /></EB></Route>
       <Route path={"/admin/application/:id"}><EB><AdminApplicationDetail /></EB></Route>
-      <Route path={"/investor"}><EB><InvestorJourneyForm /></EB></Route>
+      <Route path={"/investor"}><Redirect to="/loi" /></Route>
       <Route path={"/investor/contact"}><EB><InvestorContact /></EB></Route>
       <Route path={"/claim-seeds"}><EB><ClaimSeeds /></EB></Route>
       <Route path={"/connect"}><EB><Connect /></EB></Route>
@@ -359,6 +357,10 @@ function Router() {
       <Route path={"/showcase"}><EB><Showcase /></EB></Route>
       <Route path={"/crowd-pooling"}><EB><CrowdPooling /></EB></Route>
       <Route path={"/crowd-pooling-projects"}>{() => <Redirect to="/campaigns" />}</Route>
+      <Route path={"/crowdpool"}><Redirect to="/crowd-pooling" /></Route>
+      <Route path={"/projects"}><Redirect to="/campaigns" /></Route>
+      <Route path={"/investor-contact"}><Redirect to="/investor/contact" /></Route>
+      <Route path={"/about"}><Redirect to="/team" /></Route>
       <Route path={"/compare-projects"}><EB><ProjectComparison /></EB></Route>
       <Route path={"/profile"}><EB><PlayerProfile /></EB></Route>
       <Route path={"/profile/:handle"}><EB><PlayerProfileByHandle /></EB></Route>
@@ -377,7 +379,7 @@ function Router() {
       <Route path={"/sign-in"}><EB><SignIn /></EB></Route>
       <Route path={"/campaign-updates/unsubscribe"}><EB><CampaignUpdatesUnsubscribe /></EB></Route>
       <Route path={"/map"}><EB><MapPage /></EB></Route>
-      <Route path={"/risk-disclosure"}><EB><RiskDisclosure /></EB></Route>
+      <Route path={"/risk-disclosure"}><Redirect to="/disclaimers" /></Route>
       <Route path={"/terms-of-use"}><EB><TermsOfUse /></EB></Route>
       <Route path={"/privacy-policy"}><EB><PrivacyPolicy /></EB></Route>
       <Route path={"/disclaimers"}><EB><Disclaimers /></EB></Route>

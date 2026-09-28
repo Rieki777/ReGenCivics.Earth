@@ -75,9 +75,9 @@ export const SEASON2_CURRICULUM: Season2Episode[] = [
   },
   {
     week: 7,
-    title: "The ReGen Civics Ecosystem & the Fund",
+    title: "The ReGen Civics Ecosystem & the Cooperative",
     description:
-      "How the network supports your project. What the ReGen Civics Fund is, how the alliance works, what other projects and partners can offer you, and how to plug in.",
+      "How the network supports your project. What the cooperative in design is, how the alliance works, what other projects and partners can offer you, and how to plug in.",
     audience: "cohort",
   },
   {

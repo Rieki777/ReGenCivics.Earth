@@ -1,7 +1,7 @@
 /**
  * ReGen Civics Homepage - Biofi-style continuous background
  * Sections: Banner, Hero+Video, 4 Paths, Scarcity to Regeneration,
- * Who Are You, Stats, Fund+Game, Video Overview, Intro Videos, Newsletter, Footer
+ * Who Are You, Stats, Cooperative+Game, Video Overview, Intro Videos, Newsletter, Footer
  * Mobile-first, enchanted forest aesthetic with glass panels
  */
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -11,7 +11,6 @@ import { useState, useEffect, useMemo } from "react";
 import { HeroPageLoader } from "@/components/HeroPageLoader";
 import {
   ArrowRight,
-  Coins,
   Sprout,
   Handshake,
   Leaf,
@@ -20,13 +19,12 @@ import {
   Users,
   Building,
   Globe,
-  TrendingUp,
-  Shield,
   Network,
   Sparkles,
   Eye,
   ChevronDown,
 } from "lucide-react";
+import { COOP } from "@shared/fund";
 import PageBackground from "@/components/PageBackground";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -56,14 +54,14 @@ import { ReadableScrim } from "@/components/ReadableScrim";
 // Path card data
 const pathCards = [
   {
+    // The id stays "fund": it keys the card art and the /fund route.
     id: "fund",
-    title: "Investors",
-    tagline: "Fund the Renaissance",
-    description:
-      "Land-backed investments in systemic regeneration. Your capital heals land, builds communities, and generates healthy returns.",
-    cta: "Explore the Fund",
+    title: "The Cooperative",
+    tagline: COOP.statusLabel,
+    description: COOP.statementShort,
+    cta: "Explore the Cooperative",
     href: "/fund",
-    icon: Coins,
+    icon: Network,
     borderColor: "border-amber-400/40",
     glowColor: "shadow-amber-400/20",
     iconBg: "bg-amber-400/20",
@@ -125,27 +123,54 @@ const pathCards = [
   },
 ];
 
-// Data-driven insight cards (from research sources)
+// Data-driven insight cards (from research sources). Bodies are JSX: they
+// used to be HTML strings rendered as text, so "Read more" showed raw tags.
+const insightLink = "text-[#7dd87d] underline hover:text-[#9de89d]";
 const insightCards = [
   {
     icon: Globe,
     title: "Can't Keep Building This Way",
     lede: 'By 2050, 3.1 billion new urban dwellers will need homes.',
-    body: 'If we reach 9.8 billion people, we\'ll need the equivalent of <a href="https://www.un.org/sustainabledevelopment/sustainable-consumption-production/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#9de89d]">almost 3 planets</a> worth of natural resources. Projects demonstrating a new way of building human settlements need support now.',
+    body: (
+      <>
+        If we reach 9.8 billion people, we'll need the equivalent of{" "}
+        <a href="https://www.un.org/sustainabledevelopment/sustainable-consumption-production/" target="_blank" rel="noopener noreferrer" className={insightLink}>almost 3 planets</a>{" "}
+        worth of natural resources. Projects demonstrating a new way of building human settlements need support now.
+      </>
+    ),
     borderColor: "border-white/20",
   },
   {
-    icon: TrendingUp,
-    title: "$10.1 Trillion Opportunity",
-    lede: 'Nature-positive transitions could generate $10.1 trillion in business value by 2030.',
-    body: 'Nature-positive transitions could generate <a href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#9de89d]">$10.1 trillion in business value</a> by 2030 and create 395 million jobs. Regenerative development is where the capital is flowing.<br/><br/><span class="text-white/75 text-xs">Source: World Economic Forum / PwC, 2024</span>',
+    icon: Sprout,
+    title: "A Nature-Positive Economy",
+    lede: 'Nature-positive transitions could create 395 million jobs by 2030.',
+    body: (
+      <>
+        The{" "}
+        <a href="https://www.weforum.org/stories/2024/07/theres-10-1-trillion-in-nature-positive-transition-heres-how-we-unlock-it/" target="_blank" rel="noopener noreferrer" className={insightLink}>World Economic Forum</a>{" "}
+        puts the business value of that shift at $10.1 trillion by 2030. Land projects are where that transition takes root.
+        <br /><br />
+        <span className="text-white/75 text-xs">Source: World Economic Forum / PwC, 2024</span>
+      </>
+    ),
     borderColor: "border-[#7dd87d]/30",
   },
   {
     icon: Leaf,
     title: "We're Here to Support the Transition",
     lede: 'Thousands of regenerative land projects are pioneering new ways to live.',
-    body: 'Yet most <a href="https://www.ic.org/sky-blue-where-do-we-go-from-here/" target="_blank" rel="noopener noreferrer" class="text-[#7dd87d] underline hover:text-[#9de89d]">lack the support systems</a> to reach their full potential. ReGen Civics builds the <span class="text-[#7dd87d] font-semibold">connective tissue</span> linking these projects to capital, governance, and each other so <span class="text-[#7dd87d] font-semibold">we can thrive together</span>.<br/><br/>The infrastructure for systemic regeneration.',
+    body: (
+      <>
+        Yet most{" "}
+        <a href="https://www.ic.org/sky-blue-where-do-we-go-from-here/" target="_blank" rel="noopener noreferrer" className={insightLink}>lack the support systems</a>{" "}
+        to reach their full potential. ReGen Civics builds the{" "}
+        <span className="text-[#7dd87d] font-semibold">connective tissue</span>{" "}
+        linking these projects to resources, governance, and each other so{" "}
+        <span className="text-[#7dd87d] font-semibold">we can thrive together</span>.
+        <br /><br />
+        The infrastructure for systemic regeneration.
+      </>
+    ),
     borderColor: "border-white/20",
   },
 ];
@@ -161,7 +186,7 @@ const PATH_TO_CARD_ID: Record<string, string> = {
 
 export default function Home() {
   const { user, loading } = useAuth();
-  const [fundOpen, setFundOpen] = useState(false);
+  const [coopOpen, setCoopOpen] = useState(false);
   const [gameOpen, setGameOpen] = useState(false);
   // Track which 2x2 path card has its "More" panel open (only one at a time)
   // so the full-grid first-time-visitor view matches the compact returning-
@@ -286,8 +311,8 @@ export default function Home() {
                   durationMs={4500}
                   startDelayMs={900}
                   segments={[
-                    { text: "A " },
-                    { text: "venture fund", className: "font-medium text-amber-200" },
+                    { text: "An " },
+                    { text: "in-real-life game", className: "font-medium text-amber-200" },
                     { text: " and " },
                     { text: "alliance", className: "font-medium text-amber-200" },
                     { text: " helping " },
@@ -297,7 +322,7 @@ export default function Home() {
                     },
                     {
                       text:
-                        " pool resources, grow their economies, attract investment, and co-create ",
+                        " pool resources, grow their economies, and co-create ",
                     },
                     {
                       text: "thriving communities",
@@ -356,7 +381,7 @@ export default function Home() {
                         }}
                       >
                         <span className="text-[#9de89d] font-bold">regen-civics</span>{" "}
-                        is a fund and an in-real-life game for supporting
+                        is an in-real-life game for supporting
                         regenerative land projects and the{" "}
                         <span className="text-[#f5b942] font-bold italic">
                           ReGenerative Renaissance
@@ -419,7 +444,7 @@ export default function Home() {
                         }}
                       >
                         <span className="text-[#9de89d] font-bold">regen-civics</span>{" "}
-                        is a fund and an in-real-life game for supporting
+                        is an in-real-life game for supporting
                         regenerative land projects and the{" "}
                         <span className="text-[#f5b942] font-bold italic">
                           ReGenerative Renaissance
@@ -469,7 +494,7 @@ export default function Home() {
                 videoId="_LO2sItSofo"
                 title="ReGen Civics - 4 Paths to Play"
                 thumbnailUrl={cdnImg("https://assets.regencivics.earth/nAJFMAHKUducxpdN.jpg")}
-                thumbnailAlt="4 Paths to Play - Investors, Land Projects, Alliance Organisations, ReGen Players"
+                thumbnailAlt="4 Paths to Play: four ways into ReGen Civics"
               />
             </AnimatedSection>
           </div>
@@ -657,7 +682,7 @@ export default function Home() {
               <div className="max-w-3xl mx-auto text-center">
                 <ReadableScrim block className="mx-auto">
                   <blockquote className="text-white text-base md:text-lg lg:text-xl italic leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-                    "Over half [sic ALL] of global GDP depends on nature. Investing in regeneration is not charity, it is the most strategic allocation of capital in our lifetime."
+                    "Over half [sic ALL] of global GDP depends on nature."
                   </blockquote>
                   <p className="text-white/90 text-xs md:text-sm mt-3">
                     - Adapted from{" "}
@@ -726,28 +751,30 @@ export default function Home() {
                 className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle safe-prose"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                Two legally distinct yet interconnected ways to participate in the regenerative movement
+                Two connected spaces: the Game you can play today, and the cooperative we are designing now.
               </p>
             </AnimatedSection>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {/* Venture Fund - Collapsible */}
+              {/* The Cooperative - Collapsible. Every sentence comes from COOP
+                  (shared/fund.ts), and the principles are introduced by
+                  designPrinciplesNote, as that module requires. */}
               <AnimatedSection animation="slide-up" delay={100}>
-                <Collapsible open={fundOpen} onOpenChange={setFundOpen}>
+                <Collapsible open={coopOpen} onOpenChange={setCoopOpen}>
                   <div className="glass-panel p-6 md:p-8 h-full group border-amber-400/20">
                     <div className="flex items-center gap-4 mb-6">
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
-                        <TrendingUp className="w-8 h-8 text-white" />
+                        <Users className="w-8 h-8 text-white" />
                       </div>
                       <div>
                         <span className="text-amber-400 text-sm font-semibold uppercase tracking-wider">
-                          ReGen Civics Fund
+                          {COOP.tagline}
                         </span>
                         <h3
                           className="text-2xl md:text-3xl font-bold text-white"
                           style={{ fontFamily: "var(--font-display)" }}
                         >
-                          Venture Fund
+                          The Cooperative
                         </h3>
                       </div>
                     </div>
@@ -755,13 +782,10 @@ export default function Home() {
                     <CollapsibleTrigger asChild>
                       <button className="w-full text-left mb-4">
                         <p className="text-white/80 text-base md:text-lg leading-relaxed flex items-center justify-between">
-                          <span>
-                            A venture fund centered around an alliance of land projects and the organizations
-                            that support them.
-                          </span>
+                          <span>{COOP.statementShort}</span>
                           <ChevronDown
                             className={`w-5 h-5 text-amber-400 flex-shrink-0 ml-2 transition-transform ${
-                              fundOpen ? "rotate-180" : ""
+                              coopOpen ? "rotate-180" : ""
                             }`}
                           />
                         </p>
@@ -769,35 +793,28 @@ export default function Home() {
                     </CollapsibleTrigger>
 
                     <CollapsibleContent>
-                      <p className="text-white/70 text-sm mb-6 leading-relaxed">
-                        We run regular accelerators to support land projects in their journey toward regeneration.
+                      <p className="text-white/70 text-sm mb-4 leading-relaxed">
+                        {COOP.designPrinciplesNote}
                       </p>
 
-                      <div className="space-y-3 mb-6">
-                        <div className="flex items-center gap-3 text-white/80">
-                          <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center">
-                            <Network className="w-4 h-4 text-amber-400" />
-                          </div>
-                          <span className="text-base">Highly curated alliance of regenerative land projects</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-white/80">
-                          <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center">
-                            <Sprout className="w-4 h-4 text-amber-400" />
-                          </div>
-                          <span className="text-base">Regular accelerator programs</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-white/80">
-                          <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center">
-                            <Shield className="w-4 h-4 text-amber-400" />
-                          </div>
-                          <span className="text-base">Support organizations & resources</span>
-                        </div>
-                      </div>
+                      <ul className="space-y-3 mb-6">
+                        {COOP.designPrinciples.map((principle) => (
+                          <li key={principle.title} className="flex items-start gap-3 text-white/80">
+                            <div className="w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
+                              <Sprout className="w-4 h-4 text-amber-400" />
+                            </div>
+                            <div>
+                              <span className="block text-base">{principle.title}</span>
+                              <span className="block text-white/65 text-sm leading-relaxed">{principle.body}</span>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
                     </CollapsibleContent>
 
-                    <Link href="/seasons">
+                    <Link href="/fund">
                       <Button className="w-full rounded-xl breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-base py-3 h-auto font-bold">
-                        Explore Seasons <ArrowRight className="ml-2 w-5 h-5" />
+                        Explore the Cooperative <ArrowRight className="ml-2 w-5 h-5" />
                       </Button>
                     </Link>
                   </div>
@@ -886,6 +903,14 @@ export default function Home() {
                 </p>
               </div>
             </AnimatedSection>
+
+            {/* The one disclaimer, rendered once on this page because the page
+                describes the cooperative (COOP.notAnOffer). */}
+            <div className="max-w-2xl mx-auto mt-6 text-center">
+              <ReadableScrim block>
+                <p className="text-white/80 text-xs leading-relaxed">{COOP.notAnOffer}</p>
+              </ReadableScrim>
+            </div>
           </div>
         </section>
 

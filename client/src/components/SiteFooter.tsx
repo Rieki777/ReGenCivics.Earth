@@ -50,7 +50,7 @@ export default function SiteFooter() {
           </div>
           <p className="text-white/70 text-xs max-w-sm leading-relaxed">
             An Infinite Game for the ReGenerative Renaissance.
-            Healthier lands, healthier people, increasing real world value.
+            Healthier lands, healthier people, stronger communities.
           </p>
         </div>
 
@@ -75,7 +75,7 @@ export default function SiteFooter() {
           </Link>
           <HoverPreview href="/fund">
             <Link href="/fund" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
-              The Fund
+              The Cooperative
             </Link>
           </HoverPreview>
           <HoverPreview href="/community">
@@ -142,7 +142,7 @@ export default function SiteFooter() {
             <ul className="space-y-2">
               <li>
                 <Link href="/fund" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Investors
+                  Cooperative
                 </Link>
               </li>
               <li>
@@ -269,11 +269,6 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/risk-disclosure" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
-                  Risk Disclosure
-                </Link>
-              </li>
-              <li>
                 <Link href="/disclaimers" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Disclaimers
                 </Link>
@@ -338,11 +333,11 @@ export default function SiteFooter() {
             ReGen Civics Alliance. Growing the ReGenerative Renaissance.
           </p>
           <p className="text-white/60 text-[11px] mt-1">
-            This site does not constitute financial advice. Please review our{" "}
-            <Link href="/risk-disclosure" className="underline hover:text-white/70">
-              risk disclosures
-            </Link>{" "}
-            before making any investment decisions.
+            Nothing on this site is financial advice. Please read our{" "}
+            <Link href="/disclaimers" className="underline hover:text-white/70">
+              disclaimers
+            </Link>
+            .
           </p>
         </div>
       </div>

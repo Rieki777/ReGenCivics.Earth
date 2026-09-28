@@ -60,7 +60,7 @@ export default function DonateForm() {
         <h3>Giving opens here soon</h3>
         <p>
           We are preparing a way to give directly to the church. For now, you can give through our home
-          at ReGen Civics, alongside the fund and the wider movement.
+          at ReGen Civics, alongside the wider movement.
         </p>
         <a className="btn btn-primary" href="https://regencivics.earth">Give through ReGen Civics</a>
       </div>

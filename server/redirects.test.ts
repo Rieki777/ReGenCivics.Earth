@@ -61,7 +61,7 @@ describe("server-side route redirects", () => {
     // unattributable.
     const res = await head("/investor-form?ref=abc123&utm_source=x");
     expect(res.status).toBe(301);
-    expect(res.headers.get("location")).toBe("/investor?ref=abc123&utm_source=x");
+    expect(res.headers.get("location")).toBe("/loi?ref=abc123&utm_source=x");
   });
 
   it("keeps a fragment after the query, not before it", async () => {
