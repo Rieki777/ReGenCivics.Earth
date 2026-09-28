@@ -151,8 +151,23 @@ describe.skipIf(skipIfNoDb)("0263 on fixture campaigns", () => {
     };
   }
 
+  // CI runs every DB suite in parallel on one database, and these UPDATE ... JOIN
+  // statements can lose a lock race to another suite (CI run 36435268255: the
+  // first case failed, so the second saw unmigrated rows). Each statement is
+  // idempotent, so a retry on a lock error is safe.
+  const LOCK_ERRORS = new Set(["ER_LOCK_DEADLOCK", "ER_LOCK_WAIT_TIMEOUT", "ER_CHECKREAD"]);
   async function runScoped(): Promise<void> {
-    for (const s of STATEMENTS) await conn.query(scoped(s, all()));
+    for (const s of STATEMENTS) {
+      for (let attempt = 1; ; attempt++) {
+        try {
+          await conn.query(scoped(s, all()));
+          break;
+        } catch (e: any) {
+          if (attempt >= 5 || !LOCK_ERRORS.has(e?.code)) throw e;
+          await new Promise((r) => setTimeout(r, 150 * attempt));
+        }
+      }
+    }
   }
 
   beforeAll(async () => {
@@ -240,6 +255,9 @@ describe.skipIf(skipIfNoDb)("0263 on fixture campaigns", () => {
   });
 
   it("changes nothing on a second run", async () => {
+    // Stands on its own: apply once here, so a failure in the case above
+    // can't make this one compare unmigrated rows with migrated ones.
+    await runScoped();
     const first = await snapshot();
     await runScoped();
     const second = await snapshot();
