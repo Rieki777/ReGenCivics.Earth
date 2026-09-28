@@ -41,6 +41,11 @@ import { AdminChrome } from "@/components/admin/AdminChrome";
 import { MetricsPanel } from "@/components/admin/funding/MetricsPanel";
 import { KernelPanel } from "@/components/admin/funding/KernelPanel";
 import { CoopInterestPanel } from "@/components/admin/funding/CoopInterestPanel";
+import { ApplicationKitPanel } from "@/components/admin/funding/ApplicationKitPanel";
+import { AnswerBankPanel } from "@/components/admin/funding/AnswerBankPanel";
+import { StageFields } from "@/components/admin/funding/StageFields";
+import { DEADLINE_TONE_CLASS, daysLeftText, describeDeadline } from "@/components/admin/funding/deadlineFormat";
+import type { FundingTrack } from "@shared/fundingStages";
 import {
   AlertTriangle,
   ChevronDown,
@@ -129,7 +134,25 @@ type PipelineRow = {
   nextAction: string | null;
   nextActionDate: string | null;
   lastTouch: string | Date | null;
+  // Phase 1 (drizzle/0277)
+  track: FundingTrack | null;
+  stage: string | null;
+  cycle: string | null;
+  deadlineAt: string | Date | null;
+  reapplyAt: string | Date | null;
 };
+
+/** The deadline cell: the real instant with days left when there is one, else the research text. */
+function DeadlineCell({ row }: { row: PipelineRow }) {
+  const d = describeDeadline(row.deadlineAt);
+  if (!d) return <>{cleanField(row.deadline)}</>;
+  return (
+    <span className={`inline-flex flex-col rounded-md border px-1.5 py-0.5 ${DEADLINE_TONE_CLASS[d.tone]}`}>
+      <span className="font-semibold">{d.label}</span>
+      <span>{daysLeftText(d.daysLeft)}</span>
+    </span>
+  );
+}
 
 function ymd(value: string | Date | null | undefined): string {
   if (!value) return "";
@@ -140,6 +163,8 @@ function ymd(value: string | Date | null | undefined): string {
 /** The page's views. Pipeline is the funder list; the rest are engine tools. */
 const VIEWS = [
   { id: "pipeline", label: "Pipeline" },
+  { id: "applications", label: "Applications" },
+  { id: "answers", label: "Answer bank" },
   { id: "metrics", label: "Metrics" },
   { id: "kernel", label: "Kernel" },
   { id: "interest", label: "Co-op interest" },
@@ -413,6 +438,8 @@ export default function AdminFunding() {
 
         <ViewTabs view={view} onChange={setView} />
 
+        {view === "applications" && <ApplicationKitPanel />}
+        {view === "answers" && <AnswerBankPanel />}
         {view === "metrics" && <MetricsPanel />}
         {view === "kernel" && <KernelPanel />}
         {view === "interest" && <CoopInterestPanel />}
@@ -619,7 +646,9 @@ function FunderTableRow({
           </div>
         </td>
         <td className="p-2 text-[#1a472a]/85 text-xs">{size}</td>
-        <td className="p-2 text-[#1a472a]/85 text-xs">{cleanField(row.deadline)}</td>
+        <td className="p-2 text-[#1a472a]/85 text-xs">
+          <DeadlineCell row={row} />
+        </td>
         <td className="p-2">
           <PriorityChip priority={row.priority} />
         </td>
@@ -772,6 +801,8 @@ function FunderDetail({
         <Detail label="Entity to use" value={row.regenEntity} />
         <Detail label="Last touched" value={row.lastTouch ? ymd(row.lastTouch) : "never"} />
       </div>
+
+      <StageFields row={row} onField={onField} />
 
       <div>
         <label className="block text-xs font-bold text-[#1a472a]/80 mb-1" htmlFor={`notes-${row.id}`}>
