@@ -89,6 +89,15 @@ describe("lintAnswer", () => {
     expect(lintAnswer(long, "We have been paid $12K so far.", confirmed).warnings.join(" ")).toContain("$12K");
   });
 
+  it("fails an answer that still carries a placeholder", () => {
+    const long = { char_limit: null };
+    expect(lintAnswer(long, "Founded by a veteran [VERIFY: 16 years or a decade].").errors.join(" ")).toContain("unresolved placeholder");
+    expect(lintAnswer(long, "We are raising $X on a post-money SAFE.").errors.join(" ")).toContain('"$X"');
+    expect(lintAnswer(long, "to reach [N] paying projects").errors.join(" ")).toContain('"[N]"');
+    expect(lintAnswer(long, "Prices: [DECIDE]").errors.join(" ")).toContain("[DECIDE]");
+    expect(lintAnswer(long, "We raised $10K and $XYZ Corp paid.").errors).toEqual([]);
+  });
+
   it("treats an empty or missing answer as zero characters, not a crash", () => {
     expect(lintAnswer(q, "").chars).toBe(0);
     expect(lintAnswer(q, undefined as unknown as string).errors).toEqual([]);

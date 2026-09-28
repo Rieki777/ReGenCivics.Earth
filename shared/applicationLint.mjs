@@ -12,8 +12,9 @@
  * folder, and the admin packet view imports it through applicationLint.d.mts.
  *
  * Hard rules (errors): over a character or word limit, a G5 phrase, a retired
- * claim, an em-dash or en-dash. Unconfirmed numbers, AI words and contrast
- * framing are warnings: context decides.
+ * claim, an em-dash or en-dash, an unresolved placeholder ([VERIFY], $X).
+ * Unconfirmed numbers, AI words and contrast framing are warnings: context
+ * decides.
  */
 import { findG5, findRetired } from "./g5Rules.mjs";
 
@@ -34,6 +35,17 @@ export const CONTRAST_PATTERNS = [
   /\bnot\s+[^,.\n]{1,40},\s*but\b/i,
   /\bisn't\s+about\b[^.\n]{0,60}\bit's\s+about\b/i,
   /\bless\s+\w+,\s*more\s+\w+/i,
+];
+
+/**
+ * Placeholders a draft must never carry into a portal: the answer bank marks
+ * unconfirmed facts [VERIFY ...] and open choices [DECIDE], and the ask is
+ * written "$X on a post-money SAFE to reach [N] paying projects".
+ */
+export const PLACEHOLDER_PATTERNS = [
+  /\[(?:VERIFY|DECIDE|TODO|TBD|TK)\b[^\]]*\]?/i,
+  /\[[A-Z]\]/,
+  /\$\[?[XYN]\]?(?![A-Za-z0-9])/,
 ];
 
 /** Split a markdown draft into { order -> answer } by numbered headings. */
@@ -126,6 +138,10 @@ export function lintAnswer(question, answer, confirmedNumbers = new Set()) {
   for (const v of findRetired("draft.txt", text)) errors.push(`retired claim: "${v.claim}"`);
   if (text.includes(EM_DASH)) errors.push("contains an em-dash");
   if (text.includes(EN_DASH)) errors.push("contains an en-dash");
+  for (const re of PLACEHOLDER_PATTERNS) {
+    const m = re.exec(text);
+    if (m) errors.push(`unresolved placeholder: "${m[0].slice(0, 40)}"`);
+  }
   const lower = text.toLowerCase();
   for (const w of AI_WORDS) if (lower.includes(w)) warnings.push(`AI word: "${w}"`);
   for (const re of CONTRAST_PATTERNS) {

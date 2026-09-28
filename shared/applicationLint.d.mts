@@ -26,6 +26,8 @@ export interface MetricLike {
 
 export declare const AI_WORDS: string[];
 export declare const CONTRAST_PATTERNS: RegExp[];
+/** [VERIFY ...], [DECIDE], [TODO], $X, [N]: never allowed into a portal. */
+export declare const PLACEHOLDER_PATTERNS: RegExp[];
 
 /** Split a markdown draft into order -> answer by numbered headings. */
 export declare function parseDraft(markdown: string): Map<number, string>;

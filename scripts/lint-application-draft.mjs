@@ -130,14 +130,18 @@ async function main() {
   } else {
     console.log(`${program.program}: ${answers.size} answers checked against ${program.questions.length} questions.`);
     if (!metricRows.length) console.log("No confirmed metrics loaded: every number is reported as unconfirmed. Use --metrics-db or --metrics.");
+    // Unanswered required questions go on one line: a partial draft would
+    // otherwise bury its real errors under one block per empty question.
+    const missing = results.filter((r) => r.missing);
     for (const r of results) {
-      if (!r.errors.length && !r.warnings.length) continue;
+      if (r.missing || (!r.errors.length && !r.warnings.length)) continue;
       const limit = r.char_limit ? ` [${r.chars}/${r.char_limit} chars]` : r.word_limit ? ` [${r.words}/${r.word_limit} words]` : "";
       console.log(`\n#${r.order} ${String(r.question).slice(0, 80)}${limit}`);
       for (const e of r.errors) console.log(`  x ${e}`);
       for (const w of r.warnings) console.log(`  ! ${w}`);
     }
-    console.log(`\n${errorCount} error(s), ${warningCount} warning(s).`);
+    if (missing.length) console.log(`\nRequired with no answer (${missing.length}): ${missing.map((r) => `#${r.order}`).join(", ")}`);
+    console.log(`\n${errorCount} error(s), ${warningCount - missing.length} warning(s), ${missing.length} required question(s) with no answer.`);
   }
   process.exit(errorCount > 0 ? 1 : 0);
 }
