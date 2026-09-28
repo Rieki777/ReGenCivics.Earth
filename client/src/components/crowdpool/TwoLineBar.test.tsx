@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TwoLineBar } from "./TwoLineBar";
 import { computeCampaignProgress, summarizeProgress, type ProgressItem, type ProgressRoute, type ProgressRow } from "@shared/campaignProgress";
+import { CLOSE, STRIP } from "@shared/crowdpoolCopy";
 
 const fmt = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 
@@ -19,7 +20,7 @@ const routes: ProgressRoute[] = [
 ];
 const campaign = { status: "active", isDemo: 0, financialTarget: 20000, currency: "USD", startedAt: new Date("2027-01-01T00:00:00Z"), durationDays: 72 };
 
-function progress(over: Partial<typeof campaign> = {}, r: ProgressRoute[] = routes) {
+function progress(over: Partial<typeof campaign> & { closedAt?: Date } = {}, r: ProgressRoute[] = routes) {
   return computeCampaignProgress({ campaign: { ...campaign, ...over }, items, rows, lends: [], routes: r });
 }
 
@@ -82,6 +83,68 @@ describe("TwoLineBar, full", () => {
   it("an example campaign carries the example completion rule", () => {
     render(<TwoLineBar progress={progress({ isDemo: 1 })} formatCurrency={fmt} />);
     expect(screen.getByText("On a real campaign, complete means the money half and the in-kind half both land by its close date.")).toBeInTheDocument();
+  });
+});
+
+// Build spec 2026-09-27, section 9.7: the close date is binding.
+describe("TwoLineBar, what happens at the close date", () => {
+  const stripRows = () => screen.getAllByRole("listitem").map((li) => li.textContent);
+
+  it("while live, the strip's last row says what happens if it doesn't complete", () => {
+    render(<TwoLineBar progress={progress()} formatCurrency={fmt} settings={{ moneyMovesHere: false }} />);
+    expect(stripRows()).toEqual([
+      STRIP.noMoneyHere,
+      STRIP.stewardsAnswer,
+      STRIP.ifNotComplete,
+    ]);
+    expect(screen.queryByText(CLOSE.afterLine)).toBeNull();
+  });
+
+  it("an example shows the fourth row too, and a live campaign with both halves landed keeps it", () => {
+    const { unmount } = render(<TwoLineBar progress={progress({ isDemo: 1 })} formatCurrency={fmt} />);
+    expect(stripRows().at(-1)).toBe(STRIP.ifNotComplete);
+    unmount();
+    const landed = computeCampaignProgress({
+      campaign: { ...campaign, financialTarget: 0 },
+      items: [items[0]],
+      rows,
+      lends: [],
+      routes: [],
+    });
+    expect(landed.state).toBe("both_landed");
+    render(<TwoLineBar progress={landed} formatCurrency={fmt} />);
+    expect(stripRows().at(-1)).toBe(STRIP.ifNotComplete);
+  });
+
+  it("closed without completing: the completion line, then the after-line, no fourth row and no open line", () => {
+    render(
+      <TwoLineBar
+        progress={progress({ status: "closed", closedAt: new Date("2027-03-14T00:05:00Z") })}
+        formatCurrency={fmt}
+        onOpenSheet={() => {}}
+      />,
+    );
+    const text = document.body.textContent ?? "";
+    const completion = "Crowdpooling closed on 14 March 2027. It didn't complete.";
+    expect(text.indexOf(completion)).toBeGreaterThan(-1);
+    expect(text.indexOf(CLOSE.afterLine)).toBeGreaterThan(text.indexOf(completion));
+    expect(text).not.toContain(STRIP.ifNotComplete);
+    expect(text).not.toMatch(/still open/);
+    // The record of what was pooled stays readable.
+    expect(text).toContain("In-kind: 1 of 3 needs met ($60,000 of $90,000 confirmed)");
+  });
+
+  it("a complete campaign shows neither the fourth row nor the after-line", () => {
+    render(<TwoLineBar progress={progress({ status: "completed" })} formatCurrency={fmt} />);
+    const text = document.body.textContent ?? "";
+    expect(text).toContain("This campaign is complete.");
+    expect(text).not.toContain(STRIP.ifNotComplete);
+    expect(text).not.toContain(CLOSE.afterLine);
+  });
+
+  it("a cancelled campaign shows no fourth row either", () => {
+    render(<TwoLineBar progress={progress({ status: "cancelled" })} formatCurrency={fmt} />);
+    expect(document.body.textContent).not.toContain(STRIP.ifNotComplete);
   });
 });
 

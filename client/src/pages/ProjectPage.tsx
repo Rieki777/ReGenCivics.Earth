@@ -25,7 +25,7 @@ import { SEO } from "@/components/SEO";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { canonicalRedirectTarget } from "@shared/projectKey";
 import { progressLines } from "@shared/campaignProgress";
-import { EXAMPLE_BANNER } from "@shared/crowdpoolCopy";
+import { CLOSE, EXAMPLE_BANNER } from "@shared/crowdpoolCopy";
 import { buildStewardQueue } from "@shared/stewardQueue";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectCampaignFront } from "@/components/project/ProjectCampaignFront";
@@ -49,6 +49,8 @@ function campaignStatusWords(status: string): string {
     case "pending_review": return "In review";
     case "rejected": return "Sent back";
     case "cancelled": return "Cancelled";
+    // Set only by the close job at the close date (build spec 2026-09-27, section 9).
+    case "closed": return CLOSE.stateTag;
     default: return "Complete";
   }
 }
@@ -231,6 +233,9 @@ export default function ProjectPage() {
   const openLine = front ? progressLines(front.progress, makeCurrencyFormatter(front.currency)).open : null;
   const seoDescription = ([openLine, description].filter(Boolean).join(" ") || `${name} on ReGen Civics`).slice(0, 160);
   const sharePath = front ? `${data.canonicalPath}?campaign=${front.id}` : data.canonicalPath;
+  // Follow sends the canonical key: it names the project however the visitor arrived.
+  const projectKey = data.canonicalPath.replace(/^\/project\//, "");
+  const followsProject = !!data.viewer?.followsProject;
 
   return (
     <>
@@ -255,8 +260,11 @@ export default function ProjectPage() {
             sharePath={sharePath}
             tagline={description ? firstSentence(description) : null}
             coverUrl={coverUrl}
-            followCampaignId={front && front.status !== "cancelled" ? front.id : null}
-            initiallyFollowing={!!front?.isFollowing}
+            projectKey={projectKey}
+            // Signed out, Follow takes an email only while a campaign is live;
+            // otherwise it offers the season form (spec section 12.5).
+            followCampaignId={front?.status === "active" ? front.id : null}
+            followsProject={followsProject}
             shareText={shareText}
           />
 
@@ -321,6 +329,8 @@ export default function ProjectPage() {
               needsAnchor={!isSteward}
               projectName={name}
               canonicalPath={data.canonicalPath}
+              projectKey={projectKey}
+              followsProject={followsProject}
             />
           ) : (
             <section className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl">
@@ -356,6 +366,8 @@ export default function ProjectPage() {
                 startedAt: front.startedAt,
                 completedAt: front.completedAt,
                 updatedAt: front.updatedAt,
+                // The timeline's "Crowdpooling closed" entry sits at the close time.
+                closedAt: front.closedAt,
               }}
               progress={front.progress}
               updates={updates}

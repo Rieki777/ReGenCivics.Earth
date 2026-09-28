@@ -14,13 +14,22 @@
  * the completion line and a light strip. `compact` (cards, steward stats,
  * the admin modal): the two short lines with thin bars and the close date.
  *
+ * The close date is binding (build spec 2026-09-27, section 9.7). While a
+ * campaign is live, examples included, the strip's last row says what
+ * happens if it doesn't complete. Once it closed without completing, the
+ * bar gives the completion line, then what happened to help already given,
+ * and no "still open" line, since a closed campaign takes no offers.
+ *
  * Tailwind utilities and inline styles only (no new CSS class, gate 2).
  */
 import type { ReactNode } from "react";
-import { progressBars, progressLines, type CampaignProgress, type CampaignProgressSummary } from "@shared/campaignProgress";
+import { progressBars, progressLines, type CampaignProgress, type CampaignProgressSummary, type ProgressState } from "@shared/campaignProgress";
 import { PAGE, STRIP, WHOLE_ASK_SHEET } from "@shared/crowdpoolCopy";
 
 type AnyProgress = CampaignProgress | CampaignProgressSummary;
+
+/** A live campaign still taking offers: the strip says what happens if it doesn't complete. */
+const LIVE_STATES: ReadonlySet<ProgressState> = new Set<ProgressState>(["open", "money_landed", "in_kind_landed", "both_landed"]);
 
 /** Fill colours, each at 3:1 or better against the track (WCAG 1.4.11). */
 const IN_KIND_SOLID = "#1a472a";
@@ -121,10 +130,12 @@ export function TwoLineBar({
     </>
   );
 
+  const closedWithout = progress.state === "did_not_complete";
   const strip: string[] = [];
   if (!settings?.moneyMovesHere) strip.push(STRIP.noMoneyHere);
   if (maEarthVerified) strip.push(STRIP.maEarthEitherWay);
   strip.push(STRIP.stewardsAnswer);
+  if (LIVE_STATES.has(progress.state)) strip.push(STRIP.ifNotComplete);
 
   return (
     <div className="min-w-0">
@@ -154,9 +165,10 @@ export function TwoLineBar({
       </div>
 
       <div className="mt-3 space-y-1 text-sm text-[#1a472a]/85">
-        {lines.open && <p>{lines.open}</p>}
+        {lines.open && !closedWithout && <p>{lines.open}</p>}
         {lines.halves && <p className="font-medium text-[#1a472a]">{lines.halves}</p>}
         {lines.completion && <p>{lines.completion}</p>}
+        {lines.afterClose && <p>{lines.afterClose}</p>}
       </div>
 
       <ul className="mt-4 rounded-xl bg-[#f0f7f0] px-3 py-2 space-y-1 text-xs text-[#1a472a]/85">

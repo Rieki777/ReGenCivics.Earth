@@ -2,13 +2,14 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 const mutate = vi.fn();
-const follow = vi.fn();
+const followProject = vi.fn();
+const unfollowProject = vi.fn();
 let authState: { user: any; isAuthenticated: boolean } = { user: null, isAuthenticated: false };
 let onSuccessCb: (() => void) | null = null;
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
-    useUtils: () => ({ auth: { me: { invalidate: vi.fn() } } }),
+    useUtils: () => ({ auth: { me: { invalidate: vi.fn() } }, projects: { getPublic: { invalidate: vi.fn() } } }),
     campaigns: {
       submitContribution: {
         useMutation: (opts: { onSuccess?: () => void }) => {
@@ -17,7 +18,10 @@ vi.mock("@/lib/trpc", () => ({
         },
       },
       joinWaitlist: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
-      follow: { useMutation: () => ({ mutate: follow, isPending: false }) },
+      // The receipt's Follow is the FollowControl (build spec 2026-09-27, section 12.5).
+      followProject: { useMutation: () => ({ mutate: followProject, isPending: false }) },
+      unfollowProject: { useMutation: () => ({ mutate: unfollowProject, isPending: false }) },
+      subscribeByEmail: { useMutation: () => ({ mutate: vi.fn(), isPending: false }) },
     },
   },
 }));
@@ -53,6 +57,8 @@ function fillContact() {
 describe("ContributionModal on an hours need", () => {
   beforeEach(() => {
     mutate.mockClear();
+    followProject.mockClear();
+    unfollowProject.mockClear();
     authState = { user: null, isAuthenticated: false };
   });
 
@@ -122,25 +128,32 @@ describe("ContributionModal on an hours need", () => {
     expect(screen.queryByRole("button", { name: /Follow/ })).toBeNull();
   });
 
-  it("signed in: answers come to notifications, Follow is offered once", async () => {
+  it("signed in: answers come to notifications, and Follow follows the project in one tap", async () => {
     authState = { user: { id: 1, name: "Sam", email: "sam@example.com" }, isAuthenticated: true };
-    openModal();
+    render(<ContributionModal isOpen onClose={vi.fn()} campaignId={3} campaignTitle="Hill Farm" projectName="Hill Farm" need={hoursNeed} projectKey="12-hill-farm" />);
     fireEvent.click(screen.getByRole("button", { name: "Send my application" }));
     const { act } = await import("@testing-library/react");
     act(() => { onSuccessCb?.(); });
     expect(screen.getByText("The stewards will answer you in your notifications and by email.")).toBeInTheDocument();
     expect(screen.queryByText("We hold your tokens until you make an account.")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Follow Hill Farm" }));
-    expect(follow).toHaveBeenCalledWith({ campaignId: 3 });
+    const follow = screen.getByRole("button", { name: "Follow Hill Farm" });
+    expect(follow).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(follow);
+    expect(followProject).toHaveBeenCalledWith({ key: "12-hill-farm" });
+    expect(screen.getByRole("button", { name: "Following Hill Farm" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("offers no Follow to someone already following", async () => {
+  it("someone already following the project sees Following, pressed, and a tap unfollows", async () => {
     authState = { user: { id: 1, name: "Sam", email: "sam@example.com" }, isAuthenticated: true };
-    render(<ContributionModal isOpen onClose={vi.fn()} campaignId={3} campaignTitle="Hill Farm" projectName="Hill Farm" need={hoursNeed} isFollowing />);
+    render(<ContributionModal isOpen onClose={vi.fn()} campaignId={3} campaignTitle="Hill Farm" projectName="Hill Farm" need={hoursNeed} projectKey="12-hill-farm" followsProject />);
     fireEvent.click(screen.getByRole("button", { name: "Send my application" }));
     const { act } = await import("@testing-library/react");
     act(() => { onSuccessCb?.(); });
-    expect(screen.queryByRole("button", { name: /Follow/ })).toBeNull();
+    const following = screen.getByRole("button", { name: "Following Hill Farm" });
+    expect(following).toHaveAttribute("aria-pressed", "true");
+    fireEvent.click(following);
+    expect(unfollowProject).toHaveBeenCalledWith({ key: "12-hill-farm" });
+    expect(followProject).not.toHaveBeenCalled();
   });
 
   it("shows no nudge to someone signed in", () => {

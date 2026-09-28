@@ -13,19 +13,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   NEWSLETTER_SOURCES,
   audienceChoiceLabel,
   audienceChoiceValue,
   audienceFromChoice,
+  excludeOfferedOf,
   listAudienceGroups,
   listChoiceCount,
   newsletterSourceLabel,
   parseAudienceChoiceValue,
+  withExcludeOffered,
   type AudienceChoice,
   type NewsletterSource,
   type OutboundAudienceList,
 } from "@/lib/outboundAudience";
+import { OUTBOUND_DIGEST } from "@shared/crowdpoolCopy";
 import {
   defaultScheduleLocal,
   formatPacificSchedule,
@@ -122,6 +126,7 @@ export function AdminOutboundWrite({
 
   const audienceLabel = audienceChoiceLabel(choice, listAudiences.data);
   const listGroups = useMemo(() => listAudienceGroups(listAudiences.data, choice), [listAudiences.data, choice]);
+  const digestChoice = choice.kind === "list" && choice.list.kind === "season_digest" ? choice.list : null;
   const countNoun = choice.kind === "list" ? "person" : "active subscriber";
   const countNounPlural = choice.kind === "list" ? "people" : "active subscribers";
 
@@ -250,12 +255,14 @@ export function AdminOutboundWrite({
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-3">
-            <div className="space-y-1">
+            {/* max-w-full: a long list name (a season digest, a long campaign title) stays inside the card on a phone. */}
+            <div className="space-y-1 min-w-0 max-w-full">
               <Label className="text-[#1a472a] text-xs">Audience</Label>
               <Select
                 value={audienceChoiceValue(choice)}
                 onValueChange={(v) => {
-                  const next = parseAudienceChoiceValue(v);
+                  // A season digest keeps the checkbox as it was (on by default).
+                  const next = parseAudienceChoiceValue(v, { excludeOffered: excludeOfferedOf(choice) });
                   if (next) { setChoice(next); setPreview(null); }
                 }}
               >
@@ -305,6 +312,20 @@ export function AdminOutboundWrite({
               {audienceCount} {audienceCount === 1 ? countNoun : countNounPlural}
             </p>
           </div>
+          {digestChoice && (
+            // The season digest (build spec 2026-09-27, section 12.4): Rye
+            // writes it and sends it from here; nothing goes out on its own.
+            <div className="flex items-center gap-3 min-h-11">
+              <Checkbox
+                id="outbound-digest-exclude"
+                checked={digestChoice.excludeOffered}
+                onCheckedChange={(v) => { setChoice(withExcludeOffered(choice, v === true)); setPreview(null); }}
+              />
+              <Label htmlFor="outbound-digest-exclude" className="text-sm text-[#1a472a] cursor-pointer">
+                {OUTBOUND_DIGEST.exclude}
+              </Label>
+            </div>
+          )}
           {choice.kind === "list" && (
             <p className="text-xs text-[#1a472a]/80">
               {audienceLabel}. Each letter carries that person's own "Stop these emails" link in place of the newsletter preferences footer.

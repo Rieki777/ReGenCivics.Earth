@@ -123,6 +123,20 @@ describe("AdminCampaignApproval", () => {
     confirmSpy.mockRestore();
   });
 
+  // Build spec 2026-09-27, section 18: a campaign the close job closed renders
+  // with its own label, and offers no action (nothing leads out of closed).
+  it("labels a closed campaign Didn't complete, in the list and the review, with no actions", async () => {
+    campaignStatus = "closed";
+    await openReview();
+    const labels = screen.getAllByText("Didn't complete");
+    // One badge on the list row, one in the review dialog.
+    expect(labels.length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Draft")).toBeNull();
+    for (const name of [/Approve & Publish/, /Reject/, /Mark complete/, /Cancel Campaign/]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+  });
+
   it("does nothing when the complete confirm is declined", async () => {
     campaignStatus = "active";
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);

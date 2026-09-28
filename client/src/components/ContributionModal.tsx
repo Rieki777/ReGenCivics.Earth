@@ -13,6 +13,7 @@ import type { CapitalType, NeedKind } from "@shared/crowdpoolingTaxonomy";
 import { MAX_OFFER_HOURS, isHoursNeed, roleFillState, scaleRoleValue } from "@shared/roleCapacity";
 import { isThingKind, modesFor, needVerb, sheetCopy, toDay, todayUtc, type NeedVerb } from "@shared/crowdpoolNeedAction";
 import {
+  FOLLOW,
   GIVE_LEND,
   LINK,
   LOAN_RISK_LINE,
@@ -24,6 +25,7 @@ import {
 } from "@shared/crowdpoolCopy";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
+import { FollowControl } from "@/components/crowdpool/FollowControl";
 import { useReturnFocus } from "@/hooks/useReturnFocus";
 import { getReferralData } from "@/components/SharePrompt";
 import {
@@ -36,7 +38,6 @@ import {
   CheckCircle2,
   CalendarPlus,
   Share2,
-  Bell,
   UserPlus,
   Link2,
   Copy
@@ -99,10 +100,13 @@ interface ContributionModalProps {
   sharePath?: string;
   /** An example campaign: the token line is the practice line. */
   isExample?: boolean;
-  /** Whether the signed-in viewer already follows this campaign. */
-  isFollowing?: boolean;
-  /** Called after "Follow {project}" on the receipt succeeds. */
-  onFollowed?: () => void;
+  /**
+   * The project page key, for Follow on the receipt (FollowControl, build
+   * spec 2026-09-27, section 12.5). Without it the real receipt offers no Follow.
+   */
+  projectKey?: string;
+  /** Whether the signed-in viewer already follows the project (projects.getPublic viewer.followsProject). */
+  followsProject?: boolean;
 }
 
 /** This page with its hash swapped for `anchor`, as a same-site path. */
@@ -208,8 +212,8 @@ export function ContributionModal({
   completionLine,
   sharePath,
   isExample = false,
-  isFollowing = false,
-  onFollowed,
+  projectKey,
+  followsProject = false,
 }: ContributionModalProps) {
   const [step, setStep] = useState<'type' | 'details' | 'success'>('type');
   const [contributionType, setContributionType] = useState<ContributionType | null>(null);
@@ -225,18 +229,6 @@ export function ContributionModal({
   // The private status link for a signed-out offer (build spec 2026-09-27,
   // section 10.5): '/offer#<token>'. Held only for this receipt.
   const [statusPath, setStatusPath] = useState<string | null>(null);
-  // The practice receipt's "hear when real campaigns open" form.
-  const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [waitlistJoined, setWaitlistJoined] = useState(false);
-  const joinWaitlist = trpc.campaigns.joinWaitlist.useMutation({
-    onSuccess: () => setWaitlistJoined(true),
-    onError: () => { toast.error('Could not save your email. Try again in a moment.'); },
-  });
-  const [followed, setFollowed] = useState(false);
-  const follow = trpc.campaigns.follow.useMutation({
-    onSuccess: () => { setFollowed(true); onFollowed?.(); },
-    onError: () => { toast.error("Couldn't follow this project. Try again."); },
-  });
 
   const project = projectName?.trim() || campaignTitle;
   const verb: NeedVerb | 'Freeform' = need ? (needVerb(String(need.kind)) ?? 'Offer') : 'Freeform';
@@ -357,8 +349,6 @@ export function ContributionModal({
       // status link (/offer#<token>). A practice run never has one.
       setStatusPath(result && result.practice === false && typeof result.statusPath === 'string' ? result.statusPath : null);
       setSentEmail(contributorEmail.trim());
-      setWaitlistEmail(contributorEmail.trim());
-      setWaitlistJoined(false);
       setStep('success');
       onSuccess?.({ practice: isPractice });
     },
@@ -410,17 +400,7 @@ export function ContributionModal({
     setSentEmail('');
     setPractice(false);
     setStatusPath(null);
-    setWaitlistEmail('');
-    setWaitlistJoined(false);
-    setFollowed(false);
     onClose();
-  };
-
-  const handleJoinWaitlist = (e: React.FormEvent) => {
-    e.preventDefault();
-    const email = waitlistEmail.trim();
-    if (!email) return;
-    joinWaitlist.mutate({ email, name: contributorName.trim() || undefined });
   };
 
   /**
@@ -1157,41 +1137,11 @@ export function ContributionModal({
               This was an example campaign, so nothing reached a real project. The first real campaigns open soon.
             </p>
             <p className="text-sm text-[#1a472a]/85 max-w-sm mx-auto mb-5">{TOKEN_PRACTICE_LINE}</p>
-            <div className="text-left max-w-sm mx-auto mb-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4">
-              {waitlistJoined ? (
-                <p className="flex items-start gap-2 text-sm text-[#1a472a]">
-                  <CheckCircle2 className="w-4 h-4 mt-0.5 flex-shrink-0 text-[#4a7c59]" />
-                  You're on the list. We'll write when the first real campaigns open.
-                </p>
-              ) : (
-                <form onSubmit={handleJoinWaitlist} className="space-y-2">
-                  <Label htmlFor="practice-waitlist-email" className="text-sm text-[#1a472a]">
-                    Want to hear when they open?
-                  </Label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input
-                      id="practice-waitlist-email"
-                      type="email"
-                      inputMode="email"
-                      autoComplete="email"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      required
-                      value={waitlistEmail}
-                      onChange={(e) => setWaitlistEmail(e.target.value)}
-                      placeholder="your@email.com"
-                      className="bg-white"
-                    />
-                    <Button
-                      type="submit"
-                      disabled={joinWaitlist.isPending}
-                      className="bg-[#4a7c59] hover:bg-[#1a472a] text-white whitespace-nowrap"
-                    >
-                      {joinWaitlist.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Tell me'}
-                    </Button>
-                  </div>
-                </form>
-              )}
+            {/* The one Follow control in season mode: an example project can't
+                be followed, so it offers the season waitlist, prefilled with
+                the address just used (build spec 2026-09-27, section 12.5). */}
+            <div className="text-left max-w-sm mx-auto mb-5">
+              <FollowControl mode="season" variant="receipt" heading={FOLLOW.practiceHeading} defaultEmail={sentEmail} />
             </div>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button asChild variant="outline" className="border-[#4a7c59] text-[#1a472a]">
@@ -1239,16 +1189,19 @@ export function ContributionModal({
                   {RECEIPT.shareNeed}
                 </Button>
               )}
-              {isAuthenticated && !isFollowing && !followed && (
-                <Button
-                  variant="outline"
-                  onClick={() => follow.mutate({ campaignId })}
-                  disabled={follow.isPending}
-                  className="min-h-11 border-[#4a7c59] text-[#1a472a]"
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  {RECEIPT.follow(project)}
-                </Button>
+              {/* Follow the project: one tap signed in; signed out, the email
+                  follow prefilled with the address just used, sent only when
+                  they tap it (build spec 2026-09-27, section 12.5). */}
+              {projectKey && (
+                <FollowControl
+                  mode="project"
+                  variant="receipt"
+                  projectKey={projectKey}
+                  campaignId={campaignId}
+                  projectName={project}
+                  initiallyFollowing={followsProject}
+                  defaultEmail={sentEmail || undefined}
+                />
               )}
               <Button onClick={handleClose} className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a]">
                 {RECEIPT.close}

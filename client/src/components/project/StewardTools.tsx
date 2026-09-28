@@ -46,7 +46,8 @@ import { CancelCampaignDialog } from "./CancelCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
-import { MONEY_STEP } from "@shared/crowdpoolCopy";
+import { CLOSE, MONEY_STEP } from "@shared/crowdpoolCopy";
+import { progressLines } from "@shared/campaignProgress";
 import { takeCreatedCampaign } from "@/lib/createdNotice";
 
 /** Statuses whose stewards keep ticking the Ready to crowdpool list. Wizard campaigns start in review. */
@@ -87,7 +88,9 @@ export function StewardTools({
   const campaignId = front.id;
   const formatCurrency = useMemo(() => makeCurrencyFormatter(front.currency), [front.currency]);
   const status = front.status;
-  const closed = status === "cancelled" || status === "completed" || status === "funded";
+  // Over: cancelled, complete, or closed at its close date without completing
+  // (build spec 2026-09-27, section 9.6). None takes offers, updates or edits.
+  const closed = status === "cancelled" || status === "completed" || status === "funded" || status === "closed";
 
   const { data: contributions, isLoading: contributionsLoading } = trpc.campaigns.getContributionsForOwner.useQuery(
     { campaignId },
@@ -97,7 +100,7 @@ export function StewardTools({
   const { data: settings } = trpc.campaigns.crowdpoolSettings.useQuery(undefined, { staleTime: 10 * 60 * 1000 });
   const { data: needMarkers } = trpc.campaigns.getNeedMarkers.useQuery({ campaignId }, { retry: false });
   // Marks stay as they are once a campaign is over, and examples keep none.
-  const canMark = !closed && status !== "closed" && !front.isDemo;
+  const canMark = !closed && !front.isDemo;
   // Notes people sent from their offer links (the offers panel reads the same query).
   const { data: offerMessages } = trpc.campaigns.getOfferMessages.useQuery({ campaignId }, { retry: false });
   // A completed campaign still has people arriving to deliver, so its
@@ -282,7 +285,11 @@ export function StewardTools({
         )}
         {closed && (
           <p className="text-sm text-[#1a472a]/80 mt-2">
-            {status === "cancelled" ? "This campaign is cancelled." : "This campaign is complete."}
+            {status === "cancelled"
+              ? "This campaign is cancelled."
+              : status === "closed"
+                ? (progressLines(front.progress, formatCurrency).completion ?? CLOSE.completionNoDate)
+                : "This campaign is complete."}
           </p>
         )}
         {canCancel && (

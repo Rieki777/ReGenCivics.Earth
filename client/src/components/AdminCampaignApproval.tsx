@@ -26,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   CheckCircle2, XCircle, Eye, Clock, MapPin, DollarSign, 
   Users, Calendar, Leaf, ChevronDown, ChevronUp, ExternalLink,
-  FileText, Loader2, AlertTriangle, Sparkles, ArrowRight
+  FileText, Loader2, AlertTriangle, Sparkles, ArrowRight, CalendarX
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CrowdpoolReadiness } from './CrowdpoolReadiness';
@@ -34,7 +34,7 @@ import { TwoLineBar } from './crowdpool/TwoLineBar';
 import { formatCloseDate, moneyShareNote } from '@shared/campaignProgress';
 import { kindForItem, needTitle, roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
 import { CASH_SHARE } from '@shared/crowdpoolModel';
-import { ROUTE_LABELS, ROUTE_REVIEW, STEWARD_MONEY, ZERO_VALUE } from '@shared/crowdpoolCopy';
+import { CLOSE, ROUTE_LABELS, ROUTE_REVIEW, STEWARD_MONEY, ZERO_VALUE } from '@shared/crowdpoolCopy';
 import { isMoneyKind } from '@shared/crowdpoolNeedAction';
 import { isListableValue } from '@shared/needRules';
 
@@ -231,6 +231,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
   funded: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
   completed: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
   cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-600 border-gray-200', icon: <XCircle className="w-3 h-3" /> },
+  // Set only by the close job at the close date: it didn't complete (build
+  // spec 2026-09-27, section 9). No admin action leads here or out of it.
+  closed: { label: CLOSE.stateTag, color: 'bg-stone-100 text-stone-800 border-stone-300', icon: <CalendarX className="w-3 h-3" /> },
 };
 
 function StatusBadge({ status }: { status: string }) {

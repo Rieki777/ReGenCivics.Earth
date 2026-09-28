@@ -27,7 +27,7 @@ import {
   Target, Sparkles, FileText,
   ChevronDown, ChevronUp, Play,
   Filter, SortAsc, Lock, AlertTriangle,
-  Bell, CheckCircle, BookOpen, Leaf,
+  Bell, BookOpen, Leaf,
   Map as MapIcon, LayoutGrid
 } from "lucide-react";
 import { CampaignMap } from "@/components/crowdpool/CampaignMap";
@@ -41,17 +41,16 @@ import {
 } from "@/components/crowdpool/GalleryCard";
 import { NeedsTab } from "@/components/crowdpool/NeedsTab";
 import { SeasonDefaults } from "@/components/crowdpool/SeasonDefaults";
+import { FollowControl } from "@/components/crowdpool/FollowControl";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SEO, pageSEO } from "@/components/SEO";
 import { pageCopy } from "@/data/pageCopy";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { useEffect, useState, useMemo } from "react";
-import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useCountUp } from "@/hooks/useCountUp";
-import { GALLERY, HOW_IT_WORKS } from "@shared/crowdpoolCopy";
+import { FOLLOW, GALLERY, HOW_IT_WORKS } from "@shared/crowdpoolCopy";
 
 export type { GalleryCampaign } from "@/components/crowdpool/GalleryCard";
 
@@ -152,85 +151,32 @@ function HowCrowdPoolingWorks() {
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
-// "Get Notified" Email Capture (150-14)
-//
-// Joins the crowdpool waitlist for the current Game season
-// (campaigns.joinWaitlist; the server picks the season). Nobody is emailed
-// automatically: Rye writes to this list from admin Outbound, and every
-// letter carries a "Stop these emails" link. It needs no campaign, so it
-// shows even when the gallery is empty. Per-campaign email follows live on
-// each campaign page.
+// "Hear when crowdpooling opens" (150-14): the one Follow control in season
+// mode (build spec 2026-09-27, section 12.5). It joins the crowdpool waitlist
+// for the current Game season (campaigns.joinWaitlist; the server picks the
+// season). Nobody is emailed automatically: Rye writes to this list from
+// admin Outbound as the season digest, and every letter carries a "Stop
+// these emails" link. It needs no campaign, so it shows even when the
+// gallery is empty. Following one project lives on its project page.
 // ────────────────────────────────────────────────────────────────────────────────
-function GetNotifiedForm() {
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const subscribe = trpc.campaigns.joinWaitlist.useMutation();
 
+/** Scroll to the one #get-notified on the page (the Needs tab or the page foot). */
+function scrollToGetNotified() {
+  document.getElementById("get-notified")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function GetNotified() {
   // A project page with no campaign links here as /campaigns#get-notified.
   // wouter navigation never scrolls to a hash, so do it once this mounts.
   useEffect(() => {
     if (window.location.hash !== "#get-notified") return;
-    const t = window.setTimeout(() => {
-      document.getElementById("get-notified")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 300);
+    const t = window.setTimeout(scrollToGetNotified, 300);
     return () => window.clearTimeout(t);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-    try {
-      await subscribe.mutateAsync({ email: email.trim(), name: name.trim() || undefined });
-      setSubmitted(true);
-      toast.success("You're on the list!", { description: "We'll email you when crowd pooling opens." });
-    } catch {
-      toast.error("Could not save your email. Try again in a moment.");
-    }
-  };
-
   return (
-    <div className="bg-gradient-to-br from-[#0d2818] to-[#1a472a] border border-[#7dd87d]/20 rounded-2xl p-6 sm:p-8 text-center">
-      <Bell className="w-8 h-8 text-[#7dd87d] mx-auto mb-3" aria-hidden="true" />
-      <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-display)' }}>
-        Get notified when crowd pooling opens.
-      </h2>
-      <p className="text-white/75 text-sm mb-5 max-w-md mx-auto">
-        Leave your email and we'll write when the first season of campaigns opens for contributions.
-      </p>
-      {submitted ? (
-        <div className="flex items-center justify-center gap-2 text-[#7dd87d]">
-          <CheckCircle className="w-5 h-5" aria-hidden="true" />
-          <span className="font-medium">You're on the list!</span>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-          <Input
-            type="text"
-            aria-label="Your name"
-            placeholder="Your name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="bg-white/5 border-white/20 text-white placeholder:text-white/70"
-          />
-          <Input
-            type="email"
-            aria-label="Your email"
-            placeholder="Your email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            className="bg-white/5 border-white/20 text-white placeholder:text-white/70"
-          />
-          <Button
-            type="submit"
-            disabled={subscribe.isPending}
-            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-semibold whitespace-nowrap"
-          >
-            {subscribe.isPending ? "Saving..." : "Notify Me"}
-          </Button>
-        </form>
-      )}
+    <div id="get-notified" className="scroll-mt-24">
+      <FollowControl mode="season" variant="card" />
     </div>
   );
 }
@@ -480,12 +426,18 @@ export default function CrowdPoolingProjects() {
                   Campaigns marked Example show how it will work.
                 </p>
               </div>
-              <Link href="/newsletter">
-                <Button size="sm" className="bg-amber-500/20 border border-amber-400/40 text-amber-200 hover:bg-amber-500/30 hover:text-white text-xs sm:text-sm whitespace-nowrap">
-                  <Bell className="w-3.5 h-3.5 mr-1.5" />
-                  Sign up for updates
-                </Button>
-              </Link>
+              {/* One way to hear, not a second sign-up: it goes to the season Follow on this page. */}
+              <a
+                href="#get-notified"
+                onClick={(e) => {
+                  e.preventDefault();
+                  scrollToGetNotified();
+                }}
+                className="inline-flex items-center justify-center min-h-11 rounded-md px-3 bg-amber-500/20 border border-amber-400/40 text-amber-200 hover:bg-amber-500/30 hover:text-white text-xs sm:text-sm font-medium whitespace-nowrap"
+              >
+                <Bell className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
+                {FOLLOW.bannerButton}
+              </a>
             </div>
           </div>
         </div>
@@ -534,7 +486,7 @@ export default function CrowdPoolingProjects() {
             <NeedsTab
               data={openNeeds}
               isLoading={needsLoading}
-              notifyForm={<div id="get-notified" className="scroll-mt-24"><GetNotifiedForm /></div>}
+              notifyForm={<GetNotified />}
             />
           )}
 
@@ -731,10 +683,10 @@ export default function CrowdPoolingProjects() {
             <ImpactStrip projects={realLiveCampaigns} />
           </div>
 
-          {/* Get Notified (150-14): joins the season's crowdpool waitlist */}
+          {/* Hear when crowdpooling opens (150-14): joins the season's crowdpool waitlist */}
           {!needsTabShowsNotify && (
-            <div id="get-notified" className="mt-8 scroll-mt-24">
-              <GetNotifiedForm />
+            <div className="mt-8">
+              <GetNotified />
             </div>
           )}
 

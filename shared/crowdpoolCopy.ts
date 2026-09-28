@@ -645,6 +645,10 @@ export const FOLLOW = {
   practiceHeading: "Want to hear when real campaigns open?",
   bannerButton: "Hear when it opens",
   exampleRefused: "Example projects can't be followed. You can hear when real campaigns open instead.",
+  // Lane 5 additions: the receipt button once pressed, and the season body
+  // for someone signed in, who gives no email because we have theirs.
+  followingProject: (project: string) => `Following ${project}`,
+  seasonBodySignedIn: (email: string) => `We'll write to ${email} when real campaigns open.`,
 } as const;
 
 /** "Needed to start", a steward-only mark on needs (section 13). */
