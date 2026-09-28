@@ -134,7 +134,7 @@
     "sanitize-html": "^2.17.7",
     "satori": "^0.33.4",
     "sonner": "^2.0.8",
-    "streamdown": "^1.4.0",
+    "streamdown": "^2.6.0",
     "stripe": "^22.6.2",
     "supercluster": "^8.0.1",
     "superjson": "^1.13.3",
