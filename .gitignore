@@ -199,3 +199,9 @@ video-out/
 # statement of the project's legal position, and a half-formed legal document in
 # a public repo is worse than none.
 legal-research/
+
+# Private funding strategy, research, and counsel notes. This repo is public
+# (AGPL): anything that names funders, weighs legal structure, or records what
+# counsel should review lives here and never in a commit. Mirror copies go to
+# the second-brain vault.
+docs/private/
