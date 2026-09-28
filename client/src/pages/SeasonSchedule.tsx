@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, CheckCircle2, Clock, ExternalLink, MessageSquare, Sprout, Users, Youtube } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, ExternalLink, MessageSquare, Sprout, Users, Video, Youtube } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { BackButton } from "@/components/BackButton";
@@ -622,9 +622,31 @@ export default function SeasonSchedule() {
                 <p className="text-[#e3ac4f] text-xs font-semibold tracking-[0.2em] uppercase">Catching up</p>
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-white mb-3">If you missed a session</h2>
+
+              {/* Selection Day stays private until every project is in it (Rye,
+                  2026-09-28). The address rides in the invitation email, not on
+                  this public page. An admin hides this once it goes public. */}
+              {data?.selectionVideos && (
+                <div className="bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-xl p-5 mb-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Video className="w-5 h-5 text-[#7dd87d]" />
+                    <h3 className="text-white font-bold">If you missed Selection Day, send your video</h3>
+                  </div>
+                  <p className="text-white/80 text-sm mb-3">
+                    Selection Day goes public once every project is in it. If the time did not work for you, send your
+                    3 to 5 minute video and we add you to the session before it goes public. Your invitation email
+                    says where to send it.
+                  </p>
+                  <ul className="text-white/80 text-sm list-disc pl-5 space-y-1">
+                    <li>Five minutes is the hard stop.</li>
+                    <li>Social media style: the vision and purpose of what you are creating. Save the technical detail for the weeks ahead.</li>
+                    <li>Film in landscape, with your phone turned sideways. A phone is all you need.</li>
+                  </ul>
+                </div>
+              )}
+
               <p className="text-white/75 mb-5">
-                Every session streams live on the SEEDS YouTube channel, and the replay stays up. Watch it before
-                the next one and you are caught up.
+                Sessions go up on the SEEDS YouTube channel, so you can catch up before the next one.
               </p>
               <a
                 href={SEEDS_YOUTUBE_URL}
@@ -633,7 +655,7 @@ export default function SeasonSchedule() {
                 className="inline-flex items-center gap-2 min-h-11 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
               >
                 <ExternalLink className="w-4 h-4" />
-                Replays on YouTube
+                SEEDS on YouTube
               </a>
             </section>
           </AnimatedSection>

@@ -92,6 +92,12 @@ export interface SeasonScheduleConfig {
   closesAt: Date;
   /** Session length in minutes. */
   minutes: number;
+  /**
+   * Whether the page starts out asking projects who missed Selection Day for
+   * their 3 to 5 minute video, so the session can go public with every project
+   * in it. An admin turns the note off once it has (setting "selection_videos").
+   */
+  selectionVideos: boolean;
 }
 
 /** A session starting inside this window never moves. People have planned around it. */
@@ -134,6 +140,9 @@ export const SEASON_SCHEDULES: Readonly<Record<string, SeasonScheduleConfig>> = 
     // for every project to answer, early enough that Week 3 can still move.
     closesAt: wallTimeInZoneToUtc("2026-10-01", 17, 0, SESSION_TIME_ZONE),
     minutes: SESSION_DURATION_HOURS * 60,
+    // Selection Day stays private until the projects who missed the call have
+    // sent their videos in and been added to it (Rye, 2026-09-28).
+    selectionVideos: true,
   },
 };
 
@@ -175,7 +184,14 @@ export function seasonSlot(key: SeasonSlotKey, hourPT: number): SeasonSlot {
 
 // ─── Stored settings ─────────────────────────────────────────────────────────
 
-export type SeasonSettingPart = "offered" | "closes_at" | "pinned" | "applied";
+export type SeasonSettingPart = "offered" | "closes_at" | "pinned" | "applied" | "selection_videos";
+
+/** A stored "on" or "off", or the fallback when the setting was never written. */
+export function parseToggle(raw: string | null | undefined, fallback: boolean): boolean {
+  if (raw === "on") return true;
+  if (raw === "off") return false;
+  return fallback;
+}
 
 /** site_settings key for one Season's setting: "season_schedule:season-2:offered". */
 export function seasonSettingKey(season: string, part: SeasonSettingPart): string {

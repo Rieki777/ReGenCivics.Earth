@@ -46,6 +46,7 @@ const CONFIG: SeasonScheduleConfig = {
   ],
   closesAt: CLOSE,
   minutes: 120,
+  selectionVideos: true,
 };
 
 async function cleanup() {
@@ -128,6 +129,10 @@ describe.skipIf(skipIfNoDb)("Season Schedule sync", () => {
 
     const state = await resolveSeasonState(db, CONFIG, open);
     expect(state.closed).toBe(false);
+    // The Selection Day video note starts from the Season's default, then follows the admin switch.
+    expect(state.selectionVideos).toBe(true);
+    await setSiteSetting(seasonSettingKey(SEASON, "selection_videos"), "off");
+    expect((await resolveSeasonState(db, CONFIG, open)).selectionVideos).toBe(false);
     expect(state.leader).toBe("wed");
     expect(state.tally.slots.find((s) => s.key === "wed")).toMatchObject({ hands: 3, projects: 2 });
   });

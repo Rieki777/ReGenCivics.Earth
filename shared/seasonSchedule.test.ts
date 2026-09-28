@@ -12,6 +12,7 @@ import {
   parseClosesAt,
   parseOfferedTimes,
   parseSlotTime,
+  parseToggle,
   planSeasonMoves,
   resolveSeasonSlot,
   seasonConfig,
@@ -288,6 +289,14 @@ describe("stored settings", () => {
   it("reads a stored offer in week order and drops rows it cannot trust", () => {
     const raw = JSON.stringify([{ key: "sat", hourPT: 9 }, { key: "mon", hourPT: 13 }, { key: "xyz", hourPT: 1 }, { key: "fri", hourPT: 40 }]);
     expect(parseOfferedTimes(raw, S2.offered).map((s) => `${s.key}@${s.hourPT}`)).toEqual(["mon@13", "sat@9"]);
+  });
+
+  it("reads the Selection Day video switch, and falls back to the Season's default", () => {
+    expect(parseToggle("on", false)).toBe(true);
+    expect(parseToggle("off", true)).toBe(false);
+    expect(parseToggle(null, true)).toBe(true);
+    expect(parseToggle("maybe", false)).toBe(false);
+    expect(S2.selectionVideos).toBe(true);
   });
 
   it("round-trips offers, applied times and close dates", () => {

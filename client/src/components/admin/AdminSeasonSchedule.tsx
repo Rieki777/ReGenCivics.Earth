@@ -123,6 +123,7 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
   const sync = trpc.seasonSchedule.adminSync.useMutation({ onSuccess: refresh });
   const setOffered = trpc.seasonSchedule.adminSetOffered.useMutation({ onSuccess: refresh });
   const setClose = trpc.seasonSchedule.adminSetClosesAt.useMutation({ onSuccess: refresh });
+  const setVideos = trpc.seasonSchedule.adminSetSelectionVideos.useMutation({ onSuccess: refresh });
 
   const data = state.data;
   const offered = data?.offered ?? [];
@@ -257,6 +258,18 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
                 <span className="ml-2">Sync now</span>
               </Button>
             </div>
+
+            <label className="flex items-center gap-3 text-white/80 min-h-11 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={data.selectionVideos}
+                disabled={setVideos.isPending}
+                onChange={(e) => setVideos.mutate({ season, open: e.target.checked })}
+                className="w-4 h-4 accent-[#7dd87d]"
+              />
+              Ask projects who missed Selection Day for their video (a note on the page). Turn off once the session
+              is public.
+            </label>
 
             {lastResult && (
               <p className="text-white/60">

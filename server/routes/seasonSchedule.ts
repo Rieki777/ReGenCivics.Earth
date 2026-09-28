@@ -122,6 +122,7 @@ export const seasonScheduleRouter = router({
         register: seasonRegister(state.votes, cleanDisplayName, cleanRepoUrl),
         nextWeek,
         notesForNext,
+        selectionVideos: state.selectionVideos,
         sessions: rows
           .filter((r) => r.week != null && r.status !== "cancelled")
           .map((r) => ({
@@ -343,6 +344,18 @@ export const seasonScheduleRouter = router({
       await setSiteSetting(seasonSettingKey(config.season, "pinned"), input.slot ?? "");
       const result = await syncSeason(await database(), config, new Date());
       return { ok: true as const, result };
+    }),
+
+  /**
+   * Admin: show or hide the page's note asking projects who missed Selection
+   * Day for their video. Turn it off once the session has gone public.
+   */
+  adminSetSelectionVideos: adminProcedure
+    .input(z.object({ season: seasonInput, open: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const config = configFor(input.season);
+      await setSiteSetting(seasonSettingKey(config.season, "selection_videos"), input.open ? "on" : "off");
+      return { ok: true as const };
     }),
 
   /** Admin: run the sync now instead of waiting for the next sweep. */

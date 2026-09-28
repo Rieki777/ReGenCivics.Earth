@@ -45,6 +45,7 @@ import {
   parseClosesAt,
   parseOfferedTimes,
   parseSlotTime,
+  parseToggle,
   planSeasonMoves,
   resolveSeasonSlot,
   seasonConfig,
@@ -106,6 +107,8 @@ export type SeasonState = {
   closesAt: Date;
   closed: boolean;
   scheduled: SeasonSlot;
+  /** Whether the page asks projects who missed Selection Day for their video. */
+  selectionVideos: boolean;
 };
 
 /** Read the vote and the settings, and say which time the Season follows now. */
@@ -115,11 +118,12 @@ export async function resolveSeasonState(
   now: Date,
   clean: (raw: string | null | undefined) => string | null = plain,
 ): Promise<SeasonState> {
-  const [offeredRaw, closesRaw, pinnedRaw, appliedRaw] = await Promise.all([
+  const [offeredRaw, closesRaw, pinnedRaw, appliedRaw, videosRaw] = await Promise.all([
     getSiteSetting(seasonSettingKey(config.season, "offered")),
     getSiteSetting(seasonSettingKey(config.season, "closes_at")),
     getSiteSetting(seasonSettingKey(config.season, "pinned")),
     getSiteSetting(seasonSettingKey(config.season, "applied")),
+    getSiteSetting(seasonSettingKey(config.season, "selection_videos")),
   ]);
   const offered = parseOfferedTimes(offeredRaw, config.offered);
   const closesAt = parseClosesAt(closesRaw, config.closesAt);
@@ -149,6 +153,7 @@ export async function resolveSeasonState(
     closesAt,
     closed,
     scheduled: seasonSlot(slot.key, slot.hourPT),
+    selectionVideos: parseToggle(videosRaw, config.selectionVideos),
   };
 }
 
