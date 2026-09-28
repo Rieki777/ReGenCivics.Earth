@@ -6,9 +6,12 @@
  * owner, next action) Rye edits in /admin/funding.
  *
  * Part 2 is the application engine. `generateApplication` takes one pipeline
- * row, runs it through the positioning kernel (server/funding/positioning-
- * kernel.ts), and returns a positioning summary plus a standalone Cowork prompt
- * that executes the application process in a separate session.
+ * row, runs it through the positioning kernel, and returns a positioning
+ * summary plus a standalone Cowork prompt that executes the application
+ * process in a separate session. The kernel text is private and lives in the
+ * funding_prompts table (server/funding/prompts.ts), edited here through
+ * getPrompt / savePrompt; server/funding/positioning-kernel.ts keeps only the
+ * builders, the schema and a neutral fallback.
  *
  * Security posture (BUILD-PLAYBOOK: new procedures + a new LLM feature):
  *  - Every procedure is adminProcedure, so CSRF protection and the admin role
@@ -35,7 +38,8 @@ import { fundingPipeline, fundingApplications } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { invokeLLM, extractJsonObject, isLLMConfigured } from "../_core/llm";
 import {
-  POSITIONING_SYSTEM_PROMPT,
+  FALLBACK_POSITIONING_PROMPT,
+  FALLBACK_COWORK_TEMPLATE,
   POSITIONING_OUTPUT_SCHEMA,
   POSITIONING_LLM_TASK,
   buildPositioningUserMessage,
@@ -44,6 +48,14 @@ import {
   type FunderRowForPrompt,
   type PositioningResult,
 } from "../funding/positioning-kernel";
+import {
+  PROMPT_KEYS,
+  activatePromptVersion,
+  getActivePrompt,
+  listPromptVersions,
+  savePromptVersion,
+} from "../funding/prompts";
+import { confirmedMetricsForPrompt } from "../funding/metrics";
 
 // ── Enums, mirrored from drizzle/0215_funding_pipeline.sql ───────────────────
 export const PRIORITIES = ["P1", "P2", "P3", "ADV", "ALLY"] as const;
@@ -370,7 +382,12 @@ export const adminFundingRouter = router({
 
       const today = todayYmd();
       const funder: FunderRowForPrompt = row;
-      const userMessage = buildPositioningUserMessage(funder, today);
+      const kernel = await getActivePrompt("positioning_kernel", FALLBACK_POSITIONING_PROMPT);
+      const template = await getActivePrompt("cowork_template", FALLBACK_COWORK_TEMPLATE);
+      // Gate G4: the model may use only the numbers Rye has confirmed.
+      const metricsBlock = await confirmedMetricsForPrompt(db);
+      const systemPrompt = [kernel.body, metricsBlock].join("\n\n");
+      const userMessage = buildPositioningUserMessage(funder, today, template.body);
 
       let parsed: PositioningResult | null = null;
       let rawText = "";
@@ -380,7 +397,7 @@ export const adminFundingRouter = router({
         try {
           const result = await invokeLLM({
             messages: [
-              { role: "system", content: POSITIONING_SYSTEM_PROMPT },
+              { role: "system", content: systemPrompt },
               {
                 role: "user",
                 content:
@@ -429,7 +446,8 @@ export const adminFundingRouter = router({
               entityToUse: row.regenEntity ?? "",
               flags: ["generation_unvalidated"],
             },
-            today
+            today,
+            template.body
           ),
           modelUsed: modelUsed.slice(0, 120) || null,
           generatedBy: ctx.user.id,
@@ -449,14 +467,21 @@ export const adminFundingRouter = router({
         modelPrompt.length > 400 &&
         modelPrompt.includes("Do not submit anything yourself") &&
         !modelPrompt.includes("{{");
-      const coworkPrompt = promptIsUsable ? modelPrompt : buildCoworkPrompt(funder, parsed, today);
+      const coworkPrompt = promptIsUsable ? modelPrompt : buildCoworkPrompt(funder, parsed, today, template.body);
+
+      // An unseeded kernel produces thin positioning on purpose. Say so on the
+      // record even when the model forgot to, so nobody mistakes it for the
+      // real thing.
+      const flags = kernel.isFallback && !parsed.flags.includes("kernel_not_seeded")
+        ? [...parsed.flags, "kernel_not_seeded"]
+        : parsed.flags;
 
       await db.insert(fundingApplications).values({
         pipelineId: row.id,
         positioningSummary: parsed.positioningSummary.slice(0, 60000),
         keyPoints: parsed.keyPoints,
         entityToUse: parsed.entityToUse.slice(0, 255),
-        flags: parsed.flags,
+        flags,
         coworkPrompt,
         modelUsed: modelUsed.slice(0, 120) || null,
         generatedBy: ctx.user.id,
@@ -478,5 +503,59 @@ export const adminFundingRouter = router({
       await db.update(fundingPipeline).set(patch).where(eq(fundingPipeline.id, row.id));
 
       return generation;
+    }),
+
+  /**
+   * The kernel and the Cowork template: the active text plus every saved
+   * version. isFallback means nothing has been saved yet and the engine is
+   * running on the neutral fallback in positioning-kernel.ts.
+   */
+  getPrompt: adminProcedure
+    .input(z.object({ key: z.enum(PROMPT_KEYS) }))
+    .query(async ({ input }) => {
+      const db = await requireDb();
+      const fallback = input.key === "positioning_kernel" ? FALLBACK_POSITIONING_PROMPT : FALLBACK_COWORK_TEMPLATE;
+      const active = await getActivePrompt(input.key, fallback);
+      const versions = await listPromptVersions(db, input.key);
+      return { active, versions, fallback };
+    }),
+
+  /** Save a new version and make it active. Identical text saves nothing. */
+  savePrompt: adminProcedure
+    .input(
+      z.object({
+        key: z.enum(PROMPT_KEYS),
+        body: z.string().min(1).max(200000),
+        note: z.string().max(500).optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const db = await requireDb();
+      // The Cowork template must keep the sentence the server checks before
+      // trusting a model's copy of it.
+      if (input.key === "cowork_template" && !input.body.includes("Do not submit anything yourself")) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: 'The template must keep the sentence "Do not submit anything yourself" in its delivery step.',
+        });
+      }
+      const { row, created } = await savePromptVersion(db, input.key, input.body, {
+        note: input.note ?? null,
+        createdBy: ctx.user.id,
+      });
+      return { version: row.version, created };
+    }),
+
+  /** Roll back: make an older saved version active again. */
+  activatePrompt: adminProcedure
+    .input(z.object({ key: z.enum(PROMPT_KEYS), version: z.number().int().positive() }))
+    .mutation(async ({ input }) => {
+      const db = await requireDb();
+      try {
+        await activatePromptVersion(db, input.key, input.version);
+      } catch (err) {
+        throw new TRPCError({ code: "NOT_FOUND", message: err instanceof Error ? err.message : "Version not found" });
+      }
+      return { ok: true };
     }),
 });

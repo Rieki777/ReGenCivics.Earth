@@ -38,6 +38,9 @@ import { getLoginUrl } from "@/const";
 import { cleanField } from "@shared/funding";
 import { isAdminRole } from "@shared/adminRole";
 import { AdminChrome } from "@/components/admin/AdminChrome";
+import { MetricsPanel } from "@/components/admin/funding/MetricsPanel";
+import { KernelPanel } from "@/components/admin/funding/KernelPanel";
+import { CoopInterestPanel } from "@/components/admin/funding/CoopInterestPanel";
 import {
   AlertTriangle,
   ChevronDown,
@@ -132,6 +135,41 @@ function ymd(value: string | Date | null | undefined): string {
   if (!value) return "";
   const d = typeof value === "string" ? value : value.toISOString();
   return d.slice(0, 10);
+}
+
+/** The page's views. Pipeline is the funder list; the rest are engine tools. */
+const VIEWS = [
+  { id: "pipeline", label: "Pipeline" },
+  { id: "metrics", label: "Metrics" },
+  { id: "kernel", label: "Kernel" },
+  { id: "interest", label: "Co-op interest" },
+] as const;
+type FundingView = (typeof VIEWS)[number]["id"];
+
+function ViewTabs({ view, onChange }: { view: FundingView; onChange: (v: FundingView) => void }) {
+  return (
+    <div role="tablist" aria-label="Funding views" className="flex flex-wrap gap-2 mb-4">
+      {VIEWS.map((v) => {
+        const active = view === v.id;
+        return (
+          <button
+            key={v.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(v.id)}
+            className={`rounded-full border px-4 py-1.5 text-sm font-semibold pointer-coarse:min-h-11 ${
+              active
+                ? "bg-[#1a472a] text-white border-[#1a472a]"
+                : "bg-white text-[#1a472a] border-[#1a472a]/30 hover:bg-[#1a472a]/5"
+            }`}
+          >
+            {v.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 /** An editable cell that only writes when the value actually changed on blur. */
@@ -262,6 +300,7 @@ export default function AdminFunding() {
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [view, setView] = useState<FundingView>("pipeline");
 
   const isAdmin = isAdminRole(user?.role);
 
@@ -372,6 +411,14 @@ export default function AdminFunding() {
           </p>
         </div>
 
+        <ViewTabs view={view} onChange={setView} />
+
+        {view === "metrics" && <MetricsPanel />}
+        {view === "kernel" && <KernelPanel />}
+        {view === "interest" && <CoopInterestPanel />}
+
+        {view === "pipeline" && (
+        <>
         {/* Stat chips */}
         <div className="flex flex-wrap gap-2 mb-4">
           {chips.map((c) => (
@@ -522,6 +569,8 @@ export default function AdminFunding() {
               ))}
             </div>
           </>
+        )}
+        </>
         )}
       </div>
     </div>

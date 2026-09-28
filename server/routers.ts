@@ -7,6 +7,8 @@ import { globalSearchRouter, filesRouter, chatRouter, imagesRouter } from "./rou
 import { authRouter, statsRouter, userProfilesRouter } from "./routes/auth";
 import { applicationsRouter, applicantsForCampaignRouter, reviewsRouter, orgClaimsRouter } from "./routes/applications";
 import { investorInquiriesRouter, generalInquiriesRouter, loiRouter, reviewerEmailsRouter, contactNotesRouter, contactTagsRouter } from "./routes/investors";
+import { coopRouter } from "./routes/coop";
+import { metricsRouter } from "./routes/metrics";
 import { newsletterRouter, videoSuggestionsRouter, emailRouter } from "./routes/newsletter";
 import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRouter, savedContributionsRouter } from "./routes/campaigns";
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
@@ -102,6 +104,8 @@ export const appRouter = router({
   investorInquiries: investorInquiriesRouter,
   generalInquiries: generalInquiriesRouter,
   loi: loiRouter,
+  // The member-owned cooperative in design: interest, never pledges (funding engine Phase 0)
+  coop: coopRouter,
   reviewerEmails: reviewerEmailsRouter,
   contactNotes: contactNotesRouter,
   contactTags: contactTagsRouter,
@@ -144,6 +148,8 @@ export const appRouter = router({
   adminActions: adminActionsRouter,
   adminAutomations: adminAutomationsRouter,
   adminFunding: adminFundingRouter,
+  // Canonical numbers (admin editor + the one public read), funding engine Phase 0
+  metrics: metricsRouter,
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,

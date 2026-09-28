@@ -1,5 +1,5 @@
 // server/routes/auth.ts
-import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
@@ -67,7 +67,15 @@ export const authRouter = router({
 });
 
 export const statsRouter = router({
-  getPublicStats: publicProcedure.query(async () => {
+  /**
+   * Live platform counts (applications, accounts, quests, bioregions).
+   * Admin-only since 2026-09-27: Rye ruled that live counts show in admin until
+   * they are meaningful, and a public procedure hands them to anyone who asks
+   * the API even when no page renders them. The name stays so AdminAnalytics
+   * keeps working; public numbers now come from the metrics table
+   * (server/funding/metrics.ts), confirmed and marked public by Rye.
+   */
+  getPublicStats: adminProcedure.query(async () => {
     return db.getPublicStats();
   }),
 });
