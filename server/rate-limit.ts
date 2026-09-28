@@ -7,6 +7,7 @@
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "./_core/context";
 import { redisKeyedLimit, redisRateLimit, isCacheAvailable } from "./cache";
+import { clientIp } from "./_core/client-ip";
 
 // Configuration
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
@@ -127,18 +128,17 @@ function memoryRateLimit(
 
 // ── IP extraction ─────────────────────────────────────────────────────────────
 /**
- * The caller's address, as Express works it out under `trust proxy`
- * (server/_core/index.ts sets 1 hop: Railway's edge, which appends the
- * address it saw to X-Forwarded-For). req.ip is that appended entry.
+ * The caller's address: Cloudflare's CF-Connecting-IP when the request came
+ * through Cloudflare, otherwise req.ip (server/_core/client-ip.ts explains
+ * why req.ip alone is a shared proxy address in production).
  *
  * This used to read the FIRST X-Forwarded-For entry, which is whatever the
  * client sent, so changing it on each request gave a fresh counter every
- * time and no per-IP limit held (security review 2026-09-28). Every other
- * limiter here (rateLimitMiddleware, the tRPC LLM guard, the webhooks)
- * already used req.ip.
+ * time and no per-IP limit held (security review 2026-09-28). Every limiter
+ * and failure blocker now reads the same helper.
  */
 export function getClientIp(req: TrpcContext["req"]): string {
-  return req.ip || req.socket?.remoteAddress || "unknown";
+  return clientIp(req);
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

@@ -25,6 +25,7 @@ import { ENV } from "../_core/env";
 import { timingSafeEqualStr, recordWebhookFailure, isWebhookFailureBlocked } from "../_core/security";
 import { storagePut } from "../storage";
 import { logger } from "../_core/logger";
+import { clientIp } from "../_core/client-ip";
 import {
   loadWorldviewPack, validatePack, packObjectKey, _clearWorldviewCache,
   type WorldviewPack,
@@ -36,7 +37,7 @@ const log = logger("worldview-upload");
 export const MAX_PACK_BYTES = 1_500_000;
 
 async function checkUploadAuth(req: Request, res: Response): Promise<boolean> {
-  const ip = req.ip || "unknown";
+  const ip = clientIp(req);
   if (await isWebhookFailureBlocked(ip, "worldview-upload")) {
     res.status(429).json({ error: "too_many_failures" });
     return false;
@@ -94,7 +95,7 @@ export function registerWorldviewUploadRoutes(app: Express) {
       await storagePut(packObjectKey(), serialized, "application/octet-stream");
       _clearWorldviewCache();
       log.info(
-        `pack stored ip=${req.ip} version=${pack.manifest.version} revision=${pack.manifest.revision} bytes=${Buffer.byteLength(serialized, "utf8")}`,
+        `pack stored ip=${clientIp(req)} version=${pack.manifest.version} revision=${pack.manifest.revision} bytes=${Buffer.byteLength(serialized, "utf8")}`,
       );
       res.json({ ok: true, version: pack.manifest.version, revision: pack.manifest.revision });
     } catch (err) {

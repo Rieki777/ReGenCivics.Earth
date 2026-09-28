@@ -40,6 +40,7 @@ import {
 } from "../_core/security";
 import { logger } from "../_core/logger";
 import { storageStream, storageStreamRange } from "../storage";
+import { clientIp } from "../_core/client-ip";
 
 const log = logger("brain-assets");
 
@@ -103,7 +104,7 @@ export function brainAssetKey(raw: string | undefined, ownerId: number): KeyChec
  * would let a bad token succeed on a browser that happens to be signed in.
  */
 async function authorize(req: Request, res: Response): Promise<boolean> {
-  const ip = req.ip || "unknown";
+  const ip = clientIp(req);
   if (await isWebhookFailureBlocked(ip, SCOPE)) {
     res.status(429).json({ error: "too_many_failures" });
     return false;
@@ -166,7 +167,7 @@ export function registerBrainAssetRoutes(app: Express) {
     const raw = (req.params as Record<string, string>)[0];
     const check = brainAssetKey(raw, ENV.ownerUserId);
     if (!check.ok) {
-      log.warn(`key rejected reason=${check.reason} ip=${req.ip || "unknown"}`);
+      log.warn(`key rejected reason=${check.reason} ip=${clientIp(req)}`);
       res.status(403).json({ error: check.reason });
       return;
     }
@@ -199,7 +200,7 @@ export function registerBrainAssetRoutes(app: Express) {
       if (obj.contentRange) res.setHeader("Content-Range", obj.contentRange);
       res.status(obj.statusCode);
 
-      log.info(`serve key=${check.key} bytes=${obj.contentLength ?? "?"} ip=${req.ip}`);
+      log.info(`serve key=${check.key} bytes=${obj.contentLength ?? "?"} ip=${clientIp(req)}`);
       obj.body.on("error", (err: unknown) => {
         log.error(`stream aborted key=${check.key}: ${err instanceof Error ? err.message : String(err)}`);
         res.destroy();

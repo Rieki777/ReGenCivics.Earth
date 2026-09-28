@@ -42,6 +42,7 @@ import * as items from "../lib/brain-items";
 import { BRAIN_KINDS, BRAIN_STATES } from "../lib/brain-items";
 import { canTransition } from "../lib/brain-gate";
 import type { BrainKind, BrainState } from "../lib/brain-gate";
+import { clientIp } from "../_core/client-ip";
 
 const log = logger("telegram-brain");
 
@@ -781,7 +782,7 @@ export function registerTelegramBrainRoutes(app: Express) {
   // express.json is local to this route so the raw-body webhooks elsewhere are
   // untouched. 1 MB is generous: a photo update carries metadata, not bytes.
   app.post("/api/telegram/brain", express.json({ limit: "1mb" }), async (req: Request, res: Response) => {
-    const ip = req.ip || "unknown";
+    const ip = clientIp(req);
     if (await isWebhookFailureBlocked(ip, "telegram-brain")) {
       return res.status(429).json({ error: "too_many_failures" });
     }

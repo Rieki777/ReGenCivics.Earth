@@ -116,6 +116,7 @@ interface AlchemyHyphaEvent {
 // the default is Hypha's DAOProposals deployment on Base (chain 8453), read
 // from hypha-dao/hypha-web packages/core/src/generated.ts.
 import { decodeEventLog, parseAbi } from "viem";
+import { clientIp } from "../../_core/client-ip";
 
 const HYPHA_DAO_PROPOSALS_CONTRACT = (
   process.env.HYPHA_DAO_PROPOSALS_CONTRACT ?? "0x001bA7a00a259Fb12d7936455e292a60FC2bef14"
@@ -825,7 +826,7 @@ export function registerHyphaWebhookRoutes(app: Express) {
   registerForkLinkRoute(app);
 
   app.post("/api/webhooks/hypha-alchemy", async (req: Request, res: Response) => {
-    const sourceIp = req.ip || req.socket.remoteAddress || "unknown";
+    const sourceIp = clientIp(req);
     if (await isWebhookFailureBlocked(sourceIp, "hypha-alchemy")) {
       return res.status(429).json({ error: "Too many invalid signatures" });
     }

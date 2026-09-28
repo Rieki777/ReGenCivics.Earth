@@ -8,6 +8,7 @@ import sanitizeHtml from 'sanitize-html';
 import { Request, Response, NextFunction } from 'express';
 import { cacheGet, cacheSet, cacheDel, isCacheAvailable } from '../cache';
 import { generateNonce } from './nonce';
+import { clientIp } from "./client-ip";
 
 // In-memory fallback store for when Redis is unavailable
 const rateLimitFallback = new Map<string, { count: number; resetTime: number }>();
@@ -177,7 +178,7 @@ export function rateLimitMiddleware(
   maxRequests: number = 100
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || 'unknown';
+    const ip = clientIp(req);
     const routeKey = rateLimitRouteKey(req);
     const key = `ratelimit:${routeKey}:${ip}`;
     const now = Date.now();

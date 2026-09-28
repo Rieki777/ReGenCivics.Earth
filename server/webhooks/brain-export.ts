@@ -46,6 +46,7 @@ import { brainItems } from "../../drizzle/schema";
 import { ENV } from "../_core/env";
 import { timingSafeEqualStr, recordWebhookFailure, isWebhookFailureBlocked } from "../_core/security";
 import { logger } from "../_core/logger";
+import { clientIp } from "../_core/client-ip";
 
 const log = logger("brain-export");
 
@@ -68,7 +69,7 @@ function isMissingTableError(err: unknown): boolean {
  * itself otherwise. Same contract as harvest-bridge's checkBridgeAuth.
  */
 async function checkBridgeAuth(req: Request, res: Response): Promise<boolean> {
-  const ip = req.ip || "unknown";
+  const ip = clientIp(req);
   if (await isWebhookFailureBlocked(ip, SCOPE)) {
     res.status(429).json({ error: "too_many_failures" });
     return false;
@@ -260,7 +261,7 @@ export function registerBrainExportRoutes(app: Express) {
       const last = items.length > 0 ? items[items.length - 1] : null;
 
       log.info(
-        `export ip=${req.ip} since=${since ? since.toISOString() : "all"} after_id=${afterId ?? "-"} realm=${realm ?? "all"} count=${items.length}`,
+        `export ip=${clientIp(req)} since=${since ? since.toISOString() : "all"} after_id=${afterId ?? "-"} realm=${realm ?? "all"} count=${items.length}`,
       );
       res.json({
         items,
