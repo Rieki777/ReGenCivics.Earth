@@ -14,6 +14,7 @@ import { MAX_OFFER_HOURS, isHoursNeed, roleFillState, scaleRoleValue } from "@sh
 import { isThingKind, modesFor, needVerb, sheetCopy, toDay, todayUtc, type NeedVerb } from "@shared/crowdpoolNeedAction";
 import {
   GIVE_LEND,
+  LINK,
   LOAN_RISK_LINE,
   OFFER_TYPES,
   RECEIPT,
@@ -36,7 +37,9 @@ import {
   CalendarPlus,
   Share2,
   Bell,
-  UserPlus
+  UserPlus,
+  Link2,
+  Copy
 } from "lucide-react";
 
 /** A campaign need passed in when the contributor picks Apply, Offer or Sign up on a need. */
@@ -219,6 +222,9 @@ export function ContributionModal({
   // True when the server answered with a practice run (an example campaign):
   // the success screen is then a practice receipt.
   const [practice, setPractice] = useState(false);
+  // The private status link for a signed-out offer (build spec 2026-09-27,
+  // section 10.5): '/offer#<token>'. Held only for this receipt.
+  const [statusPath, setStatusPath] = useState<string | null>(null);
   // The practice receipt's "hear when real campaigns open" form.
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistJoined, setWaitlistJoined] = useState(false);
@@ -347,6 +353,9 @@ export function ContributionModal({
     onSuccess: (result) => {
       const isPractice = result?.practice === true;
       setPractice(isPractice);
+      // A signed-out offer on a real campaign comes back with its private
+      // status link (/offer#<token>). A practice run never has one.
+      setStatusPath(result && result.practice === false && typeof result.statusPath === 'string' ? result.statusPath : null);
       setSentEmail(contributorEmail.trim());
       setWaitlistEmail(contributorEmail.trim());
       setWaitlistJoined(false);
@@ -400,6 +409,7 @@ export function ContributionModal({
     resetForm();
     setSentEmail('');
     setPractice(false);
+    setStatusPath(null);
     setWaitlistEmail('');
     setWaitlistJoined(false);
     setFollowed(false);
@@ -593,6 +603,17 @@ export function ContributionModal({
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Link copied');
+    } catch {
+      toast.error("Couldn't copy the link.");
+    }
+  };
+
+  // The whole private link, fragment and all, for the person to keep.
+  const handleCopyStatusLink = async () => {
+    if (!statusPath || typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${statusPath}`);
+      toast.success(LINK.copied);
     } catch {
       toast.error("Couldn't copy the link.");
     }
@@ -1233,6 +1254,29 @@ export function ContributionModal({
                 {RECEIPT.close}
               </Button>
             </div>
+            {/* The private status link (spec 2026-09-27, section 10.5): signed
+                out, real offers only. A plain link, so it opens as a fresh
+                page load and the app takes the token out of the address
+                before anything else runs. */}
+            {!isAuthenticated && statusPath && (
+              <div className="text-left max-w-sm mx-auto mt-5 rounded-xl border border-[#1a472a]/25 bg-white p-4 space-y-2" data-testid="receipt-status-link">
+                <p className="text-sm font-semibold text-[#1a472a]">{LINK.receiptLead}</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <a
+                    href={statusPath}
+                    className="inline-flex items-center justify-center min-h-11 rounded-md bg-[#1a472a] hover:bg-[#0f2e1a] px-4 text-sm font-semibold text-white"
+                  >
+                    <Link2 className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {LINK.receiptOpen}
+                  </a>
+                  <Button variant="outline" onClick={handleCopyStatusLink} className="min-h-11 border-[#4a7c59] text-[#1a472a]">
+                    <Copy className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {LINK.copy}
+                  </Button>
+                </div>
+                <p className="text-sm text-[#1a472a]/85">{LINK.receiptHelp}</p>
+              </div>
+            )}
             {!isAuthenticated && sentEmail && (
               <div className="text-left max-w-sm mx-auto mt-5 rounded-xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4 space-y-2">
                 <p className="text-sm text-[#1a472a]">

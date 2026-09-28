@@ -208,17 +208,28 @@ function addTrackingPixel(html: string, emailLogId?: number): string {
 }
 
 /**
+ * A private offer status link (`/offer#<token>`, server/lib/offer-status.ts).
+ * Its token lives in the fragment so no server ever sees it; the click
+ * wrapper below would copy it into a query string (and the click log), so
+ * these links are never wrapped.
+ */
+export function isPrivateOfferLink(url: string): boolean {
+  return /\/offer#/.test(url);
+}
+
+/**
  * Wrap links with click tracking
  */
-function wrapLinksWithTracking(html: string, emailLogId?: number): string {
+export function wrapLinksWithTracking(html: string, emailLogId?: number): string {
   if (!emailLogId) return html;
-  
+
   // Replace href links with tracked versions (except mailto and tel links).
   // Each link is HMAC-signed so the click endpoint can verify the destination
   // was stamped by us (open-redirect guard, see server/emailTracking.ts).
   return html.replace(
     /href="(https?:\/\/[^"]+)"/g,
     (match, url) => {
+      if (isPrivateOfferLink(url)) return match;
       const sig = signTrackedUrl(emailLogId, url);
       const sigParam = sig ? `&sig=${sig}` : "";
       const trackedUrl = `${BASE_URL}/api/track/click/${emailLogId}?url=${encodeURIComponent(url)}${sigParam}`;
@@ -463,6 +474,17 @@ export type ContributionEmailArgs = {
   signUpUrl: string;
   /** Absolute /campaigns URL for the declined email's button. */
   browseUrl?: string;
+  /**
+   * Accepted and declined: a fresh private link to this one offer
+   * (server/lib/offer-status.ts, `/offer#<token>`). Left out when issuing
+   * it failed; the email goes without it.
+   */
+  statusUrl?: string | null;
+  /**
+   * Accepted: the arrival note's set fields as labelled lines, in order
+   * (arrivalNoteLines in shared/offerStatus.ts). Empty or missing: no block.
+   */
+  arrivalLines?: Array<{ label: string; text: string }>;
 };
 
 export type CampaignCancelledEmailArgs = {
@@ -532,6 +554,16 @@ function stewardNoteBlock(heading: string, note?: string | null): string {
   return `<div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">${textForEmail(heading)}</p>
         <p style="color: #333; margin: 0; white-space: pre-wrap;">${textForEmail(text)}</p>
+      </div>`;
+}
+
+/** "Before you arrive" and the arrival note's labelled lines. Empty when there are none. */
+function arrivalBlock(lines: Array<{ label: string; text: string }> | undefined): string {
+  const set = (lines ?? []).filter((l) => l && l.text && l.text.trim());
+  if (set.length === 0) return '';
+  return `<div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <p style="color: #4a7c59; font-weight: bold; margin: 0 0 10px 0;">Before you arrive</p>
+        ${set.map((l) => `<p style="color: #333; margin: 0 0 8px 0; white-space: pre-wrap;"><strong>${textForEmail(l.label)}:</strong> ${textForEmail(l.text)}</p>`).join('\n        ')}
       </div>`;
 }
 
@@ -723,14 +755,21 @@ export const emailTemplates = {
     const hours = a.hoursPerWeek && a.roleTitle
       ? `<p style="color: #333; line-height: 1.6;">You're in for ${Number(a.hoursPerWeek)} hours a week as ${textForEmail(a.roleTitle)}.</p>`
       : '';
+    // The arrival note rides inside this email (ruling 2026-09-27, question 3).
+    const arrival = arrivalBlock(a.arrivalLines);
     return {
       subject: `${decodeBasicEntities(a.projectName)} accepted your offer`,
       html: `
       <h2 style="color: #1a472a; margin-top: 0;">Good news, ${textForEmail(a.recipientName)}</h2>
       <p style="color: #333; line-height: 1.6;">The stewards of ${textForEmail(a.projectName)} accepted <strong>"${textForEmail(a.contributionTitle)}"</strong> for ${textForEmail(a.campaignTitle)}.</p>
       ${hours}
+      ${arrival
+        ? `<p style="color: #333; line-height: 1.6;">Here's what the stewards want you to know before you arrive.</p>
+      ${arrival}`
+        : ''}
       ${stewardNoteBlock('A note from the stewards', a.ownerNotes)}
-      <p style="color: #333; line-height: 1.6;">The stewards will reach out to sort out the details.</p>
+      ${arrival ? '' : '<p style="color: #333; line-height: 1.6;">The stewards will reach out to sort out the details.</p>'}
+      ${a.statusUrl ? emailButton(a.statusUrl, 'Check your offer') : ''}
       ${emailButton(a.projectUrl, 'See the project')}
       ${accountNudgeBlock(a.signUpUrl)}
       ${teamSignoff()}
@@ -744,6 +783,9 @@ export const emailTemplates = {
       <h2 style="color: #1a472a; margin-top: 0;">Hello ${textForEmail(a.recipientName)},</h2>
       <p style="color: #333; line-height: 1.6;">The stewards of ${textForEmail(a.projectName)} can't take <strong>"${textForEmail(a.contributionTitle)}"</strong> right now.</p>
       ${stewardNoteBlock('A note from the stewards', a.ownerNotes)}
+      ${a.statusUrl
+        ? `<p style="color: #333; line-height: 1.6;">Check this offer any time: <a href="${textForEmail(a.statusUrl)}" style="color: #1a472a; font-weight: bold;">Check your offer</a></p>`
+        : ''}
       <p style="color: #333; line-height: 1.6;">Plenty of land projects need what you offered. Have a look at the live campaigns.</p>
       ${emailButton(a.browseUrl ?? toAbsoluteUrl('/campaigns', { campaign: 'contribution-status' }), 'Browse campaigns')}
       ${accountNudgeBlock(a.signUpUrl)}

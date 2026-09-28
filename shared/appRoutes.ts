@@ -123,6 +123,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/newsletter",
   "/newsletter/confirm",
   "/notifications",
+  "/offer",
   "/opportunity",
   "/play",
   "/plays",

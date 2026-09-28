@@ -2025,6 +2025,157 @@ export async function setNeedMarker(
   return { changed: asMutationResult(result).affectedRows > 0 };
 }
 
+// ── Offer status links and arrival notes (build spec 2026-09-27, sections 10
+// and 11; migrations 0266 and 0267) ─────────────────────────────────────────
+// A status link's token is stored only as its SHA-256; the plain token never
+// reaches this file (server/lib/offer-status.ts hashes it first). Arrival
+// notes live in their own table, never on campaign_items, because getItems
+// and getById return every campaign_items column (finding F6). Times are
+// written and compared as JS dates, the way email_tokens does, so the node
+// and database clocks never have to agree on a time zone.
+import { campaignArrivalNotes, contributionMessages, contributionStatusTokens } from "../drizzle/schema";
+import type { CampaignArrivalNote } from "../drizzle/schema";
+import { ARRIVAL_FIELDS, resolveArrivalNote, type ArrivalField, type ResolvedArrivalNote } from "@shared/offerStatus";
+
+/** Store one status link: the token's hash, never the token. */
+export async function insertContributionStatusToken(row: {
+  contributionId: number;
+  tokenHash: string;
+  expiresAt: Date;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(contributionStatusTokens).values({
+    contributionId: row.contributionId,
+    tokenHash: row.tokenHash,
+    expiresAt: row.expiresAt,
+  });
+}
+
+/** The live link row for a token hash (not expired at `now`), or null. */
+export async function findLiveStatusToken(
+  tokenHash: string,
+  now: Date,
+): Promise<{ id: number; contributionId: number; expiresAt: Date } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select({
+      id: contributionStatusTokens.id,
+      contributionId: contributionStatusTokens.contributionId,
+      expiresAt: contributionStatusTokens.expiresAt,
+    })
+    .from(contributionStatusTokens)
+    .where(and(eq(contributionStatusTokens.tokenHash, tokenHash), gt(contributionStatusTokens.expiresAt, now)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Record that a link was just used. Best effort. */
+export async function touchContributionStatusToken(id: number, now: Date): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(contributionStatusTokens).set({ lastUsedAt: now }).where(eq(contributionStatusTokens.id, id));
+}
+
+/**
+ * Notes people sent the stewards from their status links, for one campaign:
+ * the latest `perOffer` for each offer, newest first. Bodies are stored
+ * sanitized (entities); the client decodes them once for display.
+ */
+export async function getOfferMessagesForCampaign(
+  campaignId: number,
+  perOffer = 5,
+): Promise<Record<number, Array<{ body: string; createdAt: Date }>>> {
+  const db = await getDb();
+  if (!db) return {};
+  const rows = await db
+    .select({
+      contributionId: contributionMessages.contributionId,
+      body: contributionMessages.body,
+      createdAt: contributionMessages.createdAt,
+    })
+    .from(contributionMessages)
+    .innerJoin(campaignContributions, eq(campaignContributions.id, contributionMessages.contributionId))
+    .where(eq(campaignContributions.campaignId, campaignId))
+    .orderBy(desc(contributionMessages.createdAt), desc(contributionMessages.id));
+  const out: Record<number, Array<{ body: string; createdAt: Date }>> = {};
+  for (const r of rows) {
+    const list = (out[r.contributionId] ??= []);
+    if (list.length < perOffer) list.push({ body: r.body, createdAt: r.createdAt });
+  }
+  return out;
+}
+
+/** Every arrival note row on the campaigns given (the campaign-wide note is campaignItemId 0). */
+export async function getArrivalNoteRows(campaignIds: number[]): Promise<CampaignArrivalNote[]> {
+  const ids = Array.from(new Set(campaignIds.filter((n) => Number.isInteger(n) && n > 0)));
+  if (ids.length === 0) return [];
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(campaignArrivalNotes)
+    .where(inArray(campaignArrivalNotes.campaignId, ids))
+    .orderBy(asc(campaignArrivalNotes.campaignId), asc(campaignArrivalNotes.campaignItemId));
+}
+
+/**
+ * Write one arrival note: the campaign-wide note (campaignItemId 0) or one
+ * need's. Fields arrive sanitized and trimmed, empty as null. When every
+ * field is null the row is deleted. The caller checks the steward, the
+ * campaign and the need (campaigns.setArrivalNote).
+ */
+export async function saveArrivalNote(
+  campaignId: number,
+  campaignItemId: number,
+  fields: Record<ArrivalField, string | null>,
+  userId: number,
+): Promise<{ saved: boolean; deleted: boolean }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const empty = ARRIVAL_FIELDS.every((f) => fields[f] == null);
+  if (empty) {
+    const result = await db
+      .delete(campaignArrivalNotes)
+      .where(and(eq(campaignArrivalNotes.campaignId, campaignId), eq(campaignArrivalNotes.campaignItemId, campaignItemId)));
+    return { saved: false, deleted: asMutationResult(result).affectedRows > 0 };
+  }
+  const values = { ...fields, updatedBy: userId, updatedAt: new Date() };
+  await db
+    .insert(campaignArrivalNotes)
+    .values({ campaignId, campaignItemId, ...values })
+    .onDuplicateKeyUpdate({ set: values });
+  return { saved: true, deleted: false };
+}
+
+/**
+ * The note someone whose offer stands should read: the need's note field by
+ * field over the campaign's (resolveArrivalNote in shared/offerStatus.ts).
+ * A freeform offer (no need) reads the campaign note. Null when neither note
+ * says anything.
+ */
+export async function getResolvedArrivalNote(
+  campaignId: number,
+  campaignItemId: number | null | undefined,
+): Promise<ResolvedArrivalNote | null> {
+  const rows = await getArrivalNoteRows([campaignId]);
+  return resolvedNoteFrom(rows, campaignId, campaignItemId ?? null);
+}
+
+/** Resolve one offer's note from rows already loaded. */
+export function resolvedNoteFrom(
+  rows: CampaignArrivalNote[],
+  campaignId: number,
+  campaignItemId: number | null,
+): ResolvedArrivalNote | null {
+  const campaignNote = rows.find((r) => r.campaignId === campaignId && r.campaignItemId === 0) ?? null;
+  const needNote = campaignItemId
+    ? rows.find((r) => r.campaignId === campaignId && r.campaignItemId === campaignItemId) ?? null
+    : null;
+  return resolveArrivalNote(campaignNote, needNote);
+}
+
 /**
  * How many people follow a campaign: with an account (campaign follows plus
  * project follows on its project, distinct people), and by email only (the

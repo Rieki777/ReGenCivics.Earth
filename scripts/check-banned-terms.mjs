@@ -64,6 +64,10 @@ export const GUARDED_FILES = [
   "client/src/components/crowdpool/GalleryCard.tsx",
   "client/src/components/crowdpool/PledgeSimulator.tsx",
   "client/src/components/crowdpool/SeasonDefaults.tsx",
+  // The offer status link and the arrival note (build spec 2026-09-27, lane 4).
+  "client/src/pages/OfferStatus.tsx",
+  "client/src/components/crowdpool/ArrivalNoteView.tsx",
+  "client/src/components/crowdpool/WithdrawOfferDialog.tsx",
   "client/src/components/ContributionModal.tsx",
   "shared/crowdpoolCopy.ts",
   "shared/campaignProgress.ts",

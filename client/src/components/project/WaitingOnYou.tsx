@@ -4,9 +4,38 @@
  * review, and offers sitting on a role that is already filled. Each row
  * jumps to the right tab of the offers panel. The counting lives in
  * shared/stewardQueue.ts.
+ *
+ * Notes from offer links (build spec 2026-09-27, section 10.2): someone who
+ * offered without an account can send the stewards a short note from their
+ * private link. Their spine notice (contributor_reply) lands on #review, so
+ * this list says how many offers still in play carry a note and jumps to
+ * them; each note shows on its offer's card.
  */
-import { ArrowRight, CheckCircle2, Clock, Gift, PackageCheck, Send, AlertTriangle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, Gift, MessageSquare, PackageCheck, Send, AlertTriangle } from "lucide-react";
 import type { OfferTab, StewardQueue } from "@shared/stewardQueue";
+import { OFFER_NOTES } from "@shared/crowdpoolCopy";
+
+export type OfferNotesSummary = { count: number; tab: OfferTab } | null;
+
+/**
+ * Offers still in play (waiting or accepted) that carry at least one note
+ * from their offer link. Jumps to Waiting when any of them waits, else to
+ * Accepted. Null when there are none.
+ */
+export function offerNotesSummary(
+  contributions: Array<{ id: number; status: string }>,
+  messages: Record<number, unknown[] | undefined>,
+): OfferNotesSummary {
+  let count = 0;
+  let waiting = false;
+  for (const c of contributions) {
+    if (c.status !== "pending" && c.status !== "accepted") continue;
+    if (!(messages[c.id]?.length)) continue;
+    count++;
+    if (c.status === "pending") waiting = true;
+  }
+  return count > 0 ? { count, tab: waiting ? "waiting" : "accepted" } : null;
+}
 
 function Row({ icon: Icon, text, onClick, tone = "default" }: {
   icon: typeof Clock;
@@ -38,11 +67,14 @@ export function WaitingOnYou({
   loading,
   onJump,
   onSendForReview,
+  offerNotes = null,
 }: {
   queue: StewardQueue | null;
   loading: boolean;
   onJump: (tab: OfferTab) => void;
   onSendForReview: () => void;
+  /** Offers in play with a note from their offer link (offerNotesSummary). */
+  offerNotes?: OfferNotesSummary;
 }) {
   return (
     <section id="review" className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl scroll-mt-24">
@@ -52,7 +84,7 @@ export function WaitingOnYou({
       </h2>
       {loading || !queue ? (
         <p className="text-sm text-[#1a472a]/75">Checking what needs you...</p>
-      ) : queue.total === 0 ? (
+      ) : queue.total === 0 && !offerNotes ? (
         <p className="text-sm text-[#1a472a]/80 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-[#4a7c59]" />
           Nothing is waiting on you right now.
@@ -64,6 +96,9 @@ export function WaitingOnYou({
           )}
           {queue.toAnswer.length > 0 && (
             <Row icon={Clock} text={`${plural(queue.toAnswer.length, "offer", "offers")} to answer`} onClick={() => onJump("waiting")} />
+          )}
+          {offerNotes && (
+            <Row icon={MessageSquare} text={OFFER_NOTES.row(offerNotes.count)} onClick={() => onJump(offerNotes.tab)} />
           )}
           {queue.pendingOnFilledRoles.length > 0 && (
             <Row

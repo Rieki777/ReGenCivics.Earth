@@ -56,6 +56,13 @@ const ACTION_LIMITS: Record<string, number> = {
   // person is the norm; a few retries cover typos without letting a script
   // fill the table.
   coop_interest: 5,
+
+  // Offer status links (build spec 2026-09-27, section 10.2). Anyone holding
+  // a link can open it, so reads get room for a few reloads across devices
+  // and writes (withdraw, a note to the stewards) stay tight. A note is also
+  // capped at 5 per offer per 24 hours, counted in the database.
+  offer_status_view: 60,
+  offer_status_write: 10,
 };
 
 function maxForAction(action: string): number {

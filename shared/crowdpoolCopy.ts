@@ -515,6 +515,23 @@ export const LINK = {
   badBody:
     "Each email from the stewards brings a fresh link. You can also make an account with the email you used to see every offer you've made.",
   notPendingHere: "The stewards already answered this offer, so it can't be withdrawn here.",
+  // Lane 4 additions: the page's own small words and the reply refusals.
+  loading: "Opening your offer...",
+  loadFailed: "We couldn't open this offer just now. Try again in a moment.",
+  tryAgain: "Try again",
+  seeLive: "See live campaigns",
+  otherNeed: (verb: string, title: string, project: string) => `${verb} ${title} at ${project}`,
+  stepsHeading: "Where it stands",
+  stepDone: "Done",
+  stepNow: "Now",
+  lending: (from: string, until: string) => `Lending ${from} to ${until}`,
+  lendingUntil: (until: string) => `Lending until ${until}`,
+  expiresOn: (date: string) => `This link works until ${date}. Each email from the stewards brings a fresh one.`,
+  replyEmpty: "Write a note before sending it.",
+  replyWithdrawn: "You withdrew this offer, so notes can't be sent from here.",
+  replyExample: "Example campaigns keep their example records.",
+  replyFailed: "That note didn't send. Try again in a moment.",
+  withdrawFailed: "That didn't go through. Try again in a moment.",
 } as const;
 
 /** The step line for one offer (section 10.3). offerSteps in shared/offerStatus.ts puts it together. */
@@ -584,6 +601,28 @@ export const ARRIVAL = {
   },
   needsYou: (title: string) => `Needs you: read the arrival note for ${title}`,
   noticeLine: "The stewards left an arrival note for you in Your contributions.",
+  // Lane 4 additions: the steward's card and the contributor's toggle.
+  cleared: "Arrival note cleared.",
+  saveFailed: "Couldn't save that. Try again.",
+  loading: "Loading the note...",
+  count: (n: number, max: number) => `${n} of ${max} characters`,
+  show: "Read the arrival note",
+  hide: "Hide the arrival note",
+} as const;
+
+/** Withdraw in Your contributions (build spec 2026-09-27, section 10.6). The dialog reuses LINK's words. */
+export const YOUR_OFFERS = {
+  withdraw: "Withdraw",
+  withdrawLabel: (title: string) => `Withdraw your offer of ${title}`,
+} as const;
+
+/** Notes people sent the stewards from their offer link, as the stewards see them. */
+export const OFFER_NOTES = {
+  heading: "Notes from their offer link",
+  row: (n: number) =>
+    Number(n) === 1
+      ? "1 offer has a note from the person who offered. Read it with the offer."
+      : `${n} offers have notes from the people who offered. Read them with each offer.`,
 } as const;
 
 /** One Follow control (section 12.5). A follow is on the project, so it lasts across seasons. */

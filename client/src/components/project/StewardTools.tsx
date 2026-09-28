@@ -8,9 +8,14 @@
  * "Needed to start" marks (campaigns.getNeedMarkers) feed the needs list,
  * where stewards set them, and the "How it's going" line.
  *
- * Anchors: #steward-tools, #review, #claims, #money-routes, #needs,
- * #updates-composer, #followers, #campaign-status. The steward digest and the
- * old /campaign/:id/manage links land on these.
+ * Anchors: #steward-tools, #review, #claims, #arrival-note, #money-routes,
+ * #needs, #updates-composer, #followers, #campaign-status. The steward digest
+ * and the old /campaign/:id/manage links land on these.
+ *
+ * The arrival note (ArrivalNoteCard, build spec 2026-09-27, section 11.3)
+ * sits after the offers panel. Notes people sent from their offer status
+ * links (campaigns.getOfferMessages) show on each offer card and as a row in
+ * "Waiting on you", where their spine notice (contributor_reply) lands.
  *
  * "How it's going" reads the campaign's one progress reading (front.progress,
  * shared/campaignProgress.ts), the same figures visitors see, plus the soft
@@ -31,8 +36,9 @@ import { canTransition } from "@shared/campaignStatus";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { buildStewardQueue, type OfferTab } from "@shared/stewardQueue";
 import { makeCurrencyFormatter } from "@/lib/needDisplay";
-import { WaitingOnYou } from "./WaitingOnYou";
+import { WaitingOnYou, offerNotesSummary } from "./WaitingOnYou";
 import { ContributionReviewPanel } from "./ContributionReviewPanel";
+import { ArrivalNoteCard } from "./ArrivalNoteCard";
 import { NeedsGlance } from "./NeedsGlance";
 import { CampaignUpdatesComposer } from "./CampaignUpdatesComposer";
 import { CampaignStewardStats } from "./CampaignStewardStats";
@@ -92,6 +98,11 @@ export function StewardTools({
   const { data: needMarkers } = trpc.campaigns.getNeedMarkers.useQuery({ campaignId }, { retry: false });
   // Marks stay as they are once a campaign is over, and examples keep none.
   const canMark = !closed && status !== "closed" && !front.isDemo;
+  // Notes people sent from their offer links (the offers panel reads the same query).
+  const { data: offerMessages } = trpc.campaigns.getOfferMessages.useQuery({ campaignId }, { retry: false });
+  // A completed campaign still has people arriving to deliver, so its
+  // arrival note stays open; a cancelled or closed one keeps it as it is.
+  const canEditArrival = status !== "cancelled" && status !== "closed";
 
   // The wizard's "campaign created" confirmation, carried across its page load.
   useEffect(() => {
@@ -110,6 +121,7 @@ export function StewardTools({
       delivered: list.filter((c) => c.status === "fulfilled" || c.status === "thanked").length,
     };
   }, [contributions]);
+  const notes = useMemo(() => offerNotesSummary(contributions ?? [], offerMessages ?? {}), [contributions, offerMessages]);
 
   const [focus, setFocus] = useState<{ tab: OfferTab; nonce: number } | null>(null);
   const jump = (tab: OfferTab) => {
@@ -156,6 +168,7 @@ export function StewardTools({
           loading={contributionsLoading}
           onJump={jump}
           onSendForReview={() => scrollToId("campaign-status")}
+          offerNotes={notes}
         />
         <CampaignStewardStats
           campaignId={campaignId}
@@ -174,6 +187,13 @@ export function StewardTools({
         formatCurrency={formatCurrency}
         focus={focus}
         onChanged={onChanged}
+      />
+
+      <ArrivalNoteCard
+        campaignId={campaignId}
+        items={front.items}
+        isExample={!!front.isDemo}
+        canEdit={canEditArrival}
       />
 
       <MoneyRoutesCard

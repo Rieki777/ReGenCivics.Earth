@@ -71,6 +71,7 @@ import { quickNotesRouter } from "./routes/quick-notes";
 import { harvestRouter } from "./routes/harvest";
 import { outboundRouter } from "./routes/outbound";
 import { projectsRouter } from "./routes/projects";
+import { offerStatusRouter } from "./routes/offerStatus";
 import { brainRouter } from "./routes/brain";
 import { callIntelligenceRouter } from "./routes/callIntelligence";
 import { videoTutorRouter } from "./routes/videoTutor";
@@ -122,6 +123,9 @@ export const appRouter = router({
   savedContributions: savedContributionsRouter,
   // The public project page (/project/:key) and its steward tools.
   projects: projectsRouter,
+  // The private offer status link (/offer#<token>) for people who offered
+  // without an account: public, rate-limited, token-scoped mutations.
+  offerStatus: offerStatusRouter,
 
   // Forum / Moderation
   forum: forumRouter,

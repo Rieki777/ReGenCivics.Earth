@@ -100,6 +100,35 @@ import {
 } from "../lib/campaign-notify";
 import { cancelCampaign } from "../lib/campaign-cancel";
 import { suggestAlternatives } from "../lib/campaign-suggest";
+import {
+  STANDING_OFFER_STATUSES,
+  issueOfferStatusToken,
+  offerStatusUrl,
+  sanitizeCapped,
+  withdrawPendingOffer,
+} from "../lib/offer-status";
+import { ARRIVAL } from "../../shared/crowdpoolCopy";
+import { ARRIVAL_FIELDS, arrivalNoteLines, type ArrivalField, type ResolvedArrivalNote } from "../../shared/offerStatus";
+
+/** Each arrival note field's column size (drizzle/0267_arrival_notes_and_need_markers.sql). */
+const ARRIVAL_FIELD_MAX: Record<ArrivalField, number> = {
+  whereToGo: 500,
+  whatToBring: 500,
+  askFor: 120,
+  meals: 300,
+  beds: 300,
+  gettingThere: 500,
+};
+
+/** The arrival note that resolves for one offer right now, or null. Never throws. */
+async function arrivalNoteForOffer(contribution: { campaignId: number; campaignItemId: number | null }): Promise<ResolvedArrivalNote | null> {
+  try {
+    return await db.getResolvedArrivalNote(contribution.campaignId, contribution.campaignItemId ?? null);
+  } catch (err) {
+    console.warn('[arrival-notes] read failed (non-fatal):', (err as Error)?.message);
+    return null;
+  }
+}
 
 /**
  * The creator, admins, and anyone at all once it is published. Sync, so the
@@ -814,6 +843,11 @@ async function deliveryPayoff(contribution: ContributionRow, campaign: Campaign,
  * The direct email for someone who offered WITHOUT an account: accepted,
  * declined, or first delivery. Account holders never get this; the spine
  * emails them by their prefs. A send failure never fails the steward's action.
+ *
+ * Accepted and declined each carry a fresh private status link (build spec
+ * 2026-09-27, section 10.5), and accepted carries the arrival note when one
+ * resolves. Issuing the link or reading the note can fail on its own; the
+ * email then goes without that block.
  */
 async function sendContributionStatusEmail(
   status: 'accepted' | 'rejected' | 'fulfilled',
@@ -827,6 +861,19 @@ async function sendContributionStatusEmail(
         ? emailTemplates.contributionRejected
         : emailTemplates.contributionFulfilled;
     const hoursNeed = isHoursNeed(args.item);
+    let statusUrl: string | null = null;
+    if ((status === 'accepted' || status === 'rejected') && !args.campaign.isDemo) {
+      try {
+        const { token } = await issueOfferStatusToken(args.contribution.id);
+        statusUrl = offerStatusUrl(token);
+      } catch (err) {
+        // Never the token or the address in a log: the contribution id is enough.
+        console.warn(`[Contribution] status link for contribution ${args.contribution.id} failed (non-fatal):`, (err as Error)?.message);
+      }
+    }
+    const arrivalLines = status === 'accepted'
+      ? arrivalNoteLines(await arrivalNoteForOffer(args.contribution)).map(({ label, text }) => ({ label, text }))
+      : [];
     const emailContent = template({
       recipientName: args.contribution.contributorName,
       contributionTitle: args.contribution.title,
@@ -836,6 +883,8 @@ async function sendContributionStatusEmail(
       hoursPerWeek: hoursNeed ? args.contribution.quantityPledged : null,
       roleTitle: hoursNeed ? (args.item?.roleTitle ?? args.contribution.roleTitle ?? null) : null,
       ...contributionEmailLinks(projectPathForCampaignFocus(args.campaign)),
+      statusUrl,
+      arrivalLines,
     });
     await sendEmail({
       to: args.contribution.contributorEmail,
@@ -1658,7 +1707,21 @@ export const campaignsRouter = router({
         console.warn('Failed to send contribution notification:', e);
       }
 
-      return { id: contributionId, success: true, practice: false as const };
+      // Signed out: a private link to check or withdraw this offer (build spec
+      // 2026-09-27, section 10). Only its hash is stored; the path carries the
+      // token in the fragment, so no server log ever sees it. Examples never
+      // reach here (the practice return above). A failure to issue it never
+      // fails the offer: the receipt shows the account card alone.
+      let statusPath: string | null = null;
+      if (!ctx.user) {
+        try {
+          statusPath = (await issueOfferStatusToken(contributionId)).path;
+        } catch (err) {
+          console.warn(`[Contribution] status link for contribution ${contributionId} failed (non-fatal):`, (err as Error)?.message);
+        }
+      }
+
+      return { id: contributionId, success: true, practice: false as const, statusPath };
     }),
 
   // Answer an offer: accept, decline, release, mark delivered, send thanks.
@@ -1918,7 +1981,12 @@ export const campaignsRouter = router({
         // Account holders: the notification spine only. It emails them by
         // their campaignsEmail preference, so there is no direct email here.
         const args = { campaign, contribution: noticeContribution, item, note: ownerNotes ?? null, actorId };
-        if (input.status === 'accepted') await notifyProposalAccepted(args);
+        if (input.status === 'accepted') {
+          // Says the stewards left an arrival note when one resolves now
+          // (section 11.4). A note written later sends nothing (question Q9).
+          const hasArrivalNote = (await arrivalNoteForOffer(contribution)) != null;
+          await notifyProposalAccepted({ ...args, hasArrivalNote });
+        }
         else if (input.status === 'rejected') await notifyProposalDeclined(args);
         else if (input.status === 'released') await notifyReleased(args);
         else if (input.status === 'fulfilled') await notifyDelivered(args);
@@ -2092,10 +2160,12 @@ export const campaignsRouter = router({
       return { success: true };
     }),
 
-  // Withdraw a contribution (authenticated, contributor only)
+  // Withdraw a contribution (authenticated, contributor only). Your
+  // contributions shows Withdraw on waiting offers (build spec 2026-09-27,
+  // section 10.6).
   withdrawContribution: protectedProcedure
     .input(z.object({
-      contributionId: z.number(),
+      contributionId: z.number().int().positive(),
     }))
     .mutation(async ({ ctx, input }) => {
       const contribution = await db.getContributionById(input.contributionId);
@@ -2103,8 +2173,14 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'NOT_FOUND', message: 'Contribution not found' });
       }
 
-      // Verify authenticated user owns this contribution
-      if (contribution.contributorEmail !== ctx.user.email) {
+      // The owner: the account the offer is linked to, or the address it was
+      // sent from, compared without case. Before 2026-09-27 this compared the
+      // emails case-sensitively and ignored userId, so an offer linked to the
+      // account under another address (an Apple relay, a capitalised email)
+      // could not be withdrawn by its owner (finding F8).
+      const sameEmail = !!ctx.user.email && !!contribution.contributorEmail
+        && contribution.contributorEmail.trim().toLowerCase() === ctx.user.email.trim().toLowerCase();
+      if (contribution.userId !== ctx.user.id && !sameEmail) {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'You can only withdraw your own contributions' });
       }
 
@@ -2116,8 +2192,7 @@ export const campaignsRouter = router({
       // Conditional, like every other status write: if a steward accepted it
       // in the meantime, the withdraw is refused instead of leaving a
       // 'withdrawn' row whose hours still count on the need.
-      const affected = await conditionalStatusUpdate(input.contributionId, ['pending'], { status: 'withdrawn' });
-      if (affected === 0) {
+      if (!(await withdrawPendingOffer(input.contributionId))) {
         throw new TRPCError({ code: 'CONFLICT', message: 'The stewards just answered this offer. Refresh to see where it stands.' });
       }
       return { success: true };
@@ -2535,6 +2610,103 @@ export const campaignsRouter = router({
       }
       const { changed } = await db.setNeedMarker(campaign.id, item.id, ctx.user.id, input.marked);
       return { success: true, changed };
+    }),
+
+  // ---- The arrival note (build spec 2026-09-27, section 11) ----
+  // What someone needs once their offer is accepted: where to go, what to
+  // bring, who to ask for, meals, beds, parking or transit. One note for the
+  // campaign (campaignItemId 0) and at most one per need. Stored in
+  // campaign_arrival_notes, which no public read touches. Readers: the
+  // project's stewards (through server/lib/project-steward.ts), the person
+  // whose offer stands (myArrivalNotes, by user id) and that offer's status
+  // link (server/routes/offerStatus.ts).
+
+  getArrivalNotes: protectedProcedure
+    .input(z.object({ campaignId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can see its arrival notes.");
+      const rows = await db.getArrivalNoteRows([campaign.id]);
+      return rows.map((r) => ({
+        campaignItemId: r.campaignItemId,
+        whereToGo: r.whereToGo,
+        whatToBring: r.whatToBring,
+        askFor: r.askFor,
+        meals: r.meals,
+        beds: r.beds,
+        gettingThere: r.gettingThere,
+        updatedAt: r.updatedAt,
+      }));
+    }),
+
+  setArrivalNote: protectedProcedure
+    .input(z.object({
+      campaignId: z.number().int().positive(),
+      campaignItemId: z.number().int().positive().optional(),
+      whereToGo: z.string().max(500).optional(),
+      whatToBring: z.string().max(500).optional(),
+      askFor: z.string().max(120).optional(),
+      meals: z.string().max(300).optional(),
+      beds: z.string().max(300).optional(),
+      gettingThere: z.string().max(500).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can write its arrival notes.");
+      if (campaign.isDemo) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: ARRIVAL.exampleOnly });
+      }
+      // A cancelled or closed campaign keeps its notes as they are. A
+      // completed one still has people arriving to deliver, so it can change.
+      if (campaign.status === 'cancelled' || campaign.status === 'closed') {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: ARRIVAL.closedCampaign });
+      }
+      const itemId = input.campaignItemId ?? 0;
+      if (itemId) {
+        const item = await db.getCampaignItemById(itemId);
+        if (!item || item.campaignId !== campaign.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'That need does not belong to this campaign' });
+        }
+      }
+      const fields = {} as Record<ArrivalField, string | null>;
+      for (const f of ARRIVAL_FIELDS) {
+        const raw = input[f];
+        fields[f] = typeof raw === 'string' && raw.trim() ? (sanitizeCapped(raw, ARRIVAL_FIELD_MAX[f]) || null) : null;
+      }
+      const result = await db.saveArrivalNote(campaign.id, itemId, fields, ctx.user.id);
+      return { success: true, ...result };
+    }),
+
+  // The caller's own standing offers (accepted, delivered, thanked) that an
+  // arrival note resolves for. Identity from ctx.user.id only.
+  myArrivalNotes: protectedProcedure.query(async ({ ctx }) => {
+    const database = await requireDb();
+    const rows = await database
+      .select({
+        id: campaignContributionsTable.id,
+        campaignId: campaignContributionsTable.campaignId,
+        campaignItemId: campaignContributionsTable.campaignItemId,
+      })
+      .from(campaignContributionsTable)
+      .where(and(
+        eq(campaignContributionsTable.userId, ctx.user.id),
+        inArray(campaignContributionsTable.status, [...STANDING_OFFER_STATUSES]),
+      ));
+    if (rows.length === 0) return [];
+    const notes = await db.getArrivalNoteRows(rows.map((r) => r.campaignId));
+    const out: Array<{ contributionId: number; note: ResolvedArrivalNote }> = [];
+    for (const r of rows) {
+      const note = db.resolvedNoteFrom(notes, r.campaignId, r.campaignItemId ?? null);
+      if (note) out.push({ contributionId: r.id, note });
+    }
+    return out;
+  }),
+
+  // Notes people sent the stewards from their offer status links: the
+  // latest 5 for each offer on the campaign. Stewards only.
+  getOfferMessages: protectedProcedure
+    .input(z.object({ campaignId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can see its offers.");
+      return await db.getOfferMessagesForCampaign(campaign.id, 5);
     }),
 
   // ---- Followers, updates, and the Pool Ledger ----

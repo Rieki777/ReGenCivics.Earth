@@ -17,6 +17,7 @@ vi.mock("./db", async (orig) => ({
 
 import {
   buildCampaignApproved,
+  buildContributorReply,
   buildCampaignCancelled,
   buildCampaignClosed,
   buildCampaignCompleted,
@@ -44,6 +45,7 @@ import {
   ROLE_REOPENED_REACHES_DECLINED,
 } from "./lib/campaign-notify";
 import { toNotificationRow } from "./lib/forum-notify";
+import { ARRIVAL } from "../shared/crowdpoolCopy";
 
 const campaign = { id: 7, title: "Plant 400 trees", projectName: "Seeds &amp; Soil", applicationId: 42, userId: 1 };
 const noAppCampaign = { id: 9, title: "Build the barn", projectName: "Harmony Valley", applicationId: null, userId: 1 };
@@ -100,6 +102,14 @@ describe("offer accepted and declined", () => {
   it("accepted on a count need quotes the offer", () => {
     const [row] = buildProposalAccepted({ campaign, contribution, item: countItem });
     expect(row.body).toBe('"Soil testing" is accepted.');
+  });
+  it("says the stewards left an arrival note when one resolves at accept time (section 11.4)", () => {
+    const [withNote] = buildProposalAccepted({ campaign, contribution, item: countItem, hasArrivalNote: true });
+    expect(withNote.body).toBe(`"Soil testing" is accepted. ${ARRIVAL.noticeLine}`);
+    const [withSteward] = buildProposalAccepted({ campaign, contribution, item: countItem, note: "Bring gloves", hasArrivalNote: true });
+    expect(withSteward.body).toBe(`"Soil testing" is accepted. Note from the stewards: Bring gloves ${ARRIVAL.noticeLine}`);
+    const [without] = buildProposalAccepted({ campaign, contribution, item: countItem, hasArrivalNote: false });
+    expect(without.body).toBe('"Soil testing" is accepted.');
   });
   it("nobody to tell when the contributor has no account or is the actor", () => {
     expect(buildProposalAccepted({ campaign, contribution: { ...contribution, userId: null } })).toEqual([]);
@@ -592,5 +602,36 @@ describe("a completion that closed waiting offers (campaign_closed)", () => {
     expect(String(rows[1].body).startsWith('It completed before the stewards answered your offers of "Seed" and "Tools", so they\'re closed with our thanks.')).toBe(true);
     expect(String(rows[2].body).startsWith('It completed before the stewards answered your offers of "A", "B" and 2 more,')).toBe(true);
     expectOurWords(rows);
+  });
+});
+
+describe("a note from an offer status link (contributor_reply)", () => {
+  const offer = { id: 301, title: "Trailer", contributorName: "Bea", userId: null, isAnonymous: 0 };
+  it("goes to every steward once, keyed per note and person, and links to the review list", () => {
+    const rows = buildContributorReply({ campaign, contribution: offer, messageId: 88, message: "Can I bring it on Friday?", stewardIds: [1, 2, 2, 0] });
+    expect(rows.map((r) => r.userId)).toEqual([1, 2]);
+    expect(rows[0]).toMatchObject({
+      type: "contributor_reply",
+      title: "Bea sent a note about their offer",
+      body: "Can I bring it on Friday?",
+      link: `${P}#review`,
+      actorId: null,
+      campaignId: 7,
+      contributionId: 301,
+      dedupeKey: "cp:reply:88:u1",
+    });
+    expect(rows[1].dedupeKey).toBe("cp:reply:88:u2");
+    expectOurWords(rows);
+  });
+  it("says Someone for an anonymous offer, decodes the stored note once and keeps 300 characters", () => {
+    const [anon] = buildContributorReply({ campaign, contribution: { ...offer, isAnonymous: 1 }, messageId: 89, message: "Tea &amp; biscuits", stewardIds: [1] });
+    expect(anon.title).toBe("Someone sent a note about their offer");
+    expect(anon.body).toBe("Tea & biscuits");
+    const [long] = buildContributorReply({ campaign, contribution: offer, messageId: 90, message: "a ".repeat(400), stewardIds: [1] });
+    expect(String(long.body).length).toBeLessThanOrEqual(300);
+  });
+  it("sends nothing for an empty note or when there is no steward", () => {
+    expect(buildContributorReply({ campaign, contribution: offer, messageId: 91, message: "   ", stewardIds: [1] })).toEqual([]);
+    expect(buildContributorReply({ campaign, contribution: offer, messageId: 92, message: "Hello", stewardIds: [] })).toEqual([]);
   });
 });

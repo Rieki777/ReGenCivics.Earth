@@ -3,6 +3,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, Redirect, useLocation } from "wouter";
 import { lazy, Suspense, ReactNode, type ComponentType } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { captureOfferTokenFromLocation } from "./lib/offerStatusToken";
+
+// A private offer status link (/offer#<token>) leaves the address bar before
+// anything else runs: this module evaluates before main.tsx registers
+// Sentry's deferred init and before React renders, so neither Sentry's
+// location and history records nor analytics ever hold the token
+// (build spec 2026-09-27, section 10.1).
+captureOfferTokenFromLocation();
 
 /**
  * lazyWithRetry — retry a dynamic import once after a short backoff before
@@ -159,6 +167,8 @@ const CampaignAnalytics = lazy(() => import("./pages/CampaignAnalytics"));
 const ProjectPage = lazy(() => import("./pages/ProjectPage"));
 const SignIn = lazy(() => import("./pages/SignIn"));
 const CampaignUpdatesUnsubscribe = lazy(() => import("./pages/CampaignUpdatesUnsubscribe"));
+// The private status page for one offer, for people who offered without an account.
+const OfferStatus = lazy(() => import("./pages/OfferStatus"));
 const MapPage = lazy(() => import("./pages/Map"));
 const ProjectComparison = lazy(() => import("./pages/ProjectComparison"));
 const Governance = lazy(() => import("./pages/Governance"));
@@ -378,6 +388,7 @@ function Router() {
       <Route path={"/project/:key"}><EB><ProjectPage /></EB></Route>
       <Route path={"/sign-in"}><EB><SignIn /></EB></Route>
       <Route path={"/campaign-updates/unsubscribe"}><EB><CampaignUpdatesUnsubscribe /></EB></Route>
+      <Route path={"/offer"}><EB><OfferStatus /></EB></Route>
       <Route path={"/map"}><EB><MapPage /></EB></Route>
       <Route path={"/risk-disclosure"}><Redirect to="/disclaimers" /></Route>
       <Route path={"/terms-of-use"}><EB><TermsOfUse /></EB></Route>
@@ -604,7 +615,9 @@ function MainApp() {
           {!adminMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!adminMode && <OnboardingController />}
-          {!adminMode && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
+          {/* Not on the private offer page: someone opening their offer from an
+              email sees it first, not a first-visit welcome over it. */}
+          {!adminMode && location !== "/offer" && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>

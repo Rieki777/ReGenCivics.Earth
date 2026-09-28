@@ -33,6 +33,7 @@ import { isHoursNeed } from "../../shared/roleCapacity";
 import { campaignContributions } from "../../drizzle/schema";
 import { excerpt, insertNotification, type NotificationInput } from "./forum-notify";
 import { getCampaignStewardIds } from "./project-steward";
+import { ARRIVAL } from "../../shared/crowdpoolCopy";
 
 // ─── Input shapes (plain objects; routes pass drizzle rows) ─────────────────
 
@@ -157,6 +158,8 @@ export function buildProposalAccepted(args: {
   contribution: NotifyContribution;
   item?: NotifyItem | null;
   note?: string | null;
+  /** True when an arrival note resolves for this offer at accept time (build spec 2026-09-27, section 11.4). */
+  hasArrivalNote?: boolean;
   actorId?: number | null;
 }): NotificationInput[] {
   const { campaign, contribution, item } = args;
@@ -165,11 +168,12 @@ export function buildProposalAccepted(args: {
   const base = isHoursNeed(item)
     ? `You're in for ${Number(contribution.quantityPledged ?? 0)} hours a week as ${needTitleOf(item, contribution)}.`
     : `"${plain(contribution.title)}" is accepted.`;
+  const body = withNote(base, args.note);
   return [{
     userId: uid,
     type: "contribution_accepted",
     title: `${projectNameOf(campaign)} accepted your offer`,
-    body: withNote(base, args.note),
+    body: args.hasArrivalNote ? `${body} ${ARRIVAL.noticeLine}` : body,
     link: projectLink(campaign, "your-contributions"),
     actorId: args.actorId ?? null,
     campaignId: campaign.id,
@@ -794,6 +798,37 @@ export function buildOfferClosedAtCompletion(args: {
   return out;
 }
 
+/**
+ * Someone who offered without an account sent the stewards a note from their
+ * offer status link (type contributor_reply; build spec 2026-09-27, section
+ * 10.2). Every steward, keyed per note and person. `Someone` when the offer
+ * is anonymous. The note is stored sanitized; the body is its first 300
+ * characters as plain text.
+ */
+export function buildContributorReply(args: {
+  campaign: NotifyCampaign;
+  contribution: NudgeContribution;
+  messageId: number;
+  message: string;
+  stewardIds: number[];
+}): NotificationInput[] {
+  const { campaign, contribution } = args;
+  const who = isOn(contribution.isAnonymous) ? "Someone" : plain(contribution.contributorName) || "Someone";
+  const body = excerpt(plain(args.message), 300);
+  if (!body) return [];
+  return recipientsOf(args.stewardIds, [contribution.userId]).map((uid) => ({
+    userId: uid,
+    type: "contributor_reply" as const,
+    title: `${who} sent a note about their offer`,
+    body,
+    link: projectLink(campaign, "review"),
+    actorId: null,
+    campaignId: campaign.id,
+    contributionId: contribution.id,
+    dedupeKey: `cp:reply:${args.messageId}:u${uid}`,
+  }));
+}
+
 // ─── Handlers (DB, never throw) ─────────────────────────────────────────────
 
 /** Insert each row on its own; one failure never stops the rest. Returns rows sent without error. */
@@ -853,10 +888,26 @@ export async function notifyProposalReceived(
 }
 
 export async function notifyProposalAccepted(
-  args: { campaign: NotifyCampaign; contribution: NotifyContribution; item?: NotifyItem | null; note?: string | null; actorId?: number | null },
+  args: {
+    campaign: NotifyCampaign;
+    contribution: NotifyContribution;
+    item?: NotifyItem | null;
+    note?: string | null;
+    hasArrivalNote?: boolean;
+    actorId?: number | null;
+  },
   deps: NotifyDeps = {},
 ): Promise<number> {
   return run("proposal accepted", async () => deliver(buildProposalAccepted(args), deps));
+}
+
+/** A note from an offer status link reaches every steward. Never throws. */
+export async function notifyContributorReply(
+  args: { campaign: NotifyCampaign; contribution: NudgeContribution; messageId: number; message: string },
+  deps: NotifyDeps = {},
+): Promise<number> {
+  return run("contributor reply", async () =>
+    deliver(buildContributorReply({ ...args, stewardIds: await safeStewards(args.campaign) }), deps));
 }
 
 export async function notifyProposalDeclined(

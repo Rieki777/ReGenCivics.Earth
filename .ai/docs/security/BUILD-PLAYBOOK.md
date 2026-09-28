@@ -40,6 +40,23 @@ A money route is a URL a project steward types that the server later fetches (th
 - [ ] **Ship the fetch hardening with the write path.** A procedure that lets people store URLs must not reach production before the fetcher that reads them is fenced (OWASP A10).
 - [ ] Pinned by `server/partner-links.test.ts` (allowlist, look-alikes, IP literals, hops), `server/partner-hydration.test.ts` (verified-only loader, manual redirects, one hop) and `server/money-routes.test.ts` (roles, visibility, example campaigns, the loan route rail).
 
+### Offer status links (worked example, 2026-09-27)
+
+Someone who offers without an account gets a private link to that one offer: its steps, Withdraw while it waits, and a short note to the stewards. The link is a bearer credential handed to a person with no account, so it is built the way a sign-in link is, and tighter. The pattern (`server/lib/offer-status.ts`, `server/routes/offerStatus.ts`, `client/src/lib/offerStatusToken.ts`, `client/src/pages/OfferStatus.tsx`):
+
+- [ ] **Enough randomness, stored hashed.** `randomBytes(32)` as base64url (43 characters, 256 bits). The table (`contribution_status_tokens`) holds only the SHA-256 hex; the plain token is returned once and never stored, logged or put in an error. Log lines name the contribution id.
+- [ ] **One thing, for a while.** A token reaches exactly one contribution and expires after 180 days. Each accepted or declined email brings a fresh one, so an old link is never the only way back in.
+- [ ] **Never where servers log.** The token rides in the URL fragment (`/offer#<token>`), which browsers never send to a server, a proxy or a Referer. The app moves it out of the address bar at module load, before Sentry or analytics can record the URL, and again on `hashchange` (a second link in the same tab reloads nothing), and keeps it in memory and `sessionStorage` only. Links to it from the app are plain anchors (a fresh page load), never a router push that history instrumentation would record.
+- [ ] **POST only.** Every procedure that takes the token is a mutation, so it travels in a request body, never a query string.
+- [ ] **No oracle.** A wrong shape, an unknown token and an expired one all answer the same NOT_FOUND with the same words. The format check happens inside the lookup, not in Zod, so a malformed token does not get a different error.
+- [ ] **Rate limited per IP before any database work**: 60 reads and 10 writes per 15 minutes (`offer_status_view`, `offer_status_write` in `server/rate-limit.ts`). A note to the stewards is also capped at 5 per offer per rolling 24 hours, counted under a row lock so two at once cannot both slip under.
+- [ ] **Least data out.** The view is an explicit object with a pinned key set (`OFFER_STATUS_VIEW_KEYS`): no email, name, phone or account id. The arrival note joins it only while the offer stands.
+- [ ] **Read-only once there is a better credential.** When the offer is linked to an account, withdraw and reply answer FORBIDDEN and the page points to sign-in.
+- [ ] **Public input stays text.** Notes go through `sanitizeInput`, are cut to the column after sanitizing (`sanitizeCapped`), reach the stewards through the notification spine, and are shown decoded once as plain text.
+- [ ] **Emails don't undo the fragment.** Click tracking (`wrapLinksWithTracking`) never wraps an `/offer#` link, since it would copy the fragment into a query string. Resend's own click tracking stays off.
+- [ ] **Examples write nothing.** The practice receipt returns before a token is issued, and withdraw and reply refuse example campaigns.
+- [ ] Pinned by `server/offer-status.test.ts` (hash-only storage and expiry, the key set, one NOT_FOUND for every bad token on every procedure, withdraw and reply rules, the daily cap, both rate limits, fresh links in the emails, the tracking exclusion, the owner check on `withdrawContribution`), `server/arrival-notes.test.ts` (the note never reaches a public read) and `client/src/pages/OfferStatus.test.tsx` (the fragment is gone before the first call).
+
 ## 2. Webhooks
 
 For any new inbound webhook:

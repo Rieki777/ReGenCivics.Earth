@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ContributionModal, lendDateError, type ContributionNeed } from './ContributionModal';
-import { TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
+import { LINK, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
 
 const mockMutate = vi.fn();
 const mockMutateAsync = vi.fn();
@@ -31,7 +31,13 @@ vi.mock('@/lib/trpc', () => ({
 }));
 
 // The sheet reads the session to nudge signed-out people toward an account.
-vi.mock('@/_core/hooks/useAuth', () => ({ useAuth: () => ({ user: null, isAuthenticated: false }) }));
+// Signed out unless a test sets authState.signedIn.
+const authState = vi.hoisted(() => ({ signedIn: false }));
+vi.mock('@/_core/hooks/useAuth', () => ({
+  useAuth: () => authState.signedIn
+    ? { user: { id: 5, name: 'Ada', email: 'ada@example.com' }, isAuthenticated: true }
+    : { user: null, isAuthenticated: false },
+}));
 vi.mock('@/const', () => ({ getGoogleLoginUrl: () => '/api/auth/google', getLoginUrl: () => '/login' }));
 
 const { toastMock } = vi.hoisted(() => ({ toastMock: { success: vi.fn(), error: vi.fn() } }));
@@ -55,6 +61,7 @@ describe('ContributionModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.signedIn = false;
   });
 
   function fillContact() {
@@ -287,6 +294,50 @@ describe('ContributionModal', () => {
     it('raises no toast of its own: the receipt is the confirmation', async () => {
       await sendAndAnswer({ id: 12, success: true, practice: false });
       expect(toastMock.success).not.toHaveBeenCalled();
+    });
+  });
+
+  // Build spec 2026-09-27, section 10.5: the private status link.
+  describe('the status link on the receipt', () => {
+    const statusPath = `/offer#${'A'.repeat(43)}`;
+
+    it('shows above the account card when signed out, with the link, a copy button and when it works', async () => {
+      const { user } = await sendAndAnswer({ id: 12, success: true, practice: false, statusPath });
+      const block = screen.getByTestId('receipt-status-link');
+      expect(block.textContent).toContain(LINK.receiptLead);
+      expect(block.textContent).toContain(LINK.receiptHelp);
+      const link = within(block).getByRole('link', { name: LINK.receiptOpen });
+      expect(link.getAttribute('href')).toBe(statusPath);
+      // A plain link: a fresh page load, so the app clears the fragment first.
+      expect(link.getAttribute('target')).toBeNull();
+      const account = screen.getByRole('button', { name: /Make my account/ });
+      expect(block.compareDocumentPosition(account) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+      await user.click(within(block).getByRole('button', { name: LINK.copy }));
+      expect(await navigator.clipboard.readText()).toBe(`${window.location.origin}${statusPath}`);
+      expect(toastMock.success).toHaveBeenCalledWith(LINK.copied);
+    });
+
+    it('does not show when the server issued no link', async () => {
+      await sendAndAnswer({ id: 12, success: true, practice: false, statusPath: null });
+      expect(screen.queryByTestId('receipt-status-link')).toBeNull();
+    });
+
+    it('never shows on the practice receipt', async () => {
+      await sendAndAnswer({ id: null, success: true, practice: true });
+      expect(screen.getByTestId('practice-receipt')).toBeDefined();
+      expect(screen.queryByTestId('receipt-status-link')).toBeNull();
+      expect(document.body.textContent).not.toContain(LINK.receiptOpen);
+    });
+
+    it('never shows for someone signed in', async () => {
+      authState.signedIn = true;
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      await user.click(screen.getByRole('button', { name: 'Send my offer' }));
+      act(() => submitOnSuccess?.({ id: 12, success: true, practice: false, statusPath }));
+      expect(screen.getByTestId('receipt')).toBeDefined();
+      expect(screen.queryByTestId('receipt-status-link')).toBeNull();
     });
   });
 
