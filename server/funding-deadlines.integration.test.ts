@@ -82,4 +82,26 @@ describe.skipIf(!LOCAL)("funding deadline pings (integration)", () => {
     await runFundingDeadlines({ now: () => now, send: async (t) => (sent.push(t), true), rowFilter: mineOnly });
     expect(mine(sent.join("\n"))).toEqual([expect.stringMatching(new RegExp(`^5 days: Ping week ${RUN} W1, due `))]);
   });
+
+  it("pings a program ReGen or a project could apply to only once Rye moves it past not started", async () => {
+    const [both] = await db
+      .insert(fundingPipeline)
+      .values({
+        name: `Ping both ${RUN}`,
+        category: "Land project program (grant)",
+        audience: "both",
+        appStatus: "not_started",
+        deadlineAt: new Date(now.getTime() + 4 * DAY),
+      })
+      .$returningId();
+    ids.push(both.id);
+    const quiet: string[] = [];
+    await runFundingDeadlines({ now: () => now, send: async (t) => (quiet.push(t), true), rowFilter: mineOnly });
+    expect(mine(quiet.join("\n")).filter((l) => l.includes("Ping both"))).toEqual([]);
+
+    await db.update(fundingPipeline).set({ appStatus: "preparing" }).where(eq(fundingPipeline.id, both.id));
+    const sent: string[] = [];
+    await runFundingDeadlines({ now: () => now, send: async (t) => (sent.push(t), true), rowFilter: mineOnly });
+    expect(mine(sent.join("\n"))).toEqual([expect.stringMatching(new RegExp(`^4 days: Ping both ${RUN}, due `))]);
+  });
 });

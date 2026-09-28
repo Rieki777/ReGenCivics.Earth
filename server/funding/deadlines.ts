@@ -4,8 +4,11 @@
  * On every hourly admin-automations tick, each deadline in the next 21 days
  * gets a ping to Rye's second-brain Telegram bot at 21, 7 and 2 days out,
  * exactly once each. Two kinds of deadline count:
- *   - ReGen Civics' own funder rows (audience platform or both), unless the row
- *     is already submitted, in review, decided or parked;
+ *   - ReGen Civics' own funder rows (audience platform), unless the row is
+ *     already submitted, in review, decided or parked; and a program either
+ *     ReGen or a project could apply to (audience both) once Rye has moved it
+ *     past not started, since most of those are for a region or an applicant
+ *     ReGen is not;
  *   - a grant program a land project is pursuing or drafting (Phase 5,
  *     network_grant_matches), pinged per project.
  * Programs no project is working on are never pinged: 34 open calls would
@@ -18,7 +21,7 @@
  * claims so the next tick retries. Only the tightest window a deadline is in
  * is pinged: a row added five days out gets its 7-day ping, never a late one.
  */
-import { and, eq, gt, inArray, lte, ne } from "drizzle-orm";
+import { and, eq, gt, inArray, lte, ne, or } from "drizzle-orm";
 import { getDb } from "../db";
 import { applications, appQuestions, fundingDeadlinePings, fundingPipeline, networkGrantMatches } from "../../drizzle/schema";
 import { notifyOwner } from "../webhooks/telegram-brain";
@@ -172,7 +175,15 @@ async function loadDeadlineRows(db: Db, now: Date, horizon: Date): Promise<Deadl
       deadlineAt: fundingPipeline.deadlineAt,
     })
     .from(fundingPipeline)
-    .where(and(inWindow, ne(fundingPipeline.audience, "project")));
+    .where(
+      and(
+        inWindow,
+        or(
+          eq(fundingPipeline.audience, "platform"),
+          and(eq(fundingPipeline.audience, "both"), ne(fundingPipeline.appStatus, "not_started")),
+        ),
+      ),
+    );
   const matched = await db
     .select({
       id: fundingPipeline.id,
