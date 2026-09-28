@@ -1,28 +1,35 @@
 ---
 name: regen-investor-deck
 description: >
-  Build or update a ReGen Civics investor-facing pitch deck (.pptx). Wraps
-  the pptx skill with ReGen voice, Fund vs. Game framing, slide architecture,
-  and the canonical investor narrative. Pulls from current state: fund
-  metrics, season progress, on-chain numbers, land project pipeline. Triggers
-  on: "investor deck", "pitch deck", "pptx for investors", "update the deck",
-  "fund deck", "LP deck", "pitch presentation", "investor presentation",
-  "slide deck for fund", "deck for the raise", or any request to build,
-  update, or convert content into an investor presentation.
+  Build or update a ReGen Civics venture-lane pitch deck (.pptx). Wraps the
+  pptx skill with ReGen voice, the v1.2 lane rules, slide architecture, and
+  the canonical company narrative: ReGen Civics sells outcomes, gives its
+  tools away, and connects land projects into a network. Pulls numbers only
+  from the admin metrics table. Triggers on: "investor deck", "pitch deck",
+  "pptx for investors", "update the deck", "accelerator deck", "pitch
+  presentation", "investor presentation", "deck for the raise", or any
+  request to build, update, or convert content into a pitch presentation.
 ---
 
 # ReGen Civics Investor Deck
 
 ## What this skill does
 
-Produce or update an investor-grade .pptx deck that holds together when
-Rye walks into a room with capital allocators, family offices, regen-curious
-LPs, or grant officers. The deck has to be legible to traditional finance
-without losing the soul of the project.
+Produce or update a pitch deck that holds together when Rye walks into a
+room with accelerator reviewers, pre-seed investors, or angels. The deck
+pitches ReGen Civics, the company: open tools, AI-assisted services, the
+network of land projects, and revenue that comes from outcomes. It has to be
+legible to venture investors without losing the soul of the project.
+
+It never pitches the cooperative, a fund, or land projects as something to
+put money into. That is the rule this skill exists to hold (see "The lane
+rules" below).
 
 Always invoke the `pptx` skill before starting; this skill builds on top
 of it for the slide construction and asset wiring. Never use python-pptx
-directly without reading `~/.claude/skills/pptx/SKILL.md` first.
+directly without reading `~/.claude/skills/pptx/SKILL.md` first. For the
+plan's main venture deck (11 slides, `docs/private/FUNDING_ENGINE_PLAN.md`
+section 6), fold the 14 slides below the way that section lays out.
 
 ## The canonical 14-slide deck
 
@@ -33,17 +40,17 @@ add slides without strong reason.
 | -- | ----------------------------- | ----------------------------------------------------------- |
 | 1  | Cover                         | Brand presence, name, tagline, one image                   |
 | 2  | The opening                   | One specific, current observation that sets the table       |
-| 3  | The problem we're addressing  | Why land regeneration is undercapitalized                   |
-| 4  | The two-game frame            | Fund (Dominant Game) + Game (new Games), why both           |
-| 5  | What ReGen Civics is          | Plain-language summary with the four-token visual           |
-| 6  | The fund                      | Structure, thesis, returns model                            |
-| 7  | The game                      | Quests, seasons, citizenship tiers, why this onboards capital |
-| 8  | The bridge                    | Hypha, Base chain, on-chain governance, ledger              |
-| 9  | Traction                      | Real numbers: projects, players, $ committed, season 1 outcomes |
+| 3  | The problem we're addressing  | Land projects die of structure, not soil                    |
+| 4  | The frame                     | Open tools, paid outcomes: what we give away, what we earn  |
+| 5  | What ReGen Civics is          | Plain-language summary: tools, services, network            |
+| 6  | The business model            | Outcome-based revenue lines, labelled where counsel is open |
+| 7  | The game                      | Quests, seasons, citizenship tiers, why this finds a project its people |
+| 8  | The infrastructure            | Coordination infrastructure and incentive design            |
+| 9  | Traction                      | Numbers from the metrics table, each with a timeframe       |
 | 10 | The pipeline                  | Land projects in flight + the incubator cohort              |
 | 11 | Team                          | Rye, contributors, advisors, key collaborations            |
-| 12 | The ask                       | What you want from this LP, at what minimum, by when        |
-| 13 | Use of funds                  | Where capital goes, what % to land vs. operations vs. fund  |
+| 12 | The ask                       | What you want from this program or investor, and what it buys |
+| 13 | Use of funds                  | Where the company's raise goes                              |
 | 14 | Close + contact               | One sentence, calendar link, email                          |
 
 For a 10-slide variant, fold:
@@ -54,21 +61,56 @@ For a 10-slide variant, fold:
 For a 5-slide "elevator deck," keep: cover, what it is, traction,
 the ask, contact.
 
+Appendix slides (optional): the company and cooperative diagram, the nine
+forms of capital with a stacked bar from a real project, a diligence sample,
+the architecture. The cooperative appears only there, and only in COOP's
+words.
+
+## The lane rules (v1.2, binding)
+
+`docs/private/FUNDING_ENGINE_PLAN.md` section 1.5 splits the pitch into
+lanes and says never mix them. This skill is the venture lane.
+
+- **Venture lane:** pitch ReGen Civics (the company): tools, services,
+  network, outcome-based revenue, network effects, structures built not to
+  collapse.
+- **The cooperative:** describe it only with the fields of `COOP` in
+  `shared/fund.ts`, verbatim: `COOP.statement` for what it is and where it
+  stands, `COOP.designPrinciples` introduced by `COOP.designPrinciplesNote`,
+  and `COOP.notAnOffer` once on any slide that mentions it. It is in design,
+  it is not a legal entity, and it accepts no money. Never use the present
+  tense about its members, land, votes or terms. It is not part of the ask.
+- **Grants and foundations:** a narrative, not a deck. Use the answer bank.
+- **Nine forms of capital,** never eight: financial, material, living,
+  intellectual, experiential, social, cultural, spiritual, health
+  (`shared/capitals.ts`).
+- **Crowdpooling,** when it appears, uses the binding wording: "Crowdpooling
+  coordinates and accounts for what people bring to land projects: time,
+  things, skills, land and money. Money goes through outside partners each
+  project holds, never through ReGen Civics."
+
+Never say, on any slide, in speaker notes or in a caption (Gate G5, and
+`node scripts/check-fund-claims.mjs` checks this file for it):
+<!-- fund-claims-allow: this line names the G5-banned phrases so agents can avoid them -->
+returns of any kind, IRR, ROI, yield, token appreciation, "value grows", distributions or dividends, exchange listings, token prices, "index fund", portfolio, "invest in land projects through us", direct investment, accredited investors, minimums, carry, preferred return, management fees, LPs, Fund I or II.
+
 ## Voice rules for investor decks
 
 These ride on top of the project Writing Rules. Investor-deck specific:
 
-- **Numbers do most of the work.** Investors trust quantification. Where
-  we have it, lead with it. Where we don't, say "directional, not
-  audited."
+- **Numbers do most of the work.** Investors trust quantification. Every
+  number comes from the admin `metrics` table with its source (Gate G4).
+  Where we don't have one, say "directional, not audited."
 - **Don't defend the regen frame.** Skeptical investors are reading;
-  pretending they aren't is a tell. Better: "Here's our thesis on why
-  bioregional capital flows generate competitive returns."
-- **Honesty about stage.** Pre-revenue. Fund 1. First seasons. Real
-  numbers but small numbers. Frame it as "early access" not "we're
-  huge."
-- **Two-token vs four-token.** Investors get the four-token model;
-  don't dumb it down. Use a clear diagram. Allocate one slide.
+  pretending they aren't is a tell. Better: "Here's why land projects built
+  on these structures last, and how we earn when they do."
+- **Honesty about stage.** Early revenue. First seasons. A cooperative still
+  in design. Real numbers but small numbers. Frame it as "early access" not
+  "we're huge."
+- **Tokens stay out of mainstream decks.** Describe that layer as "incentive
+  design" and "coordination infrastructure" (plan section 1.5). In a web3
+  variant, show the Game's tokens ($ReGen, RGVoice); $RCivics and RCVoice
+  appear only as `COOP.coopTokens` says.
 - **No "regenerative renaissance" buzzword stack on slide 2.** Earn it
   by slide 5 or 6. Investors who don't speak movement-language will
   bounce off a buzzword wall.
@@ -79,116 +121,107 @@ These ride on top of the project Writing Rules. Investor-deck specific:
 ### Slide 1: Cover
 
 - Logo (top-left or centered)
-- Title: "ReGen Civics" + subtitle "[Fund / Pitch Name], [Date]"
+- Title: "ReGen Civics" + subtitle "[Pitch Name], [Date]"
   (use commas not em-dashes)
 - One photo: real land, real people. Not stock. Not abstract.
 - One line that names the date and the audience (e.g.
-  "April 2026, prepared for [Investor Name]")
+  "October 2026, prepared for [Program Name]")
 
 ### Slide 2: The opening
 
 Pick one current, specific observation:
 
-- "$X billion flowed into climate tech VC last year. Less than X% reached
-  bioregional land stewards."
-- "[Specific land project] needed $X to plant [X acres]. They didn't have
-  it. Multiply that across 100 land projects per region, multiply that
-  across 1,000 bioregions, and you have the gap we're closing."
-- "Most regenerative agriculture pilots have run for 5 to 7 years. The
-  ones with bioregional governance and equity-style funding have a 3x
-  survival rate. We're scaling that pattern."
+- "A 40-acre community farm needs $400K, but only $80K of it is cash."
+  (the plan's founder-video example; confirm the project with Rye)
+- "[Specific land project] needed [tools, hands, a well] to plant [X
+  acres]. The crowdpool showed where each one would come from."
+- "Most forming communities never get off the ground for lack of land,
+  money and organizational skill." (Diana Leafe Christian's practitioner
+  estimate; cite it as one)
 
 If we don't have a specific number, name a specific named project as the
 anchor instead of a generic "landscapes need capital" line.
 
 ### Slide 3: The problem
 
-Three bullets max. Each one specific:
+Three bullets max. Each one specific, each one sourced. Draw them from the
+seven collapse patterns in plan section 1 (Thesis 1):
 
-1. Land projects undercapitalized at the bioregional layer
-2. Existing capital doesn't speak the same language as land stewards
-3. The on-ramp from "interested in regen" to "actually invested" is
-   broken; nobody plays the game long enough to write the check
+1. The capitalization gap before land
+2. Unclear or illegitimate decision-making
+3. No livelihood engine
 
 This slide is for investors, not for movement insiders. Use their
-language: "undercapitalized," "under-served market," "investment
-intermediary."
+language: "failure rate," "structure," "diligence," "under-served market."
 
-### Slide 4: The two-game frame
+### Slide 4: The frame
 
 This is the slide that makes or loses skeptical investors.
 
-Visual: two overlapping circles or two anchors with a bridge between
-them, labeled:
+Visual: two anchors with a bridge between them, labeled:
 
-- **Left:** "The Dominant Game (Fund)". RCVoice, $RCivics, VC structure,
-  legible to capital.
-- **Right:** "The new Games (Movement)". RGVoice, $ReGen, quests,
-  bioregional governance.
+- **Left:** "ReGen Civics, the company". Open tools, AI-assisted
+  services, outcome-based revenue, legible to venture capital.
+- **Right:** "The network". Land projects running their own games,
+  quests, seasons, bioregional governance.
 
-Caption: "We chose to build both, not because we love venture capital,
-but because legibility is the bridge. Two anchors hold up one bridge."
+Caption: "Legibility is the bridge. Two anchors hold up one bridge."
 
-Use the language from `CONTEXT_THE_TWO_GAMES.md` verbatim where it
-fits. That file is the truth source.
+Use the language from `CONTEXT_THE_TWO_GAMES.md` where it fits. Where that
+file describes the Fund side, the cooperative replaces it and is described
+only with `COOP`.
 
 ### Slide 5: What ReGen Civics is
 
-Plain language. One paragraph. One diagram showing the four tokens and
-their relationships. Reference `client/src/components/TokenBox.tsx` for
-the visual style we use on the site, replicate it on the slide.
+Plain language. One paragraph. One diagram showing tools, services and the
+network, and how a land project moves through them. Start from the plan's
+core sentence: "ReGen Civics helps regenerative land projects design
+structures that don't collapse, then connects them into a network that
+capital can trust."
 
-### Slide 6: The fund
+### Slide 6: The business model
 
-- **Status first, before anything else on this slide.** The ReGen Civics
-  Fund is in formation. It is not a legal entity. Target launch 2027. It is
-  gathering non-binding Letters of Intent and accepts no capital. Read the
-  exact wording from `shared/fund.ts` (`FUND.statement`) and use it verbatim.
-- **Never name a securities exemption.** Not a rule, not a subsection, not
-  "we intend to rely on" one. Counsel has not chosen one, so naming one is a
-  claim nobody has made, and the softer phrasing is the same claim. Until
-  2026-08-30 this line named a specific exemption and hedged it with
-  "probably", which is how a guess reaches an allocator's inbox. The only
-  permitted sentence about the offering is `FUND.offeringDisclaimer`.
-- Structure: designed as a venture capital fund. The legal structure,
-  jurisdiction, terms and governance are agreed together by the founding
-  investors at the founding event.
-- Investment thesis: "We capitalize land stewards in bioregions where
-  governance, ecology, and economy can co-evolve."
-- Hold period, exit model, return target: pull from `shared/fund.ts`, and
-  label every one of them proposed or target. Never present a modelled target
-  as a projection of results.
-- Diversification: across bioregions, project stages, ecological practices
+- **Free tools, paid outcomes.** Use the revenue lines in plan section 1
+  (Thesis 2): structure design and onboarding services, custom game builds,
+  and the outcome-based fees listed there.
+- **Label every line counsel has not cleared** (plan section 1.4). Never
+  present stakes in projects as the core revenue line.
+- Never take a percentage of grants won.
+- The cooperative is not a revenue line on this slide. If the deck must
+  mention it, it goes in the appendix in `COOP`'s words with
+  `COOP.notAnOffer`.
 
 ### Slide 7: The game
 
-- Seasons (March-September default cadence)
+- The ReGen Civics Year: Design, Resource, Build, and Rest seasons
 - 13 stewardship roles (the season character art is real, show 4-6 of them)
 - Quests + citizenship tiers
-- Why this matters financially: "Players become contributors. Contributors
-  become investors. Investors become participants. The game is the funnel."
+- Why this matters: "Players become contributors. Contributors become
+  stewards. The game is how a land project finds its people."
 
 This slide is the hardest to get right because investors hear "game"
-and reach for the eject. Frame it as the customer-acquisition layer for
-a fund, not a Steam game.
+and reach for the eject. Frame it as the engagement layer for the network,
+not a Steam game.
 
-### Slide 8: The bridge
+### Slide 8: The infrastructure
 
-- Hypha DAO contracts on Base (chain ID 8453)
-- Forum decisions become on-chain proposals
-- Token contracts deployed (use the addresses from CLAUDE.md)
-- Ledger: private + public, with claim flow
+- Mainstream decks: "coordination infrastructure" and "incentive design",
+  the federation feed, the agent-native connectors
+- Web3 variants only: Hypha DAO on Base (chain ID 8453), forum decisions
+  becoming on-chain proposals, the private and public ledger with its claim
+  flow
 
-Diagram: ReGen Civics private ledger on the left, Hypha contracts on
-Base on the right, an arrow between them labeled "Claim."
+Diagram: a land project's own game on the left, the network in the middle,
+partner networks reading the federation feed on the right.
 
 ### Slide 9: Traction
 
-- Number of land projects in pipeline / approved / funded
-- Number of registered players, completed quests
-- Token amounts circulating, claimed
-- Seasons run / cohorts completed
-- Email subscribers, forum members, Discord size
+- Only numbers from the admin `metrics` table, each with a timeframe
+  (plan section 6: traction goes second, with timeframes)
+- Only numbers Rye has cleared for decks. Public pages show none until he
+  marks them public.
+- The Season One record (2022) from `shared/regenYear.ts` may appear as is
+- Never token amounts, circulating supply, or anything priced in tokens
 
 If a metric is small, frame it as growth ("from X to Y in Z months"),
 not as absolute. If a metric isn't measured yet, say so on the slide
@@ -196,8 +229,8 @@ not as absolute. If a metric isn't measured yet, say so on the slide
 
 ### Slide 10: The pipeline
 
-Showcase 3-5 specific land projects with name, bioregion, ask size,
-state. Use real photos.
+Showcase 3-5 specific land projects with name, bioregion, what they need
+across the nine forms of capital, and state. Use real photos.
 
 Don't list 30 projects. Show the 5 most compelling and say "and X more
 in flight."
@@ -215,28 +248,29 @@ Real people. Real photos. Real roles.
 
 Specific. Not "we're raising." Say:
 
-- Stage: "In formation. Gathering non-binding Letters of Intent."
-- Threshold: the founding-event threshold from `FUND.loiThreshold`
-- Minimum: the proposed minimum, labelled proposed
-- Timeline: target launch `FUND.launchTarget`. Not a close date; there is
-  no close to date, because there is no entity to close into.
-- What an LOI signer gets: `FUND.loiPromise`. Nothing beyond it.
+- What you want from this program or investor, in the instrument it offers
+  (accelerator terms, or a SAFE in the operating company; plan section 12
+  covers incorporation, and some programs accept "incorporation in
+  progress")
+- The milestones it buys, in the plan's shape: "$[X] to reach [N] paying
+  villages and $[Y] ARR in 18 months"
+- Timeline: tied to real dates (the season calendar, program deadlines)
 
-Terms ARE still being shaped, by definition, until the founding event. Say
-so plainly. Do not say "term sheet available under NDA": there is no term
-sheet, and implying one exists is the same error one step removed.
+Never ask anyone to put money into the cooperative or into land projects
+through us. The cooperative accepts no money, and it is not part of any
+raise.
 
 ### Slide 13: Use of funds
 
-Pie chart or simple percentage breakdown:
+Pie chart or simple percentage breakdown of the company's raise:
 
-- X% to land project investments
-- X% to fund operations (legal, ops, governance)
-- X% to game / community infrastructure
-- X% to season programming + incubator
+- X% to product and the tools
+- X% to services capacity (design, onboarding, custom games)
+- X% to network and partner work
+- X% to operations (legal, ops)
 
-Match the breakdown to the fund's stated allocation. If those
-percentages aren't published yet, ask Rye for them; don't invent them.
+If those percentages aren't set yet, ask Rye for them; don't invent them.
+No line sends the raise into land projects or into the cooperative.
 
 ### Slide 14: Close + contact
 
@@ -251,8 +285,11 @@ percentages aren't published yet, ask Rye for them; don't invent them.
 
 Before producing the deck:
 
-- [ ] Pull current numbers from the live site / ledger / DB. Use the
-      `regen-database-sql` skill for the SQL queries to gather metrics
+- [ ] Pull numbers from the admin `metrics` table only, with sources (Gate
+      G4). Use the `regen-database-sql` skill for the queries. Never copy a
+      number from old site copy or an old deck.
+- [ ] Run `node scripts/check-fund-claims.mjs` on any copy you draft into
+      the repo, and read every slide against the lane rules above
 - [ ] Pull recent player photos from `client/public/images/quests/` and
       `client/public/images/roles/` if showing the game in action
 - [ ] Pull land project photos from project pages
@@ -273,8 +310,11 @@ Before producing the deck:
 ## Cross-references
 
 - `pptx` skill: read first, always, before generating
+- `shared/fund.ts` (`COOP`): the only words for the cooperative
+- `docs/private/FUNDING_ENGINE_PLAN.md` sections 1, 6 and 12.1: the thesis,
+  the lanes, the deck spec, the cooperative architecture
 - `regen-fundraising-copy` for the narrative voice in each slide
 - `CONTEXT_THE_TWO_GAMES.md` for slide 4 framing
-- `CITIZENSHIP_TIERS_SPEC.md` for slide 7 game mechanics
-- `SEASONS_HISTORY.md` for traction numbers
+- `docs/planning/CITIZENSHIP_TIERS_SPEC.md` for slide 7 game mechanics
+- `SEASONS_HISTORY.md` and `shared/regenYear.ts` for the Season One record
 - `nano-banana-pro` for any custom imagery if photos aren't available

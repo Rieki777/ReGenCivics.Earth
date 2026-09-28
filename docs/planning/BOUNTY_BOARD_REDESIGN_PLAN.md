@@ -59,7 +59,7 @@ Add "Bounties" directly under "Explore Quests" (the Game section) in every menu 
 
 ## Part C: design direction
 
-Follow `DESIGN_SYSTEM.md` and match the existing game aesthetic (the deep forest greens, `--font-display`, the soft `#7dd87d` glow already used in the current card). Structure: a hero, a live stats strip, filter/sort controls, a responsive card grid, and a detail view. Color-code by circle. Use a coin motif for the reward. Keep it mobile-first and accessible. The current component's palette is a fine starting point; the redesign is about layout, hierarchy, the provenance and reward story, and the detail view, not a new color language.
+Follow `docs/DESIGN_SYSTEM.md` and match the existing game aesthetic (the deep forest greens, `--font-display`, the soft `#7dd87d` glow already used in the current card). Structure: a hero, a live stats strip, filter/sort controls, a responsive card grid, and a detail view. Color-code by circle. Use a coin motif for the reward. Keep it mobile-first and accessible. The current component's palette is a fine starting point; the redesign is about layout, hierarchy, the provenance and reward story, and the detail view, not a new color language.
 
 ## Part D: backend touches (small)
 

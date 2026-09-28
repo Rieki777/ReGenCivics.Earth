@@ -4,7 +4,7 @@ This is the canonical, current-state description of how ReGen Civics turns a rec
 
 As of 2026-07-01 the full loop is built, deployed, and verified live on production. Migrations `0150`, `0151`, `0152` are applied. A recorded session is ingested from YouTube, transcribed (captions when present, the self-hosted Whisper worker when not), understood, published once to the community, rendered on the Schedule page, and turned into role-tagged tasks that run all the way to a consented payout. The end-to-end run was confirmed on recording 9 (`h2K_f-E4hJM`), a caption-less video that the worker transcribed into 217 timestamped segments, then synthesized into an overview, ten chapters, decisions, and action items, and published to the forum. What remains is a short list of human and maintenance items near the end.
 
-Companion docs: `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md` is the fuller vision and data model. `transcription-worker/README.md` documents the worker service.
+Companion docs: `docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md` is the fuller vision and data model. `transcription-worker/README.md` documents the worker service.
 
 ## Trigger
 
@@ -188,6 +188,6 @@ Both are `curlimages/curl:latest` services, `sh -c` wrapped, sending `Authorizat
 
 ## Related docs and skills
 
-- `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`: the full vision and data model
+- `docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`: the full vision and data model
 - `transcription-worker/README.md`: the worker service, backends, and deploy steps
 - Skills: `regen-railway-crons`, `regen-deterministic-first`, `regen-seasonal-roles`

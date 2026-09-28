@@ -1,6 +1,6 @@
 # ReGen Ship: Rye's Task Guides (for Cowork browser sessions)
 
-Each task below is self-contained. Open a fresh Cowork session, paste one task block, and Claude will drive your browser where it can and direct you where it cannot (logins, payments, physical steps). Source of truth for the whole program: `CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md`.
+Each task below is self-contained. Open a fresh Cowork session, paste one task block, and Claude will drive your browser where it can and direct you where it cannot (logins, payments, physical steps). Source of truth for the whole program: `archive/CLAUDE_CODE_PROMPT_2026-07-10_REGEN_SHIP.md`.
 
 ---
 
@@ -167,6 +167,6 @@ Each task below is self-contained. Open a fresh Cowork session, paste one task b
 1. **Regenerate Cascadia / Cascadia Department of Bioregion:** ask for the Cascadia bioregion boundary and the nine-regions boundaries as GeoJSON or shapefile (their sites credit "open source GIS data"; the McCloskey shape via the Cascadia Institute is the canonical one). Offer a credit line on `/ship/map`
 2. **Find a Spring Foundation:** ask for a Cascadia springs export (or blessing to cross-reference their pages from our pins). Offer: our crews submit their spring updates and water tests back to them
 3. **Falling Fruit:** their data is open (CC BY-NC-SA); tell them a church program's free community map is using their Cascadia food-forest data with attribution and ask for their blessing plus any bulk-export guidance. Offer contributions back from crew discoveries
-4. Send whatever files arrive to a Claude Code session: "Import these into ship_locations per CLAUDE_CODE_PROMPT_2026-07-10_SHIP_MAP_V2.md Section 6, source-stamped"
+4. Send whatever files arrive to a Claude Code session: "Import these into ship_locations per archive/CLAUDE_CODE_PROMPT_2026-07-10_SHIP_MAP_V2.md Section 6, source-stamped"
 
 **Done when:** boundary file swapped in, springs data flowing, attributions live on the map.

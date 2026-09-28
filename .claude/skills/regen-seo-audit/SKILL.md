@@ -145,7 +145,7 @@ common slip:
 
 ## Output format: the audit report
 
-When run as a full audit, produce a `FIXES_TO_MAKE_YYYY-MM-DD_seo.md`
+When run as a full audit, produce `docs/planning/FIXES_TO_MAKE_YYYY-MM-DD_seo.md`
 (use the `regen-fixes-handoff` skill for the doc structure). Tier the
 findings:
 

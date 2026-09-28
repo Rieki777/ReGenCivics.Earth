@@ -1,8 +1,8 @@
 # Gratitude System Spec
 
-Written 2026-04-03. Revised 2026-07-28 after a full code audit (GRATITUDE_AUDIT_2026-07-28.md).
+Written 2026-04-03. Revised 2026-07-28 after a full code audit (docs/planning/GRATITUDE_AUDIT_2026-07-28.md).
 Canonical reference for the ReGen Civics gratitude mechanic. Supersedes all prior gratitude
-descriptions in CITIZENSHIP_TIERS_SPEC.md and SEEDS_VISION_IMPLEMENTATION_SPEC.md.
+descriptions in docs/planning/CITIZENSHIP_TIERS_SPEC.md and docs/planning/SEEDS_VISION_IMPLEMENTATION_SPEC.md.
 
 ---
 

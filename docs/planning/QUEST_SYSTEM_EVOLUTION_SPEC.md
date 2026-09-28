@@ -2,7 +2,7 @@
 
 Version 1.2. Drafted 2026-07-06. v1.1 added Rye's cold-start, attention, and seeding directives. v1.2 hardened the plan against a three-perspective adversarial review (a first-time visitor on a phone, a staff engineer verifying every technical claim against the code, and a movement-integrity reviewer). The review record is section 10.
 
-This document builds on `QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md`, which stays authoritative for paths, portals, citizenship tiers, the three rings, and the /quest page visual redesign (its Phase 3). This spec covers the layers that one leaves open: quests as shareable living pages, playing together, quests as governed content inside the Evolution Engine, and the rhythm that binds it into one walk.
+This document builds on `docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md`, which stays authoritative for paths, portals, citizenship tiers, the three rings, and the /quest page visual redesign (its Phase 3). This spec covers the layers that one leaves open: quests as shareable living pages, playing together, quests as governed content inside the Evolution Engine, and the rhythm that binds it into one walk.
 
 Three facts govern every choice below:
 
@@ -311,7 +311,7 @@ Deterministic, readable from existing tables plus `shareEvents`, all excluding C
 
 ## 9. Cross-references
 
-- `QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md`: paths, tiers, rings, page redesign. This spec extends it.
+- `docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md`: paths, tiers, rings, page redesign. This spec extends it.
 - `CONTEXT_THE_TWO_GAMES.md`: Fund/Game token discipline honored throughout.
 - `docs/EVOLUTION-ENGINE.md` + ADR-27/28/29: the machinery the content payload extends.
 - `.ai/docs/STEERING.md` sections 1, 3, 5, 6: writing rules, ship gate, token model, Hypha bridge rule.

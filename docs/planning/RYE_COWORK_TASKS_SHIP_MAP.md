@@ -65,7 +65,7 @@ Three orgs already do this work and their data is open. A warm note from you unl
 
 ### 🙋 Your part
 1. Read Cowork's three drafts, tweak anything that doesn't sound like me, hit send (or approve Cowork to send from my account if I say so explicitly).
-2. When any file comes back (a `.geojson`, `.shp`, a springs export, a Falling Fruit API key), drop it in this folder and tell Cowork, or start a Claude Code session with: *"Import this into ship_locations per CLAUDE_CODE_PROMPT_2026-07-10_SHIP_MAP_V2.md Section 6, source-stamped; swap the boundary into shared/data/cascadia-boundary.geojson if it's the official Cascadia shape."*
+2. When any file comes back (a `.geojson`, `.shp`, a springs export, a Falling Fruit API key), drop it in this folder and tell Cowork, or start a Claude Code session with: *"Import this into ship_locations per archive/CLAUDE_CODE_PROMPT_2026-07-10_SHIP_MAP_V2.md Section 6, source-stamped; swap the boundary into shared/data/cascadia-boundary.geojson if it's the official Cascadia shape."*
 
 **Done when:** the three emails are sent. (Data flows in over the following days; that's a later Claude Code step, not a today blocker.)
 
@@ -100,7 +100,7 @@ When you're at one of these spots and confirm a 40-footer really fits, open its 
 
 ## Everything else (not today)
 
-The broader ReGen Ship program tasks (Outdoorsy listing, Zeffy forms, Railway ship vars, GPS tracker, photo/video, insurance, DEQ, counsel packet, hiring the Keeper) live in **`RYE_BROWSER_TASKS_REGEN_SHIP.md`**, same folder. None of them block the map. Do those when you're ready; each is its own paste-into-Cowork block there.
+The broader ReGen Ship program tasks (Outdoorsy listing, Zeffy forms, Railway ship vars, GPS tracker, photo/video, insurance, DEQ, counsel packet, hiring the Keeper) live in **`docs/planning/RYE_BROWSER_TASKS_REGEN_SHIP.md`**, same folder. None of them block the map. Do those when you're ready; each is its own paste-into-Cowork block there.
 
 ---
 

@@ -85,7 +85,7 @@ The security-critical paths are the best-engineered code in the repo. The audit 
 |---|---------|----------|
 | G1 | 114 root `.md` files; 22 dated prompt/fixes docs past the STEERING §8 one-week archive rule. | root listing |
 | G2 | 11 loose one-shot scripts in repo root (`run_0100.mjs`, `cleanup_doubled_data.mjs`, `tmp-check.ts`...) plus unlabeled privilege scripts (`make-superadmin.mjs`, `set-superadmin.ts`) that are destructive against prod `DATABASE_URL`. | root + `scripts/` listing |
-| G3 | `PROJECT-INDEX.md` references two docs that do not exist; `STEERING.md` last reviewed 2026-04-25; `DESIGN_SYSTEM.md` describes a token migration that never happened. | doc contents |
+| G3 | `PROJECT-INDEX.md` references two docs that do not exist; `STEERING.md` last reviewed 2026-04-25; `docs/DESIGN_SYSTEM.md` describes a token migration that never happened. | doc contents |
 | G4 | 533 `as any` casts; 3 `@ts-ignore`. Strict mode is on but nothing beyond baseline (no `noUncheckedIndexedAccess`). | grep counts, `tsconfig.json` |
 
 ---
@@ -139,7 +139,7 @@ Ordering principle: **make the safety net honest before leaning on it.** Gates f
 
 1. G1: archive per STEERING §8 (22 overdue docs).
 2. G2: move root one-shots to `archive/` or `scripts/one-shots/`; add a DANGER header + confirmation prompt to privilege scripts.
-3. G3: correct `PROJECT-INDEX.md`, refresh `STEERING.md` review date, rewrite `DESIGN_SYSTEM.md` to describe what Phase 3 actually built.
+3. G3: correct `PROJECT-INDEX.md`, refresh `STEERING.md` review date, rewrite `docs/DESIGN_SYSTEM.md` to describe what Phase 3 actually built.
 4. C5: add a lightweight schema-drift check (script that introspects the live DB information_schema against `schema.ts` table/column names) run manually pre-release, CI later if stable.
 
 ---

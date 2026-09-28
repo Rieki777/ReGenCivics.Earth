@@ -76,4 +76,4 @@ A numbered Season runs a full year, one turn of the wheel; the ritual spine repe
 - Index and compensation model: `SEASONS_HISTORY.md`
 - Role generation: `skills/regen-seasonal-roles/` (skill + briefing template + art templates)
 - Quests: `client/src/data/questData.ts` (solo), `shared/multiplayerQuests.ts` (crews)
-- Ceremonies: Riverside pipeline (see `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`)
+- Ceremonies: Riverside pipeline (see `docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`)

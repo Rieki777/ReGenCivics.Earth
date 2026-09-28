@@ -1,6 +1,6 @@
 # Mobile-First Master Plan (ecosystem-wide)
 
-Date: 2026-07-17. Status update 2026-07-18: Rye approved execution (gov app excluded for now). Phases 1-4, the admin mobile overhaul (section 1b below), and gate 1c are CODED and shipping; Phase 5 (hack deletion) waits for a production week; Phase 6 (Amora) next. Companion to `FIXES_TO_MAKE_2026-07-17_MOBILE_SAFARI_AND_DEEPLINKS.md`, which shipped the quick wins and deferred the structural work. This doc is the structural work.
+Date: 2026-07-17. Status update 2026-07-18: Rye approved execution (gov app excluded for now). Phases 1-4, the admin mobile overhaul (section 1b below), and gate 1c are CODED and shipping; Phase 5 (hack deletion) waits for a production week; Phase 6 (Amora) next. Companion to `archive/FIXES_TO_MAKE_2026-07-17_MOBILE_SAFARI_AND_DEEPLINKS.md`, which shipped the quick wins and deferred the structural work. This doc is the structural work.
 
 Execution notes 2026-07-18: mechanism is Tailwind `pointer-coarse:` min-h/min-w floors (verified present in tailwindcss 4.3 dist). Two live bugs the blanket CSS hack was causing got fixed on the way: Radix switches/checkboxes (which render as `<button>`) were being stretched to 44px-tall pills on phones (index.css now excludes `[role=checkbox|radio|switch]` and the ::after expander covers them instead), and the tabs list clipped its CSS-lifted triggers. Six modals migrated to base Dialog, one more than planned: Messages ComposeModal was a raw `fixed inset-0` overlay the original audit missed. Gate 1c fixed 27 additional small targets and suppressed 5 with reviewed `touch-ok` comments.
 
@@ -136,7 +136,7 @@ Amora is live, phone-facing, and has none of this. In `C:\Users\taren\Desktop\Am
 3. Port the index.css touch block (tap-highlight, touch-action, 16px zoom guard, text floors) minus the 44px `!important` hacks we're deleting at home; Amora gets the honest components directly and skips the hack era entirely.
 4. Add safe-area padding to fixed bottom elements; add a manifest + icons if Rye wants installability there.
 
-Then the multiplier: fold the resulting `button.tsx`, `input.tsx`, `dialog.tsx`, index.css touch block, and viewport tag into the Custom Games blueprint template (`CUSTOM_GAMES_MASTER_PLAN.md` flow), so every $20k spinoff ships at this standard by default. A one-page `MOBILE_STANDARD.md` in the template documents the bar for anyone hand-editing later.
+Then the multiplier: fold the resulting `button.tsx`, `input.tsx`, `dialog.tsx`, index.css touch block, and viewport tag into the Custom Games blueprint template (`docs/planning/CUSTOM_GAMES_MASTER_PLAN.md` flow), so every $20k spinoff ships at this standard by default. A one-page `MOBILE_STANDARD.md` in the template documents the bar for anyone hand-editing later.
 
 Effort: Amora ~1 day including verification on the live Railway deploy; template fold-in ~2 hours.
 

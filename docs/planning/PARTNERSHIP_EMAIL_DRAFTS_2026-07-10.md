@@ -74,4 +74,4 @@ https://regencivics.earth/ship/map
 2. Find a Spring: paste into https://findaspring.org/contact/ (category: General Comment/Feedback)
 3. Falling Fruit: email info@fallingfruit.org
 
-When data comes back (.geojson, .shp, springs export, or an API key), drop the file in this folder and start a Claude Code session with: "Import this into ship_locations per CLAUDE_CODE_PROMPT_2026-07-10_SHIP_MAP_V2.md Section 6, source-stamped; swap the boundary into shared/data/cascadia-boundary.geojson if it's the official Cascadia shape."
+When data comes back (.geojson, .shp, springs export, or an API key), drop the file in this folder and start a Claude Code session with: "Import this into ship_locations per archive/CLAUDE_CODE_PROMPT_2026-07-10_SHIP_MAP_V2.md Section 6, source-stamped; swap the boundary into shared/data/cascadia-boundary.geojson if it's the official Cascadia shape."

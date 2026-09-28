@@ -90,4 +90,4 @@ Tapping on the root system opens a radial view showing the 9 arteries with label
 
 ## Status
 
-**Approved by Rye.** Ready to be integrated into PLAYER_EXPERIENCE_SPEC.md once final review is complete.
+**Approved by Rye.** Ready to be integrated into docs/planning/PLAYER_EXPERIENCE_SPEC.md once final review is complete.

@@ -37,7 +37,7 @@ The Movement Coordination Engine is built this way on purpose. The split is the 
 - Deterministic, zero tokens: the YouTube poll (RSS fetch and diff against `recordings.youtubeVideoId`), role reconciliation (diff `client/src/data/gameRoles.ts` against the `roleHolders` table), the stale-claim sweep (date math against the configured windows), the YouTube upload, and the publish-to-site writes. These run as curl crons and server code and cost nothing per run.
 - Nondeterministic, agent or LLM: only the understanding step, where a transcript becomes an overview, chapters, decisions, and role-tagged task proposals. That is the one place judgment is required, so that is the only place tokens are spent.
 
-The crons `cron-coordination-pipeline` and `cron-coordination-flywheel` are deterministic triggers. They do the cheap work directly and invoke the model only for the narrow step that needs it. See `regen-railway-crons` for the cron mechanics and `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md` for the full split.
+The crons `cron-coordination-pipeline` and `cron-coordination-flywheel` are deterministic triggers. They do the cheap work directly and invoke the model only for the narrow step that needs it. See `regen-railway-crons` for the cron mechanics and `docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md` for the full split.
 
 ## Applying it to a new request
 

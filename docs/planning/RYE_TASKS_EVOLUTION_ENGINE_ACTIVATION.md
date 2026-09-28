@@ -109,7 +109,7 @@ rehearsal below happens in a fork so a mistake cannot reach production anyway.
 
 ### 2c. The tier-3 rehearsal (in a fork, never in the production repo)
 
-Acceptance is `ASSEMBLY_PAGE_SPEC.md` Phase 7. Three things must be proven:
+Acceptance is `docs/planning/ASSEMBLY_PAGE_SPEC.md` Phase 7. Three things must be proven:
 
 **A. The happy path.** In a fork of the repo with `ASSEMBLY_BUILDER_ENABLED=true`, `ANTHROPIC_API_KEY`
 set, and a test server whose `evolution.max_autonomy_tier` is forced to 3:

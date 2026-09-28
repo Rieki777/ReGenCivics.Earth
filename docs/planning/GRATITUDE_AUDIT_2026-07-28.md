@@ -10,7 +10,7 @@ alongside it.**
 
 Files audited: `server/lib/gratitude-cycles.ts`, `server/routes/gratitude.ts`,
 `server/routes/game.ts`, `server/routes/batchJobs.ts`, `server/lib/citizenship.ts`,
-`server/_core/index.ts`, `drizzle/schema.ts`, `GRATITUDE_SYSTEM_SPEC.md`,
+`server/_core/index.ts`, `drizzle/schema.ts`, `docs/planning/GRATITUDE_SYSTEM_SPEC.md`,
 `server/gratitudeCycles.test.ts`, and the four client gratitude components.
 
 ---
@@ -145,7 +145,7 @@ step is either a no-op or throws into the swallowed `errors[]` array every run.
 
 **Status:** CODED (doc + seed reconciliation)
 
-| `GRATITUDE_SYSTEM_SPEC.md` says | Code actually reads | Effect |
+| `docs/planning/GRATITUDE_SYSTEM_SPEC.md` says | Code actually reads | Effect |
 |---|---|---|
 | `gratitude.multiplier.explorer` … | `gratitude.budget_multiplier.*` | Admin edits the documented key, nothing changes |
 | `gratitude.regen_distribution.pool_per_cycle` | `gratitude.pool_per_cycle` | Same |
@@ -267,7 +267,7 @@ the ledger; only the end-of-cycle $ReGen distribution does. I will correct the d
 | 2 | Repoint `citizenship.ts` at `gratitudeLog` / `gratitude_distributions` | READY TO CODE |
 | 3 | Delete `game.sendGratitude`, swap `GratitudeDrawer` for `GratitudeButton` | READY TO CODE |
 | 4 | Delete or repoint `updateGratitudeMultipliers` | READY TO CODE |
-| 5 | Reconcile `GRATITUDE_SYSTEM_SPEC.md` variable names and the 333 vs 1000 threshold | READY TO CODE |
+| 5 | Reconcile `docs/planning/GRATITUDE_SYSTEM_SPEC.md` variable names and the 333 vs 1000 threshold | READY TO CODE |
 | 6 | Implement Fix 6 once you decide, plus a unit test for the forfeit case | BLOCKED on decision 3 |
 | 7 | Pool carry-forward for the floor remainder | READY TO CODE |
 | 8 | Correct the gratitude panel in `PLATFORM_DECK.html` | READY TO CODE |

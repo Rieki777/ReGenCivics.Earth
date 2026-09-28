@@ -2,7 +2,7 @@
 
 **Status: no send needed.** Rye secured permission directly; use is personal and
 with people we know. The import work is specced in
-`CLAUDE_CODE_PROMPT_2026-07-12_IOVERLANDER_IMPORT.md`. This draft stays for the
+`archive/CLAUDE_CODE_PROMPT_2026-07-12_IOVERLANDER_IMPORT.md`. This draft stays for the
 record.
 
 ---

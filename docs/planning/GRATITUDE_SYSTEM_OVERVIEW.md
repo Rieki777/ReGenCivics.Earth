@@ -4,8 +4,8 @@ State as of 2026-07-28, after the audit fixes and the payout cap.
 Migration: `drizzle/0223_gratitude_payout_cap.sql` (renumbered from 0219 on 2026-08-01 after
 `0219_application_season.sql` landed on main first; the runner tracks by filename).
 
-Companion documents: `GRATITUDE_AUDIT_2026-07-28.md` (what was broken),
-`GRATITUDE_SYSTEM_SPEC.md` (the canonical spec, now reconciled with the code).
+Companion documents: `docs/planning/GRATITUDE_AUDIT_2026-07-28.md` (what was broken),
+`docs/planning/GRATITUDE_SYSTEM_SPEC.md` (the canonical spec, now reconciled with the code).
 
 ---
 

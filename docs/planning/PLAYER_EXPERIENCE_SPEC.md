@@ -1,6 +1,6 @@
 # Player Experience Spec: Contribution Score, Profiles, and Engagement
 
-This spec covers the player-facing systems that make contribution visible, meaningful, and rewarding inside ReGen Civics. It builds on top of the existing playerProfiles, regenTokenLedger, questCompletions, playerContributions, and the new social sharing infrastructure from SOCIAL_SHARING_SPEC.md.
+This spec covers the player-facing systems that make contribution visible, meaningful, and rewarding inside ReGen Civics. It builds on top of the existing playerProfiles, regenTokenLedger, questCompletions, playerContributions, and the new social sharing infrastructure from docs/planning/SOCIAL_SHARING_SPEC.md.
 
 The core idea: everything a player does on the site (quests, forum posts, contributions, sharing, events, endorsements) feeds into a unified contribution score. That score drives what they can access, how they're recognized, and eventually how much governance weight they carry.
 
@@ -88,7 +88,7 @@ Track social sharing activity per player in the background. This score is never 
 
 ### Admin view
 
-In the Social & Sharing admin tab (from SOCIAL_SHARING_SPEC.md), add a "Silent Scores" section:
+In the Social & Sharing admin tab (from docs/planning/SOCIAL_SHARING_SPEC.md), add a "Silent Scores" section:
 - Ranked list of players by sharing score
 - Each row shows: name, total shares, arrivals, signups, active conversions, quality percentage
 - A "Send Recognition" button on each row that opens a compose window for a personal message
@@ -171,7 +171,7 @@ Visual: the growth visualization (#3) animating from empty to current state, sho
 If they crossed a tier threshold, celebrate it. If they unlocked new quests (from #7), show what's now available.
 
 **Card 6: The shareable card**
-"Your Season [Name] in ReGen Civics" with a summary image (generated via the /api/og endpoint from SOCIAL_SHARING_SPEC.md). Share buttons below.
+"Your Season [Name] in ReGen Civics" with a summary image (generated via the /api/og endpoint from docs/planning/SOCIAL_SHARING_SPEC.md). Share buttons below.
 
 ### Admin controls
 
@@ -206,7 +206,7 @@ Thread thickness = how active that referred person is. Bright green = active thi
 
 ### Data
 
-Pulls from the `referrals` table (from SOCIAL_SHARING_SPEC.md). The network is limited to 2 degrees (your referrals and their referrals). No deeper. This keeps it readable and prevents performance issues.
+Pulls from the `referrals` table (from docs/planning/SOCIAL_SHARING_SPEC.md). The network is limited to 2 degrees (your referrals and their referrals). No deeper. This keeps it readable and prevents performance issues.
 
 ### What the player sees
 
@@ -696,8 +696,8 @@ Write to this table from every relevant mutation (quest completion, contribution
 
 ## Connection to Other Specs
 
-- **SOCIAL_SHARING_SPEC.md:** The referral tracking (ref/src/ctx params), share_events table, and referrals table feed directly into the Silent Sharing Score (#2) and the Mycelium Network (#5). The SharePrompt component triggers share events that feed the contribution score.
-- **QUEST_PROGRESSION_SPEC.md:** Quest unlock tiers (#7) build on top of the existing quest locking chain. The Rites of Passage completion is a prerequisite for the tier system.
+- **docs/planning/SOCIAL_SHARING_SPEC.md:** The referral tracking (ref/src/ctx params), share_events table, and referrals table feed directly into the Silent Sharing Score (#2) and the Mycelium Network (#5). The SharePrompt component triggers share events that feed the contribution score.
+- **docs/planning/QUEST_PROGRESSION_SPEC.md:** Quest unlock tiers (#7) build on top of the existing quest locking chain. The Rites of Passage completion is a prerequisite for the tier system.
 - **FIXES_TO_MAKE_2026-03-29.md Fix 15:** Feature suggestions page can feed into the Seasonal Council (#14) as a source of proposals.
 - **Existing regenTokenLedger:** All token grants from recognitions (#13), referral rewards, and admin grants flow through the existing ledger. No new token system needed.
 - **Existing playerContributions + ContributionCalculator:** The Contribution Compass (#6) and Proof Timeline (#11) build directly on the existing 8 Forms of Capital framework, extended to 9 with Health.

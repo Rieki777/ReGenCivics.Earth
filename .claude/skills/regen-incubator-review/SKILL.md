@@ -231,7 +231,7 @@ cohort, etc.]
 - `regen-outreach-sequences` for the response email sequence (welcome,
   follow-up, decline)
 - `regen-database-sql` if pulling applicant data from the DB
-- `CITIZENSHIP_TIERS_SPEC.md` for what cohort participation looks like
+- `docs/planning/CITIZENSHIP_TIERS_SPEC.md` for what cohort participation looks like
 - `SEASONS_HISTORY.md` for what past seasons accepted, declined, deferred
 - `regen-fundraising-copy` for the public-facing language about the
   incubator (not for the review itself, which is internal)

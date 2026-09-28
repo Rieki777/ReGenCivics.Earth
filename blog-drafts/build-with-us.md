@@ -95,7 +95,7 @@ Claude reads the project context, the writing rules, the available skills, and t
 If you want to build a tool for the Tools Library instead, try this:
 
 ```
-Read CLAUDE.md, CONTRIBUTING.md, and REGEN_TOOLS_LIBRARY_SPEC.md. I want to submit a new tool to the ReGen Civics Tools Library. The tool is [name and URL]. Analyze the URL, fill out the submission data, and prepare the PR with the tool entry following the schema in the spec. Follow all writing rules.
+Read CLAUDE.md, CONTRIBUTING.md, and docs/planning/REGEN_TOOLS_LIBRARY_SPEC.md. I want to submit a new tool to the ReGen Civics Tools Library. The tool is [name and URL]. Analyze the URL, fill out the submission data, and prepare the PR with the tool entry following the schema in the spec. Follow all writing rules.
 ```
 
 The Tools Library at regencivics.earth/tools is a community-curated directory of tools used by regenerative projects. Submitting a tool you know and use is one of the fastest first contributions. The submission form at /tools/submit even has AI-powered auto-fill from the tool's URL.

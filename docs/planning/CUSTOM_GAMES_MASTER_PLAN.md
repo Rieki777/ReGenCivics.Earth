@@ -174,7 +174,7 @@ Validation: shared zod schema, partial/progressive for intake, strict/complete f
 ## The one-session generation path
 
 1. **`create-land-game` scaffold** (Custom-Game-Foundation repo): consumes blueprint.json, emits a new repo from the template with `brand.json`, `theme.json`, config overrides, empty seed shells, and the Railway checklist. Deterministic, minutes, zero AI.
-2. **`GAME_GENERATION.md` playbook**: the standing prompt a Claude Code session runs inside the new repo. Inputs: blueprint.json + transcript + uploads. Outputs: every content seed in their voice: persona journeys, quest ladders (derived from their problems and goals), stage names, FAQs, milestones, welcome copy, email templates, their guide's prompt seed. Quality bars encoded (writing rules, no invented facts, flag gaps), ending with self-checks: typecheck, boot, click every journey, zero foundation-brand leakage.
+2. **`docs/GAME_GENERATION.md` playbook**: the standing prompt a Claude Code session runs inside the new repo. Inputs: blueprint.json + transcript + uploads. Outputs: every content seed in their voice: persona journeys, quest ladders (derived from their problems and goals), stage names, FAQs, milestones, welcome copy, email templates, their guide's prompt seed. Quality bars encoded (writing rules, no invented facts, flag gaps), ending with self-checks: typecheck, boot, click every journey, zero foundation-brand leakage.
 3. **Intake as generation fuel:** Sylva asks for stories, language, and specifics because the generation session writes from the transcript. Uploads attach at intake, and applicants can hand over existing docs (vision docs, governance agreements, master plans) for Sylva to extract answers from rather than retyping (improvement R3-8).
 
 Session output: a running branded instance with seeded content. The 3-6 months is co-creation, never mechanical setup.
@@ -248,7 +248,7 @@ Goal: a new upstream repo with zero Amora content. Amora becomes downstream cons
 | # | Change |
 |---|--------|
 | 17 | **`create-land-game` scaffold** (deterministic, from blueprint.json). |
-| 18 | **`GAME_GENERATION.md` playbook** (one-session content generation with self-checks). |
+| 18 | **`docs/GAME_GENERATION.md` playbook** (one-session content generation with self-checks). |
 | 19 | **Owner's guide generator:** every instance ships `OWNER_GUIDE.md` built from its blueprint. |
 | 20 | **`CLAUDE.md` in every generated repo** so owners self-serve improvements with Claude Code. |
 | 21 | **Build Journey tracker:** generalize the `JourneyToLaunch` internal PM page into a client-facing progress page per engagement, so clients watch their game come alive across the 3-6 months. |
@@ -330,7 +330,7 @@ each game. Three things make it work as a backlink rather than as decoration.
 **Server-rendered, not React-only.** Custom games are SPAs, and GPTBot, ClaudeBot,
 and PerplexityBot fetch HTML without running JavaScript. A footer that only exists
 after hydration is invisible to exactly the systems the credit is for: the same gap
-Layer 1 closed on regencivics.earth itself (`LLM_DISCOVERABILITY_PLAN.md` section
+Layer 1 closed on regencivics.earth itself (`docs/planning/LLM_DISCOVERABILITY_PLAN.md` section
 3). So a game splices the credit into its HTML at request time as a `<noscript>`
 block plus an off-screen div, the identical technique
 `server/_core/crawler-content.ts` uses here, and its React footer renders the same
@@ -367,7 +367,7 @@ Code: `shared/foundationCredit.ts` (variants, renderer, guard),
 `shared/networkRegistry.ts`, `blueprint.branding.foundationCredit`,
 `server/lib/network-feed.ts`, `client/src/pages/Network.tsx`,
 `scripts/emit-foundation-credit.ts` (the scaffold step and the crawl check),
-`GAME_GENERATION.md` section 3.
+`docs/GAME_GENERATION.md` section 3.
 
 ## Risks and guards
 

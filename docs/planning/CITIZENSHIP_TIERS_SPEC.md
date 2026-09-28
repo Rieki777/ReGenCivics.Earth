@@ -1,6 +1,6 @@
 # Citizenship Tiers Spec: Explorer, Co-Creator, Steward, Sage
 
-Written 2026-04-01. Standalone reference for the ReGen Civics four-tier citizenship system. Extracted from SEEDS_VISION_IMPLEMENTATION_SPEC.md for easy reference during builds and content creation.
+Written 2026-04-01. Standalone reference for the ReGen Civics four-tier citizenship system. Extracted from docs/planning/SEEDS_VISION_IMPLEMENTATION_SPEC.md for easy reference during builds and content creation.
 
 ---
 
@@ -61,7 +61,7 @@ Note: The 70th percentile tier was renamed from "Steward" to **"Cultivator"** to
 **Gratitude multiplier:** 1.0x (effective budget: 100)
 **Harvest multiplier:** 1.0x (base rate)
 
-See GRATITUDE_SYSTEM_SPEC.md for full gratitude mechanic (proportional splitting, streaks, $ReGen distribution).
+See docs/planning/GRATITUDE_SYSTEM_SPEC.md for full gratitude mechanic (proportional splitting, streaks, $ReGen distribution).
 
 **Game Variables:**
 ```
@@ -281,7 +281,7 @@ Trust score is a 0.0 to 2.0 float representing community trust. Starts at 1.0 (n
 
 **Composting:** At each season boundary, 10% of positive trust signals decay. Trust must be actively maintained.
 
-Full formula and all Game Variable keys are in SEEDS_VISION_IMPLEMENTATION_SPEC.md under "RESOLVED: Trust Score Formula."
+Full formula and all Game Variable keys are in docs/planning/SEEDS_VISION_IMPLEMENTATION_SPEC.md under "RESOLVED: Trust Score Formula."
 
 ---
 

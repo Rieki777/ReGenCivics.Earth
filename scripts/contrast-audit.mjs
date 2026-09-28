@@ -18,7 +18,7 @@
  * the 2026-05-29 estimate).
  *
  * The checker is the same one used in the manual 2026-05-29 audit via
- * Claude in Chrome; see CONTRAST_AUDIT_2026-05-29.md for the baseline.
+ * Claude in Chrome; see docs/planning/CONTRAST_AUDIT_2026-05-29.md for the baseline.
  */
 
 import { chromium } from 'playwright';

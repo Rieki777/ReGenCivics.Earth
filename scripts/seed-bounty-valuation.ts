@@ -6,7 +6,7 @@
  *
  * Idempotent: upserts on `key`. Every value is a public, community-governed
  * weight; stewards tune within the published min/max, changing the bounds
- * themselves is a Hypha vote. See BOUNTY_VALUATION_ENGINE_SPEC.md.
+ * themselves is a Hypha vote. See docs/planning/BOUNTY_VALUATION_ENGINE_SPEC.md.
  *
  * These `bounty.tier.*.base` amounts intentionally match the legacy
  * `bounty.tier.*.delivery` defaults, so a baseline bounty (normal impact, no

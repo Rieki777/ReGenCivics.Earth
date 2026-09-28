@@ -34,7 +34,7 @@ The build is genuinely strong: a tokenized design system, self-hosted typography
 
 ## Launch blockers (do these before sharing widely)
 
-1. Broken R2 images. `IMAGE_ARCHITECTURE.md` documents that most hardcoded R2 URLs now 404 (roughly 4 of 17 keys still resolve). This shows up on Showcase, Blog, Team, Governance, and CrowdPooling, and it kills social share previews when the OG image 404s.
+1. Broken R2 images. `docs/IMAGE_ARCHITECTURE.md` documents that most hardcoded R2 URLs now 404 (roughly 4 of 17 keys still resolve). This shows up on Showcase, Blog, Team, Governance, and CrowdPooling, and it kills social share previews when the OG image 404s.
 2. No observability. Sentry is in `package.json` and `client/src/main.tsx` calls `initSentry()`, but it is gated on `VITE_SENTRY_DSN`, which is unset. Production errors are invisible.
 3. No fundraising trust layer. `/fund` and `/investor` (InvestorForm.tsx) carry no team, portfolio, transparency, or FAQ, and `RiskDisclosure.tsx` is not surfaced in the funnel.
 
@@ -48,7 +48,7 @@ These are the elevation moves. Each one shifts a dimension from "good" to "memor
 
 2. **Build the investor trust layer.** The single biggest fundraising gap. Add a team section with real bios and faces to `/fund`, a portfolio and traction snapshot (projects funded, seasons run, capital in motion), a fund-structure FAQ, and a prominent link to the risk disclosure. Investors fund people and proof, and right now neither is in the path.
 
-3. **Bring the world to life with the character art.** `CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` specifies 13 roles, each with a card portrait and a full scene, in the solarpunk-elven-jedi style. The brief is excellent and the art is not generated or placed, so the Team and role pages read text-heavy. Generate the 26 images with nano-banana-pro, optimize to WebP, and place them. This is the difference between "another DAO site" and a living movement.
+3. **Bring the world to life with the character art.** `docs/planning/CLAUDE_CODE_PROMPT_2026-04-03_CHARACTER_ART.md` specifies 13 roles, each with a card portrait and a full scene, in the solarpunk-elven-jedi style. The brief is excellent and the art is not generated or placed, so the Team and role pages read text-heavy. Generate the 26 images with nano-banana-pro, optimize to WebP, and place them. This is the difference between "another DAO site" and a living movement.
 
 4. **Instrument the whole funnel.** Turn on Sentry in Railway, then add a small product-analytics layer with a named event taxonomy: `signup`, `quest_complete`, `apply_submit`, `loi_submit`, `pledge`, `forum_post`. The first two weeks of sharing are worth far more with data than without.
 
@@ -72,7 +72,7 @@ P0 = launch blocker, P1 = high impact for sharing, P2 = polish. Effort is rough 
 
 | # | Pri | Fix | Where | Effort |
 |---|-----|-----|-------|--------|
-| 1 | P0 | Restore or finish migrating R2 images; add an `onError` fallback to every image component so nothing renders a broken asset | `IMAGE_ARCHITECTURE.md`, `PageBackground.tsx`, image components | 0.5-1 day |
+| 1 | P0 | Restore or finish migrating R2 images; add an `onError` fallback to every image component so nothing renders a broken asset | `docs/IMAGE_ARCHITECTURE.md`, `PageBackground.tsx`, image components | 0.5-1 day |
 | 2 | P0 | Set `VITE_SENTRY_DSN` in Railway and confirm a test error appears in Sentry | `client/src/main.tsx` (`initSentry`) | 1 hr |
 | 3 | P0 | Guarantee OG and Twitter images resolve, with a local default fallback | `SEO.tsx`, `public/og/` | 2-3 hrs |
 | 4 | P0 | Add a persistent above-the-fold primary CTA on the homepage into `/connect` with intent pre-select | `Home.tsx` | 2-3 hrs |
@@ -100,4 +100,4 @@ Security baseline, CSP with per-request nonce, CSRF, rate limiting, and input sa
 
 ## Verification for this audit
 
-Findings were gathered by reading the actual source: `App.tsx` routing, `Home.tsx`, `Fund.tsx`, `Land.tsx`, `Play.tsx`, `InvestorForm.tsx`, `Navigation.tsx`, `design-tokens.ts`, `index.css`, `SEO.tsx`, `main.tsx`, `IMAGE_ARCHITECTURE.md`, `CONTRAST_AUDIT_2026-05-29.md`, and the security docs under `.ai/docs/security/`. The image 404 claim and the Sentry-gating claim should be confirmed live before the P0 sprint closes.
+Findings were gathered by reading the actual source: `App.tsx` routing, `Home.tsx`, `Fund.tsx`, `Land.tsx`, `Play.tsx`, `InvestorForm.tsx`, `Navigation.tsx`, `design-tokens.ts`, `index.css`, `SEO.tsx`, `main.tsx`, `docs/IMAGE_ARCHITECTURE.md`, `docs/planning/CONTRAST_AUDIT_2026-05-29.md`, and the security docs under `.ai/docs/security/`. The image 404 claim and the Sentry-gating claim should be confirmed live before the P0 sprint closes.

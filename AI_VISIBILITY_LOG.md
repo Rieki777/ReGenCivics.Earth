@@ -1,6 +1,6 @@
 # AI Visibility Log
 
-Bi-weekly record of whether AI answer engines and search surfaces cite ReGen Civics for its target query space. Written by the `regen-ai-visibility-panel` scheduled task (runs the 1st and 15th of each month, 9am). The query panel and format live in the task prompt; the plan behind it is `LLM_DISCOVERABILITY_PLAN.md` Layer 5.
+Bi-weekly record of whether AI answer engines and search surfaces cite ReGen Civics for its target query space. Written by the `regen-ai-visibility-panel` scheduled task (runs the 1st and 15th of each month, 9am). The query panel and format live in the task prompt; the plan behind it is `docs/planning/LLM_DISCOVERABILITY_PLAN.md` Layer 5.
 
 Read this newest-first. Each entry: results table (query | cited? | position/notes | who dominates), trend note vs the previous entry, and accuracy problems in how engines describe ReGen Civics.
 

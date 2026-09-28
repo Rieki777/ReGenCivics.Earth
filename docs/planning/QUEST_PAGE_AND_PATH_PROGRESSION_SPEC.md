@@ -2,7 +2,7 @@
 
 Version 1.0. Drafted 2026-04-26. Standing spec.
 
-This document supersedes the tier-progression sections of `CITIZENSHIP_TIERS_SPEC.md` and the unlock-chain sections of `QUEST_PROGRESSION_SPEC.md` for everything new. Old specs remain as historical reference; new work follows this doc.
+This document supersedes the tier-progression sections of `docs/planning/CITIZENSHIP_TIERS_SPEC.md` and the unlock-chain sections of `docs/planning/QUEST_PROGRESSION_SPEC.md` for everything new. Old specs remain as historical reference; new work follows this doc.
 
 ---
 
@@ -91,11 +91,11 @@ Three concentric rings of quests.
 
 ### 4.1 Ring 1: Welcome Aboard (10 quests)
 
-The first thing a new player sees. All 10 unlocked from account creation. Each quest pays a small RGVoice + $ReGen reward. Completing all 10 unlocks the First Claim experience and qualifies them for the Welcome Aboard signal in their profile. This already exists; spec lives in `ReGenCivics_WelcomeAboard_Brief.md`.
+The first thing a new player sees. All 10 unlocked from account creation. Each quest pays a small RGVoice + $ReGen reward. Completing all 10 unlocks the First Claim experience and qualifies them for the Welcome Aboard signal in their profile. This already exists; spec lives in `docs/planning/ReGenCivics_WelcomeAboard_Brief.md`.
 
 ### 4.2 Ring 2: Rites of Passage (13 quests)
 
-The 13 main quests defined in `QUEST_PROGRESSION_SPEC.md`. All 13 unlocked from the moment the player declares the ReGen Player path. The seasonal-cascade unlock chain in the old spec is removed. A player can do the 13 in any order they choose. Completing all 13 grants the ReGen Player Co-Creator milestone (and pays 77 RGVoice).
+The 13 main quests defined in `docs/planning/QUEST_PROGRESSION_SPEC.md`. All 13 unlocked from the moment the player declares the ReGen Player path. The seasonal-cascade unlock chain in the old spec is removed. A player can do the 13 in any order they choose. Completing all 13 grants the ReGen Player Co-Creator milestone (and pays 77 RGVoice).
 
 The reason for unlocking all 13 from the start: the old cascade meant a player who joined in winter and completed a winter rite had to wait until spring to unlock spring rites. That paced the game at the speed of the seasons, which is poetic but makes the game feel inert in the early days. We unlock all 13 so a motivated new player can move through the Rites at their own pace, and the season ring (section 9.4) shows them which seasonal layer they're in for cosmetic and contribution-tracking purposes.
 
@@ -480,7 +480,7 @@ Authoring the long-tail Open Universe quest pool is a content project, not an en
 
 **Status**: proposed
 
-**Context**: `CITIZENSHIP_TIERS_SPEC.md` (March 2026) defined Co-Creator, Steward, and Sage as gated by contribution percentile, gratitude received, and seasonal rite count. That model rewards highly-active forum/quest participants and structurally underweights people whose contribution is capital, land, or alliance scaffolding. It also fails to give Investors and Land Projects a clear "I belong here" moment early in their journey.
+**Context**: `docs/planning/CITIZENSHIP_TIERS_SPEC.md` (March 2026) defined Co-Creator, Steward, and Sage as gated by contribution percentile, gratitude received, and seasonal rite count. That model rewards highly-active forum/quest participants and structurally underweights people whose contribution is capital, land, or alliance scaffolding. It also fails to give Investors and Land Projects a clear "I belong here" moment early in their journey.
 
 **Decision**: Tier criteria for Co-Creator and Steward are now per-path concrete milestones. Sage remains the cross-path contribution-percentile tier. The 77 / 144 / 233 RGVoice bonuses are paid on first earn per path (Co-Creator and Steward) and once for Sage.
 
@@ -492,7 +492,7 @@ Authoring the long-tail Open Universe quest pool is a content project, not an en
 - New tables: `player_paths`, `tier_events`
 - New cron: `scripts/cron/detect-tier-progression.ts`
 - New ledger sources: `tier_bonus_co_creator`, `tier_bonus_steward`, `tier_bonus_sage`
-- Superseded: `CITIZENSHIP_TIERS_SPEC.md` lines 35-169 (tier criteria) and the contribution-percentile gating logic. Document remains valid for: gratitude budgets, Harvest multipliers, governance weight per tier.
+- Superseded: `docs/planning/CITIZENSHIP_TIERS_SPEC.md` lines 35-169 (tier criteria) and the contribution-percentile gating logic. Document remains valid for: gratitude budgets, Harvest multipliers, governance weight per tier.
 
 ---
 
@@ -527,10 +527,10 @@ To keep this spec contained, the following stay out of scope:
 ## 14. Cross-references
 
 - `CONTEXT_THE_TWO_GAMES.md`: Fund vs. Game distinction. RGVoice belongs to the Game side. Tier bonuses paid in RGVoice reinforce that.
-- `CITIZENSHIP_TIERS_SPEC.md`: still authoritative for gratitude budgets, Harvest multipliers, governance weight per tier.
-- `QUEST_PROGRESSION_SPEC.md`: superseded for unlock-chain logic. Still authoritative for the 14 Rites' content and forum-post pattern.
-- `PROGRESS_MAP_DESIGN.md`: complementary visualization. Not in scope for Phase 1-3 but the path definitions align.
-- `ReGenCivics_WelcomeAboard_Brief.md`: Welcome Aboard quests stay as the first-ring entry experience.
+- `docs/planning/CITIZENSHIP_TIERS_SPEC.md`: still authoritative for gratitude budgets, Harvest multipliers, governance weight per tier.
+- `docs/planning/QUEST_PROGRESSION_SPEC.md`: superseded for unlock-chain logic. Still authoritative for the 14 Rites' content and forum-post pattern.
+- `docs/planning/PROGRESS_MAP_DESIGN.md`: complementary visualization. Not in scope for Phase 1-3 but the path definitions align.
+- `docs/planning/ReGenCivics_WelcomeAboard_Brief.md`: Welcome Aboard quests stay as the first-ring entry experience.
 - `CLAUDE.md` token model section: the four-token private-first-ledger model, including `creditPrivateTokens` as the only legitimate write to private balances.
 - `apps/web/src/lib/hypha-bridge/`: the redeem-tokens intent the Claim button uses.
 

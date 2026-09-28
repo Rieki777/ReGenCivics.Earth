@@ -433,7 +433,7 @@ The prompt is designed to:
 
 ### Prompt Content (Draft)
 
-See the separate file: `PLAY_CREATION_PROMPT.md` (to be created alongside this spec).
+See the separate file: `docs/planning/PLAY_CREATION_PROMPT.md` (to be created alongside this spec).
 
 ---
 
@@ -498,10 +498,10 @@ The first Play on the platform should be ReGen Civics itself. This serves as:
 Content sources for the ReGen Civics Play:
 - Season 1 role structure and curriculum
 - REGEN_GAMES_SPEC_V1.md (game mechanics, quests, scoring, tiers)
-- CITIZENSHIP_TIERS_SPEC.md (tier system)
+- docs/planning/CITIZENSHIP_TIERS_SPEC.md (tier system)
 - Community Agreements (the 6 ratified agreements)
 - CONTEXT_THE_TWO_GAMES.md (Fund vs Game structure)
-- SEEDS_VISION_IMPLEMENTATION_SPEC.md (economic vision)
+- docs/planning/SEEDS_VISION_IMPLEMENTATION_SPEC.md (economic vision)
 - Governance page content
 - Schedule page episode structure
 

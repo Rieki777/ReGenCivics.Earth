@@ -2,7 +2,7 @@
 
 A focused round on the phone experience, because that is where most first-time visitors will arrive and where the fundraising and incubator links will get shared. This is a complete, standalone doc: a mobile scorecard, the one real blocker, 10 ways to make the phone experience world class, and 15 prioritized fixes with file references and effort. Findings are grounded in the actual code.
 
-This round sits on top of two things already done today: the five screenshot fixes (Epic Quest cards, Quest Arc map placement, the vertical command menu, the Hymns player, and the "On the Cloud" copy), and the full CTO and CDO audit in `SITE_AUDIT_2026-06-18_CTO_CDO.md`. Where they overlap, this doc is the mobile-specific source of truth.
+This round sits on top of two things already done today: the five screenshot fixes (Epic Quest cards, Quest Arc map placement, the vertical command menu, the Hymns player, and the "On the Cloud" copy), and the full CTO and CDO audit in `docs/planning/SITE_AUDIT_2026-06-18_CTO_CDO.md`. Where they overlap, this doc is the mobile-specific source of truth.
 
 ## The verdict in one paragraph
 

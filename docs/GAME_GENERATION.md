@@ -2,7 +2,7 @@
 
 The standing prompt a Claude Code session runs **inside a freshly scaffolded
 custom game** to turn a blueprint plus an intake transcript into a working first
-draft. `CUSTOM_GAMES_MASTER_PLAN.md` B3 #18.
+draft. `docs/planning/CUSTOM_GAMES_MASTER_PLAN.md` B3 #18.
 
 **Where this file lives.** It belongs to `Custom-Game-Foundation` and moves there
 at the Phase 2 extraction, along with `shared/foundationCredit.ts` and
@@ -68,7 +68,7 @@ Writes four files into the game:
 Custom games are SPAs. GPTBot, ClaudeBot, and PerplexityBot fetch HTML and do
 not run JavaScript, so a footer that only exists in React is invisible to exactly
 the systems the credit is for. That was the single biggest gap on
-regencivics.earth itself before Layer 1 (`LLM_DISCOVERABILITY_PLAN.md` section
+regencivics.earth itself before Layer 1 (`docs/planning/LLM_DISCOVERABILITY_PLAN.md` section
 3), and a generated game starts with the same shape.
 
 So the game's HTML handler splices the credit into the response before
@@ -132,7 +132,7 @@ only stay true if nobody bends them:
 - **The owner can remove it.** They paid for 100% of the game. If they turn it
   off, it stays off, and nothing in a later update turns it back on.
 - **Anchor text varies by placement** and points at the query clusters ReGen
-  Civics is trying to own (`LLM_DISCOVERABILITY_PLAN.md` section 3, Layer 2),
+  Civics is trying to own (`docs/planning/LLM_DISCOVERABILITY_PLAN.md` section 3, Layer 2),
   rather than repeating the brand name in three places.
 
 ### 3.6 Add the game to the network

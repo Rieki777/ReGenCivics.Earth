@@ -1,6 +1,6 @@
 # The Harvest: Creation Station + Two-Way Bridge - Comprehensive Plan v2
 
-Status: Draft v2, 2026-06-26. Author: Rye + Claude (Cowork). Supersedes v1 and the Phase 2 and 3 sketches in `SECOND_BRAIN_SPEC.md`. v2 folds in a three-perspective review (security, architecture, product).
+Status: Draft v2, 2026-06-26. Author: Rye + Claude (Cowork). Supersedes v1 and the Phase 2 and 3 sketches in `docs/planning/SECOND_BRAIN_SPEC.md`. v2 folds in a three-perspective review (security, architecture, product).
 
 ## The vision in one paragraph
 

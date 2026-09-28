@@ -2,7 +2,7 @@
 
 Written 2026-07-03. Implementation spec for the profile Gratitude tab and the backend evolution that makes the gratitude economy work end to end.
 
-This spec **implements and extends** `GRATITUDE_SYSTEM_SPEC.md` (the canonical mechanic, 2026-04-03). Where this doc and that one differ, the mechanic in `GRATITUDE_SYSTEM_SPEC.md` wins; this doc fills in data model, procedures, UI wiring, jobs, and the migration path off the current half-built state.
+This spec **implements and extends** `docs/planning/GRATITUDE_SYSTEM_SPEC.md` (the canonical mechanic, 2026-04-03). Where this doc and that one differ, the mechanic in `docs/planning/GRATITUDE_SYSTEM_SPEC.md` wins; this doc fills in data model, procedures, UI wiring, jobs, and the migration path off the current half-built state.
 
 Decisions locked with Rye (2026-07-03):
 1. **Full spec vision** — history, totals, power meter, progress ring, moon phase, streak, proportional budget. Not a lean slice.
@@ -32,7 +32,7 @@ Today three data paths disagree. Target: **one acknowledgment model**, three tab
 |---|---|---|
 | `gratitude_log` (0092): sender, recipient, message, sourceType, sourceId | Forum/profile sends. `gratitude.send` credits recipient a flat **5 $ReGen** immediately. | **Becomes the acknowledgment record.** Add `cycleId` + `weight`. Stop crediting tokens at send time. |
 | `gratitude_transactions` + `gratitude_budgets` (0096): seasonId, amount 1–5 | Bounty gratitude via `game.sendGratitude`. | **Deprecate the amount + season budget.** Bounty sends fold into acknowledgments (still tagged with the bounty as source). Season budgets replaced by cycle budgets. |
-| `GRATITUDE_SYSTEM_SPEC.md` model | Lunar cycle, tier budget, proportional split, pool distribution. | **This is the target.** Build it. |
+| `docs/planning/GRATITUDE_SYSTEM_SPEC.md` model | Lunar cycle, tier budget, proportional split, pool distribution. | **This is the target.** Build it. |
 
 Key change: **$ReGen is no longer credited when you send gratitude.** It is credited to *recipients* at end of cycle by the distribution job, proportional to weighted gratitude received. Sending is a free acknowledgment; the value flows to the acknowledged.
 

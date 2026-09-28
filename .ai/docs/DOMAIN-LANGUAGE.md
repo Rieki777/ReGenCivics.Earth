@@ -2,17 +2,17 @@
 
 Canonical names + one-line definitions for every load-bearing term in ReGen Civics. Reach for this when a term feels ambiguous OR when you're about to redefine something inline.
 
-Last reviewed: 2026-04-25.
+Last reviewed: 2026-09-27 (the Fund became the cooperative in design; funding engine terms added).
 
 ---
 
 ## The two anchors
 
-**Fund** (capital F). The ReGen Civics Fund. Venture-capital-style legal structure, anchored in the Dominant Game (legible to capital allocators, accredited investors, LPs). The Fund's tokens are RCVoice (governance) and $RCivics (economic). Audience: investors, family offices, capital allocators.
+**Cooperative** (the ReGen Network Cooperative; formerly "the Fund"). In design: a member-owned purchasing cooperative in which land projects and people buy and steward land together, governed one member, one vote, anchored in the Dominant Game through one of its oldest legal tools. Not a legal entity; accepts no money. Every public sentence about it comes from `COOP` in `shared/fund.ts` (ADR-62). Rye's phrase: "a cooperative regenerative society". Audience: land projects, people who want to use and steward shared land, allies, and funders who support land projects directly. Until 2026-09-27 this anchor was "the ReGen Civics Fund", a venture-style fund; that name, and every return, yield, IRR, carry, distribution, listing or accredited-investor term that came with it, is retired from public copy (gate G5).
 
 **Game** (capital G). The Infinite Game / new Games / Regenerative Renaissance Game. Quests, seasons, citizenship, contribution scores. Anchored in the new Games (movement, bioregional, regenerative). The Game's tokens are RGVoice (governance) and $ReGen (economic). Audience: players, land projects, alliance partners.
 
-**Bridge** / **The Two Games**. The conceptual + literal connection between the two. ReGen Civics holds both ends of the bridge. Players can participate in the Game without touching the Fund and vice versa. See `CONTEXT_THE_TWO_GAMES.md`.
+**Bridge** / **The Two Games**. The conceptual + literal connection between the two. ReGen Civics holds both ends of the bridge. Players can participate in the Game without touching the cooperative and vice versa. See `CONTEXT_THE_TWO_GAMES.md`.
 
 ---
 
@@ -22,13 +22,13 @@ Last reviewed: 2026-04-25.
 
 **RGVoice**. Game-side governance token. Used to vote on quests, decisions, season programming, anything inside the Game. Contract on Base: `0x4d848B3f2D74D1D2f6c75c55d0751DAB8FC7D707`. Earned by playing.
 
-**RCVoice**. Fund-side governance token. Used to vote on Fund decisions (LP-style governance). Contract not yet deployed.
+**RCVoice**. Governance token from the earlier fund design. The cooperative is designed to vote one member, one vote, and how RCVoice relates to that is under review with counsel (`COOP.coopTokens.rcvoice`). Contract not yet deployed. Never describe it as LP-style or investor governance.
 
 ### Economic tokens (value)
 
 **$ReGen**. Game-side economic token. Tracks contributions to the Game / movement. Earned via gratitude received, harvest events, quest completion, SEEDS claim conversions. Contract on Base: `0x4E617cd113364193d215d107AdD6fa50418AA2E4`.
 
-**$RCivics**. Fund-side economic token. Tracks contributions to the Fund / Alliance. Used by Alliance Partners exchanging equity, services, technology for Fund participation. Contract on Base: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`.
+**$RCivics**. Economic token from the earlier fund design. A live ERC-20 with a public claim bridge, so it must not be tied to cooperative capital or votes (legal research, 2026-09-27); its role, if any, in the cooperative is under review with counsel (`COOP.coopTokens.rcivics`). Public copy never gives it value, a price, a market or a claim on anything. Contract on Base: `0x72e9B17a2F93A923D63666eC0a1c096B1443ef26`.
 
 ### What the four split means
 
@@ -44,7 +44,7 @@ A player's TOTAL position in any token is `private + public`. Private is on the 
 
 ## Citizenship tiers (4-tier system)
 
-From `CITIZENSHIP_TIERS_SPEC.md`.
+From `docs/planning/CITIZENSHIP_TIERS_SPEC.md`.
 
 **Visitor**. Anyone visiting the site without an account. Read-only access to public content.
 
@@ -60,7 +60,7 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 ## Seasons + roles
 
-**The ReGen Civics Year**. One turn of the wheel of four seasons (ADR-57, ADR-58, canonical in `shared/regenYear.ts`), named for what they are for: the **Design Season** (the incubator; tools, systems, governance; land projects design their games), the **Resource Season** (crowdpooling, investors, onboarding roles), the **Build Season** (on the land: gardens, buildings, festivals), and the **Rest Season** (harvest gatherings, rest, healing, village life). They loosely follow winter, spring, summer, and fall; lead with the season names in copy and use winter/spring/summer/fall as the pattern and imagery. The Game's seasons follow the work, so they run one season ahead of the northern calendar: Design opens at the September equinox, Resource at the December solstice, Build at the March equinox, Rest at the June solstice. Timelines are loose in this first full turn; say so wherever dates appear. Never call the incubator "Spring"; it is the Design Season.
+**The ReGen Civics Year**. One turn of the wheel of four seasons (ADR-57, ADR-58, canonical in `shared/regenYear.ts`), named for what they are for: the **Design Season** (the incubator; tools, systems, governance; land projects design their games), the **Resource Season** (crowdpooling, funders, onboarding roles), the **Build Season** (on the land: gardens, buildings, festivals), and the **Rest Season** (harvest gatherings, rest, healing, village life). They loosely follow winter, spring, summer, and fall; lead with the season names in copy and use winter/spring/summer/fall as the pattern and imagery. The Game's seasons follow the work, so they run one season ahead of the northern calendar: Design opens at the September equinox, Resource at the December solstice, Build at the March equinox, Rest at the June solstice. Timelines are loose in this first full turn; say so wherever dates appear. Never call the incubator "Spring"; it is the Design Season.
 
 **Recap and passoff**. The gathering at every solstice and equinox where the season we're leaving recaps what it grew and passes off to the next season's organizers.
 
@@ -90,13 +90,13 @@ From `CITIZENSHIP_TIERS_SPEC.md`.
 
 ## Quests + game mechanics
 
-**Quest**. A self-contained activity with a card, modal, optional PDF guide, optional forum seed post, and reward (typically $ReGen). See `QUEST_PROGRESSION_SPEC.md` and the `regen-quest-builder` skill.
+**Quest**. A self-contained activity with a card, modal, optional PDF guide, optional forum seed post, and reward (typically $ReGen). See `docs/planning/QUEST_PROGRESSION_SPEC.md` and the `regen-quest-builder` skill.
 
-**Welcome Aboard Quest**. The first-week onboarding sequence for new players. See `ReGenCivics_WelcomeAboard_Brief.md`.
+**Welcome Aboard Quest**. The first-week onboarding sequence for new players. See `docs/planning/ReGenCivics_WelcomeAboard_Brief.md`.
 
 **Rite of Passage**. A quest that unlocks new tier privileges or a citizenship advancement.
 
-**Living Tree**. The visual representation of a player's nine forms of capital (intellectual, social, material, financial, living, cultural, spiritual, experiential, health). See `LIVING_TREE_VISUALIZATION_SPEC.md`.
+**Living Tree**. The visual representation of a player's nine forms of capital (intellectual, social, material, financial, living, cultural, spiritual, experiential, health). See `docs/planning/LIVING_TREE_VISUALIZATION_SPEC.md`.
 
 **The 9 Roots of Capital** (a.k.a. Gratitude Variables). The nine dimensions on which contribution is recognized. From `GameMechanics.tsx`:
 1. Intellectual (knowledge, research, learning)
@@ -193,9 +193,9 @@ Source of truth for any future edit: `shared/capitals.ts`.
 
 **Land project**. A regenerative land-based initiative applying to the incubator. Has bioregion, season cohort, capital ask, application history.
 
-**Alliance Partner**. An organization contributing equity, services, or technology in exchange for $RCivics.
+**Alliance Partner**. An organization that supports land projects with services, tools, knowledge or relationships. (The earlier fund design paid alliance partners in $RCivics for equity; that is held pending counsel, ADR-62.)
 
-**Investor** / **LP** (Limited Partner). Capital allocator participating in the Fund.
+**Funder**. A foundation, grant program, lender or person who supports land projects or ReGen Civics. Public copy about the cooperative never says "investor" or "LP" (gate G5). Venture investment in ReGen Civics, Inc., the operating company, is a separate lane handled in the private funding plan, and never touches the cooperative.
 
 **Storyteller**. A community member who narrates the story of a decision after it ratifies. Pulled from the storyteller pool via the regen-guide flow.
 
@@ -221,7 +221,7 @@ Source of truth for any future edit: `shared/capitals.ts`.
 
 **Two human gates.** The Movement Coordination Engine has exactly two human checkpoints between a recorded call and a token payout. (1) Admin approval at `status: proposed` so an LLM misreading "Sam, can you look at the water rights" cannot silently mint tokens or spam a holder. (2) Circle steward consent at `status: submitted` so the definition of done is met before the bounty credits. Both are designed to be bulk and fast, not bureaucratic.
 
-**Coordination engine.** Shorthand for the whole pipeline: YouTube RSS poll, ingest + transcribe, two LLM passes (synthesize + extract-tasks), admin gate, route to holder or Opportunity board, claim / submit / consent, `creditPrivateTokens(..., "call_task_bounty", callTaskId)`. Spec: `MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`. Video pipeline stages: `CLAUDE_CODE_PROMPT_2026-06-23_RIVERSIDE_YOUTUBE_PIPELINE.md`.
+**Coordination engine.** Shorthand for the whole pipeline: YouTube RSS poll, ingest + transcribe, two LLM passes (synthesize + extract-tasks), admin gate, route to holder or Opportunity board, claim / submit / consent, `creditPrivateTokens(..., "call_task_bounty", callTaskId)`. Spec: `docs/planning/MOVEMENT_COORDINATION_ENGINE_SPEC_2026-06-23.md`. Video pipeline stages: `CLAUDE_CODE_PROMPT_2026-06-23_RIVERSIDE_YOUTUBE_PIPELINE.md`.
 
 ---
 
@@ -243,9 +243,9 @@ Source of truth for any future edit: `shared/capitals.ts`.
 
 ## Things we don't say
 
-- "Ecosystem" by itself is too vague. Say "the ReGen Civics network" or "this alliance" or "the Fund + Game system".
+- "Ecosystem" by itself is too vague. Say "the ReGen Civics network" or "this alliance" or "the cooperative and the Game".
 - "Stakeholder" rarely. Most of the time you mean players, land projects, investors, or partners. Be specific.
-- "Solution" rarely. Most of the time you mean a quest, a fund, a tool, or a practice. Be specific.
+- "Solution" rarely. Most of the time you mean a quest, a cooperative, a tool, or a practice. Be specific.
 - "Community" is fine but generic. Reach for "players", "alliance", "season cohort", "bioregional network" when the audience is more specific.
 - "Web3" is reserved for a very narrow context. We're "blockchain-anchored" or "on-chain-coordinated" most of the time.
 
@@ -255,8 +255,7 @@ Source of truth for any future edit: `shared/capitals.ts`.
 
 - "The Regenerative Renaissance" (always capitalized as a proper noun, the movement we participate in).
 - "The Infinite Game" (capital G, the game-design lineage).
-- "Two anchors holding up one bridge" (the metaphor that explains Fund + Game).
-- "Land-backed" (preferred over "asset-backed" when describing the Fund's investment thesis).
+- "Two anchors holding up one bridge" (the metaphor that explains the cooperative and the Game).
 - "Bioregional" (region + ecological character; preferred over "regional" alone).
 - "The Field Guide" (the canonical Game player's guide).
 - "Welcome Aboard" (the onboarding moment; capitalized).
@@ -363,3 +362,15 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Needs tab**. The list of every open need across live campaigns on `/campaigns?tab=needs`, least covered first.
 
 **Readiness ticks**. A project steward's record, per campaign, of which Ready to crowdpool items the project meets (`campaign_readiness_ticks`, keyed by the permanent item keys). The review team sees them.
+
+---
+
+## Funding engine (added 2026-09-27)
+
+**G5** (gate 5). The upside-language gate from the funding engine plan. Public copy never promises or prices upside: no returns, ROI, IRR, yield, appreciation, exchange listings, secondary markets, "index fund", "direct investment", "invest in land projects through us", accredited-investor gates, fund terms (carry, preferred return, management fee, LP, NAV, tender offers) or distributions to holders. Enforced on every public surface by `scripts/check-fund-claims.mjs` in CI; drafts that touch these topics route to Rye and are logged for counsel.
+
+**Metrics** (canonical numbers). The `metrics` table: the one place every number ReGen Civics states about itself lives, with a definition, a source and an as-of date. Live counts recompute from the database (`server/funding/metrics.ts`); others are entered by hand. Nothing reaches a public page until Rye confirms it and marks it public. Never type a traction number into a page.
+
+**Cooperative interest**. A "tell us you're interested" record (`coop_interest`) from the /loi form: who someone is, what forms of capital they might bring, and consent to be contacted. No amounts, no pledges. It is never a membership and never a contribution (two records, two acts).
+
+**Positioning kernel**. The private grounding the application engine reads before a funder row. Lives only in the `funding_prompts` table (versioned, edited in /admin/funding), never in the repo.

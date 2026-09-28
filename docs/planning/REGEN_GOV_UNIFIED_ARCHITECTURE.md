@@ -768,10 +768,10 @@ A page honoring the SEEDS lineage and the lessons learned. Valuable context for 
 
 **Sprint 2:** `server/routes/governance.ts` (151 procedures) + `FORUM_LOOMIO_HYPHA_FLOW_SPEC_2026-04-09.md` (staged governance flow) + `client/src/components/governance/PromotionModal.tsx` (UI patterns) + `client/src/pages/DecisionsDashboard.tsx` (existing decisions UI)
 
-**Sprint 3:** `client/src/components/BioregionSelect.tsx` (existing bioregion data) + `REGEN_GAMES_SPEC_V1.md` (game variables for contribution scores) + `LIVING_TREE_VISUALIZATION_SPEC.md` (SVG visualization patterns)
+**Sprint 3:** `client/src/components/BioregionSelect.tsx` (existing bioregion data) + `REGEN_GAMES_SPEC_V1.md` (game variables for contribution scores) + `docs/planning/LIVING_TREE_VISUALIZATION_SPEC.md` (SVG visualization patterns)
 
 **Sprint 4:** `server/jobs/governanceJobs.ts` (existing viem usage) + `CONTEXT_THE_TWO_GAMES.md` (Fund vs Game token distinction) + `.env` (token contract addresses)
 
-**Sprint 5:** `CITIZENSHIP_TIERS_SPEC.md` + `server/routes/players.ts` (player data) + `client/src/pages/PlayerProfile.tsx` (existing profile patterns)
+**Sprint 5:** `docs/planning/CITIZENSHIP_TIERS_SPEC.md` + `server/routes/players.ts` (player data) + `client/src/pages/PlayerProfile.tsx` (existing profile patterns)
 
 **Sprint 6:** `REGEN_GAMES_SPEC_V1.md` (quest system, contribution scoring) + `COMMUNITY_AGREEMENTS_PLAN.md` (community agreements feature) + `client/src/pages/Governance.tsx` (existing governance education page)

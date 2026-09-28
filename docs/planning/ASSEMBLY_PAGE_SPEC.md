@@ -248,7 +248,7 @@ that display metadata was duplicated into hardcoded frontend dicts instead of re
      already points at the live `governance.claim_threshold_regen` (seeded in 0132, matched at
      `GameMechanics.tsx` ~L363) — no fix needed there. The genuine phantoms are
      `gratitude.pool_per_cycle` and `gratitude.claim_threshold` (referenced ~L2187-2219, seeded
-     nowhere). Seed both (`GRATITUDE_SYSTEM_SPEC.md` names the pool
+     nowhere). Seed both (`docs/planning/GRATITUDE_SYSTEM_SPEC.md` names the pool
      `gratitude.regen_distribution.pool_per_cycle` — pick ONE name, align page + seed + spec doc).
 2. **Rebuild the page rendering**:
    - Delete `VARIABLE_HELP` and all hardcoded variable copy. Descriptions come from the row.
