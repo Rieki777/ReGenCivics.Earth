@@ -114,6 +114,13 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     ["/ship/book", "Fleetwood Revolution"],
     ["/ship/terms", "Voyage Covenant"],
     ["/ship/guide", "Mindful, Careful, Slow"],
+    // Served verbatim rather than condensed, so the assertion is a clause from
+    // the actual document. Phase 9's submissions need a real policy at a real
+    // url, and a reviewer fetching ours previously got an empty shell.
+    ["/privacy-policy", "respects your privacy"],
+    ["/terms-of-use", "Acceptance of Terms"],
+    ["/risk-disclosure", "READ THIS CAREFULLY BEFORE INVESTING"],
+    ["/disclaimers", "NOT AN OFFER TO SELL SECURITIES"],
   ])("serves prose on %s", async (path, phrase) => {
     const html = await (await fetch(`${base}${path}`)).text();
     expect(html.toLowerCase()).toContain(phrase.toLowerCase());

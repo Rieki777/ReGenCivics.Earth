@@ -29,6 +29,7 @@ import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/rege
 import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
 import { getNetworkFeed } from "../lib/network-feed";
+import { getLegalPage } from "@shared/legalContent";
 import { serverCurrencyFormatter } from "../lib/currency-format";
 import { decodeBasicEntities } from "../../shared/htmlText";
 import { progressLines } from "../../shared/campaignProgress";
@@ -1285,8 +1286,39 @@ export async function getBountiesListContent(): Promise<CrawlerContent | null> {
   });
 }
 
+// ── The legal pages, served verbatim ─────────────────────────────────────────
+// Every other blank route in this work got prose condensed from the live page.
+// These four deliberately do not. A summarised privacy policy that an agent
+// quotes, or that a directory reviewer reads AS the policy, is worse than no
+// policy: the summary becomes the thing people rely on and it is not the
+// agreement. So the real text goes out, extracted from the components by
+// scripts/extract-legal-content.mjs and checked for drift in CI.
+//
+// This also unblocks phase 9. The ChatGPT and Muse submissions both require a
+// public privacy policy url, and a reviewer fetching ours found an empty shell.
+export function getLegalContent(slug: string): CrawlerContent | null {
+  const page = getLegalPage(slug);
+  if (!page) return null;
+  const dated = page.lastUpdated
+    ? `<p>Last updated: ${escapeHtml(page.lastUpdated)}.</p>`
+    : "";
+  const inner = `
+      <article>
+        <h1>${escapeHtml(page.title)}</h1>
+        ${dated}
+        ${page.html}
+      </article>
+    `;
+  return {
+    title: page.title,
+    bodyHtml: wrapForInjection(inner),
+  };
+}
+
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
   if (reqPath === "/schedule") return getScheduleContent();
+  const legal = reqPath.match(/^\/(privacy-policy|terms-of-use|risk-disclosure|disclaimers)$/);
+  if (legal) return getLegalContent(legal[1]);
   if (reqPath === "/campaigns") return getCampaignsListContent();
   if (reqPath === "/bounties") return getBountiesListContent();
   if (reqPath === "/learn") return getLearnIndexContent();
