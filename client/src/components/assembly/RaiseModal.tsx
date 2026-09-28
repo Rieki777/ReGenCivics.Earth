@@ -1,5 +1,5 @@
 /**
- * RaiseModal (ASSEMBLY_PAGE_SPEC.md section 2, one-door rule)
+ * RaiseModal (docs/planning/ASSEMBLY_PAGE_SPEC.md section 2, one-door rule)
  *
  * Raises a forum thread into a forming Assembly proposal. The single
  * promotion door on a thread: title prefilled from the thread, the aim line

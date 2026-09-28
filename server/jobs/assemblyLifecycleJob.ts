@@ -1,5 +1,5 @@
 /**
- * Assembly lifecycle job (ASSEMBLY_PAGE_SPEC.md section 11).
+ * Assembly lifecycle job (docs/planning/ASSEMBLY_PAGE_SPEC.md section 11).
  *
  * Runs inside the hourly governance cron (POST /api/cron/governance-jobs):
  *   - expireLastCall: a quiet last-call window flips the proposal to
@@ -104,7 +104,7 @@ export async function markResting(): Promise<JobReport> {
 
 /** Rung 3: move gated feature PRs through their launch window and merge.
  * Dark below autonomy tier 3, so this is a no-op until the community votes
- * the tier up (ASSEMBLY_PAGE_SPEC.md section 7.3). */
+ * the tier up (docs/planning/ASSEMBLY_PAGE_SPEC.md section 7.3). */
 export async function advanceEvolutionLaunchWindows(): Promise<JobReport> {
   try {
     const { advanceLaunchWindows } = await import("../lib/evolution");

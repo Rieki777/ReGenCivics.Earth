@@ -1,5 +1,5 @@
 /**
- * Assembly lifecycle controls (ASSEMBLY_PAGE_SPEC.md sections 2, 3.2, 3.3)
+ * Assembly lifecycle controls (docs/planning/ASSEMBLY_PAGE_SPEC.md sections 2, 3.2, 3.3)
  *
  * MoveToDecideButton: owner-only, unlocked when every gate passes; the
  * disabled state lists exactly which gates are unmet. An open objection can

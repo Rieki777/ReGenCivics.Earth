@@ -4,7 +4,7 @@
  * Phase 2 of the Outdoorsy sync: pull the channel's calendar back in, so a week
  * sold on Outdoorsy stops being sellable on regencivics.earth.
  *
- * Spec: CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md section 6, with two
+ * Spec: archive/CLAUDE_CODE_PROMPT_2026-08-01_OUTDOORSY_SYNC.md section 6, with two
  * corrections forced by what the live feed actually turned out to contain.
  * Both were verified against rental 543254 on 2026-08-01, not assumed.
  *

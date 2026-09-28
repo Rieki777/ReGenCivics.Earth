@@ -1,6 +1,6 @@
 /**
  * blueprint.json v0.3: the shared shape of a Custom Game blueprint
- * (CUSTOM_GAMES_MASTER_PLAN.md, Phase 0 deliverable).
+ * (docs/planning/CUSTOM_GAMES_MASTER_PLAN.md, Phase 0 deliverable).
  *
  * Two artifacts carry a custom game from intake to generation: this structured
  * blueprint (consumed by the create-land-game scaffold) and the intake

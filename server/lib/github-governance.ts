@@ -1,6 +1,6 @@
 /**
  * GitHub API surface for the Evolution Engine's Rung 3 auto-ship
- * (ASSEMBLY_PAGE_SPEC.md section 7.3).
+ * (docs/planning/ASSEMBLY_PAGE_SPEC.md section 7.3).
  *
  * Least-privilege by construction: every call needs GITHUB_GOVERNANCE_TOKEN.
  * Without it, `githubConfigured()` is false and nothing here can fire, which

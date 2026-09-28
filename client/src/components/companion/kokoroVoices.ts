@@ -6,7 +6,7 @@
  * device has it). The model weights (~90MB quantized) download once from the
  * Hugging Face CDN on first speak and are cached by the browser after that, so
  * spoken text never leaves the device and the voices cost nothing at any scale.
- * See VOICE_TTS_RESEARCH_2026-07-17.md for the model comparison behind this.
+ * See docs/planning/VOICE_TTS_RESEARCH_2026-07-17.md for the model comparison behind this.
  *
  * This module is deliberately React-free: a small state machine (idle, loading,
  * ready, failed) with a subscribe hook for useSyncExternalStore, plus a speak

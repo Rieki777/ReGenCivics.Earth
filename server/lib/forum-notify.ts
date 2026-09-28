@@ -561,7 +561,7 @@ export async function handleGratitudeSent(args: {
   try {
     const senderName = await getActorName(args.senderId);
     // Clicking a gratitude notification lands on the recipient's Gratitude
-    // tab, scrolled to the exact note (GRATITUDE_TAB_BUILD_SPEC.md §7).
+    // tab, scrolled to the exact note (docs/planning/GRATITUDE_TAB_BUILD_SPEC.md §7).
     // postId/replyId still record the forum context for the row itself.
     const link = args.gratitudeId
       ? `/profile?tab=gratitude&highlight=${args.gratitudeId}`

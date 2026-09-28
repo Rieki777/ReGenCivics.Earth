@@ -1,5 +1,5 @@
 /**
- * The Evolution Engine, on the page (ASSEMBLY_PAGE_SPEC.md section 7.3 step 4).
+ * The Evolution Engine, on the page (docs/planning/ASSEMBLY_PAGE_SPEC.md section 7.3 step 4).
  *
  * Two pieces:
  * - EvolutionEngineSection: the public status panel. The autonomy tier, the

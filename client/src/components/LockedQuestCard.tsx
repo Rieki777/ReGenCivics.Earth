@@ -1,7 +1,7 @@
 /**
  * LockedQuestCard: a quest the player can see exists but hasn't unlocked yet.
  *
- * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.8, locked
+ * Per docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 9.8, locked
  * quests render as moss-overgrown stone ruins with a single faint
  * elemental glyph (fire / water / earth / air) instead of a corporate
  * lock icon. The aesthetic says "the path continues into the forest,

@@ -1,5 +1,5 @@
 /**
- * ProsConsPanel (ASSEMBLY_PAGE_SPEC.md section 5)
+ * ProsConsPanel (docs/planning/ASSEMBLY_PAGE_SPEC.md section 5)
  *
  * The AI-synthesized picture of a forming proposal's conversation: pros and
  * cons with voice counts, the strongest unresolved objection (steelman) with

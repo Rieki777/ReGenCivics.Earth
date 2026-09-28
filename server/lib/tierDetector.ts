@@ -1,7 +1,7 @@
 /**
  * Tier progression detector.
  *
- * Implements section 7 of QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md.
+ * Implements section 7 of docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md.
  *
  * Per-path Co-Creator and Steward criteria are checked against the
  * authoritative tables (LOI signed, application approved, quest

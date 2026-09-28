@@ -1,7 +1,7 @@
 /**
  * Open Universe progressive reveal utility.
  *
- * Per QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 4.3:
+ * Per docs/planning/QUEST_PAGE_AND_PATH_PROGRESSION_SPEC.md section 4.3:
  *   - Once a player completes the 14 Rites of Passage, the Open
  *     Universe pool unlocks 2 quests at a time. Completing one
  *     unlocks 2 more. Continues until all are revealed.
