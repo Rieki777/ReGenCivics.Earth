@@ -5,6 +5,7 @@ import type { TrpcContext } from "./context";
 import { validateCSRFToken } from "./security";
 import { ENV } from "./env";
 import { isCacheAvailable, redisRateLimit } from "../cache";
+import { clientIp } from "./client-ip";
 import { getBountyPermission } from "../db/bounties";
 import { isAdminRole } from "@shared/adminRole";
 
@@ -40,7 +41,12 @@ const rateLimitFallback = new Map<string, { count: number; resetTime: number }>(
 export function rateLimited(opts: { windowMs: number; max: number }) {
   return t.middleware(async ({ ctx, path, next }) => {
     const userId = ctx.user?.id;
-    const bucket = userId ? `u:${userId}` : `ip:${ctx.req?.ip || 'unknown'}`;
+    // The visitor, not req.ip: behind Cloudflare, req.ip is one of a few shared
+    // proxy addresses, which put every anonymous visitor on one counter per
+    // procedure (see client-ip.ts). Found 2026-09-28 while building the Season
+    // Schedule vote, where a handful of projects voting in the same minute
+    // would have locked each other out.
+    const bucket = userId ? `u:${userId}` : `ip:${ctx.req ? clientIp(ctx.req) : 'unknown'}`;
     const key = `trpc-rl:${path}:${bucket}`;
 
     const reject = () => {
