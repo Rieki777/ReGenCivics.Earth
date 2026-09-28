@@ -190,6 +190,8 @@ Every ruling, with its date, so nothing has to be reconstructed from a conversat
 | Sign-in returns to the page, email choices without a profile, a notice when a filled role reopens | `85594f1f` |
 | Embed pages escape every value they print | `3c2e817f` |
 | One progress reading in-kind first, the nine-capital sheet, give or lend, money routes admins verify, the money rail enforced, one phone-first project page, the Needs tab, stored readiness ticks, the words guard (contract 4) | `d69d40ca` to `999fbbaf` |
+| Fund-side terms held pending counsel and moved out of the public repo; the 2a principles (v1.2) | `f92ac364` to `7f522f0c` |
+| Examples at about 20% money, no need at 0, the nine-month cap, the close date and `closed` (contract 5), steward nudges at 2 and 7 days, the private offer link, the arrival note, one Follow, Needed to start, the season defaults, v1.2 wording in code, limits keyed on the visitor | `4961f715` to `139f7819` |
 
 ---
 
