@@ -199,7 +199,7 @@ export default function LOI() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="interest-name" className={LABEL_CLASS}>
-                    Your name <span className="text-red-600" aria-hidden="true">*</span>
+                    Your name <span className="text-red-700" aria-hidden="true">*</span>
                   </label>
                   <input
                     id="interest-name"
@@ -216,7 +216,7 @@ export default function LOI() {
 
                 <div>
                   <label htmlFor="interest-email" className={LABEL_CLASS}>
-                    Email <span className="text-red-600" aria-hidden="true">*</span>
+                    Email <span className="text-red-700" aria-hidden="true">*</span>
                   </label>
                   <input
                     id="interest-email"
@@ -269,7 +269,7 @@ export default function LOI() {
             {/* Kind: required, one of the four the server accepts */}
             <fieldset className="space-y-3">
               <legend className="text-xl font-bold text-[#1a472a] mb-3" style={HEADING_STYLE}>
-                I'm interested as <span className="text-red-600 text-base" aria-hidden="true">*</span>
+                I'm interested as <span className="text-red-700 text-base" aria-hidden="true">*</span>
               </legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {KIND_OPTIONS.map((opt) => {
@@ -377,7 +377,7 @@ export default function LOI() {
                 <span className="text-sm text-[#1a472a] safe-prose">
                   I agree that ReGen Civics may keep these details and email me about the cooperative. I can
                   ask to be removed at any time.{" "}
-                  <span className="text-red-600" aria-hidden="true">*</span>
+                  <span className="text-red-700" aria-hidden="true">*</span>
                 </span>
               </label>
               <p className="text-xs text-[#1a472a]/80 pl-8">
