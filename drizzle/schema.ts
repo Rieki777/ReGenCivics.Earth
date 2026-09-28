@@ -844,6 +844,76 @@ export type TierEvent = typeof tierEvents.$inferSelect;
 export type InsertTierEvent = typeof tierEvents.$inferInsert;
 
 /**
+ * Ally Steward + Sage measurement tables (migration 0262).
+ */
+
+/**
+ * Durable log of resource and token swaps with ReGen Civics.
+ * Ally Steward: at least one confirmed resource AND one confirmed token row.
+ * Writes: admin/server only (server/db/regenCivicsSwaps.ts).
+ */
+export const regenCivicsSwaps = mysqlTable("regen_civics_swaps", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  swapKind: mysqlEnum("swapKind", ["resource", "token"]).notNull(),
+  status: mysqlEnum("status", ["pending", "confirmed", "cancelled"]).default("pending").notNull(),
+  /** Resource swap: what was exchanged. */
+  resourceDescription: text("resourceDescription"),
+  /** Token swap counterparty; always "ReGen Civics" for token rows. */
+  counterparty: varchar("counterparty", { length: 128 }),
+  /** Chain id placeholder for Hypha-on-Base, e.g. "base". */
+  chain: varchar("chain", { length: 32 }),
+  /** Venue placeholder, e.g. "hypha". */
+  venue: varchar("venue", { length: 32 }),
+  /** Bridge / on-chain tx reference (filled by future Hypha bridge). */
+  txRef: varchar("txRef", { length: 128 }),
+  tokenSymbol: varchar("tokenSymbol", { length: 64 }),
+  amountIn: decimal("amountIn", { precision: 36, scale: 18 }),
+  amountOut: decimal("amountOut", { precision: 36, scale: 18 }),
+  direction: mysqlEnum("direction", ["in", "out", "swap"]),
+  confirmedAt: timestamp("confirmedAt"),
+  confirmedBy: int("confirmedBy"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull().onUpdateNow(),
+}, (table) => ([
+  index("regen_civics_swaps_userId_idx").on(table.userId),
+  index("regen_civics_swaps_kind_status_idx").on(table.swapKind, table.status),
+  index("regen_civics_swaps_user_kind_status_idx").on(table.userId, table.swapKind, table.status),
+  index("regen_civics_swaps_confirmedAt_idx").on(table.confirmedAt),
+]));
+
+export type RegenCivicsSwap = typeof regenCivicsSwaps.$inferSelect;
+export type InsertRegenCivicsSwap = typeof regenCivicsSwaps.$inferInsert;
+
+/**
+ * Daily contribution rank snapshots for Sage.
+ * Top 20% <=> percentile >= 80. Sage needs that on >= 80% of season days
+ * that have snapshots (and Steward on at least one path).
+ */
+export const dailyContributionSnapshots = mysqlTable("daily_contribution_snapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  snapshotDate: date("snapshotDate").notNull(),
+  score: double("score").default(0).notNull(),
+  rank: int("rank").notNull(),
+  percentile: double("percentile").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("daily_contribution_snapshots_user_date_uq").on(table.userId, table.snapshotDate),
+  index("daily_contribution_snapshots_date_idx").on(table.snapshotDate),
+  index("daily_contribution_snapshots_user_date_pct_idx").on(
+    table.userId,
+    table.snapshotDate,
+    table.percentile,
+  ),
+]));
+
+export type DailyContributionSnapshot = typeof dailyContributionSnapshots.$inferSelect;
+export type InsertDailyContributionSnapshot = typeof dailyContributionSnapshots.$inferInsert;
+
+
+/**
  * Crowd Pooling Projects table
  * Stores land projects that are actively crowd pooling resources
  */
