@@ -540,6 +540,61 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       </article>
     `,
   },
+
+  "/custom-games": {
+    html: `
+      <article>
+        <h1>Custom Games: a coordination game for your land project</h1>
+        <p>A complete coordination game for a community, built on the same foundation as Amora and owned outright by the project running it. Three to five projects per season.</p>
+        <h2>Who it is for</h2>
+        <p><strong>Founders</strong> starting a land project who want clear agreements from day one: who decides, how money flows, how new people come in, written down and playable. <strong>Investors</strong> putting money into a land project who want a live window into decisions, money and progress without chasing anyone for updates.</p>
+        <h2>The problem it addresses</h2>
+        <p>Land projects fail on coordination long before they fail on permaculture. The soil improves, the gardens go in, and the project still unravels: coordination breaks first, then money opacity, then burnout in the two people carrying everything.</p>
+        <p>Without a structure that can hold new people, every person who joins adds weight to the same two or three who carry the risk. More members should mean more capacity; instead it means more to hold, more to explain, more to chase. Structure is what turns willing people into contributing people, so the work spreads and the founders stop being the single point of failure.</p>
+        <h2>Running in production</h2>
+        <p>Amora is a regenerative village rising in Costa Rica and the first client. Their game runs today: four journeys into the village, quests with consent-based crediting, a Gratitude currency, twelve stages of growth, a living map where every building traces back to a funded build or a claimed quest, and Maia, their own AI guide.</p>
+        <p>See <a href="/network">the games already in the network</a>, or <a href="/season2">Season Two</a>, which is the route in for projects that want the structure before the software.</p>
+      </article>
+    `,
+  },
+
+  "/loi": {
+    html: `
+      <article>
+        <h1>The ReGen Network Cooperative: tell us you are interested</h1>
+        <p><strong>In design.</strong> The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. <strong>It is not yet a legal entity and it accepts no money.</strong> It is being designed now with land projects, future members and counsel.</p>
+        <p>Telling us you are interested is not a commitment and involves no money. It means being kept posted as the cooperative takes shape, and invited into the design conversations.</p>
+        <h2>Who can register interest</h2>
+        <p>A land project, a person, an organization, or a funder or foundation. The cooperative is being designed to recognise all nine forms of capital: intellectual, social, material, financial, living, cultural, spiritual, experiential and health.</p>
+        <p><strong>Nothing on this site is an offer to sell, or a request to buy, securities, memberships or any other financial product. The cooperative is not formed and accepts no money.</strong></p>
+        <p>Background reading: <a href="/opportunity">the investment opportunity</a>, <a href="/fund">the fund</a>, and the full <a href="/risk-disclosure">risk disclosure</a>.</p>
+      </article>
+    `,
+  },
+
+  "/calculator": {
+    html: `
+      <article>
+        <h1>Contribution calculator: nine forms of capital</h1>
+        <p>A tool for estimating the value of a contribution across the nine forms of capital, so a contribution that is not money can still be counted.</p>
+        <p><strong>It is experimental, and the figures are not guaranteed rewards.</strong> The values are estimates to help someone think through their contributions holistically. It is impossible to fully quantify the intangible, and the argument for the tool is that if everyone uses the same one the results are more equitable. The calculator itself is evolved by proposals through the game.</p>
+        <h2>What it counts</h2>
+        <p>Financial capital covers direct contribution, funds raised or facilitated, revenue generated and costs saved, each with its own crediting standard. The other eight forms of capital are stepped through in turn, and a running total is carried across all nine.</p>
+        <p>Once a value is calculated, a proposal is submitted on Hypha. See <a href="/crowd-pooling">crowd pooling</a> for where the numbers are used, and <a href="/game-mechanics">game mechanics</a> for how contribution is valued in the wider game.</p>
+      </article>
+    `,
+  },
+
+  "/marketplace": {
+    html: `
+      <article>
+        <h1>The Connection Hub: what you offer and what you need</h1>
+        <p>Where regenerators find each other. People share what they can offer the community and what they could use help with, across skills, resources, time, knowledge, land and capital, and can mark themselves as seeking collaborators or looking to join a project.</p>
+        <p>Entries are shared from a member profile. Exchange also happens on LocalScale.org, which the hub links out to.</p>
+        <p>Related ways to be matched to work: <a href="/bounties">open bounties</a>, <a href="/quest">the quest board</a> and <a href="/play">the player paths</a>.</p>
+      </article>
+    `,
+  },
 };
 
 export function getStaticPageContent(reqPath: string): CrawlerContent | null {

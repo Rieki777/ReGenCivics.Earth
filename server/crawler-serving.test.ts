@@ -121,11 +121,29 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     ["/terms-of-use", "Acceptance of Terms"],
     ["/risk-disclosure", "READ THIS CAREFULLY BEFORE INVESTING"],
     ["/disclaimers", "NOT AN OFFER TO SELL SECURITIES"],
+    ["/custom-games", "fail on coordination long before"],
+    ["/calculator", "nine forms of capital"],
+    ["/marketplace", "Connection Hub"],
   ])("serves prose on %s", async (path, phrase) => {
     const html = await (await fetch(`${base}${path}`)).text();
     expect(html.toLowerCase()).toContain(phrase.toLowerCase());
     expect(html).toContain('id="__crawler_content__"');
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
+  });
+
+  it("keeps /loi's disclaimers intact, because an agent will relay them", async () => {
+    // This page is the C funnel's conversion point and the most compliance
+    // sensitive thing the crawler serves. The spec's hard rule is that
+    // explore_investment_thesis never quotes terms and never implies an offer.
+    // An agent that reads a summary with the disclaimers trimmed off would
+    // describe a cooperative taking money, which is the opposite of true.
+    const html = await (await fetch(`${base}/loi`)).text();
+    expect(html).toContain("not yet a legal entity and it accepts no money");
+    expect(html).toContain("not a commitment and involves no money");
+    expect(html).toContain(
+      "Nothing on this site is an offer to sell, or a request to buy",
+    );
+    expect(html).toContain("The cooperative is not formed and accepts no money");
   });
 
   it.each(["/campaigns", "/bounties"])(
