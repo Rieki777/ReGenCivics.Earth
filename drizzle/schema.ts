@@ -5940,6 +5940,28 @@ export const fundingPipeline = mysqlTable("funding_pipeline", {
   priority: mysqlEnum("priority", ["P1", "P2", "P3", "ADV", "ALLY"]).notNull().default("P2"),
   /** What kind of money this is (shared/fundingStages.ts FUNDING_TRACKS). */
   track: mysqlEnum("track", ["grant", "accelerator", "investor", "public_goods", "fiscal_sponsor", "credits", "network"]),
+  /**
+   * Whose money this is (drizzle/0279): 'platform' for ReGen Civics' own
+   * funders, 'project' or 'both' for grant programs land projects apply to.
+   */
+  audience: mysqlEnum("audience", ["platform", "project", "both"]).notNull().default("platform"),
+  /** The research seed's key for a program row (scripts/seed-grant-programs.ts). */
+  programKey: varchar("programKey", { length: 120 }),
+  // Program fields the grant matcher reads (shared/grantMatcher.ts).
+  instrument: varchar("instrument", { length: 40 }),
+  applicantTypes: json("applicantTypes").$type<string[]>(),
+  geo: json("geo").$type<{ countries?: string[]; states?: string[]; scope?: string; notes?: string }>(),
+  eligibilityRules: json("eligibilityRules").$type<{ excludes?: string[]; requiresFlags?: string[] }>(),
+  programStatus: varchar("programStatus", { length: 20 }),
+  callOpen: boolean("callOpen"),
+  amountMin: int("amountMin"),
+  amountMax: int("amountMax"),
+  currency: varchar("currency", { length: 3 }),
+  matchRequiredPct: int("matchRequiredPct"),
+  requiresTechnicalAdvisor: boolean("requiresTechnicalAdvisor"),
+  minPartners: int("minPartners"),
+  statusVerifiedAt: date("statusVerifiedAt", { mode: "string" }),
+  statusSourceUrl: varchar("statusSourceUrl", { length: 500 }),
   appStatus: mysqlEnum("appStatus", [
     "not_started",
     "researching",
@@ -5973,6 +5995,8 @@ export const fundingPipeline = mysqlTable("funding_pipeline", {
   index("funding_pipeline_next_action_date_idx").on(table.nextActionDate),
   index("funding_pipeline_deadline_at_idx").on(table.deadlineAt),
   index("funding_pipeline_track_idx").on(table.track),
+  unique("funding_pipeline_program_key_uq").on(table.programKey),
+  index("funding_pipeline_audience_idx").on(table.audience),
 ]));
 export type FundingPipelineRow = typeof fundingPipeline.$inferSelect;
 export type InsertFundingPipelineRow = typeof fundingPipeline.$inferInsert;
@@ -6083,13 +6107,71 @@ export type AnswerVersionRow = typeof answerVersions.$inferSelect;
 export const fundingDeadlinePings = mysqlTable("funding_deadline_pings", {
   id: int("id").autoincrement().primaryKey(),
   pipelineId: int("pipelineId").notNull(),
+  /** The land project a program ping is for (drizzle/0279); 0 is ReGen Civics itself. */
+  applicationId: int("applicationId").notNull().default(0),
   deadlineAt: timestamp("deadlineAt").notNull(),
   /** Days before the deadline: 21, 7 or 2. */
   threshold: int("threshold").notNull(),
   sentAt: timestamp("sentAt").defaultNow().notNull(),
 }, (table) => ([
-  unique("funding_deadline_pings_once_uq").on(table.pipelineId, table.deadlineAt, table.threshold),
+  unique("funding_deadline_pings_scope_uq").on(table.pipelineId, table.applicationId, table.deadlineAt, table.threshold),
 ]));
+
+/**
+ * A land project's funding profile, keyed by its applications.id
+ * (drizzle/0279; plan v1.3 section 11). Stewards fill it on the project page.
+ * The eligibility flags are opt-in, self-reported, used only for matching and
+ * never shown publicly.
+ */
+export const projectFundingProfiles = mysqlTable("project_funding_profiles", {
+  applicationId: int("applicationId").primaryKey(),
+  /** shared/grantMatcher.ts LEGAL_WRAPPERS. */
+  legalWrapper: varchar("legalWrapper", { length: 40 }).notNull(),
+  faithBased: boolean("faithBased").notNull().default(false),
+  isProducer: boolean("isProducer").notNull().default(false),
+  /** ISO 3166-1 alpha-2. */
+  country: varchar("country", { length: 2 }).notNull(),
+  /** US state or territory code when the country is US. */
+  region: varchar("region", { length: 10 }),
+  activities: json("activities").$type<string[]>(),
+  matchCapacity: varchar("matchCapacity", { length: 20 }).notNull().default("none"),
+  technicalAdvisor: varchar("technicalAdvisor", { length: 20 }).notNull().default("none"),
+  partnerCount: int("partnerCount").notNull().default(0),
+  eligibilityFlags: json("eligibilityFlags").$type<string[]>(),
+  /** When a steward agreed to use this profile for matching. */
+  consentAt: timestamp("consentAt").notNull(),
+  updatedBy: int("updatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ProjectFundingProfileRow = typeof projectFundingProfiles.$inferSelect;
+
+/**
+ * A grant program suggested to a land project, and where the project took it
+ * (drizzle/0279). The project owns its application. No fee column exists here
+ * on purpose: ReGen never takes a percentage of grants won (plan 11.4).
+ */
+export const networkGrantMatches = mysqlTable("network_grant_matches", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  pipelineId: int("pipelineId").notNull(),
+  /** match or near, as last computed. */
+  outcome: varchar("outcome", { length: 10 }).notNull(),
+  unmetCriterion: varchar("unmetCriterion", { length: 255 }),
+  /** Internal sort key only; never shown. */
+  fitScore: int("fitScore").notNull().default(0),
+  status: mysqlEnum("status", ["suggested", "pursuing", "drafting", "submitted", "awarded", "declined", "passed"]).notNull().default("suggested"),
+  amountAwarded: int("amountAwarded"),
+  awardedAt: timestamp("awardedAt"),
+  statusChangedBy: int("statusChangedBy"),
+  computedAt: timestamp("computedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  unique("network_grant_matches_pair_uq").on(table.applicationId, table.pipelineId),
+  index("network_grant_matches_pipeline_idx").on(table.pipelineId),
+]));
+export type NetworkGrantMatchRow = typeof networkGrantMatches.$inferSelect;
 
 /** Every stage move on a funder row, for the funnel (drizzle/0277). */
 export const fundingStageHistory = mysqlTable("funding_stage_history", {

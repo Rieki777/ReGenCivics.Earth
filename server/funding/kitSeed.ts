@@ -239,3 +239,102 @@ export function planBackfill(rows: BackfillRow[]) {
   }
   return { deadlines, tracks, unparsed, untracked };
 }
+
+// ── Grant programs for land projects (Phase 5) ──────────────────────────────
+
+/** One program as docs/private/research/grant-sources-seed.json records it. */
+export interface GrantProgramSeed {
+  key: string;
+  name: string;
+  funder?: string | null;
+  url?: string | null;
+  audience: string;
+  instrument?: string | null;
+  applicant_types?: string[] | null;
+  geo?: { countries?: string[]; states?: string[]; scope?: string; notes?: string } | null;
+  amount_min?: number | null;
+  amount_max?: number | null;
+  currency?: string | null;
+  match_required_pct?: number | null;
+  requires_technical_advisor?: boolean | null;
+  min_partners?: number | null;
+  cadence?: string | null;
+  next_deadline?: string | null;
+  call_open?: boolean | null;
+  program_status?: string | null;
+  status_verified_at?: string | null;
+  status_source_url?: string | null;
+  verification?: string | null;
+  notes?: string | null;
+  eligibility?: { excludes?: string[]; requires_flags?: string[] } | null;
+}
+
+const GRANT_LIKE = new Set(["grant", "cost_share", "in_kind", "payment_for_ecosystem_services"]);
+
+function amountText(p: GrantProgramSeed): string | null {
+  const cur = p.currency && p.currency !== "USD" ? `${p.currency} ` : "$";
+  const fmt = (n: number) => `${cur}${n.toLocaleString("en-US")}`;
+  if (p.amount_min && p.amount_max) return `${fmt(p.amount_min)} to ${fmt(p.amount_max)}`;
+  if (p.amount_max) return `up to ${fmt(p.amount_max)}`;
+  if (p.amount_min) return `from ${fmt(p.amount_min)}`;
+  return null;
+}
+
+function geoText(p: GrantProgramSeed): string | null {
+  const parts = [p.geo?.countries?.join(", "), p.geo?.states?.length ? `states: ${p.geo.states.join(", ")}` : null].filter(Boolean);
+  return parts.length ? parts.join("; ") : null;
+}
+
+/** Problems that stop a program seed before it touches the database. */
+export function validateProgramSeed(programs: GrantProgramSeed[]): string[] {
+  const problems: string[] = [];
+  const keys = new Set<string>();
+  for (const p of programs) {
+    if (!p.key || !/^[a-z0-9-]+$/.test(p.key)) problems.push(`bad key: ${JSON.stringify(p.key)}`);
+    if (keys.has(p.key)) problems.push(`duplicate key: ${p.key}`);
+    keys.add(p.key);
+    if (!p.name) problems.push(`${p.key}: no name`);
+    if (p.audience !== "project" && p.audience !== "both") problems.push(`${p.key}: audience must be project or both`);
+    if (p.next_deadline && !/^\d{4}-\d{2}-\d{2}$/.test(p.next_deadline)) problems.push(`${p.key}: next_deadline must be YYYY-MM-DD`);
+  }
+  return problems;
+}
+
+/**
+ * A program's row in funding_pipeline: research facts only. The seed never
+ * writes appStatus, stage, owner, next action or notes. A date-only deadline is
+ * the start of that day in Pacific time (shared/fundingDeadlines.ts).
+ */
+export function planProgramRow(p: GrantProgramSeed) {
+  const deadline = p.next_deadline ? parseDeadlineText(p.next_deadline) : null;
+  const instrument = p.instrument ?? null;
+  return {
+    programKey: p.key,
+    name: p.name.slice(0, 255),
+    category: `Land project program (${(instrument ?? "grant").replace(/_/g, " ")})`.slice(0, 120),
+    audience: (p.audience === "both" ? "both" : "project") as "both" | "project",
+    track: instrument && GRANT_LIKE.has(instrument) ? ("grant" as const) : null,
+    instrument,
+    capitalType: instrument ? instrument.replace(/_/g, " ") : null,
+    applicantTypes: p.applicant_types ?? null,
+    geo: p.geo ?? null,
+    eligibilityRules: p.eligibility ? { excludes: p.eligibility.excludes ?? [], requiresFlags: p.eligibility.requires_flags ?? [] } : null,
+    programStatus: p.program_status ?? null,
+    callOpen: p.call_open ?? null,
+    amountMin: p.amount_min ?? null,
+    amountMax: p.amount_max ?? null,
+    currency: p.currency ?? null,
+    matchRequiredPct: p.match_required_pct ?? null,
+    requiresTechnicalAdvisor: p.requires_technical_advisor ?? null,
+    minPartners: p.min_partners ?? null,
+    statusVerifiedAt: p.status_verified_at ?? null,
+    statusSourceUrl: p.status_source_url?.slice(0, 500) ?? null,
+    deadline: (p.next_deadline ?? p.cadence ?? null)?.slice(0, 160) ?? null,
+    deadlineAt: deadline?.at ?? null,
+    link: p.url?.slice(0, 500) ?? null,
+    whatItFunds: p.notes ?? null,
+    typicalSize: amountText(p)?.slice(0, 160) ?? null,
+    geography: geoText(p)?.slice(0, 160) ?? null,
+    accessStatus: p.verification ?? null,
+  };
+}

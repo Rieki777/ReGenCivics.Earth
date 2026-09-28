@@ -386,3 +386,9 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Answer bank**. The canonical answers every application draws from, each in up to four lengths (about 50, 150 and 500 characters, and long). Draft until Rye approves; approval is refused while an answer carries a G5 phrase, a dash or a placeholder, and editing an approved answer sends it back to draft. `projectId` 0 is ReGen Civics; a land project's own answers carry its application id.
 
 **Placeholder** (in a draft). A marker that a fact or choice is still open: `[VERIFY ...]`, `[DECIDE]`, `[TODO]`, `$X`, `[N]`. The draft linter fails an answer that still carries one, so it can never reach a portal.
+
+**Audience** (funding row). Whose money a `funding_pipeline` row is: `platform` for ReGen Civics' own funders, `project` for a grant program land projects apply to, `both` for either. The admin Pipeline shows ReGen's own; project programs appear under Project matches. Deadline pings follow the same line: ReGen's own rows ping, a `both` row pings as ReGen's only once Rye moves it past not started, and a program pings per project while that project is pursuing or drafting it.
+
+**Funding profile**. A land project's answers for grant matching, keyed by its application: who would apply (the legal wrapper), whether it sells farm products, where the land is, what it does, whether it can bring a match, whether it has an independent technical advisor, and its partner farms. Filled by the project's stewards on the project page. Optional identity flags are opt-in and private.
+
+**Near miss** (grant match). A program a project could apply to after changing exactly one thing it can change, such as adding an independent technical advisor or applying through a partner. Being in the wrong place, or excluded by a funder's rule, is never a near miss.
