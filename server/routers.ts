@@ -11,6 +11,7 @@ import { coopRouter } from "./routes/coop";
 import { metricsRouter } from "./routes/metrics";
 import { fundingKitRouter } from "./routes/fundingKit";
 import { projectFundingRouter } from "./routes/projectFunding";
+import { fundingContactsRouter } from "./routes/fundingContacts";
 import { newsletterRouter, videoSuggestionsRouter, emailRouter } from "./routes/newsletter";
 import { campaignsRouter, crowdPoolingProjectsRouter, crowdPoolingProposalsRouter, savedContributionsRouter } from "./routes/campaigns";
 import { forumRouter, moderationRouter, notificationsRouter, projectJoinRequestsRouter } from "./routes/forum";
@@ -156,6 +157,8 @@ export const appRouter = router({
   fundingKit: fundingKitRouter,
   // Land projects' funding profiles and matched grant programs (funding engine Phase 5)
   projectFunding: projectFundingRouter,
+  // People and conversations, logged on a phone at events (funding engine Phase 4)
+  fundingContacts: fundingContactsRouter,
 
   // Movement Coordination Engine + Bounty Engine
   roleHolders: roleHoldersRouter,
