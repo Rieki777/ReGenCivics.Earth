@@ -17,17 +17,16 @@
  * blocked.
  */
 import { COOP } from "../../shared/fund";
+import { CROWDPOOLING_WORDING } from "../../shared/crowdpoolCopy";
 
 /**
  * The crowdpool lane's binding wording (Phase 0 spec, 2026-09-27). Every
  * server surface that describes crowdpooling uses it verbatim: the crawler
- * prose, the public chat guide, the site guide. One copy, here, so they cannot
- * drift into calling crowdpooling an investment.
+ * prose, the public chat guide, the site guide. Its one copy lives in
+ * shared/crowdpoolCopy.ts so the client can use it too; it is re-exported
+ * here for the server readers.
  */
-export const CROWDPOOLING_WORDING =
-  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. " +
-  "Money goes through outside partners each project holds, never through ReGen Civics. " +
-  "The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
+export { CROWDPOOLING_WORDING };
 
 export const CANON_FACTS = `
 - The cooperative: ${COOP.statement} Never write about it in the present tense as formed, operating, holding land or taking members, never name a legal structure or securities exemption, and never state a return, a price, a fee, a minimum, a stake or a payout of any kind. ${COOP.notAnOffer}

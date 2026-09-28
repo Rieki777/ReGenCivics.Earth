@@ -16,15 +16,34 @@
  * checking its readers.
  */
 
+// ── What crowdpooling is, in one sentence ──────────────────────────────────
+
+/**
+ * The binding description of crowdpooling (agreed with the funding lane,
+ * 2026-09-27). Every surface that describes crowdpooling uses it verbatim:
+ * server/lib/content-canon.ts re-exports it for the crawler prose, the chat
+ * guides and the site guide, so it cannot drift into calling crowdpooling an
+ * investment.
+ */
+export const CROWDPOOLING_WORDING =
+  "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. " +
+  "Money goes through outside partners each project holds, never through ReGen Civics. " +
+  "The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
+
 // ── Tokens (R33). Copy only: this build issues no tokens. ────────────────────
 
-/** The project's own campaign token, earned as help is delivered. Never RGVoice or $ReGen. */
+/**
+ * The project's own campaign token, where delivered help is recorded. Never RGVoice or $ReGen.
+ * "Recorded", never "earns": ReGen Civics sets no hours-to-token rate, and each project's
+ * own entity decides how it credits labor (CROWDPOOL_PLAN.md 2a, v1.2 reconciliation).
+ */
 export const TOKEN_LINE = (project: string) =>
   // banned-terms-allow: "no claim about value" is the token disclaimer, not the claim verb
-  `Your help earns ${project}'s token as you deliver it. The token tracks what you pooled. It makes no claim about value.`;
+  `Your help is recorded in ${project}'s token as you deliver it. The token tracks what you pooled. It makes no claim about value.`;
 export const TOKEN_HELD_LINE = "We hold your tokens until you make an account.";
-export const TOKEN_PRACTICE_LINE = "Practice run. Real campaigns issue the project's token as you deliver.";
-export const LOAN_INTEREST_LINE = "Loans earn interest. They earn no tokens.";
+export const TOKEN_PRACTICE_LINE = "Practice run. Real campaigns record your help in the project's token as you deliver.";
+/** Loans follow the route's own terms; ReGen Civics promises no upside (CROWDPOOL_PLAN.md 2a). */
+export const LOAN_INTEREST_LINE = "Steward sets each loan's terms. Loans are not recorded in the project's token.";
 
 // ── Give or lend (section 6) ────────────────────────────────────────────────
 
@@ -134,7 +153,7 @@ export const MONEY_BLOCK = {
   },
   gosteward: {
     title: "Lend through Steward",
-    body: "Steward arranges loans that the project pays back with interest.",
+    body: "Steward arranges loans to the project on Steward's own terms.",
     button: "Lend through Steward",
     raised: (amount: string) => `${amount} lent so far`,
   },
@@ -192,7 +211,7 @@ export const HOW_IT_WORKS = [
   {
     title: "It counts once accepted",
     // banned-terms-allow: "no claim about value" is the token disclaimer, not the claim verb
-    body: "An offer counts toward the campaign once the stewards accept it. It earns the project's token as you deliver it. The token tracks what you pooled and makes no claim about value.",
+    body: "An offer counts toward the campaign once the stewards accept it. It is recorded in the project's token as you deliver it. The token tracks what you pooled and makes no claim about value.",
   },
   { title: "Both halves, by the close date", body: "A campaign is complete when both halves are confirmed by the close date." },
 ];

@@ -75,9 +75,14 @@ describe("shared/crowdpoolCopy", () => {
     expect(breaks).toEqual([]);
   });
 
+  it("never says help or loans earn tokens or interest (v1.2: recorded, never earned; no promised upside)", () => {
+    const earned = strings.filter(([, text]) => /\bearn(s|ed|ing)?\b[^.]*\b(token|interest|return)/i.test(text));
+    expect(earned).toEqual([]);
+  });
+
   it("carries the token line exactly", () => {
     expect(TOKEN_LINE("Harmony Valley")).toBe(
-      "Your help earns Harmony Valley's token as you deliver it. The token tracks what you pooled. It makes no claim about value.",
+      "Your help is recorded in Harmony Valley's token as you deliver it. The token tracks what you pooled. It makes no claim about value.",
     );
   });
 
@@ -88,7 +93,7 @@ describe("shared/crowdpoolCopy", () => {
     expect(HOLDER_LINE.gosteward).toBe(
       "Steward holds this money and pays the project. It never passes through ReGen Civics. You finish on their site.",
     );
-    expect(LOAN_INTEREST_LINE).toBe("Loans earn interest. They earn no tokens.");
+    expect(LOAN_INTEREST_LINE).toBe("Steward sets each loan's terms. Loans are not recorded in the project's token.");
   });
 
   it("keeps the page strip and example banner as ruled", () => {
