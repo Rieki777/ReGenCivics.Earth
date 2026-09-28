@@ -8,8 +8,10 @@
  *    check apply, and nothing here is reachable by a normal user.
  *  - Every input is zod-bounded. Bodies stop at 15,000 characters so the
  *    worst case (four bytes a character) still fits a TEXT column.
- *  - No LLM runs here, and nothing is sent or submitted anywhere. The kit
- *    stores what Rye and Cowork wrote and shows what is wrong with it.
+ *  - Nothing is sent or submitted anywhere. The kit stores what Rye and
+ *    Cowork wrote and shows what is wrong with it. The one LLM call is
+ *    "Shorten to fit" (Phase 3): light tier, rate-limited, on Rye's own draft,
+ *    and its proposal is returned for Rye to accept, never stored by itself.
  */
 import { z } from "zod";
 import { adminProcedure, router } from "../_core/trpc";
@@ -27,6 +29,8 @@ import {
   saveQuestionDraft,
   useAnswerInQuestion,
 } from "../funding/kit";
+import { shortenToFit } from "../funding/shorten";
+import { checkRateLimit } from "../rate-limit";
 
 const BODY_MAX = 15_000;
 
@@ -48,13 +52,18 @@ export const fundingKitRouter = router({
     .input(z.object({ programKey: programKeySchema }))
     .query(async ({ input }) => getPacket(await requireDb(), input.programKey)),
 
-  /** Save a draft. Unchanged text writes nothing; changed text appends a version. */
+  /**
+   * Save a draft. Unchanged text writes nothing; changed text appends a version.
+   * source "llm" marks text Rye accepted from "Shorten to fit", so the history
+   * says honestly which words a model wrote.
+   */
   saveDraft: adminProcedure
     .input(
       z.object({
         questionId: z.number().int().positive(),
         answerDraft: z.string().max(BODY_MAX),
         note: z.string().max(500).optional(),
+        source: z.enum(["rye", "llm"]).default("rye"),
       }),
     )
     .mutation(async ({ input, ctx }) =>
@@ -62,9 +71,22 @@ export const fundingKitRouter = router({
         questionId: input.questionId,
         body: input.answerDraft,
         note: input.note ?? null,
+        source: input.source,
         userId: ctx.user.id,
       }),
     ),
+
+  /**
+   * Propose a version of an over-limit draft that fits (funding engine Phase 3).
+   * Stores nothing: the packet shows the proposal and Rye decides. One
+   * light-tier call with up to three tries, rate-limited per IP.
+   */
+  shorten: adminProcedure
+    .input(z.object({ questionId: z.number().int().positive() }))
+    .mutation(async ({ input, ctx }) => {
+      await checkRateLimit(ctx, "funding_shorten");
+      return shortenToFit(await requireDb(), input.questionId);
+    }),
 
   /** A question's saved drafts, newest first. */
   draftHistory: adminProcedure

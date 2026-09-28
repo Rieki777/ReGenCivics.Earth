@@ -276,6 +276,34 @@ function QuestionCard({
   });
   const history = trpc.fundingKit.draftHistory.useQuery({ questionId: q.id }, { enabled: historyOpen });
 
+  // "Shorten to fit" (Phase 3): a proposal Rye accepts or discards; nothing saves by itself.
+  const [proposal, setProposal] = useState<{ text: string; used: number; max: number; unit: string; fits: boolean; errors: string[]; warnings: string[] } | null>(null);
+  const shorten = trpc.fundingKit.shorten.useMutation({
+    onSuccess: (res) => {
+      if (res.alreadyFits || !res.proposal) {
+        toast({ title: "It already fits" });
+        return;
+      }
+      setProposal({
+        text: res.proposal,
+        used: res.used,
+        max: res.max,
+        unit: res.unit,
+        fits: res.fits,
+        errors: res.lint?.errors ?? [],
+        warnings: res.lint?.warnings ?? [],
+      });
+    },
+    onError: (err) => toast({ title: "Could not shorten it", description: err.message, variant: "destructive" }),
+  });
+  const overLimit = Boolean(lint?.errors.some((e) => /\blimit \d+ \(cut \d+\)/.test(e)));
+  const acceptProposal = () => {
+    if (!proposal) return;
+    setText(proposal.text);
+    save.mutate({ questionId: q.id, answerDraft: proposal.text, source: "llm", note: "shortened to fit by the light model, accepted by Rye" });
+    setProposal(null);
+  };
+
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(normalized);
@@ -349,6 +377,53 @@ function QuestionCard({
             </li>
           ))}
         </ul>
+      )}
+
+      {overLimit && !proposal && (
+        <Button
+          variant="outline"
+          onClick={() => shorten.mutate({ questionId: q.id })}
+          disabled={dirty || shorten.isPending}
+          title={dirty ? "Save the draft first: the shortener works from the saved text" : undefined}
+          className="border-[#1a472a]/40 text-[#1a472a] pointer-coarse:min-h-11"
+        >
+          {shorten.isPending ? "Shortening" : dirty ? "Save first, then shorten to fit" : "Shorten to fit"}
+        </Button>
+      )}
+
+      {proposal && (
+        <div className="rounded-lg border border-sky-400 bg-sky-50 p-3 space-y-2" aria-live="polite">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-sky-950">A shorter version from the light model. Nothing is saved until you use it.</p>
+            <Chip className={countTone(proposal.used, proposal.max)}>
+              {proposal.used} / {proposal.max} {proposal.unit}
+            </Chip>
+          </div>
+          <p className="whitespace-pre-wrap text-sm text-[#1a472a]">{proposal.text}</p>
+          {(proposal.errors.length > 0 || proposal.warnings.length > 0 || !proposal.fits) && (
+            <ul className="text-sm space-y-0.5">
+              {!proposal.fits && <li className="text-rose-800">Fix: still over the limit after three tries; trim it by hand</li>}
+              {proposal.errors.map((e) => (
+                <li key={`pe-${e}`} className="text-rose-800">
+                  Fix: {e}
+                </li>
+              ))}
+              {proposal.warnings.map((w) => (
+                <li key={`pw-${w}`} className="text-amber-900">
+                  Check: {w}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={acceptProposal} className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white pointer-coarse:min-h-11">
+              Use this
+            </Button>
+            <Button variant="outline" onClick={() => setProposal(null)} className="border-[#1a472a]/40 text-[#1a472a] pointer-coarse:min-h-11">
+              Discard
+            </Button>
+          </div>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-2">

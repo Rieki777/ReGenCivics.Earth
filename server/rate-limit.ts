@@ -52,6 +52,11 @@ const ACTION_LIMITS: Record<string, number> = {
   // deliberate work, so 10 per 15 minutes is well above a real working session.
   funding_generate: 10,
 
+  // "Shorten to fit" in the application packet (funding engine Phase 3): one
+  // light-tier call with up to three tries per click. Admin-only; 30 per 15
+  // minutes covers a long packet without letting a loop run up spend.
+  funding_shorten: 30,
+
   // Cooperative interest form (public, no account). One submission per
   // person is the norm; a few retries cover typos without letting a script
   // fill the table.

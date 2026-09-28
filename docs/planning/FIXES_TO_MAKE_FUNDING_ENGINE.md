@@ -70,6 +70,14 @@ Plan v1.3 section 9: "Rye logs a conversation on his phone in under a minute at 
 | E-2 | Due follow-ups as Open in Gmail links with the address, a subject and a starting note Rye edits; do-not-contact contacts never appear; Done clears one. The app never sends, and nothing touches LinkedIn beyond a stored link | CODED | same tests: the link carries only what Rye would type, and a do-not-contact contact drops out of the list |
 | E-3 | After the Phase 4 deploy: apply 0280 | SCRIPTS READY | `npx tsx scripts/run-migration.ts drizzle/0280_funding_contacts.sql` |
 
+## Phase 3: shorten to fit
+
+Plan v1.3 section 9: "an over-limit answer comes back within its limit with G4 and G5 re-run, and nothing saves until Rye approves it", by Oct 26. Stacked on Phase 4.
+
+| # | Fix | Status | Evidence |
+|---|---|---|---|
+| S-1 | "Shorten to fit" on an over-limit answer in the packet: one light-tier call, up to three tries, each told how far over the last landed; the proposal shows with its count and lint, and flags any number it added. Use this saves it as a version marked `llm`; Discard leaves the draft alone | CODED | `server/funding-shorten.test.ts` 6; two integration cases in `server/funding-kit.integration.test.ts` (fits on the second try with quotes and the em-dash cleaned and nothing stored; an added number is flagged); rate limit `funding_shorten` 30 per 15 minutes; OWASP-TOP10 A04 updated |
+
 ---
 
 ## Handoff Breakdown: Who Does What
