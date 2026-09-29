@@ -82,3 +82,82 @@ describe("EmailDraftAgent dictation", () => {
                  expect(screen.getByLabelText("Dictate message")).toBeTruthy();
            });
 });
+
+describe("EmailDraftAgent apply gating", () => {
+    it("hides Apply when the proposal matches the current draft", async () => {
+          applicationMutate.mockResolvedValue({
+                  reply: "Tweaked the tone.",
+                  subject: "Same subject",
+                  body: "Same body",
+                  layout: "plain",
+          });
+          render(
+                  <EmailDraftAgent
+                            currentSubject="Same subject"
+                            currentBody="Same body"
+                            currentLayout="plain"
+                            statusLabel="approved"
+                            recipientCount={3}
+                            onApply={vi.fn()}
+                          />,
+                );
+          await userEvent.click(screen.getByRole("button", { name: "Write a warmer version of this draft." }));
+          expect(await screen.findByText("Tweaked the tone.")).toBeTruthy();
+          expect(screen.queryByTestId("apply-to-draft")).toBeNull();
+    });
+
+    it("toasts an error when Apply would not change the draft", async () => {
+          const { toast } = await import("sonner");
+          applicationMutate.mockResolvedValue({
+                  reply: "Updated the subject.",
+                  subject: "",
+                  body: "",
+                  layout: "announcement",
+          });
+          const onApply = vi.fn();
+          render(
+                  <EmailDraftAgent
+                            currentSubject="Hello"
+                            currentBody="Body"
+                            currentLayout="announcement"
+                            statusLabel="approved"
+                            recipientCount={3}
+                            onApply={onApply}
+                          />,
+                );
+          await userEvent.click(screen.getByRole("button", { name: "Write a warmer version of this draft." }));
+          // layout matches current → no meaningful proposal → no button
+          expect(await screen.findByText("Updated the subject.")).toBeTruthy();
+          expect(screen.queryByTestId("apply-to-draft")).toBeNull();
+          expect(onApply).not.toHaveBeenCalled();
+          expect(toast.error).not.toHaveBeenCalled();
+    });
+
+    it("applies a subject-only proposal without requiring a new body", async () => {
+          applicationMutate.mockResolvedValue({
+                  reply: "Updated the subject line.",
+                  subject: "New subject line",
+                  body: "Kept body",
+                  layout: "",
+          });
+          const onApply = vi.fn();
+          render(
+                  <EmailDraftAgent
+                            currentSubject="Old subject"
+                            currentBody="Kept body"
+                            currentLayout="announcement"
+                            statusLabel="approved"
+                            recipientCount={3}
+                            onApply={onApply}
+                          />,
+                );
+          await userEvent.click(screen.getByRole("button", { name: "Write a warmer version of this draft." }));
+          const apply = await screen.findByTestId("apply-to-draft");
+          await userEvent.click(apply);
+          expect(onApply).toHaveBeenCalledWith({
+                  subject: "New subject line",
+                  body: "Kept body",
+                  layout: undefined,
+          });
+    });
+});
