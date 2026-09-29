@@ -18,6 +18,8 @@ const APPLICATION_STARTERS = [
   "Shorten this. Keep the next steps.",
   "Turn the next steps into a numbered list.",
   "Use announcement layout. Put each link on its own line so they become buttons.",
+  "Add an Important callout about the deadline, then a Schedule CTA on its own line.",
+  "Keep {{name}} and {{projectName}} tokens. Soften the tone.",
 ];
 
 const NEWSLETTER_STARTERS = [
@@ -25,6 +27,7 @@ const NEWSLETTER_STARTERS = [
   "Add a CTA button to the live stream.",
   "Insert a hero image after the opening paragraph.",
   "Shorten this for the exit-intent segment. Keep the button.",
+  "Add an Important callout near the top, then a Register CTA button.",
 ];
 
 interface ChatTurn {
