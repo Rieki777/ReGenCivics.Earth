@@ -114,7 +114,7 @@ Return JSON with:
 - body: the full markdown body, or an empty string to leave it unchanged
 - layout: plain, announcement, or one_pager, or an empty string to leave it unchanged
 
-When the admin asks you to write or rewrite, return the full body, not a fragment.`;
+When the admin asks you to write, rewrite, or change the draft (including subject-only edits), always return both the full subject and the full body after your edits. Never describe a change only in reply while leaving subject and body empty. Empty subject or body means "leave unchanged" and is only for clarification questions with no draft edit.`;
   return appendContextBlocks(base, opts);
 }
 
@@ -164,7 +164,7 @@ Return JSON with:
 - body: the full markdown body, or an empty string to leave it unchanged
 - layout: plain, announcement, or one_pager, or an empty string to leave it unchanged
 
-When the admin asks you to write or rewrite, return the full body, not a fragment.`;
+When the admin asks you to write, rewrite, or change the draft (including subject-only edits), always return both the full subject and the full body after your edits. Never describe a change only in reply while leaving subject and body empty. Empty subject or body means "leave unchanged" and is only for clarification questions with no draft edit.`;
   return appendContextBlocks(base, opts);
 }
 
