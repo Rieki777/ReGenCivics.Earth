@@ -324,7 +324,7 @@ export default function Seasons() {
   const { sessions, scheduled, data: schedule } = useSeasonSchedule();
   const weeks = useMemo(() => weeksFrom(sessions), [sessions]);
   const status = useMemo(() => season2Status(now, weeks), [now, weeks]);
-  const voting = schedule ? !schedule.following : false;
+  const voting = schedule ? !schedule.decided : false;
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
 

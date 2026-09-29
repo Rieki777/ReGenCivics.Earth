@@ -100,10 +100,6 @@ function pacificDay(d: Date): string {
   });
 }
 
-function hands(n: number): string {
-  return n === 1 ? "1 hand" : `${n} hands`;
-}
-
 export default function SeasonSchedule() {
   const { config, data, sessions, scheduled, query, loaded } = useSeasonSchedule(ACTIVE_SEASON, { poll: true });
   const season = config.season;
@@ -128,7 +124,7 @@ export default function SeasonSchedule() {
     setLink(readStored(LINK_STORAGE));
   }, [season]);
 
-  // The page turns from "pick" to "following" at followsFrom without a reload.
+  // Keeps the clock-driven copy current without a reload.
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
     return () => window.clearInterval(timer);
@@ -153,22 +149,27 @@ export default function SeasonSchedule() {
     [data, config],
   );
   const followsFrom = useMemo(() => (data ? new Date(data.followsFrom) : config.followsFrom), [data, config]);
-  // The server decides; the browser clock only decides what to show.
-  const following = data?.following || now.getTime() >= followsFrom.getTime();
   const seasonOver = data ? !data.running : false;
   const tally = useMemo(() => new Map((data?.tally ?? []).map((t) => [t.key, t])), [data]);
-  const voters = data?.voters ?? 0;
-  const leader = data?.leader ? offered.find((o) => o.key === data.leader) ?? null : null;
-  const leaderTally = leader ? tally.get(leader.key) : undefined;
+  const anyVotes = data?.anyVotes ?? false;
+  const revealed = data?.revealed ?? false;
+  const revealAt = data?.revealNamesAt ?? config.revealNamesAt;
+  const decided = data?.decided ?? false;
+  const leader = anyVotes && data?.leader ? offered.find((o) => o.key === data.leader) ?? null : null;
+  const leaderShare = leader ? tally.get(leader.key)?.share ?? 0 : 0;
   // A different time leads and is waiting out its day before the Season moves.
-  const movingSoon = following && !data?.pinned && leader != null && leader.key !== scheduled.key;
+  const movingSoon = decided && !data?.pinned && leader != null && leader.key !== scheduled.key;
+  const hasProject = project.trim().length > 0;
 
   /**
-   * The first session each time would hold if it took over as things stand:
-   * the first week whose session on that time starts after the vote starts
-   * steering (or now) plus the freeze window. Earlier weeks keep their time.
+   * The first session each time would hold if it won as things stand. Before
+   * the first decision, any session that has not started can take the new
+   * time (the next one is decided by the vote); after it, only sessions past
+   * the freeze window can.
    */
-  const cutoff = Math.max(now.getTime(), followsFrom.getTime()) + SEASON_FREEZE_HOURS * 3_600_000;
+  const cutoff = decided
+    ? now.getTime() + SEASON_FREEZE_HOURS * 3_600_000
+    : Math.max(now.getTime(), followsFrom.getTime());
   const firstOn = (slot: SeasonSlot): { week: number; start: Date } | null => {
     for (let week = 1; week <= config.weeks.length; week++) {
       const start = seasonSessionStart(config, week, slot);
@@ -256,7 +257,7 @@ export default function SeasonSchedule() {
     <PageWrapper>
       <SEO
         title="Season Schedule | ReGen Civics"
-        description={`The land projects pick when ${config.name} meets each week. Tap every time that works for your project; the time with the most hands becomes the Season's time, and it keeps following the vote.`}
+        description={`The land projects pick when ${config.name} meets each week. Tap every time that works for your project; the time most projects can make becomes the Season's time, and it keeps following the vote.`}
         url="https://regencivics.earth/season-schedule"
       />
 
@@ -270,24 +271,26 @@ export default function SeasonSchedule() {
                 Season Schedule · {config.name}
               </p>
               <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-4">
-                {following ? `${config.name} meets ${scheduled.label}` : `Pick the time ${config.name} meets`}
+                {decided ? `${config.name} meets ${scheduled.label}` : `Pick the time ${config.name} meets`}
               </h1>
               <p className="text-white/75 text-lg max-w-2xl">
-                {following
-                  ? "The land projects pick this time, and it keeps following their vote. Change your picks whenever your week changes, and the Season moves with the group."
-                  : "The land projects choose the weekly time. Tap every time your project can make, as many as work. The time with the most hands becomes the Season's time, and it keeps following the vote as weeks change."}
+                {decided
+                  ? "The land projects picked this time, and it keeps following their vote. Change your picks whenever your week changes, and the Season moves with the group."
+                  : "The land projects choose the next session and the weekly time. Tap every time your project can make, as many as work. The time most projects can make wins, and the Season keeps following the vote as weeks change."}
               </p>
 
               {nextUp && (
                 <div className="mt-8 bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-xl p-5 max-w-2xl">
                   <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase mb-1">Next session</p>
                   <p className="text-white font-bold text-lg">{nextUp.title ?? `Week ${nextUp.week}`}</p>
-                  <p className="text-white/80">
-                    {formatLocalDate(nextUp.start)}, {formatStartWithReference(nextUp.start)}
-                  </p>
-                  {!following && firstWeek != null && nextUp.week < firstWeek && (
-                    <p className="text-white/65 text-sm mt-2">
-                      This one keeps its current time. The time the projects pick starts with Week {firstWeek}.
+                  {decided ? (
+                    <p className="text-white/80">
+                      {formatLocalDate(nextUp.start)}, {formatStartWithReference(nextUp.start)}
+                    </p>
+                  ) : (
+                    <p className="text-white/80">
+                      The vote picks when it happens, {pacificWhen(followsFrom)}. Each time below shows the date it
+                      would be, and everyone gets an email with the result.
                     </p>
                   )}
                 </div>
@@ -303,15 +306,19 @@ export default function SeasonSchedule() {
                 <p className="text-[#e3ac4f] text-xs font-semibold tracking-[0.2em] uppercase">Live vote</p>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Tap every time your project can make</h2>
-              <p className="text-white/75 mb-6">
-                {following
+              <p className="text-white/75 mb-3">
+                {decided
                   ? "The Season follows this vote. When a different time takes the lead and holds it for a day, every session more than three days out moves there, and everyone gets an email with the new time."
-                  : `The vote starts steering the schedule ${pacificWhen(followsFrom)}. Until then every session stays where it is${firstWeek ? `, and the leading time starts with Week ${firstWeek}` : ""}. After that the Season keeps following the vote, so change your picks whenever your week changes.`}
+                  : `The vote decides ${pacificWhen(followsFrom)}: the time most projects can make becomes the next session and the weekly time. After that the Season keeps following the vote, so change your picks whenever your week changes.`}
+              </p>
+              <p className="text-white/55 text-sm mb-6">
+                Votes stay anonymous until {revealAt} projects have voted. Until then the page shows only each time's
+                share of projects. After that, it shows which projects picked each time.
               </p>
 
                 <div className="grid sm:grid-cols-2 gap-3 mb-6">
                   <label className="block">
-                    <span className="block text-white/60 text-sm mb-2">Your land project (optional)</span>
+                    <span className="block text-white/60 text-sm mb-2">Your land project (needed to vote)</span>
                     <input
                       type="text"
                       value={project}
@@ -348,8 +355,8 @@ export default function SeasonSchedule() {
                     />
                   </label>
                   <p className="text-white/45 text-xs sm:self-end">
-                    Your project and link go on the public list below, so the cohort can find each other.
-                    {seasonOver ? "" : " Your hands save as you tap."}
+                    Add a link and your project joins the public list below, so the cohort can find each other.
+                    {seasonOver ? "" : " Your picks save as you tap."}
                   </p>
                   {saveProject.isError && <p className="text-red-300 text-sm sm:col-span-2">{saveProject.error.message}</p>}
                 </div>
@@ -357,13 +364,11 @@ export default function SeasonSchedule() {
               <div className="space-y-4">
                 {offered.map((slot) => {
                   const t = tally.get(slot.key);
-                  const count = t?.hands ?? 0;
-                  const projects = t?.projects ?? 0;
-                  const pct = voters > 0 ? Math.round((count / voters) * 100) : 0;
+                  const share = t?.share ?? 0;
                   const first = firstOn(slot);
                   const isMine = mySlots.includes(slot.key);
-                  const isLeader = leader?.key === slot.key && count > 0;
-                  const isCurrent = following && scheduled.key === slot.key;
+                  const isLeader = leader?.key === slot.key && share > 0;
+                  const isCurrent = decided && scheduled.key === slot.key;
                   return (
                     <div
                       key={slot.key}
@@ -382,7 +387,7 @@ export default function SeasonSchedule() {
                             )}
                             {isLeader && (
                               <span className="text-[#1a472a] bg-[#7dd87d] text-xs font-bold px-2 py-0.5 rounded-full">
-                                Leading
+                                Winning
                               </span>
                             )}
                             {isCurrent && (
@@ -401,7 +406,8 @@ export default function SeasonSchedule() {
                           <button
                             type="button"
                             onClick={() => toggleSlot(slot.key)}
-                            disabled={!voterKey || setSlots.isPending}
+                            disabled={!voterKey || setSlots.isPending || (!hasProject && !isMine)}
+                            title={!hasProject && !isMine ? "Add your land project first" : undefined}
                             aria-pressed={isMine}
                             className={`inline-flex items-center gap-2 min-h-11 px-4 py-2 rounded-xl font-semibold text-sm transition-colors disabled:opacity-60 ${
                               isMine
@@ -431,14 +437,13 @@ export default function SeasonSchedule() {
 
                       <div className="flex items-center gap-3">
                         <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                          <div className="h-full bg-[#e3ac4f] transition-all" style={{ width: `${pct}%` }} />
+                          <div className="h-full bg-[#e3ac4f] transition-all" style={{ width: `${share}%` }} />
                         </div>
                         <span className="text-white/60 text-sm tabular-nums whitespace-nowrap">
-                          {hands(count)}
-                          {projects > 0 ? ` · ${projects === 1 ? "1 project" : `${projects} projects`}` : ""}
+                          {anyVotes ? `${share}% of projects` : "No votes yet"}
                         </span>
                       </div>
-                      {t && t.names.length > 0 && (
+                      {revealed && t && t.names.length > 0 && (
                         <p className="text-white/50 text-xs mt-2">{t.names.join(", ")}</p>
                       )}
                     </div>
@@ -467,16 +472,19 @@ export default function SeasonSchedule() {
                 {query.isError && !loaded && (
                   <p className="text-red-300 text-sm">The vote did not load. Try again in a minute.</p>
                 )}
-                {following && (
+                {decided && (
                   <p className="text-white/75">
                     {config.name} meets <span className="text-white font-semibold">{scheduled.label}</span>.
                   </p>
                 )}
                 <p className="text-white/75">
-                  {leader && leaderTally
-                    ? <>Leading right now: <span className="text-white font-semibold">{leader.label}</span>, with {hands(leaderTally.hands)}{leaderTally.projects > 0 ? ` from ${leaderTally.projects === 1 ? "1 project" : `${leaderTally.projects} projects`}` : ""}.</>
-                    : <>No hands up yet. The first ones set the lead.</>}
+                  {leader
+                    ? <>Winning right now: <span className="text-white font-semibold">{leader.label}</span>, which {leaderShare}% of the projects that voted can make.</>
+                    : <>No votes yet. The first projects set the lead.</>}
                 </p>
+                {!hasProject && !seasonOver && (
+                  <p className="text-white/55 text-sm">Add your land project above to vote. Each project counts once, however many of you vote.</p>
+                )}
                 {movingSoon && leader && (
                   <p className="text-[#e3ac4f] text-sm">
                     If {leader.label} holds the lead for a day, sessions more than three days out move there, and
@@ -507,7 +515,7 @@ export default function SeasonSchedule() {
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">The projects in {config.name}</h2>
                 <p className="text-white/75 mb-5">
-                  Every project that has shared its name or a link. Open each other's work before the next session.
+                  Every project that has shared a link. Open each other's work before the next session.
                   Add yours in the fields above.
                 </p>
                 <ul className="divide-y divide-white/10">
@@ -542,7 +550,9 @@ export default function SeasonSchedule() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Every session still to come</h2>
               <p className="text-white/75 mb-5">
-                In your own time zone. When the vote moves the Season, this list and the calendar feed move with it.
+                {decided
+                  ? "In your own time zone. When the vote moves the Season, this list and the calendar feed move with it."
+                  : `In your own time zone. These are the times the Season opened with; when the vote decides ${pacificWhen(followsFrom)}, this list and the calendar feed move to the winning time.`}
               </p>
               {upcoming.length === 0 ? (
                 <p className="text-white/60">{config.name} has finished. Thank you for building it with us.</p>

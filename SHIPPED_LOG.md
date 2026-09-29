@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-09-28, night (seasons): The vote picks the next session; each project counts once, shown as a share
+
+- **The next session is up to the vote** (ADR-66): no session this Saturday. On Thursday, October 1 at 5pm Pacific the time most projects picked wins at once and moves every session that has not started, the next one included. Everyone on the sessions' reminder list gets the result by email, also when Saturday wins and nothing moves. After that the Season follows the vote as ADR-65 set out.
+- **On or after the week's Saturday**: each session meets on the chosen day on or after its week's original Saturday, so Week 2 is Saturday, October 3, or Tuesday 6 to Friday 9 October. Christmas Eve and Christmas Day move to Monday, December 21; Thanksgiving still moves to Monday, November 23.
+- **One project, one vote, shown as a share**: a project counts once per time however many of its people vote, and voting needs a project name. The page shows each time's share of projects and which time is winning, with no counts, and names the projects behind each time once seven have voted. The link register lists only projects that shared a link.
+- Admin, Events, Season Schedule panel: share, projects and people per time, "Decide now", and the decision time.
+- Tests: 44 pure, 7 against a real database (the wait before the decision, the decision moving the next session, Saturday winning with an email and no move, a later move, notes, the pin, drift).
+
 ## 2026-09-28, evening (seasons): The Season Schedule follows its vote live; Friday for Europe; shared notes; Thanksgiving moves
 
 - **Live, like the Circle** (ADR-65, revising ADR-64): voting never closes. From Thursday, October 1 at 5pm Pacific the Season follows the vote: a time that leads for a day moves every session more than 72 hours out, and each move emails the sessions' reminder audience once (same `season2` mute; the always-include list gets its own footer). Before then nothing moves, so the first round can gather.

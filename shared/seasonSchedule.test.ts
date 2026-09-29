@@ -18,6 +18,7 @@ import {
   parseSlotTime,
   parseToggle,
   planSeasonMoves,
+  publicSeasonTally,
   resolveSeasonSlot,
   seasonConfig,
   seasonLeader,
@@ -32,6 +33,7 @@ import {
   zoneTimes,
   type SeasonRowLike,
   type SeasonSlotTime,
+  type SeasonVoteRow,
 } from "./seasonSchedule";
 import { SEASON2_EPISODE_DATES, catalogOpenAccessRows, sessionStartUtc } from "./sessionClock";
 import { DEFAULT_SLOT_HOURS, INTEROP_CIRCLE_MINUTES, buildSlot, circleWeekKey, pacificYmd, slotStartInWeek } from "./interopCircle";
@@ -130,33 +132,46 @@ describe("Season 2's offer meets Rye's brief (2026-09-28)", () => {
     }
   });
 
-  it("starts following the vote on Thursday, October 1 at 5pm Pacific", () => {
+  it("decides the next session and the weekly time on Thursday, October 1 at 5pm Pacific", () => {
     expect(S2.followsFrom.toISOString()).toBe("2026-10-02T00:00:00.000Z");
   });
 
-  it("keeps Week 10 off Thanksgiving and the day after, at the same time", () => {
+  it("stays anonymous until seven projects have voted", () => {
+    expect(S2.revealNamesAt).toBe(7);
+  });
+
+  it("keeps sessions off Thanksgiving and Christmas, at the same time that week", () => {
+    // Week 9's window is Saturday, November 21 to Friday, November 27.
     // Thursday wins: Thanksgiving becomes Monday, November 23 at 12pm PST.
-    expect(seasonSessionStart(S2, 10, { key: "thu", hourPT: 12 })!.toISOString()).toBe("2026-11-23T20:00:00.000Z");
+    expect(seasonSessionStart(S2, 9, { key: "thu", hourPT: 12 })!.toISOString()).toBe("2026-11-23T20:00:00.000Z");
     // Friday wins: the day after becomes Monday too, at 10am PST.
-    expect(seasonSessionStart(S2, 10, { key: "fri", hourPT: 10 })!.toISOString()).toBe("2026-11-23T18:00:00.000Z");
-    // Every other week, and every other day that week, stays where it was.
-    expect(seasonSessionStart(S2, 10, SAT_11AM)!.toISOString()).toBe("2026-11-28T19:00:00.000Z");
-    expect(seasonSessionStart(S2, 9, { key: "thu", hourPT: 12 })!.toISOString()).toBe("2026-11-19T20:00:00.000Z");
+    expect(seasonSessionStart(S2, 9, { key: "fri", hourPT: 10 })!.toISOString()).toBe("2026-11-23T18:00:00.000Z");
+    // Week 13's window runs to Friday, December 25: Christmas Eve and Day become Monday, December 21.
+    expect(seasonSessionStart(S2, 13, { key: "thu", hourPT: 12 })!.toISOString()).toBe("2026-12-21T20:00:00.000Z");
+    expect(seasonSessionStart(S2, 13, { key: "fri", hourPT: 10 })!.toISOString()).toBe("2026-12-21T18:00:00.000Z");
+    // Every other day stays where it was.
+    expect(seasonSessionStart(S2, 9, SAT_11AM)!.toISOString()).toBe("2026-11-21T19:00:00.000Z");
+    expect(seasonSessionStart(S2, 10, { key: "thu", hourPT: 12 })!.toISOString()).toBe("2026-12-03T20:00:00.000Z");
+    expect(seasonSessionStart(S2, 13, { key: "wed", hourPT: 10 })!.toISOString()).toBe("2026-12-23T18:00:00.000Z");
     expect(S2.rescheduleNote).toMatch(/Thanksgiving/);
+    expect(S2.rescheduleNote).toMatch(/Christmas/);
   });
 });
 
 describe("weeks and sessions", () => {
-  it("keeps a moved session inside its own Monday-to-Sunday week", () => {
-    // Week 3 was published for Saturday, October 10. Tuesday of that week is October 6.
-    expect(seasonSessionStart(S2, 3, TUE_2PM)!.toISOString()).toBe("2026-10-06T21:00:00.000Z");
-    // Week 13's last day stays inside December 14 to 20, before the solstice.
-    expect(seasonSessionStart(S2, 13, { key: "wed", hourPT: 10 })!.toISOString()).toBe("2026-12-16T18:00:00.000Z");
+  it("meets on the chosen day on or after each week's Saturday: this Saturday, or beyond", () => {
+    // Week 2 was published for Saturday, October 3. If Saturday wins, it stays there.
+    expect(seasonSessionStart(S2, 2, SAT_11AM)!.toISOString()).toBe("2026-10-03T18:00:00.000Z");
+    // Any other day starts the week after: Tuesday, October 6 at 2pm PDT.
+    expect(seasonSessionStart(S2, 2, TUE_2PM)!.toISOString()).toBe("2026-10-06T21:00:00.000Z");
+    expect(seasonSessionStart(S2, 2, { key: "fri", hourPT: 10 })!.toISOString()).toBe("2026-10-09T17:00:00.000Z");
+    // And every week after keeps the rhythm.
+    expect(seasonSessionStart(S2, 3, TUE_2PM)!.toISOString()).toBe("2026-10-13T21:00:00.000Z");
   });
 
   it("follows Pacific wall time across the November clock change", () => {
-    // Week 7: Tuesday, November 3, 2pm PST is 22:00 UTC, an hour later in UTC than in October.
-    expect(seasonSessionStart(S2, 7, TUE_2PM)!.toISOString()).toBe("2026-11-03T22:00:00.000Z");
+    // Week 7 (Saturday, November 7): Tuesday, November 10, 2pm PST is 22:00 UTC.
+    expect(seasonSessionStart(S2, 7, TUE_2PM)!.toISOString()).toBe("2026-11-10T22:00:00.000Z");
   });
 
   it("puts every week on the opening time exactly where the old fixed clock did", () => {
@@ -176,12 +191,14 @@ describe("weeks and sessions", () => {
 
 describe("the vote", () => {
   const offered = S2.offered;
-  const now = S2.followsFrom.getTime() + 5 * HOUR;
+  const followsFromMs = S2.followsFrom.getTime();
+  const now = followsFromMs + 48 * HOUR;
   const base = {
     pinned: null,
     leader: "wed" as const,
     leaderSince: now - 30 * HOUR,
     following: true,
+    followsFromMs,
     applied: null,
     opening: SAT_11AM,
     offered,
@@ -199,9 +216,14 @@ describe("the vote", () => {
     expect(seasonLeader({ mon: 9, thu: 1 }, offered, "sat")).toBe("thu");
   });
 
-  it("holds the current time until the vote starts steering the schedule", () => {
+  it("holds the current time until the vote decides", () => {
     expect(resolveSeasonSlot({ ...base, following: false })).toEqual(SAT_11AM);
     expect(resolveSeasonSlot(base)).toEqual({ key: "wed", hourPT: 10 });
+  });
+
+  it("lets the time that leads at the deadline win at once, however new its lead", () => {
+    const atDeadline = { ...base, nowMs: followsFromMs + 60_000, leaderSince: followsFromMs - HOUR };
+    expect(resolveSeasonSlot(atDeadline)).toEqual({ key: "wed", hourPT: 10 });
   });
 
   it("follows a new leader only once it has held the lead for a day, like the Circle", () => {
@@ -231,11 +253,11 @@ describe("the vote", () => {
     expect(parseLeaderRecord(null)).toBeNull();
   });
 
-  it("counts hands and projects, and lists each person once", () => {
+  it("counts each project once, gives each time its share of projects, and lists each person once", () => {
     const tally = tallySeasonVotes(
       [
         { slots: "tue,sat", displayName: "Maya", projectName: "Rainbow Bridge Hawaii" },
-        { slots: "tue", displayName: "Kai", projectName: "rainbow bridge hawaii" },
+        { slots: "tue", displayName: "Kai", projectName: "rainbow  bridge hawaii" },
         { slots: "tue,wed", displayName: null, projectName: null },
         { slots: "mon", displayName: "Off the ballot", projectName: null },
         { slots: "sat", displayName: "Maya", projectName: "Rainbow Bridge Hawaii" },
@@ -243,37 +265,78 @@ describe("the vote", () => {
       offered,
       keep,
     );
-    const tue = tally.slots.find((s) => s.key === "tue")!;
-    expect(tue.hands).toBe(3);
-    expect(tue.projects).toBe(1);
-    expect(tue.names).toEqual(["Rainbow Bridge Hawaii (Maya)", "rainbow bridge hawaii (Kai)"]);
-    const sat = tally.slots.find((s) => s.key === "sat")!;
-    expect(sat.hands).toBe(2);
-    expect(sat.names).toEqual(["Rainbow Bridge Hawaii (Maya)"]);
+    // Two voting projects: Rainbow Bridge Hawaii (three people) and one hand with no project.
+    expect(tally.projects).toBe(2);
     expect(tally.voters).toBe(4);
+    const tue = tally.slots.find((s) => s.key === "tue")!;
+    expect(tue).toMatchObject({ hands: 3, projects: 2, share: 100 });
+    expect(tue.names).toEqual(["Rainbow Bridge Hawaii (Maya)", "rainbow  bridge hawaii (Kai)"]);
+    expect(tally.slots.find((s) => s.key === "sat")).toMatchObject({ hands: 2, projects: 1, share: 50 });
+    expect(tally.slots.find((s) => s.key === "wed")).toMatchObject({ hands: 1, projects: 1, share: 50 });
+    expect(tally.slots.find((s) => s.key === "thu")).toMatchObject({ hands: 0, projects: 0, share: 0 });
+    // The leader is decided by projects, so a big team cannot outvote two small ones.
+    expect(tally.counts).toMatchObject({ tue: 2, wed: 1, sat: 1 });
     expect(tally.slots.map((s) => s.key)).toEqual(["tue", "wed", "thu", "fri", "sat"]);
+  });
+
+  it("lets two projects beat one project's many hands", () => {
+    const tally = tallySeasonVotes(
+      [
+        { slots: "wed", displayName: "A", projectName: "Big Team" },
+        { slots: "wed", displayName: "B", projectName: "Big Team" },
+        { slots: "wed", displayName: "C", projectName: "Big Team" },
+        { slots: "fri", displayName: null, projectName: "Aquarella" },
+        { slots: "fri", displayName: null, projectName: "Terra Vallalta" },
+      ],
+      offered,
+      keep,
+    );
+    expect(seasonLeader(tally.counts, offered, "sat")).toBe("fri");
+  });
+
+  it("shows the public only shares until seven projects have voted, then who picked each time", () => {
+    const rows: SeasonVoteRow[] = ["A", "B", "C", "D", "E", "F"].map((p) => ({ slots: "wed,sat", displayName: `Person ${p}`, projectName: `Project ${p}` }));
+    rows.push({ slots: "wed", displayName: "Second person", projectName: "project a" });
+    const early = publicSeasonTally(tallySeasonVotes(rows, offered, keep), 7);
+    expect(early.revealed).toBe(false);
+    expect(early.anyVotes).toBe(true);
+    // No counts and no names reach the page: only each time's share.
+    for (const slot of early.slots) {
+      expect(Object.keys(slot).sort()).toEqual(["key", "names", "share"]);
+      expect(slot.names).toEqual([]);
+    }
+    expect(early.slots.find((s) => s.key === "wed")!.share).toBe(100);
+
+    rows.push({ slots: "sat", displayName: null, projectName: "Project G" });
+    const seven = publicSeasonTally(tallySeasonVotes(rows, offered, keep), 7);
+    expect(seven.revealed).toBe(true);
+    expect(seven.slots.find((s) => s.key === "sat")!.names).toContain("Project G");
+    expect(seven.slots.find((s) => s.key === "sat")!.share).toBe(100);
+    expect(seven.slots.find((s) => s.key === "wed")!.share).toBe(86);
+
+    const none = publicSeasonTally(tallySeasonVotes([], offered, keep), 7);
+    expect(none).toMatchObject({ anyVotes: false, revealed: false });
   });
 });
 
 describe("the register and the notes", () => {
   const onlyHttp = (raw: string | null | undefined) => (raw && /^https?:\/\//.test(raw) ? raw : null);
 
-  it("lists each project once, with its link and everyone who named it", () => {
+  it("lists only projects that shared a link, so it never shows who voted", () => {
     const entries = seasonRegister(
       [
         { slots: "tue", displayName: "Maya", projectName: "Rainbow Bridge Hawaii", projectUrl: null },
         { slots: "", displayName: "Kai", projectName: "rainbow bridge hawaii", projectUrl: "https://rainbowbridge.example" },
         { slots: "wed", displayName: "Ana", projectName: null, projectUrl: "https://aquarella.example" },
-        { slots: "sat", displayName: "Just a name", projectName: null, projectUrl: null },
+        { slots: "sat", displayName: "Only voted", projectName: "Quiet Project", projectUrl: null },
         { slots: "thu", displayName: null, projectName: "Sneaky", projectUrl: "javascript:alert(1)" },
       ],
       keep,
       onlyHttp,
     );
     expect(entries).toEqual([
-      { project: "Rainbow Bridge Hawaii", names: "Maya, Kai", url: "https://rainbowbridge.example" },
+      { project: "rainbow bridge hawaii", names: "Kai", url: "https://rainbowbridge.example" },
       { project: null, names: "Ana", url: "https://aquarella.example" },
-      { project: "Sneaky", names: null, url: null },
     ]);
   });
 
@@ -310,21 +373,30 @@ describe("moving the Season", () => {
     manualOverride: false,
   }));
 
-  it("moves every week outside the freeze window once the vote steers", () => {
-    const moves = planSeasonMoves(S2, rows, TUE_2PM, S2.followsFrom);
-    // Week 1 is done and Week 2 (Saturday, October 3) is inside 72 hours.
-    expect(moves.map((m) => m.week)).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+  it("moves the next session too at the first decision, since it was always up to the vote", () => {
+    // No freeze at the first decision: Week 2 leaves Saturday, October 3 for Tuesday, October 6.
+    const moves = planSeasonMoves(S2, rows, TUE_2PM, S2.followsFrom, 0);
+    expect(moves.map((m) => m.week)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
     expect(moves[0].to.toISOString()).toBe("2026-10-06T21:00:00.000Z");
   });
 
-  it("moves nothing when the vote keeps the opening time", () => {
-    expect(planSeasonMoves(S2, rows, SAT_11AM, S2.followsFrom)).toEqual([]);
+  it("holds sessions inside 72 hours on any later move", () => {
+    // Week 1 is done and Week 2 (Saturday, October 3) is inside 72 hours.
+    const moves = planSeasonMoves(S2, rows, TUE_2PM, S2.followsFrom);
+    expect(moves.map((m) => m.week)).toEqual([3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   });
 
-  it("never moves a session into the freeze window", () => {
-    // Sunday, October 4: Tuesday, October 6 is two days out, so Week 3 stays on Saturday.
-    const moves = planSeasonMoves(S2, rows, TUE_2PM, new Date("2026-10-04T19:00:00Z"));
+  it("moves nothing when the vote keeps the opening time", () => {
+    expect(planSeasonMoves(S2, rows, SAT_11AM, S2.followsFrom, 0)).toEqual([]);
+  });
+
+  it("never moves a session into the freeze window, or one already started", () => {
+    // Saturday, October 10 at 5am PDT: Week 3 starts in six hours, so it stays; Week 4 is the first to move.
+    const moves = planSeasonMoves(S2, rows, TUE_2PM, new Date("2026-10-10T12:00:00Z"));
     expect(moves[0].week).toBe(4);
+    // Even with no freeze, a session that has started is not moved.
+    const started = planSeasonMoves(S2, rows, TUE_2PM, new Date("2026-10-03T18:30:00Z"), 0);
+    expect(started.map((m) => m.week)).not.toContain(2);
   });
 
   it("leaves edited and cancelled sessions alone", () => {
@@ -397,7 +469,8 @@ describe("time zones", () => {
     // Europe wobbles for a week and lands back where it started, so it is not a lasting shift.
     expect(shift?.zones).toEqual(["Hawaii", "Central America", "Brazil"]);
     expect(shift?.later).toBe(true);
-    expect(clockShift(starts.slice(0, 3))).toBeNull();
+    // October 13 and 20, before either change: nothing moves.
+    expect(clockShift(starts.slice(0, 2))).toBeNull();
   });
 
   it("finds the week Europe is an hour off, while its clocks have changed and the US's have not", () => {

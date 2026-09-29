@@ -9,17 +9,24 @@
  * admin panel, and the pages that print the Season's time all read this
  * module, so they cannot drift.
  *
- * How the vote decides (ADR-65, which revised ADR-64 the same day). The
- * Season follows its vote the way the Interoperability Circle does (ADR-56),
- * after one quiet first round:
- *   - Until `followsFrom`, sessions keep the time they have, so the first few
- *     hands cannot move Week 3 back and forth before most projects have voted.
- *   - From then on, the time with the most hands becomes the Season's time
- *     once it has held the lead for SEASON_LEAD_SETTLE_HOURS, and every
- *     session more than SEASON_FREEZE_HOURS out moves to it. Voting never
- *     closes: people change their hands as their weeks change.
+ * How the vote decides (ADR-64, ADR-65, ADR-66). The Season follows its vote
+ * the way the Interoperability Circle does (ADR-56), after one first decision:
+ *   - Until `followsFrom`, sessions keep the time they have and the next one
+ *     is not confirmed, so the first few hands cannot swing it.
+ *   - At `followsFrom` the vote decides the next session and the weekly time
+ *     at once: whatever leads then wins, every session that has not started
+ *     moves to it however close it is (everyone was told it depends on the
+ *     vote), and everyone gets the result by email even if nothing moved.
+ *   - After that, a time that takes the lead and holds it for
+ *     SEASON_LEAD_SETTLE_HOURS becomes the Season's time, and every session
+ *     more than SEASON_FREEZE_HOURS out moves to it. Voting never closes.
  *   - A tie that includes the current time keeps it: an even split is no
  *     reason to move a cohort. An admin pin overrides the vote.
+ *
+ * Each week's session meets on the chosen weekday on or after the date that
+ * week was first published for (Rye, 2026-09-28: "either Saturday or
+ * beyond"), so a Season that opened on Saturdays and moves to Tuesdays meets
+ * the Tuesday after each Saturday.
  *
  * Times are Pacific wall-clock hours, like every other session on the site
  * (shared/sessionClock.ts). Much of the cohort lives where clocks never change
@@ -82,9 +89,9 @@ export interface SeasonScheduleConfig {
   /** What copy calls it: "Season Two". */
   name: string;
   /**
-   * The date each week was first published for, week 1 first. A session stays
-   * inside its own Monday-to-Sunday week (Pacific) whatever day it moves to,
-   * so the Season keeps its length and its last week lands where it always did.
+   * The date each week was first published for, week 1 first. A session meets
+   * on the chosen weekday on or after this date, so the Season keeps its
+   * rhythm and never meets earlier than it was announced.
    */
   weeks: readonly string[];
   /** The time the Season opened on, before any vote. */
@@ -92,8 +99,9 @@ export interface SeasonScheduleConfig {
   /** The times on offer until an admin changes them. */
   offered: readonly SeasonSlotTime[];
   /**
-   * When the vote starts steering the schedule, until an admin changes it.
-   * Before this, sessions keep their time; after it, they follow the vote.
+   * When the vote decides the next session and starts steering the schedule,
+   * until an admin changes it. Before this, sessions keep their time; at it,
+   * the first decision; after it, they follow the vote.
    */
   followsFrom: Date;
   /** Session length in minutes. */
@@ -105,6 +113,13 @@ export interface SeasonScheduleConfig {
   reschedule?: Readonly<Record<string, string>>;
   /** What the page says about those days, so nobody is surprised. */
   rescheduleNote?: string;
+  /**
+   * How many projects must vote before the page names who picked what. Below
+   * it the vote is anonymous: the winning day and each day's share of
+   * projects, nothing else (Rye, 2026-09-28: "anonymous until at least seven
+   * votes are in").
+   */
+  revealNamesAt: number;
   /**
    * Whether the page starts out asking projects who missed Selection Day for
    * their 3 to 5 minute video, so the session can go public with every project
@@ -159,15 +174,22 @@ export const SEASON_SCHEDULES: Readonly<Record<string, SeasonScheduleConfig>> = 
       { key: "fri", hourPT: 10 },
       { key: "sat", hourPT: 11 },
     ],
-    // Thursday, October 1 at 5pm Pacific: long enough after the invitation
-    // for every project to answer, early enough that Week 3 can still move.
+    // Thursday, October 1 at 5pm Pacific: "pick by Friday" (Rye), with a
+    // day and a half of notice if Saturday wins and Week 2 is October 3.
     followsFrom: wallTimeInZoneToUtc("2026-10-01", 17, 0, SESSION_TIME_ZONE),
     minutes: SESSION_DURATION_HOURS * 60,
-    // Thanksgiving and the day after: Week 10 meets the Monday of that week
-    // instead, at the same time (Rye, 2026-09-28).
-    reschedule: { "2026-11-26": "2026-11-23", "2026-11-27": "2026-11-23" },
+    // Holidays meet the Monday of that week instead, at the same time:
+    // Thanksgiving and the day after (Rye, 2026-09-28), and Christmas Eve and
+    // Day, which a Thursday or Friday Season would otherwise land on.
+    reschedule: {
+      "2026-11-26": "2026-11-23",
+      "2026-11-27": "2026-11-23",
+      "2026-12-24": "2026-12-21",
+      "2026-12-25": "2026-12-21",
+    },
     rescheduleNote:
-      "Thanksgiving week: if the Season lands on Thanksgiving or the day after, Week 10 meets Monday, November 23 at the same time.",
+      "Holidays: a session that lands on Thanksgiving or the day after meets Monday, November 23 instead, and one on Christmas Eve or Christmas Day meets Monday, December 21, at the same time.",
+    revealNamesAt: 7,
     // Selection Day stays private until the projects who missed the call have
     // sent their videos in and been added to it (Rye, 2026-09-28).
     selectionVideos: true,
@@ -212,7 +234,14 @@ export function seasonSlot(key: SeasonSlotKey, hourPT: number): SeasonSlot {
 
 // ─── Stored settings ─────────────────────────────────────────────────────────
 
-export type SeasonSettingPart = "offered" | "follows_from" | "pinned" | "applied" | "leader" | "selection_videos";
+export type SeasonSettingPart =
+  | "offered"
+  | "follows_from"
+  | "pinned"
+  | "applied"
+  | "leader"
+  | "decided"
+  | "selection_videos";
 
 /** A stored "on" or "off", or the fallback when the setting was never written. */
 export function parseToggle(raw: string | null | undefined, fallback: boolean): boolean {
@@ -305,26 +334,42 @@ export interface SeasonVoteRow {
 
 export interface SeasonSlotTally {
   key: SeasonSlotKey;
-  /** People with a hand up for this time. */
+  /** People with a hand up for this time. Admin only. */
   hands: number;
-  /** Distinct projects named among those hands. A hand with no project adds none. */
+  /**
+   * Projects that can make this time. A project counts once however many of
+   * its people vote (the same name, any case or spacing); a hand with no
+   * project name counts as one on its own.
+   */
   projects: number;
-  /** "Rainbow Bridge Hawaii (Maya)", one line per person, capped. */
+  /** `projects` as a whole-number percentage of every project that has voted. */
+  share: number;
+  /** "Rainbow Bridge Hawaii (Maya)", one line per person, capped. Public only past revealNamesAt. */
   names: string[];
 }
 
 export interface SeasonTally {
   slots: SeasonSlotTally[];
+  /** Projects per time: what decides the leader (Rye, 2026-09-28). */
   counts: Partial<Record<SeasonSlotKey, number>>;
-  /** People who voted for at least one time on offer. */
+  /** People who voted for at least one time on offer. Admin only. */
   voters: number;
+  /** Projects that voted for at least one time on offer. */
+  projects: number;
+}
+
+/** How a project name is compared, so "Rainbow Bridge  Hawaii" and "rainbow bridge hawaii" are one project. */
+function projectKey(project: string): string {
+  return project.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 /**
- * Count hands, projects and names per offered time. `clean` sanitises the
- * free-text fields (the server passes cleanDisplayName), so this stays pure.
- * Votes for a time no longer on offer are ignored, not deleted, so putting
- * that time back restores them.
+ * Count projects, hands, shares and names per offered time. The page asks for
+ * "the percentage of projects that have selected each" (Rye, 2026-09-28), so
+ * the project is the unit: its people's hands join into one, and the time
+ * with the most projects leads. `clean` sanitises the free-text fields (the
+ * server passes cleanDisplayName), so this stays pure. Votes for a time no
+ * longer on offer are ignored, not deleted, so putting it back restores them.
  */
 export function tallySeasonVotes(
   rows: readonly SeasonVoteRow[],
@@ -333,22 +378,25 @@ export function tallySeasonVotes(
   namesPerSlot = 40,
 ): SeasonTally {
   const onOffer = new Set(offered.map((o) => o.key));
-  const bucket = new Map<SeasonSlotKey, { hands: number; projects: Set<string>; names: string[]; seen: Set<string> }>();
+  const bucket = new Map<SeasonSlotKey, { hands: number; units: Set<string>; names: string[]; seen: Set<string> }>();
   for (const key of SEASON_SLOT_KEYS) {
-    if (onOffer.has(key)) bucket.set(key, { hands: 0, projects: new Set(), names: [], seen: new Set() });
+    if (onOffer.has(key)) bucket.set(key, { hands: 0, units: new Set(), names: [], seen: new Set() });
   }
+  const allUnits = new Set<string>();
   let voters = 0;
-  for (const row of rows) {
+  rows.forEach((row, i) => {
     const keys = parseSeasonSlots(row.slots).filter((k) => onOffer.has(k));
-    if (!keys.length) continue;
+    if (!keys.length) return;
     voters += 1;
     const project = clean(row.projectName);
     const name = clean(row.displayName);
+    const unit = project ? `p:${projectKey(project)}` : `v:${i}`;
+    allUnits.add(unit);
     const line = project && name ? `${project} (${name})` : project ?? name;
     for (const key of keys) {
       const b = bucket.get(key)!;
       b.hands += 1;
-      if (project) b.projects.add(project.toLowerCase());
+      b.units.add(unit);
       // One line per person: a wall of the same name is the cheapest way to
       // deface a public list.
       if (line && b.names.length < namesPerSlot && !b.seen.has(line.toLowerCase())) {
@@ -356,14 +404,44 @@ export function tallySeasonVotes(
         b.names.push(line);
       }
     }
-  }
+  });
+  const total = allUnits.size;
   const slots: SeasonSlotTally[] = [];
   const counts: Partial<Record<SeasonSlotKey, number>> = {};
   for (const [key, b] of bucket) {
-    slots.push({ key, hands: b.hands, projects: b.projects.size, names: b.names });
-    counts[key] = b.hands;
+    const projects = b.units.size;
+    slots.push({
+      key,
+      hands: b.hands,
+      projects,
+      share: total > 0 ? Math.round((projects / total) * 100) : 0,
+      names: b.names,
+    });
+    counts[key] = projects;
   }
-  return { slots, counts, voters };
+  return { slots, counts, voters, projects: total };
+}
+
+export interface PublicSeasonTally {
+  slots: { key: SeasonSlotKey; share: number; names: string[] }[];
+  anyVotes: boolean;
+  /** True once `revealNamesAt` projects have voted: from then on each time lists who picked it. */
+  revealed: boolean;
+}
+
+/**
+ * All the public page gets of a tally (Rye, 2026-09-28): each time's share of
+ * projects, and the names behind it only once `revealNamesAt` projects have
+ * voted. Hand, project and voter counts never leave the server, and the names
+ * are left out of the response, not hidden by the page.
+ */
+export function publicSeasonTally(tally: SeasonTally, revealNamesAt: number): PublicSeasonTally {
+  const revealed = tally.projects >= revealNamesAt;
+  return {
+    slots: tally.slots.map((t) => ({ key: t.key, share: t.share, names: revealed ? t.names : [] })),
+    anyVotes: tally.projects > 0,
+    revealed,
+  };
 }
 
 export interface SeasonRegisterEntry {
@@ -374,11 +452,12 @@ export interface SeasonRegisterEntry {
 }
 
 /**
- * The projects in the room: one entry per project, with the link it chose to
- * share, so the cohort can open each other's work. The Season's version of the
- * Circle's register. A person with neither a project nor a link is already in
- * the tally and adds nothing here. Pure: the server passes the cleaners, and
- * `cleanUrl` must return only http or https links (cleanRepoUrl).
+ * The projects in the room: one entry per project that chose to share a link,
+ * so the cohort can open each other's work. The Season's version of the
+ * Circle's register. Sharing a link is the opt-in: a project that only voted
+ * never appears here, so the list cannot be read as a list of who voted.
+ * Pure: the server passes the cleaners, and `cleanUrl` must return only http
+ * or https links (cleanRepoUrl).
  */
 export function seasonRegister(
   rows: readonly SeasonVoteRow[],
@@ -386,15 +465,14 @@ export function seasonRegister(
   cleanUrl: (raw: string | null | undefined) => string | null,
   limit = 60,
 ): SeasonRegisterEntry[] {
-  const byKey = new Map<string, { project: string | null; names: string[]; url: string | null }>();
+  const byKey = new Map<string, { project: string | null; names: string[]; url: string }>();
   for (const row of rows) {
-    const project = clean(row.projectName);
     const url = cleanUrl(row.projectUrl ?? null);
-    if (!project && !url) continue;
+    if (!url) continue;
+    const project = clean(row.projectName);
     const name = clean(row.displayName);
-    const key = project ? `p:${project.toLowerCase()}` : `u:${url}`;
-    const entry = byKey.get(key) ?? { project, names: [], url: null };
-    if (!entry.url && url) entry.url = url;
+    const key = project ? `p:${projectKey(project)}` : `u:${url}`;
+    const entry = byKey.get(key) ?? { project, names: [], url };
     if (name && !entry.names.some((n) => n.toLowerCase() === name.toLowerCase())) entry.names.push(name);
     byKey.set(key, entry);
   }
@@ -481,9 +559,11 @@ export function seasonLeader(
 /**
  * Which time the Season's sessions follow right now. Pure, so the rules above
  * are testable. The pin wins. Before the vote starts steering, the time stays
- * whatever was last applied (or the opening time). After, the leader takes
- * over once it has held the lead for SEASON_LEAD_SETTLE_HOURS; a leader on the
- * current day takes over at once, since only its hour can differ.
+ * whatever was last applied (or the opening time). At the first decision, the
+ * time that leads then wins at once: it already held the lead when the vote
+ * was due. After that, a new leader takes over once it has held the lead for
+ * SEASON_LEAD_SETTLE_HOURS; a leader on the current day takes over at once,
+ * since only its hour can differ.
  */
 export function resolveSeasonSlot(opts: {
   pinned: SeasonSlotKey | null;
@@ -492,6 +572,8 @@ export function resolveSeasonSlot(opts: {
   leaderSince: number | null;
   /** Whether the vote is steering the schedule yet (now >= followsFrom). */
   following: boolean;
+  /** When it started steering: a lead held since before then has already won. */
+  followsFromMs: number;
   applied: SeasonSlotTime | null;
   opening: SeasonSlotTime;
   offered: readonly SeasonSlotTime[];
@@ -509,7 +591,8 @@ export function resolveSeasonSlot(opts: {
   if (!lead) return current;
   if (lead.key === current.key) return lead;
   const settled =
-    opts.leaderSince != null && opts.nowMs - opts.leaderSince >= SEASON_LEAD_SETTLE_HOURS * 3_600_000;
+    opts.leaderSince != null &&
+    (opts.leaderSince <= opts.followsFromMs || opts.nowMs - opts.leaderSince >= SEASON_LEAD_SETTLE_HOURS * 3_600_000);
   return settled ? lead : current;
 }
 
@@ -533,19 +616,29 @@ function addDaysYmd(ymd: string, days: number): string {
   return new Date(Date.UTC(y, m - 1, d + days, 12)).toISOString().slice(0, 10);
 }
 
+function weekdayOfYmd(ymd: string): number {
+  const [y, m, d] = ymd.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
+}
+
 /**
- * When week `week` (1-based) meets on `slot`: that weekday inside the week's
- * own Monday-to-Sunday (Pacific), at the slot's Pacific hour. DST-correct. A
- * day the Season must not meet on (config.reschedule) gives way to its
- * replacement day, at the same hour.
+ * When week `week` (1-based) meets on `slot`: the first day of that weekday on
+ * or after the date the week was first published for, at the slot's Pacific
+ * hour. DST-correct. A day the Season must not meet on (config.reschedule)
+ * gives way to its replacement day, at the same hour.
  */
 export function seasonSessionStart(config: SeasonScheduleConfig, week: number, slot: SeasonSlotTime): Date | null {
   const anchor = config.weeks[week - 1];
   if (!anchor) return null;
-  const monday = circleWeekKey(wallTimeInZoneToUtc(anchor, 12, 0, SESSION_TIME_ZONE));
-  const ymd = addDaysYmd(monday, (WEEKDAY_OF[slot.key] + 6) % 7);
+  const ymd = addDaysYmd(anchor, (WEEKDAY_OF[slot.key] - weekdayOfYmd(anchor) + 7) % 7);
   const day = config.reschedule?.[ymd] ?? ymd;
   return wallTimeInZoneToUtc(day, clampHour(slot.hourPT), 0, SESSION_TIME_ZONE);
+}
+
+/** The last moment a Season's final week could hold its session: a week after its date. */
+export function seasonEnds(config: SeasonScheduleConfig): Date | null {
+  const last = config.weeks[config.weeks.length - 1];
+  return last ? wallTimeInZoneToUtc(addDaysYmd(last, 7), 0, 0, SESSION_TIME_ZONE) : null;
 }
 
 export interface SeasonSessionTime {

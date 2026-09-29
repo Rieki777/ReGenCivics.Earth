@@ -22,6 +22,7 @@ import {
   SEASON_SLOT_KEYS,
   SEASON_TOPIC_MAX,
   nextSessionWeek,
+  publicSeasonTally,
   seasonConfig,
   seasonRegister,
   seasonSettingKey,
@@ -99,17 +100,24 @@ export const seasonScheduleRouter = router({
       } catch (err) {
         console.error("[seasonSchedule] notes read failed:", err);
       }
+      // Anonymous until enough projects have voted (Rye, 2026-09-28): the
+      // winning day and each day's share of projects, and no counts, no names.
+      // Names are withheld here, not just hidden by the page, so they cannot be
+      // read from the network before the threshold.
+      const tally = publicSeasonTally(state.tally, config.revealNamesAt);
       return {
         season: state.season,
         name: state.name,
         offered: state.offered,
-        tally: state.tally.slots,
-        voters: state.tally.voters,
+        tally: tally.slots,
+        anyVotes: tally.anyVotes,
+        revealed: tally.revealed,
+        revealNamesAt: config.revealNamesAt,
         leader: state.leader,
-        leaderSince: state.leaderSince,
         pinned: state.pinned != null,
         followsFrom: state.followsFrom,
         following: state.following,
+        decided: state.decidedAt != null,
         running: state.running,
         scheduled: state.scheduled,
         // The projects in the room: names, projects and links people chose to
@@ -189,6 +197,14 @@ export const seasonScheduleRouter = router({
 
       const displayName = cleanDisplayName(input.displayName);
       const projectName = cleanDisplayName(input.projectName);
+      // The page shows each time's share of projects, so a hand needs a
+      // project to count toward. Taking hands down never does.
+      if (stored && !projectName) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Add your land project first, so each project counts once.",
+        });
+      }
       await db
         .insert(seasonScheduleVotes)
         .values({ season: config.season, voterKey: input.voterKey, slots: stored, displayName, projectName, projectUrl })
@@ -312,6 +328,7 @@ export const seasonScheduleRouter = router({
         ...state,
         opening: config.opening,
         defaultFollowsFrom: config.followsFrom,
+        revealNamesAt: config.revealNamesAt,
         sessions: rows.map((r) => ({
           id: r.id,
           week: r.week,

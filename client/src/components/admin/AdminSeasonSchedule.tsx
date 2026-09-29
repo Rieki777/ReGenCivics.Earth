@@ -188,12 +188,13 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
           Season Schedule: {data?.name ?? season}
         </CardTitle>
         <CardDescription className="text-white/60">
-          The land projects vote on /season-schedule, and the Season follows the vote like the Circle does. Until
-          the start time below, sessions stay where they are. After it, a time that takes the lead and holds it for
-          {` ${SEASON_LEAD_SETTLE_HOURS}h`} moves every session more than {SEASON_FREEZE_HOURS}h out, and everyone the
-          sessions remind gets one email with the new time. A tie that includes the current time keeps it, and a pin
-          overrides the vote. Reminders already overdue at a moved session's new time are skipped, so nobody gets
-          "In 7 days" five days out. Editing a session in the list above locks it in place.
+          The land projects vote on /season-schedule, one vote per project. At the decision time below, the time
+          most projects can make becomes the next session and the weekly time: every session that has not started
+          moves to it, and everyone the sessions remind gets the result by email even if nothing moved. After that the
+          Season follows the vote like the Circle: a time that leads for {SEASON_LEAD_SETTLE_HOURS}h moves every
+          session more than {SEASON_FREEZE_HOURS}h out, with one email per move. A session meets on the chosen day on
+          or after its week's original date. Ties keep the current time; a pin overrides the vote. The page shows only
+          shares of projects until enough projects vote, then names them. Editing a session above locks it in place.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
@@ -211,8 +212,9 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
                   >
                     <p className="text-white font-semibold">{slot?.label ?? t.key}</p>
                     <p className="text-white/60 tabular-nums">
-                      {t.hands} {t.hands === 1 ? "hand" : "hands"} · {t.projects} {t.projects === 1 ? "project" : "projects"}
-                      {data.leader === t.key ? " · leading" : ""}
+                      {t.share}% of projects · {t.projects} {t.projects === 1 ? "project" : "projects"} · {t.hands}{" "}
+                      {t.hands === 1 ? "person" : "people"}
+                      {data.leader === t.key ? " · winning" : ""}
                       {data.scheduled.key === t.key ? " · scheduled" : ""}
                     </p>
                     {t.names.length > 0 && <p className="text-white/45 text-xs mt-1">{t.names.join(", ")}</p>}
@@ -222,17 +224,21 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
             </div>
 
             <p className="text-white/80">
-              {data.following ? "Following the vote since" : "Starts following the vote"} {when(data.followsFrom)}.{" "}
-              {data.tally.voters} {data.tally.voters === 1 ? "person has" : "people have"} voted. Sessions follow{" "}
+              {data.decidedAt
+                ? `Decided ${when(data.decidedAt)}; the Season follows the vote from there.`
+                : `The vote decides the next session ${when(data.followsFrom)}, and emails everyone the result.`}{" "}
+              {data.tally.projects} {data.tally.projects === 1 ? "project has" : "projects have"} voted
+              ({data.tally.voters} {data.tally.voters === 1 ? "person" : "people"}); the page names them from{" "}
+              {data.revealNamesAt}. Sessions follow{" "}
               <span className="text-white font-semibold">{data.scheduled.label}</span>
               {data.pinned ? " (pinned)" : ""}.
-              {data.following && data.leader && data.leader !== data.scheduled.key && !data.pinned && data.leaderSince
+              {data.decidedAt && data.leader && data.leader !== data.scheduled.key && !data.pinned && data.leaderSince
                 ? ` ${offered.find((o) => o.key === data.leader)?.label ?? data.leader} leads since ${when(new Date(data.leaderSince))} and takes over after a day in front.`
                 : ""}
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
-              <label className="text-white/70" htmlFor="season-start-input">The vote steers from (Pacific)</label>
+              <label className="text-white/70" htmlFor="season-start-input">The vote decides at (Pacific)</label>
               <input
                 id="season-start-input"
                 type="datetime-local"
@@ -249,9 +255,9 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
                 variant="outline"
                 className="min-h-11"
                 onClick={() => setStart.mutate({ season, followsFrom: new Date().toISOString() })}
-                disabled={busy || data.following}
+                disabled={busy || data.decidedAt != null}
               >
-                Start following now
+                Decide now
               </Button>
               <Button
                 size="sm"
