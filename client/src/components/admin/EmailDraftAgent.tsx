@@ -46,6 +46,19 @@ interface Props {
   audienceLabel?: string;
 }
 
+
+function hasMeaningfulProposal(
+  turn: ChatTurn,
+  currentSubject: string,
+  currentBody: string,
+  currentLayout: LetterLayout,
+): boolean {
+  if (turn.proposedSubject && turn.proposedSubject !== currentSubject) return true;
+  if (turn.proposedBody && turn.proposedBody !== currentBody) return true;
+  if (turn.proposedLayout && turn.proposedLayout !== currentLayout) return true;
+  return false;
+}
+
 export function EmailDraftAgent({
   currentSubject,
   currentBody,
@@ -149,19 +162,32 @@ export function EmailDraftAgent({
             >
               {turn.content}
             </div>
-            {turn.role === "assistant" && (turn.proposedSubject || turn.proposedBody || turn.proposedLayout) && (
+            {turn.role === "assistant" && hasMeaningfulProposal(turn, currentSubject, currentBody, currentLayout) && (
               <div className="mt-1.5">
                 <Button
                   type="button"
                   size="sm"
                   data-testid="apply-to-draft"
-                  onClick={() =>
+                  onClick={() => {
+                    const nextSubject = turn.proposedSubject ?? currentSubject;
+                    const nextBody = turn.proposedBody ?? currentBody;
+                    const nextLayout = turn.proposedLayout ?? currentLayout;
+                    const unchanged =
+                      nextSubject === currentSubject &&
+                      nextBody === currentBody &&
+                      nextLayout === currentLayout;
+                    if (unchanged) {
+                      toast.error(
+                        "That reply described changes but did not return a new subject or body. Ask again to rewrite the draft.",
+                      );
+                      return;
+                    }
                     onApply({
-                      subject: turn.proposedSubject || currentSubject,
-                      body: turn.proposedBody || currentBody,
+                      subject: nextSubject,
+                      body: nextBody,
                       layout: turn.proposedLayout,
-                    })
-                  }
+                    });
+                  }}
                   className="bg-[#4a7c59] hover:bg-[#3d6849] text-white h-8"
                 >
                   Apply to draft

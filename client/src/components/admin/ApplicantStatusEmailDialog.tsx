@@ -3,7 +3,7 @@
  * Sends through the existing email.sendBulk procedure (Resend).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -77,6 +77,8 @@ export function ApplicantStatusEmailDialog({
   const [body, setBody] = useState("");
   const [layout, setLayout] = useState<LetterLayout>("plain");
   const [sending, setSending] = useState(false);
+  const overlaidKeyRef = useRef<string | null>(null);
+  const draftTouchedRef = useRef(false);
 
   const recipientsQuery = trpc.applications.listEmailRecipients.useQuery(
     { status: status as "submitted" | "under_review" | "approved" | "rejected" | "changes_requested" },
@@ -101,6 +103,8 @@ export function ApplicantStatusEmailDialog({
 
   const loadTemplate = (id: string) => {
     setTemplateId(id);
+    draftTouchedRef.current = false;
+    overlaidKeyRef.current = null;
     const saved = savedLetters.find((row) => row.templateKey === id);
     if (saved?.customBody) {
       setSubject(saved.customSubject || "");
@@ -121,17 +125,42 @@ export function ApplicantStatusEmailDialog({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, status]);
 
+  // Overlay saved copy once per open+template while the builtin text is still
+  // untouched. After Apply (even subject-only, when body still equals builtin),
+  // never re-apply savedLetters on refetch or the AI subject gets wiped.
+  useEffect(() => {
+    if (!open) {
+      overlaidKeyRef.current = null;
+      draftTouchedRef.current = false;
+    }
+  }, [open]);
+
   useEffect(() => {
     if (!open || !savedQuery.isSuccess) return;
+    const key = `${status}:${templateId}`;
+    if (overlaidKeyRef.current === key) return;
+    if (draftTouchedRef.current) {
+      overlaidKeyRef.current = key;
+      return;
+    }
     const builtin = emailTemplates.find((t) => t.id === templateId);
     const saved = savedLetters.find((row) => row.templateKey === templateId);
-    if (!saved?.customBody || !builtin || body !== builtin.body) return;
+    if (!saved?.customBody || !builtin) {
+      overlaidKeyRef.current = key;
+      return;
+    }
+    // Wait for loadTemplate to fill the composer before deciding.
+    if (body === "") return;
+    if (body !== builtin.body) {
+      // Manual edit or Apply already moved off the builtin text.
+      overlaidKeyRef.current = key;
+      return;
+    }
     setSubject(saved.customSubject || builtin.subject);
     setBody(saved.customBody);
     setLayout(isLetterLayout(saved.layout) ? saved.layout : defaultLayoutForTemplate(templateId));
-    // Overlay saved copy only while the builtin text is still untouched.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, savedQuery.isSuccess, savedLetters, templateId]);
+    overlaidKeyRef.current = key;
+  }, [open, status, savedQuery.isSuccess, savedLetters, templateId, body]);
 
   const recipientPreview = useMemo(
     () => capped.map((r) => `${r.name} <${r.email}>`).join("\n"),
@@ -264,6 +293,8 @@ export function ApplicantStatusEmailDialog({
               statusLabel={statusLabel}
               recipientCount={capped.length}
               onApply={({ subject: nextSubject, body: nextBody, layout: nextLayout }) => {
+                draftTouchedRef.current = true;
+                overlaidKeyRef.current = `${status}:${templateId}`;
                 setSubject(nextSubject);
                 setBody(nextBody);
                 if (nextLayout) setLayout(nextLayout);
