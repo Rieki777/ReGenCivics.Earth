@@ -41,6 +41,36 @@ distribution, governance proposals).
 
 ---
 
+## Start here for diligence
+
+Cold reviewers and agents: read these first so the tree does not invent a
+worse story than the product deserves.
+
+1. **[docs/INVESTOR_KNOWN_LIMITATIONS.md](docs/INVESTOR_KNOWN_LIMITATIONS.md)** —
+   Honest status: Sage snapshot writer not production (intentional for now),
+   ADR-37 / `ci-baseline.sql` rebuild path, Hypha placeholders, AGPL, coop not
+   formed, Dependabot leave-alone, calendar PR #121 not merge-ready, member
+   links use `/join`.
+2. **[SECURITY.md](SECURITY.md)** — How to report vulnerabilities (private path).
+3. **Architecture map** — `client/` (React SPA), `server/` (Express + tRPC +
+   jobs), `shared/` (cross-boundary types and canon), `drizzle/` (`schema.ts` +
+   numbered migrations; see `drizzle/README.md` for ADR-37). Deeper diagram:
+   [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+4. **Core vs satellite** — Core product surface is the main app above plus
+   game/admin/Harvest paths. Prefer that over `.claude/` (agent skills pack)
+   and `archive/` (historical, not runtime). `apps/gov` is a separate Next app
+   with its own lockfile.
+5. **Tests / CI** — `npm test` (Vitest; default unit run may exclude some
+   DB-heavy suites). Full CI on GitHub Actions: typecheck, migration-number /
+   env-example / fund-claims / banned-terms guards, unit tests, and MySQL 9.4
+   integration via `drizzle/ci-baseline.sql`. Lighthouse and `pnpm audit` are
+   still advisory in places — see limitations doc.
+
+Then continue with local setup below, or the evolution-engine doc if you need
+governance autonomy detail.
+
+---
+
 ## The game evolves itself
 
 The rules of the game live in a database and the players change them through
@@ -308,6 +338,7 @@ configurable via the admin dashboard. This is the mechanism.
 
 | File | What it covers |
 |------|----------------|
+| `docs/INVESTOR_KNOWN_LIMITATIONS.md` | Investor / cold-agent known limitations (Sage, ADR-37, AGPL, …) |
 | `CONTRIBUTING.md` | How to contribute code, writing rules, PR process |
 | `.human/visions/AI_BUILDER_PROMPT.md` | Full context prompt for AI coding assistants |
 | `docs/ARCHITECTURE.md` | System architecture diagram and data flow |
