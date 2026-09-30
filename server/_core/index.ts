@@ -1010,7 +1010,7 @@ async function startServer() {
         }
       }
       const status = report.ok ? 200 : 500;
-      return res.status(status).json({ ok: report.ok, ...report });
+      return res.status(status).json(report);
     } catch (err: any) {
       log.error("cron daily-contribution-snapshots failed", err);
       return res.status(500).json({ error: err.message });
