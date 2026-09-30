@@ -57,9 +57,10 @@ worse story than the product deserves.
    numbered migrations; see `drizzle/README.md` for ADR-37). Deeper diagram:
    [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 4. **Core vs satellite** — Core product surface is the main app above plus
-   game/admin/Harvest paths. Prefer that over `.claude/` (agent skills pack)
-   and `archive/` (historical, not runtime). `apps/gov` is a separate Next app
-   with its own lockfile.
+   game/admin/Harvest paths. Prefer that over `.claude/` (agent skills pack;
+   see `.claude/README.md`) and `archive/` (historical, not runtime; see
+   `archive/README.md`). `apps/gov` is a separate Next app with its own
+   lockfile.
 5. **Tests / CI** — `npm test` (Vitest; default unit run may exclude some
    DB-heavy suites). Full CI on GitHub Actions: typecheck, migration-number /
    env-example / fund-claims / banned-terms guards, unit tests, and MySQL 9.4
@@ -137,7 +138,11 @@ cp .env.example .env
 #                 JWT_SECRET=<any long random string>
 
 pnpm install
-pnpm db:push       # apply every migration to docker MySQL (scripts/run-migration.ts --all)
+# Fresh/empty MySQL cannot replay every numbered migration (ADR-37).
+# Load the CI baseline, then apply anything newer — same path CI uses.
+npx tsx scripts/load-ci-baseline.ts
+npx tsx scripts/run-migration.ts --all
+# Later catch-up on an already-baselined DB: pnpm db:push
 pnpm dev           # start the dev server on http://localhost:5000
 ```
 
@@ -166,6 +171,11 @@ Migrations are hand-written `drizzle/NNNN_*.sql` applied by
 `scripts/run-migration.ts`. Do NOT run `drizzle-kit generate` / `migrate` (see
 `drizzle/README.md` for why). schema.ts is the type source of truth, not a
 migration driver.
+
+**Fresh / empty MySQL:** numbered history alone does not rebuild an empty
+database. Use `scripts/load-ci-baseline.ts` then `scripts/run-migration.ts --all`
+(see `drizzle/README.md`, ADR-37). Day-to-day on an existing DB, `pnpm db:push`
+is fine.
 
 **Running one migration** (data migrations included): always use the runner,
 never an ad-hoc script. It tracks what is applied in `_migrations_applied`,
@@ -229,7 +239,8 @@ regen-civics/
 │   ├── game/           # Game system logic (scoring, harvest, tiers)
 │   ├── jobs/           # Background jobs (digest, glossary, cleanup)
 │   ├── webhooks/       # Webhook handlers (Resend, Riverside)
-│   ├── db.ts           # All database queries, in one large file
+│   ├── db.ts           # Query barrel + getDb(); domains under server/db/
+│   ├── db/             # Extracted domain query modules (newsletter, …)
 │   ├── routers.ts      # tRPC router definitions
 │   ├── storage.ts      # Cloudflare R2 file storage (S3-compatible API)
 │   └── cache.ts        # Redis caching
@@ -325,8 +336,10 @@ option at the time the project started. The schema is MySQL-compatible
 throughout (note: backtick-quote the `key` column in `game_variables`, since
 it's a reserved word in MySQL).
 
-**Why a single `db.ts` file?** All database logic in one place makes it easy
-to find queries and spot patterns. It's large but navigable with search.
+**Why `db.ts` plus `server/db/`?** Queries started in one file for discoverability.
+Domain modules are being extracted under `server/db/` and re-exported from
+`db.ts` so existing `import { … } from "./db"` keeps working. Schema remains
+one file (`drizzle/schema.ts`) until a later phase.
 
 **Why `game_variables`?** The game needs to be tunable by admins without code
 deploys. Contribution weights, harvest ratios, and tier requirements are all
