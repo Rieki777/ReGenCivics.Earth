@@ -973,6 +973,50 @@ async function startServer() {
     }
   });
 
+  // ── Daily contribution snapshots (Sage) ────────────────────────────────────
+  // Called once per day by Railway cron: POST /api/cron/daily-contribution-snapshots
+  // Default stamps **yesterday UTC** (completed calendar day). Idempotent upsert
+  // on (userId, snapshotDate). Optionally refreshes contributionScoreRaw first
+  // (same SQL as batchJobs recalculateScores). Set CRON_SECRET; Bearer auth.
+  // Schedule ~00:15 UTC (dashboard HTTP cron — not railway.toml).
+  app.post("/api/cron/daily-contribution-snapshots", express.json(), async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(500).json({ error: "CRON_SECRET not configured" });
+    const ok = cronAuthOk(req.headers.authorization, secret);
+    if (!ok) return res.status(401).json({ error: "Unauthorized" });
+    try {
+      const body = (req.body ?? {}) as {
+        day?: "yesterday" | "today";
+        snapshotDate?: string;
+        refreshScores?: boolean;
+      };
+      const { runDailyContributionSnapshotsJob } = await import(
+        "../jobs/dailyContributionSnapshotsJob"
+      );
+      const report = await runDailyContributionSnapshotsJob({
+        day: body.day,
+        snapshotDate: body.snapshotDate,
+        refreshScores: body.refreshScores,
+      });
+      if (report.ok) {
+        try {
+          const { setSiteSetting } = await import("../db");
+          const { DAILY_SNAPSHOT_CRON_LAST_OK_KEY } = await import(
+            "../../shared/dailyContributionSnapshotCronHealth"
+          );
+          await setSiteSetting(DAILY_SNAPSHOT_CRON_LAST_OK_KEY, new Date().toISOString());
+        } catch (stampErr) {
+          log.error("daily-contribution-snapshots last_ok stamp failed", stampErr);
+        }
+      }
+      const status = report.ok ? 200 : 500;
+      return res.status(status).json(report);
+    } catch (err: any) {
+      log.error("cron daily-contribution-snapshots failed", err);
+      return res.status(500).json({ error: err.message });
+    }
+  });
+
   // ── Federation: public project directory (Phase C2, improvement 11) ─────────
   // GET /api/federation/projects.json — the machine-readable directory partner
   // networks fetch (GEN, OpenCivics, BioFi, the Ethereum localism cluster).
