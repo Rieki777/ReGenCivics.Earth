@@ -79,6 +79,11 @@ function isAdminRoute(path: string) {
   return path === "/admin" || path.startsWith("/admin/") || path === "/admin-create";
 }
 
+/** A live session board fills the screen: no site navigation, footer, or overlays (ADR-68). */
+function isSessionBoardRoute(path: string) {
+  return path.startsWith("/season2/week/");
+}
+
 function AdminLocked({ children }: { children: ReactNode }) {
   return <AdminAuthGate>{children}</AdminAuthGate>;
 }
@@ -108,6 +113,7 @@ const Season2 = lazy(() => import("./pages/Season2"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const InteropSessions = lazy(() => import("./pages/InteropSessions"));
 const SeasonSchedule = lazy(() => import("./pages/SeasonSchedule"));
+const SessionBoard = lazy(() => import("./pages/SessionBoard"));
 const Team = lazy(() => import("./pages/Team"));
 const Game = lazy(() => import("./pages/Game"));
 const Bionomics = lazy(() => import("./pages/Bionomics"));
@@ -337,6 +343,7 @@ function Router() {
       <Route path={"/socials"}><EB><Socials /></EB></Route>
       <Route path={"/seasons"}><EB><Seasons /></EB></Route>
       <Route path={"/season2"}><EB><Season2 /></EB></Route>
+      <Route path={"/season2/week/:week"}><EB><SessionBoard /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
       <Route path={"/interop-sessions"}><EB><InteropSessions /></EB></Route>
       <Route path={"/season-schedule"}><EB><SeasonSchedule /></EB></Route>
@@ -526,6 +533,8 @@ function StripStaleAuthErrorParams() {
 function MainApp() {
   const [location] = useLocation();
   const adminMode = isAdminRoute(location);
+  // Admin pages and live session boards both drop the site chrome.
+  const bareMode = adminMode || isSessionBoardRoute(location);
   // Track page visits for progress map milestones
   usePageVisitTracker();
   // Capture referral params on first load (sessionStorage stash + server
@@ -559,8 +568,8 @@ function MainApp() {
       <ThemeProvider defaultTheme={adminMode ? "light" : "dark"} switchable={false}>
         <TooltipProvider>
           <Toaster />
-          {!adminMode && <StructuredData />}
-          {!adminMode && (
+          {!bareMode && <StructuredData />}
+          {!bareMode && (
             <a
               href="#main-content"
               className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[10000] focus:px-4 focus:py-2 focus:bg-[#7dd87d] focus:text-[#1a472a] focus:rounded-lg focus:font-bold focus:text-sm focus:shadow-lg"
@@ -568,28 +577,28 @@ function MainApp() {
               Skip to main content
             </a>
           )}
-          {!adminMode && <div className={`seasonal-wash seasonal-wash--${getCurrentSeason()}`} />}
-          {!adminMode && (
+          {!bareMode && <div className={`seasonal-wash seasonal-wash--${getCurrentSeason()}`} />}
+          {!bareMode && (
             <Suspense fallback={null}>
               <MycelialBackground />
               <AnimationLayer />
             </Suspense>
           )}
-          {!adminMode && <AMABanner />}
-          {!adminMode && <Navigation />}
+          {!bareMode && <AMABanner />}
+          {!bareMode && <Navigation />}
           <main
             id="main-content"
             className={
               adminMode && location === "/admin"
                 ? "h-[100dvh] overflow-hidden p-0"
-                : adminMode
+                : bareMode
                 ? "p-0"
                 : "pb-[calc(5rem_+_env(safe-area-inset-bottom,0px))]"
             }
           >
             <Router />
           </main>
-          {!adminMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (
+          {!bareMode && !location.startsWith("/bionomics") && !location.startsWith("/economy") && !location.startsWith("/admin") && (
             location === "/" || location.startsWith("/play") || location.startsWith("/quest") || location.startsWith("/game") || location.startsWith("/local-food")
           ) && (
             <GameHookBanner
@@ -602,24 +611,24 @@ function MainApp() {
               }
             />
           )}
-          {!adminMode && <SiteFooter />}
+          {!bareMode && <SiteFooter />}
           {!adminMode && <Suspense fallback={null}><CookieConsent /></Suspense>}
           <AnalyticsLoader />
-          {!adminMode && <ScrollToTop />}
-          {!adminMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
-          {!adminMode && <AppInner />}
+          {!bareMode && <ScrollToTop />}
+          {!bareMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
+          {!bareMode && <AppInner />}
           <StripStaleAuthErrorParams />
-          {!adminMode && <Suspense fallback={null}><ExitIntentCapture /></Suspense>}
-          {!adminMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
-          {!adminMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}
-          {!adminMode && <WizardRadialMenu />}
-          {!adminMode && <HarvestCaptureModal />}
-          {!adminMode && <MobileMoreMenu />}
+          {!bareMode && <Suspense fallback={null}><ExitIntentCapture /></Suspense>}
+          {!bareMode && <Suspense fallback={null}><CommandPalette /></Suspense>}
+          {!bareMode && <Suspense fallback={null}><ShortcutPill onOpen={() => window.dispatchEvent(new CustomEvent("open-command-palette"))} /></Suspense>}
+          {!bareMode && <WizardRadialMenu />}
+          {!bareMode && <HarvestCaptureModal />}
+          {!bareMode && <MobileMoreMenu />}
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
-          {!adminMode && <OnboardingController />}
+          {!bareMode && <OnboardingController />}
           {/* Not on the private offer page: someone opening their offer from an
               email sees it first, not a first-visit welcome over it. */}
-          {!adminMode && location !== "/offer" && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
+          {!bareMode && location !== "/offer" && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>

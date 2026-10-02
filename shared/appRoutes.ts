@@ -144,6 +144,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/schedule",
   "/season-schedule",
   "/season2",
+  "/season2/week/:week",
   "/seasons",
   "/series/:season",
   "/settings/notifications",

@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { copyToClipboard } from "@/lib/clipboard";
 import { useParams, Link } from 'wouter';
+import { SessionBoardLink } from "@/components/SessionBoardLink";
 import {
   Calendar,
   Clock,
@@ -180,6 +181,11 @@ export default function EventDetail() {
               <h1 className="text-3xl md:text-4xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 {event.title}
               </h1>
+              {event.season === "Season 2" && event.episodeNumber ? (
+                <div className="mb-3">
+                  <SessionBoardLink week={event.episodeNumber} status={event.status} />
+                </div>
+              ) : null}
 
               {/* Date/time */}
               <div className="flex flex-wrap items-center gap-4 text-white/60 mb-4">

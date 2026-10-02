@@ -59,6 +59,7 @@ import {
   sessionTopic,
   SESSION_TIME_ZONE,
 } from "@/lib/seasonEvents";
+import { SessionBoardLink } from "@/components/SessionBoardLink";
 import {
   eventFeed,
   siteJoinUrl,
@@ -588,6 +589,11 @@ export default function Schedule() {
                     </button>
                   </div>
                 </div>
+                {(event as any).season === "Season 2" && (event as any).episodeNumber ? (
+                  <div className="px-6 -mt-3 pb-3">
+                    <SessionBoardLink week={(event as any).episodeNumber} status={(event as any).status} />
+                  </div>
+                ) : null}
                 
                 {effectiveExpanded === event.id && (
                   isPast ? (

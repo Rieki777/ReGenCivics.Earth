@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-01 (seasons): A live session board for every Season 2 week, starting with Week 2
+
+- **Every week from 2 to 13 has a board** at `/season2/week/:week` (ADR-68), linked under its week on /season2, /season-schedule, /seasons, /schedule and the episode's event page. Rye shows it on screen; everyone else opens it on their own device and types in, no account needed.
+- **Week 2, Incubator Overview, is the first** (Wednesday, October 7): welcome with the year wheel and the notes projects asked us to cover, a shared breath every screen follows, the open incubator, Building in Village OS (what Amora runs today, how each design week lands in the tool, and the crowdpool at the solstice that fills each Game's roster), the project circle with a share timer, a harvest with three votes each, a game canvas seeded from the chosen opportunities, the roundtables ahead with hands raised, and a close that tallies what the room made.
+- **Kept as the Season's memory** (migration 0283): projects, where each one is, pain points, growth opportunities, votes, quests drafted and next moves, per week. A facilitator (admin, Lantern-Keeper, Season Facilitator or Incubator Guide) runs the room and closes the board as the week's record.
+- Tests: 20 pure (stages, the plan filling two hours, actions, the breath, cleaners), 6 router gates, 4 against a real database.
+- Next: feed chosen opportunities into the game's quest suggestions, and show a project's board history on its project page through the application link.
+
 ## 2026-10-01 (seasons): Sign up for the season on the Season Schedule; Season 2 takes rolling applications until the crowdpooling round opens
 
 - **The vote decided**: at 5:03pm Pacific on October 1, Season Two moved to Wednesdays at 10am Pacific (Week 2 is Wednesday, October 7), and the decision email reached the Season's reminder list.

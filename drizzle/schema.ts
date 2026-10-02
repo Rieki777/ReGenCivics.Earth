@@ -6638,3 +6638,93 @@ export const interopProposals = mysqlTable("interopProposals", {
   index("interop_proposals_status_idx").on(table.status),
 ]));
 export type InteropProposal = typeof interopProposals.$inferSelect;
+
+/**
+ * Session boards (shared/sessionBoard.ts, migration 0283, ADR-68): one live
+ * board per weekly Season episode, kept as the Season's memory. `state` is the
+ * facilitator's part as JSON text, read through normalizeBoardState. `version`
+ * goes up on every write to the board or anything on it.
+ */
+export const sessionBoards = mysqlTable("session_boards", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Matches events.season: "Season 2". */
+  season: varchar("season", { length: 50 }).notNull(),
+  week: int("week").notNull(),
+  state: text("state"),
+  /** "open" while people can add to it, "closed" once it is the week's record. */
+  status: varchar("status", { length: 16 }).default("open").notNull(),
+  version: int("version").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("session_boards_week_idx").on(table.season, table.week),
+]));
+export type SessionBoard = typeof sessionBoards.$inferSelect;
+
+/** A land project in a board's circle (migration 0283). */
+export const sessionBoardProjects = mysqlTable("session_board_projects", {
+  id: int("id").autoincrement().primaryKey(),
+  boardId: int("boardId").notNull(),
+  name: varchar("name", { length: 120 }).notNull(),
+  place: varchar("place", { length: 120 }),
+  /** http or https only (cleanRepoUrl). */
+  url: varchar("url", { length: 500 }),
+  /** PROJECT_PHASES key. */
+  phase: varchar("phase", { length: 16 }),
+  whereNow: text("whereNow"),
+  /** Comma list of crowdpool readiness keys in place. */
+  ready: varchar("ready", { length: 200 }),
+  nextMove: varchar("nextMove", { length: 300 }),
+  shared: tinyint("shared").default(0).notNull(),
+  /** applications.id, once a facilitator confirms the match. */
+  applicationId: int("applicationId"),
+  /** boardIdentity(): "u:<userId>" or "k:<guest browser key>". Never sent to the page. */
+  authorKey: varchar("authorKey", { length: 80 }),
+  displayName: varchar("displayName", { length: 80 }),
+  hidden: tinyint("hidden").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("session_board_projects_board_idx").on(table.boardId),
+]));
+export type SessionBoardProject = typeof sessionBoardProjects.$inferSelect;
+
+/** Words, pain points, opportunities and game notes on a board (migration 0283). */
+export const sessionBoardItems = mysqlTable("session_board_items", {
+  id: int("id").autoincrement().primaryKey(),
+  boardId: int("boardId").notNull(),
+  /** ITEM_KINDS: arrive, leave, pain, opp, game. */
+  kind: varchar("kind", { length: 16 }).notNull(),
+  text: varchar("text", { length: 400 }).notNull(),
+  projectId: int("projectId"),
+  /** GAME_BLOCKS key, for game notes. */
+  block: varchar("block", { length: 16 }),
+  /** OPPORTUNITY_THEMES key. */
+  theme: varchar("theme", { length: 16 }),
+  chosen: tinyint("chosen").default(0).notNull(),
+  /** Votes called out in the room or the chat, counted by the facilitator. */
+  roomVotes: int("roomVotes").default(0).notNull(),
+  /** The opportunity a quest was made from. */
+  fromItemId: int("fromItemId"),
+  authorKey: varchar("authorKey", { length: 80 }),
+  displayName: varchar("displayName", { length: 80 }),
+  hidden: tinyint("hidden").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("session_board_items_board_idx").on(table.boardId),
+]));
+export type SessionBoardItem = typeof sessionBoardItems.$inferSelect;
+
+/** One vote on an opportunity, or one hand for a coming week (migration 0283). */
+export const sessionBoardVotes = mysqlTable("session_board_votes", {
+  id: int("id").autoincrement().primaryKey(),
+  boardId: int("boardId").notNull(),
+  /** voteTarget: "item:<id>" or "week:<n>". */
+  target: varchar("target", { length: 32 }).notNull(),
+  voterKey: varchar("voterKey", { length: 80 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("session_board_votes_once_idx").on(table.boardId, table.target, table.voterKey),
+  index("session_board_votes_voter_idx").on(table.boardId, table.voterKey),
+]));
+export type SessionBoardVote = typeof sessionBoardVotes.$inferSelect;

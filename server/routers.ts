@@ -29,6 +29,7 @@ import { eventsRouter } from "./routes/events";
 import { interopSessionsRouter } from "./routes/interopSessions";
 import { interopSheetsRouter } from "./routes/interopSheets";
 import { seasonScheduleRouter } from "./routes/seasonSchedule";
+import { sessionBoardRouter } from "./routes/sessionBoard";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
@@ -197,6 +198,9 @@ export const appRouter = router({
 
   // Season Schedule: the land projects' vote on each Season's weekly time
   seasonSchedule: seasonScheduleRouter,
+
+  // Session boards: the live board for each weekly Season episode (ADR-68)
+  sessionBoard: sessionBoardRouter,
 
   // Events + per-event reminders
   events: eventsRouter,

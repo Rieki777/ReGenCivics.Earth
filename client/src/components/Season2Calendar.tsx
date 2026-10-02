@@ -34,6 +34,7 @@ import {
 } from "@/lib/calendarLinks";
 import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
+import { SessionBoardLink } from "@/components/SessionBoardLink";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -85,6 +86,7 @@ export function Season2Calendar() {
         return {
           id: s.week,
           title,
+          status: s.status,
           start: s.start,
           ...season2EpisodeCalendarLinks({
             week: s.week,
@@ -256,6 +258,7 @@ export function Season2Calendar() {
                 appleUrl={ep.appleCalendarUrl}
                 appleDownload={`${ep.title.replace(/\s+/g, "-")}.ics`}
               />
+              <SessionBoardLink week={ep.id} status={ep.status} className="mt-2" />
             </div>
           ))}
         </div>

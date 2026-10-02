@@ -47,6 +47,7 @@ import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { SEASON_LOOK } from "@/lib/seasonLook";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
+import { SessionBoardLink } from "@/components/SessionBoardLink";
 import {
   SESSION_DURATION_HOURS,
   SESSION_START_HOUR_PT,
@@ -553,6 +554,7 @@ export default function Seasons() {
                             {isNow && <span className="text-xs font-semibold" style={{ color: WINTER.color }}>This week</span>}
                           </div>
                           <p className="mt-1 text-sm text-white/75 leading-relaxed safe-prose">{w.description}</p>
+                          <SessionBoardLink week={w.week} status={isNow ? "live" : w.end && w.end.getTime() < Date.now() ? "completed" : undefined} />
                         </div>
                       </div>
                     </li>

@@ -347,6 +347,20 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Season notes**. What a project wants to talk about next, and feedback on the facilitation, sent from `/season-schedule#notes`. Filed against the next session and anonymous unless signed. The writer chooses who sees it: only the organizers (the default, read in Admin, Events, Season Schedule panel) or the whole cohort, where it joins the **shared agenda** on the page. An admin can take a shared note down but never publish a private one.
 
+### Session boards (ADR-68)
+
+**Session board**. The live board for one weekly Season episode, at `/season2/week/:week` (weeks 2 to 13), linked under its week wherever the Season's schedule is listed. Shown on the facilitator's screen and open on everyone's own device at once. What lands on it stays as the week's record: the Season's memory. Defined in `shared/sessionBoard.ts`.
+
+**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has all nine; other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
+
+**Project phase** (on a board). Where a project in the circle says it is: Seed, Root, Sprout, Grow or Fruit. Self-described in the room; not the application's `projectStatus`.
+
+**Facilitator** (of a board). Whoever runs the room: a site admin, or an active holder of the Lantern-Keeper (`design-season-organizer`), Season Facilitator or Incubator Guide role. Moves the stage for everyone, runs the clocks, the breath and the share timer, curates notes, and closes the board.
+
+**Room votes**. Votes for an opportunity called out in the call or the chat, counted on the board by the facilitator and added to the votes people cast on the board themselves (three each).
+
+**Village OS**. The village coordination platform each project's Game runs on; Amora runs it at amora.regencivics.earth. Written "Village OS" in prose, `village-os` in code.
+
 ### Project pages and campaign tools (ADR-60, ADR-61)
 
 **Project page**. The public page for one land project at `/project/:key`. It shows the project's live campaign front and centre, its past campaigns, and, to project stewards only, the campaign tools. The key is `{applicationId}-{slug}` for a project with an application and `c{campaignId}-{slug}` for a campaign with none (demos, play-launched drafts). The slug is decoration. Code: `shared/projectKey.ts`.

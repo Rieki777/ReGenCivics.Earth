@@ -20,6 +20,7 @@ import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { BackButton } from "@/components/BackButton";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { SessionBoardLink } from "@/components/SessionBoardLink";
 import { LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
 import { CALENDAR_FEEDS, formatLocalDate, formatLocalDateShort, formatLocalTime, formatStartWithReference } from "@/lib/calendarLinks";
 import { trpc } from "@/lib/trpc";
@@ -630,7 +631,10 @@ export default function SeasonSchedule() {
                 <ol className="divide-y divide-white/10 mb-6">
                   {upcoming.map((s) => (
                     <li key={s.week} className="py-3 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
-                      <span className="text-white font-medium">{s.title ?? `Week ${s.week}`}</span>
+                      <span className="flex flex-col">
+                        <span className="text-white font-medium">{s.title ?? `Week ${s.week}`}</span>
+                        <SessionBoardLink week={s.week} status={s.status} />
+                      </span>
                       <span className="text-white/65 text-sm tabular-nums sm:text-right">
                         {formatLocalDate(s.start)}, {formatStartWithReference(s.start)}
                       </span>
