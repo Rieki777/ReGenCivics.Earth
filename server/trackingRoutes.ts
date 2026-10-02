@@ -4,7 +4,7 @@
  */
 
 import { Express, Request, Response } from "express";
-import { recordEmailOpen, recordEmailClick, isInternalRedirectTarget, verifyTrackedUrl } from "./emailTracking";
+import { recordEmailOpen, recordEmailClick, isInternalRedirectTarget, publicEmailRedirectTarget, verifyTrackedUrl } from "./emailTracking";
 
 /**
  * Register tracking routes with Express app
@@ -85,6 +85,6 @@ export function registerTrackingRoutes(app: Express): void {
       // Tracking failure never blocks the (already validated) redirect
     }
 
-    res.redirect(302, targetUrl);
+    res.redirect(302, publicEmailRedirectTarget(targetUrl));
   });
 }

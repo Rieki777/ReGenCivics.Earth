@@ -1,3 +1,5 @@
+import { canonicalPublicBaseUrl } from "../../shared/siteContext";
+
 // ── Required env var validation ──────────────────────────────────────────────
 // Fail fast at startup with a clear error rather than silently using empty
 // strings that cause cryptic runtime failures mid-request.
@@ -41,8 +43,9 @@ export const ENV = {
   appleTeamId: process.env.APPLE_TEAM_ID ?? "",
   appleKeyId: process.env.APPLE_KEY_ID ?? "",
   applePrivateKey: process.env.APPLE_PRIVATE_KEY ?? "",
-  // App URL
-  appUrl: process.env.APP_URL ?? "http://localhost:3000",
+  // App URL. OAuth callbacks and email preference links use this.
+  // regencivics.com (bare or www) is rewritten to https://regencivics.earth.
+  appUrl: canonicalPublicBaseUrl(process.env.APP_URL, "http://localhost:3000"),
   // AI. OPENROUTER_API_KEY is the PRIMARY LLM path (Anthropic-compatible
   // endpoint, per-task model tiers below); ANTHROPIC_API_KEY is the
   // direct-to-Anthropic fallback when OpenRouter errors or has no key.

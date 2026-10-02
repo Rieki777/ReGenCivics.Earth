@@ -1,7 +1,8 @@
 // Runs weekly: pulls top forum threads by engagement, generates digest, saves to DB, sends to subscribers
 import { invokeLLM } from "../_core/llm";
 import * as db from "../db";
-import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { sendEmail, getAppBaseUrl } from "../_core/email";
+import { rewriteLegacySiteUrls } from "../../shared/siteContext";
 import { audienceForTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import {
@@ -60,6 +61,14 @@ function rotatePick<T>(arr: T[], n: number, weekOffset: number): T[] {
     result.push(arr[(start + i) % arr.length]);
   }
   return result;
+}
+
+/** Absolute link for the weekly community digest. Retired hosts become .earth. */
+export function digestPublicUrl(pathWithQuery: string): string {
+  if (/^https?:\/\//i.test(pathWithQuery)) return rewriteLegacySiteUrls(pathWithQuery);
+  const base = getAppBaseUrl().replace(/\/$/, "");
+  const path = pathWithQuery.startsWith("/") ? pathWithQuery : `/${pathWithQuery}`;
+  return `${base}${path}`;
 }
 
 /** ISO week number, used to rotate content so each digest is fresh. */
@@ -146,15 +155,14 @@ export async function runDigestJob() {
   }
 }
 
-async function sendDigestEmails(
-  posts: { title: string; content: string; replyCount: number; id?: number }[],
-  weekNum: number
-) {
-  try {
-    const subscribers = await audienceForTopic("seasonal");
-    if (subscribers.length === 0) return;
-
-    const weekLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+export function buildCommunityDigestHtml(input: {
+  posts: { title: string; content: string; replyCount: number; id?: number }[];
+  weekNum: number;
+  weekLabel: string;
+  assemblySection?: string;
+}): string {
+  const { posts, weekNum, weekLabel } = input;
+  const assemblySection = input.assemblySection ?? "";
     const hasLivePosts = posts.length >= 3;
 
     // ── Forum section ─────────────────────────────────────────────────────────
@@ -162,9 +170,11 @@ async function sendDigestEmails(
     if (hasLivePosts) {
       const postRows = posts.map((p, i) => {
         const excerpt = p.content.replace(/<[^>]+>/g, '').slice(0, 180).trim();
-        const postUrl = p.id
-          ? `${APP_BASE_URL}/community/post/${p.id}?utm_source=email&utm_medium=digest&utm_campaign=weekly`
-          : `${APP_BASE_URL}/community?utm_source=email&utm_medium=digest&utm_campaign=weekly`;
+        const postUrl = digestPublicUrl(
+          p.id
+            ? `/community/post/${p.id}?utm_source=email&utm_medium=digest&utm_campaign=weekly`
+            : `/community?utm_source=email&utm_medium=digest&utm_campaign=weekly`,
+        );
         return `
           <tr>
             <td style="padding: 16px 0; border-bottom: 1px solid #e8e4de;">
@@ -179,7 +189,7 @@ async function sendDigestEmails(
         <h2 style="color: #1a472a; font-size: 18px; margin: 0 0 16px;">What the community is talking about</h2>
         <table style="width: 100%; border-collapse: collapse;">${postRows}</table>
         <div style="text-align: center; margin-top: 28px;">
-          <a href="${APP_BASE_URL}/community?utm_source=email&utm_medium=digest&utm_campaign=weekly"
+          <a href="${digestPublicUrl("/community?utm_source=email&utm_medium=digest&utm_campaign=weekly")}"
              style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
             Join the conversation
           </a>
@@ -188,7 +198,7 @@ async function sendDigestEmails(
       // Not enough live forum activity: fall back to blog suggestions
       const blogPicks = rotatePick(BLOG_HIGHLIGHTS, 3, weekNum);
       const blogRows = blogPicks.map(b => {
-        const url = `${APP_BASE_URL}${b.path ?? `/blog/${b.slug}`}?utm_source=email&utm_medium=digest&utm_campaign=weekly`;
+        const url = digestPublicUrl(`${b.path ?? `/blog/${b.slug}`}?utm_source=email&utm_medium=digest&utm_campaign=weekly`);
         return `
           <tr>
             <td style="padding: 14px 0; border-bottom: 1px solid #e8e4de;">
@@ -202,13 +212,68 @@ async function sendDigestEmails(
         <p style="color: #4a5568; font-size: 14px; margin: 0 0 16px; line-height: 1.6;">The community has been quiet this week. Here are three pieces worth reading while things warm back up.</p>
         <table style="width: 100%; border-collapse: collapse;">${blogRows}</table>
         <div style="text-align: center; margin-top: 28px;">
-          <a href="${APP_BASE_URL}/community?utm_source=email&utm_medium=digest&utm_campaign=weekly"
+          <a href="${digestPublicUrl("/community?utm_source=email&utm_medium=digest&utm_campaign=weekly")}"
              style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
             Start a conversation
           </a>
         </div>`;
     }
 
+    // ── "Have you seen this?" section ─────────────────────────────────────────
+    const sitePick = rotatePick(SITE_HIGHLIGHTS, 1, weekNum + 3)[0];
+    const sitePickUrl = digestPublicUrl(`${sitePick.url}?utm_source=email&utm_medium=digest&utm_campaign=site-explore`);
+
+    const siteSection = `
+      <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
+        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #7dd87d; margin: 0 0 6px; font-weight: bold;">Worth exploring</p>
+        <p style="font-size: 15px; font-weight: 600; color: #1a472a; margin: 0 0 6px;">Have you seen <a href="${sitePickUrl}" style="color: #1a472a;">${sitePick.label}</a>?</p>
+        <p style="font-size: 13px; color: #4a5568; margin: 0 0 12px; line-height: 1.6;">${sitePick.desc}</p>
+        <a href="${sitePickUrl}" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Take a look</a>
+      </div>`;
+
+    // ── Connect section ───────────────────────────────────────────────────────
+    const connectSection = `
+      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e4de;">
+        <p style="font-size: 13px; color: #1a472a; font-weight: bold; margin: 0 0 10px;">Connect with the community</p>
+        <p style="margin: 0; font-size: 13px; line-height: 2; color: #4a5568;">
+          <a href="${digestPublicUrl("/community?utm_source=email&utm_medium=digest")}" style="color: #1a472a; text-decoration: none; font-weight: 600;">Community Forum</a> &nbsp;|&nbsp;
+          <a href="${HYLO_SEEDS_URL}" style="color: #1a472a; text-decoration: none; font-weight: 600;">Hylo</a> &nbsp;|&nbsp;
+          <a href="${HOLOS_REGEN_CIVICS_URL}" style="color: #1a472a; text-decoration: none; font-weight: 600;">Holos</a> &nbsp;|&nbsp;
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #1a472a; text-decoration: none;">WhatsApp</a> &nbsp;|&nbsp;
+          <a href="${DISCORD_INVITE_URL}" style="color: #1a472a; text-decoration: none;">Discord</a> &nbsp;|&nbsp;
+          <a href="${YOUTUBE_CHANNEL_URL}" style="color: #1a472a; text-decoration: none;">YouTube</a>
+        </p>
+      </div>`;
+
+  const bodyHtml = rewriteLegacySiteUrls(`
+      <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
+        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 32px 40px; text-align: center;">
+          <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Weekly Round-Up · ${weekLabel}</p>
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-family: Georgia, serif;">ReGen Civics Community Update</h1>
+        </div>
+        <div style="padding: 32px 40px;">
+          ${mainSection}
+          ${assemblySection}
+          ${siteSection}
+          ${connectSection}
+        </div>
+        <div style="padding: 24px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
+          {{PREFS_FOOTER}}
+        </div>
+      </div>`);
+
+  return bodyHtml;
+}
+
+async function sendDigestEmails(
+  posts: { title: string; content: string; replyCount: number; id?: number }[],
+  weekNum: number
+) {
+  try {
+    const subscribers = await audienceForTopic("seasonal");
+    if (subscribers.length === 0) return;
+
+    const weekLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     // ── Assembly section (weekly governance movement) ────────────────────────
     let assemblySection = "";
     try {
@@ -237,7 +302,7 @@ async function sendDigestEmails(
       <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
         <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #7dd87d; margin: 0 0 6px; font-weight: bold;">The Assembly</p>
         <p style="font-size: 14px; color: #1a472a; margin: 0 0 12px; line-height: 1.6;">${parts.join(" · ")}</p>
-        <a href="${APP_BASE_URL}/assembly?utm_source=email&utm_medium=digest&utm_campaign=weekly" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Visit the Assembly</a>
+        <a href="${digestPublicUrl("/assembly?utm_source=email&utm_medium=digest&utm_campaign=weekly")}" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Visit the Assembly</a>
       </div>`;
         }
       }
@@ -245,48 +310,12 @@ async function sendDigestEmails(
       console.error("[DigestJob] assembly section failed", err);
     }
 
-    // ── "Have you seen this?" section ─────────────────────────────────────────
-    const sitePick = rotatePick(SITE_HIGHLIGHTS, 1, weekNum + 3)[0];
-    const sitePickUrl = `${APP_BASE_URL}${sitePick.url}?utm_source=email&utm_medium=digest&utm_campaign=site-explore`;
-
-    const siteSection = `
-      <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
-        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #7dd87d; margin: 0 0 6px; font-weight: bold;">Worth exploring</p>
-        <p style="font-size: 15px; font-weight: 600; color: #1a472a; margin: 0 0 6px;">Have you seen <a href="${sitePickUrl}" style="color: #1a472a;">${sitePick.label}</a>?</p>
-        <p style="font-size: 13px; color: #4a5568; margin: 0 0 12px; line-height: 1.6;">${sitePick.desc}</p>
-        <a href="${sitePickUrl}" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Take a look</a>
-      </div>`;
-
-    // ── Connect section ───────────────────────────────────────────────────────
-    const connectSection = `
-      <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e4de;">
-        <p style="font-size: 13px; color: #1a472a; font-weight: bold; margin: 0 0 10px;">Connect with the community</p>
-        <p style="margin: 0; font-size: 13px; line-height: 2; color: #4a5568;">
-          <a href="${APP_BASE_URL}/community?utm_source=email&utm_medium=digest" style="color: #1a472a; text-decoration: none; font-weight: 600;">Community Forum</a> &nbsp;|&nbsp;
-          <a href="${HYLO_SEEDS_URL}" style="color: #1a472a; text-decoration: none; font-weight: 600;">Hylo</a> &nbsp;|&nbsp;
-          <a href="${HOLOS_REGEN_CIVICS_URL}" style="color: #1a472a; text-decoration: none; font-weight: 600;">Holos</a> &nbsp;|&nbsp;
-          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #1a472a; text-decoration: none;">WhatsApp</a> &nbsp;|&nbsp;
-          <a href="${DISCORD_INVITE_URL}" style="color: #1a472a; text-decoration: none;">Discord</a> &nbsp;|&nbsp;
-          <a href="${YOUTUBE_CHANNEL_URL}" style="color: #1a472a; text-decoration: none;">YouTube</a>
-        </p>
-      </div>`;
-
-    const bodyHtml = `
-      <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
-        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 32px 40px; text-align: center;">
-          <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Weekly Round-Up · ${weekLabel}</p>
-          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-family: Georgia, serif;">ReGen Civics Community Update</h1>
-        </div>
-        <div style="padding: 32px 40px;">
-          ${mainSection}
-          ${assemblySection}
-          ${siteSection}
-          ${connectSection}
-        </div>
-        <div style="padding: 24px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
-          {{PREFS_FOOTER}}
-        </div>
-      </div>`;
+    const bodyHtml = buildCommunityDigestHtml({
+      posts,
+      weekNum,
+      weekLabel,
+      assemblySection,
+    });
 
     // Send in batches of 20 to avoid rate limits
     const BATCH = 20;

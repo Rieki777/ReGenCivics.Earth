@@ -185,10 +185,68 @@ export const SITE_CANONICAL_PAGES: readonly SitePage[] = [
   },
 ] as const;
 
+/** Bare apex and www on the retired domain. Subdomains are left alone. */
+const LEGACY_SITE_HOST = /^(?:www\.)?regencivics\.com$/i;
+
+/**
+ * http(s) URLs whose host is the retired apex. The next character must not
+ * continue the hostname (`regencivics.com.evil.com` stays put).
+ */
+const LEGACY_SITE_URL = /https?:\/\/(?:www\.)?regencivics\.com(?![a-z0-9.-])/gi;
+
+export function isLegacyRegenCivicsHost(hostname: string): boolean {
+  return LEGACY_SITE_HOST.test(hostname.trim());
+}
+
+/**
+ * Public site origin for links.
+ * `regencivics.com` and `www.regencivics.com` become SITE_ORIGIN.
+ * Any other http(s) origin is kept (localhost, a preview host).
+ * Empty or unparseable input returns `fallback`.
+ */
+export function canonicalPublicBaseUrl(
+  configured?: string | null,
+  fallback: string = SITE_ORIGIN,
+): string {
+  const raw = (configured ?? "").trim();
+  if (!raw) return fallback;
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return fallback;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return fallback;
+  if (isLegacyRegenCivicsHost(url.hostname)) return SITE_ORIGIN;
+  return url.origin;
+}
+
+/**
+ * First configured base among APP_BASE_URL, APP_URL, and VITE_APP_URL,
+ * with the retired domain rewritten to SITE_ORIGIN.
+ */
+export function configuredPublicBaseUrl(sources: {
+  appBaseUrl?: string | null;
+  appUrl?: string | null;
+  viteAppUrl?: string | null;
+}): string {
+  const configured =
+    sources.appBaseUrl?.trim() ||
+    sources.appUrl?.trim() ||
+    sources.viteAppUrl?.trim() ||
+    "";
+  return canonicalPublicBaseUrl(configured, SITE_ORIGIN);
+}
+
+/** Replace retired-domain links in email HTML or plain text. */
+export function rewriteLegacySiteUrls(input: string): string {
+  return input.replace(LEGACY_SITE_URL, SITE_ORIGIN);
+}
+
 /** Join apex origin and a path that may or may not start with `/`. */
 export function absoluteSiteUrl(path: string): string {
   const p = (path || "/").trim();
-  if (/^https?:\/\//i.test(p)) return p;
+  if (/^https?:\/\//i.test(p)) return rewriteLegacySiteUrls(p);
   if (!p || p === "/") return SITE_ORIGIN;
   const normalized = p.startsWith("/") ? p : `/${p}`;
   return `${SITE_ORIGIN}${normalized}`;

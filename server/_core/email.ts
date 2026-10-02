@@ -9,6 +9,7 @@ import { logger } from './logger';
 import { signTrackedUrl } from '../emailTracking';
 import { COOP } from '../../shared/fund';
 import { decodeBasicEntities, textForEmail } from '../../shared/htmlText';
+import { configuredPublicBaseUrl, rewriteLegacySiteUrls } from '../../shared/siteContext';
 import {
   WHATSAPP_COMMUNITY_URL,
   DISCORD_INVITE_URL,
@@ -34,29 +35,35 @@ function getResend(): Resend {
 const SENDER_EMAIL = 'ReGen Civics <team@regencivics.earth>';
 const SENDER_NOREPLY = 'ReGen Civics <noreply@regencivics.earth>';
 
-// Base URL for tracking (use environment variable in production)
-const BASE_URL = process.env.VITE_APP_URL || 'https://regencivics.earth';
-
 /**
- * Public base URL used when constructing deep links in notification emails.
- * Set APP_BASE_URL in your environment to override the default.
- *
- * Usage: `import { APP_BASE_URL } from '../_core/email'`
- * Then embed links as: `${APP_BASE_URL}/community/post/123`
+ * Public base URL for links in outbound mail.
+ * Reads APP_BASE_URL, then APP_URL, then VITE_APP_URL, at call time.
+ * regencivics.com and www.regencivics.com are rewritten to https://regencivics.earth
+ * so a stale Railway value cannot put the old domain in member mail.
  */
-export const APP_BASE_URL =
-  process.env.APP_BASE_URL || 'https://regencivics.earth';
+export function getAppBaseUrl(): string {
+  return configuredPublicBaseUrl({
+    appBaseUrl: process.env.APP_BASE_URL,
+    appUrl: process.env.APP_URL,
+    viteAppUrl: process.env.VITE_APP_URL,
+  });
+}
 
 /**
- * Prepend APP_BASE_URL to a relative path if it is not already an absolute URL.
- * Absolute URLs (starting with http:// or https://) are returned unchanged.
- *
- * @param path - A relative path like `/community/post/123` or an absolute URL.
- * @returns A full URL string.
+ * Normalized once at process start for callers that interpolate APP_BASE_URL.
+ * Prefer getAppBaseUrl() when building a link so a test (or a late env load)
+ * sees the current value. Both paths rewrite the retired domain.
+ */
+export const APP_BASE_URL = getAppBaseUrl();
+
+/**
+ * Prepend the public base to a relative path.
+ * Absolute URLs are returned unchanged, except retired-domain links, which
+ * are rewritten to https://regencivics.earth.
  */
 export function toAbsoluteUrl(path: string, utmParams?: { campaign?: string; medium?: string }): string {
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  const base = APP_BASE_URL.replace(/\/$/, '');
+  if (path.startsWith('http://') || path.startsWith('https://')) return rewriteLegacySiteUrls(path);
+  const base = getAppBaseUrl().replace(/\/$/, '');
   const url = new URL(path, base);
   url.searchParams.set('utm_source', 'email');
   url.searchParams.set('utm_medium', utmParams?.medium ?? 'transactional');
@@ -203,7 +210,7 @@ function wrapWithBrandedTemplate(content: string): string {
 function addTrackingPixel(html: string, emailLogId?: number): string {
   if (!emailLogId) return html;
   
-  const trackingPixelUrl = `${BASE_URL}/api/track/open/${emailLogId}`;
+  const trackingPixelUrl = `${getAppBaseUrl()}/api/track/open/${emailLogId}`;
   return html + `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none;" alt="" />`;
 }
 
@@ -229,10 +236,11 @@ export function wrapLinksWithTracking(html: string, emailLogId?: number): string
   return html.replace(
     /href="(https?:\/\/[^"]+)"/g,
     (match, url) => {
-      if (isPrivateOfferLink(url)) return match;
-      const sig = signTrackedUrl(emailLogId, url);
+      const destination = rewriteLegacySiteUrls(url);
+      if (isPrivateOfferLink(destination)) return match;
+      const sig = signTrackedUrl(emailLogId, destination);
       const sigParam = sig ? `&sig=${sig}` : "";
-      const trackedUrl = `${BASE_URL}/api/track/click/${emailLogId}?url=${encodeURIComponent(url)}${sigParam}`;
+      const trackedUrl = `${getAppBaseUrl()}/api/track/click/${emailLogId}?url=${encodeURIComponent(destination)}${sigParam}`;
       return `href="${trackedUrl}"`;
     }
   );
@@ -374,7 +382,9 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     void params.replyTo;
     
     // Wrap content with branded template unless the caller already did.
-    let processedHtml = skipBrandedWrap ? html : wrapWithBrandedTemplate(html);
+    // Then rewrite any retired-domain links still sitting in the body
+    // (stored drafts, forum excerpts, a blog URL baked into markdown).
+    let processedHtml = rewriteLegacySiteUrls(skipBrandedWrap ? html : wrapWithBrandedTemplate(html));
     
     // Add tracking if emailLogId is provided
     if (emailLogId) {
