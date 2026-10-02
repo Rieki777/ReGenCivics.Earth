@@ -1,5 +1,6 @@
-// Runs weekly: pulls top forum threads by engagement, generates digest, saves to DB, sends to subscribers
-import { invokeLLM } from "../_core/llm";
+// Runs weekly: pulls top forum threads by engagement, sends the digest, then saves the week.
+// The letter is built from forum excerpts or the rotating blog list. The archive
+// row stores a fixed note. It does not call a model.
 import * as db from "../db";
 import { sendEmail, getAppBaseUrl, msUntilStartupEmailGuardEnds } from "../_core/email";
 import { providerAccepted } from "../lib/emailAttempt";
@@ -21,6 +22,8 @@ const DIGEST_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export const DIGEST_PARTIAL_RETRY_MS = 10 * 60 * 1000;
 export const DIGEST_HELD_RETRY_MS = 60 * 60 * 1000;
 export const WEEKLY_DIGEST_TEMPLATE = "weekly_digest";
+/** Stored on digests.contentMd. The email does not render this string. */
+export const DIGEST_ARCHIVE_NOTE = "(Blog edition. See the email for featured reading.)";
 
 export type DigestJobResult =
   | { status: "skipped_running" }
@@ -132,24 +135,6 @@ export async function runDigestJob(): Promise<DigestJobResult> {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    let digestContent = "";
-
-    if (threads.length >= 3) {
-      // Enough live activity: generate LLM digest from forum threads
-      const threadData = threads
-        .map(t => `Title: ${t.title}\nContent: ${t.content.slice(0, 300)}\nReplies: ${t.replyCount}`)
-        .join("\n\n---\n\n");
-
-      const prompt = `You are the ReGen Civics community curator. Review the following forum threads from the past week and write a short digest for the community. For each of the 3-5 most valuable threads, write: the thread title, a 2-sentence summary of what was discussed, and why it matters to regenerative work. Keep the tone warm, human, and forward-looking. No em-dashes. Plain language throughout.\n\n${threadData}`;
-
-      const response = await invokeLLM({ messages: [{ role: "user", content: prompt }], maxTokens: 800, task: "light" });
-      digestContent = (response as any).choices?.[0]?.message?.content ?? "";
-    }
-
-    if (!digestContent) {
-      digestContent = "(Blog edition. See the email for featured reading.)";
-    }
-
     const outcome = await sendDigestEmails(threads.slice(0, 5), weekNum);
     if (outcome.dropped > 0) {
       console.log(`[DigestJob] Partial send: ${outcome.accepted} accepted, ${outcome.dropped} not sent. Week stays due.`);
@@ -159,7 +144,7 @@ export async function runDigestJob(): Promise<DigestJobResult> {
     await db.saveDigest({
       periodStart: weekAgo.toISOString().split("T")[0],
       periodEnd: now.toISOString().split("T")[0],
-      contentMd: digestContent,
+      contentMd: DIGEST_ARCHIVE_NOTE,
     });
 
     console.log("[DigestJob] Digest generated and saved.");
