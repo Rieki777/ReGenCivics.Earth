@@ -17,10 +17,11 @@ import { sendEmail } from "../_core/email";
 import { providerAccepted } from "./emailAttempt";
 import { emailsAcceptedForInquiry } from "../emailTracking";
 import type { Event } from "../../drizzle/schema";
-import { managePreferencesUrl } from "./emailPrefs";
+import { buildPrefsToken, managePreferencesUrl } from "./emailPrefs";
 import {
   buildSignupReminderHtml,
   reminderMuteTopic,
+  reminderUnsubscribeUrl,
 } from "./eventReminderEmail";
 
 const log = logger("signup-reminder-blast");
@@ -67,6 +68,12 @@ export async function sendSignupReminderBlast(
       continue;
     }
     const preferencesUrl = await managePreferencesUrl(email, { mute });
+    const eventStopUrl = reminderUnsubscribeUrl(
+      email,
+      event.id,
+      "event_signup",
+      await buildPrefsToken(email),
+    );
     const html = buildSignupReminderHtml({
       title: event.title,
       startTime: event.startTime,
@@ -78,6 +85,7 @@ export async function sendSignupReminderBlast(
       zoomUrl: event.zoomUrl,
       offsetMinutes: opts.offsetMinutes,
       preferencesUrl,
+      eventStopUrl,
     });
     try {
       const result = await sendEmail({
