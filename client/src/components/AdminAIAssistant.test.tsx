@@ -7,7 +7,7 @@
  * in-panel note toggle once the panel is open.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import { AdminAIAssistant } from "./AdminAIAssistant";
 
 const mockUser = vi.fn();
@@ -87,6 +87,70 @@ describe("AdminAIAssistant FAB", () => {
     fireEvent.click(fab());
     expect(screen.getByTestId("dictation-button")).toBeTruthy();
     expect(screen.getByLabelText("Dictate message")).toBeTruthy();
+  });
+
+  it("fills the overview Ask input from dictation so send can enable", async () => {
+    class FakeSpeech {
+      continuous = false;
+      interimResults = false;
+      lang = "";
+      onresult: ((event: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0?: { transcript: string } }> }) => void) | null = null;
+      onerror: ((event: { error?: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+      started = false;
+      start() {
+        if (this.started) throw new Error("already started");
+        this.started = true;
+        FakeSpeech.latest = this;
+      }
+      stop() {
+        this.started = false;
+        this.onend?.();
+      }
+      abort() {
+        this.started = false;
+        this.onend?.();
+      }
+      static latest: FakeSpeech | null = null;
+    }
+    Object.defineProperty(window, "SpeechRecognition", {
+      configurable: true,
+      writable: true,
+      value: FakeSpeech,
+    });
+    FakeSpeech.latest = null;
+
+    try {
+      render(<AdminAIAssistant context={{ activeTab: "overview" }} />);
+      fireEvent.click(fab());
+      const field = screen.getByPlaceholderText("Ask anything about your admin data...") as HTMLTextAreaElement;
+      const send = screen.getByLabelText("Send message");
+      expect(field.value).toBe("");
+      expect(send.hasAttribute("disabled")).toBe(true);
+
+      fireEvent.change(field, { target: { value: "Hello" } });
+      field.focus();
+      field.setSelectionRange(5, 5);
+      field.dispatchEvent(new Event("select", { bubbles: true }));
+
+      const mic = screen.getByTestId("dictation-button");
+      await act(async () => {
+        fireEvent.pointerDown(mic);
+        fireEvent.pointerUp(mic);
+      });
+      expect(mic.getAttribute("data-listening")).toBe("true");
+
+      await act(async () => {
+        FakeSpeech.latest?.onresult?.({
+          resultIndex: 0,
+          results: [{ isFinal: false, 0: { transcript: "who needs follow-up" } }],
+        });
+      });
+      expect(field.value).toBe("Hello who needs follow-up");
+      expect(send.hasAttribute("disabled")).toBe(false);
+    } finally {
+      delete (window as Window & { SpeechRecognition?: unknown }).SpeechRecognition;
+    }
   });
 
   it("offers Harvest draft starters when viewing Broadcast", () => {

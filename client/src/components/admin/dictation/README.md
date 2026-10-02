@@ -17,6 +17,9 @@ const [text, setText] = useState("");
 
 That is the whole integration. `onChange` receives the next full string. The
 hook inserts at the caret (or appends) and never replaces the whole field.
+Interim speech is written into the field while Listening is on, so a send
+button can enable before the browser marks the phrase final. A pause keeps
+that text and the next phrase continues after it.
 
 ## Behavior
 
