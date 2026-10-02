@@ -19,7 +19,7 @@ import type { TrpcContext } from "../_core/context";
 import type { Campaign, CampaignContribution } from "../../drizzle/schema";
 import { sanitizeInput, sanitizeRichText } from "../_core/security";
 import { designCompanionTurn } from "../lib/crowdpool-coach";
-import { getGameVariable, recordScoreEvent, logActivityEvent } from "../game";
+import { getGameVariable, recordCrowdpoolScoreOnce, logActivityEvent } from "../game";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { generateImage } from "../_core/imageGeneration";
 import { nanoid } from "nanoid";
@@ -505,9 +505,12 @@ async function tellOwnerRouteToCheck(campaign: Pick<Campaign, 'title' | 'project
  *
  * Idempotent and self-healing. It claims only rows still owned by no one, and
  * back-creates only delivered rows with no playerContributionId yet, so
- * repeated calls (it runs on every login) never double-count. recordScoreEvent
- * is not idempotent, so it fires only after playerContributionId is set, which
- * removes the row from the candidate set on any later run.
+ * repeated calls (it runs on every login) never add a second Living Tree row.
+ * The Living Tree row is gated on playerContributionId; the score is gated on
+ * recordCrowdpoolScoreOnce (one score row per contribution, with migration
+ * 0283's unique key behind it). So a delivery made before the person had a
+ * profile, which deliveryPayoff already scored, scores once: this path adds
+ * the Living Tree row and finds the score already there.
  *
  * Called by campaigns.claimMyContributions and best-effort from the auth flow.
  */
@@ -562,17 +565,12 @@ export async function linkAnonymousContributions(
         status: 'verified',
         verifiedAt: new Date(),
       });
-      // Mark done first (idempotency gate), then the one-time score event.
+      // Mark done first (the Living Tree gate), then the score, which
+      // recordCrowdpoolScoreOnce writes only if no score row exists yet.
       await db.updateContribution(Number(c.id), { playerContributionId });
       livingTreeAdded++;
       try {
-        await recordScoreEvent(
-          userId,
-          'crowdpool_contribution',
-          'scoring.weights.crowdpool_contribution',
-          'crowdpool',
-          Number(c.id),
-        );
+        await recordCrowdpoolScoreOnce(userId, Number(c.id));
       } catch (err) {
         console.warn('[link-contributions] score event failed (non-fatal):', err);
       }
@@ -788,13 +786,10 @@ async function acceptHoursContribution(args: {
 async function deliveryPayoff(contribution: ContributionRow, campaign: Campaign, need: ItemRow): Promise<void> {
   if (contribution.userId) {
     try {
-      await recordScoreEvent(
-        contribution.userId,
-        'crowdpool_contribution',
-        'scoring.weights.crowdpool_contribution',
-        'crowdpool',
-        contribution.id,
-      );
+      // Before the profile check, so a person without a profile still scores
+      // at delivery. At most once per contribution: linkAnonymousContributions
+      // calls the same function later and finds the row already there.
+      await recordCrowdpoolScoreOnce(contribution.userId, contribution.id);
     } catch (err) {
       console.warn('[Contribution] Score event failed (non-fatal):', err);
     }

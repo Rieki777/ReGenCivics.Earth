@@ -1,6 +1,7 @@
 /**
  * ReGen Games Core System
- * Shared utilities: getGameVariable, recordScoreEvent, logActivityEvent, getCurrentSeason
+ * Shared utilities: getGameVariable, recordScoreEvent, recordCrowdpoolScoreOnce,
+ * logActivityEvent, getCurrentSeason
  */
 import { getDb } from "../db";
 import { eq, and, sql, desc } from "drizzle-orm";
@@ -157,6 +158,50 @@ export async function recordScoreEvent(
   await logActivityEvent("score_event", "player", userId, action, referenceId ?? undefined, { points, variableKey });
 
   return points;
+}
+
+const CROWDPOOL_SCORE_ACTION = "crowdpool_contribution";
+const CROWDPOOL_SCORE_VARIABLE = "scoring.weights.crowdpool_contribution";
+
+/**
+ * A crowdpool delivery's score event, at most once per contribution. The row
+ * goes in only when no crowdpool score row exists for that contribution
+ * (INSERT ... SELECT ... WHERE NOT EXISTS), and migration 0283's unique key on
+ * crowdpoolScoreRef makes it a database guarantee under a race. Same points
+ * as recordScoreEvent. Returns true when this call recorded it; the activity
+ * feed line is written only then.
+ *
+ * Why (bundle 1, 2026-10-01): deliveryPayoff scores at delivery, before it
+ * checks for a player profile, and linkAnonymousContributions scored again
+ * for any delivered row with no playerContributionId, which is every
+ * delivery made by an account holder who had no profile yet.
+ *
+ * INSERT IGNORE turns the duplicate-key error from a concurrent second call
+ * into "0 rows". Every value here is a server-built integer or a constant.
+ */
+export async function recordCrowdpoolScoreOnce(userId: number, contributionId: number): Promise<boolean> {
+  const points = await getGameVariable(CROWDPOOL_SCORE_VARIABLE);
+  const season = await getCurrentSeason();
+
+  const db = await getDb();
+  if (!db) return false;
+
+  const result = await db.execute(sql`
+    INSERT IGNORE INTO contribution_score_events (userId, action, points, variableKey, referenceType, referenceId, seasonId, createdAt)
+    SELECT ${userId}, ${CROWDPOOL_SCORE_ACTION}, ${points}, ${CROWDPOOL_SCORE_VARIABLE}, 'crowdpool', ${contributionId}, ${season?.id ?? null}, NOW()
+      FROM DUAL
+     WHERE NOT EXISTS (SELECT 1 FROM contribution_score_events
+                        WHERE action = ${CROWDPOOL_SCORE_ACTION} AND referenceType = 'crowdpool' AND referenceId = ${contributionId})
+  `);
+  const r = result as any;
+  const recorded = Number(r?.[0]?.affectedRows ?? r?.affectedRows ?? 0) === 1;
+  if (!recorded) return false;
+
+  await logActivityEvent("score_event", "player", userId, CROWDPOOL_SCORE_ACTION, contributionId, {
+    points,
+    variableKey: CROWDPOOL_SCORE_VARIABLE,
+  });
+  return true;
 }
 
 // ─── Activity Feed ──────────────────────────────────────────────────────────
