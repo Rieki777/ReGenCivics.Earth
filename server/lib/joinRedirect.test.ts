@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { HOLOS_REGEN_CIVICS_URL, HYLO_SEEDS_URL } from "@shared/communityLinks";
 import { RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
 import {
+  hostIsOldStudio,
+  joinLandingHtml,
   parseJoinEventId,
   resolveJoinRedirectTarget,
   safeExternalHttpUrl,
@@ -42,20 +45,30 @@ describe("safeExternalHttpUrl", () => {
 });
 
 describe("resolveJoinRedirectTarget", () => {
-  it("falls back to the shared studio when there is no event", () => {
-    expect(resolveJoinRedirectTarget(null)).toBe(RIVERSIDE_ROOM_URL);
+  it("returns null when there is no event, so /join stays on this site", () => {
+    expect(resolveJoinRedirectTarget(null)).toBeNull();
   });
 
-  it("prefers riversideRoomUrl over zoomUrl", () => {
+  it("skips a stored old-studio URL and uses the backup meeting link", () => {
+    expect(hostIsOldStudio(RIVERSIDE_ROOM_URL)).toBe(true);
     expect(
       resolveJoinRedirectTarget({
         riversideRoomUrl: "https://riverside.com/studio/custom-room",
         zoomUrl: "https://zoom.us/j/999",
       }),
-    ).toBe("https://riverside.com/studio/custom-room");
+    ).toBe("https://zoom.us/j/999");
   });
 
-  it("uses zoomUrl when riverside is absent", () => {
+  it("uses a non-studio room URL when that is what the event stores", () => {
+    expect(
+      resolveJoinRedirectTarget({
+        riversideRoomUrl: "https://enterholos.com/holon?h=regen-civics-seeds",
+        zoomUrl: "https://zoom.us/j/999",
+      }),
+    ).toBe("https://enterholos.com/holon?h=regen-civics-seeds");
+  });
+
+  it("uses zoomUrl when the studio field is empty", () => {
     expect(
       resolveJoinRedirectTarget({
         riversideRoomUrl: null,
@@ -64,16 +77,15 @@ describe("resolveJoinRedirectTarget", () => {
     ).toBe("https://zoom.us/j/999");
   });
 
-  it("falls back when stored URLs are missing or unsafe", () => {
-    expect(
-      resolveJoinRedirectTarget({ riversideRoomUrl: null, zoomUrl: null }),
-    ).toBe(RIVERSIDE_ROOM_URL);
+  it("returns null when stored URLs are missing, unsafe, or only the old studio", () => {
+    expect(resolveJoinRedirectTarget({ riversideRoomUrl: null, zoomUrl: null })).toBeNull();
     expect(
       resolveJoinRedirectTarget({
         riversideRoomUrl: "javascript:evil",
         zoomUrl: "/relative",
       }),
-    ).toBe(RIVERSIDE_ROOM_URL);
+    ).toBeNull();
+    expect(resolveJoinRedirectTarget({ riversideRoomUrl: RIVERSIDE_ROOM_URL, zoomUrl: null })).toBeNull();
     expect(
       resolveJoinRedirectTarget({
         riversideRoomUrl: "javascript:evil",
@@ -81,10 +93,14 @@ describe("resolveJoinRedirectTarget", () => {
       }),
     ).toBe("https://zoom.us/j/ok");
   });
+});
 
-  it("accepts an explicit fallback override", () => {
-    expect(resolveJoinRedirectTarget(null, "https://example.com/fallback")).toBe(
-      "https://example.com/fallback",
-    );
+describe("joinLandingHtml", () => {
+  it("names Holos and Hylo and does not name the old studio", () => {
+    const html = joinLandingHtml();
+    expect(html).toContain("Join the call");
+    expect(html).toContain(HOLOS_REGEN_CIVICS_URL);
+    expect(html).toContain(HYLO_SEEDS_URL);
+    expect(html.toLowerCase()).not.toContain("riverside");
   });
 });

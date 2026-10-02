@@ -1,11 +1,9 @@
 /**
  * Every link that goes into a calendar invite, defined once.
  *
- * Invites never carry a Riverside studio URL: they carry
- * `regencivics.earth/join`, which redirects. A calendar invite lives on a
- * subscriber's phone for months, so if the room link ever changes, change
- * RIVERSIDE_ROOM_URL here and every invite already sitting in every calendar
- * keeps working.
+ * Invites carry `regencivics.earth/join`. A calendar invite lives on a
+ * subscriber's phone for months. GET /join serves the on-site join page
+ * unless that event has a stored room on another host.
  *
  * Open Access Sessions and all thirteen Season Two episodes share this one room
  * on purpose (Rye, 2026-09-14). There is no second room.
@@ -14,7 +12,8 @@
 export const SITE_ORIGIN = "https://regencivics.earth";
 
 /**
- * The live room. Only the /join redirect uses this directly.
+ * The old shared studio. Calendar code uses this to recognize stored copies
+ * of that room and keep them pointed at /join. GET /join does not redirect here.
  *
  * Changed 2026-09-14 from the token link
  * (`rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b`) to the room link Rye
