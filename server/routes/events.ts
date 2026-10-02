@@ -993,7 +993,6 @@ export const eventsRouter = router({
             reminderScheduledFor: new Date(scheduledTime),
             reminderCustomSubject: input.customSubject?.trim() || null,
             reminderCustomBody: input.customBody?.trim() || null,
-            reminderSent: 0,
           })
           .where(eq(events.id, input.id));
         console.log(`[events.sendReminders] Persisted scheduled reminder for event #${input.id} at ${input.scheduledFor}`);
@@ -1064,6 +1063,8 @@ export const eventsRouter = router({
       });
 
       const totalSent = blast.accepted + always.accepted;
+      // Claims the signup blast only. A custom reminder still scheduled on
+      // this event keeps reminderScheduledFor and can still go out.
       if (blast.dropped === 0 && always.dropped === 0) {
         await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
       }
