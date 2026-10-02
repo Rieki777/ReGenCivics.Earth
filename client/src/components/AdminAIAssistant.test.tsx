@@ -153,6 +153,64 @@ describe("AdminAIAssistant FAB", () => {
     }
   });
 
+  it("inserts dictation at the Ask caret, so the mic is wired to that textarea", async () => {
+    class FakeSpeech {
+      continuous = false;
+      interimResults = false;
+      lang = "";
+      onresult: ((event: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0?: { transcript: string } }> }) => void) | null = null;
+      onerror: ((event: { error?: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+      started = false;
+      start() {
+        if (this.started) throw new Error("already started");
+        this.started = true;
+        FakeSpeech.latest = this;
+      }
+      stop() {
+        this.started = false;
+        this.onend?.();
+      }
+      abort() {
+        this.started = false;
+        this.onend?.();
+      }
+      static latest: FakeSpeech | null = null;
+    }
+    Object.defineProperty(window, "SpeechRecognition", {
+      configurable: true,
+      writable: true,
+      value: FakeSpeech,
+    });
+    FakeSpeech.latest = null;
+
+    try {
+      render(<AdminAIAssistant context={{ activeTab: "applications" }} />);
+      fireEvent.click(fab());
+      const field = screen.getByPlaceholderText("Ask anything about your admin data...") as HTMLTextAreaElement;
+      fireEvent.change(field, { target: { value: "Hello there" } });
+      field.focus();
+      field.setSelectionRange(5, 5);
+      field.dispatchEvent(new Event("select", { bubbles: true }));
+
+      const mic = screen.getByTestId("dictation-button");
+      await act(async () => {
+        fireEvent.pointerDown(mic);
+        fireEvent.pointerUp(mic);
+      });
+      await act(async () => {
+        FakeSpeech.latest?.onresult?.({
+          resultIndex: 0,
+          results: [{ isFinal: true, 0: { transcript: "friend" } }],
+        });
+      });
+      expect(field.value).toBe("Hello friend there");
+      expect(screen.getByLabelText("Send message").hasAttribute("disabled")).toBe(false);
+    } finally {
+      delete (window as Window & { SpeechRecognition?: unknown }).SpeechRecognition;
+    }
+  });
+
   it("offers Harvest draft starters when viewing Broadcast", () => {
     render(<AdminAIAssistant context={{ activeTab: "broadcast" }} />);
     fireEvent.click(fab());

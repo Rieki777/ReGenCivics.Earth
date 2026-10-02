@@ -46,6 +46,19 @@ export const DICTATION_GENERIC_ERROR =
   "Listening stopped. Type instead, or try the mic again.";
 export const DICTATION_SENSITIVE_MESSAGE =
   "This field cannot take dictation.";
+/** Recognition armed and then produced no words. Shown instead of a stuck Listening ring. */
+export const DICTATION_SILENT_MESSAGE =
+  "No words came through. Check the microphone, or type instead.";
+/**
+ * Chrome's continuous pipeline can fire end within a few milliseconds of
+ * start, with no error and no result. Two of those in a row is a dead mic,
+ * not a pause. A real silence (no-speech) takes seconds, so it stays under
+ * this threshold and the restart loop keeps listening.
+ */
+const INSTANT_END_MS = 400;
+const INSTANT_END_LIMIT = 2;
+/** How long Listening may stay up with zero transcripts before we say so. */
+const SILENT_STALL_MS = 8000;
 export const DICTATION_BLOCKED_TITLE =
   "Microphone permission is blocked for this site.";
 export const DICTATION_BLOCKED_LEAD =
@@ -57,8 +70,18 @@ export const DICTATION_BLOCKED_STEPS = [
   "Press “I allowed it — try again”. Reload only if Allow does not stick.",
 ] as const;
 
+function isAlreadyStartedError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const name = "name" in err ? String(err.name) : "";
+  const message = "message" in err ? String(err.message) : "";
+  return name === "InvalidStateError" || /already started/i.test(message);
+}
+
 export function dictationSupported(): boolean {
   if (typeof window === "undefined") return false;
+  // Web Speech only runs in a secure context. An insecure page must not
+  // show Listening: start() cannot deliver words there.
+  if (window.isSecureContext === false) return false;
   const w = window as AnyWindow;
   return Boolean(w.SpeechRecognition || w.webkitSpeechRecognition);
 }
@@ -188,6 +211,12 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     end: number;
     spoken: string;
   } | null>(null);
+  /** When the current recognizer arm called start(). Instant ends are measured from here. */
+  const armAtRef = useRef(0);
+  const sawResultRef = useRef(false);
+  const instantMissRef = useRef(0);
+  const everHeardRef = useRef(false);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   valueRef.current = value;
   onChangeRef.current = onChange;
   if (value !== renderedRef.current) {
@@ -272,6 +301,55 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   const engineRef = useRef({ applyCollected, commitSession, beginSession });
   engineRef.current = { applyCollected, commitSession, beginSession };
 
+  const clearStall = useCallback(() => {
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleStall = useCallback(() => {
+    if (stallTimerRef.current || everHeardRef.current) return;
+    stallTimerRef.current = setTimeout(() => {
+      stallTimerRef.current = null;
+      if (!liveRef.current || !wantRef.current || everHeardRef.current) return;
+      wantRef.current = false;
+      acceptResultsRef.current = false;
+      try { recRef.current?.stop(); } catch { /* already ending */ }
+      setInterim("");
+      setBlockedHelp(false);
+      setState((current) => (current === "unsupported" || current === "denied" ? current : "idle"));
+      setError(DICTATION_SILENT_MESSAGE);
+    }, SILENT_STALL_MS);
+  }, []);
+
+  const noteArm = useCallback(() => {
+    sawResultRef.current = false;
+    armAtRef.current = Date.now();
+    scheduleStall();
+  }, [scheduleStall]);
+
+  /**
+   * Start the existing recognizer. "already" means it was already running, so
+   * Listening is honest. Any other throw means nothing is capturing.
+   */
+  const tryStartRecognizer = useCallback((): "started" | "already" | "failed" | "missing" => {
+    const rec = recRef.current;
+    if (!rec) return "missing";
+    try {
+      rec.start();
+      noteArm();
+      acceptResultsRef.current = true;
+      return "started";
+    } catch (err) {
+      if (isAlreadyStartedError(err)) {
+        acceptResultsRef.current = true;
+        return "already";
+      }
+      return "failed";
+    }
+  }, [noteArm]);
+
   useEffect(() => {
     const el = targetRef?.current;
     if (!el) return;
@@ -300,11 +378,19 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     if (!Ctor) return;
 
     const rec = new Ctor();
-    rec.continuous = true;
+    // Single-utterance mode. Chrome's continuous pipeline can call end a few
+    // milliseconds after start, with no error and no transcript, while the
+    // button still shows Listening. onend restarts while the user wants the
+    // mic, so a phrase pause still continues into the next one.
+    rec.continuous = false;
     rec.interimResults = true;
     rec.lang = lang;
     rec.onresult = (event) => {
       if (!liveRef.current || !acceptResultsRef.current) return;
+      sawResultRef.current = true;
+      everHeardRef.current = true;
+      instantMissRef.current = 0;
+      clearStall();
       const { interim: nextInterim, spoken } = collectSpeech(event.results);
       engineRef.current.applyCollected(spoken, nextInterim);
     };
@@ -313,6 +399,7 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       const kind = event?.error ?? "error";
       if (kind === "no-speech" || kind === "aborted") return;
       wantRef.current = false;
+      clearStall();
       engineRef.current.commitSession();
       acceptResultsRef.current = false;
       setInterim("");
@@ -332,30 +419,60 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       acceptResultsRef.current = false;
       engineRef.current.commitSession();
       setInterim("");
-      if (wantRef.current && recRef.current === rec) {
-        try {
-          rec.start();
-          acceptResultsRef.current = true;
-          setState("listening");
-        } catch {
-          wantRef.current = false;
-          setState("idle");
-        }
+      if (!(wantRef.current && recRef.current === rec)) {
+        setState((current) => (current === "denied" ? current : "idle"));
         return;
       }
-      setState((current) => (current === "denied" ? current : "idle"));
+      const elapsed = Date.now() - armAtRef.current;
+      const instantEmpty = !sawResultRef.current && elapsed < INSTANT_END_MS;
+      if (instantEmpty) {
+        instantMissRef.current += 1;
+        if (instantMissRef.current >= INSTANT_END_LIMIT) {
+          wantRef.current = false;
+          clearStall();
+          setBlockedHelp(false);
+          setState("idle");
+          setError(DICTATION_SILENT_MESSAGE);
+          return;
+        }
+      } else if (sawResultRef.current) {
+        instantMissRef.current = 0;
+      }
+      try {
+        rec.start();
+      } catch (err) {
+        if (isAlreadyStartedError(err)) {
+          acceptResultsRef.current = true;
+          setState("listening");
+          return;
+        }
+        wantRef.current = false;
+        clearStall();
+        setBlockedHelp(false);
+        setState("idle");
+        setError(DICTATION_GENERIC_ERROR);
+        return;
+      }
+      // A synchronous end (the Chrome continuous failure) may already have
+      // given up. Do not paint Listening back on after that.
+      if (!wantRef.current || recRef.current !== rec) return;
+      noteArm();
+      acceptResultsRef.current = true;
+      setState("listening");
     };
     recRef.current = rec;
     return () => {
       liveRef.current = false;
       wantRef.current = false;
       recRef.current = null;
+      clearStall();
       try { rec.abort(); } catch { /* already stopped */ }
     };
-  }, [lang, supported]);
+  }, [clearStall, lang, noteArm, supported]);
 
   const stop = useCallback(() => {
     wantRef.current = false;
+    clearStall();
     try { recRef.current?.stop(); } catch { /* nothing listening */ }
     // onend commits when the browser fires it. If it does not, keep the preview.
     engineRef.current.commitSession();
@@ -365,7 +482,7 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       if (current === "unsupported" || current === "denied") return current;
       return "idle";
     });
-  }, []);
+  }, [clearStall]);
 
   useEffect(() => {
     const onFocusIn = (event: FocusEvent) => {
@@ -377,11 +494,12 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
 
   const markDenied = useCallback(() => {
     wantRef.current = false;
+    clearStall();
     setInterim("");
     setState("denied");
     setError(DICTATION_DENIED_MESSAGE);
     setBlockedHelp(true);
-  }, []);
+  }, [clearStall]);
 
   const start = useCallback(async () => {
     if (disabled) return;
@@ -426,15 +544,24 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     // Already-open session (start() threw because recognition is running):
     // keep its base so the phrase is not inserted a second time.
     if (!sessionRef.current || !acceptResultsRef.current) engineRef.current.beginSession();
-    try {
-      recRef.current.start();
-      setState("listening");
+    instantMissRef.current = 0;
+    everHeardRef.current = false;
+    clearStall();
+    const armed = tryStartRecognizer();
+    if (armed === "failed" || armed === "missing") {
+      wantRef.current = false;
+      acceptResultsRef.current = false;
+      clearStall();
+      setState("idle");
+      setError(DICTATION_GENERIC_ERROR);
       setBlockedHelp(false);
-    } catch {
-      setState("listening");
-      setBlockedHelp(false);
+      return;
     }
-  }, [disabled, markDenied, rememberCaret, supported, targetRef]);
+    // "already" did not arm a stall timer. Listening with no words still ends.
+    scheduleStall();
+    setState("listening");
+    setBlockedHelp(false);
+  }, [clearStall, disabled, markDenied, rememberCaret, scheduleStall, supported, targetRef, tryStartRecognizer]);
 
   const toggle = useCallback(() => {
     if (wantRef.current || state === "listening") stop();

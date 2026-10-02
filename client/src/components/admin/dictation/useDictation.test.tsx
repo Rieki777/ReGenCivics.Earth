@@ -9,6 +9,8 @@ import {
   DICTATION_BLOCKED_LEAD,
   DICTATION_SENSITIVE_MESSAGE,
   DICTATION_UNSUPPORTED_MESSAGE,
+  DICTATION_SILENT_MESSAGE,
+  DICTATION_GENERIC_ERROR,
 } from "./useDictation";
 import { DictationButton } from "./DictationButton";
 
@@ -23,9 +25,14 @@ class FakeSpeechRecognition {
   aborted = false;
 
   start() {
+    FakeSpeechRecognition.latest = this;
+    if (FakeSpeechRecognition.startError) {
+      const err = FakeSpeechRecognition.startError;
+      FakeSpeechRecognition.startError = null;
+      throw err;
+    }
     if (this.started) throw new Error("already started");
     this.started = true;
-    FakeSpeechRecognition.latest = this;
   }
 
   stop() {
@@ -40,6 +47,7 @@ class FakeSpeechRecognition {
   }
 
   static latest: FakeSpeechRecognition | null = null;
+  static startError: Error | null = null;
 }
 
 function installSpeech() {
@@ -96,6 +104,17 @@ function removeGetUserMedia() {
 describe("dictation availability", () => {
   afterEach(() => removeSpeech());
 
+  it("reports unsupported outside a secure context", () => {
+    installSpeech();
+    const previous = window.isSecureContext;
+    Object.defineProperty(window, "isSecureContext", { configurable: true, value: false });
+    try {
+      expect(dictationSupported()).toBe(false);
+    } finally {
+      Object.defineProperty(window, "isSecureContext", { configurable: true, value: previous });
+    }
+  });
+
   it("reports unsupported in a plain jsdom environment", () => {
     removeSpeech();
     expect(dictationSupported()).toBe(false);
@@ -108,6 +127,7 @@ describe("dictation availability", () => {
 describe("useDictation", () => {
   beforeEach(() => {
     installSpeech();
+    FakeSpeechRecognition.startError = null;
     removeMicPermission();
     removeGetUserMedia();
   });
@@ -344,6 +364,131 @@ describe("useDictation", () => {
     expect(screen.getByTestId("value").textContent).toBe("from item");
   });
 
+  it("uses single-utterance mode so Chrome can deliver results", async () => {
+    const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
+    await act(async () => { await result.current.start(); });
+    expect(FakeSpeechRecognition.latest?.continuous).toBe(false);
+    expect(FakeSpeechRecognition.latest?.interimResults).toBe(true);
+    expect(result.current.listening).toBe(true);
+  });
+
+  it("restarts once after an instant empty end, then shows an error instead of staying on Listening", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+          <span data-testid="listening">{d.listening ? "yes" : "no"}</span>
+          <span data-testid="err">{d.error ?? ""}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    const rec = FakeSpeechRecognition.latest;
+    expect(rec?.started).toBe(true);
+
+    rec!.started = false;
+    act(() => { rec!.onend?.(); });
+    expect(screen.getByTestId("listening").textContent).toBe("yes");
+    expect(rec!.started).toBe(true);
+    expect(screen.getByTestId("value").textContent).toBe("");
+
+    rec!.started = false;
+    act(() => { rec!.onend?.(); });
+    expect(screen.getByTestId("listening").textContent).toBe("no");
+    expect(rec!.started).toBe(false);
+    expect(screen.getByTestId("err").textContent).toBe(DICTATION_SILENT_MESSAGE);
+    expect(screen.getByTestId("value").textContent).toBe("");
+  });
+
+  it("stops Listening and reports no words when recognition never emits a result", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
+      await act(async () => { await result.current.start(); });
+      expect(result.current.listening).toBe(true);
+      expect(result.current.error).toBeNull();
+      await act(async () => { vi.advanceTimersByTime(8000); });
+      expect(result.current.listening).toBe(false);
+      expect(result.current.state).toBe("idle");
+      expect(result.current.error).toBe(DICTATION_SILENT_MESSAGE);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not stall after a transcript arrives", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      function Field() {
+        const [value, setValue] = useState("");
+        const d = useDictation({ value, onChange: setValue });
+        return (
+          <>
+            <button type="button" onClick={d.start} data-testid="start">start</button>
+            <span data-testid="value">{value}</span>
+            <span data-testid="listening">{d.listening ? "yes" : "no"}</span>
+            <span data-testid="err">{d.error ?? ""}</span>
+          </>
+        );
+      }
+      render(<Field />);
+      await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+      act(() => {
+        FakeSpeechRecognition.latest?.onresult?.({
+          resultIndex: 0,
+          results: [{ isFinal: false, 0: { transcript: "who needs follow-up" } }],
+        });
+      });
+      await act(async () => { vi.advanceTimersByTime(8000); });
+      expect(screen.getByTestId("value").textContent).toBe("who needs follow-up");
+      expect(screen.getByTestId("listening").textContent).toBe("yes");
+      expect(screen.getByTestId("err").textContent).toBe("");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps Listening when start throws because recognition is already running", async () => {
+    FakeSpeechRecognition.startError = new DOMException("recognition has already started", "InvalidStateError");
+    function Field() {
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue });
+      return (
+        <>
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+          <span data-testid="listening">{d.listening ? "yes" : "no"}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    expect(screen.getByTestId("listening").textContent).toBe("yes");
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "still here" } }],
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("still here");
+  });
+
+  it("does not show Listening when start throws for another reason", async () => {
+    FakeSpeechRecognition.startError = new Error("speech engine unavailable");
+    const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
+    await act(async () => { await result.current.start(); });
+    expect(result.current.listening).toBe(false);
+    expect(result.current.state).toBe("idle");
+    expect(result.current.error).toBe(DICTATION_GENERIC_ERROR);
+    expect(FakeSpeechRecognition.latest?.started).toBeFalsy();
+  });
+
   it("surfaces permission denied without throwing", async () => {
     const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
     await act(async () => { await result.current.start(); });
@@ -507,6 +652,31 @@ describe("DictationButton", () => {
       fireEvent.pointerUp(btn);
     });
     expect(screen.getByTestId("dictation-error").textContent).toBe(DICTATION_UNSUPPORTED_MESSAGE);
+  });
+
+  it("shows an error when the recognizer ends instantly twice and the field stays empty", async () => {
+    vi.useRealTimers();
+    function Box() {
+      const [value, setValue] = useState("");
+      return <DictationButton value={value} onChange={setValue} />;
+    }
+    render(<Box />);
+    const btn = screen.getByTestId("dictation-button");
+    await act(async () => {
+      fireEvent.pointerDown(btn);
+      fireEvent.pointerUp(btn);
+    });
+    expect(btn.getAttribute("data-listening")).toBe("true");
+    const rec = FakeSpeechRecognition.latest;
+    expect(rec).toBeTruthy();
+    rec!.started = false;
+    act(() => { rec!.onend?.(); });
+    expect(btn.getAttribute("data-listening")).toBe("true");
+    rec!.started = false;
+    act(() => { rec!.onend?.(); });
+    expect(btn.getAttribute("data-listening")).toBe("false");
+    expect(screen.getByTestId("dictation-error").textContent).toBe(DICTATION_SILENT_MESSAGE);
+    expect(screen.queryByTestId("dictation-listening")).toBeNull();
   });
 
   it("shows Allow steps instead of only a red error when the mic is blocked", async () => {
