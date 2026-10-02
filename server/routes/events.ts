@@ -27,9 +27,9 @@ import { resolveAutoReminderRecipients, sendToAlwaysIncluded } from "../jobs/eve
 import { sendSignupReminderBlast } from "../lib/signupReminderBlast";
 import { formatEventWhen, reminderJoinLabel, reminderJoinUrl } from "../lib/eventReminderEmail";
 import { checkinUrlForToken, signCheckinToken, verifyCheckinToken } from "../lib/checkinToken";
+import { ALWAYS_INCLUDE_REMINDER_RECIPIENTS } from "../lib/reminderAlwaysInclude";
 import {
   ALLOWED_AUTO_REMINDER_OFFSETS,
-  ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
   AUTO_REMINDER_AUDIENCE_MODES,
   CUSTOM_APPLICATION_STATUSES,
   NEWSLETTER_AUDIENCE_SOURCES,

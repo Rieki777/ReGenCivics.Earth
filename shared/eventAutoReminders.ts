@@ -326,30 +326,9 @@ export type ReminderRecipient = {
 };
 
 /**
- * People who get every session reminder, whatever the session's audience.
- *
- * Each audience mode reaches a different list, and every mode also includes
- * people who signed up for a reminder on that event. This list is the way to
- * put one person on every reminder even when they never signed up and are not
- * an approved project: the auto-reminder offsets, the daily signup blast, and
- * admin-scheduled and manual sends.
- *
- * Adding someone is a one-line change. Emails lowercase. Recipients here get a
- * footer explaining why and how to stop (see ALWAYS_INCLUDED_FOOTER_TEXT),
- * because they never signed up for anything.
- */
-export const ALWAYS_INCLUDE_REMINDER_RECIPIENTS: readonly ReminderRecipient[] = [
-  // Added 2026-09-21 at Rye's request.
-  { email: "franz@integrity.earth", name: "Franz" },
-];
-
-export function isAlwaysIncluded(email: string): boolean {
-  const needle = email.trim().toLowerCase();
-  return ALWAYS_INCLUDE_REMINDER_RECIPIENTS.some((r) => r.email === needle);
-}
-
-/**
- * Footer for someone on ALWAYS_INCLUDE_REMINDER_RECIPIENTS.
+ * Footer for someone on the server-side always-include list
+ * (`server/lib/reminderAlwaysInclude.ts`). That list stays out of this file
+ * so the admin client bundle does not ship a personal address.
  *
  * Not the usual "Manage email preferences" link: opt-outs are stored on the
  * newsletter subscriber row, and these people usually have none, so that link
