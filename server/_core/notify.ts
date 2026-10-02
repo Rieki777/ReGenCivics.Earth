@@ -16,10 +16,9 @@
  */
 
 import { logger } from "./logger";
+import { getAppBaseUrl } from "./email";
 
 const log = logger("notify");
-
-const APP_BASE_URL = process.env.APP_BASE_URL ?? "https://regencivics.earth";
 
 // ── Telegram ──────────────────────────────────────────────────────────────────
 
@@ -146,7 +145,7 @@ export async function notifyNewEvent(event: {
     hour: "numeric", minute: "2-digit",
   });
   const tz = event.timezone ?? "UTC";
-  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${APP_BASE_URL}/schedule`;
+  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${getAppBaseUrl()}/schedule`;
   const seasonTag = event.season ? ` (${event.season})` : "";
 
   const message =
@@ -154,7 +153,7 @@ export async function notifyNewEvent(event: {
     `*${event.title}*\n` +
     `${dateStr} at ${timeStr} ${tz}\n\n` +
     `Join: ${joinUrl}\n` +
-    `Full schedule: ${APP_BASE_URL}/schedule`;
+    `Full schedule: ${getAppBaseUrl()}/schedule`;
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }
@@ -169,9 +168,9 @@ export async function notifyRecordingReady(recording: {
   riversideUrl?: string | null;
   forumPostId?: number | null;
 }): Promise<void> {
-  const watchUrl = recording.youtubeUrl ?? recording.riversideUrl ?? `${APP_BASE_URL}/schedule`;
+  const watchUrl = recording.youtubeUrl ?? recording.riversideUrl ?? `${getAppBaseUrl()}/schedule`;
   const forumUrl = recording.forumPostId
-    ? `${APP_BASE_URL}/community/post/${recording.forumPostId}`
+    ? `${getAppBaseUrl()}/community/post/${recording.forumPostId}`
     : null;
 
   let message =
@@ -206,7 +205,7 @@ export async function notifyShipCalendarConflict(conflicts: string[]): Promise<v
     `The dates are blocked either way, so nothing is oversold. Two guests may both ` +
     `think the week is theirs.\n\n` +
     `${lines}${more}\n\n` +
-    `Ship admin: ${APP_BASE_URL}/admin/ship`;
+    `Ship admin: ${getAppBaseUrl()}/admin/ship`;
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }

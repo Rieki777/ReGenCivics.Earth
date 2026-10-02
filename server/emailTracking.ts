@@ -13,6 +13,13 @@ import crypto from "crypto";
 import { getDb } from "./db";
 import { emailLogs } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
+import {
+  SITE_ORIGIN,
+  canonicalPublicBaseUrl,
+  configuredPublicBaseUrl,
+  isLegacyRegenCivicsHost,
+  rewriteLegacySiteUrls,
+} from "../shared/siteContext";
 
 // ── Click-redirect safety ────────────────────────────────────────────────────
 
@@ -56,17 +63,33 @@ export function isInternalRedirectTarget(targetUrl: string): boolean {
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return false;
   const allowedHosts = new Set<string>();
-  for (const base of [process.env.VITE_APP_URL, process.env.APP_URL, "https://regencivics.earth"]) {
+  for (const base of [process.env.VITE_APP_URL, process.env.APP_URL, process.env.APP_BASE_URL, SITE_ORIGIN]) {
     if (!base) continue;
     try {
-      allowedHosts.add(new URL(base).hostname.toLowerCase());
+      allowedHosts.add(new URL(canonicalPublicBaseUrl(base, SITE_ORIGIN)).hostname.toLowerCase());
     } catch {
       // ignore malformed configured base URLs
     }
   }
   const host = parsed.hostname.toLowerCase();
+  // Old letters still point at the retired apex. Treat them as ours so the
+  // click route can send the reader to .earth instead of dropping the click.
+  if (isLegacyRegenCivicsHost(host)) return true;
   if (allowedHosts.has(host)) return true;
   return host === "regencivics.earth" || host.endsWith(".regencivics.earth");
+}
+
+/** Where a validated click should land. Retired-domain targets move to .earth. */
+export function publicEmailRedirectTarget(targetUrl: string): string {
+  return rewriteLegacySiteUrls(targetUrl);
+}
+
+function trackingBaseUrl(): string {
+  return configuredPublicBaseUrl({
+    appBaseUrl: process.env.APP_BASE_URL,
+    appUrl: process.env.APP_URL,
+    viteAppUrl: process.env.VITE_APP_URL,
+  });
 }
 
 /**
@@ -75,8 +98,7 @@ export function isInternalRedirectTarget(targetUrl: string): boolean {
  * @returns URL to the tracking pixel endpoint
  */
 export function generateTrackingPixelUrl(emailLogId: number): string {
-  const baseUrl = process.env.VITE_APP_URL || "https://regencivics.earth";
-  return `${baseUrl}/api/track/open/${emailLogId}`;
+  return `${trackingBaseUrl()}/api/track/open/${emailLogId}`;
 }
 
 /**
@@ -96,9 +118,10 @@ export function generateTrackingPixelHtml(emailLogId: number): string {
  * @returns Tracking URL that redirects to original
  */
 export function wrapUrlWithTracking(originalUrl: string, emailLogId: number): string {
-  const baseUrl = process.env.VITE_APP_URL || "https://regencivics.earth";
-  const encodedUrl = encodeURIComponent(originalUrl);
-  const sig = signTrackedUrl(emailLogId, originalUrl);
+  const baseUrl = trackingBaseUrl();
+  const destination = rewriteLegacySiteUrls(originalUrl);
+  const encodedUrl = encodeURIComponent(destination);
+  const sig = signTrackedUrl(emailLogId, destination);
   const sigParam = sig ? `&sig=${sig}` : "";
   return `${baseUrl}/api/track/click/${emailLogId}?url=${encodedUrl}${sigParam}`;
 }

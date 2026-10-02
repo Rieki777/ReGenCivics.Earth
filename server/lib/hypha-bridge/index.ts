@@ -23,9 +23,10 @@ import type {
 } from "./types";
 import { KNOWN_INTENTS, type IntentName } from "./intents";
 import { buildTitleWithMarker, payloadToSearchParams } from "./prefill";
+import { SITE_ORIGIN, canonicalPublicBaseUrl } from "../../../shared/siteContext";
 
 const HYPHA_APP_BASE = process.env.HYPHA_APP_BASE_URL ?? "https://app.hypha.earth";
-const REGEN_CIVICS_BASE = process.env.PUBLIC_BASE_URL ?? "https://regencivics.earth";
+const REGEN_CIVICS_BASE = canonicalPublicBaseUrl(process.env.PUBLIC_BASE_URL, SITE_ORIGIN);
 
 /** kebab-case form kind for Hypha URL segments. The DB stores underscores. */
 const FORM_KIND_URL: Record<string, string> = {
