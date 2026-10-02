@@ -406,7 +406,7 @@ const EXAMPLE_ROSTER = [
 export function VillageOS({ stages, index }: StageProps) {
   return (
     <>
-      <StageHead stages={stages} index={index} title="Building our Games in Village OS" lede="Village OS is where each project's Game runs: its circles and roles, its quests, its gratitude and its Game Guide. Every village runs its own copy, with its own people, settings and address. Amora runs on it today." />
+      <StageHead stages={stages} index={index} title="Building our Games in Village OS" lede="Village OS is where each project's Game runs: its circles and roles, its quests, its gratitude and its Game Guide. Every village gets its own space on it, with its own people, settings and address. Amora runs on it today." />
       <div className="sb-two">
         <div className="sb-col">
           <div className="sb-panel sb-q">
