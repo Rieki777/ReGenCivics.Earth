@@ -31,9 +31,11 @@ import {
   pauseCommunityMail,
   resubscribeCommunity,
   saveTopicPrefs,
+  managePreferencesUrl,
   unsubscribeAllCommunity,
   verifyPrefsToken,
 } from "../lib/emailPrefs";
+import { subscriberGetsUnsubscribeConfirm, unsubscribeConfirmLetter } from "../lib/unsubscribeConfirm";
 
 const letterLayoutZ = z.enum(["plain", "announcement", "one_pager"]);
 
@@ -112,8 +114,23 @@ export const newsletterRouter = router({
     .input(z.object({ email: z.string().email() }))
     .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "newsletter_unsubscribe");
-      await db.unsubscribeNewsletter(input.email);
-      // Always return success to prevent email enumeration
+      const email = input.email.trim().toLowerCase();
+      try {
+        const sub = await db.getNewsletterSubscriberByEmail(email);
+        if (subscriberGetsUnsubscribeConfirm(sub)) {
+          const url = await managePreferencesUrl(email);
+          const letter = unsubscribeConfirmLetter(url);
+          const { sendEmail } = await import("../_core/email");
+          await sendEmail({
+            to: email,
+            subject: letter.subject,
+            html: letter.html,
+            template: "unsubscribe_confirm",
+          });
+        }
+      } catch {
+        // Same response either way, so the form does not reveal who is on the list.
+      }
       return { success: true };
     }),
 

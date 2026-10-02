@@ -1,8 +1,6 @@
 /**
- * Unsubscribe / Email Preferences Page
- * Allows users to unsubscribe from newsletters by entering their email.
- * GDPR-compliant with clear confirmation messaging.
- * Mobile-first, enchanted forest theme.
+ * /unsubscribe asks for an address and emails a confirmation when that
+ * address is already on the list. The token in the query opens preferences.
  */
 
 import { useEffect, useState } from "react";
@@ -112,20 +110,13 @@ export default function Unsubscribe() {
                 className="text-xl font-bold text-white mb-2"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                You've been unsubscribed
+                Check your inbox
               </h2>
               <p className="text-white/60 text-sm mb-6 leading-relaxed">
-                {email ? (
-                  <>
-                    <strong className="text-white/80">{email}</strong> has been removed from our mailing list.
-                    You will no longer receive newsletter emails from ReGen Civics.
-                  </>
-                ) : (
-                  <>You will no longer receive newsletter emails from ReGen Civics.</>
-                )}
+                If this address is on our list, a confirmation link is on its way. Open it and choose what to stop. Nothing changes until you do.
               </p>
               <p className="text-white/60 text-xs mb-6">
-                Changed your mind? You can always re-subscribe from our homepage or any form on the site.
+                The same note shows for every address you enter.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
@@ -133,7 +124,7 @@ export default function Unsubscribe() {
                   onClick={handleReset}
                   className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 bg-transparent rounded-xl"
                 >
-                  Unsubscribe Another Email
+                  Use another address
                 </Button>
                 <Link href="/">
                   <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-xl w-full sm:w-auto">
@@ -198,7 +189,7 @@ export default function Unsubscribe() {
                     Processing...
                   </span>
                 ) : (
-                  "Unsubscribe"
+                  "Email me a confirmation"
                 )}
               </Button>
             </form>
@@ -209,7 +200,7 @@ export default function Unsubscribe() {
             <div className="flex items-start gap-2">
               <Shield className="w-4 h-4 text-[#7dd87d]/80 flex-shrink-0 mt-0.5" />
               <p className="text-white/60 text-xs leading-relaxed">
-                Your privacy matters. We process unsubscribe requests immediately and do not share your email with third parties.
+                Your privacy matters. A confirmation link goes out before we change what you receive, and we do not share your email with third parties.
                 For questions, reach out through our{" "}
                 <a
                   href="https://discord.gg/8aTzTxH3Qe"
