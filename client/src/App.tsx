@@ -347,6 +347,7 @@ function Router() {
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
       <Route path={"/interop-sessions"}><EB><InteropSessions /></EB></Route>
       <Route path={"/season-schedule"}><EB><SeasonSchedule /></EB></Route>
+      <Route path={"/checkin"}><EB><Checkin /></EB></Route>
       <Route path={"/checkin/:token"}><EB><Checkin /></EB></Route>
       <Route path={"/events/:id"}><EB><EventDetail /></EB></Route>
       <Route path={"/series/:season"}><EB><EventSeries /></EB></Route>
