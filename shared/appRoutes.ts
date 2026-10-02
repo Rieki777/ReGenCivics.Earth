@@ -55,6 +55,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/campaign/:id/manage",
   "/campaign-updates/unsubscribe",
   "/campaigns",
+  "/checkin",
   "/checkin/:token",
   "/church",
   "/claim-seeds",
