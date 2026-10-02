@@ -89,7 +89,7 @@ describe("AdminAIAssistant FAB", () => {
     expect(screen.getByLabelText("Dictate message")).toBeTruthy();
   });
 
-  it("fills the overview Ask input from dictation so send can enable", async () => {
+  it.each(["overview", "applications"])("fills the %s Ask input from dictation so send can enable", async (activeTab) => {
     class FakeSpeech {
       continuous = false;
       interimResults = false;
@@ -121,8 +121,11 @@ describe("AdminAIAssistant FAB", () => {
     FakeSpeech.latest = null;
 
     try {
-      render(<AdminAIAssistant context={{ activeTab: "overview" }} />);
+      render(<AdminAIAssistant context={{ activeTab }} />);
       fireEvent.click(fab());
+      if (activeTab === "applications") {
+        expect(screen.getByText("Tab: applications")).toBeTruthy();
+      }
       const field = screen.getByPlaceholderText("Ask anything about your admin data...") as HTMLTextAreaElement;
       const send = screen.getByLabelText("Send message");
       expect(field.value).toBe("");

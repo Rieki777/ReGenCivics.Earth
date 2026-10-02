@@ -36,9 +36,13 @@ that text and the next phrase continues after it.
   is a fallback. Chromium will not show the Allow prompt again after Block.
   Type in the meantime.
 - Unsupported browser: a short error on the button. The page stays up.
-- Prompt, granted, or a browser without the Permissions API: the normal
-  request path runs. Chromium gets `getUserMedia({ audio: true })` first so
-  Allow can appear, then the stream is released and Web Speech starts.
+- Recognition starts in the click, before the permission check resolves, so
+  Chrome still has the gesture. A `start()` that throws, or a recognizer that
+  ends immediately with no transcript, turns Listening off and leaves the
+  field unchanged. Prompt or an unknown Permissions API, and only when that
+  start failed: Chromium gets `getUserMedia({ audio: true })` so Allow can
+  appear, then Web Speech tries once more. Already-granted mics skip that
+  second capture so it cannot take the microphone away from recognition.
 
 `useDictation` is the same engine if a surface needs custom chrome. Prefer
 `DictationButton` so hold-to-talk and the listening state stay consistent.
