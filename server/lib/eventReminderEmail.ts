@@ -62,8 +62,8 @@ function footerHtml(input: ReminderEmailInput): string {
 
 /**
  * Durable join URL for reminder emails: always the site /join hook.
- * Never a raw Riverside/Zoom/Holos URL — GET /join redirects to the room
- * (see server/routes/calendarFeed.ts + server/lib/joinRedirect.ts).
+ * Never a raw room URL. GET /join serves the on-site page, or redirects
+ * to a stored room on another host (see server/lib/joinRedirect.ts).
  *
  * With a positive eventId → `/join?e=<id>` so /join can route to that event's
  * stored URL. Without an id → plain `/join` (shared studio).
