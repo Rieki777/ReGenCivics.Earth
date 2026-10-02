@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  adminMayOperateIssue,
   buildPostSessionLetter,
   pickPostSessionCta,
   postSessionLetterIdempotencyKey,
@@ -53,5 +54,20 @@ describe("buildPostSessionLetter", () => {
     });
     expect(letter.body).toMatch(/Summary landing after processing/i);
     expect(letter.body).toContain(`${SITE_ORIGIN}/season2`);
+  });
+});
+
+describe("adminMayOperateIssue", () => {
+  const key = postSessionLetterIdempotencyKey(9);
+
+  it("keeps a hand-written draft with its author", () => {
+    expect(adminMayOperateIssue({ createdBy: 1, templateKey: null, idempotencyKey: null }, 7)).toBe(false);
+    expect(adminMayOperateIssue({ createdBy: 7, templateKey: "announcement", idempotencyKey: null }, 7)).toBe(true);
+  });
+
+  it("lets any admin operate an auto-drafted wrap-up, including after the send key replaces idempotencyKey", () => {
+    expect(adminMayOperateIssue({ createdBy: 1, templateKey: key, idempotencyKey: key }, 7)).toBe(true);
+    expect(adminMayOperateIssue({ createdBy: 1, templateKey: key, idempotencyKey: "confirm-send-key" }, 7)).toBe(true);
+    expect(adminMayOperateIssue({ createdBy: 1, templateKey: null, idempotencyKey: key }, 7)).toBe(true);
   });
 });

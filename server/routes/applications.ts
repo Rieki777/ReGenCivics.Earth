@@ -10,6 +10,7 @@ import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
+import { textForEmail, textForSubject } from "../../shared/htmlText";
 import { currentIncubatorSeason } from "../../shared/incubatorSeason";
 import { ACCEPTANCE_LINE, applicationCopy, FOLLOW_ALONG_HREF, FOLLOW_ALONG_LINE, intakeStatus } from "../../shared/applicationWindow";
 import { READINESS_HREF } from "../../shared/crowdpoolReadiness";
@@ -231,13 +232,17 @@ export const applicationsRouter = router({
         const applicantUser = await db.getUserById(ctx.user.id);
         if (applicantUser?.email) {
           const applicantName = applicantUser.name || "Applicant";
+          const safeName = textForEmail(applicantName);
+          const safeProject = textForEmail(application.projectName);
+          const safeLocation = textForEmail(application.location);
+          const projectKind = application.projectType === "early_stage" ? "Early Stage" : "Mature Project";
           await sendEmail({
             to: applicantUser.email,
-            subject: `Application Received: ${application.projectName}`,
+            subject: `Application Received: ${textForSubject(application.projectName)}`,
             html: `
               <h2>Your Application Has Been Received</h2>
-              <p>Hi ${applicantName},</p>
-              <p>Thank you for applying to the <strong>ReGen Civics Incubator</strong>! We have received your application for <strong>${application.projectName}</strong> and our team will review it carefully.</p>
+              <p>Hi ${safeName},</p>
+              <p>Thank you for applying to the <strong>ReGen Civics Incubator</strong>! We have received your application for <strong>${safeProject}</strong> and our team will review it carefully.</p>
               <h3>What happens next?</h3>
               ${intake.rolling ? `<ol>
                 <li><strong>Review:</strong> We review applications as they come in and email you our decision.</li>
@@ -250,9 +255,9 @@ export const applicationsRouter = router({
               </ol>` : `<p>${applicationCopy(intake).closedLine} We'll hold your application for the next season. You won't get emails about it until we get closer to the start of the next season. Then we'll review it and let you know.</p>${intake.followAlong ? `<p>${FOLLOW_ALONG_LINE} <a href="${toAbsoluteUrl(FOLLOW_ALONG_HREF)}">Follow along live</a>, and <a href="${toAbsoluteUrl(READINESS_HREF)}">see what ready means</a>.</p>` : ""}`}
               <h3>Your Application Summary</h3>
               <ul>
-                <li><strong>Project:</strong> ${application.projectName}</li>
-                <li><strong>Type:</strong> ${application.projectType === "early_stage" ? "Early Stage" : "Mature Project"}</li>
-                <li><strong>Location:</strong> ${application.location}</li>
+                <li><strong>Project:</strong> ${safeProject}</li>
+                <li><strong>Type:</strong> ${projectKind}</li>
+                <li><strong>Location:</strong> ${safeLocation}</li>
               </ul>
               <p>In the meantime, explore the <a href="${toAbsoluteUrl('/community')}">Community</a>, introduce yourself in the <a href="${toAbsoluteUrl('/community')}">Forum</a>, or complete your <a href="${toAbsoluteUrl('/profile')}">Player Profile</a>.</p>
               <p>With gratitude,<br>The ReGen Civics Team</p>

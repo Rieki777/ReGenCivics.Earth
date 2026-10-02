@@ -11,6 +11,7 @@ import { notifyOwner } from "../_core/notification";
 import { ENV } from "../_core/env";
 import { SignJWT, jwtVerify } from "jose";
 import { applyRecipientMergeFields } from "../lib/applicationEmailRecipients";
+import { textForEmail, textForSubject } from "../../shared/htmlText";
 import { emailDocumentFromBody } from "../lib/emailHtml";
 import { invokeLLM, isLLMConfigured } from "../_core/llm";
 import {
@@ -857,6 +858,7 @@ export const emailRouter = router({
                   input.layout ?? "plain",
                 ),
                 merge,
+                { html: true },
               ),
             };
           } else switch (input.templateType) {
@@ -872,19 +874,19 @@ export const emailRouter = router({
             case "acceptance":
               emailContent = {
                 subject: "Welcome to ReGen Civics!",
-                html: `<h2 style="color: #1a472a;">Hello ${name},</h2><p style="color: #333; line-height: 1.6;">Great news! We are thrilled to welcome you to the ReGen Civics community.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">Next Steps</h3><ul style="color: #333; line-height: 1.8;"><li>Join our next Open Session</li><li>Complete your player profile</li><li>Schedule a discovery call</li></ul></div><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p>`,
+                html: `<h2 style="color: #1a472a;">Hello ${textForEmail(name)},</h2><p style="color: #333; line-height: 1.6;">Great news! We are thrilled to welcome you to the ReGen Civics community.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">Next Steps</h3><ul style="color: #333; line-height: 1.8;"><li>Join our next Open Session</li><li>Complete your player profile</li><li>Schedule a discovery call</li></ul></div><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p>`,
               };
               break;
             case "not_selected":
               emailContent = {
                 subject: "Update on Your ReGen Civics Application",
-                html: `<h2 style="color: #1a472a;">Hello ${name},</h2><p style="color: #333; line-height: 1.6;">Thank you for your interest in ReGen Civics. After careful consideration, we've decided not to move forward at this time.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">What You Can Do</h3><ul style="color: #333; line-height: 1.8;"><li>Stay connected through our newsletter</li><li>Join our Open Sessions</li><li>Reapply in future seasons</li></ul></div><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p>`,
+                html: `<h2 style="color: #1a472a;">Hello ${textForEmail(name)},</h2><p style="color: #333; line-height: 1.6;">Thank you for your interest in ReGen Civics. After careful consideration, we've decided not to move forward at this time.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">What You Can Do</h3><ul style="color: #333; line-height: 1.8;"><li>Stay connected through our newsletter</li><li>Join our Open Sessions</li><li>Reapply in future seasons</li></ul></div><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p>`,
               };
               break;
             case "schedule_call":
               emailContent = {
                 subject: "Let's Connect - ReGen Civics",
-                html: `<h2 style="color: #1a472a;">Hello ${name},</h2><p style="color: #333; line-height: 1.6;">We'd love to schedule a call to discuss your interest in ReGen Civics.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;"><a href="https://calendly.com/rieki-cordon/30min" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Book a 30-Minute Call</a></div><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p>`,
+                html: `<h2 style="color: #1a472a;">Hello ${textForEmail(name)},</h2><p style="color: #333; line-height: 1.6;">We'd love to schedule a call to discuss your interest in ReGen Civics.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;"><a href="https://calendly.com/rieki-cordon/30min" style="display: inline-block; background: #4a7c59; color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-weight: bold;">Book a 30-Minute Call</a></div><p style="color: #4a7c59; font-weight: bold;">The ReGen Civics Team</p>`,
               };
               break;
             case "request_info":
@@ -901,8 +903,9 @@ export const emailRouter = router({
                   projectName: recipient.projectName,
                 }),
                 html: applyRecipientMergeFields(
-                  input.customBody || `<p>Hello ${name},</p><p>Thank you for being part of the ReGenerative Renaissance.</p>`,
+                  input.customBody || `<p>Hello ${textForEmail(name)},</p><p>Thank you for being part of the ReGenerative Renaissance.</p>`,
                   { email: recipient.email, name, projectName: recipient.projectName },
+                  { html: true },
                 ),
               };
               break;
@@ -913,9 +916,9 @@ export const emailRouter = router({
           // Apply merge fields to subject and body
           if (input.mergeFields) {
             for (const [key, val] of Object.entries(input.mergeFields)) {
-              const replacement = String(val);
-              emailContent.subject = emailContent.subject.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), replacement);
-              emailContent.html = emailContent.html.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), replacement);
+              const token = `{{${key}}}`;
+              emailContent.subject = emailContent.subject.split(token).join(textForSubject(val));
+              emailContent.html = emailContent.html.split(token).join(textForEmail(val));
             }
           }
 
