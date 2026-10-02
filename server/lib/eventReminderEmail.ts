@@ -87,21 +87,42 @@ export function reminderMuteTopic(event: EventKindForReminders): EmailTopicKey {
   return "events";
 }
 
-function formatSessionWhen(startTime: Date): { dateStr: string; timeStr: string } {
+/** Use the stored zone when it is a real IANA id. PDT/PST labels are not. */
+export function ianaTimeZone(label: string | null | undefined): string {
+  const raw = (label ?? "").trim();
+  if (!raw) return SESSION_TIME_ZONE;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: raw }).format(new Date());
+    return raw;
+  } catch {
+    return SESSION_TIME_ZONE;
+  }
+}
+
+/**
+ * Date and time in the event's zone, with the short zone name on the clock
+ * (11:00 AM PDT). The server's own zone is not used.
+ */
+export function formatEventWhen(startTime: Date, timeZone?: string | null): { dateStr: string; timeStr: string } {
+  const zone = ianaTimeZone(timeZone);
   const dateStr = startTime.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
-    timeZone: SESSION_TIME_ZONE,
+    timeZone: zone,
   });
   const timeStr = startTime.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: SESSION_TIME_ZONE,
+    timeZone: zone,
     timeZoneName: "short",
   });
   return { dateStr, timeStr };
+}
+
+function formatSessionWhen(startTime: Date): { dateStr: string; timeStr: string } {
+  return formatEventWhen(startTime, SESSION_TIME_ZONE);
 }
 
 function escapeHtml(value: string): string {

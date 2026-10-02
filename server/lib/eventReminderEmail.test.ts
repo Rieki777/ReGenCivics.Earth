@@ -5,11 +5,29 @@ import { APP_BASE_URL } from "../_core/email";
 import {
   buildAutoReminderHtml,
   buildSignupReminderHtml,
+  formatEventWhen,
   reminderJoinLabel,
   reminderJoinUrl,
   reminderMuteTopic,
   reminderUnsubscribeUrl,
 } from "./eventReminderEmail";
+
+describe("formatEventWhen", () => {
+  const start = new Date("2026-07-14T18:00:00.000Z");
+
+  it("prints 11:00 AM PDT for an 18:00 UTC session, even when the label is PDT", () => {
+    const when = formatEventWhen(start, "PDT");
+    expect(when.timeStr).toContain("11:00 AM");
+    expect(when.timeStr).toContain("PDT");
+    expect(when.timeStr).not.toContain("6:00");
+    expect(when.dateStr).toContain("July 14, 2026");
+  });
+
+  it("uses a real IANA zone when one is stored", () => {
+    const when = formatEventWhen(start, "America/Los_Angeles");
+    expect(when.timeStr).toContain("11:00 AM PDT");
+  });
+});
 
 describe("buildAutoReminderHtml", () => {
   it("includes the lead, title, join path, and manage-preferences footer", () => {
