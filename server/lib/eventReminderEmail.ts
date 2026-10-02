@@ -31,6 +31,11 @@ type ReminderEmailInput = {
   /** Signed community prefs URL. Footer CTA is Manage email preferences. */
   preferencesUrl?: string;
   /**
+   * Signed per-event stop link (`/schedule?unsubscribe=`). Works without a
+   * newsletter row. Omitted for the always-include footer.
+   */
+  eventStopUrl?: string;
+  /**
    * The recipient is on ALWAYS_INCLUDE_REMINDER_RECIPIENTS. They never signed
    * up, so the footer says why they are getting this and how to stop, in place
    * of a preferences link that would do nothing for them.
@@ -45,11 +50,14 @@ function footerHtml(input: ReminderEmailInput): string {
     return `${escapeHtml(ALWAYS_INCLUDED_FOOTER_TEXT)} <a href="${stop}" style="color:#7dd87d;">${escapeHtml(stop.replace(/^https?:\/\//, ""))}</a>.<br/>
             ${schedule}`;
   }
+  const stop = input.eventStopUrl
+    ? ` · <a href="${escapeHtml(input.eventStopUrl)}" style="color:#999;">Stop reminders for this event</a>`
+    : "";
   const prefs = input.preferencesUrl
     ? ` · <a href="${escapeHtml(input.preferencesUrl)}" style="color:#999;">Manage email preferences</a>`
     : "";
   return `You are receiving this as a reminder for this event.<br/>
-            ${schedule}${prefs}`;
+            ${schedule}${stop}${prefs}`;
 }
 
 /**
@@ -182,6 +190,7 @@ export function buildSignupReminderHtml(input: {
   zoomUrl?: string | null;
   offsetMinutes: number;
   preferencesUrl: string;
+  eventStopUrl?: string;
 }): string {
   return buildAutoReminderHtml({
     title: input.title,
@@ -192,6 +201,7 @@ export function buildSignupReminderHtml(input: {
     eventId: input.eventId,
     offsetMinutes: input.offsetMinutes,
     preferencesUrl: input.preferencesUrl,
+    eventStopUrl: input.eventStopUrl,
   });
 }
 
