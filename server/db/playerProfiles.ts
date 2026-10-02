@@ -17,7 +17,7 @@
  * lists must stay in lockstep, so splitting them apart would be worse than the
  * import.
  */
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { InsertPlayerProfile, playerProfiles, userProfiles } from "../../drizzle/schema";
 import { getDb, getUserProfile } from "../db";
 
@@ -78,15 +78,6 @@ export async function getAllPlayerProfiles() {
   return db.select().from(playerProfiles)
     .where(eq(playerProfiles.isActive, 1))
     .orderBy(desc(playerProfiles.createdAt));
-}
-
-export async function getVerifiedPlayerProfiles() {
-  const db = await getDb();
-  if (!db) return [];
-
-  return db.select().from(playerProfiles)
-    .where(and(eq(playerProfiles.isVerified, 1), eq(playerProfiles.isActive, 1)))
-    .orderBy(desc(playerProfiles.totalContributionValue));
 }
 
 export async function updatePlayerProfile(id: number, data: Partial<InsertPlayerProfile>) {

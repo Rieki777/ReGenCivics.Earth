@@ -10,7 +10,7 @@
  *   playerProfiles.list         every active member, one request, no input
  *   playerProfiles.getByHandle  any member by @handle
  *   playerProfiles.getById      any member by enumerable id
- *   playerProfiles.leaderboard  every verified member
+ *   playerProfiles.leaderboard  every verified member (deleted 2026-10-01)
  *
  * These tests hold the line three ways:
  *
@@ -41,7 +41,6 @@ vi.mock("./db", async (importOriginal) => {
     getPlayerProfileByUserId: vi.fn(),
     getPlayerProfileById: vi.fn(),
     getAllPlayerProfiles: vi.fn(),
-    getVerifiedPlayerProfiles: vi.fn(),
   };
 });
 
@@ -114,7 +113,6 @@ const mocked = db as unknown as {
   getPlayerProfileByUserId: ReturnType<typeof vi.fn>;
   getPlayerProfileById: ReturnType<typeof vi.fn>;
   getAllPlayerProfiles: ReturnType<typeof vi.fn>;
-  getVerifiedPlayerProfiles: ReturnType<typeof vi.fn>;
 };
 
 beforeEach(() => {
@@ -127,7 +125,6 @@ beforeEach(() => {
   mocked.getPlayerProfileByUserId.mockReset().mockResolvedValue(profile);
   mocked.getPlayerProfileById.mockReset().mockResolvedValue(profile);
   mocked.getAllPlayerProfiles.mockReset().mockResolvedValue([profile]);
-  mocked.getVerifiedPlayerProfiles.mockReset().mockResolvedValue([profile]);
 });
 
 // ── The allowlist itself ────────────────────────────────────────────────────
@@ -255,24 +252,63 @@ describe("playerProfiles.getById", () => {
   });
 });
 
-// ── leaderboard ─────────────────────────────────────────────────────────────
+// ── leaderboard: deleted ────────────────────────────────────────────────────
+// It ranked verified members by totalContributionValue, a money figure that
+// adds currencies together and includes anonymous offers. No page called it
+// (ship.quest.leaderboard is a different procedure). Deleted 2026-10-01.
 describe("playerProfiles.leaderboard", () => {
-  it("gives an anonymous caller no PII in any row", async () => {
-    const rows = (await appRouter.createCaller(ANON).playerProfiles.leaderboard()) as Array<
-      Record<string, unknown>
-    >;
-    expect(rows).toHaveLength(1);
-    for (const row of rows) {
-      for (const col of PRIVATE_COLUMNS) expect(col in row).toBe(false);
-      expect(Object.keys(row).sort()).toEqual([...PUBLIC_FIELDS].sort());
-    }
+  it("no longer exists", () => {
+    expect("leaderboard" in appRouter._def.record.playerProfiles).toBe(false);
   });
 
-  it("redacts a signed-in caller's view of other members too", async () => {
-    const rows = (await appRouter.createCaller(OTHER).playerProfiles.leaderboard()) as Array<
-      Record<string, unknown>
-    >;
-    for (const col of PII_COLUMNS) expect(col in rows[0]).toBe(false);
+  it("cannot be called, by anyone", async () => {
+    for (const ctx of [ANON, OTHER, ADMIN]) {
+      const caller = appRouter.createCaller(ctx) as unknown as {
+        playerProfiles: { leaderboard: () => Promise<unknown> };
+      };
+      await expect(Promise.resolve().then(() => caller.playerProfiles.leaderboard())).rejects.toThrow();
+    }
+  });
+});
+
+// ── totalContributionValue: the owner's only ────────────────────────────────
+// A money figure per person that adds currencies together and includes
+// anonymous offers, so a public read could tie an anonymous gift to a named
+// member. Withheld since 2026-10-01; the owner still sees it through me.
+describe("totalContributionValue stays out of public reads", () => {
+  it("is not on the allowlist", () => {
+    expect(PUBLIC_FIELDS).not.toContain("totalContributionValue");
+  });
+
+  it("is absent from the projection", () => {
+    const pub = toPublicPlayerProfile(syntheticProfile()) as Record<string, unknown>;
+    expect("totalContributionValue" in pub).toBe(false);
+  });
+
+  it("is absent from an anonymous getByHandle", async () => {
+    const res = (await appRouter
+      .createCaller(ANON)
+      .playerProfiles.getByHandle({ handle: "synthetic-handle" })) as Record<string, unknown>;
+    expect("totalContributionValue" in res).toBe(false);
+  });
+
+  it("is absent from an anonymous getById", async () => {
+    const res = (await appRouter
+      .createCaller(ANON)
+      .playerProfiles.getById({ id: 4242 })) as Record<string, unknown>;
+    expect("totalContributionValue" in res).toBe(false);
+  });
+
+  it("is absent from another member's getById", async () => {
+    const res = (await appRouter
+      .createCaller(OTHER)
+      .playerProfiles.getById({ id: 4242 })) as Record<string, unknown>;
+    expect("totalContributionValue" in res).toBe(false);
+  });
+
+  it("still reaches the owner through me", async () => {
+    const res = (await appRouter.createCaller(OWNER).playerProfiles.me()) as Record<string, unknown>;
+    expect(res.totalContributionValue).toBe("synthetic-totalContributionValue");
   });
 });
 

@@ -403,7 +403,6 @@ export {
   getPlayerProfilesByUserIds,
   getPlayerProfileByBaseAccount,
   getAllPlayerProfiles,
-  getVerifiedPlayerProfiles,
   updatePlayerProfile,
   deletePlayerProfile,
 } from "./db/playerProfiles";

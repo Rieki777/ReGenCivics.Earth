@@ -182,6 +182,9 @@ export function AcceptDialog({
         heldHours: contribution?.quantityPledged ?? null,
         // A filled role that opens up tells the people still waiting on it.
         roleFilled: !!need && hoursNeed && roleFillState(need).filled,
+        // The accept line says whether a yes puts their name on the public
+        // timeline or keeps them as "A contributor" (P8).
+        isAnonymous: !!contribution?.isAnonymous,
       })
     : "";
 

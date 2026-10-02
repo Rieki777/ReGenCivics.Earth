@@ -14,7 +14,7 @@ import { CROWDPOOLING_WORDING } from "../lib/content-canon";
 import { invokeLLM } from "../_core/llm";
 import { sanitizeInput } from "../_core/security";
 import type { TrpcContext } from "../_core/context";
-import { canSeeFullRecord, pickPublic } from "../lib/public-projection";
+import { canSeeFullRecord, isAdminUser, pickPublic } from "../lib/public-projection";
 
 // Sanitize free-text prose fields while preserving null/undefined (so an
 // unset field is not accidentally overwritten with an empty string).
@@ -42,7 +42,11 @@ const cleanText = <T extends string | null | undefined>(v: T): T =>
  * locationPrecision, locationNomadic, locationEarth, forumLocation, every
  * token balance (public and private) and lastTokenSync, emailDigestFrequency,
  * notificationPrefs, companionMemoryOptIn, preferredLanguage, trustScore and
- * trustScoreRaw, contributionScore and contributionScoreRaw, capitalScoresJson.
+ * trustScoreRaw, contributionScore and contributionScoreRaw, capitalScoresJson,
+ * totalContributionValue. That last one is a money figure per person: it adds
+ * currencies together and includes offers made anonymously, so a public read
+ * could tie an anonymous gift to a named member. The owner still sees it
+ * through playerProfiles.me. (Withheld since 2026-10-01, bundle 1.)
  */
 export const PUBLIC_PLAYER_PROFILE_FIELDS = [
   "id",
@@ -53,7 +57,6 @@ export const PUBLIC_PLAYER_PROFILE_FIELDS = [
   "bannerUrl",
   "badges",
   "questsCompleted",
-  "totalContributionValue",
   "isVerified",
   "citizenshipTier",
   "currentTier",
@@ -133,13 +136,6 @@ export const playerProfilesRouter = router({
       }
       return out;
     }),
-
-  // Get verified players (leaderboard). Public projection only: a leaderboard
-  // needs the name, avatar and contribution total, never the contact details.
-  leaderboard: publicProcedure.query(async () => {
-    const rows = await db.getVerifiedPlayerProfiles();
-    return rows.map(toPublicPlayerProfile);
-  }),
 
   // Get current user's profile
   me: protectedProcedure.query(async ({ ctx }) => {
@@ -1033,13 +1029,18 @@ export const playerProfilesRouter = router({
    * Values are 0-100 percentiles ranked across the active player base.
    * Reads from the nightly cache on playerProfiles when fresh (<24h);
    * otherwise calculates live from playerContributions + questCompletions.
+   *
+   * Owner and admins only. The one caller (CapitalSnapshot on the owner's own
+   * /profile) asks for the signed-in user. It was a publicProcedure taking any
+   * userId until 2026-10-01, which let anyone read anyone's Living Tree
+   * percentiles. The refusal comes before any database read.
    */
-  capitalScores: publicProcedure
+  capitalScores: protectedProcedure
     .input(z.object({ userId: z.number().optional() }).optional())
     .query(async ({ ctx, input }) => {
-      const targetUserId = input?.userId ?? ctx.user?.id;
-      if (!targetUserId) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "userId required" });
+      const targetUserId = input?.userId ?? ctx.user.id;
+      if (targetUserId !== ctx.user.id && !isAdminUser(ctx.user)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You can only see your own Living Tree." });
       }
 
       const db2 = await getDb();

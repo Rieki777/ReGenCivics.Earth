@@ -9,6 +9,8 @@ import {
   CLOSED_STATUSES,
   REOPEN_NOTICE_IF_OPENED,
   REOPEN_NOTICE_ON_RAISE,
+  PUBLIC_NAME_LINE,
+  ANONYMOUS_NAME_LINE,
   type QueueItem,
 } from "./stewardQueue";
 
@@ -219,5 +221,31 @@ describe("stewardActionDescription", () => {
     expect(stewardActionDescription({ action: "release", hoursNeed: true, hasAccount: false, name: "Kai", heldHours: 30 }))
       .toBe("This frees the 30 hours a week Kai holds, so someone else can take them. Kai has no account here yet, so let them know yourself.");
     expect(stewardActionDescription({ action: "thanks", hoursNeed: false, hasAccount: false, name: "Kai" })).toContain("share it with them yourself");
+  });
+
+  // P8: before a yes, the steward reads what it makes public. A named offer's
+  // name shows on the campaign's public timeline; an anonymous one shows as
+  // "A contributor" there (campaigns.getActivity).
+  describe("the accept line says what a yes makes public", () => {
+    it("a count need, named", () => {
+      expect(stewardActionDescription({ action: "accept", hoursNeed: false, hasAccount: true, name: "Rosa" }))
+        .toBe("This holds their place on the need. Once you accept, Rosa's name shows on this campaign's public timeline.");
+    });
+    it("a count need, anonymous", () => {
+      expect(stewardActionDescription({ action: "accept", hoursNeed: false, hasAccount: false, name: "Rosa", isAnonymous: true }))
+        .toBe('This holds their place on the need. They asked to stay anonymous, so the public timeline shows "A contributor".');
+    });
+    it("an hours need, named", () => {
+      expect(stewardActionDescription({ action: "accept", hoursNeed: true, hasAccount: true, name: "Kai", roleTitle: "Farm Manager" }))
+        .toBe("Accept Kai for a share of Farm Manager. Once you accept, Kai's name shows on this campaign's public timeline.");
+    });
+    it("an hours need, anonymous", () => {
+      expect(stewardActionDescription({ action: "accept", hoursNeed: true, hasAccount: true, name: "Kai", roleTitle: "Farm Manager", isAnonymous: true }))
+        .toBe('Accept Kai for a share of Farm Manager. They asked to stay anonymous, so the public timeline shows "A contributor".');
+    });
+    it("uses the exported lines, so the dialog and the tests share one wording", () => {
+      expect(PUBLIC_NAME_LINE("Kai")).toBe("Once you accept, Kai's name shows on this campaign's public timeline.");
+      expect(ANONYMOUS_NAME_LINE).toBe('They asked to stay anonymous, so the public timeline shows "A contributor".');
+    });
   });
 });

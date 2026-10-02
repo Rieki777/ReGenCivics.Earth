@@ -183,12 +183,6 @@ export function hoursDialogNumbers(
 }
 
 /**
- * The line under each steward dialog's title (client AcceptDialog). People
- * without an account get the three direct emails (accepted, declined,
- * delivered) and nothing for thanks, release or an hours change, so the
- * dialog says who will hear and when the steward should tell them directly.
- */
-/**
  * Added to the release and hours dialogs when the role is filled: freeing
  * hours on it sends a role_reopened notice (server/lib/campaign-notify.ts) to
  * the people still waiting on it and, since Rye's ruling of 2026-09-27
@@ -207,6 +201,24 @@ export const REOPEN_NOTICE_IF_OPENED =
 export const REOPEN_NOTICE_ON_RAISE =
   "People with an account who are waiting on this role or weren't picked hear that it has opened up. Anyone without an account won't hear, so let them know yourself.";
 
+/**
+ * The accept dialog's line on what a yes makes public (P8). Names show on the
+ * campaign's public timeline (campaigns.getActivity); anonymous offers show as
+ * "A contributor".
+ */
+export const PUBLIC_NAME_LINE = (name: string) =>
+  `Once you accept, ${name}'s name shows on this campaign's public timeline.`;
+export const ANONYMOUS_NAME_LINE =
+  'They asked to stay anonymous, so the public timeline shows "A contributor".';
+
+/**
+ * The line under each steward dialog's title (client AcceptDialog). People
+ * without an account get the three direct emails (accepted, declined,
+ * delivered) and nothing for thanks, release or an hours change, so the
+ * dialog says who will hear and when the steward should tell them directly.
+ * The accept line also says whether a yes puts their name on the public
+ * timeline or keeps them as "A contributor" (isAnonymous).
+ */
 export function stewardActionDescription(args: {
   action: "accept" | "reject" | "deliver" | "thanks" | "release" | "hours" | "returned";
   hoursNeed: boolean;
@@ -218,14 +230,18 @@ export function stewardActionDescription(args: {
   heldHours?: number | null;
   /** The role is filled right now, so a release or lower hours opens it. */
   roleFilled?: boolean;
+  /** The offer asked to stay anonymous: the accept line says the timeline shows "A contributor". */
+  isAnonymous?: boolean;
 }): string {
   const { action, hoursNeed, hasAccount, name } = args;
   const others = hoursNeed && args.roleFilled ? ` ${REOPEN_NOTICE_IF_OPENED}` : "";
   const role = args.roleTitle || "this role";
   const tellThem = `${name} has no account here yet, so let them know yourself.`;
   switch (action) {
-    case "accept":
-      return hoursNeed ? `Accept ${name} for a share of ${role}.` : "This holds their place on the need.";
+    case "accept": {
+      const base = hoursNeed ? `Accept ${name} for a share of ${role}.` : "This holds their place on the need.";
+      return `${base} ${args.isAnonymous ? ANONYMOUS_NAME_LINE : PUBLIC_NAME_LINE(name)}`;
+    }
     case "reject":
       return "They hear from you in their notifications or by email.";
     case "deliver":
