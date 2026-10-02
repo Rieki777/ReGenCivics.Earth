@@ -200,16 +200,16 @@ select.sb-field { width: auto; min-height: 36px; padding: 4px 10px; font-size: 1
 .sb-modules li { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--sb-line); background: var(--sb-ground-2); }
 .sb-modules strong { font-family: var(--sb-display); }
 .sb-modules span { font-size: 14.5px; color: var(--sb-muted); }
-.sb-roster-demo { display: grid; gap: 12px; }
-.sb-slot { display: grid; gap: 6px; }
-.sb-slot-top { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; flex-wrap: wrap; }
-.sb-slot-top span:last-child { font-variant-numeric: tabular-nums; color: var(--sb-muted); }
-.sb-meter { height: 12px; border-radius: 8px; background: var(--sb-arc-off); overflow: hidden; display: flex; }
-.sb-meter-arrived { background: var(--sb-spring); }
-.sb-meter-spoken { background: rgba(125, 216, 125, 0.4); }
-.sb-meter-key { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--sb-muted); font-weight: 700; }
-.sb-meter-key span { display: inline-flex; align-items: center; gap: 6px; }
-.sb-key-sw { width: 12px; height: 8px; border-radius: 3px; display: inline-block; }
+.sb-amora, .sb-rolecards { display: grid; gap: 12px; }
+.sb-amora-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sb-amora-frame { display: block; width: 100%; height: min(78vh, 760px); border: 1px solid var(--sb-line); border-radius: 12px; background: var(--sb-ground-2); }
+.sb-amora-shot { display: block; border-radius: 12px; overflow: hidden; border: 1px solid var(--sb-line); }
+.sb-amora-shot:hover { border-color: var(--sb-line-strong); }
+.sb-amora-shot img, .sb-rolecard img { display: block; width: 100%; height: auto; }
+.sb-rolecard-row { display: grid; grid-template-columns: minmax(0, 2.33fr) minmax(0, 1fr); gap: clamp(14px, 2vw, 24px); max-width: 1100px; align-items: start; }
+.sb-rolecard { margin: 0; display: grid; gap: 8px; }
+.sb-rolecard img { border-radius: 12px; }
+.sb-rolecard figcaption { font-size: 15px; color: var(--sb-muted); }
 
 /* ---------- circle ---------- */
 .sb-circle { display: grid; grid-template-columns: minmax(240px, 310px) minmax(0, 1fr); gap: clamp(16px, 2vw, 28px); align-items: start; }
@@ -366,6 +366,9 @@ select.sb-field { width: auto; min-height: 36px; padding: 4px 10px; font-size: 1
   .sb-mini { width: 44px; height: 44px; }
   .sb-wk { grid-template-columns: minmax(0, 1fr) auto; }
   .sb-wk-n { grid-column: 1 / -1; }
+  .sb-rolecard-row { grid-template-columns: minmax(0, 1fr); }
+  .sb-rolecard:last-child { max-width: 320px; }
+  .sb-amora-frame { height: min(70vh, 620px); }
 }
 @media (prefers-reduced-motion: reduce) {
   .sb-ring-fg, .sb-dot { transition: none; }

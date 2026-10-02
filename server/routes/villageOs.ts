@@ -18,11 +18,14 @@ import { adminProcedure, protectedProcedure, publicProcedure, rateLimited, route
 import { ENV } from "../_core/env";
 import { notifyOwner } from "../_core/notification";
 import { getDb } from "../db";
+import { frameOriginsFor } from "../lib/frame-check";
 import { applications, villageOsRequests } from "../../drizzle/schema";
 import { isAdminRole } from "@shared/adminRole";
 import { cleanRepoUrl } from "@shared/interopTools";
 import { cleanBoardLine, cleanBoardText } from "@shared/sessionBoard";
 import {
+  AMORA_CIRCLES_EMBED_URL,
+  AMORA_CIRCLES_URL,
   DRAFT_FIELDS,
   HOSTING_REQUEST_STATUSES,
   HOSTING_SEASON,
@@ -40,7 +43,7 @@ import {
 /** A founder fills this in once or twice; five a minute is plenty and keeps loops slow. */
 const REQUEST_LIMIT = { windowMs: 60_000, max: 5 };
 
-/** The stored lengths (migration 0284). Input is bounded by hostingRequestInput; these trim. */
+/** The stored lengths (migration 0287). Input is bounded by hostingRequestInput; these trim. */
 const STORED = {
   villageName: 120,
   ownDomain: 253,
@@ -136,6 +139,18 @@ function pickDraftFields(app: Record<string, unknown> | null | undefined): Parti
 export const villageOsRouter = router({
   /** Public: whether the page shows the code link and the membership button. */
   offer: publicProcedure.query(() => villageOsOfferFlags(ENV)),
+
+  /**
+   * Public: Amora's circles map for the Week 2 board, and which of the board's
+   * origins Amora lets frame its map-only view (server/lib/frame-check.ts).
+   * The board draws the live map only on one of those origins, and a picture
+   * otherwise.
+   */
+  amoraMap: publicProcedure.query(async () => ({
+    url: AMORA_CIRCLES_URL,
+    embedUrl: AMORA_CIRCLES_EMBED_URL,
+    frameOrigins: await frameOriginsFor(AMORA_CIRCLES_EMBED_URL),
+  })),
 
   /**
    * Public: what the hosting form can offer this visitor. Signed out, nothing

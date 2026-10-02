@@ -1,7 +1,9 @@
 -- Get your Village OS: hosting requests (shared/villageOsOffer.ts, ADR-69).
 -- A founder of an accepted Season 2 project asks the ReGen Civics team to
--- host their village at /village-os/host. Numbered 0284: 0283 is the session
--- boards. Additive and safe to run more than once.
+-- host their village at /village-os/host. Numbered 0287: 0283 is the session
+-- boards, 0284 to 0286 are the email lane's. It first ran on production as
+-- 0284_village_os_requests.sql before that number turned out to be taken, so
+-- the table already exists there. Additive and safe to run more than once.
 
 -- One row per application. A second request for the same application updates
 -- this row (the unique key on applicationId), and a withdrawn request goes

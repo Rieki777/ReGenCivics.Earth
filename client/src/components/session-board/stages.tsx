@@ -21,7 +21,8 @@ import {
   shareTime,
   type BoardStage,
 } from "@shared/sessionBoard";
-import { VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { AMORA_CIRCLES_EMBED_URL, AMORA_CIRCLES_URL, AMORA_VILLAGE_URL, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { trpc } from "@/lib/trpc";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
 
 export type StageProps = {
@@ -399,11 +400,85 @@ const MODULES = [
   { t: "Profiles", d: "Who's here, and what each person brings." },
 ];
 
-const EXAMPLE_ROSTER = [
-  { role: "Garden steward", arrived: 12, spoken: 4, wanted: 20 },
-  { role: "Builder", arrived: 24, spoken: 8, wanted: 40 },
-  { role: "Kitchen lead", arrived: 0, spoken: 6, wanted: 15 },
-];
+const NEW_TAB = <span className="sr-only"> (opens in a new tab)</span>;
+
+/**
+ * Amora's circles map: its map-only view live in a frame when Amora's headers
+ * let this origin frame it (villageOs.amoraMap), and a dated picture otherwise.
+ */
+function AmoraCircles() {
+  const map = trpc.villageOs.amoraMap.useQuery(undefined, { staleTime: 10 * 60 * 1000, refetchOnWindowFocus: false, retry: false });
+  const live = !!map.data && typeof window !== "undefined" && map.data.frameOrigins.includes(window.location.origin);
+  return (
+    <section className="sb-panel sb-amora" aria-labelledby="sb-amora-h">
+      <div className="sb-amora-head">
+        <h3 id="sb-amora-h" className="sb-h3">Amora's circles</h3>
+        <a className="sb-btn sb-small" href={AMORA_CIRCLES_URL} target="_blank" rel="noopener noreferrer">Open the map{NEW_TAB}</a>
+      </div>
+      {live ? (
+        <iframe
+          className="sb-amora-frame"
+          src={AMORA_CIRCLES_EMBED_URL}
+          title="Amora's circles map, live from amora.regencivics.earth"
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        />
+      ) : (
+        <a className="sb-amora-shot" href={AMORA_CIRCLES_URL} target="_blank" rel="noopener noreferrer">
+          <img
+            src="/images/session-board/amora-circles-map.webp"
+            width={1600}
+            height={1075}
+            loading="lazy"
+            decoding="async"
+            alt="Amora's circles map on 2 October: the village drawn as circles inside circles, from the General Coordinating Circle and the Development Circle to councils still forming, with open seats marked by a plus. Beside it: 17 circles, and 16 open calls waiting for someone."
+          />
+          {NEW_TAB}
+        </a>
+      )}
+      <p className="sb-hint">
+        {live
+          ? "Live from Amora. Tap a circle to step inside it, or a seat to see who holds it."
+          : "A picture of Amora's map from 2 October. Open the map to tap a circle or a seat."}
+      </p>
+    </section>
+  );
+}
+
+/** A first look at the role cards being built into Village OS, from invented sample seats. */
+function RoleCardsPreview() {
+  return (
+    <section className="sb-panel sb-rolecards" aria-labelledby="sb-rolecards-h">
+      <h3 id="sb-rolecards-h" className="sb-h3">Coming to Village OS: role cards</h3>
+      <p className="sb-hint">A first look at what's being built. Every seat in a Game gets a card, and a new role starts as a proposal the circle decides on. The seats and the person on them here are made-up examples.</p>
+      <div className="sb-rolecard-row">
+        <figure className="sb-rolecard">
+          <img
+            src="/images/session-board/role-card-seat.webp"
+            width={1648}
+            height={1504}
+            loading="lazy"
+            decoding="async"
+            alt="A sample role card for a Water Steward seat, opened flat. On the left: its art, its aim (every household has clean water and the systems that carry it are cared for), a Raise your hand button, and who holds it: Mara, an agent, and one open place waiting for a hand. On the right: three places, two held and one open; five of its seven commitments written down; what it decides on, the four things it answers for, why it matters, a term ending 21 March 2027, and consent as its way of deciding."
+          />
+          <figcaption>A seat's card, front and back side by side: who holds it, the open place waiting for a hand, and what the seat does.</figcaption>
+        </figure>
+        <figure className="sb-rolecard">
+          <img
+            src="/images/session-board/role-card-proposal.webp"
+            width={752}
+            height={1596}
+            loading="lazy"
+            decoding="async"
+            alt="A sample role card for a Treasury Keeper: one place, nobody seated yet, a vote fills it, and two powers it carries (list tokens, post prices and stock the treasury; confirm that a member was paid and destroy the tokens they redeemed). The rung it asks for is Contributor or above, on a ladder of twelve rungs from Visitor to Sage."
+          />
+          <figcaption>The card someone sees while proposing a role: the powers it carries and the rung it asks for.</figcaption>
+        </figure>
+      </div>
+    </section>
+  );
+}
 
 export function VillageOS({ stages, index }: StageProps) {
   return (
@@ -417,29 +492,9 @@ export function VillageOS({ stages, index }: StageProps) {
             <p className="sb-hint">Twenty more modules switch on as a village is ready for them: the Village Map, crowdpooling, governance and more.</p>
             <p>
               See it live at{" "}
-              <a className="sb-link" href="https://amora.regencivics.earth" target="_blank" rel="noopener noreferrer">amora.regencivics.earth<span className="sr-only"> (opens in a new tab)</span></a>
-              , including{" "}
-              <a className="sb-link" href="https://amora.regencivics.earth/map/circles" target="_blank" rel="noopener noreferrer">Amora's circles and open seats<span className="sr-only"> (opens in a new tab)</span></a>
+              <a className="sb-link" href={AMORA_VILLAGE_URL} target="_blank" rel="noopener noreferrer">amora.regencivics.earth{NEW_TAB}</a>
               .
             </p>
-          </div>
-          <div className="sb-panel sb-roster-demo">
-            <h3 className="sb-h3">How a roster fills</h3>
-            {EXAMPLE_ROSTER.map((s) => (
-              <div key={s.role} className="sb-slot">
-                <div className="sb-slot-top"><span>{s.role}</span><span>{s.arrived} of {s.wanted} hours a week</span></div>
-                <div className="sb-meter" role="img" aria-label={`${s.role}: ${s.arrived} hours arrived, ${s.spoken} spoken for, ${s.wanted} wanted`}>
-                  <span className="sb-meter-arrived" style={{ width: `${(s.arrived / s.wanted) * 100}%` }} />
-                  <span className="sb-meter-spoken" style={{ width: `${(s.spoken / s.wanted) * 100}%` }} />
-                </div>
-              </div>
-            ))}
-            <div className="sb-meter-key">
-              <span><span className="sb-key-sw sb-meter-arrived" />Arrived</span>
-              <span><span className="sb-key-sw sb-meter-spoken" />Spoken for</span>
-              <span><span className="sb-key-sw sb-meter" />Still wanted</span>
-            </div>
-            <p className="sb-hint">An example. Each role counts hours a week, and fills as people's pledges arrive.</p>
           </div>
         </div>
         <div className="sb-q">
@@ -453,6 +508,8 @@ export function VillageOS({ stages, index }: StageProps) {
           </ol>
         </div>
       </div>
+      <AmoraCircles />
+      <RoleCardsPreview />
     </>
   );
 }

@@ -126,7 +126,8 @@ const WEEK_2: BoardStage[] = [
     kind: "villageos", name: "Building in Village OS", short: "Village OS", min: 15,
     line: "The tool we build our Games in, and the crowdpool that fills their rosters",
     cues: [
-      "Show, don't list. Open amora.regencivics.earth and walk one path: the org chart, a quest, the Game Guide.",
+      "Show, don't list. Walk Amora's circles map: tap a circle, then an open seat.",
+      "Show the role cards: a seat's card, front and back, and the card someone sees while proposing a role.",
       "Tie each design week to what gets set up in the tool.",
       "Land the ending: the crowdpool at the solstice fills each Game's roster.",
     ],

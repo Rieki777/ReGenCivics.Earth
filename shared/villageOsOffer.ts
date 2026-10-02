@@ -35,6 +35,14 @@ export const VILLAGE_OS_PATH = "/village-os";
 export const VILLAGE_OS_HOST_PATH = "/village-os/host";
 export const VILLAGE_OS_REPO_URL = "https://github.com/Rieki777/village-os";
 export const AMORA_VILLAGE_URL = "https://amora.regencivics.earth";
+/** Amora's circles map, the page "Open the map" links to. */
+export const AMORA_CIRCLES_URL = `${AMORA_VILLAGE_URL}/map/circles`;
+/**
+ * Amora's map-only, public view of its circles, which the Week 2 board frames
+ * once Amora lets us. The full page opens on Amora's header and search, and
+ * would run in the viewer's own Amora session (an admin's view on a stream).
+ */
+export const AMORA_CIRCLES_EMBED_URL = `${AMORA_VILLAGE_URL}/embed/circles`;
 export const CORE_SITE_URL = "https://core.regencivics.earth";
 
 /** Hosting this season is for accepted Season 2 projects (Rye, 2026-10-02). */

@@ -101,7 +101,10 @@ export function cspMiddleware(_req: Request, res: Response, next: NextFunction) 
     "connect-src 'self' https://*.regencivics.earth https://ipapi.co https://*.ingest.sentry.io https://*.sentry.io https://translate.googleapis.com https://translate-pa.googleapis.com https://www.googleapis.com https://www.google-analytics.com https://*.youtube.com https://*.ytimg.com https://huggingface.co https://*.huggingface.co https://*.hf.co https://cdn.jsdelivr.net wss:",
     // https://www.zeffy.com added for the CORE (Church of the Regenerative
     // Earth) donation embed on core.regencivics.earth/donate.
-    "frame-src 'self' https://verify.walletconnect.com https://accounts.google.com https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com https://www.zeffy.com",
+    // https://amora.regencivics.earth shows Amora's circles map on the Week 2
+    // session board (ADR-69); the board frames it only when Amora's own
+    // frame-ancestors allows us (server/lib/frame-check.ts).
+    "frame-src 'self' https://verify.walletconnect.com https://accounts.google.com https://calendly.com https://www.youtube.com https://youtu.be https://www.youtube-nocookie.com https://player.vimeo.com https://www.vimeo.com https://fast.wistia.net https://www.loom.com https://www.dailymotion.com https://www.zeffy.com https://amora.regencivics.earth",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

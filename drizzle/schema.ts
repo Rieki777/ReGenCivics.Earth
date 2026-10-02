@@ -6769,7 +6769,7 @@ export type SessionBoardVote = typeof sessionBoardVotes.$inferSelect;
 
 /**
  * A request to have the ReGen Civics team host a village on Village OS
- * (migration 0284, ADR-69, shared/villageOsOffer.ts). One row per accepted
+ * (migration 0287, ADR-69, shared/villageOsOffer.ts). One row per accepted
  * Season 2 application. No gift or donation data lives here.
  */
 export const villageOsRequests = mysqlTable("village_os_requests", {
