@@ -16,7 +16,6 @@ import {
   Send,
   Clock,
   Bell,
-  ClipboardList,
   CheckCheck,
   AlertTriangle,
   Users,
@@ -79,7 +78,6 @@ export function AdminEventsTab() {
   const removeAttendanceMutation = trpc.events.removeAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
   const speakerIntroMutation = trpc.events.sendSpeakerIntro.useMutation();
   const [followupSuccess, setFollowupSuccess] = useState<number | null>(null);
-  const [checkinCopied, setCheckinCopied] = useState<number | null>(null);
   const [speakerIntroSuccess, setSpeakerIntroSuccess] = useState<number | null>(null);
   const [scheduleFor, setScheduleFor] = useState('');
   const [scheduleSuccess, setScheduleSuccess] = useState<number | null>(null);
@@ -507,25 +505,9 @@ export function AdminEventsTab() {
                   </div>
                 )}
 
-                {/* #16. Check-in URL and copy button */}
-                {(ev as any).checkinToken && (
-                  <div className="border-t border-white/10 px-4 py-2 flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-white/60">Check-in URL:</span>
-                    <code className="text-xs text-[#7dd87d] bg-white/5 px-2 py-0.5 rounded break-all">
-                      {window.location.origin}/checkin/{(ev as any).checkinToken}
-                    </code>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/checkin/${(ev as any).checkinToken}`);
-                        setCheckinCopied(ev.id);
-                        setTimeout(() => setCheckinCopied(null), 2000);
-                      }}
-                      className="text-xs text-white/60 hover:text-[#7dd87d] transition-colors flex items-center gap-1"
-                    >
-                      {checkinCopied === ev.id ? <><CheckCheck size={11} /> Copied!</> : <><ClipboardList size={11} /> Copy</>}
-                    </button>
-                  </div>
-                )}
+                <div className="border-t border-white/10 px-4 py-2">
+                  <span className="text-xs text-white/60">Personal check-in links go out in the follow-up email.</span>
+                </div>
 
                 {/* Inline email editor */}
                 {!isPast && reminderEditorOpen === ev.id && (

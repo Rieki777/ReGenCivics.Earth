@@ -25,7 +25,8 @@ import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoRem
 import { recordings, applications, users } from "../../drizzle/schema";
 import { resolveAutoReminderRecipients, sendToAlwaysIncluded } from "../jobs/eventReminders";
 import { sendSignupReminderBlast } from "../lib/signupReminderBlast";
-import { reminderJoinLabel, reminderJoinUrl } from "../lib/eventReminderEmail";
+import { formatEventWhen, reminderJoinLabel, reminderJoinUrl } from "../lib/eventReminderEmail";
+import { checkinUrlForToken, signCheckinToken, verifyCheckinToken } from "../lib/checkinToken";
 import {
   ALLOWED_AUTO_REMINDER_OFFSETS,
   ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
@@ -34,6 +35,7 @@ import {
   NEWSLETTER_AUDIENCE_SOURCES,
   audienceModeLabel,
   canEnableAutoReminders,
+  isDuplicateKeyError,
   defaultAudienceMode,
   parseAudienceConfig,
   parseOffsetMinutes,
@@ -212,10 +214,9 @@ async function promoteFromWaitlist(eventId: number) {
  * Public columns of an `events` row.
  *
  * Never leaves the server on a public read:
- *  - `checkinToken`. This one is not just disclosure. `events.checkin` below
- *    accepts (token, any email) and both writes `event_attendance` and mints
- *    a `regen_token_ledger` credit, so a token read off a public list was a
- *    mint anyone could run. The column is absent from every public response.
+ *  - `checkinToken`. The shared token used to accept any email and mint a
+ *    ledger credit. Check-in now requires a signed per-recipient token.
+ *    The column stays off every public response.
  *  - `reminderCustomSubject` / `reminderCustomBody`. Unsent internal drafts.
  *
  * The two meeting-room URLs are handled differently, because the Schedule
@@ -361,13 +362,7 @@ export const eventsRouter = router({
       }
 
       // #1. Signup confirmation email (fire-and-forget)
-      const dateStr = event.startTime.toLocaleDateString("en-US", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-      });
-      const timeStr = event.startTime.toLocaleTimeString("en-US", {
-        hour: "numeric", minute: "2-digit",
-      });
-      const tz = event.timezone ?? "UTC";
+      const { dateStr, timeStr } = formatEventWhen(event.startTime, event.timezone);
       const joinUrl = reminderJoinUrl({ eventId: event.id });
       const joinLabel = reminderJoinLabel();
       const joinColor = "#7c3aed";
@@ -383,7 +378,7 @@ export const eventsRouter = router({
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
               <h2 style="color:#1a472a;margin:0 0 10px 0;">You're on the waitlist</h2>
-              <p style="color:#444;line-height:1.7;">${event.title} is currently full. We'll email you if a spot opens up before ${dateStr} at ${timeStr} ${tz}${localTimeCtaHtml(event.startTime, { title: event.title })}.</p>
+              <p style="color:#444;line-height:1.7;">${event.title} is currently full. We'll email you if a spot opens up before ${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}.</p>
               <p style="color:#888;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events →</a></p>
             </div>
           </div>`
@@ -394,7 +389,7 @@ export const eventsRouter = router({
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
               <h2 style="color:#1a472a;margin:0 0 6px 0;">${event.title}</h2>
-              <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr} ${tz}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
+              <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
               <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">We'll send you a reminder the day before. See you there.</p>
               <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
               <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
@@ -1000,7 +995,6 @@ export const eventsRouter = router({
             reminderScheduledFor: new Date(scheduledTime),
             reminderCustomSubject: input.customSubject?.trim() || null,
             reminderCustomBody: input.customBody?.trim() || null,
-            reminderSent: 0,
           })
           .where(eq(events.id, input.id));
         console.log(`[events.sendReminders] Persisted scheduled reminder for event #${input.id} at ${input.scheduledFor}`);
@@ -1071,6 +1065,8 @@ export const eventsRouter = router({
       });
 
       const totalSent = blast.accepted + always.accepted;
+      // Claims the signup blast only. A custom reminder still scheduled on
+      // this event keeps reminderScheduledFor and can still go out.
       if (blast.dropped === 0 && always.dropped === 0) {
         await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
       }
@@ -1257,20 +1253,29 @@ export const eventsRouter = router({
 
   // ── #16. Public: self-service check-in ───────────────────
   checkin: publicProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 10 }))
     .input(z.object({
-      token: z.string().min(1),
-      email: z.string().email(),
+      token: z.string().min(16).max(4000),
     }))
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
+      const claim = await verifyCheckinToken(input.token);
+      if (!claim) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This check-in link cannot be used. Open the follow-up email and use the button there.",
+        });
+      }
+
       const [event] = await database
         .select()
         .from(events)
-        .where(eq(events.checkinToken, input.token))
+        .where(eq(events.id, claim.eventId))
         .limit(1);
       if (!event) throw new TRPCError({ code: "NOT_FOUND", message: "Invalid check-in link" });
+      const email = claim.email;
 
       const now = new Date();
       const eventDate = new Date(event.startTime);
@@ -1284,7 +1289,7 @@ export const eventsRouter = router({
       const [existing] = await database
         .select()
         .from(eventAttendance)
-        .where(and(eq(eventAttendance.eventId, event.id), eq(eventAttendance.email, input.email)))
+        .where(and(eq(eventAttendance.eventId, event.id), eq(eventAttendance.email, email)))
         .limit(1);
       if (existing) {
         return { success: true, alreadyCheckedIn: true, tokensAwarded: 0, eventTitle: event.title };
@@ -1294,22 +1299,35 @@ export const eventsRouter = router({
       // a 33 hardcoded independently in both files.
       const attendanceReward = Math.round(await getGameVariableOr("events.attendance_reward_regen", 33));
 
+      let attendanceId: number;
+      try {
+        const [attendanceResult] = await database.insert(eventAttendance).values({
+          eventId: event.id,
+          email,
+          markedByAdminId: null,
+          tokensAwarded: attendanceReward,
+        });
+        attendanceId = (attendanceResult as { insertId?: number }).insertId ?? 0;
+      } catch (err) {
+        if (isDuplicateKeyError(err)) {
+          return { success: true, alreadyCheckedIn: true, tokensAwarded: 0, eventTitle: event.title };
+        }
+        throw err;
+      }
+
       const [ledgerResult] = await database.insert(regenTokenLedger).values({
-        email: input.email,
+        email,
         amount: attendanceReward,
         reason: "event_attendance",
         eventId: event.id,
         notes: `Self check-in: ${event.title}`,
       });
-      const ledgerEntryId = (ledgerResult as any).insertId;
-
-      await database.insert(eventAttendance).values({
-        eventId: event.id,
-        email: input.email,
-        markedByAdminId: null,
-        tokensAwarded: attendanceReward,
-        tokenLedgerEntryId: ledgerEntryId,
-      });
+      const ledgerEntryId = (ledgerResult as { insertId?: number }).insertId;
+      if (attendanceId && ledgerEntryId) {
+        await database.update(eventAttendance)
+          .set({ tokenLedgerEntryId: ledgerEntryId })
+          .where(eq(eventAttendance.id, attendanceId));
+      }
 
       return { success: true, alreadyCheckedIn: false, tokensAwarded: attendanceReward, eventTitle: event.title };
     }),
@@ -1384,9 +1402,6 @@ export const eventsRouter = router({
 
       if (!signups.length) return { sent: 0, message: "No signups for this event" };
 
-      const checkinUrl = event.checkinToken
-        ? `${APP_BASE_URL}/checkin/${event.checkinToken}`
-        : `${APP_BASE_URL}/schedule`;
       const forumUrl = event.forumThreadId
         ? `${APP_BASE_URL}/community/post/${event.forumThreadId}`
         : `${APP_BASE_URL}/schedule`;
@@ -1394,6 +1409,7 @@ export const eventsRouter = router({
       let totalSent = 0;
       for (const signup of signups) {
         const unsubscribeUrl = await unsubscribeUrlFor(event.id, signup.email);
+        const checkinUrl = checkinUrlForToken(APP_BASE_URL, await signCheckinToken(event.id, signup.email));
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
           <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
             <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
@@ -1461,13 +1477,8 @@ export const eventsRouter = router({
 
       if (!signups.length) return { sent: 0, message: "No signups for this event" };
 
-      const dayOfWeek = event.startTime.toLocaleDateString("en-US", { weekday: "long" });
-      const dateStr = event.startTime.toLocaleDateString("en-US", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-      });
-      const timeStr = event.startTime.toLocaleTimeString("en-US", {
-        hour: "numeric", minute: "2-digit", timeZoneName: "short",
-      });
+      const { dateStr, timeStr } = formatEventWhen(event.startTime, event.timezone);
+      const dayOfWeek = dateStr.split(",")[0] || dateStr;
       const joinUrl = reminderJoinUrl({ eventId: event.id });
       const joinLabel = reminderJoinLabel();
       const joinColor = "#7c3aed";
