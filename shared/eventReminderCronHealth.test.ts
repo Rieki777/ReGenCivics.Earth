@@ -54,5 +54,7 @@ describe("eventReminderCronHealth", () => {
     expect(health.nextCronAt).toBe("2026-09-23T15:00:00.000Z");
     expect(health.enabledAutoReminderEvents).toBe(3);
     expect(health.inProcessSweepMinutes).toBe(5);
+    expect(health.scheduleNote).toContain("No Railway service");
+    expect(health.scheduleNote).not.toContain("Railway cron runs hourly");
   });
 });

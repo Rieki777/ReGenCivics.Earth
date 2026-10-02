@@ -142,8 +142,8 @@ export function AdminEventReminderCronHealth({
             <dd className="text-white/85 font-mono break-all">POST {data.endpoint}</dd>
           </div>
           <div>
-            <dt className="text-white/45">Next expected run</dt>
-            <dd className="text-white/85 tabular-nums">{formatWhen(data.nextCronAt)}</dd>
+            <dt className="text-white/45">HTTP cron service</dt>
+            <dd className="text-white/85">None in production. The in-process sweep covers auto-reminder offsets.</dd>
           </div>
           <div>
             <dt className="text-white/45">Last cron success</dt>

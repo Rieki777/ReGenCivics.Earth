@@ -16,9 +16,11 @@ import { Express, Request, Response } from "express";
 import crypto from "crypto";
 import { recordEmailClick, recordEmailOpen, updateEmailStatus } from "../emailTracking";
 import { getDb } from "../db";
-import { emailLogs } from "../../drizzle/schema";
-import { eq, desc } from "drizzle-orm";
+import { emailLogs, emailWebhookEvents } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
+import { isDuplicateKeyError } from "@shared/eventAutoReminders";
 import { logger } from "../_core/logger";
+import { dispatchResendEvent, type ProviderEventAction } from "../lib/resendEvent";
 
 const log = logger("resend-webhook");
 
@@ -100,94 +102,78 @@ function verifyWebhookSignature(
   });
 }
 
-/**
- * Find email log by Resend email ID or recipient
- */
-async function findEmailLogByResendId(resendEmailId: string, recipientEmail?: string): Promise<number | null> {
+function isDuplicate(err: unknown): boolean {
+  if (isDuplicateKeyError(err)) return true;
+  const cause = (err as { cause?: { code?: string } } | null)?.cause;
+  if (cause?.code === "ER_DUP_ENTRY") return true;
+  const msg = err instanceof Error ? err.message : String(err);
+  return /ER_DUP_ENTRY|duplicate/i.test(msg);
+}
+
+/** Exact Resend message id. Never the recipient's latest other letter. */
+async function findEmailLogByResendId(resendEmailId: string): Promise<number | null> {
+  if (!resendEmailId) return null;
   const db = await getDb();
-  if (!db) return null;
-  
-  // Prefer an exact match on the Resend message id (stamped at send time).
-  if (resendEmailId) {
-    const byId = await db
-      .select({ id: emailLogs.id })
-      .from(emailLogs)
-      .where(eq(emailLogs.resendEmailId, resendEmailId))
-      .limit(1);
-    if (byId.length > 0) return byId[0].id;
+  if (!db) throw new Error("Database not available");
+  const byId = await db
+    .select({ id: emailLogs.id })
+    .from(emailLogs)
+    .where(eq(emailLogs.resendEmailId, resendEmailId))
+    .limit(1);
+  return byId[0]?.id ?? null;
+}
+
+async function claimWebhookEvent(svixId: string, eventType: string, resendEmailId: string): Promise<"new" | "duplicate"> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  try {
+    await db.insert(emailWebhookEvents).values({
+      svixId: svixId.slice(0, 255),
+      eventType: eventType.slice(0, 64),
+      resendEmailId: resendEmailId ? resendEmailId.slice(0, 255) : null,
+    });
+    return "new";
+  } catch (err) {
+    if (isDuplicate(err)) return "duplicate";
+    throw err;
   }
+}
 
-  // Fallback for rows sent before the id was stored: match by recipient, most
-  // recent send (desc) — ascending matched the oldest email to the address.
-  if (recipientEmail) {
-    const logs = await db
-      .select()
-      .from(emailLogs)
-      .where(eq(emailLogs.recipientEmail, recipientEmail))
-      .orderBy(desc(emailLogs.sentAt))
-      .limit(1);
+async function releaseWebhookEvent(svixId: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(emailWebhookEvents).where(eq(emailWebhookEvents.svixId, svixId));
+}
 
-    if (logs.length > 0) {
-      return logs[0].id;
-    }
+async function applyProviderAction(emailLogId: number, action: ProviderEventAction): Promise<void> {
+  if (action.kind === "status") {
+    await updateEmailStatus(emailLogId, action.status, action.reason);
+    return;
   }
-
-  return null;
+  if (action.kind === "open") {
+    await recordEmailOpen(emailLogId);
+    return;
+  }
+  if (action.kind === "click") {
+    await recordEmailClick(emailLogId);
+  }
 }
 
 /**
  * Process webhook event
  */
-async function processWebhookEvent(event: ResendWebhookEvent): Promise<void> {
-  const { type, data } = event;
-  const recipientEmail = data.to?.[0];
-  
-  log.info(`Processing ${type} event for ${recipientEmail}`);
-
-  // Find the email log entry
-  const emailLogId = await findEmailLogByResendId(data.email_id, recipientEmail);
-
-  if (!emailLogId) {
-    log.warn(`No email log found for ${data.email_id}`);
-    return;
-  }
-
-  switch (type) {
-    case "email.delivered":
-      await updateEmailStatus(emailLogId, "delivered");
-      log.info(`Marked email ${emailLogId} as delivered`);
-      break;
-
-    case "email.bounced":
-      const bounceReason = data.bounce?.message || "Unknown bounce reason";
-      await updateEmailStatus(emailLogId, "bounced", bounceReason);
-      log.info(`Marked email ${emailLogId} as bounced: ${bounceReason}`);
-      break;
-
-    case "email.complained":
-      const complaintType = data.complaint?.feedback_type || "spam";
-      await updateEmailStatus(emailLogId, "failed", `Complaint: ${complaintType}`);
-      log.info(`Marked email ${emailLogId} as complained`);
-      break;
-
-    case "email.opened":
-      await recordEmailOpen(emailLogId);
-      log.info(`Marked email ${emailLogId} as opened`);
-      break;
-
-    case "email.clicked":
-      await recordEmailClick(emailLogId);
-      log.info(`Marked email ${emailLogId} as clicked`);
-      break;
-
-    case "email.delivery_delayed":
-      log.info(`Email ${emailLogId} delivery delayed`);
-      // Optionally update status to "delayed" if you add that status
-      break;
-
-    default:
-      log.info(`Unhandled event type: ${type}`);
-  }
+async function processWebhookEvent(event: ResendWebhookEvent, svixId: string): Promise<void> {
+  const resendEmailId = event.data?.email_id ?? "";
+  const result = await dispatchResendEvent({
+    eventType: event.type,
+    resendEmailId,
+    data: event.data,
+    claim: () => claimWebhookEvent(svixId, event.type, resendEmailId),
+    release: () => releaseWebhookEvent(svixId),
+    findLogId: findEmailLogByResendId,
+    apply: applyProviderAction,
+  });
+  log.info("resend event", { type: event.type, result, resendEmailId: resendEmailId || null });
 }
 
 /**
@@ -208,13 +194,13 @@ export function registerResendWebhookRoutes(app: Express): void {
       }
 
       const event = req.body as ResendWebhookEvent;
+      if (!svixId) {
+        return res.status(400).json({ error: "Missing svix-id" });
+      }
 
-      // Process the event asynchronously
-      processWebhookEvent(event).catch((error) => {
-        log.error("Error processing event", error);
-      });
-
-      // Always respond quickly to acknowledge receipt
+      // Apply before answering. A 500 asks Resend to retry. The svix-id row
+      // is removed on failure so the retry is not treated as a duplicate.
+      await processWebhookEvent(event, svixId);
       res.status(200).json({ received: true });
     } catch (error) {
       log.error("Error handling webhook", error);

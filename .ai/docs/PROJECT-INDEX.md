@@ -72,6 +72,7 @@ Everything else in `docs/planning/` is a dated audit, research note, brief, outr
 - `docs/planning/FIXES_TO_MAKE_2026-10-02_EMAIL_SYSTEM.md`: Phase A to D defect list for the same engine. Companion to the audit, not a replacement for the wave order.
 - `docs/planning/CLAUDE_CODE_PROMPT_2026-10-02_EMAIL_SYSTEM.md`: lane prompt that points at that fixes list.
 - `docs/planning/UNIFIED_EMAIL_PLAN.md`: how Phase A lines up with the waves, and the order the lane ships.
+- `docs/planning/EMAIL_CRON_HEALTH_2026-10-02.md`: which Railway cron services exist, which start commands expand `CRON_SECRET`, and that nothing posts to `/api/cron/event-reminders`.
 - `docs/SHIP_VARIABLES.md`: every ReGen Ship price, policy and setting, and where to change it.
 - `docs/GAME_GENERATION.md`: the standing prompt that turns a custom game blueprint into content.
 - `docs/CO_CREATORS_GUIDE.md`: draft guide for co-creators.

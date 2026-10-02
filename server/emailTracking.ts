@@ -131,9 +131,9 @@ export function wrapUrlWithTracking(originalUrl: string, emailLogId: number): st
  * @param emailLogId - The ID of the email log entry
  */
 export async function recordEmailOpen(emailLogId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   try {
-    const db = await getDb();
-    if (!db) return;
 
     const now = new Date();
     const [row] = await db
@@ -151,6 +151,7 @@ export async function recordEmailOpen(emailLogId: number): Promise<void> {
     await db.update(emailLogs).set(updates).where(eq(emailLogs.id, emailLogId)).execute();
   } catch (error) {
     console.error("Failed to record email open:", error);
+    throw error;
   }
 }
 
@@ -159,9 +160,9 @@ export async function recordEmailOpen(emailLogId: number): Promise<void> {
  * @param emailLogId - The ID of the email log entry
  */
 export async function recordEmailClick(emailLogId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
   try {
-    const db = await getDb();
-    if (!db) return;
 
     const now = new Date();
     const [row] = await db
@@ -177,6 +178,7 @@ export async function recordEmailClick(emailLogId: number): Promise<void> {
     await db.update(emailLogs).set(updates).where(eq(emailLogs.id, emailLogId)).execute();
   } catch (error) {
     console.error("Failed to record email click:", error);
+    throw error;
   }
 }
 
@@ -232,31 +234,27 @@ export async function setEmailLogResendId(emailLogId: number, resendEmailId: str
  */
 export async function updateEmailStatus(
   emailLogId: number,
-  status: "delivered" | "bounced" | "failed",
+  status: "delivered" | "bounced" | "failed" | "complained",
   bounceReason?: string
 ): Promise<void> {
-  try {
-    const db = await getDb();
-    if (!db) return;
-    
-    const updates: any = { status };
-    
-    if (status === "delivered") {
-      updates.deliveredAt = new Date();
-    }
-    
-    if (bounceReason) {
-      updates.bounceReason = bounceReason;
-    }
-    
-    await db
-      .update(emailLogs)
-      .set(updates)
-      .where(eq(emailLogs.id, emailLogId))
-      .execute();
-  } catch (error) {
-    console.error("Failed to update email status:", error);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updates: Record<string, unknown> = { status };
+
+  if (status === "delivered") {
+    updates.deliveredAt = new Date();
   }
+
+  if (bounceReason) {
+    updates.bounceReason = bounceReason;
+  }
+
+  await db
+    .update(emailLogs)
+    .set(updates)
+    .where(eq(emailLogs.id, emailLogId))
+    .execute();
 }
 
 export type EmailAttemptStatus = "queued" | "sent" | "held" | "blocked" | "failed";
