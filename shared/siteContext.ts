@@ -49,6 +49,11 @@ export const SITE_CANONICAL_PAGES: readonly SitePage[] = [
     description: "Open Access Sessions and Season Two episode calendar.",
   },
   {
+    path: "/join",
+    title: "Join the call",
+    description: "Durable join link for the live session. Emails and calendar invites use this. The server redirects to the room.",
+  },
+  {
     path: "/apply",
     title: "Apply",
     description: "Land project application for Season participation.",

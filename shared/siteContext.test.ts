@@ -70,10 +70,13 @@ describe("retired regencivics.com hosts", () => {
 });
 
 describe("SITE_CANONICAL_PAGES", () => {
-  it("only lists paths the SPA router knows", () => {
+  it("only lists paths the site actually serves", () => {
+    // /join is a server redirect (GET /join in server/routes/calendarFeed.ts),
+    // not a client route, so matchesAppRoute is false for it on purpose.
+    const serverHooks = new Set(["/join"]);
     for (const page of SITE_CANONICAL_PAGES) {
       expect(page.path.startsWith("/")).toBe(true);
-      expect(matchesAppRoute(page.path)).toBe(true);
+      expect(matchesAppRoute(page.path) || serverHooks.has(page.path), page.path).toBe(true);
     }
   });
 
@@ -86,6 +89,7 @@ describe("SITE_CANONICAL_PAGES", () => {
       "/claim-seeds",
       "/email-preferences",
       "/schedule",
+      "/join",
       "/newsletter",
     ]) {
       expect(paths.has(required)).toBe(true);
@@ -101,6 +105,8 @@ describe("formatSiteContextForPrompt", () => {
     expect(block).toContain(SITE_WWW_ORIGIN);
     expect(block).toContain(SITE_ASSETS_ORIGIN);
     expect(block).toContain(`${SITE_ORIGIN}/season2`);
+    expect(block).toContain(`${SITE_ORIGIN}/join`);
+    expect(block).toContain("Join the call");
     expect(block).toContain(`${SITE_ORIGIN}/apply`);
     expect(block).toContain(`${SITE_ORIGIN}/claim-seeds`);
     expect(block).toContain("ask the admin for the correct URL");

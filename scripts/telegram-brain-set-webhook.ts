@@ -7,7 +7,8 @@
  *
  * Flags:
  *   --url=https://...   override the base url (default PUBLIC_BASE_URL, then
- *                       APP_URL, then https://regencivics.earth)
+ *                       APP_URL, then https://regencivics.earth). A regencivics.com
+ *                       host is rewritten to https://regencivics.earth.
  *   --force             register even if the pre-flight says the handler is
  *                       not live yet
  *   --unset             delete the webhook instead of registering one
@@ -27,6 +28,8 @@
  *
  * Nothing here prints the token or the secret. Lengths only.
  */
+import { SITE_ORIGIN, canonicalPublicBaseUrl } from "../shared/siteContext";
+
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(`--${name}`);
 const value = (name: string): string | undefined =>
@@ -34,7 +37,10 @@ const value = (name: string): string | undefined =>
 
 const token = process.env.TELEGRAM_BRAIN_BOT_TOKEN ?? "";
 const secret = process.env.TELEGRAM_BRAIN_WEBHOOK_SECRET ?? "";
-const base = (value("url") ?? process.env.PUBLIC_BASE_URL ?? process.env.APP_URL ?? "https://regencivics.earth").replace(/\/+$/, "");
+const base = canonicalPublicBaseUrl(
+  value("url") ?? process.env.PUBLIC_BASE_URL ?? process.env.APP_URL ?? SITE_ORIGIN,
+  SITE_ORIGIN,
+);
 const hookUrl = `${base}/api/telegram/brain`;
 
 if (!token || !secret) {
