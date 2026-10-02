@@ -54,17 +54,20 @@ import {
 import { FREEFORM_TYPE_TO_CAPITAL, computeCampaignProgress, progressLines, summarizeProgress } from "../../shared/campaignProgress";
 import { serverCurrencyFormatter } from "../lib/currency-format";
 import { CASH_SHARE } from "../../shared/crowdpoolModel";
-import { DURATION, FOLLOW, GIVE_LEND, NEED_MARKER } from "../../shared/crowdpoolCopy";
+import { DURATION, FOLLOW, GIVE_LEND, NEED_FILLED, NEED_MARKER, SHIFT_STARTED } from "../../shared/crowdpoolCopy";
 import { MAX_WINDOW_DAYS } from "../../shared/campaignClose";
 import {
   isMoneyKind,
   isThingKind,
   kindForItem,
   modesFor,
+  needTitle,
   toDay,
   todayUtc,
   type NeedLike,
 } from "../../shared/crowdpoolNeedAction";
+import { needWindowPassed, shiftHasStarted } from "../../shared/needWindow";
+import { decodeBasicEntities } from "../../shared/htmlText";
 import { isCurrentReadinessKey, isReadinessKey } from "../../shared/crowdpoolReadiness";
 import {
   OPEN_NEEDS_CACHE_KEY,
@@ -1561,6 +1564,14 @@ export const campaignsRouter = router({
         if (!item || item.campaignId !== input.campaignId) {
           throw new TRPCError({ code: 'BAD_REQUEST', message: 'That need does not belong to this campaign' });
         }
+        // A shift stops taking sign-ups when it starts, on every campaign,
+        // examples included (shared/needWindow.ts). A need whose window has
+        // passed is shown as passed and left off the Needs tab, but is not
+        // refused here yet (build spec 2026-10-01, section 5.3).
+        const now = new Date();
+        if (shiftHasStarted(item, now)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: SHIFT_STARTED });
+        }
         hoursNeed = isHoursNeed(item);
         if (hoursNeed) {
           // A role measured in hours a week. People offer the hours they
@@ -1581,7 +1592,16 @@ export const campaignsRouter = router({
           estimatedValue = scaleRoleValue(item.estimatedValue, item.quantityWanted, Math.min(offer, item.quantityWanted));
         } else {
           if (item.quantityClaimed + input.quantityPledged > item.quantityWanted) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'This need is already fully claimed' });
+            // Point to up to three needs on the same campaign that are still
+            // open: not money, window not passed, and not filled.
+            const filledId = item.id;
+            const siblings = await db.getCampaignItems(input.campaignId);
+            const stillOpen = siblings
+              .filter((s) => s.id !== filledId && !isMoneyKind(kindForItem(s)) && !needWindowPassed(s, now)
+                && (isHoursNeed(s) ? !roleFillState(s).filled : s.quantityClaimed < s.quantityWanted))
+              .slice(0, 3)
+              .map((s) => decodeBasicEntities(needTitle(s)));
+            throw new TRPCError({ code: 'BAD_REQUEST', message: NEED_FILLED.refusal(stillOpen) });
           }
         }
       }

@@ -44,6 +44,7 @@ const SAMPLE_ARGS: Record<string, unknown[]> = {
       { verb: "Offer", title: "Seed garlic", projectName: "Pachamama" },
     ],
   ],
+  "NEED_FILLED.refusal": [["Cedar posts", "Planting day", "Cob work party"]],
 };
 
 /** Every string an export can produce: plain strings, object values, array items, and functions called with sample text. */
@@ -163,5 +164,24 @@ describe("shared/crowdpoolCopy", () => {
     expect(writingRuleBreaks("It makes no claim about value.")).toEqual([]);
     expect(writingRuleBreaks("Routing buys a seat")).toContain("fund words");
     expect(writingRuleBreaks("It's not money, but time")).toContain("contrast framing");
+  });
+});
+
+describe("bundle 1 need-window copy (build spec 2026-10-01, section 5.3)", () => {
+  it("lists up to three still-open needs, joined in plain words", () => {
+    expect(copy.NEED_FILLED.refusal([])).toBe("This need is already filled.");
+    expect(copy.NEED_FILLED.refusal(["Cedar posts"])).toBe("This need is already filled. These are still open: Cedar posts.");
+    expect(copy.NEED_FILLED.refusal(["Cedar posts", "Planting day"])).toBe(
+      "This need is already filled. These are still open: Cedar posts and Planting day.",
+    );
+    expect(copy.NEED_FILLED.refusal(["Cedar posts", "Planting day", "Cob work party"])).toBe(
+      "This need is already filled. These are still open: Cedar posts, Planting day and Cob work party.",
+    );
+  });
+
+  it("carries the started-shift, window and empty Needs tab lines exactly", () => {
+    expect(copy.SHIFT_STARTED).toBe("This shift has already started, so it isn't taking sign-ups.");
+    expect(copy.WINDOW_PASSED).toBe("Window passed");
+    expect(copy.NEEDS_TAB.allFilled).toBe("Nothing on the live campaigns is open right now.");
   });
 });

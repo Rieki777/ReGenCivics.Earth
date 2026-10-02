@@ -186,9 +186,9 @@ describe("NeedsTab", () => {
     expect(screen.queryByRole("heading", { name: "Example needs" })).toBeNull();
   });
 
-  it("says so when live campaigns have every need filled", () => {
+  it("says so when live campaigns have nothing open (every need filled or its window passed)", () => {
     render(<NeedsTab data={result({ realCampaignCount: 3 })} />);
-    expect(screen.getByText("Every need on the live campaigns is filled right now.")).toBeInTheDocument();
+    expect(screen.getByText("Nothing on the live campaigns is open right now.")).toBeInTheDocument();
     expect(screen.queryByText(/No campaigns are open yet/)).toBeNull();
   });
 });

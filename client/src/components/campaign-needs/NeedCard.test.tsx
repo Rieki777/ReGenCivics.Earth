@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { NeedCard } from "./NeedCard";
 import { needFillRatio } from "./NeedsRegistry";
@@ -137,7 +137,20 @@ describe("NeedCard on an hours need (R18)", () => {
   });
 });
 
+/** Pin the clock (Date only) so a need's window reads the same whatever day the suite runs. */
+function pinClock(iso: string) {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(iso));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+}
+
 describe("NeedCard on a thing", () => {
+  // Before the tractor's window, so it still takes offers.
+  pinClock("2026-02-01T12:00:00Z");
   const tractor = {
     id: 7, kind: "item", equipmentName: "Tractor", quantityWanted: 1, estimatedValue: 9000,
     acceptsGift: 1, acceptsLoan: 1, neededFrom: "2026-03-01", neededUntil: "2026-06-30",
@@ -163,6 +176,44 @@ describe("NeedCard on a thing", () => {
     expect(onClaim).toHaveBeenCalledWith(expect.objectContaining({
       id: 7, kind: "item", acceptsGift: 1, acceptsLoan: 1, neededFrom: "2026-03-01", neededUntil: "2026-06-30",
     }));
+  });
+});
+
+describe("NeedCard when a window has passed (bundle 1)", () => {
+  pinClock("2026-10-01T12:00:00Z");
+  const thing = (over: Record<string, unknown> = {}) => ({
+    id: 9, kind: "item", equipmentName: "Seed drill", quantityWanted: 1, quantityClaimed: 0, estimatedValue: 900,
+    acceptsGift: 1, acceptsLoan: 0, neededUntil: "2026-09-30", ...over,
+  });
+
+  it("a thing whose last day has gone reads Window passed and has no button", () => {
+    const { container } = renderCard(thing(), { progress: np() });
+    expect(screen.getByText("Window passed")).toBeInTheDocument();
+    expect(container.querySelector('[data-status="passed"]')).not.toBeNull();
+    expect(screen.queryByText("No one has offered yet")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("a shift that has started reads Window passed and has no Sign up", () => {
+    renderCard({
+      id: 10, kind: "shift", roleTitle: "Planting day", quantityWanted: 12, quantityClaimed: 0,
+      shiftStartsAt: new Date("2026-09-30T09:00:00Z"), shiftEndsAt: new Date("2026-09-30T15:00:00Z"),
+    });
+    expect(screen.getByText("Window passed")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+  });
+
+  it("a thing needed until today still takes offers", () => {
+    renderCard(thing({ neededUntil: "2026-10-01" }), { progress: np() });
+    expect(screen.queryByText("Window passed")).toBeNull();
+    expect(screen.getByRole("button", { name: "Offer: Seed drill" })).toBeInTheDocument();
+  });
+
+  it("a filled need with a passed window still reads Filled", () => {
+    renderCard(role({ quantityClaimed: 40, neededUntil: "2026-09-01" }));
+    expect(screen.getByText("Filled")).toBeInTheDocument();
+    expect(screen.queryByText("Window passed")).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });
 

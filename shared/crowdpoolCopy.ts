@@ -246,8 +246,8 @@ export const NEEDS_TAB = {
   nothingAtAll: "No campaigns are open yet. Real needs open when Season 2 starts crowdpooling.",
   addUp: "Add up what you can bring",
   // Added by lane 5 where the spec was silent.
-  /** Live real campaigns exist, and every one of their needs is filled. */
-  allFilled: "Every need on the live campaigns is filled right now.",
+  /** Live real campaigns exist, and none of their needs is open: each is filled or its window has passed (bundle 1). */
+  allFilled: "Nothing on the live campaigns is open right now.",
   loading: "Gathering every open need...",
   placeRemote: "Remote",
   placeEither: "On the land or remote",
@@ -714,6 +714,30 @@ export const SEASON_DEFAULTS = {
   /** The block's name for screen readers (lane 2 addition). */
   label: "Season defaults",
 } as const;
+
+// ═══ Bundle 1 (build spec 2026-10-01, section 5.3) ═════════════════════════
+// Need windows (shared/needWindow.ts): a shift stops taking sign-ups when it
+// starts, and a need whose window has passed shows as passed.
+
+/** A sign-up for a shift that has started (every campaign, examples included). */
+export const SHIFT_STARTED = "This shift has already started, so it isn't taking sign-ups.";
+
+/** A need card whose window has passed (shared/needWindow.ts). */
+export const WINDOW_PASSED = "Window passed";
+
+/** "a", "a and b", "a, b and c". */
+function joinAnd(items: readonly string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+/** An offer on a count need that is already filled, with up to three needs on the same campaign still open. */
+export const NEED_FILLED = {
+  refusal: (stillOpen: readonly string[]) =>
+    stillOpen.length === 0
+      ? "This need is already filled."
+      : `This need is already filled. These are still open: ${joinAnd(stillOpen)}.`,
+};
 
 /** The Outbound season digest audience for email-only followers (section 12.4). */
 export const OUTBOUND_DIGEST = {

@@ -118,7 +118,7 @@ describe("buildOpenNeeds", () => {
     { campaignId: 2, partner: "gosteward", label: "Lend through GoSteward", status: "example" },
     { campaignId: 2, partner: "grant", label: "Apply for the land grant", status: "example" },
   ];
-  const out = buildOpenNeeds({ campaigns, inputs, routes, today: "2026-09-25" });
+  const out = buildOpenNeeds({ campaigns, inputs, routes, today: "2026-09-25", now: new Date("2026-09-25T12:00:00Z") });
 
   it("leaves out filled and money needs, and keeps examples apart", () => {
     expect(out.needs.map((n) => n.needId)).toEqual([11, 15, 16]);
@@ -170,5 +170,44 @@ describe("buildOpenNeeds", () => {
       { campaignId: 2, projectName: "Harmony Valley", partner: "gosteward", label: "Lend through Steward", path: money, isDemo: true },
       { campaignId: 2, projectName: "Harmony Valley", partner: "grant", label: "Apply for the land grant", path: money, isDemo: true },
     ]);
+  });
+});
+
+describe("buildOpenNeeds leaves out passed windows (bundle 1)", () => {
+  const now = new Date("2026-10-01T12:00:00Z");
+  const inputs = new Map<number, OpenNeedsInputs>([
+    [1, {
+      items: [
+        item(31, { equipmentName: "Ended yesterday", neededUntil: "2026-09-30" }),
+        item(32, { equipmentName: "Ends today", neededUntil: "2026-10-01" }),
+        item(33, { kind: "shift", category: "role", roleTitle: "Started an hour ago", equipmentName: null, quantityWanted: 5, shiftStartsAt: new Date(now.getTime() - 3600_000) }),
+        item(34, { kind: "shift", category: "role", roleTitle: "Starts tomorrow", equipmentName: null, quantityWanted: 5, shiftStartsAt: new Date(now.getTime() + 86_400_000) }),
+        item(35, { kind: "role", category: "role", roleTitle: "Deadline passed", equipmentName: null, capacityUnit: "hours_per_week", quantityWanted: 10, needDeadline: "2026-09-29 18:00:00" }),
+        item(36, { equipmentName: "No dates" }),
+      ],
+      rows: [],
+      lends: [],
+      routes: [],
+    }],
+    [2, { items: [item(41, { equipmentName: "Example ended", neededUntil: "2026-09-01" }), item(42, { equipmentName: "Example open" })], rows: [], lends: [], routes: [] }],
+  ]);
+  const out = buildOpenNeeds({
+    campaigns: [campaign(1), campaign(2, { isDemo: 1 })],
+    inputs,
+    routes: [],
+    now,
+  });
+
+  it("drops a window that ended yesterday, a shift that started, and a passed deadline; keeps today and later", () => {
+    expect(out.needs.map((n) => n.needId).sort()).toEqual([32, 34, 36]);
+  });
+
+  it("does the same for examples", () => {
+    expect(out.examples.map((n) => n.needId)).toEqual([42]);
+  });
+
+  it("words dates against the UTC day of now when no today is given", () => {
+    const today = out.needs.find((n) => n.needId === 32)!;
+    expect(today.detail).toBe("Needed by 1 Oct.");
   });
 });

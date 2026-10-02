@@ -8,7 +8,7 @@ import { describe, it, expect, vi, afterAll } from 'vitest';
 import { and, eq, sql } from 'drizzle-orm';
 import { appRouter } from './routers';
 import * as dbHelpers from './db';
-import { campaignContributions, playerContributions } from '../drizzle/schema';
+import { campaignContributions, campaignItems, playerContributions } from '../drizzle/schema';
 import { expireCrowdpoolClaims } from './routes/batchJobs';
 import type { TrpcContext } from './_core/context';
 import { adminCaller, cleanupFixtureApplications, createApprovedApplication } from './test-fixtures/crowdpool';
@@ -493,18 +493,31 @@ describe('Campaign Contribution System', () => {
       expect(claimRow?.claimExpiresAt).toBeTruthy();
 
       // A second claim against the full need is rejected
-      await expect(
-        caller.campaigns.submitContribution({
-          campaignId: campaign.id,
-          campaignItemId: need.id,
-          contributionType: 'resource',
-          title: 'Another wheelbarrow',
-          estimatedValue: 200,
-          contributorName: 'Second Claimer',
-          contributorEmail: 'second-claimer@example.com',
-          quantityPledged: 1,
-        })
-      ).rejects.toThrow('This need is already fully claimed');
+      const second = {
+        campaignId: campaign.id,
+        campaignItemId: need.id,
+        contributionType: 'resource' as const,
+        title: 'Another wheelbarrow',
+        estimatedValue: 200,
+        contributorName: 'Second Claimer',
+        contributorEmail: 'second-claimer@example.com',
+        quantityPledged: 1,
+      };
+      await expect(caller.campaigns.submitContribution(second)).rejects.toThrow(/already filled/);
+      await expect(caller.campaigns.submitContribution(second)).rejects.toThrow(/^This need is already filled\.$/);
+
+      // The refusal points to the campaign's other needs that are still open,
+      // leaving out a filled one, one whose window has passed and a money need.
+      const db = (await dbHelpers.getDb())!;
+      const twoDaysAgo = new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10);
+      await db.insert(campaignItems).values([
+        { campaignId: campaign.id, category: 'resource', kind: 'item', resourceName: 'Garden spade', estimatedValue: 40 },
+        { campaignId: campaign.id, category: 'resource', kind: 'item', resourceName: 'Full rake', estimatedValue: 30, quantityWanted: 1, quantityClaimed: 1 },
+        { campaignId: campaign.id, category: 'resource', kind: 'item', resourceName: 'Late seed', estimatedValue: 20, neededUntil: twoDaysAgo },
+        { campaignId: campaign.id, category: 'resource', kind: 'financial_link', resourceName: 'Money link', estimatedValue: 500 },
+      ] as any);
+      await expect(caller.campaigns.submitContribution(second))
+        .rejects.toThrow(/^This need is already filled\. These are still open: Garden spade\.$/);
     });
 
     it.skipIf(skipIfNoDb)('expired sweep releases reserved quantity', async () => {

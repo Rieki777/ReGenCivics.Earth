@@ -40,6 +40,7 @@ import { decodeBasicEntities } from "@shared/htmlText";
 import { progressLines } from "@shared/campaignProgress";
 import { capitalForItem, type NeedChip } from "@shared/crowdpoolNeedAction";
 import { PAGE } from "@shared/crowdpoolCopy";
+import { needWindowPassed } from "@shared/needWindow";
 import { CAMPAIGN_STATUS_CLASSES, CAMPAIGN_STATUS_LABELS, makeCurrencyFormatter } from "@/lib/needDisplay";
 import type { ProjectFront } from "./StewardTools";
 
@@ -121,14 +122,15 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
   }, []);
 
   // ?offer={needId} (the Needs tab): open the sheet for that need, once,
-  // when the campaign is live and the need is still open; then drop it from
-  // the address so a reload or a shared link doesn't open it again.
+  // when the campaign is live and the need is still open (not filled, and its
+  // window not passed); then drop it from the address so a reload or a shared
+  // link doesn't open it again.
   useEffect(() => {
     const offerId = readOfferParam();
     if (!offerId) return;
     const item = front.items.find((it) => it.id === offerId);
     const np = progress.byNeed[offerId];
-    if (active && item && np && !np.filled) {
+    if (active && item && np && !np.filled && !needWindowPassed(item)) {
       openNeed(toContributionNeed(item, capitalForItem(item), np));
     }
     clearOfferParam();

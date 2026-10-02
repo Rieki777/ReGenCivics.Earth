@@ -322,6 +322,6 @@ describe("a legacy role still on 'count'", () => {
       contributorEmail: "leg2@example.com",
       quantityPledged: 1,
       estimatedValue: 4000,
-    })).rejects.toThrow(/fully claimed/);
+    })).rejects.toThrow(/already filled/);
   });
 });

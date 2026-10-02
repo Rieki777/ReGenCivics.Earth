@@ -325,7 +325,7 @@ describe('need slot guards', () => {
     await pledge(campaignId, itemId, 100, 'Slot1');
     // Five more people claim the same single slot. Each should be refused.
     for (const name of ['Slot2', 'Slot3', 'Slot4', 'Slot5', 'Slot6']) {
-      await expect(pledge(campaignId, itemId, 100, name)).rejects.toThrow(/fully claimed/i);
+      await expect(pledge(campaignId, itemId, 100, name)).rejects.toThrow(/already filled/i);
     }
   });
 

@@ -44,6 +44,7 @@ vi.mock("./_core/imageGeneration", () => ({
   generateImage: vi.fn().mockRejectedValue(new Error("image generation off in tests")),
 }));
 
+import { SHIFT_STARTED } from "../shared/crowdpoolCopy";
 import { insertNotification } from "./lib/forum-notify";
 import { notifyProposalReceived } from "./lib/campaign-notify";
 import { notifyIfEnabled } from "./notify-with-prefs";
@@ -214,5 +215,64 @@ describe("submitContribution on an example campaign", () => {
     const row = await dbHelpers.getContributionById(r.id as number);
     expect(row).toMatchObject({ campaignId, status: "pending" });
     expect(vi.mocked(notifyProposalReceived)).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("a shift that has started (bundle 1)", () => {
+  /** A live campaign with one shift two days gone and one two days ahead. Neutral fixture words. */
+  async function shiftCampaign(label: string, isDemo: boolean) {
+    const applicationId = await createApprovedApplication(STEWARD, { name: `Fixture Shifts ${label} ${Date.now()}` });
+    const { id } = await stewardCaller(STEWARD).campaigns.create({
+      title: `Shifts ${label} b1`,
+      description: "Sign-ups close when a shift starts",
+      projectName: `Shifts ${label} b1`,
+      currency: "USD",
+      financialTarget: 0,
+      applicationId,
+      items: [{ category: "resource", resourceName: "Mulch", resourceDescription: "Mulch", estimatedValue: 300 }],
+    });
+    createdCampaignIds.push(id);
+    await adminCaller().campaigns.updateStatus({ id, status: "active" });
+    const database = (await dbHelpers.getDb())!;
+    if (isDemo) await database.update(campaigns).set({ isDemo: 1 }).where(eq(campaigns.id, id));
+    const day = 86_400_000;
+    const shift = async (title: string, startsAt: Date) => {
+      const r: any = await database.insert(campaignItems).values({
+        campaignId: id, category: "role", kind: "shift", roleTitle: title, quantityWanted: 6, estimatedValue: 0,
+        shiftStartsAt: startsAt, shiftEndsAt: new Date(startsAt.getTime() + 6 * 3600_000),
+      });
+      return Number(r?.[0]?.insertId ?? r?.insertId);
+    };
+    return {
+      campaignId: id,
+      started: await shift("Mulching day", new Date(Date.now() - 2 * day)),
+      ahead: await shift("Hedge day", new Date(Date.now() + 2 * day)),
+    };
+  }
+
+  const signUp = (campaignId: number, campaignItemId: number) => ({
+    campaignId,
+    campaignItemId,
+    contributionType: "role" as const,
+    title: "Shift sign-up",
+    roleTitle: "Shift sign-up",
+    estimatedValue: 0,
+    contributorName: "Late Visitor",
+    contributorEmail: "late.visitor@b1-lane.invalid",
+  });
+
+  it.skipIf(skipIfNoDb)("is refused on an example (practice) and on a real campaign, and a shift ahead still takes sign-ups", async () => {
+    for (const isDemo of [true, false]) {
+      const c = await shiftCampaign(isDemo ? "Demo" : "Live", isDemo);
+      const before = await snapshot(c.campaignId);
+      clearSpies();
+      await expect(anonCaller().campaigns.submitContribution(signUp(c.campaignId, c.started)))
+        .rejects.toMatchObject({ code: "BAD_REQUEST", message: SHIFT_STARTED });
+      expect(await snapshot(c.campaignId), isDemo ? "example" : "real").toBe(before);
+      expect(vi.mocked(notifyProposalReceived)).not.toHaveBeenCalled();
+
+      const ok = await anonCaller().campaigns.submitContribution(signUp(c.campaignId, c.ahead));
+      expect(ok.practice).toBe(isDemo);
+    }
   });
 });

@@ -11,6 +11,9 @@
  * Ranking (rankOpenNeeds): needs no one has offered on first, then the
  * smallest offered share, then the project's pinned needs, then the newest
  * campaign, then the need id. No popularity sort anywhere.
+ *
+ * Open means not filled and not passed: a shift that has started and a need
+ * whose window has passed are left out (shared/needWindow.ts, bundle 1).
  */
 import type { CapitalType } from "./capitals";
 import {
@@ -39,6 +42,7 @@ import {
   type NeedVerb,
 } from "./crowdpoolNeedAction";
 import { ROUTE_LABELS } from "./crowdpoolCopy";
+import { needWindowPassed, type NeedWindowLike } from "./needWindow";
 import { projectPathForCampaignFocus } from "./projectKey";
 
 export const OPEN_NEEDS_CACHE_KEY = "crowdpool:open-needs";
@@ -104,7 +108,7 @@ export type OpenNeedsCampaign = ProgressCampaign & {
   location: string | null;
 };
 
-export type OpenNeedsItem = ProgressItem & { priorityPinned?: number | boolean | null };
+export type OpenNeedsItem = ProgressItem & NeedWindowLike & { priorityPinned?: number | boolean | null };
 
 export type OpenNeedsInputs = {
   items: OpenNeedsItem[];
@@ -178,15 +182,18 @@ function needDetail(item: OpenNeedsItem, kind: string, today: string): string | 
 /**
  * Build the Needs tab answer from live public campaigns (the server passes
  * only status 'active' campaigns that pass isPublicCampaign), their progress
- * inputs and their shown routes.
+ * inputs and their shown routes. `now` decides which windows have passed;
+ * `today` (the UTC day of `now` by default) words the dates.
  */
 export function buildOpenNeeds(input: {
   campaigns: OpenNeedsCampaign[];
   inputs: Map<number, OpenNeedsInputs>;
   routes: OpenNeedsRouteInput[];
   today?: string;
+  now?: Date;
 }): OpenNeedsResult {
-  const today = input.today ?? todayUtc();
+  const now = input.now ?? new Date();
+  const today = input.today ?? todayUtc(now);
   const real: Array<OpenNeedRow & { rank: RankFields }> = [];
   const examples: Array<OpenNeedRow & { rank: RankFields }> = [];
   const byId = new Map<number, OpenNeedsCampaign>();
@@ -205,6 +212,7 @@ export function buildOpenNeeds(input: {
       if (isMoneyKind(kind)) continue;
       const np = progress.byNeed[item.id];
       if (!np || np.filled) continue;
+      if (needWindowPassed(item, now)) continue;
       const verb = needVerb(kind);
       const chip = needChip(kind);
       if (!verb || !chip) continue;

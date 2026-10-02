@@ -8,6 +8,10 @@
  * knowledge sessions show no dollar figure (no price in front of a person's
  * time); things keep theirs. The root carries id="need-{id}" so a link can
  * land on it (the Needs tab, a shared need).
+ *
+ * A need that is not filled but whose window has passed (a shift that has
+ * started, a last day gone; shared/needWindow.ts) reads "Window passed" and
+ * shows no button, like a filled one (bundle 1, 2026-10-01).
  */
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +23,8 @@ import { fullTimeLabel, isHoursNeed, roleFillState } from "@shared/roleCapacity"
 import { needStatus, offeredLine, type NeedProgress } from "@shared/campaignProgress";
 import { formatShortDay, isThingKind, needVerb, roleTimeLine, thingWindowLine, toDay } from "@shared/crowdpoolNeedAction";
 import { inkOnWhite } from "@shared/colorContrast";
+import { needWindowPassed } from "@shared/needWindow";
+import { WINDOW_PASSED } from "@shared/crowdpoolCopy";
 
 /**
  * Reads a shift value into a Date without flipping between UTC and local. A
@@ -159,7 +165,10 @@ export function NeedCard({
   const verb = needVerb(kind);
   const thing = isThingKind(kind);
   const np = progress ?? needProgressFromItem(item);
-  const status = np.status.text ? np.status : needStatus(np);
+  const passed = !np.filled && needWindowPassed(item);
+  const status = passed
+    ? { key: "passed", text: WINDOW_PASSED }
+    : np.status.text ? np.status : needStatus(np);
   const hoursNeed = np.unit === "hours_per_week";
 
   const wanted = Math.max(np.wanted, 1);
@@ -259,7 +268,7 @@ export function NeedCard({
           <div className="text-lg font-bold" style={{ color: ink }}>
             {thing ? formatCurrency(item.estimatedValue || 0) : null}
           </div>
-          {claimsHidden || np.filled || !verb ? null : (
+          {claimsHidden || np.filled || passed || !verb ? null : (
             <Button
               size="sm"
               className="text-white min-h-11"

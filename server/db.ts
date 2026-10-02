@@ -1386,6 +1386,9 @@ export async function getCampaignProgressInputs(
             workMode: campaignItems.workMode,
             shiftStartsAt: campaignItems.shiftStartsAt,
             shiftEndsAt: campaignItems.shiftEndsAt,
+            // A need's window when it has no neededUntil (shared/needWindow.ts).
+            needDeadline: campaignItems.needDeadline,
+            loanWindowEnd: campaignItems.loanWindowEnd,
             createdAt: campaignItems.createdAt,
           })
           .from(campaignItems)
