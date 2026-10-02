@@ -1,9 +1,25 @@
 /**
- * Global Test Teardown
- * Runs ONCE after ALL test files complete to remove test data from the production database.
- * This is a vitest globalSetup teardown function, not a per-file afterAll.
+ * Global test setup and teardown.
+ *
+ * setup() refuses to start a test run whose DATABASE_URL is not a local
+ * database (or a host in TEST_DB_HOSTS). teardown() runs once after every
+ * test file and removes test data from that same local database, and refuses
+ * any other host. Never point tests at .env: it is Railway production.
+ *
+ * This is vitest's globalSetup module (vitest.config.ts), not a per-file
+ * afterAll. The guard lives in server/test-db-guard.ts.
  */
 import mysql from 'mysql2/promise';
+import { assertTestDbUrl } from './test-db-guard';
+
+/**
+ * Runs once before any test file. Throwing here stops vitest before a single
+ * fixture is written, which matters because several DB suites skip only when
+ * DATABASE_URL is unset.
+ */
+export async function setup() {
+  assertTestDbUrl(process.env.DATABASE_URL, 'Test setup');
+}
 
 export async function teardown() {
   const dbUrl = process.env.DATABASE_URL;
@@ -11,7 +27,11 @@ export async function teardown() {
     console.warn('[Test Teardown] No DATABASE_URL, skipping cleanup');
     return;
   }
-  
+
+  // Outside the try/catch on purpose: a refusal must fail the run loudly,
+  // never be logged and swallowed like a cleanup hiccup.
+  assertTestDbUrl(dbUrl, 'Test teardown');
+
   let conn: mysql.Connection | null = null;
   try {
     conn = await mysql.createConnection(dbUrl);

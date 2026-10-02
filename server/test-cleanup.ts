@@ -1,9 +1,11 @@
 /**
  * Test Cleanup Helper
- * Deletes all test data from the production database after test runs.
- * This prevents test data from polluting the production database.
+ * Deletes test data from the LOCAL test database. Refuses any host that is not
+ * local or listed in TEST_DB_HOSTS (server/test-db-guard.ts). Never point it at
+ * .env: that is Railway production.
  */
 import mysql from 'mysql2/promise';
+import { assertTestDbUrl } from './test-db-guard';
 
 export async function cleanupTestData() {
   const dbUrl = process.env.DATABASE_URL;
@@ -11,7 +13,10 @@ export async function cleanupTestData() {
     console.warn('[Test Cleanup] No DATABASE_URL, skipping cleanup');
     return;
   }
-  
+
+  // Outside the try/catch: a refusal must fail loudly, never be swallowed.
+  assertTestDbUrl(dbUrl, 'Test cleanup');
+
   let conn: mysql.Connection | null = null;
   try {
     conn = await mysql.createConnection(dbUrl);
