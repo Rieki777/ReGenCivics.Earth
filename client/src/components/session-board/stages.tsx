@@ -418,9 +418,9 @@ export function VillageOS({ stages, index }: StageProps) {
             <p>
               See it live at{" "}
               <a className="sb-link" href="https://amora.regencivics.earth" target="_blank" rel="noopener noreferrer">amora.regencivics.earth<span className="sr-only"> (opens in a new tab)</span></a>
-              , and{" "}
-              <a className="sb-link" href="https://amora.regencivics.earth/org/index.md" target="_blank" rel="noopener noreferrer">Amora's roster<span className="sr-only"> (opens in a new tab)</span></a>
-              {" "}with its open seats.
+              , including{" "}
+              <a className="sb-link" href="https://amora.regencivics.earth/map/circles" target="_blank" rel="noopener noreferrer">Amora's circles and open seats<span className="sr-only"> (opens in a new tab)</span></a>
+              .
             </p>
           </div>
           <div className="sb-panel sb-roster-demo">
