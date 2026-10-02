@@ -346,6 +346,23 @@ export const outboundRouter = router({
       }
     }),
 
+  resumeUnsent: adminProcedure
+    .use(rateLimited({ windowMs: 60_000, max: 5 }))
+    .input(z.object({
+      issueId: z.number().int().positive(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { resumeUnsentIssue } = await import("../lib/newsletter-issue-email");
+      try {
+        return await resumeUnsentIssue({
+          issueId: input.issueId,
+          createdBy: ctx.user.id,
+        });
+      } catch (err) {
+        fail(err, "Resume refused");
+      }
+    }),
+
   reschedule: adminProcedure
     .use(rateLimited({ windowMs: 60_000, max: 20 }))
     .input(z.object({

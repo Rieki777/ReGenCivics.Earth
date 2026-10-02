@@ -16,6 +16,7 @@ import {
 } from "../../shared/outboundSchedule";
 import { sendEmail } from "../_core/email";
 import { providerAccepted } from "./emailAttempt";
+import { OUTBOUND_RESUME_LEASE_MS, resumeRecipientAction, sendingLeaseOpen } from "./outboundResume";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
 import { emailDocumentFromMarkdown } from "./emailHtml";
@@ -313,39 +314,43 @@ async function dispatchClaimedSend(params: {
   hash: string;
   recipientCount: number;
   claimFrom: ReadonlyArray<NewsletterIssue["status"]>;
+  /** The caller already claimed the row. Skip the replay and the status flip. */
+  resume?: boolean;
 }): Promise<SendOutcome> {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
 
-  const replay = await replayIfKeyTaken(params.idempotencyKey, params.issue.id);
-  if (replay) return replay;
+  if (!params.resume) {
+    const replay = await replayIfKeyTaken(params.idempotencyKey, params.issue.id);
+    if (replay) return replay;
 
-  await assertSendCaps(params.issue.createdBy);
+    await assertSendCaps(params.issue.createdBy);
 
-  try {
-    const claimed = await db.update(newsletterIssues).set({
-      status: "sending",
-      idempotencyKey: params.idempotencyKey,
-      bodyHash: params.hash,
-      recipientCount: params.recipientCount,
-    }).where(and(
-      eq(newsletterIssues.id, params.issue.id),
-      inArray(newsletterIssues.status, [...params.claimFrom]),
-    ));
-    if (asMutationResult(claimed).affectedRows === 0) {
-      const [again] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, params.issue.id)).limit(1);
-      if (again && (again.status === "sent" || again.status === "sending")) {
-        return { ok: true, recipientCount: again.sentCount, failedCount: again.failedCount, duplicate: true };
+    try {
+      const claimed = await db.update(newsletterIssues).set({
+        status: "sending",
+        idempotencyKey: params.idempotencyKey,
+        bodyHash: params.hash,
+        recipientCount: params.recipientCount,
+      }).where(and(
+        eq(newsletterIssues.id, params.issue.id),
+        inArray(newsletterIssues.status, [...params.claimFrom]),
+      ));
+      if (asMutationResult(claimed).affectedRows === 0) {
+        const [again] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, params.issue.id)).limit(1);
+        if (again && (again.status === "sent" || again.status === "sending")) {
+          return { ok: true, recipientCount: again.sentCount, failedCount: again.failedCount, duplicate: true };
+        }
+        throw new Error("This letter is no longer waiting to send.");
       }
-      throw new Error("This letter is no longer waiting to send.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (/duplicate|unique/i.test(msg)) {
+        log.info(`idempotent replay for key=${params.idempotencyKey.slice(0, 8)}...`);
+        return { ok: true, recipientCount: 0, failedCount: 0, duplicate: true };
+      }
+      throw err;
     }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (/duplicate|unique/i.test(msg)) {
-      log.info(`idempotent replay for key=${params.idempotencyKey.slice(0, 8)}...`);
-      return { ok: true, recipientCount: 0, failedCount: 0, duplicate: true };
-    }
-    throw err;
   }
 
   const audience = parseIssueAudience(params.issue.audience);
@@ -363,6 +368,12 @@ async function dispatchClaimedSend(params: {
   let sentCount = 0;
   let failedCount = 0;
   for (const row of snapshot) {
+    const action = resumeRecipientAction(row.status);
+    if (action === "already_sent") {
+      sentCount += 1;
+      continue;
+    }
+    if (action === "skip") continue;
     const email = row.email;
     const liveRow = liveByEmail.get(email.trim().toLowerCase());
     if (!liveRow) {
@@ -419,6 +430,65 @@ async function dispatchClaimedSend(params: {
 
   log.info(`issue sent id=${params.issue.id} sent=${sentCount} failed=${failedCount} hash=${params.hash.slice(0, 12)}...`);
   return { ok: true, recipientCount: sentCount, failedCount };
+}
+
+/**
+ * Try the addresses that are still pending or failed.
+ * A letter stuck in `sending` waits out the lease so a live send is not doubled.
+ * A `failed` letter is claimed immediately. Addresses already sent are left alone.
+ * This does not run on deploy.
+ */
+export async function resumeUnsentIssue(params: {
+  issueId: number;
+  createdBy: number;
+  now?: Date;
+}): Promise<SendOutcome> {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const issue = await loadIssue(params.issueId);
+  assertOwned(issue, params.createdBy);
+  const now = params.now ?? new Date();
+
+  if (issue.status === "sending") {
+    if (!issue.updatedAt || !sendingLeaseOpen(issue.updatedAt, now)) {
+      throw new Error("This letter is still going out. Try again in a few minutes.");
+    }
+    const cutoff = new Date(now.getTime() - OUTBOUND_RESUME_LEASE_MS);
+    const claimed = await db.update(newsletterIssues).set({
+      updatedAt: now,
+    }).where(and(
+      eq(newsletterIssues.id, issue.id),
+      eq(newsletterIssues.status, "sending"),
+      lte(newsletterIssues.updatedAt, cutoff),
+    ));
+    if (asMutationResult(claimed).affectedRows === 0) {
+      throw new Error("This letter is still going out. Try again in a few minutes.");
+    }
+  } else if (issue.status === "failed") {
+    const claimed = await db.update(newsletterIssues).set({
+      status: "sending",
+      updatedAt: now,
+    }).where(and(
+      eq(newsletterIssues.id, issue.id),
+      eq(newsletterIssues.status, "failed"),
+    ));
+    if (asMutationResult(claimed).affectedRows === 0) {
+      throw new Error("That letter is not waiting for another try.");
+    }
+  } else {
+    throw new Error("That letter is not waiting for another try.");
+  }
+
+  const audience = parseIssueAudience(issue.audience);
+  const hash = issue.bodyHash || issueBodyHash(issue.subject, issue.body ?? "", audience);
+  return dispatchClaimedSend({
+    issue,
+    idempotencyKey: issue.idempotencyKey || `resume-issue-${issue.id}`,
+    hash,
+    recipientCount: issue.recipientCount,
+    claimFrom: ["sending"],
+    resume: true,
+  });
 }
 
 export async function confirmAndSendIssue(params: {
