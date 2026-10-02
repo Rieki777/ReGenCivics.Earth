@@ -7,7 +7,11 @@
 
 import { AUTO_REMINDER_SWEEP_MINUTES } from "./eventAutoReminders";
 
-/** Railway cron: POST /api/cron/event-reminders every hour at minute 0 (UTC). */
+/**
+ * The hourly expression the endpoint was written for.
+ * Production has no Railway service posting to this path (measured 2026-10-02,
+ * docs/planning/EMAIL_CRON_HEALTH_2026-10-02.md).
+ */
 export const EVENT_REMINDER_CRON_EXPR = "0 * * * *";
 export const EVENT_REMINDER_CRON_PATH = "/api/cron/event-reminders";
 /** site_settings key: ISO timestamp of last successful HTTP cron completion. */
@@ -90,7 +94,7 @@ export function buildEventReminderCronHealth(
     ),
     scheduleCron: EVENT_REMINDER_CRON_EXPR,
     scheduleNote:
-      "Railway cron runs hourly at minute 0 (UTC). An in-process sweep also runs for short offsets.",
+      "No Railway service posts to this endpoint (measured 2026-10-02). The 20 to 28 hour signup blast and scheduled custom reminders run only when something calls it. Auto-reminder offsets still run in the server process every 5 minutes.",
     inProcessSweepMinutes: AUTO_REMINDER_SWEEP_MINUTES,
     endpoint: EVENT_REMINDER_CRON_PATH,
     nextCronAt: nextHourlyCronAt(new Date(nowMs)).toISOString(),
