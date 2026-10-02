@@ -110,12 +110,8 @@ export const investorInquiriesRouter = router({
           });
           try {
             const { ENV } = await import("../_core/env");
-            const { SignJWT } = await import("jose");
-            const secret = new TextEncoder().encode(ENV.cookieSecret);
-            const token = await new SignJWT({ email: input.email, purpose: "newsletter-confirm" })
-              .setProtectedHeader({ alg: "HS256" })
-              .setExpirationTime("24h")
-              .sign(secret);
+            const { signEmailLink } = await import("../lib/emailLinkSecret");
+            const token = await signEmailLink({ email: input.email, purpose: "newsletter-confirm" }, "24h");
             const confirmUrl = `${ENV.appUrl}/newsletter/confirm?token=${encodeURIComponent(token)}`;
             const { sendEmail } = await import("../_core/email");
             await sendEmail({
