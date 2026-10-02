@@ -13,7 +13,7 @@ import { ENV } from "./_core/env";
 const skipIfNoDb = !process.env.DATABASE_URL;
 const TEST_OWNER_ID = 987_654_304;
 
-const sendEmailMock = vi.fn().mockResolvedValue(true);
+const sendEmailMock = vi.fn().mockResolvedValue({ id: "msg_test", status: "sent" });
 vi.mock("./_core/email", () => ({
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
 }));

@@ -149,8 +149,10 @@ export const recordingsRouter = router({
 
       const { sendRecordingEmail } = await import("../lib/recording-finalize");
       const sent = await sendRecordingEmail(rec);
-      await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, input.id));
-      return { sent };
+      if (sent.dropped === 0) {
+        await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, input.id));
+      }
+      return { sent: sent.accepted, dropped: sent.dropped };
     }),
 
   // Admin: delete a recording record (doesn't touch Riverside, just removes from our DB)
