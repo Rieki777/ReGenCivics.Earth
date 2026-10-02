@@ -22,6 +22,7 @@ import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { serveStatic } from "./_core/vite";
 import { COOP } from "../shared/fund";
+import { escapeHtml } from "./_core/crawler-content";
 import { SEASON_ONE } from "../shared/regenYear";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
 import { findRetired, findG5, findTraction } from "../scripts/check-fund-claims.mjs";
@@ -163,6 +164,63 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     expect(html).toContain('id="__crawler_content__"');
     expect(html).toContain('"@type":"ItemList"');
   });
+
+  // Routes the phase -2 baseline measured as blank, now carrying prose taken
+  // from the live page. One assertion each, on a distinctive sentence rather
+  // than a length, so a page that regresses to the shell fails here even if
+  // something else server-renders a header into the body.
+  it.each([
+    ["/season2", "thirteen regenerative land projects"],
+    ["/crowd-pooling", "money, land, skills, time and knowledge"],
+    ["/game-mechanics", "visible and tunable"],
+    ["/connect", "which path calls to you"],
+    ["/play", "five minutes or five years"],
+    ["/ally", "weaving a support network"],
+    ["/ship/book", "Fleetwood Revolution"],
+    ["/ship/terms", "Voyage Covenant"],
+    ["/ship/guide", "Mindful, Careful, Slow"],
+    ["/custom-games", "fail on coordination long before"],
+    ["/calculator", "nine forms of capital"],
+    ["/marketplace", "Connection Hub"],
+  ])("serves prose on %s", async (path, phrase) => {
+    const html = await (await fetch(`${base}${path}`)).text();
+    expect(html.toLowerCase()).toContain(phrase.toLowerCase());
+    expect(html).toContain('id="__crawler_content__"');
+    expect(agentVisibleText(html).length).toBeGreaterThan(1000);
+  });
+
+  it("keeps /loi's disclaimers intact, because an agent will relay them", async () => {
+    // This page is the C funnel's conversion point and the most compliance
+    // sensitive thing the crawler serves. The spec's hard rule is that
+    // explore_investment_thesis never quotes terms and never implies an offer.
+    // An agent that reads a summary with the disclaimers trimmed off would
+    // describe a cooperative taking money, which is the opposite of true.
+    //
+    // Asserted against COOP rather than against literals on purpose. This
+    // route was written by two lanes on the same day; the version that landed
+    // builds every sentence from shared/fund.ts so the disclaimers cannot
+    // drift between the page and the crawler, and a test carrying its own copy
+    // of the sentences would reintroduce exactly that drift.
+    const html = await (await fetch(`${base}/loi`)).text();
+    for (const claim of [COOP.statement, COOP.interestPromise, COOP.notAnOffer]) {
+      expect(html, `/loi is missing a COOP disclaimer: ${claim.slice(0, 60)}`).toContain(
+        escapeHtml(claim),
+      );
+    }
+  });
+
+  it.each(["/campaigns", "/bounties"])(
+    "serves the %s listing, even with nothing to list",
+    async (path) => {
+      // With no DATABASE_URL these render their empty-state copy. That is the
+      // right assertion here: this test asks whether the route reaches its
+      // builder at all. crawler-lists.test.ts mocks the rows and checks what
+      // a populated listing says.
+      const html = await (await fetch(`${base}${path}`)).text();
+      expect(html).toContain('id="__crawler_content__"');
+      expect(html).toContain('"@type":"ItemList"');
+    },
+  );
 
   it("leaves a route with no authored content empty, so the check can fail", async () => {
     // The known negative. Without one, every assertion above would also pass

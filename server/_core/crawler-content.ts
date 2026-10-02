@@ -385,6 +385,245 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       </article>
     `,
   },
+
+  // ── Routes the phase -2 agent baseline measured as blank ─────────────────
+  // Each of the four below was an empty shell to any agent that does not run
+  // JavaScript. The prose is taken from the live page, read in a browser on
+  // 2026-09-27, and condensed: no claim here is written fresh. That rule is
+  // the point rather than a style preference. The baseline caught models
+  // inventing a "Village Subscription", a "whole systems village as a service
+  // model" and "30+ organizations in the Alliance" against a registry holding
+  // fifteen, and this file is exactly where an invention would be quoted back
+  // as fact.
+
+  "/season2": {
+    html: `
+      <article>
+        <h1>Season Two: thirteen seats, selected on the Equinox</h1>
+        <p>Season Two selects thirteen regenerative land projects across every stage, scale, and approach to regeneration. The cohort builds its models together, then launches, with every community project that is ready, into one shared crowdpooling campaign where the world decides what to pool into. Projects that graduate become the foundation of what the cooperative is being designed to steward.</p>
+        <p><strong>Season Two applications are closed.</strong> You can follow along live, and you can apply for the next season at any time: applications are held, and no emails go out about them until the next season is closer.</p>
+        <h2>How a season works</h2>
+        <ul>
+          <li><strong>Selected.</strong> A season council of players from past seasons picks thirteen projects on the Equinox, built for range across maturity, scale, and approach.</li>
+          <li><strong>Built.</strong> Thirteen teams design their governance, legal, economic and financial models together, reviewing each other's work against the standard an investor will actually apply.</li>
+          <li><strong>Graduated.</strong> After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and the aim is all thirteen. Community projects that are ready join them.</li>
+          <li><strong>Pooled and funded.</strong> The world decides which projects to pool money, land, equipment and labor into. What comes through becomes the foundation of what the cooperative is being designed to steward.</li>
+        </ul>
+        <h2>What it costs</h2>
+        <p>No fee to apply and no fee to take part. What a project brings is its team's time and a token swap that makes the alliance and the project co-invested in each other. Every model, template, legal structure and framework built during the season is open-sourced, because charging admission to the on-ramp would work against growing the ReGenerative Renaissance.</p>
+        <p>Thirteen weeks of accelerator covering governance, legal structure, economics and financing, designed alongside twelve other projects. A network that carries some of what usually falls on one or two founders. A shared crowdpooling launch, so a project raises alongside the network rather than alone.</p>
+        <p>See <a href="/apply">how to apply for the next season</a>, <a href="/schedule">the upcoming sessions</a>, or <a href="/crowd-pooling">how crowd pooling works</a>.</p>
+      </article>
+    `,
+  },
+
+  "/crowd-pooling": {
+    html: `
+      <article>
+        <h1>Crowd Pooling: contribute land, money, skills, time and knowledge</h1>
+        <p>Crowd pooling lets a person contribute directly to regenerative land projects at a scale that works for them, with money, land, skills, time and knowledge rather than money alone. You set a budget, pick projects, and see how a contribution compounds with others. Land projects use the same tool to pool capital from many contributors and aggregate the total.</p>
+        <h2>Why crowd pooling</h2>
+        <ul>
+          <li><strong>Reduce the financial burden.</strong> Recognising all forms of capital, not just money, lowers the funding a project appears to need.</li>
+          <li><strong>Reach assets that were never for sale.</strong> Land that is not on the market can still join a vision.</li>
+          <li><strong>Equal contributions over time.</strong> A process where everyone can bring an equal contribution regardless of their financial situation.</li>
+          <li><strong>Regenerative foundations from the start.</strong> The diverse base of a regenerative economic system, built in at the onset rather than retrofitted.</li>
+        </ul>
+        <h2>How to use the tool</h2>
+        <p>Name the project and a target total value, add immediate contributions such as land, money or equipment, add future value commitments such as roles you will fill, then download a contribution summary to share with projects. A reusable proposal can be submitted to more than one project.</p>
+        <p>Related: <a href="/campaigns">land project campaigns</a>, the <a href="/calculator">contribution calculator</a> across the nine forms of capital, and <a href="/season2">the Season Two cohort launch</a>.</p>
+      </article>
+    `,
+  },
+
+  "/game-mechanics": {
+    html: `
+      <article>
+        <h1>Game mechanics: every variable visible and tunable</h1>
+        <p>Every variable in the ReGen Games is visible and tunable. The page publishes live values and a simulator showing how a change would affect scoring, harvest shares and gratitude budgets.</p>
+        <h2>Citizenship tiers</h2>
+        <p>You grow into this society at your own pace. Everyone starts as an Explorer and earns deeper participation through real contribution. Each tier carries different powers, gratitude budgets and governance weight.</p>
+        <p>The page covers live variables, how bounties are valued, the game simulator, gratitude system variables and the Living Tree. See also <a href="/game">the Infinite Game</a>, <a href="/bionomics">the living economy</a> and <a href="/glossary">the glossary</a>.</p>
+      </article>
+    `,
+  },
+
+  "/connect": {
+    html: `
+      <article>
+        <h1>Connect: which path calls to you</h1>
+        <p>A short form that routes a person to the right part of ReGen Civics, so what follows is relevant to them. More than one path can apply, and the form can be filled in more than once.</p>
+        <h2>The seven paths</h2>
+        <ul>
+          <li><strong>Land Partner.</strong> I steward or own land and would like to explore joining the Alliance.</li>
+          <li><strong>Create with ReGens.</strong> I want to co-create with one or more of the Alliance organizations.</li>
+          <li><strong>Alliance Partner.</strong> I represent an organization and want to explore joining the Alliance.</li>
+          <li><strong>Finance the Renaissance.</strong> I represent a fund or institution interested in systemic regeneration.</li>
+          <li><strong>Live.</strong> I want to co-create with one or more of the ReGen land projects.</li>
+          <li><strong>Role in ReGen Civics.</strong> Apply for a role directly.</li>
+          <li><strong>Something else.</strong> A unique way to contribute.</li>
+        </ul>
+        <p>If you already have an account you can continue an existing application. See also <a href="/apply">applying to the incubator</a>, <a href="/loi">the cooperative in design</a> and <a href="/schedule">the upcoming sessions</a>.</p>
+      </article>
+    `,
+  },
+
+  "/play": {
+    html: `
+      <article>
+        <h1>Play the Infinite Game: ways in for five minutes or five years</h1>
+        <p>Everyone can play. Whether you have five minutes or five years, there is a way to participate in regenerating civilization, and the level is yours to choose. Quests can be browsed without an account; signing in is what lets you earn $ReGen and submit deliverables.</p>
+        <h2>Easy mode: low dedication, high impact</h2>
+        <ul>
+          <li><strong>Quest.</strong> Complete games and tasks.</li>
+          <li><strong>Trade.</strong> Take part as a bioregional merchant.</li>
+          <li><strong>Claim.</strong> Record the contributions you have already made.</li>
+        </ul>
+        <h2>High dedication</h2>
+        <p>For people who want to build, lead, or root in: <strong>join</strong> an existing organization or village, or <strong>catalyze</strong> a new one.</p>
+        <h2>Two tokens, and they are not the Fund's</h2>
+        <p>ReGen Game tokens are the in-game currency and RGVoice tokens carry governance. These are distinct from the Fund tokens; the two sides are explained in <a href="/bionomics">the living economy</a> and <a href="/tokenomics">tokenomics</a>.</p>
+        <p>If you are not sure where to start, <a href="/schedule">join an open session first</a>, or go straight to <a href="/quest">the quest board</a>. The mechanics are published in full at <a href="/game-mechanics">game mechanics</a>.</p>
+      </article>
+    `,
+  },
+
+  "/ally": {
+    html: `
+      <article>
+        <h1>The Alliance Network: for organizations supporting land projects</h1>
+        <p>An alliance of organizations weaving a support network for regenerative land projects worldwide. Each organization brings something the others cannot, and pooled, that becomes real capacity for land projects. Instead of searching for clients one at a time, a partner reaches a pipeline of regenerative land projects that need what they already offer.</p>
+        <h2>What joining gives an organization</h2>
+        <ul>
+          <li>Connection to land projects across the network.</li>
+          <li>Fundraising alongside the alliance rather than alone.</li>
+          <li>Shared infrastructure.</li>
+          <li>Governance and voice in how the alliance runs.</li>
+        </ul>
+        <h2>How to join</h2>
+        <p>Five steps: apply, onboard, collaborate, agree an equity, service or token swap, then grow together. The alliance is looking for organizations across every domain needed to support regenerative land projects.</p>
+        <p>See <a href="/network">the land projects your organization could support</a>, <a href="/crowd-pooling">crowd pooling</a>, <a href="/tools">the tools directory</a>, or <a href="/team">the people building this</a>.</p>
+      </article>
+    `,
+  },
+
+  // ── The Ship ─────────────────────────────────────────────────────────────
+  // A real, bookable offering, and every sub-page of it was invisible to an
+  // agent. Someone asking an assistant "where can I rent an RV in southern
+  // Oregon" or "is there a sober, plant-based road trip I can book" was being
+  // answered from everything except us.
+  //
+  // The rates below carry their own expiry ("through early April 2027")
+  // exactly as the page states it, so a reader can tell for themselves whether
+  // the number is still current. A price with no condition attached is the
+  // kind of claim that goes stale silently and sends someone at a number that
+  // no longer exists.
+
+  "/ship/book": {
+    html: `
+      <article>
+        <h1>Book a voyage aboard the ReGen Ship</h1>
+        <p>The Ship is a 2006 Fleetwood Revolution, 40 feet, with solar, battery, water and propane systems. Her home anchorage is Ashland, Oregon. Voyages board Monday at 5pm and return the following Monday at 11am, and up to four weeks can be chained for a longer sail.</p>
+        <h2>What it costs</h2>
+        <p>Her full rate is 600 US dollars a night. Through early April 2027 that is 50 percent off, so 300 dollars a night, which is 2,100 dollars for a voyage week against a full rate of 4,200. Plus applicable taxes. Multi-week savings stack on top: 5 percent off two weeks, 10 percent off three, 15 percent off a month.</p>
+        <p>The discount is a trial year, and it is discounted because she is twenty years old and carries her quirks honestly.</p>
+        <h2>The turnover</h2>
+        <p>The Keeper resets her on the Monday turnover between 11am and 5pm, topping up propane and water before the next crew boards. Tanks reset on every turnover, including between chained weeks.</p>
+        <p>Read the <a href="/ship/terms">Voyage Covenant and rental terms</a> before booking: crew size, travel radius, included miles and the clean-vessel rules are all stated there. The <a href="/ship/guide">voyage guide</a> covers what to pack and how she drives.</p>
+      </article>
+    `,
+  },
+
+  "/ship/terms": {
+    html: `
+      <article>
+        <h1>Voyage Covenant and rental terms</h1>
+        <p>Version 1.0, effective 16 July 2026. These terms apply to every voyage aboard the ReGen Ship. The agreement is between the Church of the Regenerative Earth, also doing business as ReGen Civics, and the person who books plus every approved driver and guest aboard.</p>
+        <h2>The voyage at a glance</h2>
+        <ul>
+          <li><strong>Voyage window.</strong> Monday 5pm to Monday 11am. Whole weeks, chain up to four.</li>
+          <li><strong>Travel radius.</strong> 500 miles from Ashland, up to 1,250 miles on a four-week sail. Farther needs written permission first.</li>
+          <li><strong>Miles included.</strong> 1,000 road miles, then 50 cents a mile.</li>
+          <li><strong>Drivers.</strong> 25 or older, licensed, approved on Outdoorsy. Never drive after cannabis.</li>
+          <li><strong>Crew size.</strong> Up to 4 aboard, or 5 when at least 3 are children.</li>
+          <li><strong>Clean vessel.</strong> Meat, alcohol and smoke free inside, the whole voyage, unless agreed otherwise.</li>
+          <li><strong>Pets.</strong> Not allowed as a rule. Exceptions need written approval and a pet fee.</li>
+          <li><strong>Security deposit.</strong> 1,500 US dollars, refundable, held on Outdoorsy and returned after inspection.</li>
+          <li><strong>Late return.</strong> 50 dollars an hour for the first 12 hours, then 600 dollars a day.</li>
+          <li><strong>Her quirks.</strong> Rented as she is. A 2006; the leveling jacks are partly manual.</li>
+        </ul>
+        <p>The box above is the quick read. The full agreement on the page is what governs, and it should be read before sailing. Booking and current rates are at <a href="/ship/book">book a voyage</a>.</p>
+      </article>
+    `,
+  },
+
+  "/ship/guide": {
+    html: `
+      <article>
+        <h1>The voyage guide: everything you need to sail her well</h1>
+        <h2>Before you arrive</h2>
+        <p>Pack light and pack clean. The Ship stocks her own soaps, cleaning materials, linens, towels and cookware, so most of that can stay at home. Bring clothes, a food plan and an open week. Read the water doctrine before packing a single toiletry, because it shapes what can and cannot come aboard.</p>
+        <h2>The two-hour orientation</h2>
+        <p>Every first-time crew starts with a two-hour orientation with the Ship Keeper: a walk of the whole ship, her systems hands-on, and the water doctrine, driving and turnover. Nothing in it is hard. The orientation is how it becomes second nature before you pull away.</p>
+        <h2>Driving her: you are the captain</h2>
+        <p>She is 40 feet long. The ship language exists to break the "just another car" mindset, because that mindset is dangerous in an RV. Wide turns, steer toward the center. The driver must be 25 or older, hold a valid license, be verified before the voyage, and be capable of driving a 40-foot vehicle on the chosen route. Staying on main roads and using the bikes around towns is strongly advised.</p>
+        <p><strong>MCS: Mindful, Careful, Slow.</strong> Mindful is your full mind aware and present. Careful is your heart centered: never take the captain's seat angry, anxious or overwhelmed. Slow is taking it easy, because an accident causes far more traffic than going gently ever will.</p>
+        <p><strong>The cannabis rule, plainly.</strong> She sails Oregon, Washington and California, where the sacrament is legal, and driving after partaking is never okay. You are liable for damages and the insurance deductible. Arrive, set up fully, confirm the Ship will not move again that day, and then enjoy what you enjoy.</p>
+        <h2>Her quirks, honestly</h2>
+        <p>She is twenty-plus years old and has the quirks of any ship her age. One leveling jack currently needs manual operation, and the jacks are a comfort rather than a requirement. Quirks like these are exactly why the trial year is discounted.</p>
+        <p>See the <a href="/ship/terms">Voyage Covenant and rental terms</a> and <a href="/ship/book">open weeks and rates</a>.</p>
+      </article>
+    `,
+  },
+
+  "/custom-games": {
+    html: `
+      <article>
+        <h1>Custom Games: a coordination game for your land project</h1>
+        <p>A complete coordination game for a community, built on the same foundation as Amora and owned outright by the project running it. Three to five projects per season.</p>
+        <h2>Who it is for</h2>
+        <p><strong>Founders</strong> starting a land project who want clear agreements from day one: who decides, how money flows, how new people come in, written down and playable. <strong>Investors</strong> putting money into a land project who want a live window into decisions, money and progress without chasing anyone for updates.</p>
+        <h2>The problem it addresses</h2>
+        <p>Land projects fail on coordination long before they fail on permaculture. The soil improves, the gardens go in, and the project still unravels: coordination breaks first, then money opacity, then burnout in the two people carrying everything.</p>
+        <p>Without a structure that can hold new people, every person who joins adds weight to the same two or three who carry the risk. More members should mean more capacity; instead it means more to hold, more to explain, more to chase. Structure is what turns willing people into contributing people, so the work spreads and the founders stop being the single point of failure.</p>
+        <h2>Running in production</h2>
+        <p>Amora is a regenerative village rising in Costa Rica and the first client. Their game runs today: four journeys into the village, quests with consent-based crediting, a Gratitude currency, twelve stages of growth, a living map where every building traces back to a funded build or a claimed quest, and Maia, their own AI guide.</p>
+        <p>See <a href="/network">the games already in the network</a>, or <a href="/season2">Season Two</a>, which is the route in for projects that want the structure before the software.</p>
+      </article>
+    `,
+  },
+
+  // No "/loi" here on purpose. One landed on main first (see the entry above,
+  // near the other fund pages) and it is the better of the two: it builds every
+  // sentence from COOP in shared/fund.ts, so the cooperative's disclaimers
+  // cannot drift between the page and the crawler. Mine hardcoded the same
+  // sentences, which is exactly the drift that constants module exists to
+  // prevent. Two lanes wrote this route on the same day and the duplicate key
+  // failed CI with TS1117.
+
+  "/calculator": {
+    html: `
+      <article>
+        <h1>Contribution calculator: nine forms of capital</h1>
+        <p>A tool for estimating the value of a contribution across the nine forms of capital, so a contribution that is not money can still be counted.</p>
+        <p><strong>It is experimental, and the figures are not guaranteed rewards.</strong> The values are estimates to help someone think through their contributions holistically. It is impossible to fully quantify the intangible, and the argument for the tool is that if everyone uses the same one the results are more equitable. The calculator itself is evolved by proposals through the game.</p>
+        <h2>What it counts</h2>
+        <p>Financial capital covers direct contribution, funds raised or facilitated, revenue generated and costs saved, each with its own crediting standard. The other eight forms of capital are stepped through in turn, and a running total is carried across all nine.</p>
+        <p>Once a value is calculated, a proposal is submitted on Hypha. See <a href="/crowd-pooling">crowd pooling</a> for where the numbers are used, and <a href="/game-mechanics">game mechanics</a> for how contribution is valued in the wider game.</p>
+      </article>
+    `,
+  },
+
+  "/marketplace": {
+    html: `
+      <article>
+        <h1>The Connection Hub: what you offer and what you need</h1>
+        <p>Where regenerators find each other. People share what they can offer the community and what they could use help with, across skills, resources, time, knowledge, land and capital, and can mark themselves as seeking collaborators or looking to join a project.</p>
+        <p>Entries are shared from a member profile. Exchange also happens on LocalScale.org, which the hub links out to.</p>
+        <p>Related ways to be matched to work: <a href="/bounties">open bounties</a>, <a href="/quest">the quest board</a> and <a href="/play">the player paths</a>.</p>
+      </article>
+    `,
+  },
 };
 
 export function getStaticPageContent(reqPath: string): CrawlerContent | null {
@@ -982,8 +1221,240 @@ export async function getScheduleContent(): Promise<CrawlerContent | null> {
   return value;
 }
 
+// ── /campaigns and /bounties: the two list routes ────────────────────────────
+// Built from rows rather than written as prose, for the same reason /schedule
+// is. A hand-written sentence about "active campaigns" goes stale the week a
+// campaign closes, and a stale listing sends someone at something that is over.
+// The rows are already public on the rendered page; this puts them where an
+// agent that does not run JavaScript can read them.
+//
+// Both are deliberately thin. Only what a person needs to decide whether to
+// look further, and a link to the page that holds the rest. No contact
+// details, no internal ids.
+const LIST_CACHE_TTL_MS = 10 * 60 * 1000;
+const listCache = new Map<string, { at: number; value: CrawlerContent | null }>();
+
+async function cachedList(
+  key: string,
+  build: () => Promise<CrawlerContent | null>,
+): Promise<CrawlerContent | null> {
+  const hit = listCache.get(key);
+  if (hit && Date.now() - hit.at < LIST_CACHE_TTL_MS) return hit.value;
+  let value: CrawlerContent | null = null;
+  try {
+    value = await build();
+  } catch {
+    value = null;
+  }
+  listCache.set(key, { at: Date.now(), value });
+  return value;
+}
+
+/** ItemList wrapper, the shape a browsing agent extracts a listing from. */
+function itemList(name: string, url: string, items: object[]): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    url,
+    numberOfItems: items.length,
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item,
+    })),
+  };
+}
+
+export async function getCampaignsListContent(): Promise<CrawlerContent | null> {
+  return cachedList("campaigns", async () => {
+    const rows = await db.listCampaigns("active");
+    const url = `${SITE}/campaigns`;
+
+    const money = (n: unknown, currency: string | null) => {
+      const v = Number(n ?? 0);
+      if (!Number.isFinite(v) || v <= 0) return null;
+      return `${currency || "USD"} ${v.toLocaleString("en-US")}`;
+    };
+
+    const sections = rows
+      .map((c: any) => {
+        const target = money(c.financialTarget, c.currency);
+        const pledged = money(c.pledgedTotal, c.currency);
+        const where = c.location ? ` in ${escapeHtml(c.location)}` : "";
+        // Pledged is stated only alongside the target. A raised figure with
+        // nothing to compare it to reads as bigger or smaller than it is.
+        const progress =
+          target && pledged ? `<p>Pledged so far: ${escapeHtml(pledged)} of ${escapeHtml(target)}.</p>` : target ? `<p>Target: ${escapeHtml(target)}.</p>` : "";
+        return `
+        <section>
+          <h3><a href="${SITE}/campaign/${c.id}">${escapeHtml(c.title ?? c.projectName ?? "Campaign")}</a></h3>
+          <p>${escapeHtml(c.projectName ?? "")}${where}.</p>
+          ${c.description ? textToHtml(String(c.description).slice(0, 600)) : ""}
+          ${progress}
+        </section>`;
+      })
+      .join("\n");
+
+    const lead = rows.length
+      ? `${rows.length} land project ${rows.length === 1 ? "campaign is" : "campaigns are"} open for contributions right now.`
+      : `No campaigns are open for contributions right now. New ones are announced in the newsletter and at the open sessions.`;
+
+    const inner = `
+      <article>
+        <h1>Land project campaigns open for contributions</h1>
+        <p>${lead} Crowd pooling means a campaign accepts land, money, equipment, skills, time and knowledge, not money alone, so there is a way in that does not depend on what you can spend. Each campaign below links to its own page with the full detail.</p>
+        ${sections || ""}
+        <p>How the mechanism works: <a href="${SITE}/crowd-pooling">crowd pooling</a>. To value a non-financial contribution: <a href="${SITE}/calculator">the contribution calculator</a>. Next dated call: <a href="${SITE}/schedule">the schedule</a>.</p>
+      </article>
+    `;
+
+    const jsonld = itemList(
+      "Land project campaigns open for contributions",
+      url,
+      rows.map((c: any) => ({
+        "@type": "Project",
+        name: c.title ?? c.projectName ?? "Campaign",
+        description: c.description ? String(c.description).slice(0, 300) : undefined,
+        url: `${SITE}/campaign/${c.id}`,
+        ...(c.location ? { location: { "@type": "Place", name: c.location } } : {}),
+      })),
+    );
+
+    return { title: "Land project campaigns", bodyHtml: wrapForInjection(inner), jsonld };
+  });
+}
+
+export async function getBountiesListContent(): Promise<CrawlerContent | null> {
+  return cachedList("bounties", async () => {
+    const rows = await db.getOpenBountiesSnapshot(15);
+    const url = `${SITE}/bounties`;
+
+    const sections = rows
+      .map((b: any) => {
+        const tier = b.tier ? `<p>Tier: ${escapeHtml(String(b.tier))}.</p>` : "";
+        return `
+        <section>
+          <h3>${escapeHtml(b.title ?? "Bounty")}</h3>
+          ${b.body ? textToHtml(String(b.body).slice(0, 500)) : ""}
+          ${tier}
+        </section>`;
+      })
+      .join("\n");
+
+    const lead = rows.length
+      ? `${rows.length} ${rows.length === 1 ? "bounty is" : "bounties are"} open for claiming.`
+      : `No bounties are open right now. New ones are posted as the work appears.`;
+
+    const inner = `
+      <article>
+        <h1>Open bounties: paid work in the Infinite Game</h1>
+        <p>${lead} A bounty is a named piece of work the community needs, with a token reward attached. Bounties can be browsed without an account, and most can be done remotely, so this is one of the ways to contribute without relocating.</p>
+        ${sections || ""}
+        <p>How valuation works is published at <a href="${SITE}/game-mechanics">game mechanics</a>. Other ways in that need no relocation: <a href="${SITE}/play">the player paths</a> and <a href="${SITE}/quest">the quest board</a>.</p>
+      </article>
+    `;
+
+    const jsonld = itemList(
+      "Open bounties",
+      url,
+      rows.map((b: any) => ({
+        "@type": "CreativeWork",
+        name: b.title ?? "Bounty",
+        description: b.body ? String(b.body).slice(0, 300) : undefined,
+        url,
+      })),
+    );
+
+    return { title: "Open bounties", bodyHtml: wrapForInjection(inner), jsonld };
+  });
+}
+
+// The legal pages are NOT served here, and that is a finding rather than an
+// omission. See docs/agent-surface/LEGAL-PAGES-BLOCKED.md.
+//
+// scripts/extract-legal-content.mjs works and pulled 31 KB of verbatim policy
+// text out of the four components. Wiring it up failed the fund-claims guard,
+// which is right: the pages describe a Regulation D offering to accredited  fund-claims-allow: naming the retired claim is the whole point of this note; see docs/agent-surface/LEGAL-PAGES-BLOCKED.md
+// investors, with a Private Placement Memorandum, preferred returns, token
+// listings and secondary markets. On 2026-09-27 the fund became a cooperative
+// in design, and that guard exists because "a purchasing cooperative keeps its
+// bought-for-use footing only while nothing in the funnel promises upside".
+//
+// Publishing those pages to agents would re-assert, in the most quotable place
+// on the site, the securities story the project retired the day before. The
+// pages need rewriting by Rye and counsel first; the extractor is ready for
+// them the moment they do.
+
+/**
+ * /community/guidelines: the community agreements, from rows.
+ *
+ * Built from the table rather than written, because the page says in its own
+ * words that these "evolve as the community does": they are proposed and voted
+ * on, so a frozen copy would be a promise the community did not make. Only
+ * active agreements are listed, for the same reason.
+ */
+export async function getGuidelinesContent(): Promise<CrawlerContent | null> {
+  return cachedList("guidelines", async () => {
+    const rows = await db.listCommunityAgreements("votes", "active", 50);
+    const url = `${SITE}/community/guidelines`;
+
+    const byCategory = new Map<string, any[]>();
+    for (const r of rows as any[]) {
+      const key = r.category || "General";
+      if (!byCategory.has(key)) byCategory.set(key, []);
+      byCategory.get(key)!.push(r);
+    }
+
+    const sections = [...byCategory.entries()]
+      .map(
+        ([category, items]) => `
+        <section>
+          <h2>${escapeHtml(category)}</h2>
+          ${items
+            .map(
+              (a) => `
+          <h3>${escapeHtml(a.title ?? "")}</h3>
+          ${a.description ? textToHtml(String(a.description)) : ""}`,
+            )
+            .join("\n")}
+        </section>`,
+      )
+      .join("\n");
+
+    const lead = rows.length
+      ? `${rows.length} ${rows.length === 1 ? "agreement is" : "agreements are"} active.`
+      : `No agreements are active yet.`;
+
+    const inner = `
+      <article>
+        <h1>Community agreements</h1>
+        <p>The Gathering Grove is a space for people building a regenerative world, and these agreements keep it honest, generous and worth showing up for. ${lead} They evolve as the community does: anyone signed in can propose a change, and the community votes.</p>
+        ${sections}
+        <p>The forum is open to read without an account: <a href="${SITE}/community">the Gathering Grove</a>.</p>
+      </article>
+    `;
+
+    const jsonld = itemList(
+      "Community agreements",
+      url,
+      (rows as any[]).map((a) => ({
+        "@type": "CreativeWork",
+        name: a.title ?? "",
+        description: a.description ? String(a.description).slice(0, 300) : undefined,
+        url,
+      })),
+    );
+
+    return { title: "Community agreements", bodyHtml: wrapForInjection(inner), jsonld };
+  });
+}
+
 export async function resolveCrawlerContent(reqPath: string): Promise<CrawlerContent | null> {
   if (reqPath === "/schedule") return getScheduleContent();
+  if (reqPath === "/community/guidelines") return getGuidelinesContent();
+  if (reqPath === "/campaigns") return getCampaignsListContent();
+  if (reqPath === "/bounties") return getBountiesListContent();
   if (reqPath === "/learn") return getLearnIndexContent();
   const learnMatch = reqPath.match(/^\/learn\/([a-z0-9-]+)$/);
   if (learnMatch) return getLearnContent(learnMatch[1]);
