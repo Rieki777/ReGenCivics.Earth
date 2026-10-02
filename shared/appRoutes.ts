@@ -184,6 +184,8 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/tools/:slug",
   "/tools/submit",
   "/unsubscribe",
+  "/village-os",
+  "/village-os/host",
   "/watch/:videoId",
 ] as const;
 

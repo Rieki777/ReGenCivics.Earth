@@ -6766,3 +6766,39 @@ export const sessionBoardVotes = mysqlTable("session_board_votes", {
   index("session_board_votes_voter_idx").on(table.boardId, table.voterKey),
 ]));
 export type SessionBoardVote = typeof sessionBoardVotes.$inferSelect;
+
+/**
+ * A request to have the ReGen Civics team host a village on Village OS
+ * (migration 0284, ADR-69, shared/villageOsOffer.ts). One row per accepted
+ * Season 2 application. No gift or donation data lives here.
+ */
+export const villageOsRequests = mysqlTable("village_os_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The account that last filled in the form (the application's owner or steward). */
+  userId: int("userId").notNull(),
+  applicationId: int("applicationId").notNull(),
+  villageName: varchar("villageName", { length: 120 }).notNull(),
+  /** A name for its web address: letters, digits and hyphens. */
+  preferredAddress: varchar("preferredAddress", { length: 63 }),
+  ownDomain: varchar("ownDomain", { length: 253 }),
+  country: varchar("country", { length: 80 }),
+  timeZone: varchar("timeZone", { length: 64 }),
+  language: varchar("language", { length: 40 }),
+  memberWord: varchar("memberWord", { length: 40 }),
+  currencyName: varchar("currencyName", { length: 40 }),
+  tagline: varchar("tagline", { length: 160 }),
+  /** A raised hand for the founders circles. Changes nothing about hosting. */
+  circleInterest: tinyint("circleInterest").default(0).notNull(),
+  consentDraft: tinyint("consentDraft").default(0).notNull(),
+  consentHosting: tinyint("consentHosting").default(0).notNull(),
+  /** HOSTING_REQUEST_STATUSES key. */
+  status: varchar("status", { length: 16 }).default("requested").notNull(),
+  adminNote: text("adminNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("village_os_requests_app_idx").on(table.applicationId),
+  index("village_os_requests_user_idx").on(table.userId),
+  index("village_os_requests_status_idx").on(table.status),
+]));
+export type VillageOsRequest = typeof villageOsRequests.$inferSelect;

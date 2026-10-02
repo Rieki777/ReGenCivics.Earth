@@ -20,6 +20,7 @@ import {
   boardStages,
   hasSessionBoard,
   sessionBoardHref,
+  sessionMinutes,
   type StageKind,
 } from "@shared/sessionBoard";
 import { episodeByWeek } from "@shared/season2Curriculum";
@@ -30,6 +31,7 @@ import {
   Circle,
   Close,
   Game,
+  GetVillageOS,
   Harvest,
   OpenSeason,
   VillageOS,
@@ -136,7 +138,7 @@ function Board({ week }: { week: number }) {
   const title = ep ? `Week ${week}: ${ep.title}` : `Week ${week}`;
   const stage = stages[view];
   const state = board?.state;
-  const total = state ? state.plan.reduce((a, b) => a + b, 0) : stages.reduce((a, s) => a + s.min, 0);
+  const total = sessionMinutes(state?.plan ?? stages.map((s) => s.min), stages);
   const planFor = (i: number) => state?.plan[i] ?? stages[i].min;
   const stageElapsed = state && view === state.stage && state.stageStartedAt ? now - state.stageStartedAt : null;
 
@@ -189,6 +191,7 @@ function Board({ week }: { week: number }) {
             : stage.kind === "harvest" ? <Harvest {...stageProps} />
             : stage.kind === "game" ? <Game {...stageProps} />
             : stage.kind === "ahead" ? <Ahead {...stageProps} />
+            : stage.kind === "getvillageos" ? <GetVillageOS {...stageProps} />
             : <Close {...stageProps} />}
         </section>
       </main>
@@ -228,7 +231,7 @@ function Board({ week }: { week: number }) {
           <div className="sb-row">
             <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => actions.act({ type: "restartClocks" })}>Restart the clocks</button>
           </div>
-          <p className="sb-hint">Keys: ← and → move the room, 1 to {stages.length} jump, C shows or hides these cues.</p>
+          <p className="sb-hint">Keys: ← and → move the room, 1 to {Math.min(9, stages.length)} jump, C shows or hides these cues.</p>
         </aside>
       ) : null}
     </div>

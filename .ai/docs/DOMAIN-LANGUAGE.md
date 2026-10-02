@@ -361,6 +361,16 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Village OS**. The village coordination platform each project's Game runs on; Amora runs it at amora.regencivics.earth. Written "Village OS" in prose, `village-os` in code.
 
+### Get your Village OS (ADR-69)
+
+**Village OS offer**. The front door at `/village-os`: run Village OS yourself (free and open source), ask us to host it (free for accepted Season 2 projects), or a paid custom build. Words and rules live in `shared/villageOsOffer.ts`.
+
+**Hosting request**. A signed-in founder's ask, at `/village-os/host`, for ReGen Civics to host their village. One per accepted Season 2 application (approved or active, season 2). Read by a person; statuses: requested, reviewing, drafting, live, declined, withdrawn. Hosting never depends on giving.
+
+**First draft** (of a village). The starting set a person drafts for a hosted village from named application fields (`DRAFT_FIELDS`) and the request's own words, listing its gaps. Not a generated game; the founders choose what goes live.
+
+**Founders circle**. A small weekly circle CORE holds for founders doing this work: spiritual and peer support. Members of CORE join it; becoming a member means setting up a recurring gift to CORE. Never shown on a session board, never followed by an ask. Not a cooperative membership and not a financial product.
+
 ### Project pages and campaign tools (ADR-60, ADR-61)
 
 **Project page**. The public page for one land project at `/project/:key`. It shows the project's live campaign front and centre, its past campaigns, and, to project stewards only, the campaign tools. The key is `{applicationId}-{slug}` for a project with an application and `c{campaignId}-{slug}` for a campaign with none (demos, play-launched drafts). The slug is decoration. Code: `shared/projectKey.ts`.

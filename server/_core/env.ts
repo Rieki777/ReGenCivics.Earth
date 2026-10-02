@@ -220,4 +220,14 @@ export const ENV = {
   // button stay disabled until Oregon counsel signs off and this is "1"/"true" on
   // Railway, so the whole entry layer can deploy ahead of the legal review.
   giveawayRulesApproved: /^(1|true)$/i.test(process.env.GIVEAWAY_RULES_APPROVED ?? ""),
+
+  // Get your Village OS (/village-os, ADR-69). Both default off.
+  //  - VILLAGE_OS_SHOW_REPO "1"/"true" shows the "See the code" link, once the
+  //    Village OS repo's security cleanup has landed.
+  //  - VILLAGE_OS_MEMBERSHIP_URL is the page where someone sets up a recurring
+  //    gift to CORE. The membership button stays hidden until the Legal session
+  //    rules and this is set, and only a clean https URL is ever shown
+  //    (villageOsOfferFlags in server/routes/villageOs.ts).
+  villageOsShowRepo: /^(1|true)$/i.test(process.env.VILLAGE_OS_SHOW_REPO ?? ""),
+  villageOsMembershipUrl: process.env.VILLAGE_OS_MEMBERSHIP_URL ?? "",
 };

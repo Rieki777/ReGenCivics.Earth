@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-02 (seasons): Get your Village OS, the last page of every session
+
+- **One front door at /village-os** (ADR-69): run Village OS yourself (free and open source), ask us to host it (free for accepted Season 2 projects, with a first draft of your village from your application that you choose to publish), or the paid custom build. Plain facts on the page: English-only software today, the team can read a hosted village's stored keys, data with Railway in the US.
+- **Ask to host at /village-os/host**: signed-in founders pick their accepted Season 2 application, name their village, and give two consents. A person reads every request in the admin panel, which shows a first-draft seed built only from the named application fields (migration 0284).
+- **Founders circles through CORE membership**: a recurring gift to CORE makes someone a member of the church, and members join the weekly founders circles. The membership button and the code link stay off (env switches) until the Legal session rules and the Village OS repo is cleaned up.
+- **Every session board ends on it**: a one-minute last stage after Close, outside the two-hour plan, with the two ways in and the link. No money on the board.
+- **/custom-games** keeps the $20,000 build and points hosting to /village-os; the $20 a month hosting line is gone.
+
 ## 2026-10-01 (seasons): A live session board for every Season 2 week, starting with Week 2
 
 - **Every week from 2 to 13 has a board** at `/season2/week/:week` (ADR-68), linked under its week on /season2, /season-schedule, /seasons, /schedule and the episode's event page. Rye shows it on screen; everyone else opens it on their own device and types in, no account needed.

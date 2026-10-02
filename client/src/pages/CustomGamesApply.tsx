@@ -30,6 +30,7 @@ import { trpc } from "@/lib/trpc";
 import { analytics } from "@/lib/analytics";
 import { companionBool } from "@shared/companions";
 import { BLUEPRINT_VERSION, type BlueprintDraft } from "@shared/customGameBlueprint";
+import { VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import { ArrowRight, CheckCircle2, Loader2, Sprout } from "lucide-react";
 
 // ── Form state ────────────────────────────────────────────────────────────────
@@ -174,6 +175,8 @@ type FieldDef = {
   options?: Array<{ value: string; label: string }>;
   placeholder?: string;
   hint?: string;
+  /** A link shown after the hint (select fields). */
+  hintLink?: { href: string; text: string };
   required?: boolean;
 };
 
@@ -302,11 +305,15 @@ const SECTIONS: Array<{ title: string; intro?: string; fields: FieldDef[] }> = [
       { key: "domain", label: "Domain for your game", kind: "text", placeholder: "game.yourproject.org" },
       {
         key: "hosting", label: "Hosting", kind: "select", required: true,
+        // The stored values stay as they are (shared/customGameBlueprint.ts
+        // hostingEnum), so saved applications still parse. Only the words
+        // changed: hosting by our team goes through Village OS now (ADR-69).
         options: [
           { value: "self-hosted", label: "Self hosted: our accounts, our servers, we own the ops" },
-          { value: "regen-full-service", label: "Full service: ReGen Civics runs it, one fixed monthly price" },
+          { value: "regen-full-service", label: "Hosted by ReGen Civics through Village OS (for accepted Season 2 projects)" },
         ],
-        hint: "Either way you own the game completely: code, data, keys.",
+        hint: "Either way you own the game completely: code, data, keys. Accepted Season 2 projects can ask us to host their village through Village OS.",
+        hintLink: { href: VILLAGE_OS_PATH, text: VILLAGE_OS_OFFER.board.link },
       },
       { key: "timelineHopes", label: "When are you hoping to be live?", kind: "text" },
       { key: "budgetConfirmed", label: "I understand a custom game is a $20,000 build, paid in milestones: half at kickoff, a quarter at first playable draft, a quarter at handoff.", kind: "checkbox", required: true },
@@ -349,7 +356,7 @@ const SYLVA_FIELD_KEYS = SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
 const SYLVA_CONTEXT = [
   "This is the Custom Games application on regencivics.earth. A land project gets its own coordination game: a web app on their domain, in their brand, holding their data, guiding their personas through journeys.",
   "Facts you can share if asked: the build costs $20,000, paid in milestones (50% kickoff, 25% first playable draft, 25% handoff). They own the finished game completely: code, data, keys, no subscription required.",
-  "Delivery takes 3 to 6 months depending on their team's availability; a firm estimate comes at contract. Optional full service: ReGen Civics runs hosting and AI credits for one fixed monthly price scoped at contract.",
+  "Delivery takes 3 to 6 months depending on their team's availability; a firm estimate comes at contract. Hosting by our team goes through Village OS at regencivics.earth/village-os, free for accepted Season 2 projects; there is no monthly hosting price, so never quote one.",
   "After they submit: we review, then an intro call, then they receive their Blueprint doc, the rendered design of their game, and from there contract and kickoff.",
   "Amora (amora.regencivics.earth) is the first custom game and the living example.",
   "Never ask for or record API keys, passwords, or credentials. Provider names only; keys are set up inside their own game later and never touch our systems.",
@@ -935,7 +942,19 @@ export default function CustomGamesApply() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                              {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
+                              {(field.hint || field.hintLink) && (
+                                <p className="text-xs text-[#1a472a]/75 mt-1">
+                                  {field.hint}
+                                  {field.hintLink && (
+                                    <>
+                                      {" "}
+                                      <Link href={field.hintLink.href} className="font-semibold text-[#1a472a] underline underline-offset-2">
+                                        {field.hintLink.text}
+                                      </Link>
+                                    </>
+                                  )}
+                                </p>
+                              )}
                             </div>
                           );
                         }

@@ -316,6 +316,19 @@ select.sb-field { width: auto; min-height: 36px; padding: 4px 10px; font-size: 1
 .sb-top-opps li::before { content: counter(sbtop); font-family: var(--sb-display); font-weight: 700; color: var(--sb-spring-ink); }
 .sb-tv { font-size: 14px; color: var(--sb-muted); font-weight: 700; white-space: nowrap; }
 
+/* ---------- get your village os ---------- */
+.sb-vos-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(14px, 2vw, 24px); }
+.sb-vos-card { display: grid; gap: 10px; align-content: start; border-top-width: 4px; }
+.sb-vos-card p:last-child { font-size: clamp(17px, 0.6vw + 11px, 21px); color: var(--sb-ink-2); }
+.sb-vos-self { border-top-color: var(--sb-spring); }
+.sb-vos-hosted { border-top-color: var(--sb-lantern); }
+.sb-vos-hosted .sb-kicker { color: var(--sb-lantern); }
+.sb-vos-go { display: flex; align-items: center; gap: 12px 18px; flex-wrap: wrap; border-color: var(--sb-spring); background: var(--sb-panel-2); }
+.sb-vos-go .sb-label { flex-basis: 100%; }
+.sb-vos-link { font-family: var(--sb-display); font-weight: 700; font-size: clamp(24px, 2.4vw + 6px, 44px); color: var(--sb-spring-ink); text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; overflow-wrap: anywhere; min-width: 0; }
+.sb-vos-link:hover { color: var(--sb-spring-hover); }
+.sb-vos-link:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 4px; border-radius: 4px; }
+
 /* ---------- foot ---------- */
 .sb-foot { display: flex; align-items: center; gap: 12px; padding-block: 10px; padding-inline: clamp(16px, 3vw, 40px); background: var(--sb-ground-2); border-top: 1px solid var(--sb-line); }
 .sb-foot-mid { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 12px; min-width: 0; flex-wrap: wrap; text-align: center; }
@@ -344,7 +357,7 @@ select.sb-field { width: auto; min-height: 36px; padding: 4px 10px; font-size: 1
   .sb-top { flex-wrap: wrap; }
   .sb-rail { order: 3; flex-basis: 100%; }
   .sb-status { margin-left: auto; }
-  .sb-sp-two, .sb-canvas, .sb-modules { grid-template-columns: minmax(0, 1fr); }
+  .sb-sp-two, .sb-canvas, .sb-modules, .sb-vos-cards { grid-template-columns: minmax(0, 1fr); }
   .sb-ready-grid { grid-template-columns: minmax(0, 1fr); }
   .sb-foot { flex-wrap: wrap; }
   .sb-foot-mid { order: -1; flex-basis: 100%; }

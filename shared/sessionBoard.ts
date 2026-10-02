@@ -17,6 +17,7 @@
  * both read it. ADR-68.
  */
 import { episodeByWeek } from "./season2Curriculum";
+import { VILLAGE_OS_OFFER } from "./villageOsOffer";
 
 export const SESSION_BOARD_SEASON = "Season 2";
 export const FIRST_BOARD_WEEK = 2;
@@ -55,7 +56,8 @@ export type StageKind =
   | "harvest"
   | "game"
   | "ahead"
-  | "close";
+  | "close"
+  | "getvillageos";
 
 export type BoardStage = {
   kind: StageKind;
@@ -69,6 +71,23 @@ export type BoardStage = {
   line: string;
   /** Private-ish prompts for whoever is facilitating. */
   cues: string[];
+};
+
+/**
+ * The last page of every board (ADR-69): the two ways to start a village on
+ * Village OS, left up as people leave. One planned minute, outside the two
+ * hours. Always appended after the close, never inserted earlier: a saved
+ * board's planned minutes are kept by position. Its words come from
+ * shared/villageOsOffer.ts and say nothing about money, since the board is
+ * public and kept as the week's record.
+ */
+const GET_VILLAGE_OS: BoardStage = {
+  kind: "getvillageos", name: VILLAGE_OS_OFFER.board.title, short: "Your village", min: 1,
+  line: "Two ways to start your village",
+  cues: [
+    "Close first. Then flip here and leave it up as people leave.",
+    "Put regencivics.earth/village-os in the chat. No ask beyond that.",
+  ],
 };
 
 /**
@@ -151,6 +170,7 @@ const WEEK_2: BoardStage[] = [
     kind: "close", name: "Close", short: "Close", min: 3, line: "One word, and thanks",
     cues: ["One word each to close.", "Thank people, and say the board stays up as this week's record."],
   },
+  { ...GET_VILLAGE_OS },
 ];
 
 /** Every other week, until it gets its own design. Two hours. */
@@ -184,12 +204,22 @@ function defaultStages(week: number): BoardStage[] {
       kind: "close", name: "Close", short: "Close", min: 7, line: "One word, and thanks",
       cues: ["One word each to close."],
     },
+    { ...GET_VILLAGE_OS },
   ];
 }
 
 /** The stages a week's board walks through, in order. */
 export function boardStages(week: number): BoardStage[] {
   return week === 2 ? WEEK_2 : defaultStages(week);
+}
+
+/**
+ * The session's planned minutes: every stage's plan summed, except Get your
+ * Village OS, which sits outside the two hours (ADR-69). `plan` is read by
+ * position against `stages`, the same way a saved board keeps it.
+ */
+export function sessionMinutes(plan: number[], stages: BoardStage[]): number {
+  return plan.reduce((a, m, i) => (stages[i]?.kind === "getvillageos" ? a : a + m), 0);
 }
 
 /** What a week's welcome says. Week 2 has its own words; the rest read the curriculum. */

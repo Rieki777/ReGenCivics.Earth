@@ -46,6 +46,7 @@ import { JsonLD, schemas } from "@/components/JsonLD";
 import { CustomGameWaitlistForm } from "@/components/CustomGameWaitlistForm";
 import { PageWrapper } from "@/components/PageWrapper";
 import { analytics } from "@/lib/analytics";
+import { VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -223,6 +224,11 @@ const LATEST_SHIPS: { title: string; body: string }[] = [
 /**
  * Retainers, offered after handoff and never required: the game is self-hosted
  * and fully theirs whether or not they take one.
+ *
+ * Hosting is no longer a retainer (ADR-69, 2026-10-02): the $20 a month
+ * hosting tier and the fixed monthly full-service price are retired. Hosting by
+ * our team goes through Village OS at /village-os, free for accepted Season 2
+ * projects (shared/villageOsOffer.ts).
  */
 const RETAINERS: {
   name: string;
@@ -233,17 +239,10 @@ const RETAINERS: {
   featured?: boolean;
 }[] = [
   {
-    name: "Hosting and upkeep",
-    price: "$20",
-    per: "per month",
-    body: "We host your site and keep it updated. You stop thinking about servers.",
-    includes: [],
-  },
-  {
     name: "Fractional COO",
     price: "$2,000",
     per: "per month",
-    body: "Everything in the first tier, and we join your board and help you run the thing.",
+    body: "We join your board and help you run the thing.",
     includes: [
       "A seat on your board",
       "Coordination, role design, and governance implemented with you, not handed over as a document",
@@ -387,7 +386,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What do AI features cost?",
-    a: "Nothing until you add your own API key. AI features sleep until a key exists, so a game without one costs $0 in AI. On full service, AI credits are included in your fixed monthly price.",
+    a: "Nothing until you add your own API key. AI features sleep until a key exists, so a game without one costs $0 in AI.",
   },
   {
     q: "How long does it take?",
@@ -403,7 +402,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "What do we host it on?",
-    a: "Your own accounts: your domain, your hosting, your database. We hand you the checklist and walk your admin through it. On full service, we carry the hosting for you.",
+    a: "Your own accounts: your domain, your hosting, your database. We hand you the checklist and walk your admin through it. Accepted Season 2 projects can also ask us to host their village through Village OS, at regencivics.earth/village-os.",
   },
 ];
 
@@ -427,7 +426,7 @@ const serviceSchema = {
     price: "20000",
     priceCurrency: "USD",
     description:
-      "Fully owned, self-hosted coordination game. Milestone payments: 50% at kickoff, 25% at first draft, 25% at handoff. Optional full-service plan from $20 to $2,000 per month, fixed at contract.",
+      "Fully owned, self-hosted coordination game. Milestone payments: 50% at kickoff, 25% at first draft, 25% at handoff. Optional retainers after handoff, from $2,000 per month.",
   },
 };
 
@@ -844,14 +843,17 @@ export default function CustomGames() {
                   <div className="flex items-center gap-2 mb-2">
                     <Handshake className="w-5 h-5 text-[#7dd87d]" />
                     <span className="text-white font-semibold" style={display}>
-                      Or hand us the ops
+                      {VILLAGE_OS_OFFER.hosted.title}
                     </span>
                   </div>
                   <p className="text-white/70 leading-relaxed">
-                    Full service: ReGen Civics carries hosting, AI credits,
-                    updates, and stewardship for you. No servers, no code, no
-                    ops on your side. One fixed monthly price, scoped at
-                    contract.
+                    Hosting: accepted Season 2 projects can ask us to host their
+                    village through{" "}
+                    <Link href={VILLAGE_OS_PATH} className="text-[#7dd87d] underline underline-offset-4 hover:text-[#a8e6a8]">
+                      Village OS
+                    </Link>
+                    . {VILLAGE_OS_OFFER.hosted.lines[0]}{" "}
+                    {VILLAGE_OS_OFFER.hosted.lines[2]}
                   </p>
                 </div>
               </div>
@@ -931,8 +933,8 @@ export default function CustomGames() {
                 Then, if you want us to stay
               </h3>
               <p className="text-white/70 leading-relaxed mb-6">
-                Three retainers. Every one of them is optional: your game runs on
-                your own hosting whether or not you take one.
+                Two retainers, both optional: your game runs on your own
+                hosting whether or not you take one.
               </p>
 
               <div className="space-y-4">
@@ -970,6 +972,15 @@ export default function CustomGames() {
                   </div>
                 ))}
               </div>
+
+              <p className="mt-6 text-white/75 leading-relaxed">
+                Hosting: accepted Season 2 projects can ask us to host their
+                village through Village OS.{" "}
+                <Link href={VILLAGE_OS_PATH} className="inline-flex items-center gap-1 font-semibold text-[#7dd87d] underline underline-offset-4 hover:text-[#a8e6a8]">
+                  {VILLAGE_OS_OFFER.board.link}
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </Link>
+              </p>
             </div>
 
             <p className="mt-8 text-center text-white/60 text-sm leading-relaxed">

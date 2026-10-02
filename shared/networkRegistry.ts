@@ -7,9 +7,11 @@
  * /network. Two-way, so the credit is a real network rather than a one-way
  * footer line, and each launch gives answer engines something new to crawl.
  *
- * Deterministic on purpose (STEERING section 11). One game ships per $20k
- * engagement, so a reviewed edit to this file per launch is cheaper and safer
- * than a table plus an admin screen, and it keeps the outbound links auditable
+ * Deterministic on purpose (STEERING section 11). Games join a few at a time,
+ * each one a $20k custom build or a village we host on Village OS for an
+ * accepted Season 2 project (ADR-69), so a reviewed edit to this file per
+ * launch is cheaper and safer than a table plus an admin screen, and it keeps
+ * the outbound links auditable
  * in git history. `server/lib/network-feed.ts` enriches these entries at request
  * time from each game's own /api/federation/projects.json (ADR-41) and degrades
  * to exactly what is written here when a game has no feed yet.

@@ -17,9 +17,11 @@ import {
   boardWelcome,
   breathAt,
   sessionBoardHref,
+  sessionMinutes,
   shareTime,
   type BoardStage,
 } from "@shared/sessionBoard";
+import { VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
 
 export type StageProps = {
@@ -179,7 +181,7 @@ function YearWheel({ week }: { week: number }) {
 export function Welcome({ board, week, stages, facilitator, actions, go }: StageProps) {
   const w = boardWelcome(week);
   const plan = board.state.plan;
-  const total = plan.reduce((a, b) => a + b, 0);
+  const total = sessionMinutes(plan, stages);
   const link = `regencivics.earth${sessionBoardHref(week)}`;
   return (
     <div className="sb-welcome">
@@ -415,9 +417,9 @@ export function VillageOS({ stages, index }: StageProps) {
             <p className="sb-hint">Twenty more modules switch on as a village is ready for them: the Village Map, crowdpooling, governance and more.</p>
             <p>
               See it live at{" "}
-              <a className="sb-link" href="https://amora.regencivics.earth" target="_blank" rel="noopener noreferrer">amora.regencivics.earth</a>
+              <a className="sb-link" href="https://amora.regencivics.earth" target="_blank" rel="noopener noreferrer">amora.regencivics.earth<span className="sr-only"> (opens in a new tab)</span></a>
               , and{" "}
-              <a className="sb-link" href="https://amora.regencivics.earth/org/index.md" target="_blank" rel="noopener noreferrer">Amora's roster</a>
+              <a className="sb-link" href="https://amora.regencivics.earth/org/index.md" target="_blank" rel="noopener noreferrer">Amora's roster<span className="sr-only"> (opens in a new tab)</span></a>
               {" "}with its open seats.
             </p>
           </div>
@@ -573,7 +575,7 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
                 <div className="sb-sp-id">
                   <LiveField className="sb-sp-name" value={sel.name} readOnly={!editable} label="Project name" max={BOARD_LIMITS.projectName} onSave={(v) => { if (v.trim()) void actions.updateProject({ projectId: sel.id, name: v }); }} />
                   <LiveField className="sb-sp-place" value={sel.place ?? ""} readOnly={!editable} placeholder={editable ? "Where on Earth" : ""} label="Where on Earth" max={BOARD_LIMITS.place} onSave={(v) => void actions.updateProject({ projectId: sel.id, place: v })} />
-                  {sel.url ? <a className="sb-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.url.replace(/^https?:\/\//, "")}</a> : null}
+                  {sel.url ? <a className="sb-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.url.replace(/^https?:\/\//, "")}<span className="sr-only"> (opens in a new tab)</span></a> : null}
                 </div>
                 {sp.projectId === sel.id ? (
                   <div className="sb-timer">
@@ -937,6 +939,42 @@ export function Close({ board, week, stages, index, facilitator, canWrite, mine,
           ) : <button type="button" className="sb-btn sb-ghost" onClick={() => actions.setStatus("open")}>Open the board again</button>}
         </div>
       ) : null}
+    </>
+  );
+}
+
+/* ========================================================= get village os */
+
+/**
+ * The last page of every board (ADR-69), left up as people leave: the two
+ * ways to start a village on Village OS, and where to find them. The board is
+ * public and kept as the week's record, so this page names no money and no
+ * gifts. Every word comes from shared/villageOsOffer.ts.
+ */
+export function GetVillageOS({ stages, index }: StageProps) {
+  const b = VILLAGE_OS_OFFER.board;
+  const url = `https://regencivics.earth${VILLAGE_OS_PATH}`;
+  const cards = [
+    { key: "self", kicker: VILLAGE_OS_OFFER.self.kicker, title: VILLAGE_OS_OFFER.self.title, line: b.selfLine },
+    { key: "hosted", kicker: VILLAGE_OS_OFFER.hosted.kicker, title: VILLAGE_OS_OFFER.hosted.title, line: b.hostedLine },
+  ];
+  return (
+    <>
+      <StageHead stages={stages} index={index} title={b.title} lede={b.lede} />
+      <div className="sb-vos-cards">
+        {cards.map((c) => (
+          <article key={c.key} className={`sb-panel sb-vos-card sb-vos-${c.key}`}>
+            <p className="sb-kicker">{c.kicker}</p>
+            <h3 className="sb-h3">{c.title}</h3>
+            <p>{c.line}</p>
+          </article>
+        ))}
+      </div>
+      <div className="sb-panel sb-vos-go">
+        <p className="sb-label">Open it on your own screen</p>
+        <a className="sb-vos-link" href={VILLAGE_OS_PATH} target="_blank" rel="noopener noreferrer">{b.link}<span className="sr-only"> (opens in a new tab)</span></a>
+        <CopyButton text={url} />
+      </div>
     </>
   );
 }

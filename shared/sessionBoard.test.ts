@@ -17,9 +17,11 @@ import {
   normalizeBoardState,
   parseReadyList,
   sessionBoardHref,
+  sessionMinutes,
   shareTime,
   voteTarget,
 } from "./sessionBoard";
+import { OFFER_FORBIDDEN_WORDS, VILLAGE_OS_OFFER } from "./villageOsOffer";
 
 describe("which weeks have a board", () => {
   it("weeks 2 to 13 do, Selection Day and anything else does not", () => {
@@ -36,12 +38,37 @@ describe("which weeks have a board", () => {
 describe("the stages", () => {
   it("week 2 puts Village OS between the open season and the circle (Rye, 2026-10-01)", () => {
     const kinds = boardStages(2).map((s) => s.kind);
-    expect(kinds).toEqual(["welcome", "breath", "open", "villageos", "circle", "harvest", "game", "ahead", "close"]);
+    expect(kinds).toEqual(["welcome", "breath", "open", "villageos", "circle", "harvest", "game", "ahead", "close", "getvillageos"]);
   });
 
-  it("every week's plan fills the two-hour session exactly", () => {
+  it("every week's plan fills the two-hour session exactly, with Get your Village OS after it", () => {
     for (let w = 2; w <= 13; w++) {
-      expect(boardStages(w).reduce((a, s) => a + s.min, 0), `week ${w}`).toBe(120);
+      const stages = boardStages(w);
+      expect(sessionMinutes(stages.map((s) => s.min), stages), `week ${w}`).toBe(120);
+      expect(sessionMinutes(defaultBoardState(w).plan, stages), `week ${w} board`).toBe(120);
+      expect(stages.filter((s) => s.kind === "getvillageos"), `week ${w}`).toHaveLength(1);
+    }
+  });
+
+  it("the last stage of every week is Get your Village OS, one minute, after the close (ADR-69)", () => {
+    for (let w = 2; w <= 13; w++) {
+      const stages = boardStages(w);
+      const last = stages[stages.length - 1];
+      expect(last.kind, `week ${w}`).toBe("getvillageos");
+      expect(last.min, `week ${w}`).toBe(1);
+      expect(last.name).toBe(VILLAGE_OS_OFFER.board.title);
+      expect(stages[stages.length - 2].kind, `week ${w}`).toBe("close");
+    }
+  });
+
+  it("the Village OS page says nothing about money, since the board is public and recorded", () => {
+    const words = [
+      ...boardStages(2).filter((s) => s.kind === "getvillageos").flatMap((s) => [s.name, s.short, s.line, ...s.cues]),
+      ...Object.values(VILLAGE_OS_OFFER.board),
+    ];
+    for (const line of words) {
+      expect(line).not.toMatch(/\$|\bgift|\bdonat|\bpay|\bmoney|\bmember/i);
+      for (const re of OFFER_FORBIDDEN_WORDS) expect(line).not.toMatch(re);
     }
   });
 
@@ -132,7 +159,7 @@ describe("reading a stored state back", () => {
 
   it("keeps good values and clamps bad ones", () => {
     const s = normalizeBoardState(JSON.stringify({ stage: 50, plan: [7, -3], breath: { pattern: "nope", rounds: 6 }, speaker: { projectId: 4, secs: 9999 } }), 2);
-    expect(s.stage).toBe(8);
+    expect(s.stage).toBe(boardStages(2).length - 1);
     expect(s.plan[0]).toBe(7);
     expect(s.plan[1]).toBe(1);
     expect(s.breath.pattern).toBe("settle");

@@ -91,6 +91,7 @@ import {
 import { SEASON_ONE as SEASON_ONE_FACTS } from "@shared/regenYear";
 import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 import { COOP } from "@shared/fund";
+import { VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -1871,6 +1872,17 @@ export default function Season2() {
                     Build your custom game with us
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
+                </Link>
+                {/* The other ways in: run Village OS yourself, or hosted for accepted projects (ADR-69). */}
+                <p className="mt-5 text-white/65 text-sm max-w-xs md:ml-auto">
+                  {VILLAGE_OS_OFFER.board.selfLine}
+                </p>
+                <Link
+                  href={VILLAGE_OS_PATH}
+                  className="inline-flex items-center gap-1.5 min-h-11 text-[#d4a574] hover:text-[#e3bd93] text-sm font-semibold underline underline-offset-4"
+                >
+                  {VILLAGE_OS_OFFER.title}
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </Link>
               </div>
             </div>

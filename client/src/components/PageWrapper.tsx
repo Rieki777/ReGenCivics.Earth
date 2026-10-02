@@ -54,9 +54,12 @@ interface PageWrapperProps {
 
 // Segments whose URL outlived the page's name. /fund kept its address when the
 // fund became the cooperative in design (ADR-62), so its crumb reads the page
-// name, matching the SEO breadcrumbs in Fund.tsx.
+// name, matching the SEO breadcrumbs in Fund.tsx. Village OS keeps its
+// capitals (ADR-69), and /village-os/host reads as what it is.
 const SEGMENT_LABELS: Record<string, string> = {
   fund: "The Cooperative",
+  "village-os": "Village OS",
+  host: "Ask to host",
 };
 
 export function PageWrapper({ children, className }: PageWrapperProps) {

@@ -466,11 +466,11 @@ export const COMPANION_FORMS: Record<CompanionFormId, CompanionFormConfig> = {
       { key: "domain", label: "Do you have a domain the game should live on?", type: "text" },
       {
         key: "hosting",
-        label: "Do you want to host the game yourselves and own the ops, or have ReGen Civics run it for you full service?",
+        label: "Do you want to host the game yourselves and own the ops, or ask ReGen Civics to host it through Village OS?",
         type: "enum",
         required: true,
         enumValues: ["self-hosted", "regen-full-service"],
-        guidance: "Either way they own the game completely. Self hosting means their accounts and their servers. Full service means ReGen Civics carries hosting and AI credits for one fixed monthly price scoped at contract.",
+        guidance: "Either way they own the game completely. Self hosting means their accounts and their servers. Full service means asking ReGen Civics to host it through Village OS at regencivics.earth/village-os, which is free for accepted Season 2 projects. There is no monthly hosting price, so never quote one.",
       },
       { key: "timelineHopes", label: "When are you hoping to have your game live?", type: "text" },
       {
