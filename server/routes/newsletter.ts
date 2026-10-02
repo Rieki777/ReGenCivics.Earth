@@ -9,7 +9,7 @@ import { newsletterSubscribers } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { ENV } from "../_core/env";
-import { SignJWT, jwtVerify } from "jose";
+import { signEmailLink, verifyEmailLink } from "../lib/emailLinkSecret";
 import { applyRecipientMergeFields } from "../lib/applicationEmailRecipients";
 import { textForEmail, textForSubject } from "../../shared/htmlText";
 import { emailDocumentFromBody } from "../lib/emailHtml";
@@ -56,11 +56,7 @@ export const newsletterRouter = router({
 
       // Sign a 24h confirmation JWT and send email (best-effort)
       try {
-        const secret = new TextEncoder().encode(ENV.cookieSecret);
-        const token = await new SignJWT({ email: input.email, purpose: 'newsletter-confirm' })
-          .setProtectedHeader({ alg: 'HS256' })
-          .setExpirationTime('24h')
-          .sign(secret);
+        const token = await signEmailLink({ email: input.email, purpose: "newsletter-confirm" }, "24h");
         const confirmUrl = `${ENV.appUrl}/newsletter/confirm?token=${encodeURIComponent(token)}`;
         const { sendEmail } = await import("../_core/email");
         await sendEmail({
@@ -89,10 +85,9 @@ export const newsletterRouter = router({
     .input(z.object({ token: z.string() }))
     .mutation(async ({ input }) => {
       try {
-        const secret = new TextEncoder().encode(ENV.cookieSecret);
-        const { payload } = await jwtVerify(input.token, secret);
-        if (payload.purpose !== 'newsletter-confirm' || typeof payload.email !== 'string') {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid confirmation token' });
+        const payload = await verifyEmailLink(input.token);
+        if (!payload || payload.purpose !== "newsletter-confirm" || typeof payload.email !== "string") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid confirmation token" });
         }
         await db.activateNewsletterSubscriber(payload.email);
         return { success: true };
