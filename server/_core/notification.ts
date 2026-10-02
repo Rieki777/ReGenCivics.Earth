@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
-import { ENV } from "./env";
 import { textForEmail } from "../../shared/htmlText";
+import { providerAccepted } from "../lib/emailAttempt";
+import { sendEmail } from "./email";
 
 export type NotificationPayload = {
   title: string;
@@ -35,53 +36,44 @@ const validatePayload = (input: NotificationPayload): NotificationPayload => {
   return { title, content };
 };
 
+export function ownerAlertHtml(title: string, content: string): string {
+  return `<div style="font-family:sans-serif;max-width:600px"><h2>${textForEmail(title)}</h2><p style="white-space:pre-wrap">${textForEmail(content)}</p></div>`;
+}
+
 /**
- * Notifies the site owner via Resend email.
- * Returns true if sent, false if email not configured (non-fatal).
+ * Owner alerts go through sendEmail so EMAIL_HOLD, the hourly cap, and the
+ * attempt log apply. Returns true only when Resend accepts the letter.
  */
-export async function notifyOwner(payload: NotificationPayload): Promise<boolean> {
-  // Skip during tests
-  if (process.env.NODE_ENV === "test" || process.env.VITEST === "true") {
-    console.log("[Notification] Skipped (test environment):", payload.title);
-    return true;
-  }
-
+export async function deliverOwnerAlert(payload: NotificationPayload): Promise<boolean> {
   const { title, content } = validatePayload(payload);
-
-  const resendApiKey = process.env.RESEND_API_KEY;
-  const ownerEmail = process.env.OWNER_EMAIL;
-
-  if (!resendApiKey || !ownerEmail) {
-    console.warn("[Notification] RESEND_API_KEY or OWNER_EMAIL not configured  -  skipping owner notification");
+  const ownerEmail = process.env.OWNER_EMAIL?.trim();
+  if (!ownerEmail) {
+    console.warn("[Notification] OWNER_EMAIL not configured, skipping owner notification");
     return false;
   }
-
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `ReGen Civics <notifications@${process.env.EMAIL_DOMAIN || "regencivics.earth"}>`,
-        to: [ownerEmail],
-        subject: title,
-        text: content,
-        // Title and content carry user text (campaign titles, contributor names).
-        // Escaped so a crafted title cannot inject markup into the owner email.
-        html: `<div style="font-family:sans-serif;max-width:600px"><h2>${textForEmail(title)}</h2><p style="white-space:pre-wrap">${textForEmail(content)}</p></div>`,
-      }),
+    const result = await sendEmail({
+      to: [ownerEmail],
+      subject: title,
+      html: ownerAlertHtml(title, content),
+      template: "owner_notification",
+      skipBrandedWrap: true,
     });
-
-    if (!res.ok) {
-      console.warn(`[Notification] Resend failed: ${res.status}`);
-      return false;
-    }
-
-    return true;
+    return providerAccepted(result);
   } catch (error) {
     console.warn("[Notification] Error sending notification email:", error);
     return false;
   }
+}
+
+/**
+ * Notifies the site owner. Tests skip the send and report success so suites
+ * do not write email_logs. Production uses deliverOwnerAlert.
+ */
+export async function notifyOwner(payload: NotificationPayload): Promise<boolean> {
+  if (process.env.NODE_ENV === "test" || process.env.VITEST === "true") {
+    console.log("[Notification] Skipped (test environment):", payload.title);
+    return true;
+  }
+  return deliverOwnerAlert(payload);
 }

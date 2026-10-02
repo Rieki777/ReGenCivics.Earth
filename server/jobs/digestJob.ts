@@ -381,6 +381,7 @@ async function sendDigestEmails(
           subject: `This week in the community: ${weekLabel}`,
           html,
           template: WEEKLY_DIGEST_TEMPLATE,
+          skipBrandedWrap: true,
         });
         if (providerAccepted(result)) {
           accepted += 1;

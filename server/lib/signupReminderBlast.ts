@@ -85,6 +85,7 @@ export async function sendSignupReminderBlast(
         subject: opts.subject,
         html,
         template: "event_reminder",
+        skipBrandedWrap: true,
         inquiryType: "event_fanout",
         inquiryId: event.id,
         recipientName: signup.name?.trim() || undefined,

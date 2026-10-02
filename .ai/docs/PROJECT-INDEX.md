@@ -76,6 +76,7 @@ Everything else in `docs/planning/` is a dated audit, research note, brief, outr
 - `docs/SHIP_VARIABLES.md`: every ReGen Ship price, policy and setting, and where to change it.
 - `docs/GAME_GENERATION.md`: the standing prompt that turns a custom game blueprint into content.
 - `docs/CO_CREATORS_GUIDE.md`: draft guide for co-creators.
+- `docs/planning/EMAIL_RYE_HANDOFF_2026-10-02.md`: R-1 through R-7, the email items that still need Rye.
 - `docs/BLOCKCHAIN_INTEGRATIONS.md`: blockchain data connections tracker.
 - `docs/GOLDEN_RULE.md`: the five steps before any feature work, and the worktree workflow.
 

@@ -215,7 +215,7 @@ export async function confirmAndSend(params: {
   try {
     for (const recipient of recipients) {
       const html = renderHtml(text, await managePreferencesUrl(recipient.email, { mute: "seasonal" }));
-      const result = await sendEmail({ to: recipient.email, subject, html, template: "harvest_announcement" });
+      const result = await sendEmail({ to: recipient.email, subject, html, template: "harvest_announcement", skipBrandedWrap: true });
       if (providerAccepted(result)) {
         sent += 1;
       } else {
