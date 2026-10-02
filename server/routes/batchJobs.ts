@@ -429,6 +429,9 @@ async function cancelStaleClaimBridges(
 //
 // No token credits anywhere in this job: crowdpooling never mints platform
 // tokens (locked decision).
+//
+// Example campaigns (isDemo = 1) are left out of all three passes: nobody is
+// behind an example offer to deliver it or to hear a reminder (bundle 1).
 
 /** Game variable with a fallback: crowdpool config may not be seeded yet. */
 async function getGameVariableOr(key: string, fallback: number): Promise<number> {
@@ -468,6 +471,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     JOIN campaigns c ON c.id = cc.campaignId
     LEFT JOIN campaign_items ci ON ci.id = cc.campaignItemId
     WHERE cc.status = 'accepted'
+      AND c.isDemo = 0
       AND cc.returnedAt IS NULL
       AND cc.claimExpiresAt IS NOT NULL
       AND cc.claimExpiresAt < NOW()
@@ -548,6 +552,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     FROM campaign_contributions cc
     JOIN campaigns c ON c.id = cc.campaignId
     WHERE cc.status = 'accepted'
+      AND c.isDemo = 0
       AND cc.userId IS NOT NULL
       AND cc.returnedAt IS NULL
       AND cc.claimExpiresAt IS NOT NULL
@@ -574,6 +579,7 @@ export async function expireCrowdpoolClaims(db: any): Promise<{ expired: number;
     JOIN campaign_items ci ON ci.id = cc.campaignItemId
     JOIN campaigns c ON c.id = cc.campaignId
     WHERE cc.status = 'accepted'
+      AND c.isDemo = 0
       AND cc.userId IS NOT NULL
       AND ci.kind = 'shift'
       AND ci.shiftStartsAt IS NOT NULL

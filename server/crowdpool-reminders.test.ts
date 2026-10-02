@@ -186,3 +186,75 @@ describe("a loan marked Returned", () => {
     expect(inserted.some((n) => n.dedupeKey === `claimrem:${returnedOverdue}:expiry`)).toBe(false);
   }, 60_000);
 });
+
+describe("example campaigns (bundle 1)", () => {
+  it.skipIf(skipIfNoDb)("are left out of the sweep: an overdue place stays, and no reminder goes out; a real campaign's expires", async () => {
+    const database = (await dbHelpers.getDb())!;
+    const day = 24 * 60 * 60 * 1000;
+    // Neutral fixture words, so another run's teardown on the shared scratch database leaves them alone.
+    const make = async (label: string, isDemo: boolean) => {
+      const applicationId = await createApprovedApplication(STEWARD, { name: `Fixture Sweep ${label} ${Date.now()}` });
+      const created = await stewardCaller(STEWARD).campaigns.create({
+        applicationId,
+        title: `Sweep ${label} b1`,
+        description: "The nightly sweep and example campaigns",
+        projectName: `Sweep ${label} b1`,
+        currency: "USD",
+        financialTarget: 0,
+        items: [{ category: "equipment", equipmentName: "Chipper", equipmentQuantity: 3, estimatedValue: 600 }],
+      });
+      createdCampaignIds.push(created.id);
+      await adminCaller().campaigns.updateStatus({ id: created.id, status: "active" });
+      if (isDemo) await database.update(campaigns).set({ isDemo: 1 }).where(eq(campaigns.id, created.id));
+      const [need] = await database.select().from(campaignItems).where(eq(campaignItems.campaignId, created.id));
+      const shiftInsert: any = await database.insert(campaignItems).values({
+        campaignId: created.id,
+        category: "role",
+        kind: "shift",
+        roleTitle: "Hedge laying day",
+        quantityWanted: 5,
+        estimatedValue: 0,
+        shiftStartsAt: new Date(Date.now() + 3 * day),
+      });
+      const shiftItemId = Number(shiftInsert?.[0]?.insertId ?? shiftInsert?.insertId);
+      const row = (over: Record<string, unknown>) => dbHelpers.createContribution({
+        campaignId: created.id,
+        campaignItemId: need.id,
+        userId: CONTRIBUTOR,
+        contributorName: "Sweep Person",
+        contributorEmail: "sweep.person@b1-lane.invalid",
+        contributionType: "equipment",
+        title: "Chipper",
+        status: "accepted",
+        quantityPledged: 1,
+        ...over,
+      } as any);
+      const overdue = await row({ claimExpiresAt: new Date(Date.now() - 5 * day) });
+      const soon = await row({ claimExpiresAt: new Date(Date.now() + day) });
+      const shift = await row({ campaignItemId: shiftItemId, contributionType: "role", title: "Hedge laying day" });
+      await database.update(campaignItems).set({ quantityClaimed: 2 }).where(eq(campaignItems.id, need.id));
+      return { needId: need.id, overdue, soon, shift };
+    };
+    const example = await make("Demo", true);
+    const real = await make("Live", false);
+
+    await expireCrowdpoolClaims(database);
+
+    const status = async (id: number) =>
+      (await database.select({ s: campaignContributions.status }).from(campaignContributions).where(eq(campaignContributions.id, id)))[0]?.s;
+    const claimed = async (id: number) =>
+      (await database.select({ q: campaignItems.quantityClaimed }).from(campaignItems).where(eq(campaignItems.id, id)))[0]?.q;
+    const reminded = (id: number) => inserted.some((n) => (n.dedupeKey ?? "").startsWith(`claimrem:${id}:`));
+
+    // The example: nothing expires, no place is released, nobody is reminded.
+    expect(await status(example.overdue)).toBe("accepted");
+    expect(await claimed(example.needId)).toBe(2);
+    for (const id of [example.overdue, example.soon, example.shift]) expect(reminded(id), `example row ${id}`).toBe(false);
+
+    // The real campaign, same rows: the overdue place expires and the others are reminded.
+    expect(await status(real.overdue)).toBe("expired");
+    expect(await claimed(real.needId)).toBe(1);
+    expect(inserted.some((n) => n.dedupeKey === `claimrem:${real.soon}:expiry`)).toBe(true);
+    expect(inserted.some((n) => n.dedupeKey === `claimrem:${real.shift}:shift7`)).toBe(true);
+  }, 60_000);
+});
