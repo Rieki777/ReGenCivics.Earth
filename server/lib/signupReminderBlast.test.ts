@@ -19,6 +19,7 @@ const managePreferencesUrlMock = vi
   });
 vi.mock("./emailPrefs", () => ({
   managePreferencesUrl: (...args: unknown[]) => managePreferencesUrlMock(...args),
+  buildPrefsToken: async () => "signed-token",
 }));
 
 const sendToAlwaysIncludedMock = vi.fn().mockResolvedValue(1);
@@ -92,6 +93,8 @@ describe("sendSignupReminderBlast", () => {
     expect(sendToAlwaysIncludedMock).not.toHaveBeenCalled();
     const html = String(sendEmailMock.mock.calls[0]![0].html);
     expect(html).toContain("Manage email preferences");
+    expect(html).toContain("Stop reminders for this event");
+    expect(html).toContain("/schedule?unsubscribe=42&amp;token=signed-token");
     expect(html).not.toContain("You signed up for a reminder for this event.");
     expect(html).toContain("Join the call");
     expect(html).toContain("https://regencivics.earth/join?e=42");

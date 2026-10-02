@@ -33,8 +33,8 @@ import {
   settleReminderRecipients,
 } from "../lib/reminderClaim";
 import { logger } from "../_core/logger";
-import { buildAutoReminderHtml, reminderJoinUrl } from "../lib/eventReminderEmail";
-import { audienceForTopic, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
+import { buildAutoReminderHtml, reminderJoinUrl, reminderUnsubscribeUrl } from "../lib/eventReminderEmail";
+import { audienceForTopic, buildPrefsToken, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import type { EmailTopicKey } from "@shared/emailPrefs";
 import { ALWAYS_INCLUDE_REMINDER_RECIPIENTS, isAlwaysIncluded } from "../lib/reminderAlwaysInclude";
 import {
@@ -382,7 +382,16 @@ async function sendOffset(
     recipients,
     alreadyDelivered,
     send: async (recipient) => {
+      const alwaysIncluded = isAlwaysIncluded(recipient.email);
       const prefsUrl = await managePreferencesUrl(recipient.email, { mute });
+      const eventStopUrl = alwaysIncluded
+        ? undefined
+        : reminderUnsubscribeUrl(
+            recipient.email,
+            event.id,
+            "event_signup",
+            await buildPrefsToken(recipient.email),
+          );
       const html = buildAutoReminderHtml({
         title: event.title,
         startTime: event.startTime,
@@ -394,7 +403,8 @@ async function sendOffset(
         offsetMinutes,
         now,
         preferencesUrl: prefsUrl,
-        alwaysIncluded: isAlwaysIncluded(recipient.email),
+        eventStopUrl,
+        alwaysIncluded,
       });
       return sendEmail({
         to: [recipient.email],
