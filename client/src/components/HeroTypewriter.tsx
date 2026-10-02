@@ -13,6 +13,26 @@ export type HeroSegment = {
   className?: string;
 };
 
+/**
+ * Split a line into segments, giving each emphasis phrase its className.
+ * Phrases are matched in order, first occurrence after the previous one, so
+ * the joined text is always the line itself: a hero kept in shared copy
+ * cannot drift from what types out. A phrase that isn't found is skipped.
+ */
+export function segmentsFromLine(line: string, emphasis: ReadonlyArray<readonly [string, string]>): HeroSegment[] {
+  const segments: HeroSegment[] = [];
+  let rest = line;
+  for (const [phrase, className] of emphasis) {
+    const at = phrase ? rest.indexOf(phrase) : -1;
+    if (at < 0) continue;
+    if (at > 0) segments.push({ text: rest.slice(0, at) });
+    segments.push({ text: phrase, className });
+    rest = rest.slice(at + phrase.length);
+  }
+  if (rest) segments.push({ text: rest });
+  return segments;
+}
+
 type Props = {
   segments: HeroSegment[];
   /** Total duration of the reveal in ms. Default 2800ms. */

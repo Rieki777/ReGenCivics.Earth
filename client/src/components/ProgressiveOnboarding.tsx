@@ -14,6 +14,7 @@ import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { cdnImg } from "@/lib/utils";
 import { COOP } from "@shared/fund";
+import { SITE_TAGLINE } from "@shared/siteCopy";
 
 const VISIT_KEY = 'regen_civics_visit_count';
 const ONBOARDING_DISMISSED_KEY = 'regen_civics_onboarding_dismissed';
@@ -266,7 +267,7 @@ export function ProgressiveOnboarding({ onShowFullPage }: { onShowFullPage: () =
           </h1>
           <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto text-shadow-subtle">
             {isNewcomer
-              ? "An in-real-life game and alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities. Pick a path to start."
+              ? `${SITE_TAGLINE} Pick a path to start.`
               : "Where would you like to go?"}
           </p>
         </div>

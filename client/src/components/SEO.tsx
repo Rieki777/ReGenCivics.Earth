@@ -7,6 +7,7 @@ import { useEffect, useLayoutEffect } from 'react';
 import { useLocation } from 'wouter';
 import { schemas } from "@/components/JsonLD";
 import { COOP } from "@shared/fund";
+import { SITE_DESCRIPTION } from "@shared/siteCopy";
 import { APPLICATIONS_SHORT } from "@shared/applicationWindow";
 
 // The crowdpool lane's binding wording (Phase 0 spec), verbatim wherever a
@@ -148,7 +149,7 @@ export function SEO({
 export const pageSEO = {
   home: {
     title: 'ReGen Civics: Infinite Game for the ReGenerative Renaissance',
-    description: 'An in-real-life game for regenerative land projects, and a cooperative network in design. Do quests, earn tokens, and support real-world regeneration.',
+    description: SITE_DESCRIPTION,
     keywords: 'regenerative land projects, ecovillages, regenerative economy, community development, cooperatives, crowdpooling, quests, ReGenerative Renaissance, infinite game',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/'

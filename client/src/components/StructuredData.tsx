@@ -6,6 +6,7 @@
 import { useEffect } from 'react';
 import { APPLICATIONS_SHORT } from "@shared/applicationWindow";
 import { COOP } from "@shared/fund";
+import { SITE_DESCRIPTION } from "@shared/siteCopy";
 
 const BASE_URL = 'https://regencivics.earth';
 
@@ -25,7 +26,7 @@ const organizationSchema = {
   "alternateName": "ReGen Civics",
   "url": BASE_URL,
   "logo": "https://regencivics.earth/images/logos/regencivics-logo-dark-transparent-rounded.webp",
-  "description": "An in-real-life game and alliance helping regenerative land projects pool resources, grow their economies, and co-create thriving communities.",
+  "description": SITE_DESCRIPTION,
   "foundingDate": "2023",
   "sameAs": [
     "https://www.youtube.com/@SEEDSRegenerativeEconomies",
