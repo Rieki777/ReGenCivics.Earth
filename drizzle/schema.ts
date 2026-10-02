@@ -5988,6 +5988,10 @@ export const needsOffersMatches = mysqlTable("needs_offers_matches", {
   offerId: int("offerId").notNull(),
   matchedAt: timestamp("matchedAt").defaultNow().notNull(),
   emailSentAt: timestamp("emailSentAt"),
+  /** Set when Resend accepted the need-owner's intro. Null means that side was not accepted. */
+  needResendId: varchar("needResendId", { length: 64 }),
+  /** Set when Resend accepted the offer-owner's intro. Null means that side was not accepted. */
+  offerResendId: varchar("offerResendId", { length: 64 }),
 }, (t) => ({
   pairUnique: uniqueIndex("needs_offers_matches_needId_offerId_unique").on(t.needId, t.offerId),
 }));
