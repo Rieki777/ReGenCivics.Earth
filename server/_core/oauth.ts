@@ -680,7 +680,7 @@ export function registerOAuthRoutes(app: Express) {
 
       const verifyUrl = `${ENV.appUrl}/api/auth/email/verify?token=${token}`;
 
-      await sendEmail({
+      const result = await sendEmail({
         // Its own hourly budget: campaign notices can never use up the cap
         // and stop people signing in (server/_core/email.ts).
         budget: 'auth',
@@ -695,6 +695,11 @@ export function registerOAuthRoutes(app: Express) {
           <p style="color:#888;font-size:13px;">If you didn't request this, you can safely ignore this email.</p>
         `,
       });
+
+      if (!result.id) {
+        res.status(500).json({ error: "Failed to send login email" });
+        return;
+      }
 
       res.json({ success: true });
     } catch (error) {

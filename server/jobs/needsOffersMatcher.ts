@@ -21,9 +21,19 @@ import { getDb, isUserBanned, getPlayerProfileByUserId } from "../db";
 import { bioregions, needsOffersMatches, playerOffers, projectNeeds, users } from "../../drizzle/schema";
 import { normalizeTags, planMatches, introEmail, type MatchableRow } from "../lib/needsOffers";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
+import { providerAccepted } from "../lib/emailAttempt";
 
 const MAX_INTROS_PER_RUN = 20;
 const EMAIL_SPACING_MS = 150;
+
+/** Keep the pair only when at least one side reached Resend. Both null: release it. */
+export function matchLedgerAction(
+  sentNeed: { id?: string | null } | null | undefined,
+  sentOffer: { id?: string | null } | null | undefined,
+): "release" | "keep" {
+  if (!providerAccepted(sentNeed) && !providerAccepted(sentOffer)) return "release";
+  return "keep";
+}
 
 export type NeedsOffersMatcherReport = {
   ok: boolean;
@@ -129,7 +139,14 @@ export async function runNeedsOffersMatcherJob(): Promise<NeedsOffersMatcherRepo
         const sentB = await sendEmail({ to: offer.partyEmail!, subject: toOffer.subject, html: toOffer.html });
         await new Promise((r) => setTimeout(r, EMAIL_SPACING_MS));
 
-        if (sentA.id !== null || sentB.id !== null) {
+        if (matchLedgerAction(sentA, sentB) === "release") {
+          // Both blocked. Drop the claim so the next run can try again.
+          // Leaving the row in place used to look like "unstamped" while the
+          // pair ledger still treated it as already introduced.
+          await db
+            .delete(needsOffersMatches)
+            .where(and(eq(needsOffersMatches.needId, match.needId), eq(needsOffersMatches.offerId, match.offerId)));
+        } else {
           await db
             .update(needsOffersMatches)
             .set({ emailSentAt: new Date() })
@@ -138,7 +155,6 @@ export async function runNeedsOffersMatcherJob(): Promise<NeedsOffersMatcherRepo
           await db.update(projectNeeds).set({ status: "matched" }).where(and(eq(projectNeeds.id, need.id), eq(projectNeeds.status, "open")));
           await db.update(playerOffers).set({ status: "matched" }).where(and(eq(playerOffers.id, offer.id), eq(playerOffers.status, "open")));
         }
-        // Both blocked (EMAIL_HOLD / limiter): pair stays unstamped and retries.
       } catch (err: any) {
         report.errors.push(`match ${match.needId}:${match.offerId}: ${err?.message ?? err}`);
       }

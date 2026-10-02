@@ -16,6 +16,8 @@ import * as db from "../db";
 import { recordings, events, forumCategories } from "../../drizzle/schema";
 import { eq, gte, lte, isNotNull, and } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { providerAccepted } from "./emailAttempt";
+import { emailsAcceptedForInquiry } from "../emailTracking";
 import { notifyRecordingReady } from "../_core/notify";
 import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
@@ -116,9 +118,13 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
   // ── 2. Email subscribers (once per recording) ──
   if (!recording.emailSent && (recording.youtubeUrl || recording.riversideUrl)) {
     try {
-      await sendRecordingEmail(recording);
-      await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, recordingId));
-      log.info(`Email sent for recording ${recordingId}`);
+      const outcome = await sendRecordingEmail(recording);
+      if (outcome.dropped === 0) {
+        await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, recordingId));
+        log.info(`Email sent for recording ${recordingId}`);
+      } else {
+        log.info(`Recording ${recordingId} email incomplete: ${outcome.accepted} accepted, ${outcome.dropped} not sent`);
+      }
     } catch (err) {
       log.error("Email send failed:", err);
     }
@@ -174,22 +180,44 @@ async function createRecordingForumPost(recording: RecordingRow): Promise<number
 // ── Email sending (exported so the admin resend route can reuse it) ──
 
 export async function sendRecordingEmail(recording: {
+  id?: number;
   title: string;
   sessionDate: Date | null;
   youtubeUrl: string | null;
   riversideUrl: string | null;
   aiSummary: string | null;
   forumPostId: number | null;
-}): Promise<number> {
+}): Promise<{ accepted: number; dropped: number }> {
   const subscribers = await audienceForTopic("recordings");
   if (!subscribers.length) {
     log.info("No recording subscribers, skipping email");
-    return 0;
+    return { accepted: 0, dropped: 0 };
+  }
+
+  let already = new Set<string>();
+  if (recording.id != null) {
+    try {
+      already = await emailsAcceptedForInquiry("recording_summary", "recording", recording.id);
+    } catch (err) {
+      log.error("recording prior-send lookup failed", err);
+    }
   }
 
   const forumUrl = recording.forumPostId ? `${APP_BASE_URL}/community/post/${recording.forumPostId}` : null;
+  let accepted = 0;
+  let dropped = 0;
+  let stop = false;
 
   for (const subscriber of subscribers) {
+    const key = subscriber.email.trim().toLowerCase();
+    if (already.has(key)) {
+      accepted += 1;
+      continue;
+    }
+    if (stop) {
+      dropped += 1;
+      continue;
+    }
     const prefsUrl = await managePreferencesUrl(subscriber.email, { mute: "recordings" });
     const html = buildEmailHtml({
       title: recording.title,
@@ -200,15 +228,22 @@ export async function sendRecordingEmail(recording: {
       forumUrl,
       prefsUrl,
     });
-    await sendEmail({
+    const result = await sendEmail({
       to: subscriber.email,
       subject: `Recording ready: ${recording.title}`,
       html,
       template: "recording_summary",
+      inquiryType: "recording",
+      inquiryId: recording.id,
     });
+    if (providerAccepted(result)) accepted += 1;
+    else {
+      dropped += 1;
+      if (result.status === "rate_limited" || result.status === "held") stop = true;
+    }
   }
-  log.info(`Sent recording email to ${subscribers.length} subscribers`);
-  return subscribers.length;
+  log.info(`Recording email accepted ${accepted}, not sent ${dropped}, of ${subscribers.length}`);
+  return { accepted, dropped };
 }
 
 // ── Helpers ──

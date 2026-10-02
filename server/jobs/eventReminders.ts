@@ -9,11 +9,13 @@
  * Idempotent via unique (eventId, offsetMinutes) on event_auto_reminder_sends:
  * the insert is the claim, a duplicate key means another run already owns it.
  */
-import { and, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, ne } from "drizzle-orm";
 import { getDb } from "../db";
+import { asMutationResult } from "../db/_shared";
 import {
   applications,
   eventAutoReminders,
+  eventAutoReminderDeliveries,
   eventAutoReminderSends,
   eventSignups,
   events,
@@ -23,6 +25,13 @@ import {
   type Event,
 } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
+import { providerAccepted } from "../lib/emailAttempt";
+import { emailsAcceptedForInquiry } from "../emailTracking";
+import {
+  REMINDER_CLAIM_LEASE_MS,
+  reminderClaimAction,
+  settleReminderRecipients,
+} from "../lib/reminderClaim";
 import { logger } from "../_core/logger";
 import { buildAutoReminderHtml, reminderJoinUrl } from "../lib/eventReminderEmail";
 import { audienceForTopic, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
@@ -94,19 +103,31 @@ export async function sendToAlwaysIncluded(
     offsetMinutes: number;
     exclude?: Iterable<string>;
   },
-): Promise<number> {
+): Promise<{ accepted: number; dropped: number }> {
   const topic = communityTopicForAudience(defaultAudienceMode(event));
   const skip = new Set([...(opts.exclude ?? [])].map((e) => e.trim().toLowerCase()));
-  const recipients = (await alwaysIncludedRecipients(topic)).filter((r) => !skip.has(r.email));
-  if (recipients.length === 0) return 0;
+  let already = new Set<string>();
+  try {
+    already = await emailsAcceptedForInquiry("event_reminder", "event_fanout", event.id);
+  } catch (err) {
+    log.error("always-include prior-send lookup failed", { eventId: event.id, err });
+  }
+  const recipients = (await alwaysIncludedRecipients(topic)).filter((r) => !skip.has(r.email) && !already.has(r.email.trim().toLowerCase()));
+  if (recipients.length === 0) return { accepted: 0, dropped: 0 };
 
   const joinUrl = reminderJoinUrl({
     eventId: event.id,
     riversideRoomUrl: event.riversideRoomUrl,
     zoomUrl: event.zoomUrl,
   });
-  let sent = 0;
+  let accepted = 0;
+  let dropped = 0;
+  let stop = false;
   for (const recipient of recipients) {
+    if (stop) {
+      dropped += 1;
+      continue;
+    }
     const html = buildAutoReminderHtml({
       title: event.title,
       startTime: event.startTime,
@@ -118,18 +139,27 @@ export async function sendToAlwaysIncluded(
       offsetMinutes: opts.offsetMinutes,
       alwaysIncluded: true,
     });
-    await sendEmail({
-      to: [recipient.email],
-      subject: opts.subject,
-      html,
-      template: "event_reminder",
-      recipientName: recipient.name,
-    }).catch((err) => {
+    try {
+      const result = await sendEmail({
+        to: [recipient.email],
+        subject: opts.subject,
+        html,
+        template: "event_reminder",
+        inquiryType: "event_fanout",
+        inquiryId: event.id,
+        recipientName: recipient.name,
+      });
+      if (providerAccepted(result)) accepted += 1;
+      else {
+        dropped += 1;
+        if (result?.status === "rate_limited" || result?.status === "held") stop = true;
+      }
+    } catch (err) {
+      dropped += 1;
       log.error("always-include reminder failed", { eventId: event.id, email: recipient.email, err });
-    });
-    sent += 1;
+    }
   }
-  return sent;
+  return { accepted, dropped };
 }
 
 export async function listEnabledAutoReminderEventIds(): Promise<Set<number>> {
@@ -243,32 +273,91 @@ export async function resolveAutoReminderRecipients(opts: {
   return merged;
 }
 
-async function claimSend(eventId: number, offsetMinutes: number): Promise<boolean> {
+async function acquireOffset(eventId: number, offsetMinutes: number, now: Date): Promise<"owned" | "skip"> {
   const database = await getDb();
-  if (!database) return false;
+  if (!database) return "skip";
   try {
     await database.insert(eventAutoReminderSends).values({
       eventId,
       offsetMinutes,
       recipientCount: 0,
+      status: "partial",
+      sentAt: now,
     });
-    return true;
+    return "owned";
   } catch (err) {
-    if (isDuplicateKeyError(err)) return false;
-    throw err;
+    if (!isDuplicateKeyError(err)) throw err;
   }
+  const [row] = await database
+    .select({
+      status: eventAutoReminderSends.status,
+      sentAt: eventAutoReminderSends.sentAt,
+    })
+    .from(eventAutoReminderSends)
+    .where(and(
+      eq(eventAutoReminderSends.eventId, eventId),
+      eq(eventAutoReminderSends.offsetMinutes, offsetMinutes),
+    ))
+    .limit(1);
+  if (!row) return "skip";
+  const action = reminderClaimAction(
+    { status: row.status === "partial" ? "partial" : "complete", sentAt: new Date(row.sentAt) },
+    now,
+  );
+  if (action !== "takeover_stale") return "skip";
+  const cutoff = new Date(now.getTime() - REMINDER_CLAIM_LEASE_MS);
+  const updated = await database
+    .update(eventAutoReminderSends)
+    .set({ sentAt: now, status: "partial" })
+    .where(and(
+      eq(eventAutoReminderSends.eventId, eventId),
+      eq(eventAutoReminderSends.offsetMinutes, offsetMinutes),
+      eq(eventAutoReminderSends.status, "partial"),
+      lt(eventAutoReminderSends.sentAt, cutoff),
+    ));
+  return asMutationResult(updated).affectedRows > 0 ? "owned" : "skip";
 }
 
-async function recordRecipientCount(eventId: number, offsetMinutes: number, recipientCount: number) {
+async function markOffset(
+  eventId: number,
+  offsetMinutes: number,
+  recipientCount: number,
+  status: "complete" | "partial",
+) {
   const database = await getDb();
   if (!database) return;
   await database
     .update(eventAutoReminderSends)
-    .set({ recipientCount })
+    .set({ recipientCount, status })
     .where(and(
       eq(eventAutoReminderSends.eventId, eventId),
       eq(eventAutoReminderSends.offsetMinutes, offsetMinutes),
     ));
+}
+
+async function deliveredAddresses(eventId: number, offsetMinutes: number): Promise<Set<string>> {
+  const database = await getDb();
+  if (!database) return new Set();
+  const rows = await database
+    .select({ email: eventAutoReminderDeliveries.email })
+    .from(eventAutoReminderDeliveries)
+    .where(and(
+      eq(eventAutoReminderDeliveries.eventId, eventId),
+      eq(eventAutoReminderDeliveries.offsetMinutes, offsetMinutes),
+    ));
+  return new Set(rows.map((row) => row.email.trim().toLowerCase()));
+}
+
+async function rememberDeliveries(eventId: number, offsetMinutes: number, emails: string[]) {
+  const database = await getDb();
+  if (!database) return;
+  for (const email of emails) {
+    try {
+      await database.insert(eventAutoReminderDeliveries).values({ eventId, offsetMinutes, email });
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) throw err;
+    }
+  }
 }
 
 async function sendOffset(
@@ -278,6 +367,7 @@ async function sendOffset(
   customSubject: string | null,
   customBody: string | null,
   audienceMode: AutoReminderAudienceMode,
+  alreadyDelivered: Iterable<string>,
 ) {
   const joinUrl = reminderJoinUrl({
     eventId: event.id,
@@ -287,33 +377,34 @@ async function sendOffset(
   const subject = customSubject?.trim() || offsetSubject(event.title, offsetMinutes);
   const mute = communityTopicForAudience(audienceMode);
 
-  let sent = 0;
-  for (const recipient of recipients) {
-    const prefsUrl = await managePreferencesUrl(recipient.email, { mute });
-    const html = buildAutoReminderHtml({
-      title: event.title,
-      startTime: event.startTime,
-      timezone: event.timezone,
-      description: event.description,
-      bodyText: customBody,
-      eventId: event.id,
-      joinUrl,
-      offsetMinutes,
-      preferencesUrl: prefsUrl,
-      alwaysIncluded: isAlwaysIncluded(recipient.email),
-    });
-    await sendEmail({
-      to: [recipient.email],
-      subject,
-      html,
-      template: "event_reminder",
-      recipientName: recipient.name,
-    }).catch((err) => {
-      log.error("auto-reminder email failed", { eventId: event.id, email: recipient.email, err });
-    });
-    sent += 1;
-  }
-  return sent;
+  return settleReminderRecipients({
+    recipients,
+    alreadyDelivered,
+    send: async (recipient) => {
+      const prefsUrl = await managePreferencesUrl(recipient.email, { mute });
+      const html = buildAutoReminderHtml({
+        title: event.title,
+        startTime: event.startTime,
+        timezone: event.timezone,
+        description: event.description,
+        bodyText: customBody,
+        eventId: event.id,
+        joinUrl,
+        offsetMinutes,
+        preferencesUrl: prefsUrl,
+        alwaysIncluded: isAlwaysIncluded(recipient.email),
+      });
+      return sendEmail({
+        to: [recipient.email],
+        subject,
+        html,
+        template: "event_reminder",
+        inquiryType: `auto_offset:${offsetMinutes}`.slice(0, 50),
+        inquiryId: event.id,
+        recipientName: recipient.name,
+      });
+    },
+  });
 }
 
 export async function runAutoEventReminders(now = new Date()): Promise<AutoReminderJobReport> {
@@ -346,11 +437,14 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
     .select({
       eventId: eventAutoReminderSends.eventId,
       offsetMinutes: eventAutoReminderSends.offsetMinutes,
+      status: eventAutoReminderSends.status,
     })
     .from(eventAutoReminderSends)
     .where(inArray(eventAutoReminderSends.eventId, eventIds));
   const sentByEvent = new Map<number, Set<number>>();
   for (const row of sentRows) {
+    // A partial row is still due. Only a finished offset leaves the queue.
+    if (row.status === "partial") continue;
     const set = sentByEvent.get(row.eventId) ?? new Set<number>();
     set.add(row.offsetMinutes);
     sentByEvent.set(row.eventId, set);
@@ -408,32 +502,40 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
 
     for (const offsetMinutes of due) {
       report.due += 1;
-      let claimed = false;
+      let owned: "owned" | "skip" = "skip";
       try {
-        claimed = await claimSend(event.id, offsetMinutes);
+        owned = await acquireOffset(event.id, offsetMinutes, now);
       } catch (err: any) {
         report.ok = false;
         report.errors.push(`claim ${event.id}/${offsetMinutes}: ${err?.message ?? err}`);
         continue;
       }
-      if (!claimed) {
+      if (owned !== "owned") {
         report.skipped += 1;
         continue;
       }
       try {
-        const sent = await sendOffset(
+        const already = await deliveredAddresses(event.id, offsetMinutes);
+        const outcome = await sendOffset(
           event,
           offsetMinutes,
           recipients,
           config.customSubject,
           config.customBody,
           config.audienceMode,
+          already,
         );
-        await recordRecipientCount(event.id, offsetMinutes, sent);
-        if (offsetMinutes === 24 * 60) {
-          await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, event.id));
+        await rememberDeliveries(event.id, offsetMinutes, outcome.delivered);
+        const deliveredCount = already.size + outcome.delivered.length;
+        if (outcome.complete) {
+          await markOffset(event.id, offsetMinutes, deliveredCount, "complete");
+          if (offsetMinutes === 24 * 60) {
+            await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, event.id));
+          }
+        } else {
+          await markOffset(event.id, offsetMinutes, deliveredCount, "partial");
         }
-        report.sent += sent;
+        report.sent += outcome.delivered.length;
       } catch (err: any) {
         report.ok = false;
         report.errors.push(`send ${event.id}/${offsetMinutes}: ${err?.message ?? err}`);

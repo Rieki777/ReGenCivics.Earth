@@ -1054,8 +1054,7 @@ export const eventsRouter = router({
       if (customOrDesc) bodyParts.push(customOrDesc);
       const bodyText = bodyParts.length ? bodyParts.join("\n\n") : null;
 
-      let totalSent = 0;
-      totalSent += await sendSignupReminderBlast(event, {
+      const blast = await sendSignupReminderBlast(event, {
         subject,
         bodyText,
         offsetMinutes: 24 * 60,
@@ -1063,14 +1062,17 @@ export const eventsRouter = router({
       });
 
       // Same subject and body, but their own always-include footer.
-      totalSent += await sendToAlwaysIncluded(event, {
+      const always = await sendToAlwaysIncluded(event, {
         subject,
         bodyText,
         offsetMinutes: 24 * 60,
         exclude: signups.map((s) => s.email),
       });
 
-      await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
+      const totalSent = blast.accepted + always.accepted;
+      if (blast.dropped === 0 && always.dropped === 0) {
+        await database.update(events).set({ reminderSent: 1 }).where(eq(events.id, input.id));
+      }
       return { sent: totalSent };
     }),
 

@@ -1,10 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { Event } from "../../drizzle/schema";
 
-const sendEmailMock = vi.fn().mockResolvedValue({ id: "msg_test" });
+const sendEmailMock = vi.fn().mockResolvedValue({ id: "msg_test", status: "sent" });
 vi.mock("../_core/email", () => ({
   sendEmail: (...args: unknown[]) => sendEmailMock(...args),
   APP_BASE_URL: "https://regencivics.earth",
+}));
+
+vi.mock("../emailTracking", () => ({
+  emailsAcceptedForInquiry: vi.fn().mockResolvedValue(new Set<string>()),
 }));
 
 const managePreferencesUrlMock = vi
@@ -42,7 +46,8 @@ function fakeEvent(over: Partial<Event> = {}): Event {
 
 describe("sendSignupReminderBlast", () => {
   beforeEach(() => {
-    sendEmailMock.mockClear();
+    sendEmailMock.mockReset();
+    sendEmailMock.mockResolvedValue({ id: "msg_test", status: "sent" });
     managePreferencesUrlMock.mockClear();
     sendToAlwaysIncludedMock.mockClear();
   });
@@ -54,7 +59,7 @@ describe("sendSignupReminderBlast", () => {
       offsetMinutes: 24 * 60,
       signups: [],
     });
-    expect(sent).toBe(0);
+    expect(sent).toEqual({ accepted: 0, dropped: 0 });
     expect(sendEmailMock).not.toHaveBeenCalled();
     expect(managePreferencesUrlMock).not.toHaveBeenCalled();
     expect(sendToAlwaysIncludedMock).not.toHaveBeenCalled();
@@ -66,7 +71,7 @@ describe("sendSignupReminderBlast", () => {
       offsetMinutes: 24 * 60,
       signups: [{ email: null, name: "Phone only" }, { email: "  ", name: "Blank" }],
     });
-    expect(sent).toBe(0);
+    expect(sent).toEqual({ accepted: 0, dropped: 0 });
     expect(sendEmailMock).not.toHaveBeenCalled();
     expect(sendToAlwaysIncludedMock).not.toHaveBeenCalled();
   });
@@ -81,7 +86,7 @@ describe("sendSignupReminderBlast", () => {
         { email: "bob@land.example", name: "Bob" },
       ],
     });
-    expect(sent).toBe(2);
+    expect(sent).toEqual({ accepted: 2, dropped: 0 });
     expect(sendEmailMock).toHaveBeenCalledTimes(2);
     expect(sendToAlwaysIncludedMock).not.toHaveBeenCalled();
     const html = String(sendEmailMock.mock.calls[0]![0].html);
@@ -92,5 +97,19 @@ describe("sendSignupReminderBlast", () => {
     expect(html).not.toContain("Join on Riverside");
     expect(html).not.toMatch(/Riverside/i);
     expect(html).not.toMatch(/Zoom/i);
+  });
+
+  it("does not count a dropped send, and stops the rest of the list", async () => {
+    sendEmailMock.mockResolvedValueOnce({ id: null, status: "rate_limited" });
+    const sent = await sendSignupReminderBlast(fakeEvent(), {
+      subject: "Tomorrow: Open Access Session",
+      offsetMinutes: 24 * 60,
+      signups: [
+        { email: "ada@farm.example", name: "Ada" },
+        { email: "bob@land.example", name: "Bob" },
+      ],
+    });
+    expect(sent).toEqual({ accepted: 0, dropped: 2 });
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
   });
 });

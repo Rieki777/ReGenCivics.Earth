@@ -15,6 +15,7 @@ import {
   validateScheduleWindow,
 } from "../../shared/outboundSchedule";
 import { sendEmail } from "../_core/email";
+import { providerAccepted } from "./emailAttempt";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
 import { emailDocumentFromMarkdown } from "./emailHtml";
@@ -388,13 +389,13 @@ async function dispatchClaimedSend(params: {
         emailLogId,
         skipBrandedWrap: true,
       });
-      if (!result.id && process.env.EMAIL_HOLD !== "true") {
-        failedCount += 1;
-        await db.update(newsletterIssueRecipients).set({ status: "failed", emailLogId })
-          .where(eq(newsletterIssueRecipients.id, row.id));
-      } else {
+      if (providerAccepted(result)) {
         sentCount += 1;
         await db.update(newsletterIssueRecipients).set({ status: "sent", emailLogId })
+          .where(eq(newsletterIssueRecipients.id, row.id));
+      } else {
+        failedCount += 1;
+        await db.update(newsletterIssueRecipients).set({ status: "failed", emailLogId })
           .where(eq(newsletterIssueRecipients.id, row.id));
       }
     } catch (err) {

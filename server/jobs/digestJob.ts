@@ -1,7 +1,9 @@
 // Runs weekly: pulls top forum threads by engagement, generates digest, saves to DB, sends to subscribers
 import { invokeLLM } from "../_core/llm";
 import * as db from "../db";
-import { sendEmail, getAppBaseUrl } from "../_core/email";
+import { sendEmail, getAppBaseUrl, msUntilStartupEmailGuardEnds } from "../_core/email";
+import { providerAccepted } from "../lib/emailAttempt";
+import { emailsAcceptedSince } from "../emailTracking";
 import { rewriteLegacySiteUrls } from "../../shared/siteContext";
 import { audienceForTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
@@ -16,6 +18,25 @@ import { ENV } from "../_core/env";
 import { COOP } from "../../shared/fund";
 
 const DIGEST_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+export const DIGEST_PARTIAL_RETRY_MS = 10 * 60 * 1000;
+export const DIGEST_HELD_RETRY_MS = 60 * 60 * 1000;
+export const WEEKLY_DIGEST_TEMPLATE = "weekly_digest";
+
+export type DigestJobResult =
+  | { status: "skipped_running" }
+  | { status: "skipped_recent" }
+  | { status: "skipped_startup"; retryInMs: number }
+  | { status: "sent" }
+  | { status: "partial"; reason: "held" | "rate_limited" | "provider_error" };
+
+let digestJobActive = false;
+
+/** When the scheduler should try again. Null means the weekly interval is enough. */
+export function digestFollowUpDelayMs(result: DigestJobResult): number | null {
+  if (result.status === "skipped_startup") return result.retryInMs;
+  if (result.status !== "partial") return null;
+  return result.reason === "held" ? DIGEST_HELD_RETRY_MS : DIGEST_PARTIAL_RETRY_MS;
+}
 // Extra guard: if a digest was sent within the last 2 hours, treat it as a duplicate
 // (covers Railway redeploy race conditions where two instances both start up)
 const DUPLICATE_GUARD_MS = 2 * 60 * 60 * 1000; // 2 hours
@@ -79,7 +100,14 @@ function isoWeekNumber(date: Date): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
-export async function runDigestJob() {
+export async function runDigestJob(): Promise<DigestJobResult> {
+  if (digestJobActive) return { status: "skipped_running" };
+  const startupLeft = msUntilStartupEmailGuardEnds();
+  if (startupLeft > 0) {
+    console.log(`[DigestJob] Skipping: startup email guard has ${Math.ceil(startupLeft / 1000)}s left.`);
+    return { status: "skipped_startup", retryInMs: startupLeft + 1000 };
+  }
+  digestJobActive = true;
   try {
     const latest = await db.getLatestDigest();
     if (latest) {
@@ -88,13 +116,13 @@ export async function runDigestJob() {
       if (age < DUPLICATE_GUARD_MS) {
         const minsAgo = Math.round(age / 60000);
         console.log(`[DigestJob] Skipping: last digest was ${minsAgo}m ago (duplicate guard).`);
-        return;
+        return { status: "skipped_recent" };
       }
       // Weekly interval guard
       if (age < DIGEST_INTERVAL_MS) {
         const hoursAgo = Math.round(age / (60 * 60 * 1000));
         console.log(`[DigestJob] Skipping: last digest was ${hoursAgo}h ago (< 7 days).`);
-        return;
+        return { status: "skipped_recent" };
       }
     }
 
@@ -122,6 +150,12 @@ export async function runDigestJob() {
       digestContent = "(Blog edition. See the email for featured reading.)";
     }
 
+    const outcome = await sendDigestEmails(threads.slice(0, 5), weekNum);
+    if (outcome.dropped > 0) {
+      console.log(`[DigestJob] Partial send: ${outcome.accepted} accepted, ${outcome.dropped} not sent. Week stays due.`);
+      return { status: "partial", reason: outcome.reason };
+    }
+
     await db.saveDigest({
       periodStart: weekAgo.toISOString().split("T")[0],
       periodEnd: now.toISOString().split("T")[0],
@@ -129,8 +163,6 @@ export async function runDigestJob() {
     });
 
     console.log("[DigestJob] Digest generated and saved.");
-
-    await sendDigestEmails(threads.slice(0, 5), weekNum);
 
     // Steward weekly digest: per active campaign, nudge the steward on open
     // needs, claims to deliver, new followers, and pending reviews. Piggybacks
@@ -149,9 +181,13 @@ export async function runDigestJob() {
     } catch (err) {
       console.error("[DigestJob] steward digest failed", err);
     }
+    return { status: "sent" };
   } catch (e) {
     console.error("[DigestJob] Error:", e);
     try { const Sentry = await import("@sentry/node"); Sentry.captureException(e, { tags: { job: "digest" } }); } catch {}
+    return { status: "partial", reason: "provider_error" };
+  } finally {
+    digestJobActive = false;
   }
 }
 
@@ -268,10 +304,18 @@ export function buildCommunityDigestHtml(input: {
 async function sendDigestEmails(
   posts: { title: string; content: string; replyCount: number; id?: number }[],
   weekNum: number
-) {
+): Promise<{ accepted: number; dropped: number; reason: "held" | "rate_limited" | "provider_error" }> {
   try {
     const subscribers = await audienceForTopic("seasonal");
-    if (subscribers.length === 0) return;
+    if (subscribers.length === 0) return { accepted: 0, dropped: 0, reason: "provider_error" };
+    const since = new Date(Date.now() - DIGEST_INTERVAL_MS);
+    let already = new Set<string>();
+    try {
+      already = await emailsAcceptedSince(WEEKLY_DIGEST_TEMPLATE, since);
+    } catch (err) {
+      console.error("[DigestJob] could not read prior sends", err);
+    }
+    const pending = subscribers.filter((sub) => !already.has(sub.email.trim().toLowerCase()));
 
     const weekLabel = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     // ── Assembly section (weekly governance movement) ────────────────────────
@@ -317,30 +361,45 @@ async function sendDigestEmails(
       assemblySection,
     });
 
-    // Send in batches of 20 to avoid rate limits
-    const BATCH = 20;
-    for (let i = 0; i < subscribers.length; i += BATCH) {
-      const batch = subscribers.slice(i, i + BATCH);
-      await Promise.allSettled(
-        batch.map(async (sub) => {
-          const prefsUrl = await managePreferencesUrl(sub.email, { mute: "seasonal" });
-          const html = bodyHtml.replace(
-            "{{PREFS_FOOTER}}",
-            newsletterLegalFooterHtml(prefsUrl, ENV.harvestPostalAddress),
-          );
-          return sendEmail({
-            to: sub.email,
-            subject: `This week in the community: ${weekLabel}`,
-            html,
-          }).catch(err => console.warn(`[DigestJob] Failed to send to ${sub.email}:`, err));
-        }),
-      );
-      if (i + BATCH < subscribers.length) {
-        await new Promise(r => setTimeout(r, 1000));
+    let accepted = subscribers.length - pending.length;
+    let dropped = 0;
+    let reason: "held" | "rate_limited" | "provider_error" = "provider_error";
+    let stop = false;
+    for (const sub of pending) {
+      if (stop) {
+        dropped += 1;
+        continue;
+      }
+      try {
+        const prefsUrl = await managePreferencesUrl(sub.email, { mute: "seasonal" });
+        const html = bodyHtml.replace(
+          "{{PREFS_FOOTER}}",
+          newsletterLegalFooterHtml(prefsUrl, ENV.harvestPostalAddress),
+        );
+        const result = await sendEmail({
+          to: sub.email,
+          subject: `This week in the community: ${weekLabel}`,
+          html,
+          template: WEEKLY_DIGEST_TEMPLATE,
+        });
+        if (providerAccepted(result)) {
+          accepted += 1;
+        } else {
+          dropped += 1;
+          if (result.status === "held" || result.status === "rate_limited") {
+            reason = result.status === "held" ? "held" : "rate_limited";
+            stop = true;
+          }
+        }
+      } catch (err) {
+        dropped += 1;
+        console.warn(`[DigestJob] Failed to send to ${sub.email}:`, err);
       }
     }
-    console.log(`[DigestJob] Digest sent to ${subscribers.length} subscribers.`);
+    console.log(`[DigestJob] Digest accepted ${accepted}, not sent ${dropped}, of ${subscribers.length}.`);
+    return { accepted, dropped, reason };
   } catch (err) {
     console.error("[DigestJob] Failed to send digest emails:", err);
+    return { accepted: 0, dropped: 1, reason: "provider_error" };
   }
 }

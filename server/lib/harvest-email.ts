@@ -24,6 +24,7 @@ import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { creationItems, harvestEmailSends } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
+import { providerAccepted } from "./emailAttempt";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl, previewManagePreferencesUrl } from "./emailPrefs";
@@ -210,11 +211,20 @@ export async function confirmAndSend(params: {
 
   const recipients = await audienceForTopic("seasonal");
   let sent = 0;
+  let dropped = 0;
   try {
     for (const recipient of recipients) {
       const html = renderHtml(text, await managePreferencesUrl(recipient.email, { mute: "seasonal" }));
-      await sendEmail({ to: recipient.email, subject, html, template: "harvest_announcement" });
-      sent += 1;
+      const result = await sendEmail({ to: recipient.email, subject, html, template: "harvest_announcement" });
+      if (providerAccepted(result)) {
+        sent += 1;
+      } else {
+        dropped += 1;
+        if (result?.status === "rate_limited" || result?.status === "held") break;
+      }
+    }
+    if (dropped > 0) {
+      throw new Error("incomplete");
     }
   } catch (err) {
     await db.update(harvestEmailSends)

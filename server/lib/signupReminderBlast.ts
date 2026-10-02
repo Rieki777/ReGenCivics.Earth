@@ -14,6 +14,8 @@
  */
 import { logger } from "../_core/logger";
 import { sendEmail } from "../_core/email";
+import { providerAccepted } from "./emailAttempt";
+import { emailsAcceptedForInquiry } from "../emailTracking";
 import type { Event } from "../../drizzle/schema";
 import { managePreferencesUrl } from "./emailPrefs";
 import {
@@ -41,16 +43,29 @@ export async function sendSignupReminderBlast(
     offsetMinutes: number;
     signups: SignupReminderRecipient[];
   },
-): Promise<number> {
+): Promise<{ accepted: number; dropped: number }> {
   const mute = reminderMuteTopic(event);
   const emailSignups = opts.signups.filter(
     (s): s is SignupReminderRecipient & { email: string } =>
       typeof s.email === "string" && s.email.trim().length > 0,
   );
+  let already = new Set<string>();
+  try {
+    already = await emailsAcceptedForInquiry("event_reminder", "event_fanout", event.id);
+  } catch (err) {
+    log.error("signup reminder prior-send lookup failed", { eventId: event.id, err });
+  }
 
-  let sent = 0;
+  let accepted = 0;
+  let dropped = 0;
+  let stop = false;
   for (const signup of emailSignups) {
     const email = signup.email.trim();
+    if (already.has(email.toLowerCase())) continue;
+    if (stop) {
+      dropped += 1;
+      continue;
+    }
     const preferencesUrl = await managePreferencesUrl(email, { mute });
     const html = buildSignupReminderHtml({
       title: event.title,
@@ -64,17 +79,26 @@ export async function sendSignupReminderBlast(
       offsetMinutes: opts.offsetMinutes,
       preferencesUrl,
     });
-    await sendEmail({
-      to: [email],
-      subject: opts.subject,
-      html,
-      template: "event_reminder",
-      recipientName: signup.name?.trim() || undefined,
-    }).catch((err) => {
+    try {
+      const result = await sendEmail({
+        to: [email],
+        subject: opts.subject,
+        html,
+        template: "event_reminder",
+        inquiryType: "event_fanout",
+        inquiryId: event.id,
+        recipientName: signup.name?.trim() || undefined,
+      });
+      if (providerAccepted(result)) accepted += 1;
+      else {
+        dropped += 1;
+        if (result?.status === "rate_limited" || result?.status === "held") stop = true;
+      }
+    } catch (err) {
+      dropped += 1;
       log.error("signup reminder failed", { eventId: event.id, email, err });
-    });
-    sent += 1;
+    }
   }
 
-  return sent;
+  return { accepted, dropped };
 }

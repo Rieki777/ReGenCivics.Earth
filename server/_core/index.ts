@@ -19,7 +19,7 @@ function parseCookieHeader(str: string): Record<string, string> {
   return result;
 }
 import * as Sentry from "@sentry/node";
-import { runDigestJob } from "../jobs/digestJob";
+import { digestFollowUpDelayMs, runDigestJob } from "../jobs/digestJob";
 import { runNotificationDigestJob } from "../jobs/notificationDigestJob";
 import { runForumAffinityJob } from "../jobs/forumAffinityJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
@@ -85,7 +85,8 @@ import { registerWorldviewUploadRoutes } from "../webhooks/worldview-upload";
 import { getGuideWorldviewPreamble } from "../lib/worldview";
 import { registerOidcRoutes } from "../routes/oidc";
 import * as db from "../db";
-import { sendEmail } from "./email";
+import { msUntilStartupEmailGuardEnds, sendEmail } from "./email";
+import { scheduledEmailNextStatus } from "../lib/emailAttempt";
 import { emailDocumentFromMarkdown } from "../lib/emailHtml";
 import { cspMiddleware, cspNonceMiddleware, securityHeadersMiddleware, rateLimitMiddleware, generateCSRFToken } from "./security";
 import { cronAuthOk } from "./cronAuth";
@@ -1227,12 +1228,13 @@ async function startServer() {
           ));
 
         // Prefs footer + join label via shared builder (1:1 for signed prefs URL).
-        totalSent += await sendSignupReminderBlast(event, {
+        const blast = await sendSignupReminderBlast(event, {
           subject: `Tomorrow: ${event.title}`,
           bodyText: event.description,
           offsetMinutes: 24 * 60,
           signups,
         });
+        totalSent += blast.accepted;
 
         // #4. Send SMS reminders to those who provided a phone number
         const smsSignups = signups.filter((s) => s.phone);
@@ -1253,7 +1255,9 @@ async function startServer() {
           }
         }
 
-        await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
+        if (blast.dropped === 0) {
+          await database.update(eventsTable).set({ reminderSent: 1 }).where(dbEq(eventsTable.id, event.id));
+        }
       }
 
       // Durable admin-scheduled custom reminders (persisted by
@@ -1294,15 +1298,18 @@ async function startServer() {
           ));
         const subj = event.reminderCustomSubject?.trim() || `Reminder: ${event.title}`;
         const bodyText = event.reminderCustomBody?.trim() || (event.description ?? "");
-        scheduledSent += await sendSignupReminderBlast(event, {
+        const scheduledBlast = await sendSignupReminderBlast(event, {
           subject: subj,
           bodyText,
           offsetMinutes: 0,
           signups,
         });
-        await database.update(eventsTable)
-          .set({ reminderSent: 1, reminderScheduledFor: null })
-          .where(dbEq(eventsTable.id, event.id));
+        scheduledSent += scheduledBlast.accepted;
+        if (scheduledBlast.dropped === 0) {
+          await database.update(eventsTable)
+            .set({ reminderSent: 1, reminderScheduledFor: null })
+            .where(dbEq(eventsTable.id, event.id));
+        }
       }
 
       const autoReminders = await runAutoEventReminders(now);
@@ -1629,14 +1636,25 @@ async function processScheduledEmails() {
     for (const item of due) {
       if (new Date(item.scheduledFor) > now) continue; // not yet due
       try {
-        await sendEmail({
+        const result = await sendEmail({
           to: item.recipientEmail,
           subject: item.subject,
           html: emailDocumentFromMarkdown(item.body),
+          template: "scheduled_email",
           // No replyTo: replies route through /connect, not into an inbox.
         });
-        await db.updateScheduledEmailStatus(item.id, 'sent', new Date());
-        log.info("ScheduledEmail sent", { id: item.id, recipient: item.recipientEmail });
+        const next = scheduledEmailNextStatus(result);
+        if (next === "pending") {
+          log.warn("ScheduledEmail rate limited, leaving pending", { id: item.id });
+          continue;
+        }
+        if (next === "sent") {
+          await db.updateScheduledEmailStatus(item.id, "sent", new Date());
+          log.info("ScheduledEmail sent", { id: item.id });
+        } else {
+          await db.updateScheduledEmailStatus(item.id, "failed");
+          log.warn("ScheduledEmail not accepted", { id: item.id, status: result.status });
+        }
       } catch (err) {
         await db.updateScheduledEmailStatus(item.id, 'failed');
         log.error(`ScheduledEmail failed id=${item.id}`, err);
@@ -1690,12 +1708,23 @@ setTimeout(async () => {
 }, 2 * 60 * 1000);
 
 // ─── Weekly digest job ───────────────────────────────────────────────────────
-setTimeout(async () => {
-  try { await runDigestJob(); } catch (e) { log.error("DigestJob error", e); }
-  setInterval(async () => {
-    try { await runDigestJob(); } catch (e) { log.error("DigestJob error", e); }
-  }, 7 * 24 * 60 * 60 * 1000);
-}, 60 * 1000); // first run after 1 minute
+// First fire waits out the boot burst guard. A partial send retries in minutes
+// and does not save the week, so a restart cannot mark the digest done.
+const DIGEST_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+async function runDigestOnce() {
+  try {
+    const result = await runDigestJob();
+    const retryInMs = digestFollowUpDelayMs(result);
+    if (retryInMs != null) setTimeout(() => { void runDigestOnce(); }, retryInMs);
+  } catch (e) {
+    log.error("DigestJob error", e);
+  }
+}
+const digestFirstWaitMs = Math.max(1000, msUntilStartupEmailGuardEnds() + 5000);
+setTimeout(() => {
+  void runDigestOnce();
+  setInterval(() => { void runDigestOnce(); }, DIGEST_WEEK_MS);
+}, digestFirstWaitMs);
 
 // ─── Daily notification digest ───────────────────────────────────────────────
 // Batches unread, un-emailed forum notifications (mentions, replies,

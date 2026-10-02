@@ -1007,7 +1007,7 @@ export const emailLogs = mysqlTable("email_logs", {
   template: varchar("template", { length: 100 }),
   inquiryType: varchar("inquiryType", { length: 50 }), // project, investor, alliance, etc.
   inquiryId: int("inquiryId"), // Reference to the inquiry
-  status: mysqlEnum("status", ["sent", "delivered", "bounced", "failed"]).default("sent").notNull(),
+  status: mysqlEnum("status", ["sent", "delivered", "bounced", "failed", "queued", "held", "blocked"]).default("sent").notNull(),
   sentAt: timestamp("sentAt").defaultNow().notNull(),
   deliveredAt: timestamp("deliveredAt"),
   openedAt: timestamp("openedAt"),
@@ -3290,6 +3290,10 @@ export const eventAutoReminderSends = mysqlTable("event_auto_reminder_sends", {
   offsetMinutes: int("offsetMinutes").notNull(),
   sentAt: timestamp("sentAt").defaultNow().notNull(),
   recipientCount: int("recipientCount").default(0).notNull(),
+  // complete: every address in that pass got a Resend id, or the offset was
+  // closed by a schedule move. partial: a lock while sending, or a tail that
+  // still needs a retry. Existing rows default to complete.
+  status: mysqlEnum("status", ["complete", "partial"]).default("complete").notNull(),
 }, (table) => ([
   unique("event_auto_reminder_sends_unique").on(table.eventId, table.offsetMinutes),
   index("event_auto_reminder_sends_eventId_idx").on(table.eventId),
@@ -3297,6 +3301,25 @@ export const eventAutoReminderSends = mysqlTable("event_auto_reminder_sends", {
 
 export type EventAutoReminderSend = typeof eventAutoReminderSends.$inferSelect;
 export type InsertEventAutoReminderSend = typeof eventAutoReminderSends.$inferInsert;
+
+/**
+ * Addresses that already received an auto-reminder offset.
+ * The offset row stays partial until every current recipient is in this table,
+ * so a rate-limit drop is retried and a success is not sent twice.
+ */
+export const eventAutoReminderDeliveries = mysqlTable("event_auto_reminder_deliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull(),
+  offsetMinutes: int("offsetMinutes").notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+}, (table) => ([
+  unique("event_auto_reminder_deliveries_unique").on(table.eventId, table.offsetMinutes, table.email),
+  index("event_auto_reminder_deliveries_event_offset_idx").on(table.eventId, table.offsetMinutes),
+]));
+
+export type EventAutoReminderDelivery = typeof eventAutoReminderDeliveries.$inferSelect;
+export type InsertEventAutoReminderDelivery = typeof eventAutoReminderDeliveries.$inferInsert;
 
 /**
  * $ReGen Token Ledger

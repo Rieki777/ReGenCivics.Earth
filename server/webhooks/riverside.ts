@@ -192,9 +192,11 @@ export function registerRiversideWebhookRoutes(app: Express) {
       const [rec] = await database.select().from(recordings).where(eq(recordings.id, id)).limit(1);
       if (!rec) return res.status(404).json({ error: "Recording not found" });
 
-      await sendRecordingEmail(rec);
-      await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, id));
-      res.json({ sent: true });
+      const sent = await sendRecordingEmail(rec);
+      if (sent.dropped === 0) {
+        await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, id));
+      }
+      res.json({ sent: sent.dropped === 0, accepted: sent.accepted, dropped: sent.dropped });
     }
   );
 }

@@ -12,7 +12,7 @@
 import crypto from "crypto";
 import { getDb } from "./db";
 import { emailLogs } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, inArray } from "drizzle-orm";
 import {
   SITE_ORIGIN,
   canonicalPublicBaseUrl,
@@ -257,4 +257,100 @@ export async function updateEmailStatus(
   } catch (error) {
     console.error("Failed to update email status:", error);
   }
+}
+
+export type EmailAttemptStatus = "queued" | "sent" | "held" | "blocked" | "failed";
+
+const ACCEPTED_LOG_STATUSES = ["sent", "delivered", "bounced"] as const;
+
+/**
+ * Write or update the attempt row for one sendEmail call.
+ * Caller-supplied ids are updated in place so a pre-created log is not doubled.
+ * Otherwise one row is inserted per recipient.
+ * Returns the ids that now reflect this attempt. Empty when the database is down.
+ */
+export async function writeEmailAttempt(input: {
+  emailLogIds?: number[];
+  recipients: Array<{ email: string; name?: string }>;
+  subject: string;
+  template?: string;
+  inquiryType?: string;
+  inquiryId?: number;
+  status: EmailAttemptStatus;
+  reason?: string;
+  resendEmailId?: string;
+}): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const subject = input.subject.slice(0, 500);
+  const reason = input.reason ? input.reason.slice(0, 2000) : undefined;
+  const patch: Record<string, unknown> = { status: input.status };
+  if (reason) patch.bounceReason = reason;
+  if (input.resendEmailId) patch.resendEmailId = input.resendEmailId;
+  if (input.status === "sent") patch.sentAt = new Date();
+
+  const existing = (input.emailLogIds ?? []).filter((id) => Number.isFinite(id));
+  if (existing.length > 0) {
+    await db.update(emailLogs).set(patch).where(inArray(emailLogs.id, existing));
+    return existing;
+  }
+
+  const ids: number[] = [];
+  for (const recipient of input.recipients) {
+    const email = recipient.email.trim().slice(0, 255);
+    if (!email) continue;
+    const result = await db.insert(emailLogs).values({
+      recipientEmail: email,
+      recipientName: recipient.name?.slice(0, 255),
+      subject,
+      template: input.template?.slice(0, 100),
+      inquiryType: input.inquiryType?.slice(0, 50),
+      inquiryId: input.inquiryId,
+      status: input.status,
+      sentAt: new Date(),
+      bounceReason: reason,
+      resendEmailId: input.resendEmailId,
+    });
+    ids.push(result[0].insertId);
+  }
+  return ids;
+}
+
+function acceptedEmailSet(rows: Array<{ email: string | null }>): Set<string> {
+  return new Set(rows.map((row) => (row.email ?? "").trim().toLowerCase()).filter(Boolean));
+}
+
+/** Addresses whose letter for this template was accepted by Resend since `since`. */
+export async function emailsAcceptedSince(template: string, since: Date): Promise<Set<string>> {
+  const db = await getDb();
+  if (!db) return new Set();
+  const rows = await db
+    .select({ email: emailLogs.recipientEmail })
+    .from(emailLogs)
+    .where(and(
+      eq(emailLogs.template, template),
+      gte(emailLogs.sentAt, since),
+      inArray(emailLogs.status, [...ACCEPTED_LOG_STATUSES]),
+    ));
+  return acceptedEmailSet(rows);
+}
+
+/** Addresses already accepted for one logical send (event fan-out, recording, and so on). */
+export async function emailsAcceptedForInquiry(
+  template: string,
+  inquiryType: string,
+  inquiryId: number,
+): Promise<Set<string>> {
+  const db = await getDb();
+  if (!db) return new Set();
+  const rows = await db
+    .select({ email: emailLogs.recipientEmail })
+    .from(emailLogs)
+    .where(and(
+      eq(emailLogs.template, template),
+      eq(emailLogs.inquiryType, inquiryType),
+      eq(emailLogs.inquiryId, inquiryId),
+      inArray(emailLogs.status, [...ACCEPTED_LOG_STATUSES]),
+    ));
+  return acceptedEmailSet(rows);
 }

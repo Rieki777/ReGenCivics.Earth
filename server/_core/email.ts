@@ -6,7 +6,7 @@
 
 import { Resend } from 'resend';
 import { logger } from './logger';
-import { signTrackedUrl } from '../emailTracking';
+import { signTrackedUrl, writeEmailAttempt, type EmailAttemptStatus } from '../emailTracking';
 import { COOP } from '../../shared/fund';
 import { decodeBasicEntities, textForEmail } from '../../shared/htmlText';
 import { configuredPublicBaseUrl, rewriteLegacySiteUrls } from '../../shared/siteContext';
@@ -270,6 +270,25 @@ const SERVER_START_TIME = Date.now();
 const STARTUP_WINDOW_MS = 120_000; // 2 minutes
 const STARTUP_LIMIT = parseInt(process.env.STARTUP_EMAIL_LIMIT ?? "5", 10);
 let startupEmailCount = 0;
+/** Test override. null follows the real clock. */
+let startupWindowOverride: boolean | null = null;
+
+function inStartupWindow(now: number): boolean {
+  if (startupWindowOverride !== null) return startupWindowOverride;
+  return now - SERVER_START_TIME < STARTUP_WINDOW_MS;
+}
+
+/** True while the boot burst guard is still eating recipients. */
+export function startupEmailGuardActive(now = Date.now()): boolean {
+  return inStartupWindow(now);
+}
+
+/** Milliseconds until the boot burst guard lifts. Zero when it is already open. */
+export function msUntilStartupEmailGuardEnds(now = Date.now()): number {
+  if (startupWindowOverride === false) return 0;
+  if (startupWindowOverride === true) return STARTUP_WINDOW_MS;
+  return Math.max(0, STARTUP_WINDOW_MS - (now - SERVER_START_TIME));
+}
 
 const HOUR_MS = 60 * 60 * 1000;
 const HOURLY_LIMIT = parseInt(process.env.EMAIL_RATE_LIMIT_PER_HOUR ?? "50", 10);
@@ -295,7 +314,7 @@ function checkRateLimits(recipientCount: number, subject: string, budget?: 'auth
 
   // ── Guard 1: startup burst ──
   const ageMs = now - SERVER_START_TIME;
-  if (ageMs < STARTUP_WINDOW_MS) {
+  if (inStartupWindow(now)) {
     if (startupEmailCount + recipientCount > STARTUP_LIMIT) {
       return {
         blocked: true,
@@ -326,42 +345,96 @@ function recordSend(recipientCount: number, budget?: 'auth'): void {
     return;
   }
   const ageMs = now - SERVER_START_TIME;
-  if (ageMs < STARTUP_WINDOW_MS) startupEmailCount += recipientCount;
+  if (inStartupWindow(now)) startupEmailCount += recipientCount;
   for (let i = 0; i < recipientCount; i++) sendTimestamps.push(now);
 }
 
 /** Test hook for the in-memory limiter (server/campaign-notification-prefs.test.ts). */
-export const __emailRateLimitsForTests = { check: checkRateLimits, record: recordSend };
+export const __emailRateLimitsForTests = {
+  check: checkRateLimits,
+  record: recordSend,
+  reset() {
+    startupEmailCount = 0;
+    sendTimestamps.length = 0;
+    authSendTimestamps.length = 0;
+    startupWindowOverride = null;
+  },
+  setStartupWindow(active: boolean | null) {
+    startupWindowOverride = active;
+  },
+  counts() {
+    return { startup: startupEmailCount, hour: sendTimestamps.length, auth: authSendTimestamps.length };
+  },
+};
+
+export type EmailSendStatus = "sent" | "held" | "rate_limited" | "provider_error";
+
+function attemptRecipients(params: SendEmailParams): Array<{ email: string; name?: string }> {
+  const list = (Array.isArray(params.to) ? params.to : [params.to]).map((email) => String(email).trim()).filter(Boolean);
+  return list.map((email) => ({
+    email,
+    name: list.length === 1 ? params.recipientName : undefined,
+  }));
+}
+
+function logAttempt(status: EmailSendStatus, template: string | undefined, recipientCount: number, budget?: "auth"): void {
+  const payload = { template: template ?? null, recipientCount, status, budget: budget ?? "shared" };
+  if (status === "sent") log.info("email attempt", payload);
+  else log.warn("email attempt", payload);
+}
 
 /**
- * Send an email using Resend with tracking
- * @param params Email parameters
- * @returns Email ID if successful, null if failed
+ * Send an email using Resend with tracking.
+ * Always returns a status. id is null unless Resend accepted the letter.
+ * Hold, rate limit, and provider errors do not throw, and they do not count
+ * against the hourly cap. Every attempt is written to email_logs.
  */
-export async function sendEmail(params: SendEmailParams): Promise<{ id: string | null; trackingData?: any }> {
+export async function sendEmail(params: SendEmailParams): Promise<{ id: string | null; status: EmailSendStatus; trackingData?: any }> {
+  const recipients = attemptRecipients(params);
+  const recipientCount = recipients.length;
+  const existingIds = params.emailLogId ? [params.emailLogId] : [];
+  let logIds = existingIds;
+
+  const record = async (status: EmailAttemptStatus, reason?: string, resendEmailId?: string) => {
+    try {
+      const ids = await writeEmailAttempt({
+        emailLogIds: logIds.length > 0 ? logIds : undefined,
+        recipients,
+        subject: params.subject,
+        template: params.template,
+        inquiryType: params.inquiryType,
+        inquiryId: params.inquiryId,
+        status,
+        reason,
+        resendEmailId,
+      });
+      if (ids.length > 0) logIds = ids;
+    } catch (err) {
+      log.error("email attempt log failed", err);
+    }
+  };
+
   // ── EMAIL HOLD ────────────────────────────────────────────────────────────
   // Set EMAIL_HOLD=true in Railway env vars to pause ALL outbound email.
   // Use this while testing flows or after accidental spam. Remove / set to false
   // to re-enable. Emails that hit this gate are logged but never sent.
   if (process.env.EMAIL_HOLD === "true") {
-    const recipients = Array.isArray(params.to) ? params.to.join(", ") : params.to;
-    log.info(`HELD (EMAIL_HOLD=true), would have sent "${params.subject}" to: ${recipients}`);
-    return { id: null };
+    await record("held", "EMAIL_HOLD");
+    logAttempt("held", params.template, recipientCount, params.budget);
+    return { id: null, status: "held" };
   }
   // ─────────────────────────────────────────────────────────────────────────
 
   // ── RATE LIMIT CHECK ──────────────────────────────────────────────────────
-  const toList = Array.isArray(params.to) ? params.to : [params.to];
-  const recipientCount = toList.length;
   const { blocked, reason } = checkRateLimits(recipientCount, params.subject, params.budget);
   if (blocked) {
     log.error(`BLOCKED by rate limiter, ${reason}`);
-    // In production, this would ideally fire a Sentry alert or admin notification.
     try { const Sentry = await import("@sentry/node"); Sentry.captureMessage(`Email rate limit hit: ${reason}`, "error"); } catch {}
-    return { id: null };
+    await record("blocked", reason);
+    logAttempt("rate_limited", params.template, recipientCount, params.budget);
+    return { id: null, status: "rate_limited" };
   }
-  // Record send before dispatching (optimistic, prevents races)
-  recordSend(recipientCount, params.budget);
+  // The hour is counted only after Resend accepts. A provider error must not burn it.
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
@@ -380,18 +453,21 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     // params.replyTo is intentionally ignored. All replies route through
     // the Connect form on the site instead of into a personal inbox.
     void params.replyTo;
-    
+
+    await record("queued");
+
     // Wrap content with branded template unless the caller already did.
     // Then rewrite any retired-domain links still sitting in the body
     // (stored drafts, forum excerpts, a blog URL baked into markdown).
     let processedHtml = rewriteLegacySiteUrls(skipBrandedWrap ? html : wrapWithBrandedTemplate(html));
-    
-    // Add tracking if emailLogId is provided
+
+    // Tracking stays on the caller's pre-created row only. Rows this function
+    // inserts are a ledger, not a new click wrapper.
     if (emailLogId) {
       processedHtml = wrapLinksWithTracking(processedHtml, emailLogId);
       processedHtml = addTrackingPixel(processedHtml, emailLogId);
     }
-    
+
     const response = await getResend().emails.send({
       from,
       to: Array.isArray(to) ? to : [to],
@@ -401,24 +477,23 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       // Connect form (https://regencivics.earth/connect) so they land
       // in admin as form submissions, not as inbox emails.
     });
-    
-    if (response.error) {
-      log.error('Failed to send', undefined, { responseError: response.error });
-      return { id: null };
-    }
-    
-    log.info('Sent successfully', { messageId: response.data?.id });
 
-    // If the caller pre-created a log row, stamp the Resend message id on it so
-    // the delivery webhook can match the exact row later.
-    if (emailLogId && response.data?.id) {
-      const { setEmailLogResendId } = await import("../emailTracking");
-      void setEmailLogResendId(emailLogId, response.data.id);
+    if (response.error || !response.data?.id) {
+      const detail = response.error ? JSON.stringify(response.error).slice(0, 500) : "Resend returned no id";
+      log.error("Failed to send", undefined, { responseError: response.error ?? null });
+      await record("failed", detail);
+      logAttempt("provider_error", template, recipientCount, params.budget);
+      return { id: null, status: "provider_error" };
     }
 
-    // Return tracking data for logging
+    recordSend(recipientCount, params.budget);
+    await record("sent", undefined, response.data.id);
+    log.info("Sent successfully", { messageId: response.data.id });
+    logAttempt("sent", template, recipientCount, params.budget);
+
     return {
-      id: response.data?.id || null,
+      id: response.data.id,
+      status: "sent",
       trackingData: {
         recipientEmail: Array.isArray(to) ? to[0] : to,
         recipientName,
@@ -426,12 +501,15 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
         template,
         inquiryType,
         inquiryId,
-        emailLogId,
+        emailLogId: logIds[0] ?? emailLogId,
       },
     };
   } catch (error) {
-    log.error('Error sending email', error);
-    return { id: null };
+    log.error("Error sending email", error);
+    const detail = error instanceof Error ? error.message : "send threw";
+    await record("failed", detail);
+    logAttempt("provider_error", params.template, recipientCount, params.budget);
+    return { id: null, status: "provider_error" };
   }
 }
 
