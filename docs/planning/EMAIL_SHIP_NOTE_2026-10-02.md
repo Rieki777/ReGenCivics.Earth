@@ -1,6 +1,6 @@
 # Email ship note (2026-10-02)
 
-Wave 0 is on `main` as `0702aa01` (#192). This branch is the season rollup only. Nothing else from this note is deployed. Migration `0284` is in that squash and has not been applied here. Migration `0285` is on the webhook pull request. No letter was sent to a real inbox. `RESEND_API_KEY` is not set in this environment, so there was no Resend test send.
+Wave 0 is on `main` as `0702aa01` (#192). The webhook migration `0285` is on `main` as `62d7f756` (#194). Owner alerts through `sendEmail` are on `main` as `c3c5cf93` (#196). This branch is the season rollup only, rebased onto that main. Migration `0284` is in the Wave 0 squash and has not been applied here. No letter was sent to a real inbox. `RESEND_API_KEY` is not set in this environment, so there was no Resend test send.
 
 ## This pull request
 
