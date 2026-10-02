@@ -1007,7 +1007,7 @@ export const emailLogs = mysqlTable("email_logs", {
   template: varchar("template", { length: 100 }),
   inquiryType: varchar("inquiryType", { length: 50 }), // project, investor, alliance, etc.
   inquiryId: int("inquiryId"), // Reference to the inquiry
-  status: mysqlEnum("status", ["sent", "delivered", "bounced", "failed", "queued", "held", "blocked"]).default("sent").notNull(),
+  status: mysqlEnum("status", ["sent", "delivered", "bounced", "failed", "queued", "held", "blocked", "complained"]).default("sent").notNull(),
   sentAt: timestamp("sentAt").defaultNow().notNull(),
   deliveredAt: timestamp("deliveredAt"),
   openedAt: timestamp("openedAt"),
@@ -1022,6 +1022,17 @@ export const emailLogs = mysqlTable("email_logs", {
 
 export type EmailLog = typeof emailLogs.$inferSelect;
 export type InsertEmailLog = typeof emailLogs.$inferInsert;
+
+/** One row per Svix delivery so a Resend retry does not apply twice. */
+export const emailWebhookEvents = mysqlTable("email_webhook_events", {
+  id: int("id").primaryKey().autoincrement(),
+  svixId: varchar("svixId", { length: 255 }).notNull(),
+  eventType: varchar("eventType", { length: 64 }).notNull(),
+  resendEmailId: varchar("resendEmailId", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("email_webhook_events_svix_idx").on(table.svixId),
+]);
 
 
 /**
