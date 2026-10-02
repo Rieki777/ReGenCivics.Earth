@@ -68,6 +68,7 @@ Everything else in `docs/planning/` is a dated audit, research note, brief, outr
 - `docs/IMAGE_ARCHITECTURE.md`, `docs/IMAGE_UPLOAD_PROCESS.md`, `docs/image-management.md`: the image pipeline.
 - `docs/COORDINATION_ENGINE_WORKFLOW.md`: canonical current-state workflow of the coordination engine.
 - `docs/EVENT_FLOW_OVERVIEW.md`: events, reminders and schedule.
+- `docs/planning/EMAIL_COMMS_AUDIT_2026-10-02.md`: as-built audit of outbound mail (send sites, schedulers, preferences, the hourly cap). Read before changing `server/_core/email.ts` or any send path.
 - `docs/SHIP_VARIABLES.md`: every ReGen Ship price, policy and setting, and where to change it.
 - `docs/GAME_GENERATION.md`: the standing prompt that turns a custom game blueprint into content.
 - `docs/CO_CREATORS_GUIDE.md`: draft guide for co-creators.
