@@ -26,6 +26,7 @@ type BrowserSpeechRecognition = {
   start: () => void;
   stop: () => void;
   abort: () => void;
+  onstart: (() => void) | null;
   onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
   onerror: ((event: { error?: string }) => void) | null;
   onend: (() => void) | null;
@@ -121,12 +122,38 @@ function joinSpeechPieces(parts: string[]): string {
   return acc;
 }
 
+type SpeechResultList = ArrayLike<SpeechRow> & {
+  item?: (index: number) => SpeechRow | null;
+};
+
+/** Index first, then item(), so a host list that hides [i] still yields the phrase. */
+function rowAt(results: SpeechResultList, index: number): SpeechRow | undefined {
+  const direct = results[index];
+  if (direct) return direct;
+  try {
+    return results.item?.(index) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Chrome throws InvalidStateError when start() is called on a recognizer that
+ * is already running. Any other throw means listening never began.
+ */
+function isAlreadyRunning(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const name = "name" in err ? String(err.name) : "";
+  const message = "message" in err ? String(err.message) : "";
+  return name === "InvalidStateError" || /already started/i.test(message);
+}
+
 /** Rebuild the whole session utterance so a newer interim replaces the preview. */
-function collectSpeech(results: ArrayLike<SpeechRow>): { interim: string; spoken: string } {
+function collectSpeech(results: SpeechResultList): { interim: string; spoken: string } {
   const finalParts: string[] = [];
   const interimParts: string[] = [];
   for (let i = 0; i < results.length; i++) {
-    const row = results[i];
+    const row = rowAt(results, i);
     const text = readTranscript(row);
     if (!text.trim()) continue;
     if (row?.isFinal) finalParts.push(text);
@@ -182,6 +209,14 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   const emittedRef = useRef(value);
   /** False while a session is ending, so a late result cannot insert the phrase twice. */
   const acceptResultsRef = useRef(true);
+  /** True only after the browser fires onstart. A start() that never opens must not keep the ring on. */
+  const engineOpenRef = useRef(false);
+  /** Set when onend gives up, so the caller does not paint Listening over that failure. */
+  const engineDiedRef = useRef(false);
+  const startedAtRef = useRef(0);
+  const spanHadResultRef = useRef(false);
+  /** Consecutive instant ends with no transcript. Two of those is a dead recognizer, not a pause. */
+  const rapidEmptyRef = useRef(0);
   const sessionRef = useRef<{
     base: string;
     start: number;
@@ -303,9 +338,20 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     rec.continuous = true;
     rec.interimResults = true;
     rec.lang = lang;
+    rec.onstart = () => {
+      if (!liveRef.current) return;
+      engineOpenRef.current = true;
+      startedAtRef.current = Date.now();
+      setState("listening");
+      setBlockedHelp(false);
+    };
     rec.onresult = (event) => {
       if (!liveRef.current || !acceptResultsRef.current) return;
       const { interim: nextInterim, spoken } = collectSpeech(event.results);
+      if (spoken.trim()) {
+        spanHadResultRef.current = true;
+        rapidEmptyRef.current = 0;
+      }
       engineRef.current.applyCollected(spoken, nextInterim);
     };
     rec.onerror = (event) => {
@@ -327,23 +373,51 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     };
     rec.onend = () => {
       if (!liveRef.current) return;
+      const wasOpen = engineOpenRef.current;
+      engineOpenRef.current = false;
       // Chrome ends the recognizer on a pause and the last phrase is often
       // still interim. Commit it before restart or the Ask field stays empty.
       acceptResultsRef.current = false;
       engineRef.current.commitSession();
       setInterim("");
-      if (wantRef.current && recRef.current === rec) {
-        try {
-          rec.start();
-          acceptResultsRef.current = true;
-          setState("listening");
-        } catch {
-          wantRef.current = false;
-          setState("idle");
-        }
+      if (!wantRef.current || recRef.current !== rec) {
+        setState((current) => (current === "denied" ? current : "idle"));
         return;
       }
-      setState((current) => (current === "denied" ? current : "idle"));
+      // start() returned, but the engine never opened. Restarting here spins
+      // the green ring while onresult never fires and the field stays empty.
+      if (!wasOpen) {
+        engineDiedRef.current = true;
+        wantRef.current = false;
+        setState("idle");
+        setError(DICTATION_GENERIC_ERROR);
+        return;
+      }
+      const emptyBurst = !spanHadResultRef.current && (Date.now() - startedAtRef.current) < 400;
+      spanHadResultRef.current = false;
+      if (emptyBurst) {
+        rapidEmptyRef.current += 1;
+        if (rapidEmptyRef.current >= 2) {
+          engineDiedRef.current = true;
+          wantRef.current = false;
+          setState("idle");
+          setError(DICTATION_GENERIC_ERROR);
+          return;
+        }
+      } else {
+        rapidEmptyRef.current = 0;
+      }
+      try {
+        engineDiedRef.current = false;
+        rec.start();
+        if (engineDiedRef.current || !wantRef.current) return;
+        acceptResultsRef.current = true;
+        setState("listening");
+      } catch {
+        wantRef.current = false;
+        setState("idle");
+        setError(DICTATION_GENERIC_ERROR);
+      }
     };
     recRef.current = rec;
     return () => {
@@ -383,6 +457,23 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     setBlockedHelp(true);
   }, []);
 
+  const armEngine = useCallback((): "started" | "already" | "failed" => {
+    const rec = recRef.current;
+    if (!rec) return "failed";
+    // Already-open session (start() threw because recognition is running):
+    // keep its base so the phrase is not inserted a second time.
+    if (!sessionRef.current || !acceptResultsRef.current) engineRef.current.beginSession();
+    engineDiedRef.current = false;
+    try {
+      rec.start();
+    } catch (err) {
+      if (isAlreadyRunning(err)) return "already";
+      return "failed";
+    }
+    if (engineDiedRef.current || !wantRef.current) return "failed";
+    return "started";
+  }, []);
+
   const start = useCallback(async () => {
     if (disabled) return;
     rememberCaret();
@@ -404,15 +495,28 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     // flash the modal closed when permission is still denied.
     wantRef.current = true;
 
+    // Start in this turn, before permissions.query. Awaiting first drops
+    // Chrome's click gesture: start() then ends immediately, onresult never
+    // fires, and the old catch still painted Listening on the empty field.
+    const armed = armEngine();
+    if (armed === "started" || armed === "already") {
+      setState("listening");
+      setBlockedHelp(false);
+    }
+
     const permission = await queryMicrophonePermission();
     if (!liveRef.current || !wantRef.current) return;
     if (permission === "denied") {
+      wantRef.current = false;
+      try { recRef.current?.abort(); } catch { /* not running */ }
       markDenied();
       return;
     }
 
-    // Prompt (or unknown Permissions API): ask via getUserMedia so Chromium
-    // can still show Allow, then hand off to Web Speech.
+    if (armed === "started" || armed === "already") return;
+
+    // Prompt (or unknown Permissions API) and the recognizer did not start:
+    // ask via getUserMedia so Chromium can still show Allow, then try once more.
     if (permission === "prompt" || permission === "unknown") {
       const access = await requestMicrophoneAccess();
       if (!liveRef.current || !wantRef.current) return;
@@ -422,19 +526,17 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       }
     }
 
-    if (!recRef.current) return;
-    // Already-open session (start() threw because recognition is running):
-    // keep its base so the phrase is not inserted a second time.
-    if (!sessionRef.current || !acceptResultsRef.current) engineRef.current.beginSession();
-    try {
-      recRef.current.start();
-      setState("listening");
+    const retry = armEngine();
+    if (retry === "failed") {
+      wantRef.current = false;
+      setState("idle");
+      setError(DICTATION_GENERIC_ERROR);
       setBlockedHelp(false);
-    } catch {
-      setState("listening");
-      setBlockedHelp(false);
+      return;
     }
-  }, [disabled, markDenied, rememberCaret, supported, targetRef]);
+    setState("listening");
+    setBlockedHelp(false);
+  }, [armEngine, disabled, markDenied, rememberCaret, supported, targetRef]);
 
   const toggle = useCallback(() => {
     if (wantRef.current || state === "listening") stop();
