@@ -40,10 +40,10 @@ import { APP_BASE_URL, sendEmail } from "../_core/email";
 import { communityTopicForAudience, resolveAutoReminderRecipients } from "../jobs/eventReminders";
 import { managePreferencesUrl } from "./emailPrefs";
 import { SESSION_TIME_ZONE, zoneName } from "@shared/sessionClock";
+import { isAlwaysIncluded } from "./reminderAlwaysInclude";
 import {
   ALWAYS_INCLUDED_FOOTER_TEXT,
   ALWAYS_INCLUDED_STOP_PATH,
-  isAlwaysIncluded,
   parseOffsetMinutes,
 } from "@shared/eventAutoReminders";
 import { newsletterLegalFooterHtml } from "@shared/letterHtml";

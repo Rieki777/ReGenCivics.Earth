@@ -9,6 +9,7 @@
  */
 import { sql } from "drizzle-orm";
 import { getDb } from "../db";
+import { textForEmail, textForSubject } from "../../shared/htmlText";
 
 /**
  * The same rule the settings page reads, in SQL. Mirrors
@@ -80,10 +81,10 @@ export async function notifyGovernanceSubscribers(subject: string, html: string)
 export async function notifySubscribersOfReadyProposals(rows: { id: number; title: string; aim: string | null }[]): Promise<void> {
   if (rows.length === 0) return;
   const items = rows
-    .map((p) => `<li><strong>${p.title}</strong>${p.aim ? ` (aim: ${p.aim})` : ""}</li>`)
+    .map((p) => `<li><strong>${textForEmail(p.title)}</strong>${p.aim ? ` (aim: ${textForEmail(p.aim)})` : ""}</li>`)
     .join("");
   await notifyGovernanceSubscribers(
-    rows.length === 1 ? `Ready to launch: ${rows[0].title}` : `${rows.length} proposals are ready to launch`,
+    rows.length === 1 ? `Ready to launch: ${textForSubject(rows[0].title)}` : `${rows.length} proposals are ready to launch`,
     `<p>Last call passed quietly. ${rows.length === 1 ? "This proposal is" : "These proposals are"} ready for the binding vote on Hypha:</p>
      <ul>${items}</ul>
      <p><a href="https://regencivics.earth/assembly">Open the Assembly</a> to launch or read the full trail.</p>

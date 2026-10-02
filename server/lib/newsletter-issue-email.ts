@@ -26,6 +26,7 @@ import {
   outboundWriteContentReady,
 } from "../../shared/outboundWriteFill";
 import { managePreferencesUrl, previewManagePreferencesUrl, verifyPrefsToken } from "./emailPrefs";
+import { adminMayOperateIssue } from "../../shared/postSessionLetter";
 import { parseAudienceList, type OutboundAudienceList } from "../../shared/outboundHistory";
 import type { LetterDocumentExtras } from "../../shared/letterHtml";
 import {
@@ -169,7 +170,7 @@ export async function buildIssuePreview(params: {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const [issue] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, params.issueId)).limit(1);
-  if (!issue || issue.createdBy !== params.createdBy) throw new Error("Issue not found.");
+  if (!issue || !adminMayOperateIssue(issue, params.createdBy)) throw new Error("Issue not found.");
   if (issue.status === "sending" || issue.status === "sent") {
     throw new Error("This letter is already sending or sent. Open History.");
   }
@@ -239,7 +240,7 @@ async function loadIssue(issueId: number): Promise<NewsletterIssue> {
 }
 
 function assertOwned(issue: NewsletterIssue, createdBy: number) {
-  if (issue.createdBy !== createdBy) throw new Error("Issue not found.");
+  if (!adminMayOperateIssue(issue, createdBy)) throw new Error("Issue not found.");
 }
 
 async function replayIfKeyTaken(
@@ -508,7 +509,6 @@ export async function cancelScheduledIssue(params: {
   }).where(and(
     eq(newsletterIssues.id, issue.id),
     eq(newsletterIssues.status, "scheduled"),
-    eq(newsletterIssues.createdBy, params.createdBy),
   ));
   if (asMutationResult(claimed).affectedRows === 0) {
     throw new Error("That letter is not waiting to send.");
