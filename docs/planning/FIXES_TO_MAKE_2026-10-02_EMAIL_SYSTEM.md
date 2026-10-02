@@ -108,7 +108,7 @@ Each fix lands with a test that fails on the old code: a named control, never a 
 | C-1 | One `sendEmail` that always writes a ledger row: template, category, idempotency key, attempts, and a status of queued, sending, sent, failed, or skipped with its reason. It returns an honest result | planned | |
 | C-2 | A durable queue drained by one job. Resend's `Idempotency-Key` is the row key. Bulk sends use the batch API (100 per call, no attachments). Failures retry with backoff, then go to a dead-letter list Admin can see | planned | |
 | C-3 | The in-memory limiter stays only as a safety fuse. The queue paces sends to the provider's limits, and mail past a limit waits instead of being dropped | planned | |
-| C-4 | `scripts/check-one-mail-door.mjs`: CI fails if any code calls Resend outside the door | planned | |
+| C-4 | `scripts/check-one-mail-door.mjs`: CI fails if any code calls Resend outside the door | coded | `scripts/check-one-mail-door.mjs` allows only `server/_core/email.ts` to import the SDK, construct the client, call `emails.send`, or name the provider host. Wired in `.github/workflows/ci.yml`. Not VERIFIED. |
 | C-5 | Preview equals send: every admin preview calls the real renderer (the event reminder preview is a JSX lookalike today, `AdminEventsTab.tsx:554-579`). "Send me a test" in every composer | planned | |
 | C-6 | A plain-text part and a preheader on every email | planned | |
 | C-7 | The four email schedulers fold into one due-send table drained by the queue | planned | |
