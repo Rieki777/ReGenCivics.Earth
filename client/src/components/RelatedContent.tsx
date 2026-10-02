@@ -5,6 +5,7 @@
 import { Link } from "wouter";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { COOP } from "@shared/fund";
+import { APPLICATIONS, APPLICATIONS_SHORT, APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
 
 // The first sentence of the crowdpool lane's binding wording (Phase 0 spec),
 // short enough for a two-line card.
@@ -149,7 +150,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   seasons: {
     pages: [
       { href: "/schedule#follow-along", title: "Follow Along Live", description: "Watch Season 2 live, and crowdpool with the cohort if your project is ready." },
-      { href: "/apply", title: "Apply Anytime", description: "Season 2 applications are closed. Apply anytime for the next season of the incubator." },
+      { href: "/apply", title: APPLICATIONS.reviewing ? APPLY_BUTTON_LABEL : "Apply Anytime", description: APPLICATIONS.reviewing ? `${APPLICATIONS_SHORT}.` : "Season 2 applications are closed. Apply anytime for the next season of the incubator." },
       { href: "/game", title: "Play the Game", description: "Start contributing as a player while you prepare your application." },
     ],
     blog: { slug: "how-to-apply-for-season-2", title: "How to Apply for Season 2", excerpt: "Complete guide to the application process, requirements, and timeline." },

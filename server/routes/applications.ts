@@ -11,7 +11,7 @@ import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { sendEmail, toAbsoluteUrl } from "../_core/email";
 import { currentIncubatorSeason } from "../../shared/incubatorSeason";
-import { applicationCopy, FOLLOW_ALONG_HREF, FOLLOW_ALONG_LINE, intakeStatus } from "../../shared/applicationWindow";
+import { ACCEPTANCE_LINE, applicationCopy, FOLLOW_ALONG_HREF, FOLLOW_ALONG_LINE, intakeStatus } from "../../shared/applicationWindow";
 import { READINESS_HREF } from "../../shared/crowdpoolReadiness";
 import { isAdminRole } from "@shared/adminRole";
 import {
@@ -239,7 +239,11 @@ export const applicationsRouter = router({
               <p>Hi ${applicantName},</p>
               <p>Thank you for applying to the <strong>ReGen Civics Incubator</strong>! We have received your application for <strong>${application.projectName}</strong> and our team will review it carefully.</p>
               <h3>What happens next?</h3>
-              ${intake.reviewing ? `<ol>
+              ${intake.rolling ? `<ol>
+                <li><strong>Review:</strong> We review applications as they come in and email you our decision.</li>
+                <li><strong>What acceptance means:</strong> ${ACCEPTANCE_LINE}</li>
+                <li><strong>Season ${intake.openSeason} is live now:</strong> find the weekly time, the sessions and the recordings on the <a href="${toAbsoluteUrl("/season-schedule")}">Season Schedule</a>.</li>
+              </ol>` : intake.reviewing ? `<ol>
                 <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the ReGenerative Renaissance mission.</li>
                 <li><strong>Invitation to Connect:</strong> If your project is a strong fit, we will reach out to schedule a call.</li>
                 <li><strong>Season Decision:</strong> Final decisions are communicated before the season kickoff.</li>

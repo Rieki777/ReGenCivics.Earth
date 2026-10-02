@@ -20,7 +20,7 @@ Church of the Regenerative Earth (CORE) is the church and operating entity. ReGe
 ## Four Paths Into ReGen Civics
 
 ### Land Project Path
-Regenerative land projects apply for the 13-week incubator program. Projects build governance structures, design their economic game, access alliance support, and launch a crowdpool with their cohort. Season 2 began in September 2026. Its applications closed September 11, 2026. Anyone can follow Season 2 live, and land projects that are ready can join its community crowdpooling round with the cohort, which has room for far more than 13 projects. Land projects can apply anytime; each year's applications are reviewed from the June solstice to about September 10, for the Season that opens at the September equinox.
+Regenerative land projects apply for the 13-week incubator program. Projects build governance structures, design their economic game, access alliance support, and launch a crowdpool with their cohort. Season 2 began in September 2026. Its first round of applications closed September 11, 2026, and from October 1 to December 21, 2026, when its crowdpooling round opens, Season 2 takes applications again on a rolling basis; being accepted means a project meets the minimum criteria to take part in crowdpooling. Anyone can follow Season 2 live, and land projects that are ready can join its community crowdpooling round with the cohort, which has room for far more than 13 projects. Land projects can apply anytime; each year's applications are reviewed from the June solstice to about September 10, for the Season that opens at the September equinox.
 
 ### Contributor Path
 Contributors back land projects through crowdpooling. Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.
@@ -130,7 +130,7 @@ The year turns through four seasons named for what they are for, loosely followi
 Each solstice and equinox holds a recap and passoff; the September one is the Handoff Festival. Timelines are loose in this first full turn. Details: https://regencivics.earth/seasons
 
 ### Season 2 Incubator (September to December 2026)
-The 13-week Design Season for regenerative land projects: Selection Day; the incubator overview; game and organisation co-creation; Game Guides and economic systems; growing your village; the ReGen Civics ecosystem; tokenomics; legal structures; coordination and minimum viable economies; and, in week 13, the shared crowdpool launch, which community projects that are ready can join too. Anyone can follow the sessions live. Land projects can apply anytime; applications are reviewed from the June solstice to about September 10.
+The 13-week Design Season for regenerative land projects: Selection Day; the incubator overview; game and organisation co-creation; Game Guides and economic systems; growing your village; the ReGen Civics ecosystem; tokenomics; legal structures; coordination and minimum viable economies; and, in week 13, the shared crowdpool launch, which community projects that are ready can join too. Anyone can follow the sessions live. Land projects can apply anytime; applications are reviewed from the June solstice to about September 10, and Season 2 also takes them on a rolling basis from October 1 to December 21, 2026.
 
 Projects receive mentorship, technical support, and help preparing their crowdpools.
 

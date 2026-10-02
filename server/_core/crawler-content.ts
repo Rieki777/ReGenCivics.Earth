@@ -28,7 +28,7 @@ import { COOP, COOP_LINEAGE_HEADING } from "../../shared/fund";
 import { NEEDS_SECTION, SITE_TAGLINE } from "../../shared/siteCopy";
 import { CROWDPOOLING_WORDING } from "../lib/content-canon";
 import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/regenYear";
-import { APPLICATIONS_STATUS } from "../../shared/applicationWindow";
+import { ACCEPTANCE_LINE, APPLICATIONS, APPLICATIONS_HEADLINE, APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
 import { getNetworkFeed } from "../lib/network-feed";
 import { serverCurrencyFormatter } from "../lib/currency-format";
@@ -403,7 +403,9 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
       <article>
         <h1>Season Two: thirteen seats, selected on the Equinox</h1>
         <p>Season Two selects thirteen regenerative land projects across every stage, scale, and approach to regeneration. The cohort builds its models together, then launches, with every community project that is ready, into one shared crowdpooling campaign where the world decides what to pool into. Projects that graduate become the foundation of what the cooperative is being designed to steward.</p>
-        <p><strong>Season Two applications are closed.</strong> You can follow along live, and you can apply for the next season at any time: applications are held, and no emails go out about them until the next season is closer.</p>
+        ${APPLICATIONS.rolling
+          ? `<p><strong>${escapeHtml(APPLICATIONS_HEADLINE)}</strong> ${escapeHtml(ACCEPTANCE_LINE)}</p>`
+          : `<p><strong>Season Two applications are closed.</strong> You can follow along live, and you can apply for the next season at any time: applications are held, and no emails go out about them until the next season is closer.</p>`}
         <h2>How a season works</h2>
         <ul>
           <li><strong>Selected.</strong> A season council of players from past seasons picks thirteen projects on the Equinox, built for range across maturity, scale, and approach.</li>

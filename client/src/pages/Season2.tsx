@@ -79,6 +79,7 @@ import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
 import { ApplicationsNotice } from "@/components/ApplicationsNotice";
 import {
+  ACCEPTANCE_LINE,
   APPLICATIONS,
   APPLICATIONS_HELD,
   APPLICATIONS_SHORT,
@@ -531,10 +532,18 @@ const SELECTION: {
   body: string;
   cta?: { href: string; label: string; external?: boolean };
 }[] = [
-  {
-    title: "Applications closed September 11th",
-    body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took ${SEASON_ONE_FACTS.selected} projects out of the ${SEASON_ONE_FACTS.applied} that applied, after ${SEASON_ONE_FACTS.presented} presented. ${APPLICATIONS_HELD}`,
-  },
+  // Rye, 2026-10-01: Season Two takes applications again, rolling, until its
+  // crowdpooling round opens (shared/applicationWindow.ts).
+  APPLICATIONS.rolling
+    ? {
+        title: `Applications are open again, until ${APPLICATIONS.closesOn}`,
+        body: `The first round closed September 11th, and the cohort began on Selection Day. Season One took ${SEASON_ONE_FACTS.selected} projects out of the ${SEASON_ONE_FACTS.applied} that applied, after ${SEASON_ONE_FACTS.presented} presented. Season Two applications are open again on a rolling basis until the crowdpooling round opens on ${APPLICATIONS.closesOn}, and we review them as they come in. ${ACCEPTANCE_LINE}`,
+        cta: { href: "/season-schedule", label: "See the Season Schedule" },
+      }
+    : {
+        title: "Applications closed September 11th",
+        body: `Season Two applications closed September 11th. Every project that applied was taken seriously regardless of scale, geography, or stage. Season One took ${SEASON_ONE_FACTS.selected} projects out of the ${SEASON_ONE_FACTS.applied} that applied, after ${SEASON_ONE_FACTS.presented} presented. ${APPLICATIONS_HELD}`,
+      },
   {
     title: "Shortlisted projects make a pitch video",
     body: "All projects are scored, and we let shortlisted projects know by September 5th, or sooner if you apply early. Shortlisted projects then have until September 14th to submit a short pitch video telling their story, so about nine days to finalize it. We encourage making one in advance since it is a great thing to have anyway. We share every pitch video publicly to give your project exposure, unless you ask us not to.",
@@ -1953,16 +1962,39 @@ export default function Season2() {
               .
             </FaqItem>
             <FaqItem q="Can I still apply, and when does the season start?">
-              Season Two applications closed September 11th. Shortlisted projects
-              sent in their pitch videos by September 14th, and Season Two begins
-              on the Equinox with a selection day held in public, where a season
-              council of members from previous seasons' projects picks the 13
-              projects. {APPLICATIONS_HELD}
+              {APPLICATIONS.rolling ? (
+                <>
+                  Yes. Season Two began on the Equinox with a selection day held
+                  in public, and its sessions are running now. Applications are
+                  open again on a rolling basis until the crowdpooling round opens
+                  on {APPLICATIONS.closesOn}, and we review them as they come in.{" "}
+                  {ACCEPTANCE_LINE}{" "}
+                  <Link href="/season-schedule" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                    See the Season Schedule
+                  </Link>
+                  .
+                </>
+              ) : (
+                <>
+                  Season Two applications closed September 11th. Shortlisted projects
+                  sent in their pitch videos by September 14th, and Season Two begins
+                  on the Equinox with a selection day held in public, where a season
+                  council of members from previous seasons' projects picks the 13
+                  projects. {APPLICATIONS_HELD}
+                </>
+              )}
             </FaqItem>
             <FaqItem q="Can my project crowdpool with the cohort if it isn't selected?">
               Yes.{" "}
+              {APPLICATIONS.rolling && (
+                <>
+                  Apply while Season Two applications are open, until{" "}
+                  {APPLICATIONS.closesOn}: being accepted means your project meets
+                  the minimum criteria to take part in crowdpooling. Then{" "}
+                </>
+              )}
               <Link href={FOLLOW_ALONG_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
-                Follow along live
+                {APPLICATIONS.rolling ? "follow along live" : "Follow along live"}
               </Link>{" "}
               through the Design Season. {CROWDPOOL_ROUND_LINE}{" "}
               <Link href={READINESS_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">

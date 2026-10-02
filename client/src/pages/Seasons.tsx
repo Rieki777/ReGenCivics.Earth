@@ -10,7 +10,8 @@
  * different four-season models at once (the hero, the rhythm cards, and a
  * "project growth cycle"). Rye's rulings that day: the incubator is the Design
  * Season (winter); the seasons go by Design, Resource, Build, and Rest; the
- * timelines are loose this first year; Season 2 applications are closed.
+ * timelines are loose this first year; Season 2 applications are closed (they
+ * reopened, rolling, on 2026-10-01: shared/applicationWindow.ts).
  * The seasons now come from shared/regenYear.ts, Season 2's weeks from
  * shared/season2Curriculum.ts, its dates from shared/sessionClock.ts, and every
  * word about the cooperative from COOP in shared/fund.ts (the old FUND export

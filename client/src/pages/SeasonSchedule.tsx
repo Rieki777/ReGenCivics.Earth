@@ -9,7 +9,9 @@
  * the page reads ACTIVE_SEASON and that Season's entry in SEASON_SCHEDULES, so
  * its copy stays general and the invitation email carries the moment's story.
  *
- * Forked from /interop-sessions (Rye, 2026-09-28).
+ * Forked from /interop-sessions (Rye, 2026-09-28). Since 2026-10-01 it is also
+ * where people sign up for the season: the join section reads the intake from
+ * shared/applicationWindow.ts, so it says the same thing as /apply and /season2.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -22,7 +24,16 @@ import { LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
 import { CALENDAR_FEEDS, formatLocalDate, formatLocalDateShort, formatLocalTime, formatStartWithReference } from "@/lib/calendarLinks";
 import { trpc } from "@/lib/trpc";
 import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
+import { Link } from "wouter";
 import { SEEDS_YOUTUBE_URL } from "@shared/sessionLinks";
+import {
+  ACCEPTANCE_LINE,
+  APPLICATIONS,
+  APPLICATIONS_HEADLINE,
+  APPLICATIONS_STATUS,
+  APPLY_BUTTON_LABEL,
+} from "@shared/applicationWindow";
+import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 import {
   ACTIVE_SEASON,
   SEASON_FACILITATION_MAX,
@@ -155,6 +166,8 @@ export default function SeasonSchedule() {
   const revealed = data?.revealed ?? false;
   const revealAt = data?.revealNamesAt ?? config.revealNamesAt;
   const decided = data?.decided ?? false;
+  // Whether this Season is the one taking applications right now ("Season 2").
+  const applyingThisSeason = APPLICATIONS.reviewing && season === `Season ${APPLICATIONS.openSeason}`;
   const leader = anyVotes && data?.leader ? offered.find((o) => o.key === data.leader) ?? null : null;
   const leaderShare = leader ? tally.get(leader.key)?.share ?? 0 : 0;
   // A different time leads and is waiting out its day before the Season moves.
@@ -257,7 +270,7 @@ export default function SeasonSchedule() {
     <PageWrapper>
       <SEO
         title="Season Schedule | ReGen Civics"
-        description={`The land projects pick when ${config.name} meets each week. Tap every time that works for your project; the time most projects can make becomes the Season's time, and it keeps following the vote.`}
+        description={`Sign up for ${config.name} and vote on when it meets each week. Tap every time that works for your project; the time most projects can make becomes the Season's time, and it keeps following the vote.`}
         url="https://regencivics.earth/season-schedule"
       />
 
@@ -296,6 +309,63 @@ export default function SeasonSchedule() {
                 </div>
               )}
             </header>
+          </AnimatedSection>
+
+          {/* Signing up for the season (Rye, 2026-10-01): applications roll until
+              the crowdpooling round opens, and being accepted is the bar for
+              crowdpooling. Outside that window this says what /apply says. */}
+          <AnimatedSection>
+            <section id="join" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
+              <div className="flex items-center gap-3 mb-3">
+                <Sprout className="w-5 h-5 text-[#7dd87d]" />
+                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">Join the season</p>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                {applyingThisSeason ? `Sign up for ${config.name}` : `Follow ${config.name}`}
+              </h2>
+              {applyingThisSeason ? (
+                <>
+                  <p className="text-white/80 mb-3">{APPLICATIONS_HEADLINE}</p>
+                  <p className="text-white/75 mb-5">{ACCEPTANCE_LINE}</p>
+                </>
+              ) : (
+                <p className="text-white/75 mb-5">{APPLICATIONS_STATUS}</p>
+              )}
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/apply"
+                  className="inline-flex items-center gap-2 min-h-11 bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] px-4 py-2 rounded-xl font-semibold transition-colors text-sm"
+                >
+                  <Sprout className="w-4 h-4" />
+                  {APPLY_BUTTON_LABEL}
+                </Link>
+                <a
+                  href="#weeks"
+                  className="inline-flex items-center gap-2 min-h-11 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Add the season to your calendar
+                </a>
+                <a
+                  href="#catch-up"
+                  className="inline-flex items-center gap-2 min-h-11 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                >
+                  <Youtube className="w-4 h-4" />
+                  Watch sessions you missed
+                </a>
+                <Link
+                  href={READINESS_HREF}
+                  className="inline-flex items-center gap-2 min-h-11 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl font-medium transition-colors text-sm border border-white/20"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  What a project needs to crowdpool
+                </Link>
+              </div>
+              <p className="text-white/55 text-sm mt-4">
+                Already in? Vote on the weekly time below, and add the season to your calendar so every session lands
+                on it.
+              </p>
+            </section>
           </AnimatedSection>
 
           {/* The vote */}
@@ -543,7 +613,7 @@ export default function SeasonSchedule() {
 
           {/* The weeks ahead, as scheduled right now */}
           <AnimatedSection>
-            <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
+            <section id="weeks" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <Calendar className="w-5 h-5 text-[#7dd87d]" />
                 <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">The weeks ahead</p>
@@ -698,7 +768,7 @@ export default function SeasonSchedule() {
 
           {/* Catching up */}
           <AnimatedSection>
-            <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 md:p-8 mb-8">
+            <section id="catch-up" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 md:p-8 mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <Youtube className="w-5 h-5 text-[#e3ac4f]" />
                 <p className="text-[#e3ac4f] text-xs font-semibold tracking-[0.2em] uppercase">Catching up</p>

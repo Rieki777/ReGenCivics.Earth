@@ -17,6 +17,35 @@
  */
 const SEASON_3_STARTS = new Date("2026-09-22T00:00:00Z");
 
+/**
+ * Season 2 takes applications again, on a rolling basis, until its
+ * crowdpooling round opens (Rye, 2026-10-01). Being accepted means a project
+ * meets the minimum criteria to take part in crowdpooling; from there each
+ * village and project follows the live sessions, catches up on any it missed,
+ * and does the parts its project needs to join the round.
+ *
+ * The window closes at the end of the round's default opening day, December
+ * 21, 2026, on the US west coast (shared/crowdpoolCalendar.ts; a test keeps
+ * the two together). Applications from September 22 to 30 were stamped
+ * Season 3, under the 2026-09-24 ruling that had closed Season 2.
+ */
+export const SEASON_2_ROLLING = {
+  season: 2,
+  /** October 1, 2026, midnight Pacific. */
+  opens: new Date("2026-10-01T07:00:00Z"),
+  /** The end of December 21, 2026, Pacific. */
+  closes: new Date("2026-12-22T08:00:00Z"),
+  /** The day the crowdpooling round opens, for copy. */
+  closesOn: "December 21",
+} as const;
+
+/** True while Season 2 takes rolling applications. */
+export function season2Rolling(now: Date = new Date()): boolean {
+  const t = now.getTime();
+  return t >= SEASON_2_ROLLING.opens.getTime() && t < SEASON_2_ROLLING.closes.getTime();
+}
+
 export function currentIncubatorSeason(now: Date = new Date()): number {
-  return now < SEASON_3_STARTS ? 2 : 3;
+  if (now < SEASON_3_STARTS || season2Rolling(now)) return 2;
+  return 3;
 }

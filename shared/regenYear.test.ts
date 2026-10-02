@@ -9,6 +9,7 @@ import {
   regenSeasonSpan,
 } from "./regenYear";
 import {
+  ACCEPTANCE_LINE,
   APPLY_ANYTIME_LINE,
   CROWDPOOL_ROUND_LINE,
   FOLLOW_ALONG_LINE,
@@ -17,6 +18,8 @@ import {
   intakeStatus,
 } from "./applicationWindow";
 import { REGEN_LANDS, guessLandFromTimeZone } from "./regenYear";
+import { SEASON_2_ROLLING, currentIncubatorSeason } from "./incubatorSeason";
+import { defaultCrowdpoolOpening } from "./crowdpoolCalendar";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
 
@@ -102,7 +105,7 @@ describe("the wheel", () => {
         .toLowerCase();
       for (const word of banned) expect(text).not.toContain(word);
     }
-    for (const iso of ["2026-09-24", "2027-04-15", "2027-07-15"]) {
+    for (const iso of ["2026-09-24", "2026-10-15", "2027-04-15", "2027-07-15"]) {
       const copy = applicationCopy(intakeStatus(at(iso)));
       const status = [
         copy.status,
@@ -113,6 +116,7 @@ describe("the wheel", () => {
         FOLLOW_ALONG_LINE,
         NEXT_SEASON_LINE,
         CROWDPOOL_ROUND_LINE,
+        ACCEPTANCE_LINE,
       ]
         .join(" ")
         .toLowerCase();
@@ -191,6 +195,52 @@ describe("the intake follows the wheel", () => {
     expect(applicationCopy(s).buttonLabel).toBe("Apply for Season 3");
     expect(applicationCopy(s).short).toBe("Season 3 applications are open until September 10");
     expect(intakeStatus(at("2027-09-10")).reviewing).toBe(true);
+  });
+
+  it("takes Season 2 applications again, rolling, until its crowdpooling round opens", () => {
+    // Rye, 2026-10-01: open and rolling up to the crowdpooling event, and being
+    // accepted means a project meets the minimum criteria to crowdpool.
+    const s = intakeStatus(at("2026-10-15"));
+    expect(s).toMatchObject({ reviewing: true, rolling: true, openSeason: 2, closesOn: "December 21", followAlong: false });
+    const copy = applicationCopy(s);
+    expect(copy.headline).toBe(
+      "Season 2 applications are open and rolling until the crowdpooling round opens on December 21. We review them as they come in and email you as we go.",
+    );
+    expect(copy.status).toBe(`${copy.headline} ${ACCEPTANCE_LINE}`);
+    expect(copy.held).toBe(ACCEPTANCE_LINE);
+    expect(copy.short).toBe("Season 2 applications are open until December 21");
+    expect(copy.buttonLabel).toBe("Apply for Season 2");
+    expect(ACCEPTANCE_LINE).toMatch(/^Being accepted means your project meets the minimum criteria to take part in crowdpooling\./);
+
+    // From midnight Pacific on October 1 to the end of December 21, Pacific.
+    expect(intakeStatus(new Date("2026-10-01T06:59:59Z")).rolling).toBe(false);
+    expect(intakeStatus(new Date("2026-10-01T07:00:00Z")).rolling).toBe(true);
+    expect(intakeStatus(new Date("2026-12-22T07:59:59Z")).rolling).toBe(true);
+    expect(intakeStatus(new Date("2026-12-22T08:00:00Z"))).toMatchObject({
+      reviewing: false,
+      rolling: false,
+      closedSeason: 2,
+      openSeason: 3,
+      followAlong: true,
+    });
+  });
+
+  it("stamps applications Season 2 while it rolls, and Season 3 on either side", () => {
+    expect(currentIncubatorSeason(at("2026-09-21"))).toBe(2);
+    expect(currentIncubatorSeason(at("2026-09-25"))).toBe(3);
+    expect(currentIncubatorSeason(at("2026-10-15"))).toBe(2);
+    expect(currentIncubatorSeason(new Date("2026-12-22T07:59:59Z"))).toBe(2);
+    expect(currentIncubatorSeason(new Date("2026-12-22T08:00:00Z"))).toBe(3);
+  });
+
+  it("closes the rolling window with the crowdpooling round's default opening day", () => {
+    const round = defaultCrowdpoolOpening(at("2026-10-15"));
+    expect(round.seasonNumber).toBe(SEASON_2_ROLLING.season);
+    // The end of that day on the US west coast: midnight UTC plus 24 hours plus PST's 8.
+    expect(SEASON_2_ROLLING.closes.getTime()).toBe(round.date.getTime() + 32 * 3_600_000);
+    expect(round.date.toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" })).toBe(
+      SEASON_2_ROLLING.closesOn,
+    );
   });
 
   it("rolls over to the next Season by itself once review closes", () => {

@@ -31,9 +31,18 @@
  * the September equinox to the March equinox (the Design Season's live
  * sessions, then the Resource Season's crowdpooling) the held copy leads with
  * that, and says to apply for the next season if this one doesn't work out.
+ *
+ * Rye, 2026-10-01: Season 2 takes applications again, rolling, until its
+ * crowdpooling round opens on December 21 (SEASON_2_ROLLING in
+ * shared/incubatorSeason.ts, which also stamps those applications Season 2).
+ * Being accepted means a project meets the minimum criteria to take part in
+ * crowdpooling. While that window is open the status is `rolling`: review is
+ * open, and the copy says what acceptance means instead of promising a
+ * decision before the season starts, since the season is already running.
  */
 
 import { regenSeasonOn } from "./regenYear";
+import { SEASON_2_ROLLING, season2Rolling } from "./incubatorSeason";
 
 export const INTAKE_WINDOW = {
   /** Review opens with the Rest Season, the June solstice. */
@@ -50,6 +59,12 @@ export const INTAKE_WINDOW = {
 export type IntakeStatus = {
   /** True while the next Season's applications are being reviewed. */
   reviewing: boolean;
+  /**
+   * True while a Season that has already started takes applications on a
+   * rolling basis, until its crowdpooling round opens (Season 2, October 1 to
+   * December 21, 2026). `reviewing` is true then too.
+   */
+  rolling: boolean;
   /** The last Season whose applications closed. */
   closedSeason: number;
   /** The Season new applications are for. */
@@ -71,6 +86,16 @@ const MONTHS = [
 
 /** Where the intake stands at a moment. Pure, so tests can pass any date. */
 export function intakeStatus(now: Date = new Date()): IntakeStatus {
+  if (season2Rolling(now)) {
+    return {
+      reviewing: true,
+      rolling: true,
+      closedSeason: SEASON_2_ROLLING.season - 1,
+      openSeason: SEASON_2_ROLLING.season,
+      closesOn: SEASON_2_ROLLING.closesOn,
+      followAlong: false,
+    };
+  }
   const y = now.getUTCFullYear();
   const t = now.getTime();
   const opens = Date.UTC(y, INTAKE_WINDOW.opens.month - 1, INTAKE_WINDOW.opens.day);
@@ -85,6 +110,7 @@ export function intakeStatus(now: Date = new Date()): IntakeStatus {
   const season = regenSeasonOn(now);
   return {
     reviewing,
+    rolling: false,
     closedSeason,
     openSeason: closedSeason + 1,
     closesOn: `${MONTHS[INTAKE_WINDOW.closes.month - 1]} ${INTAKE_WINDOW.closes.day}`,
@@ -113,12 +139,25 @@ export const NEXT_SEASON_LINE =
 export const APPLY_ANYTIME_LINE =
   "You can apply anytime for the next season. We'll hold your application, and you won't get emails about it until we get closer to the start of the next season.";
 
+/**
+ * What being accepted means while a Season takes rolling applications (Rye,
+ * 2026-10-01).
+ */
+export const ACCEPTANCE_LINE =
+  "Being accepted means your project meets the minimum criteria to take part in crowdpooling. From there it's up to each village and project to follow along, join the sessions, watch any you missed, and do the parts your project needs to join the crowdpooling round.";
+
 /** Every line the site shows about applying, for a given status. */
 export function applicationCopy(s: IntakeStatus) {
   const closedLine = `Season ${s.closedSeason} applications are closed.`;
-  const openLine = `Season ${s.openSeason} applications are open until ${s.closesOn}. We review them as they come in and email you as we go.`;
-  /** What we say while applications are held, after the headline. */
-  const held = s.followAlong ? `${FOLLOW_ALONG_LINE} ${NEXT_SEASON_LINE}` : APPLY_ANYTIME_LINE;
+  const openLine = s.rolling
+    ? `Season ${s.openSeason} applications are open and rolling until the crowdpooling round opens on ${s.closesOn}. We review them as they come in and email you as we go.`
+    : `Season ${s.openSeason} applications are open until ${s.closesOn}. We review them as they come in and email you as we go.`;
+  /** What we say after the headline: while applications are held, or what acceptance means while they roll. */
+  const held = s.rolling
+    ? ACCEPTANCE_LINE
+    : s.followAlong
+      ? `${FOLLOW_ALONG_LINE} ${NEXT_SEASON_LINE}`
+      : APPLY_ANYTIME_LINE;
   return {
     closedLine,
     openLine,
@@ -130,7 +169,7 @@ export function applicationCopy(s: IntakeStatus) {
         ? `Season ${s.closedSeason} applications are closed, and you can follow along live.`
         : closedLine,
     /** Headline plus the rest, for places with room for a few sentences. */
-    status: s.reviewing ? openLine : `${closedLine} ${held}`,
+    status: s.rolling ? `${openLine} ${ACCEPTANCE_LINE}` : s.reviewing ? openLine : `${closedLine} ${held}`,
     /** One clause with no end stop, for banners and meta descriptions. */
     short: s.reviewing
       ? `Season ${s.openSeason} applications are open until ${s.closesOn}`
@@ -151,7 +190,7 @@ export const APPLICATIONS = NOW;
 export const APPLICATIONS_HEADLINE = COPY.headline;
 /** Just "Season 2 applications are closed.", for places that say the rest themselves. */
 export const APPLICATIONS_CLOSED_LINE = COPY.closedLine;
-/** What follows the headline while applications are held. */
+/** What follows the headline: while applications are held, or what acceptance means while they roll. */
 export const APPLICATIONS_HELD = COPY.held;
 /** Headline plus the rest. */
 export const APPLICATIONS_STATUS = COPY.status;

@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { BackButton } from "@/components/BackButton";
 import SEO from "@/components/SEO";
 import {
+  ACCEPTANCE_LINE,
   APPLICATIONS,
   APPLICATIONS_CLOSED_LINE,
   CROWDPOOL_ROUND_LINE,
@@ -28,13 +29,36 @@ export default function ApplySuccess() {
           </h1>
 
           <p className="text-lg text-[#1a472a]/80 mb-6">
-            Thank you for applying to the next season of ReGen Civics. We've received your application and our team will review it carefully.
+            Thank you for applying to {APPLICATIONS.rolling ? `Season ${APPLICATIONS.openSeason}` : "the next season"} of ReGen Civics. We've received your application and our team will review it carefully.
           </p>
 
           <div className="bg-[#f0f7f0] border-2 border-[#7dd87d]/50 rounded-lg p-6 mb-8 text-left">
             <h2 className="font-bold text-[#1a472a] mb-3">What happens next?</h2>
             <ul className="space-y-2 text-[#1a472a]/80">
-              {APPLICATIONS.reviewing ? (
+              {APPLICATIONS.rolling ? (
+                // Rye, 2026-10-01: the season is already running, so there is
+                // no kickoff to decide before; acceptance is the bar for crowdpooling.
+                <>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#7dd87d] mt-1">✓</span>
+                    <span>We review applications as they come in and email you our decision</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#7dd87d] mt-1">✓</span>
+                    <span>{ACCEPTANCE_LINE}</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-[#7dd87d] mt-1">✓</span>
+                    <span>
+                      Season {APPLICATIONS.openSeason} is live now. Find the weekly time, the sessions and the recordings on the{" "}
+                      <Link href="/season-schedule" className="font-semibold text-[#1a472a] underline underline-offset-2">
+                        Season Schedule
+                      </Link>
+                      .
+                    </span>
+                  </li>
+                </>
+              ) : APPLICATIONS.reviewing ? (
                 <>
                   <li className="flex items-start gap-2">
                     <span className="text-[#7dd87d] mt-1">✓</span>
@@ -75,7 +99,11 @@ export default function ApplySuccess() {
               )}
               <li className="flex items-start gap-2">
                 <span className="text-[#7dd87d] mt-1">✓</span>
-                <span>If approved, you'll be invited to join the next Season cohort</span>
+                <span>
+                  {APPLICATIONS.rolling
+                    ? `If approved, you'll get a reminder before every Season ${APPLICATIONS.openSeason} session`
+                    : "If approved, you'll be invited to join the next Season cohort"}
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#7dd87d] mt-1">✓</span>
