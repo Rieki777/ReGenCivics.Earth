@@ -71,7 +71,7 @@ describe("retired regencivics.com hosts", () => {
 
 describe("SITE_CANONICAL_PAGES", () => {
   it("only lists paths the site actually serves", () => {
-    // /join is a server redirect (GET /join in server/routes/calendarFeed.ts),
+    // /join is a server route (GET /join in server/routes/calendarFeed.ts),
     // not a client route, so matchesAppRoute is false for it on purpose.
     const serverHooks = new Set(["/join"]);
     for (const page of SITE_CANONICAL_PAGES) {
