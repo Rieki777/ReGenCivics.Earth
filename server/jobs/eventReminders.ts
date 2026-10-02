@@ -3,8 +3,8 @@
  *
  * Picked up by the existing hourly POST /api/cron/event-reminders job (and a
  * 5-minute in-process sweep so the 33-minute and 1-hour offsets do not wait
- * for the next hour). Catch-up still sends an offset that is already due,
- * until the session starts. Past events (now >= endTime, or >= startTime when
+ * for the next hour). When several offsets are already due, only the closest
+ * one is sent. Past events (now >= endTime, or >= startTime when
  * endTime is missing) are skipped even if DB status still says upcoming/live.
  * Idempotent via unique (eventId, offsetMinutes) on event_auto_reminder_sends:
  * the insert is the claim, a duplicate key means another run already owns it.
@@ -38,6 +38,7 @@ import { audienceForTopic, emailsBlockingTopic, managePreferencesUrl } from "../
 import type { EmailTopicKey } from "@shared/emailPrefs";
 import {
   ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
+  audienceIncludesEventSignups,
   canEnableAutoReminders,
   defaultAudienceMode,
   isAlwaysIncluded,
@@ -45,7 +46,7 @@ import {
   isDuplicateKeyError,
   isOpenForUpcomingReminders,
   mergeRecipients,
-  offsetSubject,
+  offsetSubjectFromRemaining,
   parseAudienceConfig,
   parseOffsetMinutes,
   type AutoReminderAudienceMode,
@@ -196,7 +197,6 @@ export async function resolveAutoReminderRecipients(opts: {
 
   const loadOpenAccess = async () => {
     groups.push(await audienceForTopic("open_access"));
-    groups.push(await loadEventSignups(opts.eventId));
   };
 
   const loadEventSignups = async (eventId: number) => {
@@ -246,9 +246,6 @@ export async function resolveAutoReminderRecipients(opts: {
         .where(ne(letterOfIntent.status, "withdrawn"));
       groups.push(lois);
     }
-    if (config.includeEventSignups) {
-      groups.push(await loadEventSignups(opts.eventId));
-    }
     if (config.applicationStatuses && config.applicationStatuses.length > 0) {
       const apps = await database
         .select({
@@ -260,6 +257,10 @@ export async function resolveAutoReminderRecipients(opts: {
         .where(inArray(applications.status, config.applicationStatuses));
       groups.push(apps);
     }
+  }
+
+  if (audienceIncludesEventSignups(opts.audienceMode)) {
+    groups.push(await loadEventSignups(opts.eventId));
   }
 
   // Last, so a person who is also in the real audience keeps that entry.
@@ -368,13 +369,14 @@ async function sendOffset(
   customBody: string | null,
   audienceMode: AutoReminderAudienceMode,
   alreadyDelivered: Iterable<string>,
+  now: Date,
 ) {
   const joinUrl = reminderJoinUrl({
     eventId: event.id,
     riversideRoomUrl: event.riversideRoomUrl,
     zoomUrl: event.zoomUrl,
   });
-  const subject = customSubject?.trim() || offsetSubject(event.title, offsetMinutes);
+  const subject = customSubject?.trim() || offsetSubjectFromRemaining(event.title, event.startTime, now);
   const mute = communityTopicForAudience(audienceMode);
 
   return settleReminderRecipients({
@@ -391,6 +393,7 @@ async function sendOffset(
         eventId: event.id,
         joinUrl,
         offsetMinutes,
+        now,
         preferencesUrl: prefsUrl,
         alwaysIncluded: isAlwaysIncluded(recipient.email),
       });
@@ -524,6 +527,7 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
           config.customBody,
           config.audienceMode,
           already,
+          now,
         );
         await rememberDeliveries(event.id, offsetMinutes, outcome.delivered);
         const deliveredCount = already.size + outcome.delivered.length;

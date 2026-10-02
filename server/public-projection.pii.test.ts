@@ -12,9 +12,9 @@
  *   events.list/getBySeason/getById   check-in token and meeting-room URLs
  *   hyphaBridge.get         recipient wallet, tx hash, payouts, initiator id
  *
- * `events.checkinToken` was the worst of them, because it is not only
- * disclosure: `events.checkin` takes (token, any email) and both writes
- * `event_attendance` and mints a `regen_token_ledger` credit. Reading the
+ * `events.checkinToken` used to mint for any email typed next to the shared
+ * token: it wrote `event_attendance` and a `regen_token_ledger` credit.
+ * Check-in now requires a signed per-recipient token. Reading the shared
  * token off a public list was a mint.
  *
  * Every fix is a named field list rather than a filter applied afterwards,

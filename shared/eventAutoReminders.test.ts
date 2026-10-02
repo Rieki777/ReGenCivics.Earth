@@ -5,12 +5,15 @@ import {
   customAudienceIsSelected,
   defaultAudienceMode,
   defaultOffsetsForEvent,
+  audienceIncludesEventSignups,
   dueOffsets,
   isDuplicateKeyError,
   isOpenForUpcomingReminders,
   mergeRecipients,
   reminderOpenUntilMs,
+  offsetLeadFromRemaining,
   offsetSubject,
+  offsetSubjectFromRemaining,
   parseAudienceConfig,
   parseOffsetMinutes,
   AUTO_REMINDER_SWEEP_MINUTES,
@@ -167,13 +170,31 @@ describe("dueOffsets", () => {
     })).toEqual([]);
   });
 
-  it("catches up a newly enabled 7d reminder that is already inside the window", () => {
+  it("sends the 7d offset when it is the only one already due", () => {
     expect(dueOffsets({
       startTime: start,
       now: new Date("2026-09-19T12:00:00Z"),
       offsetsMinutes: [7 * 24 * 60, 60],
       alreadySent: [],
     })).toEqual([7 * 24 * 60]);
+  });
+
+  it("sends only the closest overdue offset when several are already due", () => {
+    expect(dueOffsets({
+      startTime: start,
+      now: new Date("2026-09-19T18:00:00Z"),
+      offsetsMinutes: [7 * 24 * 60, 24 * 60, 60],
+      alreadySent: [],
+    })).toEqual([24 * 60]);
+  });
+
+  it("does not send an older offset after the closer one has already gone out", () => {
+    expect(dueOffsets({
+      startTime: start,
+      now: new Date("2026-09-19T20:00:00Z"),
+      offsetsMinutes: [7 * 24 * 60, 24 * 60, 60],
+      alreadySent: [24 * 60],
+    })).toEqual([]);
   });
 
   it("fires the 33-minute offset at T-33 and not a minute earlier", () => {
@@ -282,6 +303,27 @@ describe("offsetSubject", () => {
     expect(offsetSubject("Selection Day", 24 * 60)).toBe("Reminder: Selection Day is tomorrow");
     expect(offsetSubject("Selection Day", 60)).toBe("Starting soon: Selection Day");
     expect(offsetSubject("Selection Day", CALL_START_OFFSET_MINUTES)).toBe("Starting in 33 minutes: Selection Day");
+  });
+});
+
+describe("offsetSubjectFromRemaining", () => {
+  const start = new Date("2026-09-20T18:00:00Z");
+
+  it("words the subject from the clock, not from the offset that happened to be due", () => {
+    expect(offsetSubjectFromRemaining("Selection Day", start, new Date("2026-09-13T18:00:00Z"))).toBe("In 7 days: Selection Day");
+    expect(offsetSubjectFromRemaining("Selection Day", start, new Date("2026-09-18T18:00:00Z"))).toBe("In 2 days: Selection Day");
+    expect(offsetSubjectFromRemaining("Selection Day", start, new Date("2026-09-19T18:00:00Z"))).toBe("Reminder: Selection Day is tomorrow");
+    expect(offsetSubjectFromRemaining("Selection Day", start, new Date("2026-09-20T17:00:00Z"))).toBe("Starting soon: Selection Day");
+    expect(offsetSubjectFromRemaining("Selection Day", start, new Date("2026-09-20T17:27:00Z"))).toBe("Starting in 33 minutes: Selection Day");
+    expect(offsetLeadFromRemaining(start, new Date("2026-09-18T18:00:00Z"))).toBe("Starting in 2 days");
+  });
+});
+
+describe("audienceIncludesEventSignups", () => {
+  it("includes this event's signups on Season 2, Open Access, and custom", () => {
+    expect(audienceIncludesEventSignups("season2_approved")).toBe(true);
+    expect(audienceIncludesEventSignups("open_access")).toBe(true);
+    expect(audienceIncludesEventSignups("custom")).toBe(true);
   });
 });
 

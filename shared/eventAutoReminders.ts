@@ -102,9 +102,20 @@ export function audienceModeLabel(mode: AutoReminderAudienceMode): string {
   return "Custom selection";
 }
 
+/**
+ * Event signups asked for a reminder on this session. Every audience includes
+ * them, including Season 2, where the rest of the list is approved projects.
+ * The custom `includeEventSignups` flag still counts toward "a list is
+ * selected" so a custom reminder can be turned on. The send adds signups
+ * either way.
+ */
+export function audienceIncludesEventSignups(mode: AutoReminderAudienceMode): boolean {
+  return mode === "season2_approved" || mode === "open_access" || mode === "custom";
+}
+
 export function audienceModeHelp(mode: AutoReminderAudienceMode): string {
   if (mode === "season2_approved") {
-    return "Land projects with application status approved or active. Not the full newsletter.";
+    return "Land projects with application status approved or active, plus anyone who signed up for a reminder on this event.";
   }
   if (mode === "open_access") {
     return "Active newsletter subscribers, plus anyone who signed up for a reminder on this event.";
@@ -236,13 +247,14 @@ export function isOpenForUpcomingReminders(opts: {
 }
 
 /**
- * Offsets that should fire now: due (now >= start - offset) and not yet sent.
+ * The one offset that should fire now.
  *
- * Catch-up window:
- * - Offset subjects are pre-start ("Starting in…"), so we still only fire while
- *   now < startTime.
- * - Additionally require now < (endTime ?? startTime) so a status-lagged past
- *   event can never send, matching admin temporal derive.
+ * An offset is time-due when now is at or after start minus that many minutes,
+ * and the session has not started. Past sessions stay closed via
+ * isOpenForUpcomingReminders. When several offsets are time-due, only the
+ * closest one (smallest minute count) is eligible. If that closest offset was
+ * already sent, nothing else goes out: an older offset such as "7 days" must
+ * not follow the day-before letter on a later sweep.
  */
 export function dueOffsets(opts: {
   startTime: Date;
@@ -255,14 +267,57 @@ export function dueOffsets(opts: {
   const nowMs = opts.now.getTime();
   if (!Number.isFinite(startMs)) return [];
   if (!isOpenForUpcomingReminders(opts)) return [];
-  // Pre-start only: do not blast "Starting soon" after the session has begun.
   if (nowMs >= startMs) return [];
   const sent = new Set(opts.alreadySent);
-  return opts.offsetsMinutes.filter((minutes) => {
-    if (sent.has(minutes)) return false;
+  const timeDue = opts.offsetsMinutes.filter((minutes) => {
+    if (!Number.isFinite(minutes)) return false;
     const dueAt = startMs - minutes * 60 * 1000;
     return nowMs >= dueAt;
   });
+  if (timeDue.length === 0) return [];
+  const closest = Math.min(...timeDue);
+  if (sent.has(closest)) return [];
+  return [closest];
+}
+
+/** Whole minutes from now until start. Null once the session has begun. */
+export function minutesUntilStart(start: Date, now: Date): number | null {
+  const ms = start.getTime() - now.getTime();
+  if (!Number.isFinite(ms) || ms <= 0) return null;
+  return Math.max(1, Math.round(ms / 60_000));
+}
+
+/**
+ * Subject from the real time left, so a 7-day offset that goes out two days
+ * before the session does not say "In 7 days".
+ */
+export function offsetSubjectFromRemaining(title: string, start: Date, now: Date): string {
+  const minutes = minutesUntilStart(start, now);
+  if (minutes == null) return `Reminder: ${title}`;
+  if (minutes < 90) {
+    if (minutes <= 50) return `Starting in ${minutes} minutes: ${title}`;
+    return `Starting soon: ${title}`;
+  }
+  const hours = Math.round(minutes / 60);
+  if (hours < 20) return `Starting in ${hours} hours: ${title}`;
+  const days = Math.round(minutes / (24 * 60));
+  if (days <= 1) return `Reminder: ${title} is tomorrow`;
+  return `In ${days} days: ${title}`;
+}
+
+/** Lead line that matches offsetSubjectFromRemaining. */
+export function offsetLeadFromRemaining(start: Date, now: Date): string {
+  const minutes = minutesUntilStart(start, now);
+  if (minutes == null) return "Upcoming session";
+  if (minutes < 90) {
+    if (minutes <= 50) return `Starting in ${minutes} minutes`;
+    return "Starting in about an hour";
+  }
+  const hours = Math.round(minutes / 60);
+  if (hours < 20) return `Starting in ${hours} hours`;
+  const days = Math.round(minutes / (24 * 60));
+  if (days <= 1) return "Starting in about 24 hours";
+  return `Starting in ${days} days`;
 }
 
 export type ReminderRecipient = {
@@ -273,13 +328,11 @@ export type ReminderRecipient = {
 /**
  * People who get every session reminder, whatever the session's audience.
  *
- * Each audience mode reaches a different list. Season 2 reminders go only to
- * land projects with an approved or active application, and they ignore
- * per-event signups entirely, so signing someone up for every session reaches
- * them for Open Access and silently not for the thirteen Season 2 weeks. This
- * list is the way to put one person on every reminder, from every send path:
- * the auto-reminder offsets, the daily signup blast, and admin-scheduled and
- * manual sends.
+ * Each audience mode reaches a different list, and every mode also includes
+ * people who signed up for a reminder on that event. This list is the way to
+ * put one person on every reminder even when they never signed up and are not
+ * an approved project: the auto-reminder offsets, the daily signup blast, and
+ * admin-scheduled and manual sends.
  *
  * Adding someone is a one-line change. Emails lowercase. Recipients here get a
  * footer explaining why and how to stop (see ALWAYS_INCLUDED_FOOTER_TEXT),

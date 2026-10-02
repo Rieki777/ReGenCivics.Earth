@@ -1264,14 +1264,21 @@ async function startServer() {
       // events.sendReminders instead of an in-memory setTimeout). Send any
       // whose scheduled time has passed and that haven't been sent yet.
       let scheduledSent = 0;
-      const dueScheduled = await database
+      // Do not filter on reminderSent. That flag is the signup blast.
+      // scheduledReminderStillDue is the gate, including after a blast.
+      const { scheduledReminderDonePatch, scheduledReminderStillDue } = await import("../lib/reminderPaths");
+      const scheduledCandidates = await database
         .select()
         .from(eventsTable)
         .where(dbAnd(
           dbIsNotNull(eventsTable.reminderScheduledFor),
           dbLte(eventsTable.reminderScheduledFor as any, now),
-          dbEq(eventsTable.reminderSent, 0),
         ));
+      const dueScheduled = scheduledCandidates.filter((event) => scheduledReminderStillDue({
+        reminderSent: event.reminderSent,
+        reminderScheduledFor: event.reminderScheduledFor,
+        now,
+      }));
       for (const event of dueScheduled) {
         // Skip past / cancelled sessions — do not send after endTime (or start if no end).
         if (
@@ -1284,7 +1291,7 @@ async function startServer() {
           })
         ) {
           await database.update(eventsTable)
-            .set({ reminderSent: 1, reminderScheduledFor: null })
+            .set(scheduledReminderDonePatch())
             .where(dbEq(eventsTable.id, event.id));
           continue;
         }
@@ -1307,7 +1314,7 @@ async function startServer() {
         scheduledSent += scheduledBlast.accepted;
         if (scheduledBlast.dropped === 0) {
           await database.update(eventsTable)
-            .set({ reminderSent: 1, reminderScheduledFor: null })
+            .set(scheduledReminderDonePatch())
             .where(dbEq(eventsTable.id, event.id));
         }
       }
@@ -1684,9 +1691,10 @@ setTimeout(async () => {
 }, 20_000);
 
 // ─── Auto-scheduled event reminders (every 10 minutes) ───────────────────────
-// Same job the hourly Railway cron POST /api/cron/event-reminders runs. The
-// in-process sweep exists so the 33-minute and 1-hour offsets do not wait for
-// the next hour. Catch-up still sends a due offset until the session starts.
+// The in-process sweep runs auto-reminder offsets only. The 20-28 hour signup
+// blast and admin-scheduled custom reminders still wait for POST
+// /api/cron/event-reminders, and no production cron posts there.
+// When several offsets are already due, only the closest one is sent.
 // Idempotent via unique (eventId, offsetMinutes).
 setTimeout(async () => {
   const run = async () => {
