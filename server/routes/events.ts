@@ -26,6 +26,12 @@ import { recordings, applications, users } from "../../drizzle/schema";
 import { resolveAutoReminderRecipients, sendToAlwaysIncluded } from "../jobs/eventReminders";
 import { sendSignupReminderBlast } from "../lib/signupReminderBlast";
 import { formatEventWhen, reminderJoinLabel, reminderJoinUrl } from "../lib/eventReminderEmail";
+import {
+  cancellingOpensASeat,
+  duplicateSignupNext,
+  receivesSessionFollowup,
+  signupKindForCapacity,
+} from "../lib/eventSignupSeats";
 import { checkinUrlForToken, signCheckinToken, verifyCheckinToken } from "../lib/checkinToken";
 import {
   ALLOWED_AUTO_REMINDER_OFFSETS,
@@ -343,8 +349,12 @@ export const eventsRouter = router({
         const [{ count }] = await database
           .select({ count: sql<number>`count(*)` })
           .from(eventSignups)
-          .where(and(eq(eventSignups.eventId, input.eventId), eq(eventSignups.signupType, "reminder")));
-        if (Number(count) >= event.maxAttendees) signupType = "waitlist";
+          .where(and(
+            eq(eventSignups.eventId, input.eventId),
+            eq(eventSignups.signupType, "reminder"),
+            isNull(eventSignups.cancelledAt),
+          ));
+        signupType = signupKindForCapacity(Number(count), event.maxAttendees);
       }
 
       // Upsert (ignore duplicate, unique constraint on eventId+email)
@@ -357,8 +367,30 @@ export const eventsRouter = router({
           signupType,
         });
       } catch (e: any) {
-        if (e?.code === "ER_DUP_ENTRY") return { success: true, alreadySignedUp: true, signupType: "reminder" as const };
-        throw e;
+        if (e?.code !== "ER_DUP_ENTRY") throw e;
+        const [existing] = await database
+          .select({
+            id: eventSignups.id,
+            cancelledAt: eventSignups.cancelledAt,
+            signupType: eventSignups.signupType,
+            name: eventSignups.name,
+            phone: eventSignups.phone,
+          })
+          .from(eventSignups)
+          .where(and(eq(eventSignups.eventId, input.eventId), eq(eventSignups.email, input.email)))
+          .limit(1);
+        if (!existing || duplicateSignupNext(existing.cancelledAt) === "already") {
+          return { success: true, alreadySignedUp: true, signupType: existing?.signupType ?? "reminder" };
+        }
+        await database
+          .update(eventSignups)
+          .set({
+            cancelledAt: null,
+            signupType,
+            name: input.name ?? existing.name,
+            phone: input.phone ?? existing.phone,
+          })
+          .where(eq(eventSignups.id, existing.id));
       }
 
       // #1. Signup confirmation email (fire-and-forget)
@@ -1358,12 +1390,27 @@ export const eventsRouter = router({
       const email = input.token ? await verifyPrefsToken(input.token) : input.email;
       if (!email) throw new TRPCError({ code: "FORBIDDEN", message: "That unsubscribe link is not valid any more." });
 
+      const [existingSignup] = await database
+        .select({
+          signupType: eventSignups.signupType,
+          cancelledAt: eventSignups.cancelledAt,
+        })
+        .from(eventSignups)
+        .where(and(eq(eventSignups.eventId, input.eventId), eq(eventSignups.email, email)))
+        .limit(1);
+
       await database.update(eventSignups)
         .set({ cancelledAt: new Date() })
         .where(and(
           eq(eventSignups.eventId, input.eventId),
           eq(eventSignups.email, email),
         ));
+
+      if (cancellingOpensASeat(existingSignup)) {
+        promoteFromWaitlist(input.eventId).catch(err =>
+          console.error("[events.unsubscribe] promoteFromWaitlist error:", err)
+        );
+      }
 
       // The Circle is one standing sign-up spread across weekly rows. Leaving
       // from any week's email leaves every future week, so the sync does not
@@ -1392,13 +1439,14 @@ export const eventsRouter = router({
         .limit(1);
       if (!event) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const signups = await database
+      const signups = (await database
         .select()
         .from(eventSignups)
         .where(and(
           eq(eventSignups.eventId, input.eventId),
           isNull(eventSignups.cancelledAt),
-        ));
+        )))
+        .filter((row) => receivesSessionFollowup(row.signupType));
 
       if (!signups.length) return { sent: 0, message: "No signups for this event" };
 
