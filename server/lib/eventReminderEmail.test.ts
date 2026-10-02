@@ -53,6 +53,18 @@ describe("buildAutoReminderHtml", () => {
     expect(html).not.toContain("—");
   });
 
+  it("words the lead from the real time left when now is set", () => {
+    const html = buildAutoReminderHtml({
+      title: "Week 1: Selection Day",
+      startTime: new Date("2026-09-26T18:00:00Z"),
+      offsetMinutes: 7 * 24 * 60,
+      now: new Date("2026-09-24T18:00:00Z"),
+      preferencesUrl: "https://regencivics.earth/email-preferences?token=abc",
+    });
+    expect(html).toContain("Starting in 2 days");
+    expect(html).not.toContain("Starting in 7 days");
+  });
+
   it("names the session, Pacific time, and join link on the 33-minute ping", () => {
     const html = buildAutoReminderHtml({
       title: "Open Access Session",

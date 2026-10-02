@@ -4,6 +4,7 @@ import {
   ALWAYS_INCLUDED_STOP_PATH,
   defaultAudienceMode,
   offsetLead,
+  offsetLeadFromRemaining,
   type EventKindForReminders,
 } from "@shared/eventAutoReminders";
 import type { EmailTopicKey } from "@shared/emailPrefs";
@@ -25,6 +26,8 @@ type ReminderEmailInput = {
   /** @deprecated Ignored — href always comes from reminderJoinUrl({ eventId }). Kept so older call sites type-check. */
   joinUrl?: string;
   offsetMinutes: number;
+  /** When set, the lead uses the real time left instead of the offset's canned phrase. */
+  now?: Date;
   /** Signed community prefs URL. Footer CTA is Manage email preferences. */
   preferencesUrl?: string;
   /**
@@ -141,7 +144,9 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
   // Reminder emails always use the durable /join hook (never a raw room URL).
   const joinUrl = reminderJoinUrl({ eventId: input.eventId });
   const joinLabel = reminderJoinLabel();
-  const lead = escapeHtml(offsetLead(input.offsetMinutes));
+  const lead = escapeHtml(
+    input.now ? offsetLeadFromRemaining(input.startTime, input.now) : offsetLead(input.offsetMinutes),
+  );
 
   return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
           <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
