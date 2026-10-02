@@ -8,8 +8,8 @@
  *   GET /calendar/season2.ics       the thirteen Season 2 weeks
  *   GET /calendar/event/:id.ics     one session
  *   GET /regen-civics-all-events.ics  legacy alias, see below
- *   GET /join                       durable redirect into the live room
- *   GET /join?e=<eventId>           same, routed to that event's stored URL
+ *   GET /join                       on-site join page
+ *   GET /join?e=<eventId>           that event's stored room, or the join page
  *
  * Raw Express rather than tRPC: calendar clients issue a plain unauthenticated
  * GET and expect `text/calendar`. tRPC's JSON envelope would be meaningless.
@@ -34,8 +34,7 @@ import {
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { events } from "../../drizzle/schema";
-import { RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
-import { parseJoinEventId, resolveJoinRedirectTarget } from "../lib/joinRedirect";
+import { joinLandingHtml, parseJoinEventId, resolveJoinRedirectTarget } from "../lib/joinRedirect";
 
 const log = logger("calendar-feed");
 
@@ -127,44 +126,43 @@ export function registerCalendarFeedRoutes(app: Express): void {
   });
 
   /**
-   * The join link that goes into every calendar invite and every reminder
-   * email. Invites live on people's phones for months, so they must never
-   * carry the meeting-platform URL directly: if the room ever rotates, a
-   * hardcoded invite is dead with no way to fix it. One redirect, changed in
-   * one place.
+   * The join link in every calendar invite and every reminder email.
+   * Invites live on people's phones for months, so they point here.
    *
-   * Optional `?e=<eventId>`: look up that event and redirect to its stored
-   * riversideRoomUrl (else zoomUrl), http(s) only. Missing/invalid id or no
-   * safe stored URL → shared studio (same as plain /join).
+   * Optional `?e=<eventId>`: look up that event and redirect to a stored
+   * http(s) room on another host. The old studio host is skipped. Missing
+   * id, missing row, or no safe room → the on-site join page.
    */
   app.get("/join", async (req: Request, res: Response) => {
     res.setHeader("Cache-Control", "public, max-age=300");
 
     const eventId = parseJoinEventId(req.query.e);
-    if (eventId == null) {
-      res.redirect(302, RIVERSIDE_ROOM_URL);
+    let target: string | null = null;
+    if (eventId != null) {
+      try {
+        const database = await getDb();
+        if (database) {
+          const [row] = await database
+            .select({
+              riversideRoomUrl: events.riversideRoomUrl,
+              zoomUrl: events.zoomUrl,
+            })
+            .from(events)
+            .where(eq(events.id, eventId))
+            .limit(1);
+          target = resolveJoinRedirectTarget(row ?? null);
+        }
+      } catch (err) {
+        log.error("join redirect event lookup failed", { eventId, err });
+        target = null;
+      }
+    }
+
+    if (target) {
+      res.redirect(302, target);
       return;
     }
 
-    let target = RIVERSIDE_ROOM_URL;
-    try {
-      const database = await getDb();
-      if (database) {
-        const [row] = await database
-          .select({
-            riversideRoomUrl: events.riversideRoomUrl,
-            zoomUrl: events.zoomUrl,
-          })
-          .from(events)
-          .where(eq(events.id, eventId))
-          .limit(1);
-        target = resolveJoinRedirectTarget(row ?? null);
-      }
-    } catch (err) {
-      log.error("join redirect event lookup failed", { eventId, err });
-      target = RIVERSIDE_ROOM_URL;
-    }
-
-    res.redirect(302, target);
+    res.status(200).type("html").send(joinLandingHtml());
   });
 }
