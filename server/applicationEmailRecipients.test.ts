@@ -106,6 +106,18 @@ describe("applyRecipientMergeFields", () => {
 
     expect(merged).toBe("Hi Ada, Green Valley is at ada@farm.example.");
   });
+
+  it("escapes markup in HTML and leaves an ampersand readable in a subject", () => {
+    const recipient = {
+      email: "ada@farm.example",
+      name: "<script>",
+      projectName: "Farm & Garden",
+    };
+    expect(applyRecipientMergeFields("{{name}} {{projectName}}", recipient, { html: true })).toBe(
+      "&lt;script&gt; Farm &amp; Garden",
+    );
+    expect(applyRecipientMergeFields("{{projectName}}", recipient)).toBe("Farm & Garden");
+  });
 });
 
 describe("applications.listEmailRecipients", () => {

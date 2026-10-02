@@ -1,3 +1,5 @@
+import { textForEmail, textForSubject } from "../../shared/htmlText";
+
 /**
  * Map land-project applications to bulk-email recipients.
  * Contact email/name come from the applicant's user account (applications.userId),
@@ -57,11 +59,13 @@ export function mapApplicationEmailRecipients(
 export function applyRecipientMergeFields(
   text: string,
   recipient: { email: string; name: string; projectName?: string },
+  opts?: { html?: boolean },
 ): string {
-  const name = recipient.name || "Friend";
-  const projectName = recipient.projectName || name || "your project";
+  const rawName = recipient.name || "Friend";
+  const rawProject = recipient.projectName || rawName || "your project";
+  const render = opts?.html ? textForEmail : textForSubject;
   return text
-    .replace(/\{\{name\}\}/g, name)
-    .replace(/\{\{email\}\}/g, recipient.email)
-    .replace(/\{\{projectName\}\}/g, projectName);
+    .replace(/\{\{name\}\}/g, render(rawName))
+    .replace(/\{\{email\}\}/g, render(recipient.email))
+    .replace(/\{\{projectName\}\}/g, render(rawProject));
 }

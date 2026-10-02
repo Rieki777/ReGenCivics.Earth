@@ -37,3 +37,11 @@ export function escapeHtml(s: string): string {
 export function textForEmail(s: string | null | undefined): string {
   return escapeHtml(decodeBasicEntities(s ?? ""));
 }
+
+/** Plain subject text. Line breaks become spaces so a name cannot start a second line. */
+export function textForSubject(s: string | null | undefined): string {
+  return decodeBasicEntities(s ?? "")
+    .replace(/[\r\n\u0000]/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
