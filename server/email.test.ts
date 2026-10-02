@@ -124,6 +124,18 @@ describe('Email Service', () => {
       
       expect(template.html).toContain('Friend');
     });
+
+    it('escapes a name and project in the HTML and keeps an ampersand readable in the subject', () => {
+      const accepted = emailTemplates.landProjectAccepted('Farm & <Garden>', '<b>Ada</b>');
+      expect(accepted.html).toContain('&lt;b&gt;Ada&lt;/b&gt;');
+      expect(accepted.html).toContain('Farm &amp; &lt;Garden&gt;');
+      expect(accepted.html).not.toContain('<b>Ada</b>');
+      expect(accepted.subject).toBe('Congratulations! Farm & <Garden> Passed Our Quality Check');
+
+      const welcome = emailTemplates.newsletterWelcome('<script>');
+      expect(welcome.html).toContain('&lt;script&gt;');
+      expect(welcome.html).not.toContain('<script>');
+    });
   });
 
   describe('email tracking', () => {

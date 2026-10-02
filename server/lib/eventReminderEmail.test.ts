@@ -120,6 +120,21 @@ describe("buildAutoReminderHtml", () => {
 describe("buildSignupReminderHtml (cron tomorrow / scheduled-custom path)", () => {
   const prefs = "https://regencivics.earth/email-preferences?token=signup&mute=open_access";
 
+  it("links a per-event stop URL when one is passed", () => {
+    const stop = "https://regencivics.earth/schedule?unsubscribe=12&token=signed.token.value";
+    const html = buildAutoReminderHtml({
+      title: "Open session",
+      startTime: new Date("2026-09-26T18:00:00Z"),
+      eventId: 12,
+      offsetMinutes: 24 * 60,
+      preferencesUrl: "https://regencivics.earth/email-preferences?token=abc",
+      eventStopUrl: stop,
+    });
+    expect(html).toContain("Stop reminders for this event");
+    expect(html).toContain(`href="${stop.replace(/&/g, "&amp;")}"`);
+    expect(html).toContain("Manage email preferences");
+  });
+
   it("uses the Manage email preferences footer and omits the old signup-only footer", () => {
     const html = buildSignupReminderHtml({
       title: "Open Access Session",

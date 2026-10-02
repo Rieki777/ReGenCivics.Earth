@@ -8,7 +8,7 @@ import { Resend } from 'resend';
 import { logger } from './logger';
 import { signTrackedUrl, writeEmailAttempt, type EmailAttemptStatus } from '../emailTracking';
 import { COOP } from '../../shared/fund';
-import { decodeBasicEntities, textForEmail } from '../../shared/htmlText';
+import { decodeBasicEntities, textForEmail, textForSubject } from '../../shared/htmlText';
 import { configuredPublicBaseUrl, rewriteLegacySiteUrls } from '../../shared/siteContext';
 import {
   WHATSAPP_COMMUNITY_URL,
@@ -702,10 +702,10 @@ function coopNote(recipientName: string): { subject: string; html: string } {
 
 export const emailTemplates = {
   landProjectAccepted: (projectName: string, recipientName: string) => ({
-    subject: `Congratulations! ${projectName} Passed Our Quality Check`,
+    subject: `Congratulations! ${textForSubject(projectName)} Passed Our Quality Check`,
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Great News, ${recipientName}!</h2>
-      <p style="color: #333; line-height: 1.6;">We're excited to inform you that <strong>${projectName}</strong> has passed our initial quality check for ReGen Civics Season 2.</p>
+      <h2 style="color: #1a472a; margin-top: 0;">Great News, ${textForEmail(recipientName)}!</h2>
+      <p style="color: #333; line-height: 1.6;">We're excited to inform you that <strong>${textForEmail(projectName)}</strong> has passed our initial quality check for ReGen Civics Season 2.</p>
       
       <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #4a7c59; margin-top: 0;">What This Means</h3>
@@ -730,7 +730,7 @@ export const emailTemplates = {
   followUp: (recipientName: string) => ({
     subject: 'Following Up on Your ReGen Civics Inquiry',
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Hello ${recipientName},</h2>
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${textForEmail(recipientName)},</h2>
       <p style="color: #333; line-height: 1.6;">Thank you for your interest in ReGen Civics. We wanted to follow up on your inquiry and let you know we've received it.</p>
       
       <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -743,10 +743,11 @@ export const emailTemplates = {
     `,
   }),
   
+  // `questions` is the admin HTML body. The name is escaped. The body stays HTML.
   requestMoreInfo: (recipientName: string, questions: string) => ({
     subject: 'Additional Information Needed for Your Application',
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Hello ${recipientName},</h2>
+      <h2 style="color: #1a472a; margin-top: 0;">Hello ${textForEmail(recipientName)},</h2>
       <p style="color: #333; line-height: 1.6;">Thank you for your application to ReGen Civics. To move forward with your review, we need some additional information:</p>
       
       <div style="background: #fff3e0; padding: 20px; border-left: 4px solid #d4a574; margin: 20px 0; border-radius: 0 8px 8px 0;">
@@ -762,10 +763,10 @@ export const emailTemplates = {
   }),
   
   applicationReceived: (projectName: string, recipientName: string) => ({
-    subject: `Application Received: ${projectName}`,
+    subject: `Application Received: ${textForSubject(projectName)}`,
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${recipientName}!</h2>
-      <p style="color: #333; line-height: 1.6;">We've received your application for <strong>${projectName}</strong> to join ReGen Civics.</p>
+      <h2 style="color: #1a472a; margin-top: 0;">Thank You, ${textForEmail(recipientName)}!</h2>
+      <p style="color: #333; line-height: 1.6;">We've received your application for <strong>${textForEmail(projectName)}</strong> to join ReGen Civics.</p>
       
       <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
         <p style="color: #1a472a; font-size: 18px; margin: 0;">Your application is now in our review queue</p>
@@ -801,7 +802,7 @@ export const emailTemplates = {
   newsletterWelcome: (recipientName: string) => ({
     subject: 'Welcome to the ReGen Civics Newsletter!',
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Welcome to the Journey, ${recipientName || 'Friend'}!</h2>
+      <h2 style="color: #1a472a; margin-top: 0;">Welcome to the Journey, ${textForEmail(recipientName || 'Friend')}!</h2>
       <p style="color: #333; line-height: 1.6;">You're now part of the ReGen Civics community. Get ready for updates on regenerative land projects, community events, and the infinite game of building a better world.</p>
       
       <div style="background-color: #f0f7f0; background: linear-gradient(135deg, #f0f7f0 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">

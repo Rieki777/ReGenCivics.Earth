@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeBasicEntities, escapeHtml, textForEmail } from "./htmlText";
+import { decodeBasicEntities, escapeHtml, textForEmail, textForSubject } from "./htmlText";
 
 describe("textForEmail", () => {
   it("does not double-encode a value sanitizeInput already encoded", () => {
@@ -24,6 +24,13 @@ describe("decodeBasicEntities", () => {
     expect(decodeBasicEntities("&amp;lt;")).toBe("&lt;");
     expect(decodeBasicEntities("&lt;b&gt; &quot;x&quot; &apos;y&apos;")).toBe(`<b> "x" 'y'`);
     expect(decodeBasicEntities("&nbsp;")).toBe("&nbsp;");
+  });
+});
+
+describe("textForSubject", () => {
+  it("keeps an ampersand readable and drops line breaks", () => {
+    expect(textForSubject("Farm & Garden")).toBe("Farm & Garden");
+    expect(textForSubject("Line\r\none")).toBe("Line one");
   });
 });
 

@@ -28,7 +28,7 @@ import {
   syncSeason,
 } from "./lib/seasonSchedule";
 import { seasonSettingKey, type SeasonScheduleConfig } from "@shared/seasonSchedule";
-import { ALWAYS_INCLUDE_REMINDER_RECIPIENTS } from "@shared/eventAutoReminders";
+import { ALWAYS_INCLUDE_REMINDER_RECIPIENTS } from "./lib/reminderAlwaysInclude";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 const SIGNUP = "season-schedule-test@example.com";

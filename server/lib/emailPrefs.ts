@@ -1,10 +1,11 @@
 /**
  * Signed email preference tokens + audience filter for community mail.
  *
- * Same JWT model as newsletter confirm (jose HS256, cookieSecret).
+ * HS256 via emailLinkSecret. New links use EMAIL_LINK_SECRET when set.
+ * JWT_SECRET still verifies, so a footer already sent keeps working.
  * Prefs URLs do not require login. Investor mail does not use this module.
  */
-import { SignJWT, jwtVerify } from "jose";
+import { signEmailLink, verifyEmailLink } from "./emailLinkSecret";
 import {
   EMAIL_TOPIC_KEYS,
   isEmailTopicKey,
@@ -17,29 +18,19 @@ import { ENV } from "../_core/env";
 const PREFS_PURPOSE = "newsletter-prefs";
 const PREFS_TTL = "365d";
 
-function secret() {
-  return new TextEncoder().encode(ENV.cookieSecret);
-}
-
 export async function buildPrefsToken(email: string): Promise<string> {
-  return new SignJWT({ email, purpose: PREFS_PURPOSE })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(PREFS_TTL)
-    .sign(secret());
+  return signEmailLink({ email, purpose: PREFS_PURPOSE }, PREFS_TTL);
 }
 
 const LEGACY_UNSUB_PURPOSE = "newsletter-unsubscribe";
 
 export async function verifyPrefsToken(token: string): Promise<string | null> {
-  try {
-    const { payload } = await jwtVerify(token, secret());
-    const purpose = payload.purpose;
-    const purposeOk = purpose === PREFS_PURPOSE || purpose === LEGACY_UNSUB_PURPOSE;
-    if (!purposeOk || typeof payload.email !== "string") return null;
-    return payload.email;
-  } catch {
-    return null;
-  }
+  const payload = await verifyEmailLink(token);
+  if (!payload) return null;
+  const purpose = payload.purpose;
+  const purposeOk = purpose === PREFS_PURPOSE || purpose === LEGACY_UNSUB_PURPOSE;
+  if (!purposeOk || typeof payload.email !== "string") return null;
+  return payload.email;
 }
 
 export function previewManagePreferencesUrl(opts?: { mute?: EmailTopicKey }): string {
