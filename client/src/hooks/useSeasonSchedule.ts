@@ -68,5 +68,12 @@ export function useSeasonSchedule(season: string = ACTIVE_SEASON, opts: { poll?:
 
   const scheduled: SeasonSlot = query.data?.scheduled ?? seasonSlot(config.opening.key, config.opening.hourPT);
 
-  return { config, query, data: query.data, sessions, scheduled, loaded: !!query.data };
+  // Until the vote's first decision nothing moves, so the opening time is the
+  // real schedule and the fallback is safe to show. After it, only the live
+  // rows know the time: pages wait for them instead of flashing the opening
+  // time (on October 1 that was a Saturday the Season had left).
+  const loaded = !!query.data;
+  const ready = loaded || Date.now() < config.followsFrom.getTime();
+
+  return { config, query, data: query.data, sessions, scheduled, loaded, ready };
 }

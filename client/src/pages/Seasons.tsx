@@ -147,11 +147,14 @@ function SessionTimesNote({
   weeks,
   scheduled,
   voting,
+  ready,
 }: {
   now: Date;
   weeks: readonly Week[];
   scheduled: SeasonSlot;
   voting: boolean;
+  /** False while the live schedule is still loading after the vote decided (useSeasonSchedule). */
+  ready: boolean;
 }) {
   const next = weeks.find((w) => w.start && w.start > now)?.start ?? null;
   let zone = "";
@@ -171,14 +174,16 @@ function SessionTimesNote({
           Session times for every region
         </h3>
         <p className="text-white/75 text-sm md:text-base leading-relaxed safe-prose">
-          {voting
+          {!ready
+            ? "The cohort meets weekly, at the time the land projects pick on the "
+            : voting
             ? `The cohort meets ${scheduled.label} for now, and the land projects are picking the weekly time on the `
             : `The cohort meets ${scheduled.label}, following the land projects' vote on the `}
           <Link href="/season-schedule" className="underline underline-offset-2 hover:text-white">
             Season Schedule
           </Link>
           . Open Access Sessions start at {SESSION_TIME}.
-          {local ? ` Where you are, the next Season session lands on ${local}.` : ""}
+          {ready && local ? ` Where you are, the next Season session lands on ${local}.` : ""}
         </p>
       </div>
     </div>
@@ -323,7 +328,7 @@ function stopStatus(stop: Stop, now: Date): "complete" | "active" | "future" {
 
 export default function Seasons() {
   const now = useMemo(() => new Date(), []);
-  const { sessions, scheduled, data: schedule } = useSeasonSchedule();
+  const { sessions, scheduled, data: schedule, ready } = useSeasonSchedule();
   const weeks = useMemo(() => weeksFrom(sessions), [sessions]);
   const status = useMemo(() => season2Status(now, weeks), [now, weeks]);
   const voting = schedule ? !schedule.decided : false;
@@ -397,10 +402,10 @@ export default function Seasons() {
                       Week {status.week} of 13: {status.title}
                     </h3>
                     <p className="text-white/80 safe-prose">
-                      The cohort meets {scheduled.label}, and the sessions stream on the SEEDS
+                      The cohort meets {ready ? scheduled.label : "weekly"}, and the sessions stream on the SEEDS
                       channel for anyone who wants to follow along. If your project is ready by the
                       last week, join the community crowdpooling round.
-                      {status.next ? ` Next session: ${pacificDay.format(status.next)}.` : ""}
+                      {ready && status.next ? ` Next session: ${pacificDay.format(status.next)}.` : ""}
                     </p>
                   </>
                 )}
@@ -468,7 +473,9 @@ export default function Seasons() {
               {
                 Icon: Clock,
                 title: `${SESSION_DURATION_HOURS}-hour live sessions`,
-                body: `Every ${scheduled.day} at ${scheduled.hour} Pacific: examples, tools, lessons, practical how-to's, and open questions.`,
+                body: ready
+                  ? `Every ${scheduled.day} at ${scheduled.hour} Pacific: examples, tools, lessons, practical how-to's, and open questions.`
+                  : "Every week: examples, tools, lessons, practical how-to's, and open questions.",
               },
               {
                 Icon: BookOpen,
@@ -509,7 +516,9 @@ export default function Seasons() {
                       The 13 weeks of the Design Season
                     </span>
                     <span className="block text-white/70 text-sm">
-                      {weeks[0]?.start && weeks[12]?.start
+                      {!ready
+                        ? "Weekly, through the Design Season"
+                        : weeks[0]?.start && weeks[12]?.start
                         ? `${pacificShort.format(weeks[0].start)} to ${pacificShort.format(weeks[12].start)}, ${scheduled.label}`
                         : `${scheduled.days} through the winter`}
                     </span>
@@ -846,7 +855,7 @@ export default function Seasons() {
           </div>
 
           <AnimatedSection animation="slide-up">
-            <SessionTimesNote now={now} weeks={weeks} scheduled={scheduled} voting={voting} />
+            <SessionTimesNote now={now} weeks={weeks} scheduled={scheduled} voting={voting} ready={ready} />
           </AnimatedSection>
         </div>
       </section>

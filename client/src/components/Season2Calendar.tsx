@@ -77,7 +77,9 @@ export function Season2Calendar() {
   const sessions = upcomingOpenAccessSessions();
   // The weeks as scheduled, which follows the land projects' vote (ADR-64).
   // Weeks already over drop off, so the first card is always the next one.
-  const { sessions: seasonSessions } = useSeasonSchedule();
+  // `ready` is false only after the vote has decided and before the live rows
+  // arrive, when the opening time would be the wrong one to show.
+  const { sessions: seasonSessions, ready } = useSeasonSchedule();
   const allEpisodes = useMemo(
     () =>
       seasonSessions.map((s) => {
@@ -210,7 +212,7 @@ export function Season2Calendar() {
         </div>
         <p className="text-white/70 text-sm mb-5">
           Thirteen weekly sessions,{" "}
-          {seasonFirst && seasonLast
+          {ready && seasonFirst && seasonLast
             ? `${pacificMonthDay(seasonFirst)} through ${pacificMonthDay(seasonLast)}, 2026`
             : "September through December 2026"}
           . Selection Day is open to anyone; the rest are cohort working sessions you can follow on the
@@ -242,8 +244,9 @@ export function Season2Calendar() {
           </a>
         </div>
 
+        {!ready && <p className="text-white/60 text-sm">Loading the session times.</p>}
         <div className="space-y-3">
-          {shownEpisodes.map((ep) => (
+          {ready && shownEpisodes.map((ep) => (
             <div
               key={ep.id}
               className="rounded-xl border border-[#7dd87d]/20 bg-[#0d2818]/40 p-5"
@@ -265,7 +268,7 @@ export function Season2Calendar() {
 
         <MoreDatesToggle
           open={episodesOpen}
-          count={Math.max(0, episodes.length - 1)}
+          count={ready ? Math.max(0, episodes.length - 1) : 0}
           label="episodes"
           onToggle={() => setEpisodesOpen((v) => !v)}
         />

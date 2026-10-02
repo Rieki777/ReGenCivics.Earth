@@ -113,7 +113,7 @@ function pacificDay(d: Date): string {
 }
 
 export default function SeasonSchedule() {
-  const { config, data, sessions, scheduled, query, loaded } = useSeasonSchedule(ACTIVE_SEASON, { poll: true });
+  const { config, data, sessions, scheduled, query, loaded, ready } = useSeasonSchedule(ACTIVE_SEASON, { poll: true });
   const season = config.season;
 
   const [voterKey, setVoterKey] = useState("");
@@ -285,15 +285,18 @@ export default function SeasonSchedule() {
                 Season Schedule · {config.name}
               </p>
               <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-4">
-                {decided ? `${config.name} meets ${scheduled.label}` : `Pick the time ${config.name} meets`}
+                {!ready ? config.name : decided ? `${config.name} meets ${scheduled.label}` : `Pick the time ${config.name} meets`}
               </h1>
-              <p className="text-white/75 text-lg max-w-2xl">
-                {decided
-                  ? "The land projects picked this time, and it keeps following their vote. Change your picks whenever your week changes, and the Season moves with the group."
-                  : "The land projects choose the next session and the weekly time. Tap every time your project can make, as many as work. The time most projects can make wins, and the Season keeps following the vote as weeks change."}
-              </p>
+              {/* Waits for the live schedule once the vote has decided (useSeasonSchedule `ready`). */}
+              {ready && (
+                <p className="text-white/75 text-lg max-w-2xl">
+                  {decided
+                    ? "The land projects picked this time, and it keeps following their vote. Change your picks whenever your week changes, and the Season moves with the group."
+                    : "The land projects choose the next session and the weekly time. Tap every time your project can make, as many as work. The time most projects can make wins, and the Season keeps following the vote as weeks change."}
+                </p>
+              )}
 
-              {nextUp && (
+              {ready && nextUp && (
                 <div className="mt-8 bg-[#7dd87d]/15 border border-[#7dd87d]/40 rounded-xl p-5 max-w-2xl">
                   <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase mb-1">Next session</p>
                   <p className="text-white font-bold text-lg">{nextUp.title ?? `Week ${nextUp.week}`}</p>
@@ -378,7 +381,9 @@ export default function SeasonSchedule() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Tap every time your project can make</h2>
               <p className="text-white/75 mb-3">
-                {decided
+                {!ready
+                  ? "The time most projects can make becomes the weekly time, and the Season keeps following the vote."
+                  : decided
                   ? "The Season follows this vote. When a different time takes the lead and holds it for a day, every session more than three days out moves there, and everyone gets an email with the new time."
                   : `The vote decides ${pacificWhen(followsFrom)}: the time most projects can make becomes the next session and the weekly time. After that the Season keeps following the vote, so change your picks whenever your week changes.`}
               </p>
@@ -621,11 +626,17 @@ export default function SeasonSchedule() {
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Every session still to come</h2>
               <p className="text-white/75 mb-5">
-                {decided
+                {!ready
+                  ? "In your own time zone."
+                  : decided
                   ? "In your own time zone. When the vote moves the Season, this list and the calendar feed move with it."
                   : `In your own time zone. These are the times the Season opened with; when the vote decides ${pacificWhen(followsFrom)}, this list and the calendar feed move to the winning time.`}
               </p>
-              {upcoming.length === 0 ? (
+              {!ready ? (
+                <p className="text-white/60 mb-6">
+                  {query.isError ? "The sessions did not load. Try again in a minute." : "Loading the sessions."}
+                </p>
+              ) : upcoming.length === 0 ? (
                 <p className="text-white/60">{config.name} has finished. Thank you for building it with us.</p>
               ) : (
                 <ol className="divide-y divide-white/10 mb-6">

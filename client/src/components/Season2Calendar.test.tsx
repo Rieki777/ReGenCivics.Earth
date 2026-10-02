@@ -33,6 +33,8 @@ vi.mock("@/hooks/useSeasonSchedule", async () => {
       sessions: seasonSessionsOn(config, config.opening).map((s) => ({ ...s, title: null, status: "upcoming" })),
       scheduled: seasonSlot(config.opening.key, config.opening.hourPT),
       loaded: false,
+      // Before the vote's decision the opening time is the real one.
+      ready: true,
       data: undefined,
       query: {},
     }),
