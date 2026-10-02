@@ -45,6 +45,7 @@ import { and, asc, desc, eq, ne, gte, lte, lt, isNull, sql, inArray } from "driz
 import { TRPCError } from "@trpc/server";
 import { getGameVariableOr } from "../game";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { sendSeasonRollupEmails } from "../lib/seasonRollup";
 import { localTimeCtaHtml } from "@shared/localTimeCta";
 import { notifyNewEvent } from "../_core/notify";
 import { audienceForTopic, buildPrefsToken, verifyPrefsToken } from "../lib/emailPrefs";
@@ -1138,19 +1139,14 @@ export const eventsRouter = router({
 
       if (!allEmails.length) return { sent: 0, message: "No recipients" };
 
-      const BATCH = 50;
-      let totalSent = 0;
-      for (let i = 0; i < allEmails.length; i += BATCH) {
-        await sendEmail({
-          to: allEmails.slice(i, i + BATCH),
-          subject: `${input.season}: Here's what we built together`,
-          html,
-          template: "season_rollup",
-        });
-        totalSent += Math.min(BATCH, allEmails.length - i);
-      }
+      const outcome = await sendSeasonRollupEmails({
+        season: input.season,
+        emails: allEmails.filter((email): email is string => typeof email === "string" && email.trim().length > 0),
+        subject: `${input.season}: Here's what we built together`,
+        html,
+      });
 
-      return { sent: totalSent };
+      return { sent: outcome.accepted, dropped: outcome.dropped };
     }),
 
   // ── Attendance Tracking (#8 revised) ─────────────────────────────────────
