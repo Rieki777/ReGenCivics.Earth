@@ -104,7 +104,7 @@ export default function SiteFooter() {
           </div>
           <div className="px-4 py-5 rounded-2xl bg-gradient-to-br from-[#d4a574]/15 to-[#4a7c59]/10 border border-[#d4a574]/30 text-center">
             <div className="flex items-center justify-center gap-1.5 mb-1">
-              <h2 className="text-[#d4a574] text-lg font-semibold">Send gratitude</h2>
+              <h2 className="text-[#e0be9b] text-lg font-semibold">Send gratitude</h2>
               <span className="group relative inline-flex">
                 <Info className="w-4 h-4 text-[#d4a574]/70 cursor-help" tabIndex={0} aria-label="What gratitude is" />
                 <span

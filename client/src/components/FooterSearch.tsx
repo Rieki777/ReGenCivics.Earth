@@ -114,7 +114,7 @@ export function FooterSearch() {
         <span className="text-white/70 text-sm group-hover:text-white/90 transition-colors">
           Search pages, tools, and resources...
         </span>
-        <kbd className="hidden sm:inline-flex ml-auto items-center gap-0.5 px-2 py-0.5 rounded bg-white/10 text-white/70 text-[10px] font-mono">
+        <kbd className="hidden sm:inline-flex ml-auto items-center gap-0.5 px-2 py-0.5 rounded bg-white/10 text-white/90 text-[10px] font-mono">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
