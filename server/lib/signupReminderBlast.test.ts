@@ -88,6 +88,7 @@ describe("sendSignupReminderBlast", () => {
     });
     expect(sent).toEqual({ accepted: 2, dropped: 0 });
     expect(sendEmailMock).toHaveBeenCalledTimes(2);
+    expect(sendEmailMock.mock.calls[0]![0].skipBrandedWrap).toBe(true);
     expect(sendToAlwaysIncludedMock).not.toHaveBeenCalled();
     const html = String(sendEmailMock.mock.calls[0]![0].html);
     expect(html).toContain("Manage email preferences");
