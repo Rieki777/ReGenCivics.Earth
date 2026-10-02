@@ -36,12 +36,11 @@ import { logger } from "../_core/logger";
 import { buildAutoReminderHtml, reminderJoinUrl, reminderUnsubscribeUrl } from "../lib/eventReminderEmail";
 import { audienceForTopic, buildPrefsToken, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import type { EmailTopicKey } from "@shared/emailPrefs";
+import { ALWAYS_INCLUDE_REMINDER_RECIPIENTS, isAlwaysIncluded } from "../lib/reminderAlwaysInclude";
 import {
-  ALWAYS_INCLUDE_REMINDER_RECIPIENTS,
   audienceIncludesEventSignups,
   canEnableAutoReminders,
   defaultAudienceMode,
-  isAlwaysIncluded,
   dueOffsets,
   isDuplicateKeyError,
   isOpenForUpcomingReminders,
