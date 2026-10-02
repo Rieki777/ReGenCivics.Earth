@@ -1,22 +1,22 @@
 /**
  * #16 - Self-service Check-in Page
- * URL: /checkin/:token
- * Shows event title, email input, check-in button.
- * On success awards 33 $ReGen tokens.
+ * URL: /checkin?token= signed per-recipient token
+ * One button. The server reads the email from the token.
  */
 
 import { useState } from 'react';
-import { useParams } from 'wouter';
+import { useParams, useSearch } from 'wouter';
 import { Check, Loader2 } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { SEO } from '@/components/SEO';
 import { PageWrapper } from '@/components/PageWrapper';
 
 export default function Checkin() {
-  const params = useParams<{ token: string }>();
-  const token = params.token ?? '';
+  const params = useParams<{ token?: string }>();
+  const search = useSearch();
+  const queryToken = new URLSearchParams(search).get("token") ?? "";
+  const token = queryToken || params.token || "";
 
-  const [email, setEmail] = useState('');
   const [result, setResult] = useState<{
     success: boolean;
     alreadyCheckedIn?: boolean;
@@ -37,9 +37,9 @@ export default function Checkin() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!token) return;
     setError('');
-    checkinMutation.mutate({ token, email: email.trim() });
+    checkinMutation.mutate({ token });
   };
 
   return (
@@ -61,7 +61,7 @@ export default function Checkin() {
                 <p className="text-white/70 text-lg mb-4">{result.eventTitle}</p>
               )}
               <div className="bg-[#7dd87d]/20 rounded-xl p-4 border border-[#7dd87d]/30">
-                <p className="text-[#7dd87d] text-2xl font-bold">+33 $ReGen</p>
+                <p className="text-[#7dd87d] text-2xl font-bold">+{result.tokensAwarded ?? 0} $ReGen</p>
                 <p className="text-white/60 text-sm mt-1">Tokens earned for attending</p>
               </div>
             </div>
@@ -89,24 +89,14 @@ export default function Checkin() {
                   <Check className="w-8 h-8 text-[#7dd87d]" />
                 </div>
                 <h1 className="text-2xl font-bold text-white mb-2">Event Check-in</h1>
-                <p className="text-white/60">Enter your email to confirm your attendance and earn 33 $ReGen tokens.</p>
+                <p className="text-white/60">
+                  {token
+                    ? "This button records that you were at the session."
+                    : "Open the check-in button in your follow-up email."}
+                </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/60"
-                    autoComplete="email"
-                    inputMode="email"
-                    enterKeyHint="go"
-                  />
-                </div>
-
                 {error && (
                   <div className="bg-red-500/20 border border-red-500/30 rounded-xl px-4 py-3 text-red-300 text-sm">
                     {error}
@@ -115,7 +105,7 @@ export default function Checkin() {
 
                 <button
                   type="submit"
-                  disabled={checkinMutation.isPending || !email.trim()}
+                  disabled={checkinMutation.isPending || !token}
                   className="w-full bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-6 py-3 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2"
                 >
                   {checkinMutation.isPending ? (
