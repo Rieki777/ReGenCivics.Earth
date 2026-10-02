@@ -8,6 +8,7 @@ import { ENV } from "../_core/env";
 import { emailDocumentFromMarkdown } from "../lib/emailHtml";
 import { loadRecipientLogs } from "../lib/outbound-history";
 import { NEWSLETTER_POSTAL_ADDRESS, isLetterLayout } from "../../shared/letterLayout";
+import { adminMayOperateIssue } from "../../shared/postSessionLetter";
 import {
   HISTORY_VISIBLE_STATUSES,
   attachHistoryStats,
@@ -101,7 +102,7 @@ export const outboundRouter = router({
       const audience = input.audience ?? { sources: [], activeOnly: true as const };
       if (input.issueId) {
         const [existing] = await db.select().from(newsletterIssues).where(eq(newsletterIssues.id, input.issueId)).limit(1);
-        if (!existing || existing.createdBy !== ctx.user.id) {
+        if (!existing || !adminMayOperateIssue(existing, ctx.user.id)) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Issue not found." });
         }
         if (existing.status === "sending" || existing.status === "sent") {

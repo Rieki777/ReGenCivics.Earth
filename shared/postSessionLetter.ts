@@ -10,6 +10,35 @@ export function postSessionLetterIdempotencyKey(recordingId: number): string {
   return `${POST_SESSION_LETTER_KEY_PREFIX}${recordingId}`;
 }
 
+function hasPostSessionKey(value: string | null | undefined): boolean {
+  return (value ?? "").startsWith(POST_SESSION_LETTER_KEY_PREFIX);
+}
+
+/**
+ * Recording wrap-up drafts are inserted as user 1. The send path later
+ * replaces idempotencyKey with the confirm key, and templateKey keeps the
+ * post-session prefix. Either field is enough to recognize the draft.
+ */
+export function isAutoDraftedPostSessionLetter(issue: {
+  idempotencyKey?: string | null;
+  templateKey?: string | null;
+}): boolean {
+  return hasPostSessionKey(issue.idempotencyKey) || hasPostSessionKey(issue.templateKey);
+}
+
+/** A hand-written Outbound draft stays with its author. The auto wrap-up draft is shared by every admin. */
+export function adminMayOperateIssue(
+  issue: {
+    createdBy: number;
+    idempotencyKey?: string | null;
+    templateKey?: string | null;
+  },
+  actorId: number,
+): boolean {
+  if (issue.createdBy === actorId) return true;
+  return isAutoDraftedPostSessionLetter(issue);
+}
+
 /** @deprecated Prefer pickAudienceCta — same heuristic, shared with Schedule past cards. */
 export type PostSessionCta = AudienceCta;
 
