@@ -11,6 +11,10 @@
  * example near its close moves by the same whole number of days (a stamp of
  * something that happened never past now), a real campaign and every other
  * row stay as they were, updatedAt is kept, and a second run changes nothing.
+ * Those fixtures' needs all close more than 14 days out, so the daily step's
+ * need rule (bundle 1) asks for nothing there and both give the same answer.
+ * One more fixture, far from its close with a shift that has started, is the
+ * case only the daily step moves.
  *
  * The migration's statements run as the runner runs them (split the same
  * way, one connection, prepared statements) with TWO changes: the ledger
@@ -29,6 +33,7 @@ import fs from "fs";
 import path from "path";
 import mysql from "mysql2/promise";
 import { exampleShiftDays, movedDay, movedStamp } from "../shared/exampleWindow";
+import { needClosesAt } from "../shared/needWindow";
 import {
   EXAMPLE_DATED_COLUMNS,
   EXAMPLES_ROLL_SWITCH,
@@ -201,24 +206,27 @@ describe.skipIf(skipIfNoDb)("0268 and the daily step on fixture campaigns", () =
     await q(`INSERT INTO ${table} (${Object.keys(cols).join(", ")}) VALUES (?)`, [Object.values(cols)]);
   }
 
-  /** An example with every dated column set somewhere, one stamp recent enough to be capped at now. */
-  async function fullChildren(id: number): Promise<void> {
+  /**
+   * An example with every dated column set somewhere, one stamp recent enough
+   * to be capped at now. Its needs close 20 or more days after PIN.
+   */
+  async function fullChildren(id: number, emailDomain = "example.com"): Promise<void> {
     await insert("campaign_items", { campaignId: id, category: "resource", kind: "item", resourceName: "Posts", estimatedValue: 500, neededFrom: day(9), neededUntil: day(50), createdAt: OLD, updatedAt: OLD });
     await insert("campaign_items", { campaignId: id, category: "equipment", kind: "loan", equipmentName: "Chipper", estimatedValue: 800, loanWindowStart: at(12, 3600), loanWindowEnd: at(40, 3600), neededFrom: day(12), neededUntil: day(40), createdAt: OLD, updatedAt: OLD });
     await insert("campaign_items", { campaignId: id, category: "role", kind: "shift", roleTitle: "Planting day", estimatedValue: 300, shiftStartsAt: at(20, 7200), shiftEndsAt: at(20, 36000), needDeadline: at(18), createdAt: OLD, updatedAt: OLD });
     await insert("campaign_items", { campaignId: id, category: "role", kind: "role", roleTitle: "Undated role", estimatedValue: 900, createdAt: OLD, updatedAt: OLD });
     await insert("campaign_contributions", {
-      campaignId: id, contributorName: "Thanked Offer", contributorEmail: "thanked@example.com", contributionType: "resource", title: "Saplings", status: "thanked",
+      campaignId: id, contributorName: "Thanked Offer", contributorEmail: `thanked@${emailDomain}`, contributionType: "resource", title: "Saplings", status: "thanked",
       submittedAt: at(-70), createdAt: at(-70), reviewedAt: at(-68), fulfilledAt: at(-63), acknowledgedAt: at(-61, 1234), updatedAt: OLD,
     });
     await insert("campaign_contributions", {
-      campaignId: id, contributorName: "Lend Offer", contributorEmail: "lend@example.com", contributionType: "equipment", title: "Trailer", status: "accepted",
+      campaignId: id, contributorName: "Lend Offer", contributorEmail: `lend@${emailDomain}`, contributionType: "equipment", title: "Trailer", status: "accepted",
       offerMode: "lend", availableFrom: day(5), lendUntil: day(30), claimExpiresAt: at(8), submittedAt: at(-6), createdAt: at(-6),
       reviewedAt: at(-2), returnedAt: at(-60), hyphaConfirmedAt: at(-59), cancelNoticedAt: at(-58), nudge1At: at(-4), nudge2At: at(-3, 5),
       waitNoteAt: at(-57), closeReleasedAt: at(-56), updatedAt: OLD,
     });
     await insert("campaign_contributions", {
-      campaignId: id, contributorName: "Waiting Offer", contributorEmail: "waiting@example.com", contributionType: "role", title: "Help", status: "pending",
+      campaignId: id, contributorName: "Waiting Offer", contributorEmail: `waiting@${emailDomain}`, contributionType: "role", title: "Help", status: "pending",
       submittedAt: at(-1), createdAt: at(-1), updatedAt: OLD,
     });
     await insert("campaign_updates", { campaignId: id, authorId: OWNER, updateNumber: 1, title: "Posts in", body: "The first posts are in.", publishedAt: at(-40), createdAt: at(-40) });
@@ -232,7 +240,8 @@ describe.skipIf(skipIfNoDb)("0268 and the daily step on fixture campaigns", () =
     await fullChildren(near);
     const pubOnly = await campaign(`Test Window ${tag} published only`, 1, "active", 90, -10 * 86400, {});
     await q("UPDATE campaigns SET startedAt = NULL, updatedAt = updatedAt WHERE id = ?", [pubOnly]);
-    await insert("campaign_items", { campaignId: pubOnly, category: "resource", kind: "item", resourceName: "Seed", estimatedValue: 100, neededUntil: day(-5), createdAt: OLD, updatedAt: OLD });
+    // Its need closes ahead (more than 14 days out), so only the close rule decides its move.
+    await insert("campaign_items", { campaignId: pubOnly, category: "resource", kind: "item", resourceName: "Seed", estimatedValue: 100, neededUntil: day(25), createdAt: OLD, updatedAt: OLD });
     const far = await campaign(`Test Window ${tag} far`, 1, "active", 120, 40 * 86400);
     await fullChildren(far);
     const boundary = await campaign(`Test Window ${tag} boundary`, 1, "active", 120, 30 * 86400);
@@ -262,10 +271,14 @@ describe.skipIf(skipIfNoDb)("0268 and the daily step on fixture campaigns", () =
     return String(v).replace(/\.\d+$/, "");
   }
 
-  /** What shared/exampleWindow.ts says every row should read after one move at PIN. */
-  function expected(before: Snapshot): Snapshot {
-    const shiftOf = new Map<number, number>();
+  /**
+   * What shared/exampleWindow.ts says every row should read after one move at
+   * PIN: the close rule, or the shift given for a campaign in `shifts`.
+   */
+  function expected(before: Snapshot, shifts: Map<number, number> = new Map()): Snapshot {
+    const shiftOf = new Map<number, number>(shifts);
     for (const c of before.campaigns) {
+      if (shiftOf.has(Number(c.id))) continue;
       const toIso = (v: unknown) => (v == null ? null : `${String(v).replace(" ", "T")}Z`);
       shiftOf.set(Number(c.id), exampleShiftDays({
         isDemo: Number(c.isDemo), status: String(c.status), durationDays: Number(c.durationDays),
@@ -422,6 +435,36 @@ describe.skipIf(skipIfNoDb)("0268 and the daily step on fixture campaigns", () =
 
     expect(await rollExampleWindows({ now: PIN_DATE, onlyCampaignIds: ids(J), readSwitch: on })).toEqual({ moved: 0, paused: false });
     expect(normalized(await snapshot(ids(J)))).toEqual(normalized(after));
+  }, DB_TIMEOUT);
+
+  it("the daily step also moves an example far from its close whose shift has started, which 0268 leaves alone", async () => {
+    // 60 days left of 120, so the close rule asks for nothing.
+    const id = await campaign("Window b1 started shift", 1, "active", 120, 60 * 86400);
+    await fullChildren(id, "b1-lane.invalid");
+    // A shift that started yesterday.
+    await insert("campaign_items", { campaignId: id, category: "role", kind: "shift", roleTitle: "Mulching day", estimatedValue: 200, shiftStartsAt: at(-1), shiftEndsAt: at(-1, 6 * 3600), createdAt: OLD, updatedAt: OLD });
+    const before = await snapshot([id]);
+
+    await runMigration([id]);
+    expect(normalized(await snapshot([id])), "0268 leaves it alone").toEqual(normalized(before));
+
+    expect(await rollExampleWindows({ now: PIN_DATE, onlyCampaignIds: [id], readSwitch: on })).toEqual({ moved: 1, paused: false });
+    const after = await snapshot([id]);
+    // 15 days puts the shift that started a day ago 14 days out; every listed column moves by that one interval.
+    expect(normalized(after)).toEqual(normalized(expected(before, new Map([[id, 15]]))));
+    const start = Date.parse(`${norm(after.campaigns[0].startedAt)!.replace(" ", "T")}Z`);
+    expect(start).toBeLessThan(PIN_DATE.getTime());
+    expect((PIN_DATE.getTime() - start) / DAY_MS).toBe(45);
+    // Every shift and window now closes 14 or more days out (UTC session, so the strings read as UTC).
+    const needs = await q("SELECT id, kind, category, shiftStartsAt, neededUntil, needDeadline, loanWindowEnd FROM campaign_items WHERE campaignId = ?", [id]);
+    expect(needs.filter((n: any) => n.kind === "shift" && n.shiftStartsAt)).toHaveLength(2);
+    for (const need of needs) {
+      const closes = needClosesAt(need);
+      if (closes) expect(closes.getTime() - PIN_DATE.getTime(), `need ${need.id}`).toBeGreaterThanOrEqual(14 * DAY_MS);
+    }
+    // And it is not due again.
+    expect(await rollExampleWindows({ now: PIN_DATE, onlyCampaignIds: [id], readSwitch: on })).toEqual({ moved: 0, paused: false });
+    expect(normalized(await snapshot([id]))).toEqual(normalized(after));
   }, DB_TIMEOUT);
 
   it("the daily step waits while its switch is off or missing, and a dry run writes nothing", async () => {

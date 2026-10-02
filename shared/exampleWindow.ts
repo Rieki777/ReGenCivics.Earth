@@ -8,18 +8,26 @@
  * publishedAt) plus durationDays, so their dates age: production's Harmony
  * Valley read a close date a week away on 2026-09-28 and would then have
  * shown a past close date forever. Demos can't be re-seeded while
- * drizzle/after-deploy/0251 is held. Instead, an example near its close is
- * moved forward in time, whole, so it reads partway through its window
- * again:
+ * drizzle/after-deploy/0251 is held. Instead, an example is moved forward in
+ * time, whole, so it reads partway through its window again.
  *
- *   - It rolls when its close date is fewer than 30 days away, or past. A
- *     window shorter than 100 days rolls at 30% of it left instead, so a
- *     short window doesn't sit under 30 days right after a roll and move
+ * The close rule (0268 applied it once, in SQL):
+ *   - An example rolls when its close date is fewer than 30 days away, or
+ *     past. A window shorter than 100 days rolls at 30% of it left instead,
+ *     so a short window doesn't sit under 30 days right after a roll and move
  *     every day.
  *   - It moves by the fewest whole days that leave about 60% of its window
  *     (round(3/5 of durationDays) days) still to run.
- *   - Whole days, so a DATE column ('YYYY-MM-DD', a need's window, a lend's
- *     dates) and a TIMESTAMP move by exactly the same interval.
+ *
+ * The need rule (bundle 1, 2026-10-01; the daily step applies both): an
+ * example also rolls when any of its shifts has started or any need window
+ * has passed (shared/needWindow.ts needClosesAt), so no example shows a past
+ * shift or window. It then moves by the larger of the close rule and the
+ * fewest whole days that put every shift and window at least 14 days out,
+ * never moving its start past now.
+ *
+ * Whole days, so a DATE column ('YYYY-MM-DD', a need's window, a lend's
+ * dates) and a TIMESTAMP move by exactly the same interval.
  *
  * Everything that belongs to the example moves by that interval (the column
  * list is EXAMPLE_DATED_COLUMNS in server/lib/example-window.ts). Planned
@@ -29,10 +37,12 @@
  * nothing reads as having happened in the future; the move is monotonic, so
  * their order is kept.
  *
- * Arithmetic is in whole seconds and integers only, mirroring the SQL in
- * 0268 statement for statement: MySQL's TIMESTAMPDIFF(SECOND, ...), integer
- * DIV, and no float that could round a day the other way.
+ * Arithmetic is in whole seconds and integers only. The close rule mirrors
+ * the SQL in 0268 statement for statement: MySQL's TIMESTAMPDIFF(SECOND, ...),
+ * integer DIV, and no float that could round a day the other way. The need
+ * rule has no SQL mirror; only the daily step applies it.
  */
+import { needClosesAt, type NeedWindowLike } from "./needWindow";
 
 export const DAY_SECONDS = 86_400;
 
@@ -44,6 +54,8 @@ export const EXAMPLE_WINDOW = {
   rollBelowShare: { numerator: 3, denominator: 10 },
   /** After a roll, about 3/5 of the window is left. */
   keepShare: { numerator: 3, denominator: 5 },
+  /** After a roll for a started shift or a passed window, every shift and window is at least this many days out. */
+  needLeadDays: 14,
 } as const;
 
 export type ExampleWindowCampaign = {
@@ -100,23 +112,49 @@ function durationOf(c: ExampleWindowCampaign): number {
 
 /**
  * Whole days to move this example forward so it reads partway through its
- * window, or 0 for no move: a real campaign, one that isn't live, one with
- * no start date or no duration, and an example with enough time left.
+ * window with no past shift or window, or 0 for no move: a real campaign,
+ * one that isn't live, one with no start date or no duration, and an example
+ * with enough time left whose shifts and windows are all still ahead.
  *
- * SQL (0268, the ledger insert), with left = TIMESTAMPDIFF(SECOND, now,
- * COALESCE(startedAt, publishedAt) + INTERVAL durationDays DAY):
+ * The close rule, as SQL (0268, the ledger insert), with left =
+ * TIMESTAMPDIFF(SECOND, now, COALESCE(startedAt, publishedAt) + INTERVAL
+ * durationDays DAY):
  *   rolls when left < LEAST(30, (3 * D + 5) DIV 10) * 86400, and then moves
  *   GREATEST(0, (((6 * D + 5) DIV 10) * 86400 - left + 86399) DIV 86400) days.
+ *
+ * The need rule (no SQL mirror): with `needs` given, the example also rolls
+ * when any need's needClosesAt is at or before now, and moves by at least
+ * the whole days that put the earliest one needLeadDays (14) days out. When
+ * that is more than the close rule, the move stops where the example's start
+ * would pass now, so its window always started in the past. With no needs
+ * this is exactly the close rule.
  */
-export function exampleShiftDays(c: ExampleWindowCampaign, now: Date): number {
+export function exampleShiftDays(c: ExampleWindowCampaign, now: Date, needs: readonly NeedWindowLike[] = []): number {
   if (!isExample(c.isDemo) || c.status !== "active") return 0;
   const start = toDate(c.startedAt) ?? toDate(c.publishedAt ?? null);
   const days = durationOf(c);
   if (!start || days <= 0) return 0;
-  const left = wholeSeconds(start) + days * DAY_SECONDS - wholeSeconds(now);
-  if (left >= exampleRollBelowDays(days) * DAY_SECONDS) return 0;
-  const short = exampleKeepDays(days) * DAY_SECONDS - left;
-  return short > 0 ? Math.ceil(short / DAY_SECONDS) : 0;
+  const nowS = wholeSeconds(now);
+  const startS = wholeSeconds(start);
+  const left = startS + days * DAY_SECONDS - nowS;
+  const nearClose = left < exampleRollBelowDays(days) * DAY_SECONDS;
+  const closes: number[] = [];
+  for (const need of needs) {
+    const at = needClosesAt(need);
+    if (at) closes.push(wholeSeconds(at));
+  }
+  const anyPassed = closes.some((t) => t <= nowS);
+  if (!nearClose && !anyPassed) return 0;
+
+  const closeRule = nearClose ? Math.max(0, Math.ceil((exampleKeepDays(days) * DAY_SECONDS - left) / DAY_SECONDS)) : 0;
+  const needRule = closes.length
+    ? Math.max(0, Math.ceil((nowS + EXAMPLE_WINDOW.needLeadDays * DAY_SECONDS - Math.min(...closes)) / DAY_SECONDS))
+    : 0;
+  let shift = Math.max(closeRule, needRule);
+  // The close rule alone always leaves about 40% of the window behind now, so
+  // only the need rule can push the start past now: stop it there.
+  if (needRule > closeRule) shift = Math.min(shift, Math.max(closeRule, Math.floor((nowS - startS) / DAY_SECONDS)));
+  return shift > 0 ? shift : 0;
 }
 
 /** The example's close date once moved by `shiftDays`, or null when it has none. */

@@ -354,16 +354,16 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     ],
     updates: [
       {
-        title: "The first posts are in the ground", daysAgo: 30,
-        body: "The cedar posts from the Cypress family mill arrived on Tuesday. By Friday the first hundred meters of paddock fence stood along the ridge line. Every post that goes in means one more zone protected from the neighbor's cattle and one step closer to planting. The crew celebrated with fresh coconut water on the new fence line. More posts are still needed, so if you have cedar, we have holes waiting.",
+        title: "Where the paddock fence will run", daysAgo: 30,
+        body: "We walked the ridge line and marked where the paddock fence will run. Every cedar post that arrives protects one more zone from the neighbour's cattle and brings planting day closer. If you have posts, tools or a free weekend, the needs list shows what is still open.",
       },
       {
-        title: "Sixty fruit trees have a home", daysAgo: 14,
-        body: "Teodora drove three hours with a truck full of mango and citrus saplings, and we planted every one of them before the afternoon rain. The zone 2 food forest is no longer a drawing on paper. It is sixty small trees with mulch rings, drip lines, and names. Walk the rows with us at the next open day and pick one to watch grow.",
+        title: "The food forest plan", daysAgo: 14,
+        body: "Zone 2 of the food forest is drawn out, with mango and citrus in the first rows and a mulch ring and drip line for every tree. When saplings come in, they go in the ground the same week. Everyone who helps plant can pick a tree to watch grow.",
       },
       {
-        title: "Work party dates are set", daysAgo: 5,
-        body: "Two dates for your calendar. The food forest planting day happens in three weeks, and the cob work party on the community kitchen follows two weeks after. Tools, lunch, and music are on us. Bring gloves, a hat, and anyone who wants to learn by doing. Claim a spot through the needs list so we know how much lunch to cook.",
+        title: "Two work days for your calendar", daysAgo: 5,
+        body: "The food forest planting day comes first, and a cob work party on the community kitchen follows two weeks later. The dates are on each shift in the needs list. Tools, lunch and music are on us. Bring gloves, a hat and anyone who wants to learn by doing. Sign up through the needs list so we know how much lunch to cook.",
       },
     ],
     partnerLinks: [
@@ -541,12 +541,12 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     ],
     updates: [
       {
-        title: "The soil is starting to answer", daysAgo: 25,
-        body: "The compost from Quinta do Sol Nascente went onto the worst two hectares three weeks ago, and this morning the infiltration test held water twice as long as the baseline. Small numbers, big feeling. Dr. Ashgrove starts with us next month and will put real measurements behind what our boots already know. The east slope is waking up.",
+        title: "Starting with the soil", daysAgo: 25,
+        body: "We measured how fast water soaks into the two most worn hectares, so we have a baseline to come back to. Finished compost goes there first. Soil science support would put real numbers behind what our boots already tell us about the east slope.",
       },
       {
-        title: "Swales before the autumn rains", daysAgo: 8,
-        body: "The excavator is booked, the keyline survey is nearly done, and the swale digging weekend now has nine of the sixteen hands we need. If you have ever wanted to learn water harvesting earthworks with your own shovel, this is the weekend. Every meter of swale we finish before the rains is water in the ground next summer.",
+        title: "Swales before the rains", daysAgo: 8,
+        body: "The keyline survey shows where the swales should run on the east slope. The digging weekend needs a crew and a mini excavator. If you have ever wanted to learn water-harvesting earthworks with your own shovel, this is the weekend. Every metre of swale finished before the rains is water in the ground next summer.",
       },
     ],
     partnerLinks: [
@@ -718,12 +718,12 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     ],
     updates: [
       {
-        title: "The minga raised the first walls", daysAgo: 21,
-        body: "Forty hands, one day, and the first classroom now stands shoulder height in adobe. The elders blessed the corners at sunrise and the youngest children pressed their palms into the final course of blocks. The blocks from Taller Tierra Viva laid true and straight. The second classroom minga is on the calendar, and there is a place in the line for you.",
+        title: "Planning the first minga", daysAgo: 21,
+        body: "The first classroom will go up in adobe at a community minga, with the elders blessing the corners at sunrise. It takes blocks, many hands and good food for a long day. The needs list shows what is still open, and there is a place in the line for you.",
       },
       {
-        title: "Recording the elders", daysAgo: 10,
-        body: "The camera kit arrived from the Andes Media Collective and the first three interviews are done. Mama Rosa spoke for two hours about the water ceremonies and the old terracing songs. Each recording goes into the community archive with her family's consent, in Kichwa first, Spanish second. This is the heart of the whole project and it has begun.",
+        title: "Why we are recording the elders", daysAgo: 10,
+        body: "The heart of this project is an archive of what the elders know: water ceremonies, terracing songs and the stories behind them. Each recording will go into the community archive with the family's consent, in Kichwa first and Spanish second. A camera kit and someone to help with documentation would let the first interviews begin.",
       },
     ],
     partnerLinks: [
@@ -905,16 +905,16 @@ const DEMO_CAMPAIGNS: DemoCampaign[] = [
     ],
     updates: [
       {
-        title: "The lower glen is fenced", daysAgo: 32,
-        body: "The last strainer post went in on Thursday and the lower glen enclosure is complete. Fifteen hundred whips from the nursery are heeled in and waiting for the November planting weekend. Standing at the top gate you can see the whole shape of the future wood laid out in fence line. Twenty years from now this view will be canopy.",
+        title: "Fencing the lower glen", daysAgo: 32,
+        body: "The lower glen enclosure is marked out on the ground. Once the deer fencing is up, birch, rowan and Scots pine whips can go in at the planting weekend. From the top gate you can already see the shape of the future wood in the fence line.",
       },
       {
-        title: "The camera traps caught a pine marten", daysAgo: 15,
-        body: "Three weeks after the Struan group's cameras went up, camera six on the burn-side corridor recorded a pine marten crossing at dusk. It is the first confirmed record on this ground in living memory. The corridor route we chose is already being used before a single tree of it is planted. The wildlife is telling us we drew the map right.",
+        title: "Camera traps for the wildlife corridor", daysAgo: 15,
+        body: "Camera traps along the burn-side corridor will show which animals use the route before a single tree of it is planted. We hope to record pine marten, which would be the first sighting on this ground in living memory.",
       },
       {
-        title: "November planting weekend is filling up", daysAgo: 4,
-        body: "Eight of the twenty five places for the November weekend are already claimed by the Inverness Hill Runners, who say they will race each other up the slope with the whip bags. Bothy bunks, hot meals, and tools are all sorted. If you want a place, claim it on the needs list and bring warm socks.",
+        title: "The planting weekend", daysAgo: 4,
+        body: "Bothy bunks, hot meals and tools are sorted for the planting weekend. What it needs now is people. If you would like a place, sign up on the needs list and bring warm socks.",
       },
     ],
     partnerLinks: [

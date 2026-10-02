@@ -1,9 +1,12 @@
 /**
  * Example campaigns that never go stale: the daily step. Each live example
- * near its close date moves forward in time, whole, so it reads partway
- * through its window again. The rule is shared/exampleWindow.ts
- * (exampleShiftDays); migration 0268 applied it once in SQL, and this applies
- * it every day from the daily crowdpool job (server/jobs/crowdpoolDailyJob.ts).
+ * near its close date, or with a started shift or a passed need window,
+ * moves forward in time, whole, so it reads partway through its window again
+ * with every shift and window ahead. The rule is shared/exampleWindow.ts
+ * (exampleShiftDays, reading each need through shared/needWindow.ts);
+ * migration 0268 applied its close rule once in SQL, and this applies the
+ * whole rule every day from the daily crowdpool job
+ * (server/jobs/crowdpoolDailyJob.ts).
  *
  * Examples only. The candidate query, the locked re-read and every UPDATE
  * each require isDemo = 1, so a real campaign is never touched even if one of
@@ -27,6 +30,7 @@ import { getDb } from "../db";
 import { cacheDel } from "../cache";
 import { OPEN_NEEDS_CACHE_KEY } from "../../shared/openNeeds";
 import { exampleShiftDays, type ExampleWindowCampaign } from "../../shared/exampleWindow";
+import type { NeedWindowLike } from "../../shared/needWindow";
 import { crowdpoolSwitchOn } from "./campaign-close";
 
 /** Pauses the daily roll without a deploy. Off when missing or unreadable, like the other crowdpool switches. */
@@ -116,6 +120,9 @@ export function setClauseFor(spec: TableSpec, days: number, nowUtc: string): str
 
 type ExampleRow = ExampleWindowCampaign & { id: number };
 
+/** A live example with the need dates the rule reads. */
+export type LiveExample = ExampleRow & { needs: NeedWindowLike[] };
+
 /**
  * The campaign fields the rule reads. The dates come back as epoch seconds
  * (UNIX_TIMESTAMP of a TIMESTAMP column returns its stored UTC value), not
@@ -131,6 +138,29 @@ function epochDate(v: unknown): Date | null {
   if (v == null) return null;
   const n = Number(v);
   return Number.isFinite(n) && n > 0 ? new Date(n * 1000) : null;
+}
+
+/**
+ * The need fields the rule reads (shared/needWindow.ts needClosesAt), for the
+ * same reason as SELECT_EXAMPLE: TIMESTAMPs as epoch seconds, and the DATE
+ * column as its 'YYYY-MM-DD' text, so no session zone can move them.
+ */
+const SELECT_NEED_WINDOWS = sql`SELECT campaignId, kind, category,
+  UNIX_TIMESTAMP(shiftStartsAt) AS shiftStartsAtS,
+  DATE_FORMAT(neededUntil, '%Y-%m-%d') AS neededUntil,
+  UNIX_TIMESTAMP(needDeadline) AS needDeadlineS,
+  UNIX_TIMESTAMP(loanWindowEnd) AS loanWindowEndS
+  FROM campaign_items`;
+
+function needOf(r: any): NeedWindowLike {
+  return {
+    kind: r.kind == null ? null : String(r.kind),
+    category: r.category == null ? null : String(r.category),
+    shiftStartsAt: epochDate(r.shiftStartsAtS),
+    neededUntil: r.neededUntil == null ? null : String(r.neededUntil),
+    needDeadline: epochDate(r.needDeadlineS),
+    loanWindowEnd: epochDate(r.loanWindowEndS),
+  };
 }
 
 function exampleRowOf(r: any): ExampleRow {
@@ -149,15 +179,28 @@ function rowsOf(result: unknown): any[] {
   return Array.isArray(rows) ? rows : [];
 }
 
-/** Live examples, optionally only these ids (tests: scratch holds a thousand old fixtures). */
-export async function listLiveExamples(onlyCampaignIds?: number[]): Promise<ExampleRow[]> {
+/**
+ * Live examples with their needs' dates, optionally only these ids (tests:
+ * scratch holds a thousand old fixtures). The needs come in one query.
+ */
+export async function listLiveExamples(onlyCampaignIds?: number[]): Promise<LiveExample[]> {
   const database = await getDb();
   if (!database) return [];
   const only = onlyCampaignIds?.map(Number).filter((n) => Number.isInteger(n) && n > 0);
   if (only && only.length === 0) return [];
   const scope = only ? sql` AND id IN (${sql.join(only.map((n) => sql`${n}`), sql`, `)})` : sql``;
   const result = await database.execute(sql`${SELECT_EXAMPLE} WHERE isDemo = 1 AND status = 'active'${scope}`);
-  return rowsOf(result).map(exampleRowOf);
+  const examples = rowsOf(result).map(exampleRowOf);
+  if (examples.length === 0) return [];
+  const ids = sql.join(examples.map((c) => sql`${c.id}`), sql`, `);
+  const needRows = rowsOf(await database.execute(sql`${SELECT_NEED_WINDOWS} WHERE campaignId IN (${ids})`));
+  const byCampaign = new Map<number, NeedWindowLike[]>();
+  for (const r of needRows) {
+    const id = Number(r.campaignId);
+    if (!byCampaign.has(id)) byCampaign.set(id, []);
+    byCampaign.get(id)!.push(needOf(r));
+  }
+  return examples.map((c) => ({ ...c, needs: byCampaign.get(c.id) ?? [] }));
 }
 
 const LOCK_ERRORS = new Set(["ER_LOCK_DEADLOCK", "ER_LOCK_WAIT_TIMEOUT"]);
@@ -169,7 +212,9 @@ function isLockError(e: any): boolean {
 /**
  * Moves one example by the rule, in one transaction. Returns the whole days
  * it moved, or 0 when it had nothing to do: a real campaign, one no longer
- * live, one not near its close, or one a run beside this one already moved.
+ * live, one not near its close with every shift and window still ahead, or
+ * one a run beside this one already moved. The rule is worked out again from
+ * the campaign and its needs as read under the lock.
  * campaign_items has no campaignId index, so the need-row lock scans the
  * table (as the close does); a deadlock with another writer rolls this
  * transaction back whole, and it is tried again up to twice.
@@ -193,10 +238,10 @@ async function shiftExampleWindowOnce(campaignId: number, now: Date): Promise<nu
   return database.transaction(async (tx) => {
     // Lock order as everywhere: need rows, then the campaign row, then
     // contribution rows (taken by the UPDATE below).
-    await tx.execute(sql`SELECT id FROM campaign_items WHERE campaignId = ${id} FOR UPDATE`);
+    const locked = rowsOf(await tx.execute(sql`${SELECT_NEED_WINDOWS} WHERE campaignId = ${id} FOR UPDATE`));
     const [raw] = rowsOf(await tx.execute(sql`${SELECT_EXAMPLE} WHERE id = ${id} FOR UPDATE`));
     if (!raw) return 0;
-    const days = exampleShiftDays(exampleRowOf(raw), now);
+    const days = exampleShiftDays(exampleRowOf(raw), now, locked.map(needOf));
     if (days <= 0) return 0;
 
     const nowUtc = utcStamp(now);
@@ -233,8 +278,9 @@ export type ExampleRollOptions = {
 };
 
 /**
- * The daily step: move every live example near its close. Returns how many
- * moved (or would, on a dry run). Paused while crowdpool.examples_roll is off
+ * The daily step: move every live example near its close, or with a started
+ * shift or a passed need window. Returns how many moved (or would, on a dry
+ * run). Paused while crowdpool.examples_roll is off
  * or missing. One example that fails doesn't stop the others; the failures
  * are thrown together at the end, so the daily job counts them.
  */
@@ -245,7 +291,7 @@ export async function rollExampleWindows(opts: ExampleRollOptions = {}): Promise
   let moved = 0;
   const failed: string[] = [];
   for (const c of candidates) {
-    if (exampleShiftDays(c, now) <= 0) continue;
+    if (exampleShiftDays(c, now, c.needs) <= 0) continue;
     if (opts.dryRun) {
       moved++;
       continue;
