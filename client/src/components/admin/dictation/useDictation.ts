@@ -6,6 +6,8 @@
  *
  * Click-to-toggle and hold-to-talk live on DictationButton; this hook owns
  * recognition, caret insert, permission/unsupported errors, and cleanup.
+ * Interim phrases are inserted too. Chrome often withholds isFinal until a
+ * pause, and the listening indicator stays on the whole time.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { insertTranscript } from "./insertTranscript";
@@ -91,6 +93,76 @@ function readCaret(el: HTMLTextAreaElement | HTMLInputElement | null): { start: 
   return { start, end: typeof end === "number" ? end : start };
 }
 
+type SpeechRow = {
+  isFinal?: boolean;
+  0?: { transcript?: string };
+  item?: (index: number) => { transcript?: string } | null;
+};
+
+/**
+ * Chrome often keeps a phrase interim for the whole time Listening is on, and
+ * only marks it final after a pause. Read both shapes (index and item()) so a
+ * host result object cannot throw the handler and drop the phrase.
+ */
+function readTranscript(row: SpeechRow | undefined): string {
+  if (!row) return "";
+  const alt = row[0] ?? row.item?.(0) ?? undefined;
+  const text = alt?.transcript;
+  return typeof text === "string" ? text : "";
+}
+
+function joinSpeechPieces(parts: string[]): string {
+  let acc = "";
+  for (const part of parts) {
+    const piece = part.replace(/\s+/g, " ").trim();
+    if (!piece) continue;
+    acc = acc ? `${acc} ${piece}` : piece;
+  }
+  return acc;
+}
+
+/** Rebuild the whole session utterance so a newer interim replaces the preview. */
+function collectSpeech(results: ArrayLike<SpeechRow>): { interim: string; spoken: string } {
+  const finalParts: string[] = [];
+  const interimParts: string[] = [];
+  for (let i = 0; i < results.length; i++) {
+    const row = results[i];
+    const text = readTranscript(row);
+    if (!text.trim()) continue;
+    if (row?.isFinal) finalParts.push(text);
+    else interimParts.push(text);
+  }
+  const finals = joinSpeechPieces(finalParts);
+  const interim = joinSpeechPieces(interimParts);
+  return { interim, spoken: joinSpeechPieces([finals, interim]) };
+}
+
+function clampRange(
+  range: { start: number; end: number },
+  length: number,
+): { start: number; end: number } {
+  const start = Math.min(Math.max(0, range.start), length);
+  const end = Math.min(Math.max(start, range.end), length);
+  return { start, end };
+}
+
+/**
+ * Prefer a live caret. After the mic click blurs the field, keep the caret
+ * captured while it was focused. With neither, append.
+ */
+function resolveRange(
+  el: HTMLTextAreaElement | HTMLInputElement | null,
+  value: string,
+  saved: { start: number; end: number } | null,
+): { start: number; end: number } {
+  if (el && typeof document !== "undefined" && document.activeElement === el) {
+    const live = readCaret(el);
+    if (live) return clampRange(live, value.length);
+  }
+  if (saved) return clampRange(saved, value.length);
+  return { start: value.length, end: value.length };
+}
+
 export function useDictation(opts: UseDictationOptions): UseDictationResult {
   const { value, onChange, targetRef, lang = "en-US", disabled = false } = opts;
   const supported = useMemo(dictationSupported, []);
@@ -105,8 +177,28 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   const caretRef = useRef<{ start: number; end: number } | null>(null);
   const valueRef = useRef(value);
   const onChangeRef = useRef(onChange);
+  /** Field text we last published, so a lagging render is not treated as an edit. */
+  const renderedRef = useRef(value);
+  const emittedRef = useRef(value);
+  /** False while a session is ending, so a late result cannot insert the phrase twice. */
+  const acceptResultsRef = useRef(true);
+  const sessionRef = useRef<{
+    base: string;
+    start: number;
+    end: number;
+    spoken: string;
+  } | null>(null);
   valueRef.current = value;
   onChangeRef.current = onChange;
+  if (value !== renderedRef.current) {
+    const echo = value === emittedRef.current;
+    renderedRef.current = value;
+    if (!echo && sessionRef.current) {
+      const range = resolveRange(targetRef?.current ?? null, value, null);
+      sessionRef.current = { base: value, start: range.start, end: range.end, spoken: "" };
+      caretRef.current = range;
+    }
+  }
 
   const rememberCaret = useCallback(() => {
     const el = targetRef?.current ?? null;
@@ -118,23 +210,67 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     if (saved) caretRef.current = saved;
   }, [targetRef]);
 
-  const applyFinal = useCallback((transcript: string) => {
-    const caret = caretRef.current;
-    const result = insertTranscript(valueRef.current, transcript, caret?.start, caret?.end);
-    onChangeRef.current(result.value);
-    caretRef.current = { start: result.caret, end: result.caret };
+  const placeCaret = useCallback((caret: number) => {
     const el = targetRef?.current;
-    if (el) {
-      requestAnimationFrame(() => {
-        try {
-          el.focus();
-          el.setSelectionRange(result.caret, result.caret);
-        } catch {
-          /* some input types throw on setSelectionRange */
-        }
-      });
-    }
+    if (!el) return;
+    requestAnimationFrame(() => {
+      try {
+        el.focus();
+        el.setSelectionRange(caret, caret);
+      } catch {
+        /* some input types throw on setSelectionRange */
+      }
+    });
   }, [targetRef]);
+
+  const publish = useCallback((next: string, caret: number) => {
+    emittedRef.current = next;
+    renderedRef.current = next;
+    caretRef.current = { start: caret, end: caret };
+    onChangeRef.current(next);
+    placeCaret(caret);
+  }, [placeCaret]);
+
+  const shownValue = useCallback(() => {
+    if (valueRef.current === renderedRef.current) return valueRef.current;
+    if (emittedRef.current === renderedRef.current) return renderedRef.current;
+    return valueRef.current;
+  }, []);
+
+  const beginSession = useCallback(() => {
+    const shown = shownValue();
+    const range = resolveRange(targetRef?.current ?? null, shown, caretRef.current);
+    sessionRef.current = { base: shown, start: range.start, end: range.end, spoken: "" };
+    acceptResultsRef.current = true;
+  }, [shownValue, targetRef]);
+
+  const applyCollected = useCallback((spoken: string, nextInterim: string) => {
+    if (!acceptResultsRef.current) return;
+    const session = sessionRef.current;
+    if (!session) return;
+    setInterim(nextInterim);
+    if (!spoken.trim()) return;
+    session.spoken = spoken;
+    const rendered = insertTranscript(session.base, spoken, session.start, session.end);
+    if (rendered.value !== renderedRef.current) publish(rendered.value, rendered.caret);
+    else caretRef.current = { start: rendered.caret, end: rendered.caret };
+  }, [publish]);
+
+  /** Freeze the live preview into the base so the next phrase appends after it. */
+  const commitSession = useCallback(() => {
+    const session = sessionRef.current;
+    if (!session?.spoken.trim()) return;
+    const rendered = insertTranscript(session.base, session.spoken, session.start, session.end);
+    session.base = rendered.value;
+    session.start = rendered.caret;
+    session.end = rendered.caret;
+    session.spoken = "";
+    if (rendered.value !== renderedRef.current) publish(rendered.value, rendered.caret);
+    else caretRef.current = { start: rendered.caret, end: rendered.caret };
+  }, [publish]);
+
+  const engineRef = useRef({ applyCollected, commitSession, beginSession });
+  engineRef.current = { applyCollected, commitSession, beginSession };
 
   useEffect(() => {
     const el = targetRef?.current;
@@ -168,22 +304,17 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     rec.interimResults = true;
     rec.lang = lang;
     rec.onresult = (event) => {
-      if (!liveRef.current) return;
-      let nextInterim = "";
-      let finalText = "";
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const row = event.results[i];
-        if (row.isFinal) finalText += row[0].transcript;
-        else nextInterim += row[0].transcript;
-      }
-      setInterim(nextInterim);
-      if (finalText.trim()) applyFinal(finalText);
+      if (!liveRef.current || !acceptResultsRef.current) return;
+      const { interim: nextInterim, spoken } = collectSpeech(event.results);
+      engineRef.current.applyCollected(spoken, nextInterim);
     };
     rec.onerror = (event) => {
       if (!liveRef.current) return;
       const kind = event?.error ?? "error";
       if (kind === "no-speech" || kind === "aborted") return;
       wantRef.current = false;
+      engineRef.current.commitSession();
+      acceptResultsRef.current = false;
       setInterim("");
       if (kind === "not-allowed" || kind === "service-not-allowed") {
         setState("denied");
@@ -196,10 +327,15 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     };
     rec.onend = () => {
       if (!liveRef.current) return;
+      // Chrome ends the recognizer on a pause and the last phrase is often
+      // still interim. Commit it before restart or the Ask field stays empty.
+      acceptResultsRef.current = false;
+      engineRef.current.commitSession();
       setInterim("");
       if (wantRef.current && recRef.current === rec) {
         try {
           rec.start();
+          acceptResultsRef.current = true;
           setState("listening");
         } catch {
           wantRef.current = false;
@@ -216,12 +352,15 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       recRef.current = null;
       try { rec.abort(); } catch { /* already stopped */ }
     };
-  }, [applyFinal, lang, supported]);
+  }, [lang, supported]);
 
   const stop = useCallback(() => {
     wantRef.current = false;
-    setInterim("");
     try { recRef.current?.stop(); } catch { /* nothing listening */ }
+    // onend commits when the browser fires it. If it does not, keep the preview.
+    engineRef.current.commitSession();
+    acceptResultsRef.current = false;
+    setInterim("");
     setState((current) => {
       if (current === "unsupported" || current === "denied") return current;
       return "idle";
@@ -284,6 +423,9 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     }
 
     if (!recRef.current) return;
+    // Already-open session (start() threw because recognition is running):
+    // keep its base so the phrase is not inserted a second time.
+    if (!sessionRef.current || !acceptResultsRef.current) engineRef.current.beginSession();
     try {
       recRef.current.start();
       setState("listening");

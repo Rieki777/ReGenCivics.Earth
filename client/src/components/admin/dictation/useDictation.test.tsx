@@ -168,6 +168,182 @@ describe("useDictation", () => {
     expect(screen.getByTestId("value").textContent).toBe("Keep this draft. add this");
   });
 
+  it("writes interim speech into the field while Listening is on", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+          <span data-testid="listening">{d.listening ? "yes" : "no"}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    expect(screen.getByTestId("listening").textContent).toBe("yes");
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "who needs follow-up" } }],
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("who needs follow-up");
+  });
+
+  it("replaces the live preview when the interim phrase grows", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "who" } }],
+      });
+    });
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "who needs follow-up" } }],
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("who needs follow-up");
+  });
+
+  it("keeps interim text when the recognizer pauses and appends the next phrase", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+          <span data-testid="listening">{d.listening ? "yes" : "no"}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "follow up" } }],
+      });
+    });
+    const rec = FakeSpeechRecognition.latest;
+    expect(rec).toBeTruthy();
+    rec!.started = false;
+    act(() => { rec!.onend?.(); });
+    expect(screen.getByTestId("value").textContent).toBe("follow up");
+    expect(screen.getByTestId("listening").textContent).toBe("yes");
+    expect(rec!.started).toBe(true);
+    act(() => {
+      rec!.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: true, 0: { transcript: "today" } }],
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("follow up today");
+  });
+
+  it("keeps dictated text after stop", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <button type="button" onClick={d.stop} data-testid="stop">stop</button>
+          <span data-testid="value">{value}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "who needs follow-up" } }],
+      });
+    });
+    await act(async () => { fireEvent.click(screen.getByTestId("stop")); });
+    expect(screen.getByTestId("value").textContent).toBe("who needs follow-up");
+  });
+
+  it("inserts at a saved mid-field caret after the mic click blurs the field", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("Hello there");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} data-testid="field" />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    const field = screen.getByTestId("field") as HTMLTextAreaElement;
+    field.focus();
+    field.setSelectionRange(5, 5);
+    field.dispatchEvent(new Event("select", { bubbles: true }));
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: true, 0: { transcript: "friend" } }],
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("Hello friend there");
+  });
+
+  it("reads a transcript exposed only through result.item()", async () => {
+    function Field() {
+      const ref = useRef<HTMLTextAreaElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <textarea ref={ref} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="value">{value}</span>
+        </>
+      );
+    }
+    render(<Field />);
+    await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+    const row = {
+      isFinal: false,
+      item: (index: number) => (index === 0 ? { transcript: "from item" } : null),
+    };
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: { length: 1, 0: row } as unknown as Array<{ isFinal: boolean; 0: { transcript: string } }>,
+      });
+    });
+    expect(screen.getByTestId("value").textContent).toBe("from item");
+  });
+
   it("surfaces permission denied without throwing", async () => {
     const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
     await act(async () => { await result.current.start(); });
