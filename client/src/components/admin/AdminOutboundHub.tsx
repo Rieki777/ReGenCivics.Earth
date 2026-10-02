@@ -124,6 +124,7 @@ function SentPanel() {
   const issues = trpc.outbound.listIssues.useQuery();
   const cancelScheduled = trpc.outbound.cancelScheduled.useMutation();
   const reschedule = trpc.outbound.reschedule.useMutation();
+  const resumeUnsent = trpc.outbound.resumeUnsent.useMutation();
   const [filter, setFilter] = useState<IssueStatusFilter>("all");
   const [rescheduleId, setRescheduleId] = useState<number | null>(null);
   const [rescheduleLocal, setRescheduleLocal] = useState(() => defaultScheduleLocal());
@@ -144,6 +145,16 @@ function SentPanel() {
   }, [issues.data, filter]);
 
   const scheduledCount = (issues.data ?? []).filter((row) => row.status === "scheduled").length;
+
+  async function handleResume(issueId: number) {
+    try {
+      await resumeUnsent.mutateAsync({ issueId });
+      toast.success("Unsent addresses were tried again.");
+      await issues.refetch();
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Resume refused.");
+    }
+  }
 
   async function handleCancel(issueId: number) {
     try {
@@ -231,6 +242,17 @@ function SentPanel() {
                       <Badge variant="outline" className="text-xs shrink-0">Queued</Badge>
                     )}
                   </div>
+                  {(row.status === "sending" || row.status === "failed") && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-[#1a472a]/30 text-[#1a472a]"
+                      disabled={resumeUnsent.isPending}
+                      onClick={() => void handleResume(row.id)}
+                    >
+                      Try unsent addresses
+                    </Button>
+                  )}
                   {row.status === "scheduled" && (
                     <div className="flex flex-wrap items-end gap-2">
                       <Button
