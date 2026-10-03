@@ -17,6 +17,7 @@
  * both read it. ADR-68.
  */
 import { episodeByWeek } from "./season2Curriculum";
+import { stripHiddenText } from "./hiddenText";
 import { VILLAGE_OS_OFFER } from "./villageOsOffer";
 
 export const SESSION_BOARD_SEASON = "Season 2";
@@ -330,8 +331,7 @@ export function maxTextFor(kind: ItemKind): number {
 /** One line of text: hidden characters out, runs of whitespace (line breaks too) folded to one space. */
 export function cleanBoardLine(raw: string | null | undefined, max: number): string | null {
   if (typeof raw !== "string") return null;
-  const text = raw
-    .replace(HIDDEN_TEXT, "")
+  const text = stripHiddenText(raw)
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, max)
@@ -342,9 +342,7 @@ export function cleanBoardLine(raw: string | null | undefined, max: number): str
 /** Several lines: hidden characters out, at most one blank line in a row. */
 export function cleanBoardText(raw: string | null | undefined, max: number): string | null {
   if (typeof raw !== "string") return null;
-  const text = raw
-    .replace(/\r\n?/g, "\n")
-    .replace(HIDDEN_TEXT, "")
+  const text = stripHiddenText(raw.replace(/\r\n?/g, "\n"))
     .replace(/[^\S\n]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
@@ -352,22 +350,6 @@ export function cleanBoardText(raw: string | null | undefined, max: number): str
     .trim();
   return text ? text : null;
 }
-
-/**
- * Characters that let text hide or disguise itself on a public page: control
- * characters other than tab and line breaks, zero-width characters, bidi
- * overrides and the byte-order mark. Built from code points, so no escape
- * sequence lands in this file as the character itself (same set as
- * shared/seasonSchedule.ts cleanNoteText).
- */
-const HIDDEN_TEXT = new RegExp(
-  "[" +
-    [[0x00, 0x08], [0x0b, 0x0c], [0x0e, 0x1f], [0x7f, 0x7f], [0x200b, 0x200f], [0x202a, 0x202e], [0x2066, 0x2069], [0xfeff, 0xfeff]]
-      .map(([a, b]) => (a === b ? String.fromCodePoint(a) : `${String.fromCodePoint(a)}-${String.fromCodePoint(b)}`))
-      .join("") +
-    "]",
-  "gu",
-);
 
 /** Readiness keys a board's project can tick, kept as a comma list. Unknown keys drop. */
 export function parseReadyList(raw: string | null | undefined, allowed: readonly string[]): string[] {

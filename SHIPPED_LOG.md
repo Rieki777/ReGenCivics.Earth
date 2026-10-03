@@ -21,7 +21,8 @@ Add new entries to the top. Format per entry:
 - **Every session board ends on it**: a one-minute last stage after Close, outside the two-hour plan, with the two ways in and the link. No money on the board.
 - **/custom-games** keeps the $20,000 build and points hosting to /village-os; the $20 a month hosting line is gone.
 - **Week 2's Village OS stage shows Amora as it is**: Amora's circles map inline (a live frame once Amora lets regencivics.earth frame it, a dated picture until then) and a first look at the role cards being built, rendered from the cards themselves with invented sample seats. The invented roster example is gone.
-- Open: the Village OS change that builds a map-only public view at /embed/circles and lets regencivics.earth frame it; until then the board shows the picture.
+- **Run it yourself, ready behind its switch**: "Copy the setup guide" (the prompt for your own AI assistant), "Download the starter kit" and the step-by-step guide, all at Village OS 1.2.0, open together with the code link when `VILLAGE_OS_SHOW_REPO` is set.
+- Open: the Village OS change that builds a map-only public view at /embed/circles and lets regencivics.earth frame it; until then the board shows the picture. `VILLAGE_OS_SHOW_REPO` waits for the self-host lane to say the repo is safe to link.
 
 ## 2026-10-01 (seasons): A live session board for every Season 2 week, starting with Week 2
 

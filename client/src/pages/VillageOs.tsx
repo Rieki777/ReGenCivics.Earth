@@ -7,16 +7,17 @@
  * the weekly founders circle CORE is starting.
  *
  * Every word comes from shared/villageOsOffer.ts. Two switches arrive from
- * villageOs.offer and both start off: the code link waits for the Village OS
- * repo's security cleanup (VILLAGE_OS_SHOW_REPO), and the membership sentence
+ * villageOs.offer and both start off: the code link, the setup guide and the
+ * starter kit wait for the Village OS repo's security cleanup
+ * (VILLAGE_OS_SHOW_REPO), and the membership sentence
  * and button wait for the Legal session (VILLAGE_OS_MEMBERSHIP_URL). The page renders
  * whole with both off, which is also how it looks while the query loads.
  * No money moves anywhere on this page.
  */
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "wouter";
-import { ArrowRight, Code2, ExternalLink, Hammer, Heart, Info, Server, Sprout } from "lucide-react";
+import { ArrowRight, ClipboardCopy, Code2, Download, ExternalLink, Hammer, Heart, Info, Server, Sprout } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -26,7 +27,14 @@ import { AMORA_VILLAGE_URL, VILLAGE_OS_HOST_PATH, VILLAGE_OS_OFFER } from "@shar
 const display = { fontFamily: "var(--font-display)" } as const;
 
 /** Both switches off: what the page shows while loading and until each one opens. */
-const OFFER_CLOSED = { showRepo: false, repoUrl: null, membershipUrl: null } as const;
+const OFFER_CLOSED = {
+  showRepo: false,
+  repoUrl: null,
+  starterKitUrl: null,
+  guideUrl: null,
+  setupPromptUrl: null,
+  membershipUrl: null,
+} as const;
 
 /** The server already vets these; this keeps a bad value from ever becoming a link. */
 function httpsOnly(url: string | null | undefined): string | null {
@@ -84,6 +92,99 @@ function OfferCardView({
   );
 }
 
+const NEW_TAB = <span className="sr-only"> (opens in a new tab)</span>;
+
+/**
+ * The "Run it yourself" card once the repo switch is on: copy the setup prompt
+ * for your own AI assistant, download the starter kit, read the guide, see the
+ * code. The prompt is fetched by the server ahead of the click so copying
+ * stays inside the click; when it cannot be read or copied, the page links to
+ * the guide's own page instead.
+ */
+export function SelfHostActions({
+  repoUrl,
+  starterKitUrl,
+  guideUrl,
+  setupPromptUrl,
+}: {
+  repoUrl: string;
+  starterKitUrl: string | null;
+  guideUrl: string | null;
+  setupPromptUrl: string | null;
+}) {
+  const o = VILLAGE_OS_OFFER;
+  const prompt = trpc.villageOs.setupPrompt.useQuery(undefined, { staleTime: 60 * 60_000, refetchOnWindowFocus: false });
+  const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
+  const text = prompt.data?.text ?? null;
+  const canCopy = !!text && typeof navigator !== "undefined" && !!navigator.clipboard;
+
+  const copyPrompt = () => {
+    if (!text || !navigator.clipboard) {
+      setCopy("failed");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      () => setCopy("copied"),
+      () => setCopy("failed"),
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-white/70 text-sm">{o.selfGuideHint}</p>
+      <div className="flex flex-wrap gap-2">
+        {canCopy ? (
+          <button type="button" onClick={copyPrompt} className={BUTTON_GREEN}>
+            <ClipboardCopy className="w-4 h-4" aria-hidden="true" />
+            {o.selfCopyGuide}
+          </button>
+        ) : setupPromptUrl && !prompt.isLoading ? (
+          <a href={setupPromptUrl} target="_blank" rel="noopener noreferrer" className={BUTTON_GREEN}>
+            {o.selfOpenGuidePrompt}
+            {NEW_TAB}
+            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+          </a>
+        ) : null}
+        {starterKitUrl ? (
+          <a href={starterKitUrl} className={BUTTON_QUIET}>
+            <Download className="w-4 h-4" aria-hidden="true" />
+            {o.selfStarterKit}
+          </a>
+        ) : null}
+      </div>
+      <p role="status" aria-live="polite" className={`text-sm min-h-5 ${copy === "failed" ? "text-white/80" : "text-[#7dd87d]"}`}>
+        {copy === "copied" ? o.selfCopied : null}
+        {copy === "failed" ? (
+          <>
+            {o.selfCopyFailed}{" "}
+            {setupPromptUrl ? (
+              <a href={setupPromptUrl} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+                {o.selfOpenGuidePrompt}
+                {NEW_TAB}
+              </a>
+            ) : null}
+          </>
+        ) : null}
+      </p>
+      <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        {guideUrl ? (
+          <a href={guideUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 min-h-11 text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-4">
+            {o.selfReadGuide}
+            {NEW_TAB}
+            <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+          </a>
+        ) : null}
+        <a href={repoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 min-h-11 text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-4">
+          <Code2 className="w-4 h-4" aria-hidden="true" />
+          {o.selfButton}
+          {NEW_TAB}
+          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function VillageOs() {
   const offerQuery = trpc.villageOs.offer.useQuery(undefined, { staleTime: 5 * 60_000 });
   const offer = offerQuery.data ?? OFFER_CLOSED;
@@ -132,12 +233,12 @@ export default function VillageOs() {
                 frame="bg-white/5 border-white/15"
               >
                 {repoUrl ? (
-                  <a href={repoUrl} target="_blank" rel="noopener noreferrer" className={BUTTON_QUIET}>
-                    <Code2 className="w-4 h-4" aria-hidden="true" />
-                    {o.selfButton}
-                    <span className="sr-only"> (opens in a new tab)</span>
-                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                  </a>
+                  <SelfHostActions
+                    repoUrl={repoUrl}
+                    starterKitUrl={httpsOnly(offer.starterKitUrl)}
+                    guideUrl={httpsOnly(offer.guideUrl)}
+                    setupPromptUrl={httpsOnly(offer.setupPromptUrl)}
+                  />
                 ) : (
                   <p className="text-white/60 text-sm">{o.selfPending}</p>
                 )}

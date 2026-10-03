@@ -23,7 +23,23 @@ import { notifyOwner } from "./_core/notification";
 import { asHostingStatus, cleanMembershipUrl, shouldNotifyOwner, villageOsOfferFlags } from "./routes/villageOs";
 import { getDb } from "./db";
 import { applications, users, villageOsRequests } from "../drizzle/schema";
-import { VILLAGE_OS_REPO_URL, hostingRequestInput } from "@shared/villageOsOffer";
+import {
+  VILLAGE_OS_GUIDE_URL,
+  VILLAGE_OS_REPO_URL,
+  VILLAGE_OS_SETUP_PROMPT_URL,
+  VILLAGE_OS_STARTER_KIT_URL,
+  hostingRequestInput,
+} from "@shared/villageOsOffer";
+
+/** What the offer gives with both switches off. */
+const CLOSED = {
+  showRepo: false,
+  repoUrl: null,
+  starterKitUrl: null,
+  guideUrl: null,
+  setupPromptUrl: null,
+  membershipUrl: null,
+};
 
 let ipCounter = 0;
 function makeCtx(user: TrpcContext["user"] | null): TrpcContext {
@@ -126,16 +142,20 @@ describe("village os: who may call what, before the database", () => {
 describe("village os: the offer's two switches", () => {
   it("both stay off while the env vars are unset", async () => {
     const caller = appRouter.createCaller(makeCtx(null));
-    expect(await caller.villageOs.offer()).toEqual({ showRepo: false, repoUrl: null, membershipUrl: null });
+    expect(await caller.villageOs.offer()).toEqual(CLOSED);
+    expect(await caller.villageOs.setupPrompt()).toEqual({ text: null });
   });
 
-  it("the code link shows only when switched on", () => {
-    expect(villageOsOfferFlags({ villageOsShowRepo: false, villageOsMembershipUrl: "" })).toEqual({
-      showRepo: false,
-      repoUrl: null,
+  it("the code, the starter kit and both guides show only when switched on, and all at once", () => {
+    expect(villageOsOfferFlags({ villageOsShowRepo: false, villageOsMembershipUrl: "" })).toEqual(CLOSED);
+    expect(villageOsOfferFlags({ villageOsShowRepo: true, villageOsMembershipUrl: "" })).toEqual({
+      showRepo: true,
+      repoUrl: VILLAGE_OS_REPO_URL,
+      starterKitUrl: VILLAGE_OS_STARTER_KIT_URL,
+      guideUrl: VILLAGE_OS_GUIDE_URL,
+      setupPromptUrl: VILLAGE_OS_SETUP_PROMPT_URL,
       membershipUrl: null,
     });
-    expect(villageOsOfferFlags({ villageOsShowRepo: true, villageOsMembershipUrl: "" }).repoUrl).toBe(VILLAGE_OS_REPO_URL);
   });
 
   it("the membership link is a clean https URL or nothing", () => {

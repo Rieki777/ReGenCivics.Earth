@@ -27,6 +27,7 @@
  */
 import { z } from "zod";
 import { intakeStatus, type IntakeStatus } from "./applicationWindow";
+import { stripHiddenText } from "./hiddenText";
 
 /** Hosting never depends on giving. A test pins this; changing it is a Legal question first. */
 export const HOSTING_DEPENDS_ON_GIFT = false as const;
@@ -34,6 +35,48 @@ export const HOSTING_DEPENDS_ON_GIFT = false as const;
 export const VILLAGE_OS_PATH = "/village-os";
 export const VILLAGE_OS_HOST_PATH = "/village-os/host";
 export const VILLAGE_OS_REPO_URL = "https://github.com/Rieki777/village-os";
+/**
+ * The Village OS release the "Run it yourself" card points at, so the setup
+ * guide, the starter kit and the image a founder gets all match. Bump it with
+ * each release; every link below follows.
+ */
+export const VILLAGE_OS_RELEASE = "1.2.0";
+/**
+ * The commit tag v1.2.0 points at. The setup prompt goes into an AI assistant
+ * that can run commands on a founder's computer, so the server reads it by
+ * commit, which no one can move the way a tag can: the words a founder pastes
+ * are the ones reviewed for this release. Those words then send the assistant
+ * to the repo's current guides (AGENTS.md and START_HERE.md on main) and its
+ * latest release, which the Village OS lane keeps; the pin covers the pasted
+ * text, not what the assistant reads next. Bump with the release:
+ * `git ls-remote https://github.com/Rieki777/village-os.git "refs/tags/v<release>^{}"`.
+ */
+export const VILLAGE_OS_RELEASE_COMMIT = "cfaa41feeb3f83a30e527cdcbaa40d4abcf6b053";
+export const VILLAGE_OS_STARTER_KIT_URL = `${VILLAGE_OS_REPO_URL}/releases/download/v${VILLAGE_OS_RELEASE}/village-os-starter-${VILLAGE_OS_RELEASE}.zip`;
+/** The step-by-step guide for a person. */
+export const VILLAGE_OS_GUIDE_URL = `${VILLAGE_OS_REPO_URL}/blob/v${VILLAGE_OS_RELEASE}/START_HERE.md`;
+/** The setup prompt for a founder's own AI assistant: the raw file the server reads, and its page for people. */
+export const VILLAGE_OS_SETUP_PROMPT_RAW_URL = `https://raw.githubusercontent.com/Rieki777/village-os/${VILLAGE_OS_RELEASE_COMMIT}/docs/FOUNDER_SETUP_PROMPT.md`;
+export const VILLAGE_OS_SETUP_PROMPT_URL = `${VILLAGE_OS_REPO_URL}/blob/v${VILLAGE_OS_RELEASE}/docs/FOUNDER_SETUP_PROMPT.md`;
+/** A setup prompt longer than this is refused rather than cut short. */
+export const SETUP_PROMPT_MAX_CHARS = 20_000;
+
+/**
+ * The part of the founder setup prompt that goes into an AI assistant:
+ * everything after the first line that is exactly "---". Above it are notes
+ * for the person, so a file without that line gives null and nothing is
+ * copied. Hidden characters go; line breaks and indents stay. A body over
+ * SETUP_PROMPT_MAX_CHARS also gives null, since half a prompt is worse than none.
+ */
+export function setupPromptBody(markdown: string | null | undefined): string | null {
+  if (typeof markdown !== "string") return null;
+  const lines = markdown.replace(/\r\n?/g, "\n").split("\n");
+  const rule = lines.findIndex((line) => line.trim() === "---");
+  if (rule < 0) return null;
+  const body = stripHiddenText(lines.slice(rule + 1).join("\n")).trim();
+  if (!body || body.length > SETUP_PROMPT_MAX_CHARS) return null;
+  return body;
+}
 export const AMORA_VILLAGE_URL = "https://amora.regencivics.earth";
 /** Amora's circles map, the page "Open the map" links to. */
 export const AMORA_CIRCLES_URL = `${AMORA_VILLAGE_URL}/map/circles`;
@@ -79,13 +122,21 @@ export const VILLAGE_OS_OFFER = {
     tag: "Free and open source",
     lines: [
       "Village OS is free and open source. Host it on your own server, choose your settings and modules, and change any part of the code.",
-      "Give the setup guide to your own AI assistant and it walks you through each step. If you're technical, follow it yourself.",
+      "Give the setup guide to an AI assistant that can run commands on your computer and it walks you through each step. If you're technical, follow it yourself.",
       "The software is free. You pay your own hosting provider, and setup needs a computer.",
       "New modules you offer back to the shared Module Library get reviewed and can reach every village.",
     ],
   } satisfies OfferCard,
   selfButton: "See the code",
-  selfPending: "The code link and the setup guide open with the next Village OS release.",
+  selfCopyGuide: "Copy the setup guide",
+  selfCopied: "Copied. Paste it into an AI assistant that can run commands on your computer, such as Claude Code.",
+  selfCopyFailed: "Copying didn't work in this browser. Open the setup guide and copy it from there.",
+  selfOpenGuidePrompt: "Open the setup guide",
+  selfStarterKit: "Download the starter kit",
+  selfReadGuide: "Read the step-by-step guide",
+  selfGuideHint:
+    "The setup guide is a prompt for an AI assistant that can read files and run commands on your computer, such as Claude Code or any assistant with a terminal. A chat app in your browser can't do the steps. The assistant explains each step, asks before it runs anything, and never asks for your passwords.",
+  selfPending: "The code, the setup guide and the starter kit open here soon.",
 
   hosted: {
     key: "hosted",

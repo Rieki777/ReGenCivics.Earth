@@ -19,6 +19,7 @@ import { ENV } from "../_core/env";
 import { notifyOwner } from "../_core/notification";
 import { getDb } from "../db";
 import { frameOriginsFor } from "../lib/frame-check";
+import { villageOsSetupPrompt } from "../lib/village-os-setup-prompt";
 import { applications, villageOsRequests } from "../../drizzle/schema";
 import { isAdminRole } from "@shared/adminRole";
 import { cleanRepoUrl } from "@shared/interopTools";
@@ -30,8 +31,11 @@ import {
   HOSTING_REQUEST_STATUSES,
   HOSTING_SEASON,
   HOSTING_STATUS_LABEL,
+  VILLAGE_OS_GUIDE_URL,
   VILLAGE_OS_OFFER,
   VILLAGE_OS_REPO_URL,
+  VILLAGE_OS_SETUP_PROMPT_URL,
+  VILLAGE_OS_STARTER_KIT_URL,
   applicationToVillageSeed,
   hostingRequestInput,
   isAcceptedForHosting,
@@ -82,12 +86,19 @@ export function cleanMembershipUrl(raw: string | null | undefined): string | nul
   return cleaned;
 }
 
-/** The two switches the offer page reads, from the env (pure, so tests can pass their own). */
+/**
+ * The two switches the offer page reads, from the env (pure, so tests can pass
+ * their own). The repo switch opens everything that points into the Village OS
+ * repo at once: the code, the starter kit, and both setup guides.
+ */
 export function villageOsOfferFlags(env: { villageOsShowRepo: boolean; villageOsMembershipUrl: string }) {
   const showRepo = env.villageOsShowRepo === true;
   return {
     showRepo,
     repoUrl: showRepo ? VILLAGE_OS_REPO_URL : null,
+    starterKitUrl: showRepo ? VILLAGE_OS_STARTER_KIT_URL : null,
+    guideUrl: showRepo ? VILLAGE_OS_GUIDE_URL : null,
+    setupPromptUrl: showRepo ? VILLAGE_OS_SETUP_PROMPT_URL : null,
     membershipUrl: cleanMembershipUrl(env.villageOsMembershipUrl),
   };
 }
@@ -139,6 +150,15 @@ function pickDraftFields(app: Record<string, unknown> | null | undefined): Parti
 export const villageOsRouter = router({
   /** Public: whether the page shows the code link and the membership button. */
   offer: publicProcedure.query(() => villageOsOfferFlags(ENV)),
+
+  /**
+   * Public: the setup prompt a founder copies into their own AI assistant,
+   * once the repo switch is on, and null before that or when it cannot be read
+   * (server/lib/village-os-setup-prompt.ts).
+   */
+  setupPrompt: publicProcedure.query(async () => ({
+    text: ENV.villageOsShowRepo === true ? await villageOsSetupPrompt() : null,
+  })),
 
   /**
    * Public: Amora's circles map for the Week 2 board, and which of the board's
