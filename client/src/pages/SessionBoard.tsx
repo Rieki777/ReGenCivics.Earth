@@ -34,6 +34,7 @@ import {
   GetVillageOS,
   Harvest,
   OpenSeason,
+  Together,
   VillageOS,
   Welcome,
   type StageProps,
@@ -187,6 +188,7 @@ function Board({ week }: { week: number }) {
             : stage.kind === "breath" ? <Breath {...stageProps} />
             : stage.kind === "open" ? <OpenSeason {...stageProps} />
             : stage.kind === "villageos" ? <VillageOS {...stageProps} />
+            : stage.kind === "together" ? <Together {...stageProps} />
             : stage.kind === "circle" ? <Circle {...stageProps} displayName={displayName} setDisplayName={setDisplayName} />
             : stage.kind === "harvest" ? <Harvest {...stageProps} />
             : stage.kind === "game" ? <Game {...stageProps} />

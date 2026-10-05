@@ -32,6 +32,7 @@ import {
 } from "../../drizzle/schema";
 import {
   BOARD_LIMITS,
+  BOARD_OFFER_KEYS,
   BREATH_KEYS,
   GAME_BLOCK_KEYS,
   ITEM_KINDS,
@@ -40,6 +41,7 @@ import {
   PROJECT_PHASE_KEYS,
   SESSION_BOARD_SEASON,
   boardIdentity,
+  boardStages,
   cleanBoardLine,
   cleanBoardText,
   hasSessionBoard,
@@ -61,6 +63,7 @@ import {
   findBoard,
   itemVotesUsed,
   mineOnBoard,
+  offerPeople,
   parseReadyList,
   readBoardRows,
   type Db,
@@ -233,11 +236,16 @@ export const sessionBoardRouter = router({
         : { projects: [], items: [], counts: new Map<string, number>() };
 
       const hands: Record<number, number> = {};
+      const offers: Record<string, number> = {};
       for (const [target, n] of rows.counts) {
         if (target.startsWith("week:")) hands[Number(target.slice(5))] = n;
+        else if (target.startsWith("offer:")) offers[target.slice(6)] = n;
       }
 
       const lists = facilitator ? await facilitatorLists(db, SESSION_BOARD_SEASON, APPLICATION_SEASON) : null;
+      // Who offered to coach or build, for the facilitator only: names of
+      // signed-in people so they can be reached, and a count of guests.
+      const offerList = facilitator && board ? await offerPeople(db, board.id) : null;
 
       return {
         week: input.week,
@@ -248,6 +256,8 @@ export const sessionBoardRouter = router({
         canFacilitate: facilitator,
         notes,
         hands,
+        offers,
+        offerPeople: offerList,
         projects: rows.projects.map((p) => ({
           id: p.id,
           name: p.name,
@@ -308,6 +318,7 @@ export const sessionBoardRouter = router({
         projectIds: mine.projectIds,
         votes: mine.targets.filter((t) => t.startsWith("item:")).map((t) => Number(t.slice(5))),
         hands: mine.targets.filter((t) => t.startsWith("week:")).map((t) => Number(t.slice(5))),
+        offers: mine.targets.filter((t) => t.startsWith("offer:")).map((t) => t.slice(6)),
         canFacilitate: await canFacilitate(db, ctx.user),
       };
     }),
@@ -513,6 +524,34 @@ export const sessionBoardRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Hands are for the weeks still to come." });
       }
       const target = voteTarget.week(input.forWeek);
+      if (input.on) {
+        await db
+          .insert(sessionBoardVotes)
+          .values({ boardId: board.id, target, voterKey: keys[0] })
+          .onDuplicateKeyUpdate({ set: { target: sql`target` } });
+      } else {
+        await db.delete(sessionBoardVotes).where(and(
+          eq(sessionBoardVotes.boardId, board.id),
+          eq(sessionBoardVotes.target, target),
+          inArray(sessionBoardVotes.voterKey, keys),
+        ));
+      }
+      await bumpVersion(db, board.id);
+      return { ok: true as const };
+    }),
+
+  /** Public: raise or lower a hand to coach a village or build a module ("A Game we build together"). */
+  offer: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({ week: weekInput, voterKey: voterKeySchema.optional(), offer: z.enum(BOARD_OFFER_KEYS), on: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
+      if (!boardStages(input.week).some((s) => s.kind === "together")) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This week's board has no hands to raise for that." });
+      }
+      const db = await database();
+      const board = await writableBoard(db, input.week, false);
+      const target = voteTarget.offer(input.offer);
       if (input.on) {
         await db
           .insert(sessionBoardVotes)

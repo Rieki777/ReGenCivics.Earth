@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-05 (seasons): A Game we build together, on the Week 2 board
+
+- **A new Week 2 stage right after Village OS** (ADR-68 update): Village OS is a Game we all play. The code is open source (MIT), and its address shows on the stage once `VILLAGE_OS_SHOW_REPO` is on (until then the stage points to /village-os). Anyone can build a module, the builders' pool shares $ReGen by how much villages use each one, and ReGen Civics needs village coaches, which is Rye's own work and income today. Eight minutes, from Village OS and the circle, so the session still fills two hours.
+- **Raise a hand to coach or to build**: two hands on the stage, kept as board votes with the week's record. The facilitator sees who, by account name.
+- **Production migrations caught up**: the email lane's 0284 to 0286 were already in the schema without a record; their state was checked and they are recorded, so nothing is pending.
+- The facilitation artifact matches, with its planned minutes now kept by stage name instead of position.
+
 ## 2026-10-02 (seasons): Get your Village OS, the last page of every session
 
 - **One front door at /village-os** (ADR-69): run Village OS yourself (free and open source), ask us to host it (free for accepted Season 2 projects, with a first draft of your village from your application that you choose to publish), or the paid custom build. Plain facts on the page: English-only software today, the team can read a hosted village's stored keys, data with Railway in the US.

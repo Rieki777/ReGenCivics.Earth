@@ -13,6 +13,7 @@ import {
   sessionBoardProjects,
   sessionBoardVotes,
   sessionBoards,
+  users,
   type SessionBoard,
 } from "../../drizzle/schema";
 import { getDb } from "../db";
@@ -21,6 +22,7 @@ import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
 import {
   BOARD_FACILITATOR_ROLE_SLUGS,
   applyBoardAction,
+  cleanBoardLine,
   normalizeBoardState,
   parseReadyList,
   type BoardAction,
@@ -188,6 +190,35 @@ export async function mineOnBoard(db: Db, boardId: number, keys: string[]) {
     projectIds: projects.map((r) => r.id),
     targets: votes.map((r) => r.target),
   };
+}
+
+/**
+ * For the facilitator: who raised a hand to offer something ("offer:coach",
+ * "offer:build"). Signed-in people by the name on their account, so they can
+ * be reached; guests only as a count, since a guest key names no one.
+ */
+export async function offerPeople(db: Db, boardId: number): Promise<Record<string, { names: string[]; guests: number }>> {
+  const rows = await db
+    .select({ target: sessionBoardVotes.target, voterKey: sessionBoardVotes.voterKey })
+    .from(sessionBoardVotes)
+    .where(and(eq(sessionBoardVotes.boardId, boardId), like(sessionBoardVotes.target, "offer:%")))
+    .orderBy(asc(sessionBoardVotes.id));
+  const userIds = Array.from(new Set(
+    rows.map((r) => /^u:(\d+)$/.exec(r.voterKey)?.[1]).filter((id): id is string => !!id).map(Number),
+  ));
+  const named = userIds.length
+    ? await db.select({ id: users.id, name: users.name, handle: users.handle }).from(users).where(inArray(users.id, userIds))
+    : [];
+  const nameById = new Map(named.map((u) => [u.id, cleanBoardLine(u.name, 80) ?? (u.handle ? `@${u.handle}` : `Player ${u.id}`)]));
+  const out: Record<string, { names: string[]; guests: number }> = {};
+  for (const r of rows) {
+    const key = r.target.slice("offer:".length);
+    const slot = (out[key] ??= { names: [], guests: 0 });
+    const id = /^u:(\d+)$/.exec(r.voterKey)?.[1];
+    if (id) slot.names.push(nameById.get(Number(id)) ?? `Player ${id}`);
+    else slot.guests += 1;
+  }
+  return out;
 }
 
 /**

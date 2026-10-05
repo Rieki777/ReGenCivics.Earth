@@ -10,6 +10,7 @@ import {
   BREATH_KEYS,
   BREATH_PATTERNS,
   BREATH_ROUNDS,
+  BOARD_OFFERS,
   GAME_BLOCKS,
   LAST_BOARD_WEEK,
   OPPORTUNITY_THEMES,
@@ -19,9 +20,16 @@ import {
   sessionBoardHref,
   sessionMinutes,
   shareTime,
+  TOGETHER_COPY,
   type BoardStage,
 } from "@shared/sessionBoard";
-import { AMORA_CIRCLES_EMBED_URL, AMORA_CIRCLES_URL, AMORA_VILLAGE_URL, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import {
+  AMORA_CIRCLES_EMBED_URL,
+  AMORA_CIRCLES_URL,
+  AMORA_VILLAGE_URL,
+  VILLAGE_OS_OFFER,
+  VILLAGE_OS_PATH,
+} from "@shared/villageOsOffer";
 import { trpc } from "@/lib/trpc";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
 
@@ -510,6 +518,84 @@ export function VillageOS({ stages, index }: StageProps) {
       </div>
       <AmoraCircles />
       <RoleCardsPreview />
+    </>
+  );
+}
+
+/* =============================================================== together */
+
+/** Village OS as a Game we all build: open source, modules that count, coaches for villages. */
+export function Together({ board, stages, index, facilitator, mine, actions }: StageProps) {
+  const c = TOGETHER_COPY;
+  // The repo's address follows the same switch as /village-os (VILLAGE_OS_SHOW_REPO,
+  // ADR-69): until it is on, the panel points to the front door instead.
+  const offer = trpc.villageOs.offer.useQuery(undefined, { staleTime: 5 * 60 * 1000, refetchOnWindowFocus: false, retry: false });
+  const repoUrl = offer.data?.showRepo && offer.data.repoUrl?.startsWith("https://") ? offer.data.repoUrl : null;
+  const people = board.offerPeople;
+  return (
+    <>
+      <StageHead stages={stages} index={index} title={c.title} lede={c.lede} />
+      <div className="sb-together">
+        <article className="sb-panel sb-tg-card">
+          <h3 className="sb-h3">{c.open.title}</h3>
+          <p>{c.open.body}</p>
+          {repoUrl ? (
+            <>
+              <a className="sb-tg-repo" href={repoUrl} target="_blank" rel="noopener noreferrer">{repoUrl.replace(/^https:\/\//, "")}{NEW_TAB}</a>
+              <CopyButton text={repoUrl} />
+            </>
+          ) : (
+            <p className="sb-hint">
+              {c.open.pending}{" "}
+              <a className="sb-link" href={VILLAGE_OS_PATH} target="_blank" rel="noopener noreferrer">regencivics.earth{VILLAGE_OS_PATH}{NEW_TAB}</a>
+            </p>
+          )}
+        </article>
+        <article className="sb-panel sb-tg-card">
+          <h3 className="sb-h3">{c.modules.title}</h3>
+          <p>{c.modules.body}</p>
+          <a className="sb-link" href="/builders-pool" target="_blank" rel="noopener noreferrer">{c.modules.link}{NEW_TAB}</a>
+        </article>
+        <article className="sb-panel sb-tg-card sb-tg-coach">
+          <h3 className="sb-h3">{c.coaches.title}</h3>
+          <p>{c.coaches.body}</p>
+          <a className="sb-link" href="/custom-games" target="_blank" rel="noopener noreferrer">{c.coaches.link}{NEW_TAB}</a>
+        </article>
+      </div>
+      <section className="sb-panel sb-tg-hands" aria-labelledby="sb-tg-hands-h">
+        <h3 id="sb-tg-hands-h" className="sb-h3">{c.hands.title}</h3>
+        <p className="sb-hint">{c.hands.hint}</p>
+        <ul className="sb-tg-offers">
+          {BOARD_OFFERS.map((o) => {
+            const n = board.offers[o.key] ?? 0;
+            const raised = mine.offers.has(o.key);
+            const who = facilitator ? people?.[o.key] : undefined;
+            return (
+              <li key={o.key} className="sb-tg-offer">
+                <strong>{o.label}</strong>
+                <span className="sb-h-n">{plural(n, "hand", "hands")}</span>
+                {board.status === "open" ? (
+                  <button type="button" className="sb-toggle" aria-pressed={raised} onClick={() => void actions.offer(o.key, !raised)}>
+                    {raised ? o.on : "Raise a hand"}
+                    <span className="sr-only"> to {o.label.toLowerCase()}</span>
+                  </button>
+                ) : null}
+                {/* Names stay folded: the facilitator's screen is the one on the stream. */}
+                {who && (who.names.length || who.guests) ? (
+                  <details className="sb-tg-who">
+                    <summary>Who raised a hand (only facilitators see this)</summary>
+                    <p>
+                      {who.names.length ? <>Signed in: {who.names.join(", ")}.</> : null}
+                      {who.names.length && who.guests ? " " : null}
+                      {who.guests ? <>{plural(who.guests, "guest", "guests")} without an account.</> : null}
+                    </p>
+                  </details>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </>
   );
 }

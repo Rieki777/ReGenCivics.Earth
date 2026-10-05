@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import type { BoardOfferKey } from "@shared/sessionBoard";
 
 const VOTER_KEY_STORAGE = "season-voter-key";
 const NAME_STORAGE = "session-board:name";
@@ -58,9 +59,11 @@ export type Mine = {
   projectIds: Set<number>;
   votes: Set<number>;
   hands: Set<number>;
+  /** Offers this person raised a hand for ("coach", "build"). */
+  offers: Set<string>;
 };
 
-const emptyMine = (): Mine => ({ itemIds: new Set(), projectIds: new Set(), votes: new Set(), hands: new Set() });
+const emptyMine = (): Mine => ({ itemIds: new Set(), projectIds: new Set(), votes: new Set(), hands: new Set(), offers: new Set() });
 
 function errorMessage(err: unknown): string {
   const msg = (err as { message?: string })?.message;
@@ -117,6 +120,7 @@ export function useSessionBoard(week: number) {
           projectIds: new Set(r.projectIds),
           votes: new Set(r.votes),
           hands: new Set(r.hands),
+          offers: new Set(r.offers),
         });
       })
       .catch(() => {
@@ -139,6 +143,7 @@ export function useSessionBoard(week: number) {
   const updateProjectM = trpc.sessionBoard.updateProject.useMutation({ onSettled: after, onError });
   const voteM = trpc.sessionBoard.vote.useMutation({ onSettled: after, onError });
   const handM = trpc.sessionBoard.hand.useMutation({ onSettled: after, onError });
+  const offerM = trpc.sessionBoard.offer.useMutation({ onSettled: after, onError });
   const actM = trpc.sessionBoard.act.useMutation({
     onSuccess: (r) => {
       utils.sessionBoard.get.setData({ week }, (old) => (old ? { ...old, state: r.state } : old));
@@ -233,6 +238,22 @@ export function useSessionBoard(week: number) {
         });
       }
     },
+    offer: async (key: BoardOfferKey, on: boolean) => {
+      setMine((m) => {
+        const offers = new Set(m.offers);
+        if (on) offers.add(key); else offers.delete(key);
+        return { ...m, offers };
+      });
+      try {
+        await offerM.mutateAsync({ week, voterKey, offer: key, on });
+      } catch {
+        setMine((m) => {
+          const offers = new Set(m.offers);
+          if (on) offers.delete(key); else offers.add(key);
+          return { ...m, offers };
+        });
+      }
+    },
     act: (action: Parameters<typeof actM.mutate>[0]["action"]) => actM.mutate({ week, action }),
     curateItem: (input: { itemId: number; theme?: "people" | "decide" | "money" | "land" | "story" | "tools" | "care" | null; chosen?: boolean; roomVotes?: number; hidden?: boolean }) =>
       curateItemM.mutate({ week, ...input }),
@@ -241,7 +262,7 @@ export function useSessionBoard(week: number) {
     promote: (itemId: number) => promoteM.mutate({ week, itemId }),
     importRegister: () => importM.mutate({ week }),
     setStatus: (status: "open" | "closed") => statusM.mutate({ week, status }),
-  }), [week, voterKey, name, addItemM, removeItemM, addProjectM, updateProjectM, voteM, handM, actM, curateItemM, curateProjectM, promoteM, importM, statusM]);
+  }), [week, voterKey, name, addItemM, removeItemM, addProjectM, updateProjectM, voteM, handM, offerM, actM, curateItemM, curateProjectM, promoteM, importM, statusM]);
 
   return {
     board: boardQ.data ?? null,

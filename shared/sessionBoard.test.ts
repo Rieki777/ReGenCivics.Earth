@@ -5,6 +5,9 @@
 import { describe, expect, it } from "vitest";
 import {
   BOARD_LIMITS,
+  BOARD_OFFERS,
+  BOARD_OFFER_KEYS,
+  TOGETHER_COPY,
   applyBoardAction,
   boardIdentity,
   boardStages,
@@ -36,9 +39,33 @@ describe("which weeks have a board", () => {
 });
 
 describe("the stages", () => {
-  it("week 2 puts Village OS between the open season and the circle (Rye, 2026-10-01)", () => {
+  it("week 2 puts Village OS, then A Game we build together, between the open season and the circle (Rye, 2026-10-01 and 10-05)", () => {
     const kinds = boardStages(2).map((s) => s.kind);
-    expect(kinds).toEqual(["welcome", "breath", "open", "villageos", "circle", "harvest", "game", "ahead", "close", "getvillageos"]);
+    expect(kinds).toEqual(["welcome", "breath", "open", "villageos", "together", "circle", "harvest", "game", "ahead", "close", "getvillageos"]);
+    expect(boardStages(2).find((s) => s.kind === "together")?.name).toBe(TOGETHER_COPY.title);
+  });
+
+  it("only week 2 has the together stage, so only its board takes hands to coach or build", () => {
+    for (let w = 3; w <= 13; w++) expect(boardStages(w).some((s) => s.kind === "together"), `week ${w}`).toBe(false);
+    expect(BOARD_OFFER_KEYS).toEqual(["coach", "build"]);
+    expect(voteTarget.offer("coach")).toBe("offer:coach");
+    // Fits the votes table's target column (VARCHAR(32)).
+    for (const k of BOARD_OFFER_KEYS) expect(voteTarget.offer(k).length).toBeLessThanOrEqual(32);
+  });
+
+  it("the together stage's words follow the writing rules", () => {
+    const words: string[] = [];
+    const walk = (v: unknown) => {
+      if (typeof v === "string") words.push(v);
+      else if (v && typeof v === "object") Object.values(v).forEach(walk);
+    };
+    walk(TOGETHER_COPY);
+    walk(BOARD_OFFERS);
+    expect(words.length).toBeGreaterThan(10);
+    for (const line of words) {
+      expect(line).not.toContain("—");
+      expect(line).not.toMatch(/\b(journey|foster|unlock|nurture|empower|leverage|seamless|delve|robust)\b/i);
+    }
   });
 
   it("every week's plan fills the two-hour session exactly, with Get your Village OS after it", () => {

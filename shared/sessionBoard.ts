@@ -53,6 +53,7 @@ export type StageKind =
   | "breath"
   | "open"
   | "villageos"
+  | "together"
   | "circle"
   | "harvest"
   | "game"
@@ -92,9 +93,55 @@ const GET_VILLAGE_OS: BoardStage = {
 };
 
 /**
+ * Week 2's "A Game we build together" stage, right after Village OS (Rye,
+ * 2026-10-05): Village OS is itself a collaborative Game. The code is open
+ * source and held in common, anyone can build modules, the builders' pool
+ * shares $ReGen across the modules villages actually open, and ReGen Civics
+ * contracts with land projects through coaches who embed early, which is Rye's
+ * own income today and a field he wants to grow with others. Rye speaks in the
+ * first person here, as he does on the open season stage.
+ */
+export const TOGETHER_COPY = {
+  title: "A Game we build together",
+  lede:
+    "Village OS is a Game too, and everyone who uses it is a player. We're crowdbuilding our own village technology, one module at a time.",
+  open: {
+    title: "Open source, held in common",
+    body: "Every line of Village OS is public. Read it, run it, change it. The code is owned by all of us: the villages that run it and the people who build it.",
+    /** Shown while VILLAGE_OS_SHOW_REPO is off, in place of the repo's address. */
+    pending: "The code's address goes up here soon. Start at",
+  },
+  modules: {
+    title: "Build a module, and its use counts",
+    body: "Anyone can build a module and offer it to the shared Module Library. Each lunar cycle the builders' pool divides its $ReGen among the modules villages actually open, by how many of their members use each one, and the treasury's members approve each payout. $ReGen tracks contributions to the Game.",
+    link: "How the builders' pool works",
+  },
+  coaches: {
+    title: "We need coaches",
+    body: "ReGen Civics contracts with land projects to help them set up their Games. If you're a holistic system designer who loves working with villages, come coach: embed with a village project early and help it find its shape. It's paid work, it's my own income right now, and I want to grow this field together.",
+    link: "Help for land projects",
+  },
+  hands: {
+    title: "Raise a hand",
+    hint: "Raise a hand for either, and tell me your name in the chat so I can reach you after the session.",
+  },
+} as const;
+
+/** What someone can offer from the "A Game we build together" stage, as a raised hand. */
+export const BOARD_OFFERS = [
+  { key: "coach", label: "Coach a village", on: "I'd coach" },
+  { key: "build", label: "Build a module", on: "I'd build" },
+] as const;
+export type BoardOfferKey = (typeof BOARD_OFFERS)[number]["key"];
+export const BOARD_OFFER_KEYS = BOARD_OFFERS.map((o) => o.key) as [BoardOfferKey, ...BoardOfferKey[]];
+
+/**
  * Week 2, Incubator Overview, the first board (Rye, 2026-10-01). Two hours.
  * Village OS sits between the open season and the circle: how we will build
- * our Games in it, ending in the crowdpool that fills their rosters.
+ * our Games in it, ending in the crowdpool that fills their rosters. "A Game
+ * we build together" follows it (Rye, 2026-10-05), added before the board had
+ * any saved state: once a board is saved its planned minutes are kept by
+ * position, so stages are never inserted into a week that has run.
  */
 const WEEK_2: BoardStage[] = [
   {
@@ -124,7 +171,7 @@ const WEEK_2: BoardStage[] = [
     ],
   },
   {
-    kind: "villageos", name: "Building in Village OS", short: "Village OS", min: 15,
+    kind: "villageos", name: "Building in Village OS", short: "Village OS", min: 10,
     line: "The tool we build our Games in, and the crowdpool that fills their rosters",
     cues: [
       "Show, don't list. Walk Amora's circles map: tap a circle, then an open seat.",
@@ -134,7 +181,17 @@ const WEEK_2: BoardStage[] = [
     ],
   },
   {
-    kind: "circle", name: "Project circle", short: "Circle", min: 45,
+    kind: "together", name: TOGETHER_COPY.title, short: "Together", min: 8,
+    line: "Open source, modules that count, and coaches for villages",
+    cues: [
+      "Village OS is a Game we all play: open source, owned in common, crowdbuilt.",
+      "Modules: anyone can build one. The builders' pool shares $ReGen by how much villages use each module.",
+      "Name coaching as paid work and your own income today. Ask who wants to grow it with you.",
+      "Ask for hands, then names in the chat.",
+    ],
+  },
+  {
+    kind: "circle", name: "Project circle", short: "Circle", min: 42,
     line: "Where you are, your biggest pain, your next growth",
     cues: [
       "Go first with Amora to model the three questions and the time.",
@@ -555,8 +612,9 @@ export function boardIdentity(userId: number | null | undefined, voterKey: strin
   return null;
 }
 
-/** Vote targets: an opportunity on the board, or a hand raised for a coming week. */
+/** Vote targets: an opportunity on the board, a hand raised for a coming week, or a hand raised to offer something. */
 export const voteTarget = {
   item: (id: number) => `item:${id}`,
   week: (week: number) => `week:${week}`,
+  offer: (key: BoardOfferKey) => `offer:${key}`,
 };

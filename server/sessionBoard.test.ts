@@ -26,6 +26,7 @@ import {
   findBoard,
   itemVotesUsed,
   mineOnBoard,
+  offerPeople,
   readBoardRows,
 } from "./lib/sessionBoard";
 import { normalizeBoardState } from "@shared/sessionBoard";
@@ -83,6 +84,15 @@ describe("session board: what the router accepts", () => {
   it("a guest's writes need the key their browser keeps", async () => {
     const caller = appRouter.createCaller(makeCtx(null));
     await expect(caller.sessionBoard.addItem({ week: 2, kind: "arrive", text: "here" })).rejects.toThrow();
+  });
+
+  it("a hand to coach or build is one of the known offers, on a board that has that stage", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    // @ts-expect-error not an offer
+    await expect(caller.sessionBoard.offer({ week: 2, voterKey: KEY, offer: "invest", on: true })).rejects.toThrow();
+    await expect(caller.sessionBoard.offer({ week: 2, offer: "coach", on: true })).rejects.toThrow(/Reload the page/);
+    // Week 3 has no "A Game we build together" stage, so it is refused before the database.
+    await expect(caller.sessionBoard.offer({ week: 3, voterKey: KEY, offer: "coach", on: true })).rejects.toThrow(/no hands to raise/);
   });
 
   it("a caller writes as their account and owns what their browser key wrote", () => {
@@ -170,6 +180,26 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
       .from(sessionBoardVotes)
       .where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.target, `item:${item1}`)));
     expect(votes).toHaveLength(1);
+  });
+
+  it("tells the facilitator who offered to coach or build: account names, and guests as a count", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 4);
+    boardIds.push(board.id);
+    await db.insert(sessionBoardVotes).values([
+      { boardId: board.id, target: "offer:coach", voterKey: "u:987654321" },
+      { boardId: board.id, target: "offer:coach", voterKey: `k:${KEY}` },
+      { boardId: board.id, target: "offer:build", voterKey: `k:${KEY}` },
+      { boardId: board.id, target: "week:6", voterKey: "u:987654321" },
+    ]);
+    const people = await offerPeople(db, board.id);
+    // No such account: a stable stand-in name, never a crash or a blank.
+    expect(people.coach).toEqual({ names: ["Player 987654321"], guests: 1 });
+    expect(people.build).toEqual({ names: [], guests: 1 });
+    expect(Object.keys(people).sort()).toEqual(["build", "coach"]);
+    const counts = (await readBoardRows(db, board.id, { includeHidden: false })).counts;
+    expect(counts.get("offer:coach")).toBe(2);
+    expect((await mineOnBoard(db, board.id, [`k:${KEY}`])).targets.sort()).toEqual(["offer:build", "offer:coach"]);
   });
 
   it("only admins and the facilitating role holders facilitate", async () => {
