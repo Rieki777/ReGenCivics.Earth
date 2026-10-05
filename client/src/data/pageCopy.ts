@@ -82,7 +82,7 @@ export const pageCopy = {
       },
       {
         heading: "Learn About Games & Quests",
-        body: "Discover how to play the Infinite Game and earn tokens for your contributions",
+        body: "Discover the Infinite Game, where quests earn $ReGen. Help you bring to a land project is recorded in that project's own token.",
       },
     ],
     signIn: {

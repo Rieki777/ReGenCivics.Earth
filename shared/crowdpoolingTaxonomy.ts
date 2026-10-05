@@ -406,7 +406,7 @@ export const CAPITAL_LABELS: Record<CapitalType, { label: string; blurb: string 
   },
   financial: {
     label: "Financial",
-    blurb: "Money and financial instruments. On this platform that means crypto; national currency goes through the funders we recommend.",
+    blurb: "Money, and the skills that look after it. Money goes through the outside routes each project holds.",
   },
   living: {
     label: "Living",

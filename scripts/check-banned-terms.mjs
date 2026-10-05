@@ -36,8 +36,21 @@
  * Suppression: `banned-terms-allow: <reason>` on the same line or the line
  * immediately above, like `fund-claims-allow`. Every allow carries a reason.
  *
- * Pure core findBannedTerms(path, text) is exported for
- * server/banned-terms-guard.test.ts.
+ * Old phrases (bundle 1, 2026-10-01). A second, narrower rule set,
+ * OLD_PHRASES, holds phrases we rewrote and never want back: "fully claimed",
+ * "claim a spot", "earn tokens", "tokens for your contributions", "on this
+ * platform that means crypto", "grows on your Living Tree", and on the
+ * profile only a "Currency" label under the $ReGen balance. They apply more
+ * widely than the word list:
+ *   - campaign surfaces: the word list, the em-dash and the old phrases;
+ *   - PROFILE_GUARDED_FILES: the old phrases (with the "Currency" label) and
+ *     the em-dash, never the word list (the profile rightly says claim for
+ *     the token bridge and names $RCivics on its token boxes);
+ *   - PHRASE_GUARDED_FILES: the old phrases and the em-dash.
+ * The same skips and the same allow comment apply, and a missing path fails.
+ *
+ * Pure cores findBannedTerms(path, text) and findOldPhrases(path, text) are
+ * exported for server/banned-terms-guard.test.ts.
  *
  * Usage: node scripts/check-banned-terms.mjs
  * Wired into scripts/gate.mjs (gate 1f) and .github/workflows/ci.yml.
@@ -87,6 +100,21 @@ export const GUARDED_DIRS = [
 
 /** Surfaces where the fund words are allowed: notices name no fund, but need no fund ban either. */
 export const FUND_WORDS_EXEMPT = new Set(["server/lib/campaign-notify.ts"]);
+
+/** The profile page files (the old phrases, the "Currency" label and the em-dash). Each must exist. */
+export const PROFILE_GUARDED_FILES = [
+  "client/src/pages/PlayerProfile.tsx",
+  "client/src/pages/PlayerProfileByHandle.tsx",
+  "client/src/components/profile/ProfileHeader.tsx",
+];
+
+/** Other files the old phrases (and the em-dash) are checked in, beyond the campaign surfaces. Each must exist. */
+export const PHRASE_GUARDED_FILES = [
+  "client/src/data/pageCopy.ts",
+  "shared/crowdpoolingTaxonomy.ts",
+  "server/routes/campaigns.ts",
+  "scripts/seed-demo-campaigns.ts",
+];
 
 const SOURCE_EXT = [".ts", ".tsx"];
 const TEST_FILE = /\.(test|spec)\.tsx?$/;
@@ -145,7 +173,7 @@ export function buildRules(modelTerms = loadModelBannedTerms().terms) {
     { label: "unlock", body: "unlock|unlocks" },
     { label: "claim", body: "claim|claims|claimed" },
   ].map((r) => ({ label: r.label, fund: false, re: new RegExp(wordPattern(r.body), "gi") }));
-  const emDash = { label: "em-dash", fund: false, re: new RegExp(String.fromCharCode(0x2014), "g") };
+  const emDash = emDashRule();
   const fund = [
     // $ is not a word character, so this one carries its own left edge.
     { label: "$RCivics", re: /(?<![A-Za-z0-9_$])\$RCivics(?![A-Za-z0-9_])/gi },
@@ -159,6 +187,23 @@ export function buildRules(modelTerms = loadModelBannedTerms().terms) {
   ].map((r) => ({ ...r, fund: true }));
   return [...modelRules, ...base, emDash, ...fund];
 }
+
+/** The em-dash character, built from its code so this file carries none. */
+function emDashRule() {
+  return { label: "em-dash", fund: false, re: new RegExp(String.fromCharCode(0x2014), "g") };
+}
+
+/** Old phrases that must not come back (bundle 1, 2026-10-01). Case-insensitive. */
+export const OLD_PHRASES = [
+  { label: "fully claimed", re: /fully[\s-]+claimed/gi },
+  { label: "claim a spot", re: /claim\s+a\s+spot/gi },
+  { label: "earn tokens", re: /\bearn(?:s|ing)?\s+tokens\b/gi },
+  { label: "tokens for your contributions", re: /tokens\s+for\s+your\s+contributions/gi },
+  { label: "that means crypto", re: /on\s+this\s+platform\s+that\s+means\s+crypto/gi },
+  { label: "grows on your Living Tree", re: /grows\s+on\s+your\s+living\s+tree/gi },
+  // Profile files only: CreateCampaign's campaign-currency picker is rightly labelled "Currency".
+  { label: "Currency label", re: />\s*Currency\s*</g, profileOnly: true },
+];
 
 // ── Skips ───────────────────────────────────────────────────────────────────
 
@@ -199,14 +244,57 @@ function enumLiteralRanges(line) {
 
 // ── The pure core ───────────────────────────────────────────────────────────
 
+/** A path with forward slashes, as the lists hold it. */
+function normalise(file) {
+  return String(file).split(path.sep).join("/");
+}
+
 /**
  * Every banned word in one file's text. `file` is the repo-relative path; it
  * decides whether the fund words apply. Returns
  * [{ line, term, match, text }] with 1-based line numbers.
  */
 export function findBannedTerms(file, text, rules = buildRules()) {
-  const rel = String(file).split(path.sep).join("/");
-  const fundApplies = !FUND_WORDS_EXEMPT.has(rel);
+  const fundApplies = !FUND_WORDS_EXEMPT.has(normalise(file));
+  return scanLines(text, rules, (rule) => !rule.fund || fundApplies);
+}
+
+/** True for a file on PROFILE_GUARDED_FILES, where the "Currency" label rule applies. */
+export function isProfileFile(file) {
+  return PROFILE_GUARDED_FILES.includes(normalise(file));
+}
+
+/** True for a campaign surface: on GUARDED_FILES, or a source file (not a test) under GUARDED_DIRS. */
+export function isCampaignSurface(file) {
+  const rel = normalise(file);
+  if (GUARDED_FILES.includes(rel)) return true;
+  if (TEST_FILE.test(rel) || !SOURCE_EXT.some((e) => rel.endsWith(e))) return false;
+  return GUARDED_DIRS.some((dir) => rel.startsWith(`${dir}/`));
+}
+
+/**
+ * Every old phrase in one file's text (OLD_PHRASES). The "Currency" label
+ * rule applies only to the profile files. Same skips, same allow comment and
+ * same finding shape as findBannedTerms.
+ */
+export function findOldPhrases(file, text) {
+  const profile = isProfileFile(file);
+  return scanLines(text, OLD_PHRASES, (rule) => !rule.profileOnly || profile);
+}
+
+/**
+ * Everything the guard reports for one file, by the lists it is on: a
+ * campaign surface gets the word list (with the em-dash) and the old phrases;
+ * a profile or phrase-guarded file gets the em-dash and the old phrases.
+ */
+export function findForFile(file, text, rules = buildRules()) {
+  const found = isCampaignSurface(file) ? findBannedTerms(file, text, rules) : scanLines(text, [emDashRule()]);
+  found.push(...findOldPhrases(file, text));
+  return found.sort((a, b) => a.line - b.line);
+}
+
+/** The shared line scan: comment lines, block comments and allow lines skipped. */
+function scanLines(text, rules, applies = () => true) {
   const lines = String(text).split(/\r?\n/);
   const found = [];
   let inBlock = false;
@@ -228,7 +316,7 @@ export function findBannedTerms(file, text, rules = buildRules()) {
     const code = stripTrailingComment(raw);
     const literals = enumLiteralRanges(code);
     for (const rule of rules) {
-      if (rule.fund && !fundApplies) continue;
+      if (!applies(rule)) continue;
       rule.re.lastIndex = 0;
       let m;
       while ((m = rule.re.exec(code))) {
@@ -277,16 +365,30 @@ export function guardedFiles(root = REPO) {
   return { files: [...files].sort(), missing };
 }
 
+/** PROFILE_GUARDED_FILES and PHRASE_GUARDED_FILES as repo-relative paths, plus the listed ones that are missing. */
+export function phraseGuardedFiles(root = REPO) {
+  const missing = [];
+  const files = new Set();
+  for (const rel of [...PROFILE_GUARDED_FILES, ...PHRASE_GUARDED_FILES]) {
+    if (existsSync(path.join(root, rel))) files.add(rel);
+    else missing.push(rel);
+  }
+  return { files: [...files].sort(), missing };
+}
+
 // ── CLI ─────────────────────────────────────────────────────────────────────
 
 function main() {
   const { terms, fromSource } = loadModelBannedTerms();
   const rules = buildRules(terms);
-  const { files, missing } = guardedFiles();
+  const { files, missing: missingSurfaces } = guardedFiles();
+  const phrase = phraseGuardedFiles();
+  const missing = [...missingSurfaces, ...phrase.missing];
+  const extra = phrase.files.filter((rel) => !files.includes(rel));
   const violations = [];
-  for (const rel of files) {
+  for (const rel of [...files, ...extra]) {
     const text = readFileSync(path.join(REPO, rel), "utf8");
-    for (const v of findBannedTerms(rel, text, rules)) violations.push({ file: rel, ...v });
+    for (const v of findForFile(rel, text, rules)) violations.push({ file: rel, ...v });
   }
 
   let failed = false;
@@ -303,7 +405,7 @@ function main() {
   }
   if (violations.length) {
     failed = true;
-    console.error(`\n✗ banned-terms: ${violations.length} word(s) we do not use on campaign surfaces.\n`);
+    console.error(`\n✗ banned-terms: ${violations.length} word(s) or old phrase(s) we do not use.\n`);
     for (const v of violations) {
       console.error(`  ${v.file}:${v.line}`);
       console.error(`    term:  ${v.term} ("${v.match}")`);
@@ -312,12 +414,16 @@ function main() {
     console.error(
       "\n  Say contribution or offer (never pledge or donation), complete (never funded),\n" +
         "  route (never earmark). Claim belongs to the token bridge. No em-dashes, and no fund\n" +
-        "  copy on campaign pages. If a line truly needs the word, add\n" +
+        "  copy on campaign pages. Help is recorded in a project's token, and money goes\n" +
+        "  through each project's own routes. If a line truly needs the word, add\n" +
         "  `banned-terms-allow: <reason>` on it or on the line above.\n",
     );
   }
   if (failed) process.exit(1);
-  console.log(`✓ banned-terms: ${files.length} campaign surface files clean of ${rules.length} banned words.`);
+  console.log(
+    `✓ banned-terms: ${files.length} campaign surface files clean of ${rules.length} banned words, ` +
+      `and ${extra.length} profile and copy files clean of the ${OLD_PHRASES.length} old phrases.`,
+  );
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

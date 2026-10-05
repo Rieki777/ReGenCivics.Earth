@@ -1911,7 +1911,7 @@ function ContributionsTab({
           <div className="bg-[#7dd87d]/8 border border-[#7dd87d]/20 rounded-xl p-4">
             <p className="text-white/70 text-xs mb-1">💚 $ReGen Balance</p>
             <p className="text-2xl font-bold text-[#7dd87d]">{rgenBalance != null && rgenBalance !== 0 ? rgenBalance.toLocaleString() : "--"}</p>
-            <p className="text-white/70 text-xs mt-1">Currency</p>
+            <p className="text-white/70 text-xs mt-1">From quests and gratitude</p>
           </div>
           <div className="bg-[#d4a574]/8 border border-[#d4a574]/20 rounded-xl p-4">
             <p className="text-white/70 text-xs mb-1">🗳 RGVoice / Voice Weight</p>
@@ -2588,7 +2588,7 @@ export default function PlayerProfile() {
               </h1>
               
               <p className="text-xl text-white/80 max-w-2xl mx-auto">
-                Track your contributions, earn tokens, and connect your Base blockchain account to verify your on-chain identity.
+                Complete quests to earn $ReGen, see the gratitude you receive, and connect your Base account to verify your on-chain identity.
               </p>
             </div>
           </AnimatedSection>
@@ -2613,7 +2613,7 @@ export default function PlayerProfile() {
                     Join the ReGen Civics Game
                   </CardTitle>
                   <CardDescription className="text-[#14331f]">
-                    Create your player profile to track your contributions, earn tokens, and connect with the regenerative movement.
+                    Create your player profile to complete quests, earn $ReGen and connect with the regenerative movement.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
@@ -2637,7 +2637,7 @@ export default function PlayerProfile() {
                     Create Your Player Profile
                   </CardTitle>
                   <CardDescription className="text-[#14331f]">
-                    Your profile here and in Hypha is how you earn tokens and track contributions
+                    Your profile here and in Hypha is where your quests and $ReGen live.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -2728,7 +2728,7 @@ export default function PlayerProfile() {
                           <Compass className="w-6 h-6 text-[#7dd87d]" />
                         </div>
                         <h3 className="font-semibold text-white text-base drop-shadow">Explore Welcome Aboard Quests</h3>
-                        <p className="text-sm text-white/75 leading-relaxed max-w-xs">Complete quests to earn tokens, deepen your practice, and root yourself in the game.</p>
+                        <p className="text-sm text-white/75 leading-relaxed max-w-xs">Complete quests to earn $ReGen, deepen your practice, and root yourself in the game.</p>
                         <button
                           onClick={() => { setActiveTab("quests"); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                           className="mt-1 px-5 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] text-sm font-semibold hover:bg-[#9de89d] transition-colors shadow-md"
@@ -3063,9 +3063,9 @@ export default function PlayerProfile() {
                   <div className="w-12 h-12 bg-[#7dd87d] rounded-full flex items-center justify-center mx-auto mb-4">
                     <Trophy className="w-6 h-6 text-[#1a472a]" />
                   </div>
-                  <h3 className="text-white font-semibold mb-2">3. Earn Tokens</h3>
+                  <h3 className="text-white font-semibold mb-2">3. Quests and land projects</h3>
                   <p className="text-white/60 text-sm">
-                    Complete quests, contribute to projects, and earn tokens for your contributions
+                    Complete quests to earn $ReGen. Bring what you have to land projects, and each project records your help in its own token.
                   </p>
                 </CardContent>
               </Card>

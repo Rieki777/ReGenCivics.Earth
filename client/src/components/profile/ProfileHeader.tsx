@@ -36,8 +36,8 @@ export function ProfileHeader({ displayName }: ProfileHeaderProps) {
               )}
             </h1>
             <p className="text-xl text-white/80 max-w-2xl mx-auto">
-              Track your contributions, earn tokens, and connect your Base blockchain account to
-              verify your on-chain identity.
+              Complete quests to earn $ReGen, see the gratitude you receive, and connect your Base
+              account to verify your on-chain identity.
             </p>
           </div>
         </AnimatedSection>

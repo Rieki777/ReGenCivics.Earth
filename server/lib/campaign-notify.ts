@@ -353,7 +353,7 @@ export function buildDelivered(args: {
     userId: uid,
     type: "contribution_delivered",
     title: `${projectNameOf(campaign)} marked your contribution delivered`,
-    body: `"${plain(contribution.title)}" is on the record, and it now grows on your Living Tree.`,
+    body: `"${plain(contribution.title)}" is delivered. ${projectNameOf(campaign)} records it in its own token. Thank you for showing up for this land.`,
     link: projectLink(campaign, "your-contributions"),
     actorId: args.actorId ?? null,
     campaignId: campaign.id,

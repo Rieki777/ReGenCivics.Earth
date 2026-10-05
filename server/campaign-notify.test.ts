@@ -269,7 +269,7 @@ describe("hours changed, released, delivered, thanked", () => {
     expect(row).toMatchObject({
       type: "contribution_delivered",
       title: "Seeds & Soil marked your contribution delivered",
-      body: '"Soil testing" is on the record, and it now grows on your Living Tree.',
+      body: '"Soil testing" is delivered. Seeds & Soil records it in its own token. Thank you for showing up for this land.',
       dedupeKey: "cp:contrib:300:delivered",
     });
   });

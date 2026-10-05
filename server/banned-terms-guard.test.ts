@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
-import { FUND_WORDS_EXEMPT, GUARDED_FILES, buildRules, findBannedTerms, guardedFiles, loadModelBannedTerms } from "../scripts/check-banned-terms.mjs";
+import { FUND_WORDS_EXEMPT, GUARDED_FILES, OLD_PHRASES, PHRASE_GUARDED_FILES, PROFILE_GUARDED_FILES, buildRules, findBannedTerms, findForFile, findOldPhrases, guardedFiles, isCampaignSurface, loadModelBannedTerms, phraseGuardedFiles } from "../scripts/check-banned-terms.mjs";
 
 type Finding = { line: number; term: string; match: string; text: string };
 
@@ -130,6 +130,117 @@ describe("what the guard skips", () => {
   });
 });
 
+describe("the old phrases (bundle 1, 2026-10-01)", () => {
+  const PROFILE = "client/src/pages/PlayerProfile.tsx";
+  const COPY = "client/src/data/pageCopy.ts";
+  const phrases = (file: string, text: string): string[] => (findOldPhrases(file, text) as Finding[]).map((f) => f.term);
+  const everything = (file: string, text: string): string[] => (findForFile(file, text) as Finding[]).map((f) => f.term);
+
+  const CASES: Array<[string, string]> = [
+    ['const a = "This need is already fully claimed";', "fully claimed"],
+    ['const a = "Fully-claimed needs drop off";', "fully claimed"],
+    ['const a = "Claim a spot on the needs list";', "claim a spot"],
+    ['const a = "Complete quests to earn tokens";', "earn tokens"],
+    ['const a = "Each quest earns tokens";', "earn tokens"],
+    ['const a = "Help earning tokens";', "earn tokens"],
+    ['const a = "Get tokens for your contributions";', "tokens for your contributions"],
+    ['const a = "Money. On this platform that means crypto.";', "that means crypto"],
+    ['const a = "It now grows on your Living Tree.";', "grows on your Living Tree"],
+  ];
+
+  it("catches each old phrase in a profile file and on a campaign surface", () => {
+    for (const [line, term] of CASES) {
+      expect(phrases(PROFILE, line), line).toContain(term);
+      expect(phrases(SURFACE, line), line).toContain(term);
+      expect(everything(COPY, line), line).toContain(term);
+    }
+    // Every rule has a case here.
+    const covered = new Set(CASES.map(([, term]) => term));
+    for (const rule of OLD_PHRASES as Array<{ label: string; profileOnly?: boolean }>) {
+      if (!rule.profileOnly) expect(covered.has(rule.label), rule.label).toBe(true);
+    }
+  });
+
+  it("catches the Currency label on the profile only", () => {
+    const line = '<p className="text-white/70 text-xs mt-1">Currency</p>';
+    expect(phrases(PROFILE, line)).toEqual(["Currency label"]);
+    expect(phrases("client/src/components/profile/ProfileHeader.tsx", line)).toEqual(["Currency label"]);
+    expect(phrases("client/src/pages/CreateCampaign.tsx", line)).toEqual([]);
+    expect(phrases(SURFACE, line)).toEqual([]);
+    expect(phrases(COPY, line)).toEqual([]);
+    // The word in a sentence is not the label.
+    expect(phrases(PROFILE, "<p>Pick a currency for the campaign</p>")).toEqual([]);
+  });
+
+  it("leaves the word list off the profile, so claim for the token bridge stays", () => {
+    const text = ['<Button>Claim to wallet</Button>', 'const a = "Funded and claimed";', 'const b = "$RCivics balance";'].join("\n");
+    expect(everything(PROFILE, text)).toEqual([]);
+    expect(everything(COPY, text)).toEqual([]);
+    // The same lines on a campaign surface still trip the word list.
+    expect(everything(SURFACE, text)).toEqual(expect.arrayContaining(["claim", "funded", "$RCivics"]));
+  });
+
+  it("checks the em-dash on the profile and copy files", () => {
+    const line = `const a = "Quests ${DASH} and gratitude";`;
+    expect(everything(PROFILE, line)).toEqual(["em-dash"]);
+    expect(everything(COPY, line)).toEqual(["em-dash"]);
+  });
+
+  it("skips comment lines and honours banned-terms-allow", () => {
+    const text = [
+      "// it used to say earn tokens here",
+      "{/* 3. Earn Tokens, the old heading */}",
+      " * fully claimed, in a doc comment",
+      'const a = "earn tokens"; // banned-terms-allow: quoting the old copy in a test fixture',
+      'const ok = "Complete quests to earn $ReGen.";',
+    ].join("\n");
+    expect(findOldPhrases(PROFILE, text)).toEqual([]);
+    expect(findForFile(PROFILE, text)).toEqual([]);
+  });
+
+  it("knows which files are campaign surfaces", () => {
+    expect(isCampaignSurface("client/src/components/project/StewardTools.tsx")).toBe(true);
+    expect(isCampaignSurface("client/src/components/project/StewardTools.test.tsx")).toBe(false);
+    expect(isCampaignSurface("shared/crowdpoolCopy.ts")).toBe(true);
+    expect(isCampaignSurface(PROFILE)).toBe(false);
+    expect(isCampaignSurface(COPY)).toBe(false);
+  });
+
+  it("lists the profile and copy files the spec names", () => {
+    expect(PROFILE_GUARDED_FILES).toEqual([
+      "client/src/pages/PlayerProfile.tsx",
+      "client/src/pages/PlayerProfileByHandle.tsx",
+      "client/src/components/profile/ProfileHeader.tsx",
+    ]);
+    expect(PHRASE_GUARDED_FILES).toEqual([
+      "client/src/data/pageCopy.ts",
+      "shared/crowdpoolingTaxonomy.ts",
+      "server/routes/campaigns.ts",
+      "scripts/seed-demo-campaigns.ts",
+    ]);
+  });
+
+  it("reports a missing profile or copy file", () => {
+    const empty = mkdtempSync(path.join(tmpdir(), "old-phrases-"));
+    try {
+      const { files, missing } = phraseGuardedFiles(empty);
+      expect(files).toEqual([]);
+      expect(missing).toEqual([...PROFILE_GUARDED_FILES, ...PHRASE_GUARDED_FILES]);
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  it("every profile and copy file is clean today", () => {
+    const { files, missing } = phraseGuardedFiles();
+    expect(missing).toEqual([]);
+    const dirty = files
+      .map((f: string) => [f, findForFile(f, readFileSync(f, "utf8")) as Finding[]] as const)
+      .filter(([, found]: readonly [string, Finding[]]) => found.length > 0);
+    expect(dirty).toEqual([]);
+  });
+});
+
 describe("the guarded files", () => {
   it("lists the contributor surfaces the spec names", () => {
     expect(GUARDED_FILES).toEqual(
@@ -166,7 +277,7 @@ describe("the guarded files", () => {
     expect(files).toEqual(expect.arrayContaining(["client/src/components/project/StewardTools.tsx", "client/src/components/campaign-needs/NeedCard.tsx"]));
     const rules = buildRules();
     const dirty = files
-      .map((f: string) => [f, findBannedTerms(f, readFileSync(f, "utf8"), rules) as Finding[]] as const)
+      .map((f: string) => [f, findForFile(f, readFileSync(f, "utf8"), rules) as Finding[]] as const)
       .filter(([, found]: readonly [string, Finding[]]) => found.length > 0);
     expect(dirty).toEqual([]);
   });
