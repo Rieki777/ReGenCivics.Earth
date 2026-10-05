@@ -511,7 +511,7 @@ async function tellOwnerRouteToCheck(campaign: Pick<Campaign, 'title' | 'project
  * repeated calls (it runs on every login) never add a second Living Tree row.
  * The Living Tree row is gated on playerContributionId; the score is gated on
  * recordCrowdpoolScoreOnce (one score row per contribution, with migration
- * 0283's unique key behind it). So a delivery made before the person had a
+ * 0288's unique key behind it). So a delivery made before the person had a
  * profile, which deliveryPayoff already scored, scores once: this path adds
  * the Living Tree row and finds the score already there.
  *
