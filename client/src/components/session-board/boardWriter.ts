@@ -74,6 +74,147 @@ export function patchBoardAction<B extends { state: BoardState }>(
   return { ...board, state: applyBoardAction(board.state, action, now) };
 }
 
+/** What `prefillBoardProject` tells the page it wrote. */
+export type BoardPrefillPaint = {
+  projectId: number;
+  applicationId: number | null;
+  place?: string;
+  url?: string;
+  phase?: string;
+  whereNow?: string;
+  ready?: string[];
+  pain?: { id: number; text: string };
+  prefillFields: readonly string[];
+};
+
+type PrefillProject = {
+  id: number;
+  place: string | null;
+  url: string | null;
+  phase: string | null;
+  whereNow: string | null;
+  ready: string[];
+  applicationId: number | null;
+  prefillFields: string[];
+};
+
+type PrefillItem = {
+  id: number;
+  kind: string;
+  text: string;
+  projectId: number | null;
+  prefilled: boolean;
+};
+
+const TEXT_FIELDS = ["place", "url", "phase", "whereNow"] as const;
+
+function blankText(value: string | null | undefined): boolean {
+  return !value || !value.trim();
+}
+
+function sameReady(current: readonly string[], incoming: readonly string[] | undefined): boolean {
+  if (!incoming || current.length !== incoming.length) return false;
+  return current.every((key, i) => key === incoming[i]);
+}
+
+/**
+ * Paint a prefill onto the cached card. A field that already has text, a
+ * phase, a readiness set, or a pain note stays as it is. Marks come back
+ * only for fields this response filled, or ones the card already showed as
+ * prefilled and the server still does.
+ */
+export function applyBoardPrefill<
+  P extends PrefillProject,
+  I extends PrefillItem,
+  B extends { projects: P[]; items: I[] },
+>(board: B, prefill: BoardPrefillPaint | null | undefined): B {
+  if (!prefill) return board;
+  const project = board.projects.find((p) => p.id === prefill.projectId);
+  if (!project) return board;
+
+  const localMarks = new Set(project.prefillFields);
+  const serverMarks = new Set(prefill.prefillFields);
+  const marks: string[] = [];
+  const patch: Partial<P> = {};
+
+  for (const field of TEXT_FIELDS) {
+    const incoming = prefill[field];
+    const current = project[field];
+    if (incoming && blankText(current)) {
+      (patch as Record<string, string>)[field] = incoming;
+      if (serverMarks.has(field)) marks.push(field);
+    } else if (serverMarks.has(field) && localMarks.has(field) && (!incoming || current === incoming)) {
+      marks.push(field);
+    }
+  }
+
+  if (prefill.ready?.length && project.ready.length === 0) {
+    patch.ready = [...prefill.ready] as P["ready"];
+    if (serverMarks.has("ready")) marks.push("ready");
+  } else if (serverMarks.has("ready") && localMarks.has("ready") && sameReady(project.ready, prefill.ready ?? project.ready)) {
+    marks.push("ready");
+  }
+
+  if (prefill.applicationId != null && project.applicationId == null) {
+    patch.applicationId = prefill.applicationId as P["applicationId"];
+  }
+
+  let items = board.items;
+  if (prefill.pain && serverMarks.has("pain")) {
+    const pains = board.items.filter((item) => item.kind === "pain" && item.projectId === prefill.projectId);
+    if (pains.length === 0) {
+      items = [
+        ...board.items,
+        {
+          id: prefill.pain.id,
+          kind: "pain",
+          text: prefill.pain.text,
+          projectId: prefill.projectId,
+          block: null,
+          theme: null,
+          chosen: false,
+          votes: 0,
+          roomVotes: 0,
+          fromItemId: null,
+          hidden: false,
+          displayName: null,
+          prefilled: true,
+          createdAt: new Date(),
+        } as unknown as I,
+      ];
+      marks.push("pain");
+    } else if (pains.some((item) => item.prefilled) && localMarks.has("pain")) {
+      marks.push("pain");
+    }
+  }
+
+  return {
+    ...board,
+    projects: board.projects.map((p) => (p.id === project.id ? { ...p, ...patch, prefillFields: marks } : p)),
+    items,
+  };
+}
+
+/** An edit of a field clears its prefilled mark in the same paint as the value. */
+export function dropProjectPrefill<B extends { projects: Array<{ id: number; prefillFields: string[] }> }>(
+  board: B,
+  projectId: number,
+  input: { place?: unknown; url?: unknown; phase?: unknown; whereNow?: unknown; ready?: unknown },
+): B {
+  const drop: string[] = TEXT_FIELDS.filter((field) => input[field] !== undefined);
+  if (input.ready !== undefined) drop.push("ready");
+  if (!drop.length) return board;
+  const gone = new Set<string>(drop);
+  return {
+    ...board,
+    projects: board.projects.map((p) =>
+      p.id === projectId
+        ? { ...p, prefillFields: p.prefillFields.filter((field) => !gone.has(field)) }
+        : p,
+    ),
+  };
+}
+
 export type WriteFailure = { latest: boolean };
 
 type Slot = {

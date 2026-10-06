@@ -2,7 +2,8 @@
  * The stages of a live session board (ADR-68). Each one is a screen the room
  * moves through together; anyone can type into it, and the facilitator runs it.
  */
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode, type Ref } from "react";
+import { PREFILL_ITEM_NAME, PREFILL_NOTE } from "@shared/boardPrefill";
 import { CROWDPOOL_READINESS, GAME_NEEDS, GAME_NEEDS_LABEL, GAME_NEEDS_LEAD } from "@shared/crowdpoolReadiness";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 import {
@@ -29,6 +30,7 @@ import {
   VILLAGE_OS_OFFER,
   VILLAGE_OS_PATH,
 } from "@shared/villageOsOffer";
+import { DictationButton } from "@/components/admin/dictation/DictationButton";
 import { trpc } from "@/lib/trpc";
 import { JoinBoard } from "./JoinBoard";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
@@ -70,9 +72,10 @@ function StageHead({ stages, index, title, lede, children }: { stages: BoardStag
 }
 
 /** One input that adds a note on Enter. */
-function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placeholder: string; max: number; label: string; onAdd: (text: string) => Promise<unknown> | void; button?: boolean }) {
+function QuickAdd({ placeholder, max, label, onAdd, button = false, dictate = false }: { placeholder: string; max: number; label: string; onAdd: (text: string) => Promise<unknown> | void; button?: boolean; dictate?: boolean }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const fieldRef = useRef<HTMLInputElement | null>(null);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const v = text.trim();
@@ -85,9 +88,13 @@ function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placehol
       setBusy(false);
     }
   };
+  const speak = label.startsWith("Add ") ? `Speak ${label.slice(4)}` : `Speak into ${label}`;
   return (
     <form className="sb-add" onSubmit={submit}>
-      <input className="sb-field" value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete="off" />
+      <input ref={fieldRef} className="sb-field" value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete="off" />
+      {dictate ? (
+        <DictationButton className="sb-mic" label={speak} value={text} targetRef={fieldRef} errorAlign="end" disabled={busy} onChange={setText} />
+      ) : null}
       {button ? <button className="sb-btn" type="submit" disabled={busy}>Add</button> : null}
     </form>
   );
@@ -102,6 +109,7 @@ function Chips({ items, mine, facilitator, actions, className = "sb-chips" }: { 
         return (
           <li key={i.id} className={`sb-chip${removable ? " sb-has-x" : ""}${i.hidden ? " sb-r-hidden" : ""}`}>
             <span className="sb-chip-t">{i.text}</span>
+            {i.prefilled ? <span className="sb-chip-src">{PREFILL_ITEM_NAME}</span> : null}
             {removable ? (
               <button type="button" className="sb-x" aria-label={`Take back "${i.text}"`} onClick={() => void actions.removeItem(i.id)}>×</button>
             ) : null}
@@ -116,13 +124,14 @@ function Chips({ items, mine, facilitator, actions, className = "sb-chips" }: { 
  * A field that saves as you type (after a pause) and when you leave it, and
  * takes in other people's changes whenever you are not typing in it.
  */
-function LiveField({ value, onSave, readOnly, multiline, className, placeholder, label, max }: {
-  value: string; onSave: (v: string) => void; readOnly: boolean; multiline?: boolean; className: string; placeholder?: string; label: string; max: number;
+function LiveField({ value, onSave, readOnly, multiline, className, placeholder, label, max, dictate = false }: {
+  value: string; onSave: (v: string) => void; readOnly: boolean; multiline?: boolean; className: string; placeholder?: string; label: string; max: number; dictate?: boolean;
 }) {
   const [draft, setDraft] = useState(value);
   const focused = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSaved = useRef(value);
+  const fieldRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   useEffect(() => {
     if (!focused.current) {
       setDraft(value);
@@ -138,6 +147,13 @@ function LiveField({ value, onSave, readOnly, multiline, className, placeholder,
       onSave(v);
     }
   };
+  const schedule = (v: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      save(v);
+      if (fieldRef.current !== document.activeElement) focused.current = false;
+    }, 900);
+  };
   const common = {
     className,
     value: draft,
@@ -146,15 +162,44 @@ function LiveField({ value, onSave, readOnly, multiline, className, placeholder,
     "aria-label": label,
     maxLength: max,
     onFocus: () => { focused.current = true; },
-    onBlur: () => { focused.current = false; save(draft); },
+    onBlur: () => {
+      focused.current = false;
+      // A prefill that arrived while the field was focused, and nothing was typed, still shows.
+      if (draft === lastSaved.current && value !== draft) {
+        setDraft(value);
+        lastSaved.current = value;
+        return;
+      }
+      save(draft);
+    },
     onChange: (e: { target: { value: string } }) => {
       const v = e.target.value;
       setDraft(v);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => save(v), 900);
+      schedule(v);
     },
   };
-  return multiline ? <textarea {...common} /> : <input {...common} autoComplete="off" />;
+  const field = multiline
+    ? <textarea ref={fieldRef as Ref<HTMLTextAreaElement>} {...common} />
+    : <input ref={fieldRef as Ref<HTMLInputElement>} {...common} autoComplete="off" />;
+  if (!dictate || readOnly) return field;
+  const speak = label.startsWith("Add ") ? `Speak ${label.slice(4)}` : `Speak into ${label}`;
+  return (
+    <div className="sb-dictate">
+      {field}
+      <DictationButton
+        className="sb-mic"
+        label={speak}
+        value={draft}
+        targetRef={fieldRef}
+        errorAlign="end"
+        onChange={(next) => {
+          focused.current = true;
+          setDraft(next);
+          schedule(next);
+        }}
+      />
+    </div>
+  );
 }
 
 /* ================================================================ welcome */
@@ -717,8 +762,10 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
               <div className="sb-sp-top">
                 <div className="sb-sp-id">
                   <LiveField className="sb-sp-name" value={sel.name} readOnly={!editable} label="Project name" max={BOARD_LIMITS.projectName} onSave={(v) => { if (v.trim()) void actions.updateProject({ projectId: sel.id, name: v }); }} />
-                  <LiveField className="sb-sp-place" value={sel.place ?? ""} readOnly={!editable} placeholder={editable ? "Where on Earth" : ""} label="Where on Earth" max={BOARD_LIMITS.place} onSave={(v) => void actions.updateProject({ projectId: sel.id, place: v })} />
-                  {sel.url ? <a className="sb-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.url.replace(/^https?:\/\//, "")}<span className="sr-only"> (opens in a new tab)</span></a> : null}
+                  <LiveField className={`sb-sp-place${sel.prefillFields.includes("place") ? " sb-prefilled" : ""}`} value={sel.place ?? ""} readOnly={!editable} placeholder={editable ? "Where on Earth" : ""} label="Where on Earth" max={BOARD_LIMITS.place} onSave={(v) => void actions.updateProject({ projectId: sel.id, place: v })} />
+                  {editable && (sel.url || sel.prefillFields.includes("url")) ? (
+                    <LiveField className={`sb-sp-place${sel.prefillFields.includes("url") ? " sb-prefilled" : ""}`} value={sel.url ?? ""} readOnly={false} placeholder="Project website" label="Project website" max={500} onSave={(v) => void actions.updateProject({ projectId: sel.id, url: v })} />
+                  ) : sel.url ? <a className="sb-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.url.replace(/^https?:\/\//, "")}<span className="sr-only"> (opens in a new tab)</span></a> : null}
                 </div>
                 {sp.projectId === sel.id ? (
                   <div className="sb-timer">
@@ -742,9 +789,11 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
                 ) : null}
               </div>
 
+              {sel.prefillFields.length > 0 ? <p className="sb-prefill">{PREFILL_NOTE}</p> : null}
+
               <div className="sb-q">
                 <h3 className="sb-q-t">Where are you now?</h3>
-                <div className="sb-row" role="group" aria-label="Where the project is">
+                <div className={`sb-row${sel.prefillFields.includes("phase") ? " sb-prefilled" : ""}`} role="group" aria-label="Where the project is">
                   {PROJECT_PHASES.map((p) => (
                     <button key={p.key} type="button" className="sb-toggle" aria-pressed={sel.phase === p.key} disabled={!editable}
                       onClick={() => void actions.updateProject({ projectId: sel.id, phase: sel.phase === p.key ? null : p.key })}>{p.title}</button>
@@ -752,7 +801,7 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
                 </div>
                 <p className="sb-hint">{phase ? phase.desc : editable ? "Pick the stage that fits best." : ""}</p>
                 {editable || sel.whereNow ? (
-                  <LiveField multiline className="sb-field" value={sel.whereNow ?? ""} readOnly={!editable} placeholder="Land, people, what's built, what's running" label="Where the project is now" max={BOARD_LIMITS.whereNow} onSave={(v) => void actions.updateProject({ projectId: sel.id, whereNow: v })} />
+                  <LiveField multiline dictate={editable} className={`sb-field${sel.prefillFields.includes("whereNow") ? " sb-prefilled" : ""}`} value={sel.whereNow ?? ""} readOnly={!editable} placeholder="Land, people, what's built, what's running" label="Where the project is now" max={BOARD_LIMITS.whereNow} onSave={(v) => void actions.updateProject({ projectId: sel.id, whereNow: v })} />
                 ) : null}
               </div>
 
@@ -760,18 +809,18 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
                 <div className="sb-q">
                   <h3 className="sb-q-t">Biggest pain point</h3>
                   <Chips items={notesFor("pain")} mine={mine} facilitator={facilitator} actions={actions} />
-                  {canWrite ? <QuickAdd placeholder="Type a pain point and press Enter" max={BOARD_LIMITS.note} label="Add a pain point" onAdd={(text) => actions.addItem({ kind: "pain", text, projectId: sel.id })} /> : null}
+                  {canWrite ? <QuickAdd dictate placeholder="Type a pain point and press Enter" max={BOARD_LIMITS.note} label="Add a pain point" onAdd={(text) => actions.addItem({ kind: "pain", text, projectId: sel.id })} /> : null}
                 </div>
                 <div className="sb-q">
                   <h3 className="sb-q-t">Growth opportunity you see right now</h3>
                   <Chips items={notesFor("opp")} mine={mine} facilitator={facilitator} actions={actions} />
-                  {canWrite ? <QuickAdd placeholder="Type an opportunity and press Enter" max={BOARD_LIMITS.note} label="Add a growth opportunity" onAdd={(text) => actions.addItem({ kind: "opp", text, projectId: sel.id })} /> : null}
+                  {canWrite ? <QuickAdd dictate placeholder="Type an opportunity and press Enter" max={BOARD_LIMITS.note} label="Add a growth opportunity" onAdd={(text) => actions.addItem({ kind: "opp", text, projectId: sel.id })} /> : null}
                 </div>
               </div>
 
               <div className="sb-sp-ready">
                 <div className="sb-sp-ready-head"><h3 className="sb-q-t">Ready to crowdpool: in place now</h3><span className="sb-count">{ready.size} of 8</span></div>
-                <div className="sb-row" role="group" aria-label="Readiness items in place">
+                <div className={`sb-row${sel.prefillFields.includes("ready") ? " sb-prefilled" : ""}`} role="group" aria-label="Readiness items in place">
                   {CROWDPOOL_READINESS.map((r) => (
                     <button key={r.key} type="button" className="sb-rt" aria-pressed={ready.has(r.key)} disabled={!editable} title={r.need}
                       onClick={() => {

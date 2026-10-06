@@ -14,6 +14,9 @@ import type { TrpcContext } from "./_core/context";
 import { addItemInput, callerKeys, updateProjectInput } from "./routes/sessionBoard";
 import { getDb } from "./db";
 import {
+  applications,
+  campaignReadinessTicks,
+  campaigns,
   sessionBoardItems,
   sessionBoardProjects,
   sessionBoardVotes,
@@ -29,7 +32,9 @@ import {
   offerPeople,
   readBoardRows,
 } from "./lib/sessionBoard";
+import { PREFILL_ITEM_NAME } from "@shared/boardPrefill";
 import { normalizeBoardState } from "@shared/sessionBoard";
+import { prefillBoardProject } from "./lib/boardPrefill";
 
 function makeCtx(user: TrpcContext["user"] | null): TrpcContext {
   return {
@@ -108,10 +113,18 @@ const SEASON = "Board Test 2030";
 
 describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
   const boardIds: number[] = [];
+  const appIds: number[] = [];
+  const campaignIds: number[] = [];
 
   afterAll(async () => {
     const db = await getDb();
-    if (!db || boardIds.length === 0) return;
+    if (!db) return;
+    if (campaignIds.length) {
+      await db.delete(campaignReadinessTicks).where(inArray(campaignReadinessTicks.campaignId, campaignIds));
+      await db.delete(campaigns).where(inArray(campaigns.id, campaignIds));
+    }
+    if (appIds.length) await db.delete(applications).where(inArray(applications.id, appIds));
+    if (boardIds.length === 0) return;
     await db.delete(sessionBoardVotes).where(inArray(sessionBoardVotes.boardId, boardIds));
     await db.delete(sessionBoardItems).where(inArray(sessionBoardItems.boardId, boardIds));
     await db.delete(sessionBoardProjects).where(inArray(sessionBoardProjects.boardId, boardIds));
@@ -200,6 +213,126 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
     const counts = (await readBoardRows(db, board.id, { includeHidden: false })).counts;
     expect(counts.get("offer:coach")).toBe(2);
     expect((await mineOnBoard(db, board.id, [`k:${KEY}`])).targets.sort()).toEqual(["offer:build", "offer:coach"]);
+  });
+
+  it("fills an empty presenter card from the matching application and does not replace typed text", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 6);
+    boardIds.push(board.id);
+    const name = "Prefill Probe 2030";
+    const [appRow] = await db.insert(applications).values({
+      userId: 986201,
+      status: "approved",
+      season: 2,
+      projectName: name,
+      projectType: "early_stage",
+      location: "Ubud",
+      country: "Indonesia",
+      vision: "A village in the rice fields",
+      landStatus: "owned",
+      projectSizeHectares: 12,
+      currentPeopleCount: 8,
+      currentHouseholdCount: 3,
+      teamSize: 4,
+      teamDescription: "Four people who already live nearby",
+      regenerativePractices: "Rice, fruit trees, and greywater",
+      governanceApproach: "We decide in a circle",
+      communityEngagement: "Weekly meals",
+      timeCommitment: "Full time",
+      fundingNeeds: "A well and a road",
+      needsText: "Housing for two more households",
+      offersText: "Meals and a toolshed",
+      websiteUrl: "https://amora.earth",
+    });
+    const appId = Number((appRow as { insertId: number }).insertId);
+    appIds.push(appId);
+    const [campRow] = await db.insert(campaigns).values({
+      userId: 986201,
+      applicationId: appId,
+      status: "active",
+      title: name,
+      description: "Probe campaign",
+      projectName: name,
+      currentPhase: "Sprout",
+      legalStructure: "A land cooperative",
+      challenges: "The road washes out in the rains.",
+      housingPlans: "Three small homes",
+      isDemo: 0,
+    });
+    const campaignId = Number((campRow as { insertId: number }).insertId);
+    campaignIds.push(campaignId);
+    await db.insert(campaignReadinessTicks).values([
+      { campaignId, itemKey: "governance", tickedBy: 986201 },
+      { campaignId, itemKey: "care", tickedBy: 986201 },
+    ]);
+
+    const [proj] = await db.insert(sessionBoardProjects).values({
+      boardId: board.id,
+      name,
+      authorKey: `k:${KEY}`,
+    });
+    const projectId = Number((proj as { insertId: number }).insertId);
+    const [before] = await db.select().from(sessionBoardProjects).where(eq(sessionBoardProjects.id, projectId));
+    const applied = await prefillBoardProject(db, board.id, before, "u:986201");
+
+    expect(applied?.applicationId).toBe(appId);
+    expect(applied?.place).toBe("Ubud, Indonesia");
+    expect(applied?.url).toBe("https://amora.earth");
+    expect(applied?.phase).toBe("sprout");
+    expect(applied?.whereNow).toContain("The land is owned");
+    expect(applied?.whereNow).toContain("12 hectares");
+    expect(applied?.whereNow).toContain("Three small homes");
+    expect(applied?.whereNow).not.toContain("Phase they wrote");
+    expect(applied?.whereNow).not.toContain("Housing for two more households");
+    expect([...(applied?.ready ?? [])].sort()).toEqual(["care", "governance"]);
+    expect(applied?.pain?.text).toBe("The road washes out in the rains.");
+    expect(applied?.prefillFields).toEqual(["place", "url", "phase", "whereNow", "ready", "pain"]);
+
+    const notes = await db.select().from(sessionBoardItems).where(eq(sessionBoardItems.projectId, projectId));
+    expect(notes.map((n) => n.kind).sort()).toEqual(["pain"]);
+    expect(notes[0]?.displayName).toBe(PREFILL_ITEM_NAME);
+
+    await db.update(sessionBoardProjects).set({
+      place: "typed live",
+      whereNow: "said in the room",
+      prefillFields: "phase,ready,pain",
+    }).where(eq(sessionBoardProjects.id, projectId));
+    const [edited] = await db.select().from(sessionBoardProjects).where(eq(sessionBoardProjects.id, projectId));
+    const second = await prefillBoardProject(db, board.id, edited, "u:986201");
+    const [after] = await db.select().from(sessionBoardProjects).where(eq(sessionBoardProjects.id, projectId));
+    expect(after.place).toBe("typed live");
+    expect(after.whereNow).toBe("said in the room");
+    expect(after.phase).toBe("sprout");
+    expect(second?.place).toBeUndefined();
+    expect(second?.whereNow).toBeUndefined();
+    const pains = await db.select().from(sessionBoardItems).where(and(
+      eq(sessionBoardItems.projectId, projectId),
+      eq(sessionBoardItems.kind, "pain"),
+    ));
+    expect(pains).toHaveLength(1);
+
+    const [twin] = await db.insert(applications).values({
+      userId: 986201,
+      status: "approved",
+      season: 2,
+      projectName: name,
+      projectType: "mature",
+      location: "Elsewhere",
+      vision: "Another project with the same name",
+      landStatus: "seeking",
+      teamSize: 2,
+      teamDescription: "Two people",
+      regenerativePractices: "Gardens",
+      governanceApproach: "Consensus",
+      communityEngagement: "Markets",
+      timeCommitment: "Part time",
+      fundingNeeds: "Land",
+    });
+    appIds.push(Number((twin as { insertId: number }).insertId));
+    const [loose] = await db.insert(sessionBoardProjects).values({ boardId: board.id, name, authorKey: `k:${KEY}` });
+    const looseId = Number((loose as { insertId: number }).insertId);
+    const [looseRow] = await db.select().from(sessionBoardProjects).where(eq(sessionBoardProjects.id, looseId));
+    expect(await prefillBoardProject(db, board.id, looseRow, "u:986201")).toBeNull();
   });
 
   it("only admins and the facilitating role holders facilitate", async () => {
