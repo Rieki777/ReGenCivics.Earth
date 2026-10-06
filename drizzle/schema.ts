@@ -6716,6 +6716,8 @@ export const sessionBoardProjects = mysqlTable("session_board_projects", {
   shared: tinyint("shared").default(0).notNull(),
   /** applications.id, once a facilitator confirms the match. */
   applicationId: int("applicationId"),
+  /** Comma list of card fields filled from the application and not yet edited. */
+  prefillFields: varchar("prefillFields", { length: 80 }),
   /** boardIdentity(): "u:<userId>" or "k:<guest browser key>". Never sent to the page. */
   authorKey: varchar("authorKey", { length: 80 }),
   displayName: varchar("displayName", { length: 80 }),

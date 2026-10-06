@@ -20,7 +20,9 @@ import type { BoardOfferKey } from "@shared/sessionBoard";
 import {
   adjustMap,
   adjustVotes,
+  applyBoardPrefill,
   createBoardWriter,
+  dropProjectPrefill,
   patchBoardAction,
   patchItem,
   patchProject,
@@ -273,6 +275,7 @@ export function useSessionBoard(week: number) {
             fromItemId: null,
             hidden: false,
             displayName: name ?? null,
+            prefilled: false,
             createdAt: new Date(),
           }],
         }));
@@ -292,7 +295,17 @@ export function useSessionBoard(week: number) {
     },
     removeItem: (itemId: number) => {
       const { done } = writer.fifo(`item-remove:${itemId}`, () => {
-        paint((b) => ({ ...b, items: b.items.filter((item) => item.id !== itemId) }));
+        paint((b) => {
+          const item = b.items.find((row) => row.id === itemId);
+          const next = { ...b, items: b.items.filter((row) => row.id !== itemId) };
+          if (!item?.prefilled || item.projectId == null) return next;
+          return {
+            ...next,
+            projects: next.projects.map((p) =>
+              p.id === item.projectId ? { ...p, prefillFields: p.prefillFields.filter((field) => field !== "pain") } : p,
+            ),
+          };
+        });
         setMine((m) => {
           const itemIds = new Set(m.itemIds);
           itemIds.delete(itemId);
@@ -319,6 +332,7 @@ export function useSessionBoard(week: number) {
             hidden: false,
             applicationId: null,
             displayName: name ?? null,
+            prefillFields: [],
           }],
         }));
       }, async () => {
@@ -340,7 +354,7 @@ export function useSessionBoard(week: number) {
       const merged = { ...(projectWrites.current.get(id) ?? { projectId: id }), ...input };
       projectWrites.current.set(id, merged);
       const { done } = writer.coalesce(`project:${id}`, merged, () => {
-        paint((b) => patchProject(b, id, input));
+        paint((b) => dropProjectPrefill(patchProject(b, id, input), id, input));
       }, async (body) => {
         if (projectWrites.current.get(id) === body) projectWrites.current.delete(id);
         await updateProjectM.mutateAsync({ week, voterKey, ...body });
@@ -380,7 +394,11 @@ export function useSessionBoard(week: number) {
     act: (action: Parameters<typeof actM.mutate>[0]["action"]) => {
       writer.fifo("act", () => {
         paint((b) => patchBoardAction(b, action, serverNow()));
-      }, () => actM.mutateAsync({ week, action }));
+      }, async () => {
+        const r = await actM.mutateAsync({ week, action });
+        if (r.prefill) paint((b) => applyBoardPrefill(b, r.prefill));
+        return r;
+      });
     },
     curateItem: (input: CurateItemWrite) => {
       const id = input.itemId;
@@ -403,7 +421,8 @@ export function useSessionBoard(week: number) {
         paint((b) => patchProject(b, id, patch));
       }, async (body) => {
         if (curateWrites.current.get(id) === body) curateWrites.current.delete(id);
-        await curateProjectM.mutateAsync({ week, ...body });
+        const r = await curateProjectM.mutateAsync({ week, ...body });
+        if (r.prefill) paint((b) => applyBoardPrefill(b, r.prefill));
       });
     },
     promote: (itemId: number) => {

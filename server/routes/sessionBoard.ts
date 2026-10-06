@@ -69,6 +69,8 @@ import {
   type Db,
 } from "../lib/sessionBoard";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
+import { PREFILL_ITEM_NAME, dropPrefillFields, parsePrefillFields, type PrefillField } from "@shared/boardPrefill";
+import { clearPrefillOnItem, prefillBoardProject } from "../lib/boardPrefill";
 
 /** Per-visitor ceilings. Generous for a live room; there to make loops slow. */
 const WRITE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -271,6 +273,7 @@ export const sessionBoardRouter = router({
           hidden: !!p.hidden,
           applicationId: facilitator ? p.applicationId : null,
           displayName: facilitator ? p.displayName : null,
+          prefillFields: parsePrefillFields(p.prefillFields),
         })),
         items: rows.items.map((i) => ({
           id: i.id,
@@ -285,6 +288,7 @@ export const sessionBoardRouter = router({
           fromItemId: i.fromItemId,
           hidden: !!i.hidden,
           displayName: facilitator ? i.displayName : null,
+          prefilled: i.displayName === PREFILL_ITEM_NAME,
           createdAt: i.createdAt,
         })),
         facilitatorLists: lists && {
@@ -386,6 +390,7 @@ export const sessionBoardRouter = router({
       if (!facilitator && !(item.authorKey && keys.includes(item.authorKey))) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You can only take back what you wrote." });
       }
+      await clearPrefillOnItem(db, item);
       await db.delete(sessionBoardItems).where(eq(sessionBoardItems.id, item.id));
       await db.delete(sessionBoardVotes).where(and(
         eq(sessionBoardVotes.boardId, board.id),
@@ -467,6 +472,16 @@ export const sessionBoardRouter = router({
       if (input.whereNow !== undefined) set.whereNow = cleanBoardText(input.whereNow, BOARD_LIMITS.whereNow);
       if (input.ready !== undefined) set.ready = parseReadyList(input.ready.join(","), READY_KEYS).join(",") || null;
       if (input.nextMove !== undefined) set.nextMove = cleanBoardLine(input.nextMove, BOARD_LIMITS.nextMove);
+      const drop: PrefillField[] = [];
+      if (input.place !== undefined) drop.push("place");
+      if (input.url !== undefined) drop.push("url");
+      if (input.phase !== undefined) drop.push("phase");
+      if (input.whereNow !== undefined) drop.push("whereNow");
+      if (input.ready !== undefined) drop.push("ready");
+      if (drop.length && p.prefillFields) {
+        const next = dropPrefillFields(p.prefillFields, drop);
+        if (next !== p.prefillFields) set.prefillFields = next;
+      }
       if (Object.keys(set).length === 0) return { ok: true as const };
       await db.update(sessionBoardProjects).set(set).where(eq(sessionBoardProjects.id, p.id));
       await bumpVersion(db, board.id);
@@ -573,12 +588,17 @@ export const sessionBoardRouter = router({
   /** Facilitator: move the room, run the clocks, the breath and the share timer. */
   act: facilitatorProcedure
     .input(z.object({ week: weekInput, action: actionSchema }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       assertWeek(input.week);
       const db = await database();
       const board = await ensureBoard(db, SESSION_BOARD_SEASON, input.week);
       const state = await actOnBoard(db, board.id, input.week, input.action, Date.now());
-      return { ok: true as const, state };
+      const projectId = input.action.type === "speaker" ? input.action.projectId : null;
+      const project = projectId ? await projectOnBoard(db, board.id, projectId) : null;
+      const prefill = project
+        ? await prefillBoardProject(db, board.id, project, boardIdentity(ctx.user.id, null))
+        : null;
+      return { ok: true as const, state, prefill };
     }),
 
   /** Facilitator: theme, choose, count room votes, hide, or fix the wording of a note. */
@@ -623,7 +643,7 @@ export const sessionBoardRouter = router({
       hidden: z.boolean().optional(),
       applicationId: idInput.nullable().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       assertWeek(input.week);
       const db = await database();
       const board = await ensureBoard(db, SESSION_BOARD_SEASON, input.week);
@@ -633,10 +653,14 @@ export const sessionBoardRouter = router({
       if (input.shared !== undefined) set.shared = input.shared ? 1 : 0;
       if (input.hidden !== undefined) set.hidden = input.hidden ? 1 : 0;
       if (input.applicationId !== undefined) set.applicationId = input.applicationId;
-      if (Object.keys(set).length === 0) return { ok: true as const };
+      if (Object.keys(set).length === 0) return { ok: true as const, prefill: null };
       await db.update(sessionBoardProjects).set(set).where(eq(sessionBoardProjects.id, p.id));
       await bumpVersion(db, board.id);
-      return { ok: true as const };
+      const linked = input.applicationId;
+      const prefill = typeof linked === "number"
+        ? await prefillBoardProject(db, board.id, { ...p, applicationId: linked }, boardIdentity(ctx.user.id, null))
+        : null;
+      return { ok: true as const, prefill };
     }),
 
   /** Facilitator: turn a chosen opportunity into a quest on the game canvas, once. */

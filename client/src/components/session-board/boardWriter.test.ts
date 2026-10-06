@@ -7,9 +7,12 @@ import { defaultBoardState } from "@shared/sessionBoard";
 import {
   adjustMap,
   adjustVotes,
+  applyBoardPrefill,
   createBoardWriter,
+  dropProjectPrefill,
   patchBoardAction,
   patchProject,
+  type BoardPrefillPaint,
 } from "./boardWriter";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -175,5 +178,85 @@ describe("optimistic board paints", () => {
     expect(board.items[0].votes).toBe(0);
     expect(board.hands[3]).toBeUndefined();
     expect(board.offers.coach).toBe(1);
+  });
+});
+
+function emptyCard() {
+  return {
+    projects: [{
+      id: 3,
+      place: null as string | null,
+      url: null as string | null,
+      phase: null as string | null,
+      whereNow: null as string | null,
+      ready: [] as string[],
+      applicationId: null as number | null,
+      prefillFields: [] as string[],
+    }],
+    items: [] as Array<{ id: number; kind: string; text: string; projectId: number | null; prefilled: boolean }>,
+  };
+}
+
+describe("presenter card prefill paint", () => {
+  const filled: BoardPrefillPaint = {
+    projectId: 3,
+    applicationId: 9,
+    place: "Ubud, Indonesia",
+    url: "https://amora.earth",
+    phase: "sprout",
+    whereNow: "Land: The land is owned.",
+    ready: ["land", "legal"],
+    pain: { id: 41, text: "The road washes out in the rains." },
+    prefillFields: ["place", "url", "phase", "whereNow", "ready", "pain"],
+  };
+
+  it("fills an empty card and marks those fields", () => {
+    const board = applyBoardPrefill(emptyCard(), filled);
+    const project = board.projects[0];
+    expect(project.place).toBe("Ubud, Indonesia");
+    expect(project.phase).toBe("sprout");
+    expect(project.ready).toEqual(["land", "legal"]);
+    expect(project.applicationId).toBe(9);
+    expect(project.prefillFields).toEqual(["place", "url", "phase", "whereNow", "ready", "pain"]);
+    expect(board.items).toEqual([
+      expect.objectContaining({ id: 41, kind: "pain", prefilled: true, text: "The road washes out in the rains." }),
+    ]);
+  });
+
+  it("leaves text that was typed while the fill was in flight", () => {
+    const card = emptyCard();
+    card.projects[0].place = "typed live";
+    card.projects[0].whereNow = "already on the card";
+    card.projects[0].ready = ["care"];
+    card.items.push({ id: 2, kind: "pain", text: "said in the room", projectId: 3, prefilled: false });
+    const board = applyBoardPrefill(card, filled);
+    const project = board.projects[0];
+    expect(project.place).toBe("typed live");
+    expect(project.whereNow).toBe("already on the card");
+    expect(project.ready).toEqual(["care"]);
+    expect(project.phase).toBe("sprout");
+    expect(project.url).toBe("https://amora.earth");
+    expect(project.prefillFields).toEqual(["url", "phase"]);
+    expect(board.items.map((item) => item.text)).toEqual(["said in the room"]);
+  });
+
+  it("keeps a mark the card already shows when the server still lists it", () => {
+    const card = emptyCard();
+    card.projects[0].place = "Ubud, Indonesia";
+    card.projects[0].prefillFields = ["place"];
+    const board = applyBoardPrefill(card, {
+      projectId: 3,
+      applicationId: 9,
+      prefillFields: ["place"],
+    });
+    expect(board.projects[0].place).toBe("Ubud, Indonesia");
+    expect(board.projects[0].prefillFields).toEqual(["place"]);
+  });
+
+  it("clears a mark in the same paint as an edit", () => {
+    const card = emptyCard();
+    card.projects[0].prefillFields = ["place", "whereNow", "ready"];
+    const board = dropProjectPrefill(card, 3, { whereNow: "rewritten" });
+    expect(board.projects[0].prefillFields).toEqual(["place", "ready"]);
   });
 });
