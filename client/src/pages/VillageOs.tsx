@@ -1,10 +1,9 @@
 /**
  * Get your Village OS (/village-os, ADR-69).
  *
- * One front door with three ways in: run it yourself (free and open source),
- * we host it (free for accepted Season 2 projects), or a paid custom build
- * with the core team. Below them sit how hosting works, the plain facts, and
- * the weekly founders circle CORE is starting.
+ * A start screen: the village mark, the four core modules, three gates,
+ * the forge, the tools that integrate, the hosting quest, the field guide,
+ * and weekly support from CORE.
  *
  * Every word comes from shared/villageOsOffer.ts. Two switches arrive from
  * villageOs.offer and both start off: the code link, the setup guide and the
@@ -12,17 +11,26 @@
  * (VILLAGE_OS_SHOW_REPO), and the membership sentence
  * and button wait for the Legal session (VILLAGE_OS_MEMBERSHIP_URL). The page renders
  * whole with both off, which is also how it looks while the query loads.
- * No money moves anywhere on this page.
+ * No money moves anywhere on this page. Donate reads churchDonations.zeffyEnabled
+ * and opens the Zeffy form page, or CORE's donate page when that query is empty.
  */
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Link } from "wouter";
-import { ArrowRight, ClipboardCopy, Code2, Download, ExternalLink, Hammer, Heart, Info, Server, Sprout } from "lucide-react";
+import { ArrowRight, ChevronDown, ClipboardCopy, Code2, Download, ExternalLink } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { trpc } from "@/lib/trpc";
-import { AMORA_VILLAGE_URL, VILLAGE_OS_HOST_PATH, VILLAGE_OS_OFFER } from "@shared/villageOsOffer";
+import { JOIN_URL } from "@shared/sessionLinks";
+import {
+  AMORA_VILLAGE_URL,
+  CORE_DONATE_PAGE_URL,
+  VILLAGE_OS_HOST_PATH,
+  VILLAGE_OS_OFFER,
+  zeffyFormPageUrl,
+  type OfferCard,
+} from "@shared/villageOsOffer";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -47,50 +55,10 @@ function httpsOnly(url: string | null | undefined): string | null {
 }
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 min-h-11 px-4 py-2 rounded-xl font-semibold transition-colors text-sm";
+  "inline-flex items-center justify-center gap-2 min-h-11 px-4 py-2 rounded-xl font-semibold text-sm";
 const BUTTON_GREEN = `${BUTTON_BASE} bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]`;
 const BUTTON_QUIET = `${BUTTON_BASE} bg-white/10 hover:bg-white/20 text-white border border-white/20`;
 const BUTTON_SAND = `${BUTTON_BASE} bg-[#d4a574] hover:bg-[#e3bd93] text-[#1a2818]`;
-
-type CardCopy = { kicker: string; title: string; tag: string; lines: readonly string[] };
-
-function OfferCardView({
-  card,
-  icon,
-  accent,
-  frame,
-  children,
-}: {
-  card: CardCopy;
-  icon: ReactNode;
-  /** Text color for the kicker and the tag. */
-  accent: string;
-  /** Border and background classes for the card. */
-  frame: string;
-  children: ReactNode;
-}) {
-  return (
-    <article className={`flex flex-col rounded-2xl border p-6 md:p-7 backdrop-blur-sm ${frame}`}>
-      <div className="flex items-center gap-2 mb-3">
-        {icon}
-        <p className={`text-xs font-semibold tracking-[0.2em] uppercase ${accent}`}>{card.kicker}</p>
-      </div>
-      <h2 className="text-2xl font-bold text-white leading-tight mb-2" style={display}>
-        {card.title}
-      </h2>
-      <p className={`text-sm font-semibold mb-4 ${accent}`}>{card.tag}</p>
-      <ul className="space-y-3 text-white/75 text-[15px] leading-relaxed mb-6">
-        {card.lines.map((line) => (
-          <li key={line} className="flex gap-2">
-            <span aria-hidden="true" className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current ${accent}`} />
-            <span>{line}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="mt-auto space-y-3">{children}</div>
-    </article>
-  );
-}
 
 const NEW_TAB = <span className="sr-only"> (opens in a new tab)</span>;
 
@@ -131,7 +99,7 @@ export function SelfHostActions({
 
   return (
     <div className="space-y-3">
-      <p className="text-white/70 text-sm">{o.selfGuideHint}</p>
+      <p className="text-[#f0ebe3]/90 text-sm">{o.selfGuideHint}</p>
       <div className="flex flex-wrap gap-2">
         {canCopy ? (
           <button type="button" onClick={copyPrompt} className={BUTTON_GREEN}>
@@ -152,7 +120,7 @@ export function SelfHostActions({
           </a>
         ) : null}
       </div>
-      <p role="status" aria-live="polite" className={`text-sm min-h-5 ${copy === "failed" ? "text-white/80" : "text-[#7dd87d]"}`}>
+      <p role="status" aria-live="polite" className={`text-sm min-h-5 ${copy === "failed" ? "text-[#f0ebe3]" : "text-[#7dd87d]"}`}>
         {copy === "copied" ? o.selfCopied : null}
         {copy === "failed" ? (
           <>
@@ -185,174 +153,348 @@ export function SelfHostActions({
   );
 }
 
+function VillageSeal() {
+  return (
+    <div
+      className="relative mx-auto h-52 w-52 shrink-0 rounded-full border border-[#7dd87d]/40 bg-[radial-gradient(circle_at_50%_50%,rgba(125,216,125,0.18),transparent_46%)]"
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full">
+        <circle cx="78" cy="100" r="46" fill="none" stroke="#7dd87d" strokeWidth="2" />
+        <circle cx="122" cy="100" r="46" fill="none" stroke="#d4a574" strokeWidth="2" />
+        <circle cx="100" cy="78" r="28" fill="none" stroke="#f0ebe3" strokeWidth="1.5" opacity="0.7" />
+      </svg>
+      <p className="absolute inset-0 grid place-items-center text-center font-bold text-white" style={display}>
+        <span className="rounded-full bg-[#0d2818]/90 px-3 py-2 text-sm">Your village</span>
+      </p>
+    </div>
+  );
+}
+
+function Notes({ title, lines }: { title: string; lines: readonly string[] }) {
+  const o = VILLAGE_OS_OFFER;
+  const [open, setOpen] = useState(false);
+  const panelId = useId();
+  return (
+    <div className="md:col-span-2">
+      <button
+        type="button"
+        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/15 bg-[#0d2818]/40 px-3 text-left text-sm font-bold text-[#f0ebe3]"
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <span>
+          {open ? o.notesClose : o.notesOpen}
+          <span className="sr-only"> for {title}</span>
+        </span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-[#7dd87d] motion-safe:transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+      </button>
+      <div id={panelId} role="region" aria-label={title} hidden={!open} className={open ? "pt-3" : undefined}>
+        {open ? (
+          <ul className="space-y-2.5 text-[15px] leading-relaxed text-[#f0ebe3]/90">
+            {lines.map((line) => (
+              <li key={line} className="flex gap-2">
+                <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7dd87d]" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function GateArt({ kind }: { kind: OfferCard["key"] }) {
+  if (kind === "hosted") {
+    return (
+      <svg viewBox="0 0 68 68" className="h-14 w-14" aria-hidden="true">
+        <circle cx="34" cy="36" r="8" fill="#7dd87d" />
+        <circle cx="18" cy="26" r="7" fill="none" stroke="#9de89d" strokeWidth="2" />
+        <circle cx="50" cy="26" r="7" fill="none" stroke="#d4a574" strokeWidth="2" />
+        <path d="M24 32l6 4M44 32l-6 4" stroke="#7dd87d" strokeWidth="2" />
+      </svg>
+    );
+  }
+  if (kind === "custom") {
+    return (
+      <svg viewBox="0 0 68 68" className="h-14 w-14" aria-hidden="true">
+        <rect x="16" y="16" width="30" height="36" rx="3" fill="#d4a574" />
+        <path d="M22 26h16M22 32h16M22 38h10" stroke="#1a2818" strokeWidth="2" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 68 68" className="h-14 w-14" aria-hidden="true">
+      <rect x="14" y="30" width="40" height="22" rx="4" fill="#1a472a" stroke="#7dd87d" strokeWidth="2" />
+      <path d="M34 42V16" stroke="#7dd87d" strokeWidth="2" />
+      <circle cx="34" cy="14" r="6" fill="#7dd87d" />
+    </svg>
+  );
+}
+
+const GATE_FRAME: Record<OfferCard["key"], string> = {
+  self: "border-white/15 bg-white/5",
+  hosted: "border-[#7dd87d]/50 bg-[#7dd87d]/10",
+  custom: "border-[#d4a574]/50 bg-gradient-to-r from-[#d4a574]/16 to-[#0d2818]/30",
+};
+
+function DonateControl() {
+  const o = VILLAGE_OS_OFFER;
+  const zeffy = trpc.churchDonations.zeffyEnabled.useQuery(undefined, { staleTime: 5 * 60_000 });
+  const formPage = zeffy.data?.enabled ? zeffyFormPageUrl(zeffy.data.embedUrl) : null;
+  return (
+    <a href={formPage ?? CORE_DONATE_PAGE_URL} target="_blank" rel="noopener noreferrer" className={BUTTON_SAND}>
+      {o.circle.donateButton}
+      {NEW_TAB}
+      <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+    </a>
+  );
+}
+
 export default function VillageOs() {
   const offerQuery = trpc.villageOs.offer.useQuery(undefined, { staleTime: 5 * 60_000 });
   const offer = offerQuery.data ?? OFFER_CLOSED;
   const repoUrl = offer.showRepo ? httpsOnly(offer.repoUrl) : null;
   const membershipUrl = httpsOnly(offer.membershipUrl);
   const o = VILLAGE_OS_OFFER;
+  const [guideOpen, setGuideOpen] = useState(false);
+  const guideId = useId();
 
   return (
     <PageWrapper>
       <SEO
-        title="Get your Village OS | ReGen Civics"
-        description="Village OS runs a village's Game: its circles, roles, quests and gratitude. Run it yourself, free and open source, or ask the ReGen Civics team to host it, free for accepted Season 2 projects."
+        title="Start your own game | ReGen Civics"
+        description="Village OS is an open-source foundation for a village's Game, with an open library of modules. Run it yourself, or ask the team to host it, free for accepted Season 2 projects."
         url="https://regencivics.earth/village-os"
       />
 
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#14301f] to-[#0d2818]">
-        <div className="max-w-6xl mx-auto px-4 py-10 md:py-16">
-          {/* Hero */}
+        <div className="mx-auto max-w-6xl px-4 py-8 md:py-14">
           <AnimatedSection>
-            <header className="mt-6 mb-12 max-w-3xl">
-              <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase mb-3">Village OS</p>
-              <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-4" style={display}>
-                {o.title}
-              </h1>
-              <p className="text-white/75 text-lg mb-4">{o.lede}</p>
-              <a
-                href={AMORA_VILLAGE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 min-h-11 text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-4"
-              >
-                {o.amoraLine}
-                <span className="sr-only"> (opens in a new tab)</span>
-                <ExternalLink className="w-4 h-4 shrink-0" aria-hidden="true" />
-              </a>
+            <header className="grid items-center gap-6 md:grid-cols-[220px_1fr] md:gap-10">
+              <VillageSeal />
+              <div>
+                <p className="mb-3 text-[13px] font-bold uppercase tracking-[0.2em] text-[#7dd87d]">Village OS</p>
+                <h1 className="mb-4 text-4xl font-bold leading-tight text-white md:text-6xl" style={display}>
+                  {o.heroTitle}
+                </h1>
+                <p className="max-w-2xl text-lg leading-relaxed text-[#f0ebe3]/90">{o.lede}</p>
+                <a
+                  href={AMORA_VILLAGE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex min-h-11 items-center gap-1.5 font-semibold text-[#7dd87d] underline underline-offset-4 hover:text-[#9de89d]"
+                >
+                  {o.amoraLine}
+                  {NEW_TAB}
+                  <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+                </a>
+              </div>
             </header>
           </AnimatedSection>
 
-          {/* The three ways in */}
           <AnimatedSection>
-            <section aria-label="Ways to get Village OS" className="grid gap-5 lg:grid-cols-3 mb-12">
-              <OfferCardView
-                card={o.self}
-                icon={<Code2 className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />}
-                accent="text-[#7dd87d]"
-                frame="bg-white/5 border-white/15"
-              >
-                {repoUrl ? (
-                  <SelfHostActions
-                    repoUrl={repoUrl}
-                    starterKitUrl={httpsOnly(offer.starterKitUrl)}
-                    guideUrl={httpsOnly(offer.guideUrl)}
-                    setupPromptUrl={httpsOnly(offer.setupPromptUrl)}
-                  />
-                ) : (
-                  <p className="text-white/60 text-sm">{o.selfPending}</p>
-                )}
-              </OfferCardView>
-
-              <OfferCardView
-                card={o.hosted}
-                icon={<Server className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />}
-                accent="text-[#7dd87d]"
-                frame="bg-[#7dd87d]/10 border-[#7dd87d]/50"
-              >
-                <Link href={VILLAGE_OS_HOST_PATH} className={BUTTON_GREEN}>
-                  {o.hostedButton}
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </Link>
-              </OfferCardView>
-
-              <OfferCardView
-                card={o.custom}
-                icon={<Hammer className="w-5 h-5 text-[#d4a574]" aria-hidden="true" />}
-                accent="text-[#d4a574]"
-                frame="bg-gradient-to-br from-[#d4a574]/15 to-[#0d2818]/60 border-[#d4a574]/45"
-              >
-                <Link href="/custom-games" className={BUTTON_SAND}>
-                  {o.customButton}
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </Link>
-              </OfferCardView>
-            </section>
-          </AnimatedSection>
-
-          {/* How hosting works */}
-          <AnimatedSection>
-            <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
-              <div className="flex items-center gap-3 mb-3">
-                <Sprout className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />
-                <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">{o.hosted.title}</p>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-6">How hosting works</h2>
-              <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {o.howHostingWorks.map((step, i) => (
-                  <li key={step.title} className="rounded-xl border border-white/10 bg-white/5 p-5">
-                    <span
-                      aria-hidden="true"
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#7dd87d] text-[#1a472a] font-bold text-sm mb-3"
-                    >
-                      {i + 1}
-                    </span>
-                    <h3 className="text-white font-bold text-lg mb-1">
-                      <span className="sr-only">Step {i + 1}: </span>
-                      {step.title}
-                    </h3>
-                    <p className="text-white/70 text-sm leading-relaxed">{step.body}</p>
-                  </li>
-                ))}
-              </ol>
-              <div className="mt-6">
-                <Link href={VILLAGE_OS_HOST_PATH} className={BUTTON_GREEN}>
-                  {o.hostedButton}
-                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                </Link>
-              </div>
-            </section>
-          </AnimatedSection>
-
-          {/* The plain facts */}
-          <AnimatedSection>
-            <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 md:p-8 mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <Info className="w-5 h-5 text-[#e3ac4f]" aria-hidden="true" />
-                <h2 className="text-[#e3ac4f] text-xs font-semibold tracking-[0.2em] uppercase">Good to know</h2>
-              </div>
-              <ul className="space-y-2 text-white/75">
-                {o.facts.map((fact) => (
-                  <li key={fact} className="flex gap-2">
-                    <span aria-hidden="true" className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#e3ac4f]" />
-                    <span>{fact}</span>
+            <section className="mt-10" aria-labelledby="standard-modules">
+              <h2 id="standard-modules" className="mb-4 text-2xl font-bold text-white md:text-3xl" style={display}>
+                {o.standardLabel}
+              </h2>
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {o.standardModules.map((mod) => (
+                  <li key={mod.name} className="rounded-2xl border border-white/12 bg-white/5 p-4">
+                    <p className="font-bold text-white" style={display}>{mod.name}</p>
+                    <p className="mt-1 text-[15px] leading-relaxed text-[#f0ebe3]/85">{mod.line}</p>
                   </li>
                 ))}
               </ul>
             </section>
           </AnimatedSection>
 
-          {/* The founders circle */}
           <AnimatedSection>
-            <section
-              id="founders-circle"
-              className="relative overflow-hidden rounded-2xl border-2 border-[#d4a574]/45 bg-gradient-to-br from-[#d4a574]/15 via-[#0d2818]/70 to-[#0d2818]/90 p-6 md:p-10 mb-8"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <Heart className="w-5 h-5 text-[#d4a574]" aria-hidden="true" />
-                <p className="text-[#d4a574] text-xs font-semibold tracking-[0.2em] uppercase">{o.circle.kicker}</p>
+            <section className="mt-12" aria-label="Three gates">
+              <h2 className="mb-4 text-3xl font-bold text-white" style={display}>Three gates</h2>
+              <div className="grid gap-3">
+                {([o.self, o.hosted, o.custom] as OfferCard[]).map((card) => (
+                  <article
+                    key={card.key}
+                    className={`grid gap-4 rounded-3xl border p-4 motion-safe:transition-transform motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0 md:grid-cols-[84px_1fr] md:p-5 ${GATE_FRAME[card.key]}`}
+                  >
+                    <div className="grid h-[84px] w-[84px] place-items-center rounded-[22px] border border-white/12 bg-[#0d2818]/50">
+                      <GateArt kind={card.key} />
+                    </div>
+                    <div>
+                      <p className={`text-[13px] font-bold uppercase tracking-[0.16em] ${card.key === "custom" ? "text-[#e3bd93]" : "text-[#7dd87d]"}`}>
+                        {card.gate} · {card.path}
+                      </p>
+                      <h3 className="mt-1 text-2xl font-bold text-white" style={display}>{card.title}</h3>
+                      <p className="mt-1 text-[15px] leading-relaxed text-[#f0ebe3]/90">{card.blurb}</p>
+                      <p className="mt-3">
+                        <span className={`inline-flex min-h-7 items-center rounded-full px-3 text-[13px] font-extrabold ${card.key === "custom" ? "bg-[#d4a574] text-[#1a2818]" : "bg-[#7dd87d] text-[#1a472a]"}`}>
+                          {card.priceBadge ?? card.tag}
+                        </span>
+                      </p>
+                      <div className="mt-3">
+                        {card.key === "self" && (
+                          repoUrl ? (
+                            <SelfHostActions
+                              repoUrl={repoUrl}
+                              starterKitUrl={httpsOnly(offer.starterKitUrl)}
+                              guideUrl={httpsOnly(offer.guideUrl)}
+                              setupPromptUrl={httpsOnly(offer.setupPromptUrl)}
+                            />
+                          ) : (
+                            <p className="text-[15px] text-[#f0ebe3]/85">{o.selfPending}</p>
+                          )
+                        )}
+                        {card.key === "hosted" && (
+                          <Link href={VILLAGE_OS_HOST_PATH} className={BUTTON_GREEN}>
+                            {o.hostedButton}
+                            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          </Link>
+                        )}
+                        {card.key === "custom" && (
+                          <Link href="/custom-games" className={BUTTON_SAND}>
+                            {o.customButton}
+                            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                    <Notes title={card.title} lines={card.lines} />
+                  </article>
+                ))}
               </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4" style={display}>
-                {o.circle.title}
-              </h2>
-              <div className="space-y-3 text-white/75 max-w-3xl mb-6">
-                {/* lines[1], the membership sentence, waits for the Legal ruling with the button. */}
+            </section>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <section className="mt-12 rounded-3xl border-2 border-[#7dd87d]/45 bg-[#7dd87d]/10 p-5 md:p-8">
+              <p className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#7dd87d]">{o.forge.kicker}</p>
+              <h2 className="mt-2 text-3xl font-bold text-white md:text-4xl" style={display}>{o.forge.title}</h2>
+              <p className="mt-3 max-w-3xl text-lg leading-relaxed text-[#f0ebe3]/90">{o.forge.body}</p>
+            </section>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <section className="mt-12" aria-labelledby="tools-heading">
+              <p className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#7dd87d]">{o.tools.kicker}</p>
+              <h2 id="tools-heading" className="mt-2 text-3xl font-bold text-white" style={display}>{o.tools.title}</h2>
+              <ul className="mt-4 grid gap-3 md:grid-cols-3">
+                {o.tools.items.map((tool) => {
+                  const href = httpsOnly(tool.url);
+                  const inner = (
+                    <>
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#1a472a] text-sm font-extrabold text-[#7dd87d]" aria-hidden="true">
+                        {tool.name.slice(0, 1)}
+                      </span>
+                      <span>
+                        <span className="block font-bold text-white" style={display}>{tool.name}</span>
+                        <span className="mt-1 block text-[15px] leading-relaxed text-[#f0ebe3]/85">{tool.line}</span>
+                      </span>
+                    </>
+                  );
+                  return (
+                    <li key={tool.name}>
+                      {href ? (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="flex h-full gap-3 rounded-2xl border border-white/15 bg-white/5 p-4 hover:border-[#7dd87d]/50">
+                          {inner}
+                          {NEW_TAB}
+                        </a>
+                      ) : (
+                        <div className="flex h-full gap-3 rounded-2xl border border-white/15 bg-white/5 p-4">{inner}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-4 rounded-3xl border border-[#d4a574]/40 bg-[#d4a574]/10 p-5 md:p-6">
+                <h3 className="text-2xl font-bold text-white" style={display}>{o.tools.integrateTitle}</h3>
+                <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-[#f0ebe3]/90">{o.tools.integrateBody}</p>
+                <Link href={o.tools.integrateHref} className={`${BUTTON_GREEN} mt-4`}>
+                  {o.tools.integrateButton}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              </div>
+            </section>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <section className="mt-12" aria-labelledby="quest-heading">
+              <p className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#7dd87d]">Quest line</p>
+              <h2 id="quest-heading" className="mt-2 text-3xl font-bold text-white" style={display}>{o.questTitle}</h2>
+              <ol className="mt-4 grid gap-3">
+                {o.howHostingWorks.map((step, i) => (
+                  <li key={step.title} className="rounded-r-2xl border-l-[3px] border-[#7dd87d] bg-white/5 p-4">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#7dd87d] text-sm font-extrabold text-[#1a472a]" aria-hidden="true">
+                      {i + 1}
+                    </span>
+                    <h3 className="mt-2 text-lg font-bold text-white" style={display}>
+                      <span className="sr-only">Level {i + 1}: </span>
+                      {step.title}
+                    </h3>
+                    <p className="mt-1 text-[15px] leading-relaxed text-[#f0ebe3]/85">{step.body}</p>
+                  </li>
+                ))}
+              </ol>
+              <Link href={VILLAGE_OS_HOST_PATH} className={`${BUTTON_GREEN} mt-4`}>
+                {o.hostedButton}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </section>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <section className="mt-12 rounded-3xl border border-white/12 bg-white/5 p-5 md:p-6">
+              <p className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#e3ac4f]">{o.fieldGuide.kicker}</p>
+              <h2 className="mt-2 text-2xl font-bold text-white" style={display}>{o.fieldGuide.title}</h2>
+              <button
+                type="button"
+                className="mt-3 flex min-h-11 w-full items-center justify-between gap-2 rounded-xl border border-white/15 bg-[#0d2818]/40 px-3 text-left text-sm font-bold text-[#f0ebe3]"
+                aria-expanded={guideOpen}
+                aria-controls={guideId}
+                onClick={() => setGuideOpen((v) => !v)}
+              >
+                <span>{guideOpen ? o.fieldGuide.close : o.fieldGuide.open}</span>
+                <ChevronDown className={`h-4 w-4 text-[#e3ac4f] motion-safe:transition-transform ${guideOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+              <div id={guideId} role="region" aria-label={o.fieldGuide.title} hidden={!guideOpen} className={guideOpen ? "pt-3" : undefined}>
+                {guideOpen ? (
+                  <ul className="space-y-2.5 text-[15px] leading-relaxed text-[#f0ebe3]/90">
+                    {o.facts.map((fact) => (
+                      <li key={fact} className="flex gap-2">
+                        <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#e3ac4f]" />
+                        <span>{fact}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </section>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <section id="support" className="mt-12 mb-8 rounded-3xl border-2 border-[#d4a574]/50 bg-gradient-to-br from-[#d4a574]/16 via-[#0d2818]/70 to-[#0d2818]/90 p-5 md:p-8">
+              <p className="text-[13px] font-bold uppercase tracking-[0.2em] text-[#e3bd93]">{o.circle.kicker}</p>
+              <h2 className="mt-2 text-3xl font-bold text-white" style={display}>{o.circle.title}</h2>
+              <div className="mt-4 max-w-3xl space-y-3 text-[15px] leading-relaxed text-[#f0ebe3]/90">
                 {o.circle.lines
                   .filter((_line, i) => i !== 1 || membershipUrl !== null)
                   .map((line) => (
                     <p key={line}>{line}</p>
                   ))}
               </div>
-              {membershipUrl ? (
-                <a href={membershipUrl} target="_blank" rel="noopener noreferrer" className={BUTTON_SAND}>
-                  <Heart className="w-4 h-4" aria-hidden="true" />
-                  {o.circle.button}
-                  <span className="sr-only"> (opens in a new tab)</span>
-                  <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                </a>
-              ) : (
-                <p className="text-white/60 text-sm">{o.circle.pending}</p>
-              )}
+              <div className="mt-5 flex flex-wrap gap-3">
+                <DonateControl />
+                <a href={JOIN_URL} className={BUTTON_GREEN}>{o.circle.joinButton}</a>
+                {membershipUrl ? (
+                  <a href={membershipUrl} target="_blank" rel="noopener noreferrer" className={BUTTON_SAND}>
+                    {o.circle.button}
+                    {NEW_TAB}
+                    <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
+                  </a>
+                ) : null}
+              </div>
             </section>
           </AnimatedSection>
         </div>

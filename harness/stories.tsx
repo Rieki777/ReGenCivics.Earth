@@ -16,6 +16,7 @@ import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { DictationButton } from "@/components/admin/dictation";
 import Seasons from "@/pages/Seasons";
+import VillageOs from "@/pages/VillageOs";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
@@ -450,6 +451,22 @@ export const STORIES: Record<string, Story> = {
         <div className="max-w-3xl mx-auto">
           <CrowdpoolReadiness id="ready" storageKey="harness" />
         </div>
+      </div>
+    ),
+  },
+
+  /** /village-os with both offer switches off, which is how the page ships. */
+  "village-os": {
+    title: "/village-os: Start your own game",
+    setup: () => {
+      mockData["churchDonations.zeffyEnabled"] = {
+        enabled: true,
+        embedUrl: "https://www.zeffy.com/en-US/embed/donation-form/donation-312",
+      };
+    },
+    render: () => (
+      <div className="-m-6">
+        <VillageOs />
       </div>
     ),
   },
