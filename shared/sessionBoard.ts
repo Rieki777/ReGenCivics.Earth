@@ -83,11 +83,11 @@ export type BoardStage = {
 
 /**
  * The last page of every board (ADR-69): the two ways to start a village on
- * Village OS, left up as people leave. One planned minute, outside the two
- * hours. Always appended after the close, never inserted earlier: a saved
- * board's planned minutes are kept by position. Its words come from
- * shared/villageOsOffer.ts and say nothing about money, since the board is
- * public and kept as the week's record.
+ * Village OS, left up as people leave. Its planned minute counts in the
+ * session total, the same as every other stage. Always appended after the
+ * close, never inserted earlier: a saved board's planned minutes are kept by
+ * position. Its words come from shared/villageOsOffer.ts and say nothing
+ * about money, since the board is public and kept as the week's record.
  */
 const GET_VILLAGE_OS: BoardStage = {
   kind: "getvillageos", name: VILLAGE_OS_OFFER.board.title, short: "Your village", min: 1,
@@ -142,7 +142,7 @@ export type BoardOfferKey = (typeof BOARD_OFFERS)[number]["key"];
 export const BOARD_OFFER_KEYS = BOARD_OFFERS.map((o) => o.key) as [BoardOfferKey, ...BoardOfferKey[]];
 
 /**
- * Week 2, Incubator Overview, the first board (Rye, 2026-10-01). Two hours.
+ * Week 2, Incubator Overview, the first board (Rye, 2026-10-01).
  * Village OS sits between the open season and the circle: how we will build
  * our Games in it, ending in the crowdpool that fills their rosters. "A Game
  * we build together" follows it (Rye, 2026-10-05), added before the board had
@@ -238,7 +238,7 @@ const WEEK_2: BoardStage[] = [
   { ...GET_VILLAGE_OS },
 ];
 
-/** Every other week, until it gets its own design. Two hours. */
+/** Every other week, until it gets its own design. */
 function defaultStages(week: number): BoardStage[] {
   const next = week + 1;
   return [
@@ -279,12 +279,14 @@ export function boardStages(week: number): BoardStage[] {
 }
 
 /**
- * The session's planned minutes: every stage's plan summed, except Get your
- * Village OS, which sits outside the two hours (ADR-69). `plan` is read by
- * position against `stages`, the same way a saved board keeps it.
+ * The session's planned minutes: the sum of every entry in `plan`, one per
+ * stage. `normalizeBoardState` sizes `plan` to the stage list, so a stage
+ * added later is counted too. Get your Village OS used to sit outside this
+ * sum (ADR-69). It is included now, and so is any stage added after it.
+ * `stages` is the list the plan lines up with.
  */
-export function sessionMinutes(plan: number[], stages: BoardStage[]): number {
-  return plan.reduce((a, m, i) => (stages[i]?.kind === "getvillageos" ? a : a + m), 0);
+export function sessionMinutes(plan: number[], _stages: BoardStage[]): number {
+  return plan.reduce((a, m) => a + m, 0);
 }
 
 /**

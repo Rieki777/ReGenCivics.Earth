@@ -73,13 +73,25 @@ describe("the stages", () => {
     }
   });
 
-  it("every week's plan fills the two-hour session exactly, with Get your Village OS after it", () => {
+  it("total equals the sum of every stage's minutes", () => {
     for (let w = 2; w <= 13; w++) {
       const stages = boardStages(w);
-      expect(sessionMinutes(stages.map((s) => s.min), stages), `week ${w}`).toBe(120);
-      expect(sessionMinutes(defaultBoardState(w).plan, stages), `week ${w} board`).toBe(120);
+      const mins = stages.map((s) => s.min);
+      const sum = mins.reduce((a, m) => a + m, 0);
+      expect(sum, `week ${w} default`).toBe(121);
+      expect(sessionMinutes(mins, stages), `week ${w}`).toBe(sum);
+      expect(sessionMinutes(defaultBoardState(w).plan, stages), `week ${w} board`).toBe(sum);
       expect(stages.filter((s) => s.kind === "getvillageos"), `week ${w}`).toHaveLength(1);
     }
+  });
+
+  it("counts Get your Village OS, and a stage added after it", () => {
+    const stages = boardStages(2);
+    const live = [5, 8, 10, 10, 5, 42, 12, 15, 7, 3, 6];
+    expect(sessionMinutes(live, stages)).toBe(123);
+    const extra = { ...stages[stages.length - 1], name: "One more page", min: 4 };
+    const withExtra = [...stages, extra];
+    expect(sessionMinutes([...live, extra.min], withExtra)).toBe(127);
   });
 
   it("the last stage of every week is Get your Village OS, one minute, after the close (ADR-69)", () => {

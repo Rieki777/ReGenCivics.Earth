@@ -826,7 +826,7 @@ describe("DictationButton", () => {
   });
 });
 
-function arrivalProps(addItem: StageProps["actions"]["addItem"] = async () => ({ id: 1 })): StageProps {
+function arrivalProps(addItem: StageProps["actions"]["addItem"] = async () => ({ ok: true as const, id: 1 })): StageProps {
   const stages = boardStages(2);
   return {
     board: {
@@ -894,7 +894,7 @@ describe("arrival word on the week board", () => {
   });
 
   it("shows no-speech on the board after two quiet sessions and does not add an empty word", async () => {
-    const addItem = vi.fn(async () => ({ id: 1 }));
+    const addItem = vi.fn(async () => ({ ok: true as const, id: 1 }));
     const orig = FakeSpeechRecognition.prototype.start;
     let starts = 0;
     FakeSpeechRecognition.prototype.start = function (this: FakeSpeechRecognition) {

@@ -70,9 +70,7 @@ try {
   const w = await measure(welcome);
   console.log(`welcome: total ${w.total} scroll ${w.scrollHeight}/${w.innerHeight}`);
   await welcome.screenshot({ path: path.join(outDir, "welcome-1024x560.png") });
-  if (process.env.EXPECT_TOTAL && w.total !== process.env.EXPECT_TOTAL) {
-    failures.push(`welcome total ${w.total}, expected ${process.env.EXPECT_TOTAL}`);
-  }
+  if (w.total !== "123 min") failures.push(`welcome total ${w.total}, expected 123 min`);
   await welcome.close();
 } finally {
   await browser.close();
