@@ -614,7 +614,7 @@ export default function Tokenomics() {
               className="text-3xl font-bold text-white mb-6"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              A Multi-Generational Journey
+              A Multi-Generational Path
             </h2>
             <p className="text-white/80 text-lg leading-relaxed mb-6 safe-prose prose-readable">
               We measure our success by our shared progress toward co-creating regenerative cultures and civilizations.

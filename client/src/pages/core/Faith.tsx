@@ -113,7 +113,7 @@ export default function Faith() {
               <span className="num">3</span>
               <div>
                 <h3>Consciousness actualizes through learning together</h3>
-                <p>We are an expression of a universe on a continual learning journey, developing our capacities to thrive together. Every quest is a step of consciousness waking up. Every gathering is the universe learning through us.</p>
+                <p>We are an expression of a universe that keeps learning, developing our capacities to thrive together. Every quest is a step of consciousness waking up. Every gathering is the universe learning through us.</p>
               </div>
             </div>
           </div>

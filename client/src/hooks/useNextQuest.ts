@@ -51,7 +51,7 @@ export function useNextQuest(): NextQuestResult {
         season: null,
         questNumber: 0,
         type: "fire",
-        prompt: "Begin your journey",
+        prompt: "Begin here",
       };
     }
 

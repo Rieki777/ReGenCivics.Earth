@@ -1023,14 +1023,14 @@ export default function Season2() {
           <figure className="mb-12">
             <img
               src="/season2/game-journey.jpg"
-              alt="The ReGen Game Journey map: Vision Values and Image, Patterns of Co-Creation, Legal, Initial Circles Roles and Quests, Membership Criteria and Conflict Evolution Processes, Crowd Pooling Structure, and Governance Process, drawn as a glowing river winding through a landscape"
+              alt="The ReGen Game path map: Vision Values and Image, Patterns of Co-Creation, Legal, Initial Circles Roles and Quests, Membership Criteria and Conflict Evolution Processes, Crowd Pooling Structure, and Governance Process, drawn as a glowing river winding through a landscape"
               width={960}
               height={540}
               loading="lazy"
               className="w-full rounded-2xl border-2 border-[#7dd87d]/30 shadow-[0_18px_60px_rgba(0,0,0,0.45)]"
             />
             <figcaption className="mt-3 text-center text-white/60 text-sm">
-              The journey every project walks across the season.
+              The path every project walks across the season.
             </figcaption>
           </figure>
 
@@ -1729,7 +1729,7 @@ export default function Season2() {
             >
               YouTube
             </a>{" "}
-            to see the journey these projects went through.
+            to see what these projects walked through.
           </p>
         </div>
       </AnimatedSection>
@@ -1748,7 +1748,7 @@ export default function Season2() {
             <div className="space-y-5 text-white/75 text-lg leading-relaxed">
               <p>
                 Amora is a regenerative village rising in Costa Rica. Together we
-                built their Infinite Game: four journeys into the village for
+                built their Infinite Game: four paths into the village for
                 Investors, Village Stewards, Residents, and Prosperity Creators,
                 with their own GRATITUDE and VOICE tokens, circles, quests, roles,
                 and rites of passage.
@@ -1762,6 +1762,7 @@ export default function Season2() {
                   href="https://amora.regencivics.earth/"
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="inline-flex"
                 >
                   <Button
                     size="lg"
@@ -1795,7 +1796,7 @@ export default function Season2() {
                   <div className="text-[#2d5a3d] font-bold text-xl mb-1" style={display}>
                     Amora Co-Create
                   </div>
-                  <div className="text-[#2d5a3d]/70 text-sm mb-5">
+                  <div className="text-[#14331f] text-sm mb-5">
                     Choose your path into the village
                   </div>
                   <div className="space-y-3">
@@ -1812,7 +1813,7 @@ export default function Season2() {
                         <span className="text-[#2d5a3d] font-semibold text-sm">
                           {j.path}
                         </span>
-                        <span className="flex items-center gap-2 text-[#e07a5f] text-xs font-semibold">
+                        <span className="flex items-center gap-2 text-[#8c3424] text-xs font-semibold">
                           {j.steps}
                           <ArrowRight className="w-3.5 h-3.5" />
                         </span>

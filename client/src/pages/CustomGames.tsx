@@ -178,7 +178,7 @@ function FaqItem({ q, children }: { q: string; children: React.ReactNode }) {
 const AMORA_SHOTS: { name: string; caption: string; wide?: boolean }[] = [
   {
     name: "amora-home-desktop",
-    caption: "Choose your path: four journeys into the village",
+    caption: "Four paths into the village",
     wide: true,
   },
   {
@@ -217,7 +217,7 @@ const LATEST_SHIPS: { title: string; body: string }[] = [
   },
   {
     title: "Setup Wizard: make it yours in an afternoon",
-    body: "Admins reshape brand, language, and journeys from one screen, no developer needed.",
+    body: "Admins reshape brand, language, and paths from one screen, no developer needed.",
   },
 ];
 
@@ -269,13 +269,13 @@ const PERSONAS: {
     label: "Residents",
     shot: "amora-resident-journey-desktop",
     headline: "From first visit to rooted member",
-    body: "Residents arrive through their own journey: introductions, agreements, rites of passage, and quests that turn settling in into contribution. Every step is written down and playable, so nobody has to onboard people one conversation at a time.",
+    body: "Residents arrive through their own path: introductions, agreements, rites of passage, and quests that turn settling in into contribution. Every step is written down and playable, so nobody has to onboard people one conversation at a time.",
   },
   {
     label: "Prosperity Creators",
     shot: "amora-prosperity-journey-desktop",
     headline: "Business builders inside the community",
-    body: "People who want to build a venture on your land get a journey of their own: proposals, agreements with the community, and quests that grow their business while feeding the village economy.",
+    body: "People who want to build a venture on your land get a path of their own: proposals, agreements with the community, and quests that grow their business while feeding the village economy.",
   },
   {
     label: "Core Team / Stewards",
@@ -287,7 +287,7 @@ const PERSONAS: {
     label: "Investors",
     shot: "amora-investor-journey-desktop",
     headline: "Capital with a clear window",
-    body: "Investors get their own journey: the vision, the numbers, the agreements, and a live view of how the project spends and progresses. Accountability is built into the game instead of assembled for each update call.",
+    body: "Investors get their own path: the vision, the numbers, the agreements, and a live view of how the project spends and progresses. Accountability is built into the game instead of assembled for each update call.",
   },
 ];
 
@@ -343,7 +343,7 @@ const STEPS: { n: string; title: string; body: string }[] = [
   {
     n: "02",
     title: "Receive your custom Blueprint",
-    body: "We turn the conversation into a Blueprint: your personas, journeys, currency, stages, and brand, laid out as the plan for your game.",
+    body: "We turn the conversation into a Blueprint: your personas, paths, currency, stages, and brand, laid out as the plan for your game.",
   },
   {
     n: "03",
@@ -353,7 +353,7 @@ const STEPS: { n: string; title: string; body: string }[] = [
   {
     n: "04",
     title: "First playable draft of your game",
-    body: "A running instance in your brand, in your language, with seeded journeys and quests for your team to react to.",
+    body: "A running instance in your brand, in your language, with seeded paths and quests for your team to react to.",
   },
   {
     n: "05",
@@ -413,7 +413,7 @@ const serviceSchema = {
   name: "Custom Coordination Games for Land Projects",
   serviceType: "Custom community coordination game design and build",
   description:
-    "A complete coordination game for a land project community: persona journeys, quests, community currency, governance, and transparency. Built on the same foundation as Amora and owned 100% by the community.",
+    "A complete coordination game for a land project community: persona paths, quests, community currency, governance, and transparency. Built on the same foundation as Amora and owned 100% by the community.",
   provider: {
     "@type": "Organization",
     name: "ReGen Civics",
@@ -443,7 +443,7 @@ export default function CustomGames() {
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
         <SEO
           title="Custom Games for Land Projects | ReGen Civics"
-          description="Get a complete coordination game for your land project: persona journeys, quests, community currency, governance, and money transparency. Built on the same foundation as Amora, owned 100% by you. $20,000, delivered in 3 to 6 months."
+          description="Get a complete coordination game for your land project: persona paths, quests, community currency, governance, and money transparency. Built on the same foundation as Amora, owned 100% by you. $20,000, delivered in 3 to 6 months."
           keywords="custom coordination game, land project software, community governance tools, ecovillage onboarding, community currency, regenerative community platform"
         />
         <JsonLD data={serviceSchema} />
@@ -622,7 +622,7 @@ export default function CustomGames() {
             </h2>
             <p className="text-white/75 text-lg leading-relaxed mb-10 max-w-2xl">
               Amora is a regenerative village rising in Costa Rica, and client
-              #1. Their game runs today: four journeys into the village, quests
+              #1. Their game runs today: four paths into the village, quests
               with consent-based crediting, a Gratitude currency, twelve stages
               of growth, and Maia, their own AI guide. Every screen below is
               the real thing.
@@ -690,7 +690,7 @@ export default function CustomGames() {
               The four personas
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white leading-tight mb-6" style={display}>
-              A journey for every person{" "}
+              A path for every person{" "}
               <span className="italic text-[#a8e6a8]">your project needs</span>
             </h2>
             <p className="text-white/75 text-lg leading-relaxed mb-12 max-w-2xl">
@@ -704,7 +704,7 @@ export default function CustomGames() {
               {PERSONAS.map((p, i) => (
                 <div key={p.label} className="grid md:grid-cols-2 gap-8 items-center">
                   <div className={i % 2 === 1 ? "md:order-2" : ""}>
-                    <AmoraShot name={p.shot} caption={`${p.label} journey inside Amora`} />
+                    <AmoraShot name={p.shot} caption={`${p.label} path inside Amora`} />
                   </div>
                   <div className={i % 2 === 1 ? "md:order-1" : ""}>
                     <div className="text-[#7dd87d] text-xs font-semibold tracking-[0.18em] uppercase mb-2">

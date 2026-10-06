@@ -361,7 +361,7 @@ function buildStewardSteps(
     case "land_project":
       return [
         {
-          label: "Complete a season of the Game Co-Creation Journey",
+          label: "Complete a season of game co-creation",
           done: false, // schema gap
         },
         {

@@ -15,7 +15,7 @@ export const RITES_OF_PASSAGE_FORUM_POSTS: RitesForumPost[] = [
 
 Record a 3-7 minute video sharing who you are and why you are here. What stories are you ready to let go of? What do you want to build in their place?
 
-Share your video or written reflection below. This is where the journey starts.`,
+Share your video or written reflection below. This is where it starts.`,
     seeds: [
       {
         author: "Kai Rautio",
@@ -146,17 +146,17 @@ What wild foods are growing around you? Share your foraging finds below.`,
   {
     slug: "rites-quest-8-medicine-journey",
     questId: 8,
-    title: "Quest 8: Medicine Journey — Inner Exploration",
-    body: `Quest 8 is a guided journey into the depths of consciousness. Exploring the medicine within and around us.
+    title: "Quest 8: Medicine Path. Inner Exploration",
+    body: `Quest 8 is a guided path into the depths of consciousness. Exploring the medicine within and around us.
 
-Your deliverable: a reflection on your medicine journey. This is deeply personal work, so share only what feels right.
+Your deliverable: a reflection on your medicine path. This is deeply personal work, so share only what feels right.
 
 What did you discover? What shifted? Share your reflections below.`,
     seeds: [
       {
         author: "Ezra Whitfield",
         handle: "@ezra_innerwork",
-        body: "My medicine journey was a 4-day silent retreat in the mountains. No substances, just silence, fasting, and sitting with whatever came up. What came up was grief I did not know I was carrying. I wrote about it afterward. Not ready to share the full piece publicly yet, but the short version: I came back lighter. Reflection: [Ezra's journey notes](https://medium.com/example_medicine)\n\n[EXAMPLE COMMENT - share your own medicine journey reflection below]",
+        body: "My medicine path was a 4-day silent retreat in the mountains. No substances, just silence, fasting, and sitting with whatever came up. What came up was grief I did not know I was carrying. I wrote about it afterward. Not ready to share the full piece publicly yet, but the short version: I came back lighter. Reflection: [Ezra's notes](https://medium.com/example_medicine)\n\n[EXAMPLE COMMENT - share your own medicine path reflection below]",
       },
     ],
   },

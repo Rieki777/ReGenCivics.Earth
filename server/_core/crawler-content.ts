@@ -583,7 +583,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         <p>Land projects fail on coordination long before they fail on permaculture. The soil improves, the gardens go in, and the project still unravels: coordination breaks first, then money opacity, then burnout in the two people carrying everything.</p>
         <p>Without a structure that can hold new people, every person who joins adds weight to the same two or three who carry the risk. More members should mean more capacity; instead it means more to hold, more to explain, more to chase. Structure is what turns willing people into contributing people, so the work spreads and the founders stop being the single point of failure.</p>
         <h2>Running in production</h2>
-        <p>Amora is a regenerative village rising in Costa Rica and the first client. Their game runs today: four journeys into the village, quests with consent-based crediting, a Gratitude currency, twelve stages of growth, a living map where every building traces back to a funded build or a claimed quest, and Maia, their own AI guide.</p>
+        <p>Amora is a regenerative village rising in Costa Rica and the first client. Their game runs today: four paths into the village, quests with consent-based crediting, a Gratitude currency, twelve stages of growth, a living map where every building traces back to a funded build or a claimed quest, and Maia, their own AI guide.</p>
         <p>See <a href="/network">the games already in the network</a>, or <a href="/season2">Season Two</a>, which is the route in for projects that want the structure before the software.</p>
       </article>
     `,

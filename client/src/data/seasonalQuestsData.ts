@@ -114,9 +114,9 @@ export const seasonalQuestsData: SeasonalQuest[] = [
     season: "fall",
     tagline: "Where are we actually heading? Go see.",
     description:
-      "Do a guided meditation or solo journey in which you travel forward in time to a regenerative future. Experience it fully: what does it look like, smell like, taste like, feel like? Come back and write your account. Not a wish list. A sensory, specific story of a real day in that future. Share it with the community.",
+      "Do a guided meditation or solo vision in which you travel forward in time to a regenerative future. Experience it fully: what does it look like, smell like, taste like, feel like? Come back and write your account. Not a wish list. A sensory, specific story of a real day in that future. Share it with the community.",
     deliverable: "A written account of a day in a regenerative future, shared to help build our collective vision.",
-    estimatedTime: "One journey session, plus writing time",
+    estimatedTime: "One session, plus writing time",
     element: "air",
     reward: { regen: 77, rvoice: 1 },
   },

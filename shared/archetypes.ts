@@ -76,11 +76,11 @@ export const ARCHETYPES: ArchetypeSeed[] = [
     key: "storytelling",
     name: "The Storyteller",
     subtitle: "Storytelling & Communicating",
-    blurb: "Sharing the vision, documenting the journey, and drawing others in.",
+    blurb: "Sharing the vision, documenting the work, and drawing others in.",
     examples: [
       "Telling the story of the land",
       "Creating content that carries the work",
-      "Documenting the journey",
+      "Documenting the work",
       "Keeping the outside world in the loop",
     ],
     sigil: "book",

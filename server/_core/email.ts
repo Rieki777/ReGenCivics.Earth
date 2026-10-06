@@ -715,7 +715,7 @@ export const emailTemplates = {
       <h3 style="color: #4a7c59;">Next Steps</h3>
       <ul style="color: #333; line-height: 1.8;">
         <li><strong>Community Governance:</strong> Your application will be reviewed by our community through a participatory voting process</li>
-        <li><strong>Follow the Journey:</strong> We highly encourage you to stay engaged regardless of the final selection outcome</li>
+        <li><strong>Stay engaged:</strong> We highly encourage you to stay engaged regardless of the final selection outcome</li>
         <li><strong>Alliance Eligibility:</strong> If you complete all the steps, you may still be eligible for joining the ReGen Civics Alliance even if not selected for Season 2</li>
       </ul>
       
@@ -734,7 +734,7 @@ export const emailTemplates = {
       <p style="color: #333; line-height: 1.6;">Thank you for your interest in ReGen Civics. We wanted to follow up on your inquiry and let you know we've received it.</p>
       
       <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <p style="color: #333; margin: 0;">We're here to support you on your regenerative journey. If you have questions or want to learn more, join our community channels where our team and community members are active!</p>
+        <p style="color: #333; margin: 0;">We're here to support you in your regenerative work. If you have questions or want to learn more, join our community channels where our team and community members are active!</p>
       </div>
       
       <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
@@ -802,7 +802,7 @@ export const emailTemplates = {
   newsletterWelcome: (recipientName: string) => ({
     subject: 'Welcome to the ReGen Civics Newsletter!',
     html: `
-      <h2 style="color: #1a472a; margin-top: 0;">Welcome to the Journey, ${textForEmail(recipientName || 'Friend')}!</h2>
+      <h2 style="color: #1a472a; margin-top: 0;">Welcome in, ${textForEmail(recipientName || 'Friend')}!</h2>
       <p style="color: #333; line-height: 1.6;">You're now part of the ReGen Civics community. Get ready for updates on regenerative land projects, community events, and the infinite game of building a better world.</p>
       
       <div style="background-color: #f0f7f0; background: linear-gradient(135deg, #f0f7f0 0%, #f0f7f0 100%); padding: 25px; border-radius: 8px; margin: 20px 0; text-align: center;">

@@ -1275,8 +1275,24 @@ export default function CrowdPoolingTool({
     );
   }
   
+  const addOnPress = (add: () => void) => (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    event.currentTarget.dataset.armed = "1";
+    add();
+  };
+  const addOnClick = (add: () => void) => (event: React.MouseEvent<HTMLButtonElement>) => {
+    if (event.currentTarget.dataset.armed === "1") {
+      delete event.currentTarget.dataset.armed;
+      return;
+    }
+    add();
+  };
+
   const entryForm = (
-    <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
+    <div className={embedded
+      ? "sheet-gift"
+      : "bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30 light-form-island"
+    }>
       {/* Header with progress */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -1367,9 +1383,10 @@ export default function CrowdPoolingTool({
               <p className="text-xs text-[#1a472a]/80">Land, crypto, equipment, plants, and more</p>
             </div>
             <Button
-              onClick={addImmediateContribution}
+              onPointerDown={addOnPress(addImmediateContribution)}
+              onClick={addOnClick(addImmediateContribution)}
               size="sm"
-              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
+              className="touch-press bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add
@@ -1381,9 +1398,10 @@ export default function CrowdPoolingTool({
               <Package className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
               <p className="text-[#1a472a]/80 mb-3">No immediate contributions yet</p>
               <Button
-                onClick={addImmediateContribution}
+                onPointerDown={addOnPress(addImmediateContribution)}
+                onClick={addOnClick(addImmediateContribution)}
                 variant="outline"
-                className="border-[#4a7c59] text-[#4a7c59] hover:bg-[#7dd87d]/10"
+                className="touch-press border-[#4a7c59] text-[#4a7c59] hover:bg-[#7dd87d]/10"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Your First Contribution
@@ -1402,11 +1420,13 @@ export default function CrowdPoolingTool({
                       </div>
                       <div className="flex-1 w-full space-y-3">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="min-w-0">
+                          <label id={`imm-cat-${contribution.id}`} className="text-xs mb-1 block">Category</label>
                           <Select
                             value={contribution.category}
                             onValueChange={(value) => updateImmediateContribution(contribution.id, 'category', value)}
                           >
-                            <SelectTrigger className="w-full bg-white border-[#7dd87d]/30">
+                            <SelectTrigger aria-labelledby={`imm-cat-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/30">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="max-h-60">
@@ -1417,11 +1437,15 @@ export default function CrowdPoolingTool({
                               ))}
                             </SelectContent>
                           </Select>
+                          </div>
+                          <div className="min-w-0">
+                          <label htmlFor={`imm-val-${contribution.id}`} className="text-xs mb-1 block">Value</label>
                           <div className="relative w-full">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/80 text-sm">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">
                               {currencySymbol}
                             </span>
                             <Input
+                              id={`imm-val-${contribution.id}`}
                               type="number"
                               inputMode="decimal"
                               value={contribution.value || ''}
@@ -1430,13 +1454,18 @@ export default function CrowdPoolingTool({
                               className="pl-7 bg-white border-[#7dd87d]/30 w-full text-base"
                             />
                           </div>
+                          </div>
                         </div>
+                        <div>
+                        <label htmlFor={`imm-desc-${contribution.id}`} className="text-xs mb-1 block">Description</label>
                         <Input
+                          id={`imm-desc-${contribution.id}`}
                           value={contribution.description}
                           onChange={(e) => updateImmediateContribution(contribution.id, 'description', e.target.value)}
                           placeholder={contribution.category === 'crypto' ? 'USDC, ETH, or other tokens' : `Description (e.g., ${immediateCategories.find(c => c.id === contribution.category)?.description || 'item details'})`}
                           className="bg-white border-[#7dd87d]/30 w-full"
                         />
+                        </div>
                         {contribution.category === 'crypto' && (
                           <p className="text-xs text-[#1a472a]/75">
                             {CRYPTO_PAYMENT_CONTEXT.fiatNote}
@@ -1694,12 +1723,14 @@ export default function CrowdPoolingTool({
                             />
                           </div>
                         </div>
-                        <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                          <label id={`fut-cap-${contribution.id}`} className="text-xs mb-1 block">Capital</label>
                           <Select
                             value={contribution.capital}
                             onValueChange={(value) => updateFutureCapital(contribution.id, value as CapitalType)}
                           >
-                            <SelectTrigger className="w-40 h-8 text-xs bg-white border-[#7dd87d]/30">
+                            <SelectTrigger aria-labelledby={`fut-cap-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/30">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1710,7 +1741,8 @@ export default function CrowdPoolingTool({
                               ))}
                             </SelectContent>
                           </Select>
-                          <div className="text-right text-sm">
+                          </div>
+                          <div className="text-right text-sm sm:pb-2">
                             <span className="text-[#1a472a]/80">Total: </span>
                             <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
                           </div>

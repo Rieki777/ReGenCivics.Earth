@@ -47,7 +47,7 @@ const QUEST_LABELS: Record<number, string> = {
   6:  "Love",
   7:  "Healing Circles",
   8:  "Wild Foraging",
-  9:  "Medicine Journey",
+  9:  "Medicine Path",
   10: "NVC",
   11: "Coordination",
   12: "Breathplay",

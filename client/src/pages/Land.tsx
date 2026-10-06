@@ -913,7 +913,7 @@ export default function Land() {
               className="text-3xl md:text-5xl font-bold text-white mb-3 text-center text-shadow-strong"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              The ReGen Game <span className="text-[#7dd87d]">Journey</span>
+              The ReGen Game <span className="text-[#7dd87d]">Path</span>
             </h2>
             <p
               className="text-white/60 text-center mb-8 max-w-xl mx-auto text-lg text-shadow-subtle"
@@ -972,7 +972,7 @@ export default function Land() {
                     className="text-lg md:text-xl font-bold text-white flex-1"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    Explore the Journey Steps
+                    Explore the path steps
                   </h3>
                   {journeyStepsOpen ? (
                     <ChevronUp className="w-6 h-6 text-[#7dd87d] flex-shrink-0" />

@@ -123,18 +123,18 @@ export default function Navigation() {
           {/* Logo / Brand */}
           <Link 
             href="/"
-            className="flex items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] transition-colors"
+            className="flex shrink-0 items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] transition-colors"
           >
             <img
               src="/icon-192.webp"
               alt="ReGen Civics"
               width="40"
               height="40"
-              className="w-10 h-10 object-contain md:hidden"
+              className="w-10 h-10 object-contain lg:hidden"
               loading="eager"
               onError={(e) => { e.currentTarget.style.display = 'none'; const span = e.currentTarget.nextElementSibling as HTMLElement; if (span) span.classList.remove('hidden', 'md:block'); }}
             />
-            <span className="hidden md:block text-lg font-bold bg-gradient-to-r from-[#d4a574] to-[#ffd700] bg-clip-text text-transparent">
+            <span className="hidden lg:block text-lg font-bold bg-gradient-to-r from-[#d4a574] to-[#ffd700] bg-clip-text text-transparent whitespace-nowrap">
               ReGen Civics
             </span>
           </Link>
@@ -142,10 +142,10 @@ export default function Navigation() {
           {/* Mobile Participate Button - centered with gold glow */}
           <Link
             href="/connect"
-            className="md:hidden"
+            className="lg:hidden shrink-0"
           >
             <Button
-              className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-5 py-1.5 text-sm font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
+              className="touch-press bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-3 min-[400px]:px-5 text-sm font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
               style={{ fontFamily: 'var(--font-accent)' }}
             >
               <Sparkles className="w-5 h-5 mr-1" />
@@ -154,14 +154,14 @@ export default function Navigation() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-0.5 min-[1440px]:gap-1">
 
             {/* 4 Paths Dropdown - NEW */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`flex items-center gap-2 rounded-full px-4 ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 ${
                     is4PathsActive
                       ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]'
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -214,7 +214,7 @@ export default function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`flex items-center gap-2 rounded-full px-4 border-2 transition-all ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 border-2 transition-all ${
                     isPlayGameActive
                       ? 'bg-[#7dd87d] text-[#1a472a] border-[#7dd87d] hover:bg-[#7dd87d] hover:text-[#1a472a]'
                       : 'text-[#ffd700] border-[#ffd700]/60 hover:bg-[#ffd700]/10 hover:text-[#ffd700] hover:border-[#ffd700] shadow-[0_0_8px_rgba(255,215,0,0.15)]'
@@ -223,7 +223,8 @@ export default function Navigation() {
                   onMouseEnter={() => { prefetch("/game"); prefetch("/quest"); prefetch("/play"); prefetch("/bounties"); }}
                 >
                   <FlowerOfLifeIcon className="w-[22px] h-[22px]" size={22} />
-                  Play the Game
+                  <span className="min-[1440px]:hidden">Play</span>
+                  <span className="hidden min-[1440px]:inline">Play the Game</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
@@ -331,12 +332,13 @@ export default function Navigation() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Seasons + Schedule Dropdown */}
+            {/* Seasons + Schedule. Folded into Explore below 1440 so the bar fits. */}
+            <div className="hidden min-[1440px]:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={`flex items-center gap-2 rounded-full px-4 ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 ${
                     isSeasonsActive
                       ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]' 
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -368,11 +370,12 @@ export default function Navigation() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
 
-            {/* Global Map Link */}
+            {/* Global Map Link. In the Explore menu below 1440. */}
             <Link 
               href="/map"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+              className={`hidden min-[1440px]:flex shrink-0 items-center gap-2 px-2 min-[1440px]:px-4 py-2 rounded-full transition-all ${
                 location === '/map' 
                   ? 'bg-[#7dd87d] text-[#1a472a]' 
                   : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -386,7 +389,7 @@ export default function Navigation() {
             {/* Team Link */}
             <Link
               href="/team"
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all ${
+              className={`hidden min-[1440px]:flex shrink-0 items-center gap-2 px-2 min-[1440px]:px-4 py-2 rounded-full transition-all ${
                 location === '/team'
                   ? 'bg-[#7dd87d] text-[#1a472a]'
                   : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -400,7 +403,7 @@ export default function Navigation() {
             {/* Desktop Participate CTA with gold glow */}
             <Link href="/connect">
               <Button
-                className="bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-5 font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
+                className="touch-press shrink-0 bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-3 min-[1440px]:px-5 font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 <Sparkles className="w-5 h-5 mr-1" />
@@ -413,7 +416,7 @@ export default function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={`flex items-center gap-2 rounded-full px-4 ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 ${
                     isSocialsBlogActive
                       ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]' 
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -421,7 +424,8 @@ export default function Navigation() {
                   style={{ fontFamily: 'var(--font-accent)' }}
                 >
                   <Users className="w-[22px] h-[22px]" />
-                  Explore + Connect
+                  <span className="min-[1440px]:hidden">Explore</span>
+                  <span className="hidden min-[1440px]:inline">Explore + Connect</span>
                   <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                 </Button>
               </DropdownMenuTrigger>
@@ -429,6 +433,37 @@ export default function Navigation() {
                 align="end" 
                 className="bg-[#1a472a] border-[#7dd87d]/30 min-w-[200px]"
               >
+                <div className="min-[1440px]:hidden">
+                  <DropdownMenuItem
+                    className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                    onClick={() => window.location.href = '/seasons'}
+                  >
+                    <Layers className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                    <span style={{ fontFamily: 'var(--font-accent)' }}>Seasons</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                    onClick={() => window.location.href = '/schedule'}
+                  >
+                    <Calendar className="w-5 h-5 mr-3 text-amber-400" />
+                    <span style={{ fontFamily: 'var(--font-accent)' }}>Schedule</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                    onClick={() => window.location.href = '/map'}
+                  >
+                    <Globe className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                    <span style={{ fontFamily: 'var(--font-accent)' }}>Map</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                    onClick={() => window.location.href = '/team'}
+                  >
+                    <Users className="w-5 h-5 mr-3 text-white" />
+                    <span style={{ fontFamily: 'var(--font-accent)' }}>Team</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
+                </div>
                 <DropdownMenuItem 
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/blog'}
@@ -622,7 +657,7 @@ export default function Navigation() {
             ) : (
               <Button 
                 variant="ghost" 
-                className="flex items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] hover:text-[#1a472a] rounded-full px-4"
+                className="flex shrink-0 items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] hover:text-[#1a472a] rounded-full px-3 min-[1440px]:px-4"
                 style={{ fontFamily: 'var(--font-accent)' }}
                 onClick={handleSignIn}
               >
@@ -637,7 +672,7 @@ export default function Navigation() {
             onClick={() => {
               window.dispatchEvent(new CustomEvent("open-command-palette"));
             }}
-            className="p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="shrink-0 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
             aria-label="Search (Ctrl+K)"
           >
             <Search className="w-[22px] h-[22px]" />
@@ -653,7 +688,7 @@ export default function Navigation() {
             <>
               <Link
                 href="/messages"
-                className="md:hidden relative p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-white/80 hover:text-white"
+                className="lg:hidden relative p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-white/80 hover:text-white"
                 aria-label={messagesUnreadCount > 0 ? `Messages, ${messagesUnreadCount} unread` : "Messages"}
               >
                 <MessageCircle className="w-5 h-5" />
@@ -666,7 +701,7 @@ export default function Navigation() {
                   </span>
                 )}
               </Link>
-              <div className="md:hidden">
+              <div className="lg:hidden">
                 <NotificationBell />
               </div>
             </>
@@ -674,7 +709,7 @@ export default function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="lg:hidden shrink-0 text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
             onClick={() => setMobileMenuOpen(true)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
@@ -688,10 +723,10 @@ export default function Navigation() {
       {/* Mobile Drawer  -  slides in from right */}
       <Drawer.Root open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} direction="right">
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] md:hidden" />
+          <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] lg:hidden" />
           <Drawer.Content
             id="mobile-nav-drawer"
-            className="fixed inset-y-0 right-0 z-[70] w-[min(85vw,320px)] bg-[#0d2818] border-l border-[#7dd87d]/20 flex flex-col overflow-x-hidden overflow-y-hidden md:hidden focus:outline-none"
+            className="fixed inset-y-0 right-0 z-[70] w-[min(85vw,320px)] bg-[#0d2818] border-l border-[#7dd87d]/20 flex flex-col overflow-x-hidden overflow-y-hidden lg:hidden focus:outline-none"
             style={{ touchAction: "pan-y", overscrollBehavior: "contain" }}
             aria-label="Mobile navigation"
           >

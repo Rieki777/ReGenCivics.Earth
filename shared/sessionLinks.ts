@@ -70,6 +70,6 @@ export const SEEDS_YOUTUBE_SUBSCRIBE_URL = `${SEEDS_YOUTUBE_URL}?sub_confirmatio
 export const RIVERSIDE_INFO = {
   topic: "ReGen Civics Season 2",
   description:
-    "Join ReGen Civics in Season 2! Helping land projects evolve to the next stage of their regenerative journeys.",
+    "Join ReGen Civics in Season 2. Helping land projects evolve to the next stage of their regenerative paths.",
   roomUrl: RIVERSIDE_ROOM_URL,
 } as const;

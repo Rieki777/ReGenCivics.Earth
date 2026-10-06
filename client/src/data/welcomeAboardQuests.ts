@@ -110,7 +110,7 @@ export const WELCOME_ABOARD_QUESTS: WelcomeAboardQuest[] = [
     reward: "33 $ReGen + 0.1 RGVoice",
     forumUrl: "/community/post/596",
     about:
-      "ReGen Civics did not emerge overnight. It grew from more than a decade of asking hard questions about land, money, governance, and what healing a civilisation actually takes. This quest invites you to watch the Foundational Series: four short videos that distil that journey and illuminate the vision we are building toward together. After watching, you will understand not just what ReGen Civics is, but why it has to exist. Then share what you found with the people in your life who are also searching.",
+      "ReGen Civics did not emerge overnight. It grew from more than a decade of asking hard questions about land, money, governance, and what healing a civilisation actually takes. This quest invites you to watch the Foundational Series: four short videos that distil that story and illuminate the vision we are building toward together. After watching, you will understand not just what ReGen Civics is, but why it has to exist. Then share what you found with the people in your life who are also searching.",
     steps: [
       // Was "at: regencivics.earth/foundations", which 404s. That page does not
       // exist and the videos are nowhere else on the site, so this step sent

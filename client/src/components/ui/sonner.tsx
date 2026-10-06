@@ -7,8 +7,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="light"
       className="toaster group"
       position="bottom-right"
-      // Push toast above iOS home-indicator so it doesn't collide with the
-      // safe-area inset on phones with rounded corners.
+      // Desktop offset. Phones override --offset-bottom in index.css so the
+      // toast clears the fixed bottom nav and the home-indicator inset.
       style={{
         ['--offset-bottom' as string]: 'max(1rem, env(safe-area-inset-bottom))',
       } as React.CSSProperties}

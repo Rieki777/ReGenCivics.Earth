@@ -107,7 +107,7 @@ export default function MyApplications() {
               No Applications Yet
             </h2>
             <p className="text-[#1a472a]/75 mb-6">
-              Start your journey by submitting your first application
+              Start by submitting your first application
             </p>
             <Link href="/apply">
               <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">

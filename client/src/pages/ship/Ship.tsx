@@ -189,7 +189,7 @@ export default function Ship() {
           <div data-reveal="left" className="prose prose-lg max-w-none text-foreground/90 space-y-4">
             <p>The pantry is a gift economy. She sails stocked, so eat what is aboard, cook freely, and set a full table. The one rule of an abundant ship is that you leave her fuller than you found her. When you use something up, replace it with something of equal or greater value, so the next crew boards into the same abundance you did. Live abundantly, and take care of the people voyaging after you.</p>
             <p>Everything aboard is organic, plant-based, and as local as the road allows. The food, the soaps, the oils, and the cleaners are all chosen so that anything going down her drains is safe to give back to the earth.</p>
-            <p>That choice is the heart of her regenerative footprint. Because she runs plant-based and organic, the greywater and blackwater in her tanks leave clean enough to nourish an ecosystem. At the end of a voyage you empty her tanks into a healing hole, plant it, and the whole journey returns to the land as food for a forest. What the crew eats becomes what the land drinks.</p>
+            <p>That choice is the heart of her regenerative footprint. Because she runs plant-based and organic, the greywater and blackwater in her tanks leave clean enough to nourish an ecosystem. At the end of a voyage you empty her tanks into a healing hole, plant it, and the whole voyage returns to the land as food for a forest. What the crew eats becomes what the land drinks.</p>
           </div>
           <div data-reveal="right">
             <AutoplayVideo

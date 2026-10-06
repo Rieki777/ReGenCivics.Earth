@@ -417,7 +417,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
             {rows.length} {rows.length === 1 ? 'tool' : 'tools'} in the register
           </h2>
           <p className="text-white/60 mb-5 text-sm">
-            What each one speaks. The badge shows how far it is along the journey into the shared system.
+            What each one speaks. The badge shows how far it is along the path into the shared system.
           </p>
           <ul className="space-y-4">
             {rows.map((s) => (

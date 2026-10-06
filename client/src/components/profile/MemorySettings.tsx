@@ -41,7 +41,7 @@ export function MemorySettings() {
         <h3 className="text-white font-bold text-sm">What the Guide remembers about you</h3>
       </div>
       <p className="text-white/60 text-sm">
-        With your consent, the Guide keeps small notes about your game journey: quests you completed, crews you
+        With your consent, the Guide keeps small notes about your play: quests you completed, crews you
         joined, gratitude you received. Everything it remembers is listed here, in full. You can delete any note,
         delete them all, or export them. Off means the Guide writes nothing and reads nothing.
       </p>
@@ -54,7 +54,7 @@ export function MemorySettings() {
           disabled={setOptIn.isPending || settingsQuery.isLoading}
           className="w-4 h-4 accent-[#7dd87d]"
         />
-        <span className="text-white/80 text-sm">Let the Guide remember my journey</span>
+        <span className="text-white/80 text-sm">Let the Guide remember my play</span>
       </label>
 
       {facts.length > 0 ? (

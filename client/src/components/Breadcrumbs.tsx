@@ -10,7 +10,7 @@ export function Breadcrumbs({ crumbs }: { crumbs: Crumb[] }) {
     <nav aria-label="Breadcrumb" className="text-sm text-white/70 mb-4">
       <ol className="flex items-center gap-1 flex-wrap">
         <li>
-          <Link href="/" className="hover:text-[#7dd87d] transition-colors inline-flex items-center gap-1">
+          <Link href="/" className="tap-44 hover:text-[#7dd87d] transition-colors inline-flex items-center justify-center gap-1">
             <Home className="w-3.5 h-3.5" />
             <span className="sr-only">Home</span>
           </Link>

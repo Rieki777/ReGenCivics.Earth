@@ -131,7 +131,7 @@ export function ContinueYourJourneyRow() {
             className="text-2xl md:text-3xl font-bold text-[#1a472a]"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Continue Your <span className="text-[#7dd87d]">Journey</span>
+            Continue Your <span className="text-[#7dd87d]">Path</span>
           </h2>
           <p className="text-sm text-[#1a472a]/80">
             {entries.length} quest{entries.length === 1 ? "" : "s"} in progress

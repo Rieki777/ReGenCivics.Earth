@@ -1292,7 +1292,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Anchor"
                 title="Local food economies"
-                blurb="Our entire journey started with food. In 2017 the question was simple. If Bitcoin could spend billions a year on energy to back its currency, what if we spent that money setting up local food systems to back a new currency, one backed by local, regenerative, and delicious food? Bionomics is what grew from that question."
+                blurb="Our work started with food. In 2017 the question was simple. If Bitcoin could spend billions a year on energy to back its currency, what if we spent that money setting up local food systems to back a new currency, one backed by local, regenerative, and delicious food? Bionomics is what grew from that question."
                 accent={C.greenSoft}
               />
 

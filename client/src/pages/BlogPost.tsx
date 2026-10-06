@@ -563,7 +563,7 @@ export default function BlogPost() {
                 Ready to Join the <span className="text-[#7dd87d]">Game</span>?
               </h2>
               <p className="text-white/70 mb-6">
-                Start your regenerative journey today.
+                Start your regenerative path today.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link href="/quest">
