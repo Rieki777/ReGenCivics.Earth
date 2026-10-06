@@ -153,15 +153,17 @@ export default function Navigation() {
             </Button>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-0.5 min-[1440px]:gap-1">
+          {/* Desktop Navigation. Full labels return at 1440. Padding stays tight
+              until 1680 so the row, including Search, stays inside the
+              1280px header at 1440 and 1536. */}
+          <div className="hidden lg:flex items-center gap-0.5 min-[1680px]:gap-1">
 
             {/* 4 Paths Dropdown - NEW */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1680px]:px-4 ${
                     is4PathsActive
                       ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]'
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -214,7 +216,7 @@ export default function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 border-2 transition-all ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1680px]:px-4 border-2 transition-all ${
                     isPlayGameActive
                       ? 'bg-[#7dd87d] text-[#1a472a] border-[#7dd87d] hover:bg-[#7dd87d] hover:text-[#1a472a]'
                       : 'text-[#ffd700] border-[#ffd700]/60 hover:bg-[#ffd700]/10 hover:text-[#ffd700] hover:border-[#ffd700] shadow-[0_0_8px_rgba(255,215,0,0.15)]'
@@ -338,7 +340,7 @@ export default function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1680px]:px-4 ${
                     isSeasonsActive
                       ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]' 
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -375,7 +377,7 @@ export default function Navigation() {
             {/* Global Map Link. In the Explore menu below 1440. */}
             <Link 
               href="/map"
-              className={`hidden min-[1440px]:flex shrink-0 items-center gap-2 px-2 min-[1440px]:px-4 py-2 rounded-full transition-all ${
+              className={`hidden min-[1440px]:flex shrink-0 items-center gap-2 px-2 min-[1680px]:px-4 py-2 rounded-full transition-all ${
                 location === '/map' 
                   ? 'bg-[#7dd87d] text-[#1a472a]' 
                   : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -389,7 +391,7 @@ export default function Navigation() {
             {/* Team Link */}
             <Link
               href="/team"
-              className={`hidden min-[1440px]:flex shrink-0 items-center gap-2 px-2 min-[1440px]:px-4 py-2 rounded-full transition-all ${
+              className={`hidden min-[1440px]:flex shrink-0 items-center gap-2 px-2 min-[1680px]:px-4 py-2 rounded-full transition-all ${
                 location === '/team'
                   ? 'bg-[#7dd87d] text-[#1a472a]'
                   : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -403,7 +405,7 @@ export default function Navigation() {
             {/* Desktop Participate CTA with gold glow */}
             <Link href="/connect">
               <Button
-                className="touch-press shrink-0 bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-3 min-[1440px]:px-5 font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
+                className="touch-press shrink-0 bg-gradient-to-r from-[#d4a574] to-[#ffd700] text-[#1a472a] hover:from-[#e0b88a] hover:to-[#ffe44d] rounded-full px-3 min-[1680px]:px-5 font-bold shadow-[0_0_15px_rgba(255,215,0,0.4),0_0_30px_rgba(212,165,116,0.2)] hover:shadow-[0_0_20px_rgba(255,215,0,0.6),0_0_40px_rgba(212,165,116,0.3)] transition-all"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
                 <Sparkles className="w-5 h-5 mr-1" />
@@ -416,7 +418,7 @@ export default function Navigation() {
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1440px]:px-4 ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-2 min-[1680px]:px-4 ${
                     isSocialsBlogActive
                       ? 'bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d] hover:text-[#1a472a]' 
                       : 'text-white hover:bg-[#ffd700]/20 hover:text-[#ffd700]'
@@ -657,7 +659,7 @@ export default function Navigation() {
             ) : (
               <Button 
                 variant="ghost" 
-                className="flex shrink-0 items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] hover:text-[#1a472a] rounded-full px-3 min-[1440px]:px-4"
+                className="flex shrink-0 items-center gap-2 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] hover:text-[#1a472a] rounded-full px-3 min-[1680px]:px-4"
                 style={{ fontFamily: 'var(--font-accent)' }}
                 onClick={handleSignIn}
               >

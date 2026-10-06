@@ -33,14 +33,14 @@ export function ShortcutPill({ onOpen }: ShortcutPillProps) {
   return (
     <button
       onClick={onOpen}
-      className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#1a472a]/90 backdrop-blur-sm text-[#7dd87d] border border-[#7dd87d]/30 rounded-full shadow-lg hover:bg-[#1a472a] transition-all duration-500 ${expanded ? 'px-4 py-2' : 'p-2'}`}
+      className={`tap-44 fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-[#1a472a]/90 backdrop-blur-sm text-[#7dd87d] border border-[#7dd87d]/30 rounded-full shadow-lg hover:bg-[#1a472a] transition-all duration-500 ${expanded ? 'px-4 py-2' : 'p-2'}`}
       aria-label="Open search (⌘K)"
       title="Search (⌘K)"
     >
       <Search className="w-4 h-4 shrink-0" />
       {expanded && (
         <span className="text-xs font-medium whitespace-nowrap">
-          Search <kbd className="ml-1 text-[10px] bg-[#7dd87d]/20 px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
+          Search <kbd className="ml-1 text-xs text-[#f4fff6] bg-[#0e2a18] px-1.5 py-0.5 rounded font-mono">⌘K</kbd>
         </span>
       )}
     </button>

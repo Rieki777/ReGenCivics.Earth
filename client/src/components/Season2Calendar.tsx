@@ -217,7 +217,7 @@ export function Season2Calendar() {
             : "September through December 2026"}
           . Selection Day is open to anyone; the rest are cohort working sessions you can follow on the
           livestream. The land projects pick the weekly time on the{" "}
-          <Link href="/season-schedule">
+          <Link href="/season-schedule" className="tap-44">
             <span className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">Season Schedule</span>
           </Link>
           , and every date here follows it.
@@ -278,7 +278,7 @@ export function Season2Calendar() {
         </div>
 
         <div className="mt-10">
-          <Link href="/schedule">
+          <Link href="/schedule" className="tap-44">
             <span className="inline-flex items-center gap-2 text-[#7dd87d] hover:text-[#9de89d] font-semibold">
               See the full season schedule
               <ArrowRight className="w-4 h-4" />
