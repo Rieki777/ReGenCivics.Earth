@@ -34,9 +34,9 @@ export default defineConfig(({ mode }): UserConfig => ({
         navigateFallback: null,
         // Clean up precache entries from older SW versions on activation
         cleanupOutdatedCaches: true,
-        // skipWaiting + clientsClaim: new SW activates immediately on install,
-        // no waiting for old tabs to close. Combined with the controllerchange
-        // listener in main.tsx, this forces a page reload on every deploy.
+        // skipWaiting + clientsClaim: new SW activates immediately on install.
+        // ServiceWorkerRegister owns the reload and skips the first claim, so
+        // a brand-new visit is not refreshed out from under the form.
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
