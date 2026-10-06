@@ -131,6 +131,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/plays/:slug",
   "/plays/submit",
   "/preferences",
+  "/preview/game",
   "/privacy-policy",
   "/profile",
   "/profile/:handle",

@@ -16,6 +16,7 @@ import { AdminBroadcastPanel } from "@/components/AdminBroadcastPanel";
 import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { DictationButton } from "@/components/admin/dictation";
 import Seasons from "@/pages/Seasons";
+import GameExperiencePreview from "@/pages/preview/GameExperiencePreview";
 import VillageOs from "@/pages/VillageOs";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
@@ -469,6 +470,12 @@ export const STORIES: Record<string, Story> = {
         <VillageOs />
       </div>
     ),
+  },
+
+  /** Full-screen design mockup. Open with ?bare=1&screen=week&shot=1 */
+  "game-preview": {
+    title: "Game experience mockup",
+    render: () => <GameExperiencePreview />,
   },
 
   /** The wheel alone, as it looks in the middle of spring. */

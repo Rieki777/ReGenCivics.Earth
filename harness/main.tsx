@@ -26,12 +26,21 @@ class Boundary extends Component<{ children: ReactNode }, { error: Error | null 
 }
 
 const keys = Object.keys(STORIES);
-const requested = new URLSearchParams(location.search).get("story");
+const params = new URLSearchParams(location.search);
+const requested = params.get("story");
 const active = requested && STORIES[requested] ? requested : keys[0];
 const story = STORIES[active];
 story?.setup?.();
+const bare = params.get("bare") === "1";
 
 function Shell() {
+  if (bare) {
+    return (
+      <div data-harness-story={active} className="min-h-screen">
+        <Boundary>{story?.render() ?? null}</Boundary>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-[#f0ebe3] p-6">
       <nav className="mb-5 flex flex-wrap gap-2">
