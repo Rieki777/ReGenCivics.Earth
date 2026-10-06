@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # The week-people PR is stacked on the raise-hand branch, so it is not a
+    # pull request into main. GitHub only runs this file for those. The extra
+    # branch lets the required jobs run on that stacked PR. Drop it on merge.
+    branches: [main, cursor/board-week-people-461d]
   pull_request:
     branches: [main]
 

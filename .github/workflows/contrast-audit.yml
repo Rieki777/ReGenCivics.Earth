@@ -15,6 +15,10 @@ name: Contrast Audit
 on:
   pull_request:
     branches: [main]
+  # Stacked PR: required contrast job does not run unless the base is main.
+  # Drop this branch filter on merge.
+  push:
+    branches: [cursor/board-week-people-461d]
   workflow_dispatch:
 
 permissions:
