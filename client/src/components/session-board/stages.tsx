@@ -3,7 +3,7 @@
  * moves through together; anyone can type into it, and the facilitator runs it.
  */
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
+import { CROWDPOOL_READINESS, GAME_NEEDS, GAME_NEEDS_LABEL, GAME_NEEDS_LEAD } from "@shared/crowdpoolReadiness";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 import {
   BOARD_LIMITS,
@@ -17,7 +17,6 @@ import {
   PROJECT_PHASES,
   boardWelcome,
   breathAt,
-  sessionBoardHref,
   sessionMinutes,
   shareTime,
   TOGETHER_COPY,
@@ -31,6 +30,7 @@ import {
   VILLAGE_OS_PATH,
 } from "@shared/villageOsOffer";
 import { trpc } from "@/lib/trpc";
+import { JoinBoard } from "./JoinBoard";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
 
 export type StageProps = {
@@ -169,10 +169,10 @@ function YearWheel({ week }: { week: number }) {
   };
   const seasons: [string, number][] = [["Design", 0], ["Resource", 90], ["Build", 180], ["Rest", 270]];
   const at = (week / 13) * 88 + 2;
-  const [lx, ly] = P(90, r);
+  const [lx, ly] = P(180, r);
   const [mx, my] = P(at, r);
   return (
-    <svg viewBox="0 0 260 260" role="img" aria-label={`The year wheel: Design Season, week ${week} of 13. The shared crowdpool launches at the December solstice, where the Resource Season begins.`}>
+    <svg viewBox="0 0 260 260" role="img" aria-label={`The year wheel: Design Season, week ${week} of 13. The shared crowdpool launches at the March equinox, where the Build Season begins.`}>
       {seasons.map(([n, a], i) => <path key={n} d={arc(a + 2, a + 88)} className={`sb-w-arc${i === 0 ? " sb-w-design" : ""}`} />)}
       <path d={arc(2, at)} className="sb-w-prog" />
       {seasons.map(([n, a], i) => {
@@ -191,7 +191,6 @@ export function Welcome({ board, week, stages, facilitator, actions, go }: Stage
   const w = boardWelcome(week);
   const plan = board.state.plan;
   const total = sessionMinutes(plan, stages);
-  const link = `regencivics.earth${sessionBoardHref(week)}`;
   return (
     <div className="sb-welcome">
       <div className="sb-welcome-main">
@@ -220,12 +219,8 @@ export function Welcome({ board, week, stages, facilitator, actions, go }: Stage
       </div>
       <aside className="sb-side">
         <div className="sb-wheel"><YearWheel week={week} /></div>
-        <ul className="sb-legend"><li><span className="sb-lg-here" />You are here</li><li><span className="sb-lg-launch" />Crowdpool launch, December solstice</li></ul>
-        <div className="sb-panel">
-          <h2 className="sb-h3">Type in with us</h2>
-          <p className="sb-hint">Open this board on your own screen. Your words, your project and your votes land here live.</p>
-          <div className="sb-copy"><code>{link}</code><CopyButton text={`https://${link}`} /></div>
-        </div>
+        <ul className="sb-legend"><li><span className="sb-lg-here" />You are here</li><li><span className="sb-lg-launch" />Crowdpool launch, March equinox</li></ul>
+        <JoinBoard week={week} />
         <div className="sb-panel">
           <h2 className="sb-h3">We leave with</h2>
           <ul className="sb-ticks">{w.leaveWith.map((t) => <li key={t}>{t}</li>)}</ul>
@@ -376,12 +371,17 @@ export function OpenSeason({ stages, index, week }: StageProps) {
             <li><span className="sb-path-n">2</span><div><strong>A yes means foundations</strong><p>Approval says we see the minimum foundations for you to join the crowdpool.</p></div></li>
             <li><span className="sb-path-n">3</span><div><strong>Choose your roundtables</strong><p>Every weekly session is open to every project. Come to the ones that serve where you are.</p></div></li>
             <li><span className="sb-path-n">4</span><div><strong>Get yourself ready</strong><p>Follow the episodes live or recorded, and work through the eight readiness items at your own pace.</p></div></li>
-            <li className="sb-path-end"><span className="sb-path-n sb-path-diamond" aria-hidden="true" /><div><strong>December solstice: the shared crowdpool launch</strong><p>Every project that's ready launches together, as many as are ready.</p></div></li>
+            <li className="sb-path-end"><span className="sb-path-n sb-path-diamond" aria-hidden="true" /><div><strong>March equinox: the shared crowdpool launch</strong><p>Every project that's ready launches together, as many as are ready.</p></div></li>
           </ol>
         </article>
       </div>
       <div className="sb-q">
         <h3 className="sb-h3">Ready to crowdpool: the eight</h3>
+        <p className="sb-needs-lead">{GAME_NEEDS_LEAD}</p>
+        <p className="sb-label">{GAME_NEEDS_LABEL}</p>
+        <ul className="sb-chips sb-needs">
+          {GAME_NEEDS.map((need) => <li key={need} className="sb-chip">{need}</li>)}
+        </ul>
         <p className="sb-hint">The review checks that each one is in place and clear. Nobody scores how good it is. Who shows up each week shapes the route we take to get there.</p>
         <ol className="sb-ready-grid">
           {CROWDPOOL_READINESS.map((r) => {
@@ -512,7 +512,7 @@ export function VillageOS({ stages, index }: StageProps) {
             <li><span className="sb-path-n">2</span><div><span className="sb-path-weeks">Week 6</span><strong>Grow the village</strong><p>How people find you, join and stay. In Village OS, your entry journeys and onboarding.</p></div></li>
             <li><span className="sb-path-n">3</span><div><span className="sb-path-weeks">Weeks 8, 9 and 12</span><strong>Set the economy</strong><p>What flows between your players. In Village OS, your gratitude, your credits and the ledger that keeps them honest.</p></div></li>
             <li><span className="sb-path-n">4</span><div><span className="sb-path-weeks">Week 13</span><strong>Open the roster</strong><p>Every role your Game needs, with the hours a week it asks for.</p></div></li>
-            <li className="sb-path-end"><span className="sb-path-n sb-path-diamond" aria-hidden="true" /><div><strong>December solstice: the crowdpool fills the roster</strong><p>People pledge hours to the roles your Game needs. A 40-hour role fills as pledges arrive, ten hours at a time.</p></div></li>
+            <li className="sb-path-end"><span className="sb-path-n sb-path-diamond" aria-hidden="true" /><div><strong>March equinox: the crowdpool fills the roster</strong><p>People pledge hours to the roles your Game needs. A 40-hour role fills as pledges arrive, ten hours at a time.</p></div></li>
           </ol>
         </div>
       </div>

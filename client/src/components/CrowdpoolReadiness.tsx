@@ -22,6 +22,9 @@ import { ClipboardCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import {
   CROWDPOOL_READINESS,
+  GAME_NEEDS,
+  GAME_NEEDS_LABEL,
+  GAME_NEEDS_LEAD,
   READINESS_INTRO,
   READINESS_TITLE,
   weeksLabel,
@@ -166,7 +169,14 @@ export function CrowdpoolReadiness({
             <ClipboardCheck className="w-6 h-6 text-[#4a7c59] shrink-0" aria-hidden="true" />
             {READINESS_TITLE}
           </h2>
-          <p className="text-[#1a472a]/85 mb-5 safe-prose">{READINESS_INTRO}</p>
+          <p className="text-[#1a472a]/85 mb-3 safe-prose">{READINESS_INTRO}</p>
+          <p className="text-[#1a472a] mb-2 safe-prose">{GAME_NEEDS_LEAD}</p>
+          <p className="text-sm font-bold text-[#1a472a] mb-2">{GAME_NEEDS_LABEL}</p>
+          <ul className="flex flex-wrap gap-2 mb-5 list-none p-0">
+            {GAME_NEEDS.map((need) => (
+              <li key={need} className="rounded-lg border border-[#4a7c59]/40 bg-white px-3 py-1.5 text-sm font-semibold text-[#0a1f14]">{need}</li>
+            ))}
+          </ul>
         </>
       )}
       <ol className="space-y-3">
