@@ -20,9 +20,12 @@ import {
   boardStages,
   hasSessionBoard,
   sessionBoardHref,
+  sessionClosedAt,
+  sessionElapsedMs,
   sessionMinutes,
   type StageKind,
 } from "@shared/sessionBoard";
+import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
 import { episodeByWeek } from "@shared/season2Curriculum";
 import { useSessionBoard } from "@/components/session-board/useSessionBoard";
 import {
@@ -40,6 +43,10 @@ import {
   type StageProps,
 } from "@/components/session-board/stages";
 import "@/components/session-board/session-board.css";
+
+function boardDate(ms: number): string {
+  return new Date(ms).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
 
 const fmtClock = (ms: number) => {
   const t = Math.max(0, Math.floor(ms / 1000));
@@ -62,13 +69,13 @@ function NoBoard() {
   return (
     <div className="sb-app">
       <div />
-      <main className="sb-main">
+      <section className="sb-main" aria-label="Week board">
         <div className="sb-stage">
           <h1 className="sb-title">No board for that week</h1>
           <p className="sb-lede">Season 2 has a live board for each week from 2 to {LAST_BOARD_WEEK}.</p>
           <p><Link href={sessionBoardHref(2)} className="sb-link">Open the Week 2 board</Link> or go back to the <Link href="/season2" className="sb-link">Season 2 page</Link>.</p>
         </div>
-      </main>
+      </section>
       <div />
     </div>
   );
@@ -141,7 +148,28 @@ function Board({ week }: { week: number }) {
   const state = board?.state;
   const total = sessionMinutes(state?.plan ?? stages.map((s) => s.min), stages);
   const planFor = (i: number) => state?.plan[i] ?? stages[i].min;
-  const stageElapsed = state && view === state.stage && state.stageStartedAt ? now - state.stageStartedAt : null;
+  const plannedMs = total * 60_000;
+  const closedAt = state ? sessionClosedAt(state, plannedMs, now) : null;
+  const sessionElapsed = state ? sessionElapsedMs(state, plannedMs, now) : null;
+  const schedule = useSeasonSchedule();
+  const nextSession = useMemo(() => {
+    if (!closedAt || !schedule.ready) return null;
+    return schedule.sessions
+      .filter((s) => s.status !== "cancelled" && s.status !== "completed" && s.start.getTime() > closedAt)
+      .sort((a, b) => a.start.getTime() - b.start.getTime())[0] ?? null;
+  }, [closedAt, schedule.ready, schedule.sessions]);
+  const stageElapsed = state && view === state.stage && state.stageStartedAt ? (closedAt ?? now) - state.stageStartedAt : null;
+  const planMin = planFor(view);
+  const planMs = planMin * 60_000;
+  const stageOver = stageElapsed != null && stageElapsed > planMs;
+  const stageLabel = stageElapsed == null
+    ? `${planMin} min`
+    : stageOver && !closedAt
+      ? `over by ${fmtClock(stageElapsed - planMs)}`
+      : stageOver
+        ? `${planMin} min`
+        : `${fmtClock(stageElapsed)} of ${planMin} min`;
+  const endedDate = closedAt ? boardDate(state?.sessionStartedAt ?? closedAt) : null;
 
   const stageProps: StageProps | null = board
     ? { board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go }
@@ -155,33 +183,44 @@ function Board({ week }: { week: number }) {
           <span className="sb-mark-name">ReGen Civics</span>
           <span className="sb-mark-sub">Season 2 · Week {week}</span>
         </Link>
-        <ol className="sb-rail" aria-label="Session stages">
-          {stages.map((s, i) => (
-            <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : ""].filter(Boolean).join(" ")}>
-              <button type="button" className="sb-rail-btn" title={s.name} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
-                <span className="sb-dot" />
-                <span className="sb-lbl">{s.short}</span>
-              </button>
-            </li>
-          ))}
-        </ol>
+        <div className="sb-rail-wrap">
+          <p className="sb-rail-current">{stage.name}</p>
+          <ol className="sb-rail" aria-label="Session stages">
+            {stages.map((s, i) => (
+              <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : ""].filter(Boolean).join(" ")}>
+                <button type="button" className="sb-rail-btn" title={s.name} aria-label={s.name} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
+                  <span className="sb-dot" />
+                  <span className="sb-lbl">{s.short}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
         <div className="sb-status">
           {facilitator && open && state && !state.sessionStartedAt ? (
             <button type="button" className="sb-btn sb-small" onClick={() => actions.act({ type: "startSession" })}>Start session</button>
           ) : null}
+          {facilitator && open && state?.sessionStartedAt && !closedAt ? (
+            <button type="button" className="sb-btn sb-small" onClick={() => actions.act({ type: "endSession" })}>End session</button>
+          ) : null}
           <span className="sb-clock" title="Session time">
-            {state?.sessionStartedAt ? `${fmtClock(now - state.sessionStartedAt)} of ${total} min` : `${total} min planned`}
+            {sessionElapsed != null ? `${fmtClock(sessionElapsed)} of ${total} min` : `${total} min planned`}
           </span>
-          <span className={`sb-pill${!open ? "" : facilitator ? " sb-host" : " sb-on"}`}>
+          <span className={`sb-pill${!open || closedAt ? "" : facilitator ? " sb-host" : " sb-on"}`}>
             <span className="sb-pill-dot" />
-            {!open ? "The week's record" : facilitator ? "You're facilitating" : "Live"}
+            {!open ? "The week's record" : endedDate ? `Ended ${endedDate}` : facilitator ? "You're facilitating" : "Live"}
           </span>
         </div>
       </header>
 
-      <main className="sb-main" ref={mainRef} id="board">
+      <section className="sb-main" ref={mainRef} id="board" aria-label="Week board">
         <section className={`sb-stage${WIDE.includes(stage.kind) ? " sb-wide" : ""}`} aria-label={stage.name}>
           {!open ? <p className="sb-banner">This board is closed and kept as the record of {title}. Browse every stage with the arrows.</p> : null}
+          {open && endedDate ? (
+            <p className="sb-banner">
+              This session ended {endedDate}.{nextSession ? ` Next session: Week ${nextSession.week}, ${boardDate(nextSession.start.getTime())}.` : ""}
+            </p>
+          ) : null}
           {loading || !stageProps ? (
             <p className="sb-empty">{error ? "The board didn't load. Check your connection and refresh the page." : "Opening the board..."}</p>
           ) : stage.kind === "welcome" ? <Welcome {...stageProps} />
@@ -196,14 +235,14 @@ function Board({ week }: { week: number }) {
             : stage.kind === "getvillageos" ? <GetVillageOS {...stageProps} />
             : <Close {...stageProps} />}
         </section>
-      </main>
+      </section>
 
       <footer className="sb-foot">
         <button type="button" className="sb-btn" disabled={view === 0} onClick={() => go(view - 1)}>← {view > 0 ? stages[view - 1].short : "Back"}</button>
         <div className="sb-foot-mid">
           <span className="sb-foot-stage">{view + 1}. {stage.name}</span>
-          <span className={`sb-foot-time${stageElapsed != null && stageElapsed > planFor(view) * 60000 ? " sb-over" : ""}`}>
-            {stageElapsed != null ? `${fmtClock(stageElapsed)} of ${planFor(view)} min` : `${planFor(view)} min`}
+          <span className={`sb-foot-time${stageOver && !closedAt ? " sb-over" : ""}`}>
+            {stageLabel}
           </span>
         </div>
         <button type="button" className="sb-btn sb-primary" disabled={view === stages.length - 1} onClick={() => go(view + 1)}>{view < stages.length - 1 ? stages[view + 1].short : "Done"} →</button>

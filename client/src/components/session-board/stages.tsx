@@ -62,7 +62,7 @@ function StageHead({ stages, index, title, lede, children }: { stages: BoardStag
   return (
     <header className="sb-head">
       <p className="sb-kicker">Stage {index + 1} of {stages.length} · {stages[index].min} min</p>
-      <h2 className="sb-title">{title}</h2>
+      <h1 className="sb-title">{title}</h1>
       {lede ? <p className="sb-lede">{lede}</p> : null}
       {children}
     </header>
@@ -509,7 +509,7 @@ export function VillageOS({ stages, index }: StageProps) {
           <h3 className="sb-h3">How we build our Games this season</h3>
           <ol className="sb-path">
             <li><span className="sb-path-n">1</span><div><span className="sb-path-weeks">Weeks 3 to 5</span><strong>Design the Game</strong><p>Purpose, roles, who decides, and your Game Guide. In Village OS they become your circles, your seats and your Guide.</p></div></li>
-            <li><span className="sb-path-n">2</span><div><span className="sb-path-weeks">Week 6</span><strong>Grow the village</strong><p>How people find you, join and stay. In Village OS, your entry journeys and onboarding.</p></div></li>
+            <li><span className="sb-path-n">2</span><div><span className="sb-path-weeks">Week 6</span><strong>Grow the village</strong><p>How people find you, join and stay. In Village OS, your paths in and your onboarding.</p></div></li>
             <li><span className="sb-path-n">3</span><div><span className="sb-path-weeks">Weeks 8, 9 and 12</span><strong>Set the economy</strong><p>What flows between your players. In Village OS, your gratitude, your credits and the ledger that keeps them honest.</p></div></li>
             <li><span className="sb-path-n">4</span><div><span className="sb-path-weeks">Week 13</span><strong>Open the roster</strong><p>Every role your Game needs, with the hours a week it asks for.</p></div></li>
             <li className="sb-path-end"><span className="sb-path-n sb-path-diamond" aria-hidden="true" /><div><strong>March equinox: the crowdpool fills the roster</strong><p>People pledge hours to the roles your Game needs. A 40-hour role fills as pledges arrive, ten hours at a time.</p></div></li>
