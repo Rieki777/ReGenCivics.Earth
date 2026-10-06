@@ -3,6 +3,12 @@
  * number (`sessionBoard.version`) and fetches the whole board only when it
  * moves, so a room of thirty people costs a few tiny requests a second.
  *
+ * A tap paints on the cached board in the same turn (`boardWriter`), then the
+ * save runs behind it. While a save is in flight the version poll does not
+ * refetch, so a slower response cannot flip a chip back. When the queue is
+ * idle, one read brings in everyone else's taps. A failed save that nothing
+ * newer replaced rolls the cache back and says so.
+ *
  * Guests have no account, so the browser keeps a random key that owns what
  * they write. It is the same key the Season Schedule uses, so one person is
  * one person across both pages. It only travels in mutation bodies.
@@ -11,6 +17,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import type { BoardOfferKey } from "@shared/sessionBoard";
+import {
+  adjustMap,
+  adjustVotes,
+  createBoardWriter,
+  patchBoardAction,
+  patchItem,
+  patchProject,
+  type BoardWriter,
+} from "./boardWriter";
 
 const VOTER_KEY_STORAGE = "season-voter-key";
 const NAME_STORAGE = "session-board:name";
@@ -71,6 +86,32 @@ function errorMessage(err: unknown): string {
   return "That didn't save. Check your connection and try again.";
 }
 
+type ProjectWrite = {
+  projectId: number;
+  name?: string;
+  place?: string;
+  url?: string;
+  phase?: "seed" | "root" | "sprout" | "grow" | "fruit" | null;
+  whereNow?: string;
+  ready?: string[];
+  nextMove?: string;
+};
+
+type CurateProjectWrite = {
+  projectId: number;
+  shared?: boolean;
+  hidden?: boolean;
+  applicationId?: number | null;
+};
+
+type CurateItemWrite = {
+  itemId: number;
+  theme?: "people" | "decide" | "money" | "land" | "story" | "tools" | "care" | null;
+  chosen?: boolean;
+  roomVotes?: number;
+  hidden?: boolean;
+};
+
 export function useSessionBoard(week: number) {
   const utils = trpc.useUtils();
   const voterKey = useMemo(readVoterKey, []);
@@ -89,14 +130,55 @@ export function useSessionBoard(week: number) {
     { staleTime: Infinity, refetchOnWindowFocus: false, retry: 1 },
   );
 
-  // Fetch the board again whenever the version it was read at falls behind.
+  const syncRef = useRef<() => void>(() => {});
+  const failRef = useRef<(err: unknown, info: { latest: boolean }) => void>(() => {});
+  const writer = useMemo(
+    () => createBoardWriter({
+      onIdle: () => syncRef.current(),
+      onFail: (err, info) => failRef.current(err, info),
+    }),
+    [week],
+  );
+  const writerRef = useRef<BoardWriter>(writer);
+  writerRef.current = writer;
+
+  // The last board we know the server confirmed. Optimistic paints do not
+  // replace it, so a failed save can put that picture back.
+  const serverSnap = useRef(boardQ.data ?? null);
+  useEffect(() => {
+    if (boardQ.data?.week === week && !serverSnap.current && writer.inflight() === 0) {
+      serverSnap.current = boardQ.data;
+    }
+  }, [boardQ.data, writer, week]);
+
+  const sync = useCallback(() => {
+    const current = writerRef.current;
+    if (current.inflight() > 0) return;
+    const seen = current.epoch();
+    void (async () => {
+      try {
+        const fresh = await utils.client.sessionBoard.get.query({ week });
+        if (writerRef.current.epoch() !== seen || writerRef.current.inflight() > 0) return;
+        serverSnap.current = fresh;
+        utils.sessionBoard.get.setData({ week }, fresh);
+        utils.sessionBoard.version.setData({ week }, { version: fresh.version, status: fresh.status });
+      } catch {
+        /* the next version poll tries again */
+      }
+    })();
+  }, [utils, week]);
+  syncRef.current = sync;
+
+  // Fetch the board again whenever the version it was read at falls behind,
+  // unless a tap is still saving. That response would be older than the chip.
   const liveVersion = versionQ.data?.version;
   const boardVersion = boardQ.data?.version;
-  const refetchBoard = boardQ.refetch;
   useEffect(() => {
     if (liveVersion == null || boardVersion == null) return;
-    if (liveVersion !== boardVersion && !boardQ.isFetching) void refetchBoard();
-  }, [liveVersion, boardVersion, boardQ.isFetching, refetchBoard]);
+    if (liveVersion === boardVersion) return;
+    if (writer.inflight() > 0) return;
+    sync();
+  }, [liveVersion, boardVersion, writer, sync]);
 
   // Everyone counts from the server's clock, so the breath and the timers match.
   const offset = useRef(0);
@@ -110,11 +192,10 @@ export function useSessionBoard(week: number) {
   const whoami = trpc.sessionBoard.whoami.useMutation();
   const whoamiRef = useRef(whoami.mutateAsync);
   whoamiRef.current = whoami.mutateAsync;
-  useEffect(() => {
-    let cancelled = false;
-    whoamiRef.current({ week, voterKey })
+  const refreshMine = useCallback(() => {
+    void whoamiRef.current({ week, voterKey })
       .then((r) => {
-        if (cancelled) return;
+        if (writerRef.current.inflight() > 0) return;
         setMine({
           itemIds: new Set(r.itemIds),
           projectIds: new Set(r.projectIds),
@@ -126,143 +207,220 @@ export function useSessionBoard(week: number) {
       .catch(() => {
         /* the page still works; edit and take-back offers just stay hidden */
       });
-    return () => {
-      cancelled = true;
-    };
   }, [week, voterKey]);
+  useEffect(() => {
+    refreshMine();
+  }, [refreshMine]);
 
-  const after = useCallback(() => {
-    void utils.sessionBoard.get.invalidate({ week });
-    void utils.sessionBoard.version.invalidate({ week });
+  const paint = useCallback((fn: (old: NonNullable<typeof boardQ.data>) => NonNullable<typeof boardQ.data>) => {
+    utils.sessionBoard.get.setData({ week }, (old) => (old ? fn(old) : old));
   }, [utils, week]);
-  const onError = useCallback((err: unknown) => toast.error(errorMessage(err)), []);
 
-  const addItemM = trpc.sessionBoard.addItem.useMutation({ onSettled: after, onError });
-  const removeItemM = trpc.sessionBoard.removeItem.useMutation({ onSettled: after, onError });
-  const addProjectM = trpc.sessionBoard.addProject.useMutation({ onSettled: after, onError });
-  const updateProjectM = trpc.sessionBoard.updateProject.useMutation({ onSettled: after, onError });
-  const voteM = trpc.sessionBoard.vote.useMutation({ onSettled: after, onError });
-  const handM = trpc.sessionBoard.hand.useMutation({ onSettled: after, onError });
-  const offerM = trpc.sessionBoard.offer.useMutation({ onSettled: after, onError });
-  const actM = trpc.sessionBoard.act.useMutation({
-    onSuccess: (r) => {
-      utils.sessionBoard.get.setData({ week }, (old) => (old ? { ...old, state: r.state } : old));
-    },
-    onSettled: after,
-    onError,
-  });
-  const curateItemM = trpc.sessionBoard.curateItem.useMutation({ onSettled: after, onError });
-  const curateProjectM = trpc.sessionBoard.curateProject.useMutation({ onSettled: after, onError });
-  const promoteM = trpc.sessionBoard.promote.useMutation({ onSettled: after, onError });
-  const importM = trpc.sessionBoard.importRegister.useMutation({
-    onSuccess: (r) => toast.success(r.added ? `${r.added} project${r.added === 1 ? "" : "s"} brought into the circle.` : "Everyone on the register is already in the circle."),
-    onSettled: after,
-    onError,
-  });
-  const statusM = trpc.sessionBoard.setStatus.useMutation({ onSettled: after, onError });
+  failRef.current = (err, info) => {
+    if (!info.latest) return;
+    toast.error(errorMessage(err));
+    // This job is still counted, so 1 means nothing else is saving.
+    if (writerRef.current.inflight() <= 1 && serverSnap.current) {
+      utils.sessionBoard.get.setData({ week }, serverSnap.current);
+      refreshMine();
+    }
+  };
+
+  const addItemM = trpc.sessionBoard.addItem.useMutation();
+  const removeItemM = trpc.sessionBoard.removeItem.useMutation();
+  const addProjectM = trpc.sessionBoard.addProject.useMutation();
+  const updateProjectM = trpc.sessionBoard.updateProject.useMutation();
+  const voteM = trpc.sessionBoard.vote.useMutation();
+  const handM = trpc.sessionBoard.hand.useMutation();
+  const offerM = trpc.sessionBoard.offer.useMutation();
+  const actM = trpc.sessionBoard.act.useMutation();
+  const curateItemM = trpc.sessionBoard.curateItem.useMutation();
+  const curateProjectM = trpc.sessionBoard.curateProject.useMutation();
+  const promoteM = trpc.sessionBoard.promote.useMutation();
+  const importM = trpc.sessionBoard.importRegister.useMutation();
+  const statusM = trpc.sessionBoard.setStatus.useMutation();
 
   const name = displayName.trim() || undefined;
+  const projectWrites = useRef(new Map<number, ProjectWrite>());
+  const curateWrites = useRef(new Map<number, CurateProjectWrite>());
+  const itemWrites = useRef(new Map<number, CurateItemWrite>());
+  const seenWeek = useRef(week);
+  if (seenWeek.current !== week) {
+    seenWeek.current = week;
+    serverSnap.current = null;
+    projectWrites.current.clear();
+    curateWrites.current.clear();
+    itemWrites.current.clear();
+  }
 
   const actions = useMemo(() => ({
     /** Each of these resolves null when the write failed (the error is already on screen). */
     addItem: async (input: { kind: "arrive" | "leave" | "pain" | "opp" | "game"; text: string; projectId?: number; block?: "aim" | "players" | "quests" | "flows" | "decide" }) => {
-      try {
+      const tempId = -Date.now();
+      const { done } = writer.fifo(`add:${tempId}`, () => {
+        paint((b) => ({
+          ...b,
+          items: [...b.items, {
+            id: tempId,
+            kind: input.kind,
+            text: input.text,
+            projectId: input.projectId ?? null,
+            block: input.block ?? null,
+            theme: null,
+            chosen: false,
+            votes: 0,
+            roomVotes: 0,
+            fromItemId: null,
+            hidden: false,
+            displayName: name ?? null,
+            createdAt: new Date(),
+          }],
+        }));
+      }, async () => {
         const r = await addItemM.mutateAsync({ week, voterKey, displayName: name, ...input });
-        if (r.id) setMine((m) => ({ ...m, itemIds: new Set(m.itemIds).add(r.id) }));
+        if (r.id) {
+          paint((b) => ({
+            ...b,
+            items: b.items.map((item) => (item.id === tempId ? { ...item, id: r.id } : item)),
+          }));
+          setMine((m) => ({ ...m, itemIds: new Set(m.itemIds).add(r.id) }));
+        }
         return r;
-      } catch {
-        return null;
-      }
-    },
-    removeItem: async (itemId: number) => {
-      try {
-        await removeItemM.mutateAsync({ week, voterKey, itemId });
-      } catch {
-        return null;
-      }
-      setMine((m) => {
-        const itemIds = new Set(m.itemIds);
-        itemIds.delete(itemId);
-        return { ...m, itemIds };
       });
-      return true;
+      const result = await done;
+      return result.ok ? result.value : null;
+    },
+    removeItem: (itemId: number) => {
+      const { done } = writer.fifo(`item-remove:${itemId}`, () => {
+        paint((b) => ({ ...b, items: b.items.filter((item) => item.id !== itemId) }));
+        setMine((m) => {
+          const itemIds = new Set(m.itemIds);
+          itemIds.delete(itemId);
+          return { ...m, itemIds };
+        });
+      }, () => removeItemM.mutateAsync({ week, voterKey, itemId }));
+      return done.then((result) => result.ok);
     },
     addProject: async (input: { name: string; place?: string; url?: string }) => {
-      try {
+      const tempId = -Date.now();
+      const { done } = writer.fifo(`add-project:${tempId}`, () => {
+        paint((b) => ({
+          ...b,
+          projects: [...b.projects, {
+            id: tempId,
+            name: input.name,
+            place: input.place ?? null,
+            url: input.url ?? null,
+            phase: null,
+            whereNow: null,
+            ready: [],
+            nextMove: null,
+            shared: false,
+            hidden: false,
+            applicationId: null,
+            displayName: name ?? null,
+          }],
+        }));
+      }, async () => {
         const r = await addProjectM.mutateAsync({ week, voterKey, displayName: name, ...input });
-        if (r.id) setMine((m) => ({ ...m, projectIds: new Set(m.projectIds).add(r.id) }));
+        if (r.id) {
+          paint((b) => ({
+            ...b,
+            projects: b.projects.map((p) => (p.id === tempId ? { ...p, id: r.id } : p)),
+          }));
+          setMine((m) => ({ ...m, projectIds: new Set(m.projectIds).add(r.id) }));
+        }
         return r;
-      } catch {
-        return null;
-      }
-    },
-    updateProject: (input: {
-      projectId: number;
-      name?: string;
-      place?: string;
-      url?: string;
-      phase?: "seed" | "root" | "sprout" | "grow" | "fruit" | null;
-      whereNow?: string;
-      ready?: string[];
-      nextMove?: string;
-    }) => updateProjectM.mutateAsync({ week, voterKey, ...input }).catch(() => null),
-    vote: async (itemId: number, on: boolean) => {
-      setMine((m) => {
-        const votes = new Set(m.votes);
-        if (on) votes.add(itemId); else votes.delete(itemId);
-        return { ...m, votes };
       });
-      try {
-        await voteM.mutateAsync({ week, voterKey, itemId, on });
-      } catch {
+      const result = await done;
+      return result.ok ? result.value : null;
+    },
+    updateProject: (input: ProjectWrite) => {
+      const id = input.projectId;
+      const merged = { ...(projectWrites.current.get(id) ?? { projectId: id }), ...input };
+      projectWrites.current.set(id, merged);
+      const { done } = writer.coalesce(`project:${id}`, merged, () => {
+        paint((b) => patchProject(b, id, input));
+      }, async (body) => {
+        if (projectWrites.current.get(id) === body) projectWrites.current.delete(id);
+        await updateProjectM.mutateAsync({ week, voterKey, ...body });
+      });
+      return done;
+    },
+    vote: (itemId: number, on: boolean) => {
+      writer.coalesce(`vote:${itemId}`, on, () => {
         setMine((m) => {
           const votes = new Set(m.votes);
-          if (on) votes.delete(itemId); else votes.add(itemId);
+          if (on) votes.add(itemId); else votes.delete(itemId);
           return { ...m, votes };
         });
-      }
+        paint((b) => adjustVotes(b, itemId, on ? 1 : -1));
+      }, (next) => voteM.mutateAsync({ week, voterKey, itemId, on: next }));
     },
-    hand: async (forWeek: number, on: boolean) => {
-      setMine((m) => {
-        const hands = new Set(m.hands);
-        if (on) hands.add(forWeek); else hands.delete(forWeek);
-        return { ...m, hands };
-      });
-      try {
-        await handM.mutateAsync({ week, voterKey, forWeek, on });
-      } catch {
+    hand: (forWeek: number, on: boolean) => {
+      writer.coalesce(`hand:${forWeek}`, on, () => {
         setMine((m) => {
           const hands = new Set(m.hands);
-          if (on) hands.delete(forWeek); else hands.add(forWeek);
+          if (on) hands.add(forWeek); else hands.delete(forWeek);
           return { ...m, hands };
         });
-      }
+        paint((b) => adjustMap(b, "hands", forWeek, on ? 1 : -1));
+      }, (next) => handM.mutateAsync({ week, voterKey, forWeek, on: next }));
     },
-    offer: async (key: BoardOfferKey, on: boolean) => {
-      setMine((m) => {
-        const offers = new Set(m.offers);
-        if (on) offers.add(key); else offers.delete(key);
-        return { ...m, offers };
-      });
-      try {
-        await offerM.mutateAsync({ week, voterKey, offer: key, on });
-      } catch {
+    offer: (key: BoardOfferKey, on: boolean) => {
+      writer.coalesce(`offer:${key}`, on, () => {
         setMine((m) => {
           const offers = new Set(m.offers);
-          if (on) offers.delete(key); else offers.add(key);
+          if (on) offers.add(key); else offers.delete(key);
           return { ...m, offers };
         });
-      }
+        paint((b) => adjustMap(b, "offers", key, on ? 1 : -1));
+      }, (next) => offerM.mutateAsync({ week, voterKey, offer: key, on: next }));
     },
-    act: (action: Parameters<typeof actM.mutate>[0]["action"]) => actM.mutate({ week, action }),
-    curateItem: (input: { itemId: number; theme?: "people" | "decide" | "money" | "land" | "story" | "tools" | "care" | null; chosen?: boolean; roomVotes?: number; hidden?: boolean }) =>
-      curateItemM.mutate({ week, ...input }),
-    curateProject: (input: { projectId: number; shared?: boolean; hidden?: boolean; applicationId?: number | null }) =>
-      curateProjectM.mutate({ week, ...input }),
-    promote: (itemId: number) => promoteM.mutate({ week, itemId }),
-    importRegister: () => importM.mutate({ week }),
-    setStatus: (status: "open" | "closed") => statusM.mutate({ week, status }),
-  }), [week, voterKey, name, addItemM, removeItemM, addProjectM, updateProjectM, voteM, handM, offerM, actM, curateItemM, curateProjectM, promoteM, importM, statusM]);
+    act: (action: Parameters<typeof actM.mutate>[0]["action"]) => {
+      writer.fifo("act", () => {
+        paint((b) => patchBoardAction(b, action, serverNow()));
+      }, () => actM.mutateAsync({ week, action }));
+    },
+    curateItem: (input: CurateItemWrite) => {
+      const id = input.itemId;
+      const merged = { ...(itemWrites.current.get(id) ?? { itemId: id }), ...input };
+      itemWrites.current.set(id, merged);
+      writer.coalesce(`item:${id}`, merged, () => {
+        const { itemId: _itemId, ...patch } = input;
+        paint((b) => patchItem(b, id, patch));
+      }, async (body) => {
+        if (itemWrites.current.get(id) === body) itemWrites.current.delete(id);
+        await curateItemM.mutateAsync({ week, ...body });
+      });
+    },
+    curateProject: (input: CurateProjectWrite) => {
+      const id = input.projectId;
+      const merged = { ...(curateWrites.current.get(id) ?? { projectId: id }), ...input };
+      curateWrites.current.set(id, merged);
+      writer.coalesce(`curate:${id}`, merged, () => {
+        const { projectId: _projectId, ...patch } = input;
+        paint((b) => patchProject(b, id, patch));
+      }, async (body) => {
+        if (curateWrites.current.get(id) === body) curateWrites.current.delete(id);
+        await curateProjectM.mutateAsync({ week, ...body });
+      });
+    },
+    promote: (itemId: number) => {
+      writer.fifo(`promote:${itemId}`, () => {}, () => promoteM.mutateAsync({ week, itemId }));
+    },
+    importRegister: () => {
+      writer.fifo("import", () => {}, async () => {
+        const r = await importM.mutateAsync({ week });
+        toast.success(r.added ? `${r.added} project${r.added === 1 ? "" : "s"} brought into the circle.` : "Everyone on the register is already in the circle.");
+      });
+    },
+    setStatus: (status: "open" | "closed") => {
+      writer.fifo("status", () => {
+        paint((b) => ({ ...b, status }));
+      }, () => statusM.mutateAsync({ week, status }));
+    },
+  }), [week, voterKey, name, writer, paint, serverNow, addItemM, removeItemM, addProjectM, updateProjectM, voteM, handM, offerM, actM, curateItemM, curateProjectM, promoteM, importM, statusM]);
 
   return {
     board: boardQ.data ?? null,

@@ -520,7 +520,7 @@ const GETS_SUMMARY: { icon: React.ElementType; title: string; body: string }[] =
   {
     icon: Coins,
     title: "A shared launch",
-    body: "One shared crowdpooling launch at the end of the season, so your project raises alongside the whole network.",
+    body: "One shared crowdpooling launch at the March equinox, so your project raises alongside the whole network.",
   },
 ];
 
@@ -560,7 +560,7 @@ const SELECTION: {
   },
   {
     title: "Everyone who's ready goes live together",
-    body: "At the end of the season, every project that graduates with everything it needs launches its crowdpooling campaign in one shared event. We need at least nine projects to graduate for that launch to happen, and we want all thirteen. Community projects that followed the season and are ready join the same round, with room for far more than thirteen, and the more the better. From there the world decides which projects to pool into.",
+    body: "At the March equinox, every project that graduates with everything it needs launches its crowdpooling campaign in one shared event. We need at least nine projects to graduate for that launch to happen, and we want all thirteen. Community projects that followed the season and are ready join the same round, with room for far more than thirteen, and the more the better. From there the world decides which projects to pool into.",
     cta: { href: "/crowd-pooling", label: "See how crowdpooling works" },
   },
 ];
@@ -583,7 +583,7 @@ const ARC: { n: string; icon: React.ElementType; title: string; body: string }[]
     n: "03",
     icon: Rocket,
     title: "Graduated",
-    body: "After thirteen weeks, projects that finish with everything they need go live together in one shared crowdpooling campaign. At least nine, and we want all thirteen. Community projects that are ready join them.",
+    body: "Projects that finish the thirteen weeks with everything they need go live together at the March equinox, in one shared crowdpooling campaign. At least nine, and we want all thirteen. Community projects that are ready join them.",
   },
   {
     n: "04",
@@ -1303,7 +1303,7 @@ export default function Season2() {
             </p>
             <p>
               Every project that graduates launches its campaign in one shared
-              event at the end of the season. People bring what they have: money,
+              event at the March equinox. People bring what they have: money,
               land, equipment, tools, expertise, labor, relationships, time. All{" "}
               <Link
                 href="/learn/nine-forms-of-capital"

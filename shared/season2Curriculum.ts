@@ -119,7 +119,7 @@ export const SEASON2_CURRICULUM: Season2Episode[] = [
     week: 13,
     title: "Crowd Pooling & Resourcing Our Projects",
     description:
-      "The season's last live session, and the week you invite people in. We launch the shared crowdpool: how projects raise together, what goes live, and how your community backs you. Project stewards share where they landed. After this the journey continues at the monthly Open Access Sessions.",
+      "The season's last live session, and the week you invite people in. We get the shared crowdpool ready: how projects raise together, what goes live at the March equinox, and how your community backs you. Project stewards share where they landed. After this the work continues at the monthly Open Access Sessions.",
     audience: "cohort",
   },
 ];

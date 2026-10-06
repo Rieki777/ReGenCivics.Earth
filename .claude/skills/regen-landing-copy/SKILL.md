@@ -96,8 +96,8 @@ specific anchor:
 
 - A live deadline: "Season 2 applications close on [date]"
 - A live event: "Earth Day 2026 Convergence is in 4 days"
-- A live shift: "Season 2's shared crowdpool launches at the December
-  solstice"
+- A live shift: "Season 2's shared crowdpool launches at the March
+  equinox"
 - A live number, only once Rye has marked it public in the admin metrics
   table. Public pages show no counts of players, members, land projects,
   partners, hectares or dollars until then (ruling 2026-09-27).

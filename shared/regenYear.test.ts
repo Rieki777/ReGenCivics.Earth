@@ -177,8 +177,10 @@ describe("the intake follows the wheel", () => {
     expect(copy.short).toBe("Season 2 applications are closed; follow along live, and crowdpool with us if you're ready");
   });
 
-  it("keeps the follow-along copy through the Resource Season's crowdpooling, then goes back to apply anytime", () => {
-    expect(intakeStatus(at("2027-01-15"))).toMatchObject({ reviewing: false, closedSeason: 2, followAlong: true });
+  it("keeps the follow-along copy through a later Resource Season, then goes back to apply anytime", () => {
+    // January 2027 is still inside Season 2's rolling window (through March 20).
+    // A later Resource Season, with no rolling window, is the follow-along case.
+    expect(intakeStatus(at("2028-01-15"))).toMatchObject({ reviewing: false, closedSeason: 3, followAlong: true });
     const build = intakeStatus(at("2027-04-15"));
     expect(build).toMatchObject({ reviewing: false, closedSeason: 2, openSeason: 3, followAlong: false });
     expect(applicationCopy(build).status).toBe(`Season 2 applications are closed. ${APPLY_ANYTIME_LINE}`);
@@ -201,27 +203,28 @@ describe("the intake follows the wheel", () => {
     // Rye, 2026-10-01: open and rolling up to the crowdpooling event, and being
     // accepted means a project meets the minimum criteria to crowdpool.
     const s = intakeStatus(at("2026-10-15"));
-    expect(s).toMatchObject({ reviewing: true, rolling: true, openSeason: 2, closesOn: "December 21", followAlong: false });
+    expect(s).toMatchObject({ reviewing: true, rolling: true, openSeason: 2, closesOn: "March 20", followAlong: false });
     const copy = applicationCopy(s);
     expect(copy.headline).toBe(
-      "Season 2 applications are open and rolling until the crowdpooling round opens on December 21. We review them as they come in and email you as we go.",
+      "Season 2 applications are open and rolling until the crowdpooling round opens on March 20. We review them as they come in and email you as we go.",
     );
     expect(copy.status).toBe(`${copy.headline} ${ACCEPTANCE_LINE}`);
     expect(copy.held).toBe(ACCEPTANCE_LINE);
-    expect(copy.short).toBe("Season 2 applications are open until December 21");
+    expect(copy.short).toBe("Season 2 applications are open until March 20");
     expect(copy.buttonLabel).toBe("Apply for Season 2");
     expect(ACCEPTANCE_LINE).toMatch(/^Being accepted means your project meets the minimum criteria to take part in crowdpooling\./);
 
-    // From midnight Pacific on October 1 to the end of December 21, Pacific.
+    // From midnight Pacific on October 1 to the end of March 20, 2027, Pacific (PDT).
     expect(intakeStatus(new Date("2026-10-01T06:59:59Z")).rolling).toBe(false);
     expect(intakeStatus(new Date("2026-10-01T07:00:00Z")).rolling).toBe(true);
-    expect(intakeStatus(new Date("2026-12-22T07:59:59Z")).rolling).toBe(true);
-    expect(intakeStatus(new Date("2026-12-22T08:00:00Z"))).toMatchObject({
+    expect(intakeStatus(new Date("2027-01-15T12:00:00Z")).rolling).toBe(true);
+    expect(intakeStatus(new Date("2027-03-21T06:59:59Z")).rolling).toBe(true);
+    expect(intakeStatus(new Date("2027-03-21T07:00:00Z"))).toMatchObject({
       reviewing: false,
       rolling: false,
       closedSeason: 2,
       openSeason: 3,
-      followAlong: true,
+      followAlong: false,
     });
   });
 
@@ -229,15 +232,16 @@ describe("the intake follows the wheel", () => {
     expect(currentIncubatorSeason(at("2026-09-21"))).toBe(2);
     expect(currentIncubatorSeason(at("2026-09-25"))).toBe(3);
     expect(currentIncubatorSeason(at("2026-10-15"))).toBe(2);
-    expect(currentIncubatorSeason(new Date("2026-12-22T07:59:59Z"))).toBe(2);
-    expect(currentIncubatorSeason(new Date("2026-12-22T08:00:00Z"))).toBe(3);
+    expect(currentIncubatorSeason(new Date("2027-03-21T06:59:59Z"))).toBe(2);
+    expect(currentIncubatorSeason(new Date("2027-03-21T07:00:00Z"))).toBe(3);
   });
 
   it("closes the rolling window with the crowdpooling round's default opening day", () => {
     const round = defaultCrowdpoolOpening(at("2026-10-15"));
     expect(round.seasonNumber).toBe(SEASON_2_ROLLING.season);
-    // The end of that day on the US west coast: midnight UTC plus 24 hours plus PST's 8.
-    expect(SEASON_2_ROLLING.closes.getTime()).toBe(round.date.getTime() + 32 * 3_600_000);
+    // The end of that day on the US west coast. March 20, 2027 is PDT (UTC-7):
+    // midnight UTC plus 24 hours plus 7.
+    expect(SEASON_2_ROLLING.closes.getTime()).toBe(round.date.getTime() + 31 * 3_600_000);
     expect(round.date.toLocaleDateString("en-US", { month: "long", day: "numeric", timeZone: "UTC" })).toBe(
       SEASON_2_ROLLING.closesOn,
     );

@@ -49,6 +49,18 @@ export const READINESS_HREF = "/crowd-pooling#ready";
 export const READINESS_INTRO =
   "Every project joining the crowdpooling round shows these eight before its campaign is approved, from the Season 2 cohort and from the wider community alike. Season 2 works through each one, and the Governance Canvas holds the governance pieces. The review checks that each is in place and clear, and nobody scores how good it is.";
 
+/**
+ * What a Game is for, beside the eight. The list is the site's own local
+ * needs (`LOCAL_NEEDS` in shared/siteCopy.ts). Week 12's episode is the
+ * session that works on meeting them through coordination.
+ */
+export const GAME_NEEDS_LEAD =
+  "A Game is how a project meets real needs, its community's and its land's, in the best way we can play together.";
+
+export const GAME_NEEDS_LABEL = "The needs these projects are meeting";
+
+export { LOCAL_NEEDS as GAME_NEEDS } from "./siteCopy";
+
 export const CROWDPOOL_READINESS: ReadinessItem[] = [
   {
     key: "legal",

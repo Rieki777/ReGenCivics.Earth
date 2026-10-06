@@ -513,7 +513,7 @@ const TIMELINE: TimelineNode[] = [
     year: "Late 2026",
     title: "Season 2 (Winter)",
     body:
-      "Thirteen land projects go through the open-source process of co-creating their Games, and anyone can follow along live. Winter ends with the first Crowdpooling Season, our spring, where the cohort and every community project that's ready pool various forms of capital to evolve their work.",
+      "Thirteen land projects go through the open-source process of co-creating their Games, and anyone can follow along live. The shared crowdpool opens at the March equinox, where the cohort and every community project that's ready pool various forms of capital to evolve their work.",
   },
   {
     year: "Looking ahead",

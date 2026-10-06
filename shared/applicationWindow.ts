@@ -33,8 +33,9 @@
  * that, and says to apply for the next season if this one doesn't work out.
  *
  * Rye, 2026-10-01: Season 2 takes applications again, rolling, until its
- * crowdpooling round opens on December 21 (SEASON_2_ROLLING in
+ * crowdpooling round opens on March 20 (SEASON_2_ROLLING in
  * shared/incubatorSeason.ts, which also stamps those applications Season 2).
+ * ADR-70 moved that opening day from the December solstice to the March equinox.
  * Being accepted means a project meets the minimum criteria to take part in
  * crowdpooling. While that window is open the status is `rolling`: review is
  * open, and the copy says what acceptance means instead of promising a
@@ -62,7 +63,7 @@ export type IntakeStatus = {
   /**
    * True while a Season that has already started takes applications on a
    * rolling basis, until its crowdpooling round opens (Season 2, October 1 to
-   * December 21, 2026). `reviewing` is true then too.
+   * March 20, 2027). `reviewing` is true then too.
    */
   rolling: boolean;
   /** The last Season whose applications closed. */

@@ -18,6 +18,7 @@
  */
 import { episodeByWeek } from "./season2Curriculum";
 import { stripHiddenText } from "./hiddenText";
+import { absoluteSiteUrl } from "./siteContext";
 import { VILLAGE_OS_OFFER } from "./villageOsOffer";
 
 export const SESSION_BOARD_SEASON = "Season 2";
@@ -32,6 +33,11 @@ export function hasSessionBoard(week: number): boolean {
 /** Where a week's board lives on the site. */
 export function sessionBoardHref(week: number): string {
   return `/season2/week/${week}`;
+}
+
+/** The full https URL of that week's board, on the public site. */
+export function sessionBoardShareUrl(week: number): string {
+  return absoluteSiteUrl(sessionBoardHref(week));
 }
 
 /**
@@ -167,7 +173,7 @@ const WEEK_2: BoardStage[] = [
       "Two hats: you hold the room, and Amora is one more project at the table.",
       "Name the shift: rolling applications, open roundtables, each project self-organizing.",
       "A yes means minimum foundations. Getting ready is each project's own work.",
-      "Point to the solstice launch as where everyone is headed.",
+      "Point to the March equinox launch as where everyone is headed.",
     ],
   },
   {
@@ -177,7 +183,7 @@ const WEEK_2: BoardStage[] = [
       "Show, don't list. Walk Amora's circles map: tap a circle, then an open seat.",
       "Show the role cards: a seat's card, front and back, and the card someone sees while proposing a role.",
       "Tie each design week to what gets set up in the tool.",
-      "Land the ending: the crowdpool at the solstice fills each Game's roster.",
+      "Land the ending: the crowdpool at the March equinox fills each Game's roster.",
     ],
   },
   {
@@ -212,7 +218,7 @@ const WEEK_2: BoardStage[] = [
     kind: "game", name: "Seed the game", short: "Game", min: 15,
     line: "A first sketch: aim, players, quests, flows, who decides",
     cues: [
-      "Start with the aim: what does winning look like at the solstice?",
+      "Start with the aim: what does winning look like at the March equinox?",
       "Turn each chosen opportunity into a quest.",
       "Leave the rest open. Week 3 picks it up.",
     ],
@@ -290,7 +296,7 @@ export function boardWelcome(week: number): { title: string; lede: string; leave
       lede: "How this season works, the tool we'll build our Games in, and the projects at the table. We finish by choosing the growth opportunities our first Game grows around.",
       leaveWith: [
         "A clear picture of how the season works and where it ends",
-        "Every project at the table, and where each one is",
+        "Some projects at the table, and where each one is",
         "The growth opportunities we share, ready to design a Game around",
       ],
     };
@@ -299,7 +305,7 @@ export function boardWelcome(week: number): { title: string; lede: string; leave
     title: ep?.title ?? `Week ${week}`,
     lede: ep?.description ?? "",
     leaveWith: [
-      "Where every project is this week",
+      "Where the projects at the table are this week",
       "The opportunities we see together",
       "One move each before the next session",
     ],
@@ -332,7 +338,7 @@ export const OPPORTUNITY_THEME_KEYS = OPPORTUNITY_THEMES.map((t) => t.key) as [O
 
 /** The game canvas: every organisation is a game. */
 export const GAME_BLOCKS = [
-  { key: "aim", title: "What we play for", prompt: "What does winning look like at the December solstice?" },
+  { key: "aim", title: "What we play for", prompt: "What does winning look like at the March equinox?" },
   { key: "players", title: "Who plays", prompt: "Projects, stewards, contributors, neighbours, the land itself. Who else?" },
   { key: "quests", title: "Quests", prompt: "Which moves grow the opportunities we chose? One quest per note." },
   { key: "flows", title: "What flows", prompt: "What does each player give, and what do they get back?" },

@@ -33,10 +33,10 @@ import {
 } from "./villageOsOffer";
 import { intakeStatus } from "./applicationWindow";
 
-/** Season 2 rolling intake is open (October 1 to December 21, 2026). */
+/** Season 2 rolling intake is open (October 1, 2026 to March 20, 2027). */
 const ROLLING = intakeStatus(new Date("2026-10-05T12:00:00Z"));
 /** After the crowdpooling round opens: no rolling intake. */
-const AFTER_ROLLING = intakeStatus(new Date("2027-01-15T12:00:00Z"));
+const AFTER_ROLLING = intakeStatus(new Date("2027-03-21T12:00:00Z"));
 
 /** Every string inside a value, with the path that leads to it. */
 function strings(value: unknown, path = "VILLAGE_OS_OFFER"): [string, string][] {
@@ -246,7 +246,7 @@ describe("notEligibleCopy follows the intake window", () => {
     const copy = notEligibleCopy(ROLLING);
     expect(copy.title).toBe(VILLAGE_OS_OFFER.notEligible.title);
     expect(copy.body).toBe(
-      "Season 2 applications are open and rolling until December 21. Apply, and once your project is accepted you can ask us to host your village. You can also run Village OS yourself today.",
+      "Season 2 applications are open and rolling until March 20. Apply, and once your project is accepted you can ask us to host your village. You can also run Village OS yourself today.",
     );
     expect(copy.showApply).toBe(true);
   });

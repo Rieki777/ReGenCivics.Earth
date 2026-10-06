@@ -361,9 +361,9 @@ export default function Seasons() {
             <p className="text-lg text-white/85 max-w-3xl mx-auto leading-relaxed safe-prose">
               Season 2 opens with the Design Season and our incubator. For 13 weeks, thirteen
               regenerative land projects design how their villages decide, share value, hold roles,
-              and stay legal and fair. On the last week they launch into one shared crowdpool, joined
-              by every community project that's ready, and the Resource Season begins. Anyone can
-              follow along live.
+              and stay legal and fair. The Resource Season begins at the December solstice. The
+              shared crowdpool launches at the March equinox, joined by every community project
+              that's ready. Anyone can follow along live.
             </p>
           </AnimatedSection>
 

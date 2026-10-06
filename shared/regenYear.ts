@@ -29,9 +29,9 @@
  * Timing is loose on purpose in this first turn of the wheel. The Game's
  * seasons follow the work, so they run one season ahead of the northern
  * calendar: Design opens at the September equinox with Selection Day and runs
- * the 13-week incubator; Resource opens at the December solstice, when week 13
- * launches the shared crowdpool; Build opens at the March equinox, planting
- * season; Rest opens at the June solstice. We adjust as the year needs, with
+ * the 13-week incubator; Resource opens at the December solstice with a recap
+ * and passoff; the shared crowdpool launches at the March equinox, when Build
+ * opens (ADR-70); Rest opens at the June solstice. We adjust as the year needs, with
  * the goal of a clear pattern once we get going. Moving a boundary is a
  * one-line change in TURNING_POINTS.
  *
@@ -141,9 +141,9 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     pattern: "Spring",
     headline: "We spring to life.",
     summary:
-      "The designs are done, so we open the doors. Each project launches its crowdpool and asks for everything it needs to come alive: hands, roles, tools, materials, and money. We talk with funders, welcome people into roles, and receive the energy and resources that flow in.",
+      "The designs are done, so we get each crowdpool ready. Each project lines up the hands, roles, tools, materials, and money it needs to come alive. We talk with funders, welcome people into roles, and receive the energy and resources that flow in. The shared launch is the March equinox.",
     happens: [
-      "The cohort and every ready community project launch their crowdpools together",
+      "Projects prepare their crowdpools for the shared launch at the March equinox",
       "People claim roles, lend tools, and pledge time and materials",
       "We talk with funders, and people tell us they're interested in the cooperative taking shape",
       "Stories go out wide so the right people find each project",
@@ -152,9 +152,9 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     place: "Mostly online",
     scope: "shared",
     organizer: { title: "Resource Season Organizer", character: "The Rainmaker" },
-    opensWith: "a recap and passoff, and the crowdpool launch, at the December solstice",
+    opensWith: "a recap and passoff at the December solstice",
     gathering:
-      "Recap and passoff from Design to Resource. The cohort and the community projects that are ready launch their crowdpools together and invite everyone in.",
+      "Recap and passoff from Design to Resource. Projects get their crowdpools ready for the March equinox and invite people to follow the work.",
     play: [
       { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
       { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: "/crowd-pooling#ready", label: "What ready means" },
@@ -171,6 +171,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     summary:
       "Everyone goes outside. We plant gardens, raise buildings, and throw work parties and festivals on the land projects. This is where the designs meet the ground, and where we have a great time making the magic happen.",
     happens: [
+      "The cohort and every ready community project launch their crowdpools together",
       "Planting gardens, food forests, and water systems",
       "Building homes, kitchens, and gathering spaces",
       "Work parties, land visits, and festivals",
@@ -180,8 +181,9 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     place: "On the land",
     scope: "local",
     organizer: { title: "Build Season Organizer", character: "The Barn-Raiser" },
-    opensWith: "a recap and passoff at the March equinox",
-    gathering: "Recap and passoff from Resource to Build. We head out to the land together to plant and raise.",
+    opensWith: "a recap and passoff, and the shared crowdpool launch, at the March equinox",
+    gathering:
+      "Recap and passoff from Resource to Build. The cohort and the community projects that are ready launch their crowdpools together, and we head out to the land to plant and raise.",
     play: [
       { who: "Everyone", what: "Find a land project near you and show up for a work day.", href: "/map", label: "Open the map" },
       { who: "Players", what: "Come to work parties, land visits, and festivals.", href: "/schedule", label: "See what's coming up" },

@@ -20,6 +20,7 @@ import {
   normalizeBoardState,
   parseReadyList,
   sessionBoardHref,
+  sessionBoardShareUrl,
   sessionMinutes,
   shareTime,
   voteTarget,
@@ -35,6 +36,8 @@ describe("which weeks have a board", () => {
     expect(hasSessionBoard(2.5)).toBe(false);
     expect(hasSessionBoard(Number.NaN)).toBe(false);
     expect(sessionBoardHref(2)).toBe("/season2/week/2");
+    expect(sessionBoardShareUrl(2)).toBe("https://regencivics.earth/season2/week/2");
+    expect(sessionBoardShareUrl(7)).toBe("https://regencivics.earth/season2/week/7");
   });
 });
 
@@ -112,6 +115,11 @@ describe("the stages", () => {
     expect(boardWelcome(2).title).toBe("Incubator Overview");
     expect(boardWelcome(3).title).toBe("Game & Organisation Co-Creation Part 1");
     expect(boardWelcome(3).lede.length).toBeGreaterThan(20);
+    expect(boardWelcome(2).leaveWith).toContain("Some projects at the table, and where each one is");
+    expect(boardWelcome(3).leaveWith[0]).toBe("Where the projects at the table are this week");
+    const leave = [2, 3, 13].flatMap((w) => boardWelcome(w).leaveWith).join(" ");
+    expect(leave).not.toMatch(/every project at the table/i);
+    expect(leave).not.toMatch(/where every project is/i);
   });
 
   it("no em-dashes in anything the room reads", () => {
