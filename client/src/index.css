@@ -3497,6 +3497,62 @@ html[data-contrast="high"] *:focus-visible {
   color: var(--sheet-ink);
   padding: 0 0.75rem;
 }
+.sheet-field::placeholder {
+  color: #d5e3da;
+  opacity: 1;
+}
+
+/* Unlayered so these beat `.flex { min-width: 0; min-height: 0 }` in
+   @layer components. Phones and coarse pointers only; a desktop mouse
+   keeps the denser sizes. */
+@media (pointer: coarse), (max-width: 767px) {
+  button,
+  [role="button"],
+  summary,
+  header a,
+  header button,
+  nav a,
+  footer a[href],
+  #mobile-nav-drawer a,
+  #mobile-nav-drawer button,
+  .tap-44 {
+    min-height: 44px;
+  }
+  header a,
+  header button,
+  footer a[href],
+  #mobile-nav-drawer a,
+  #mobile-nav-drawer button,
+  .tap-44 {
+    min-width: 44px;
+  }
+  footer a[href],
+  .tap-44 {
+    display: inline-flex;
+    align-items: center;
+  }
+  .tap-44 {
+    justify-content: center;
+  }
+  /* Anchors that only wrap a button were measuring as the line box (~42px)
+     while the button inside was the visible control. */
+  a:has(> button) {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* The page column stops at 1280px. The desktop nav with full labels is wider
+   than that column, so at 1440 Search sat in the right gutter and, with a
+   slightly wider font, past the viewport. Let the header use the viewport
+   from lg up. Below 1280 the column was already the viewport. */
+@media (min-width: 1024px) {
+  header > .container {
+    max-width: none;
+  }
+}
 .sheet-island {
   background: #f4f7f2;
   color: #1a472a;

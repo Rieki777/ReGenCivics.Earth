@@ -731,7 +731,7 @@ export default function Season2() {
         <a
           href="#arc"
           aria-label="Scroll to learn more"
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[#7dd87d]/50 hover:text-[#7dd87d] transition-colors"
+          className="tap-44 absolute bottom-8 left-1/2 -translate-x-1/2 text-[#7dd87d]/50 hover:text-[#7dd87d] transition-colors"
         >
           <ChevronDown className="w-6 h-6 animate-bounce" />
         </a>
@@ -1009,7 +1009,7 @@ export default function Season2() {
           </div>
 
           <div className="mb-10">
-            <Link href="/schedule">
+            <Link href="/schedule" className="tap-44">
               <Button
                 size="lg"
                 className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
@@ -1626,7 +1626,7 @@ export default function Season2() {
                         href={s.cta.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#7dd87d]/40 bg-[#7dd87d]/10 px-5 py-2.5 text-sm font-semibold text-[#7dd87d] hover:bg-[#7dd87d]/20 hover:text-white transition-colors"
+                        className="tap-44 mt-4 inline-flex items-center gap-2 rounded-xl border border-[#7dd87d]/40 bg-[#7dd87d]/10 px-5 py-2.5 text-sm font-semibold text-[#7dd87d] hover:bg-[#7dd87d]/20 hover:text-white transition-colors"
                       >
                         {s.cta.label}
                         <ArrowRight className="w-4 h-4" />
@@ -1634,7 +1634,7 @@ export default function Season2() {
                     ) : (
                       <Link
                         href={s.cta.href}
-                        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7dd87d] px-5 py-2.5 text-sm font-semibold text-[#1a472a] hover:bg-[#9de89d] transition-colors"
+                        className="tap-44 mt-4 inline-flex items-center gap-2 rounded-xl bg-[#7dd87d] px-5 py-2.5 text-sm font-semibold text-[#1a472a] hover:bg-[#9de89d] transition-colors"
                       >
                         {s.cta.label}
                         <ArrowRight className="w-4 h-4" />
@@ -1991,7 +1991,7 @@ export default function Season2() {
                   open again on a rolling basis until the crowdpooling round opens
                   on {APPLICATIONS.closesOn}, and we review them as they come in.{" "}
                   {ACCEPTANCE_LINE}{" "}
-                  <Link href="/season-schedule" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+                  <Link href="/season-schedule" className="tap-44 text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
                     See the Season Schedule
                   </Link>
                   .
@@ -2015,7 +2015,7 @@ export default function Season2() {
                   the minimum criteria to take part in crowdpooling. Then{" "}
                 </>
               )}
-              <Link href={FOLLOW_ALONG_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+              <Link href={FOLLOW_ALONG_HREF} className="tap-44 text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
                 {APPLICATIONS.rolling ? "follow along live" : "Follow along live"}
               </Link>{" "}
               through the Design Season. {CROWDPOOL_ROUND_LINE}{" "}
@@ -2113,7 +2113,7 @@ export default function Season2() {
             </p>
             <p className="text-white/70">
               <Heart className="inline w-4 h-4 text-[#7dd87d] mr-1 -mt-0.5" />
-              <Link href={FOLLOW_ALONG_HREF} className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
+              <Link href={FOLLOW_ALONG_HREF} className="tap-44 text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
                 Follow along live
               </Link>{" "}
               whether or not you're in the cohort, and{" "}

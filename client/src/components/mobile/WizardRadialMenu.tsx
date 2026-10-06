@@ -283,8 +283,8 @@ export function WizardRadialMenu() {
               `group/row flex items-center gap-2.5 outline-none transition-all duration-300 ` +
               `focus-visible:opacity-100 ${
                 open
-                  ? "opacity-100 translate-x-0 scale-100"
-                  : "opacity-0 translate-x-5 scale-90"
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 translate-x-5"
               }`;
             const controlStyle: React.CSSProperties = {
               transitionDelay: delay,
