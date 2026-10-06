@@ -233,7 +233,7 @@ export function DictationButton({
         <p
           role="status"
           data-testid="dictation-error"
-          className="fixed w-max max-w-[240px] rounded-lg border border-red-200 bg-white px-2 py-1 text-[11px] leading-snug text-red-700 shadow-lg"
+          className="fixed w-max max-w-[240px] rounded-lg border border-[#fecaca] bg-white px-2 py-1 text-[13px] leading-snug text-[#7f1d1d] shadow-lg"
           style={{
             zIndex: ERROR_Z,
             top: errorPos.top,
@@ -298,7 +298,7 @@ export function DictationButton({
         </p>
       )}
       <span className="sr-only" aria-live="polite">
-        {listening ? (dictation.interim ? dictation.interim : "Listening") : ""}
+        {listening ? (dictation.interim ? dictation.interim : "Listening") : (dictation.error ?? "")}
       </span>
       {helpPopover}
       {errorPopover}

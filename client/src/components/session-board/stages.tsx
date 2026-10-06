@@ -120,7 +120,9 @@ function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placehol
     setBusy(true);
     try {
       const r = await onAdd(v);
-      if (r !== null) setText("");
+      if (r != null) setText("");
+    } catch {
+      /* Leave the words in the field when the add fails. */
     } finally {
       setBusy(false);
     }
@@ -139,7 +141,7 @@ function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placehol
         disabled={busy}
         onChange={setText}
         onListeningChange={(on) => {
-          if (!on) void commit(textRef.current);
+          if (!on && textRef.current.trim()) void commit(textRef.current);
         }}
       />
       {button ? <button className="sb-btn" type="submit" disabled={busy}>Add</button> : null}
