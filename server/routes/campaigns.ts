@@ -33,6 +33,7 @@ import {
   isPublicCampaign,
 } from "../lib/project-steward";
 import { canTransition, type CampaignStatus } from "../../shared/campaignStatus";
+import { archetypeKeyForSave } from "@shared/characterSheet";
 import {
   MAX_OFFER_HOURS,
   MAX_ROLE_HOURS,
@@ -3257,6 +3258,7 @@ export const savedContributionsRouter = router({
       totalFutureValue: z.number().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
       const id = await db.createSavedContribution({
         userId: ctx.user.id,
         name: input.name,
@@ -3270,6 +3272,7 @@ export const savedContributionsRouter = router({
         futureContributions: input.futureContributions,
         totalImmediateValue: input.totalImmediateValue || 0,
         totalFutureValue: input.totalFutureValue || 0,
+        primaryArchetypeKey: archetypeKeyForSave(profile?.primaryArchetypeKey),
       });
       return { id, success: true };
     }),
@@ -3292,7 +3295,11 @@ export const savedContributionsRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
-      await db.updateSavedContribution(id, ctx.user.id, data);
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      await db.updateSavedContribution(id, ctx.user.id, {
+        ...data,
+        primaryArchetypeKey: archetypeKeyForSave(profile?.primaryArchetypeKey),
+      });
       return { success: true };
     }),
 

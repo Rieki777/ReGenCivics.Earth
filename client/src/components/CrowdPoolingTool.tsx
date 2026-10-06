@@ -4,7 +4,7 @@
  * Tracks immediate contributions and future value commitments
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
@@ -75,6 +75,26 @@ import {
   categoryForKey,
   type RoleTemplate,
 } from '@shared/crowdpoolingTaxonomy';
+import { buildGiftRecord, standingFromRecord, type GiftDraft } from '@shared/characterSheet';
+import GiftRecord from '@/components/character/GiftRecord';
+
+export type GiftMapContext = {
+  path: "project" | "general";
+  setPath: (path: "project" | "general") => void;
+  snap: ReturnType<typeof standingFromRecord> & {
+    lines: ReturnType<typeof buildGiftRecord>["lines"];
+    quietLine: string;
+    empty: boolean;
+    currencySymbol: string;
+  };
+};
+
+type CrowdPoolingToolProps = {
+  /** Sheet layout: gift record under the caller-supplied hero, then the entry form. */
+  embedded?: boolean;
+  aboveRecord?: (ctx: GiftMapContext) => React.ReactNode;
+  belowForm?: React.ReactNode;
+};
 
 // Currency definitions
 const currencies = [
@@ -227,18 +247,31 @@ function CapitalSummaryList({
   );
 }
 
-export default function CrowdPoolingTool() {
+export default function CrowdPoolingTool({
+  embedded = false,
+  aboveRecord,
+  belowForm,
+}: CrowdPoolingToolProps = {}) {
   // Get URL search params
   const searchString = useSearch();
   const urlParams = new URLSearchParams(searchString);
   
   // Project setup - initialize from URL params or defaults
   const [projectName, setProjectName] = useState('');
-  const [targetAmount, setTargetAmount] = useState<number>(100000);
+  const [targetAmount, setTargetAmount] = useState<number>(embedded ? 0 : 100000);
   const [currency, setCurrency] = useState('USD');
-  const [showSetup, setShowSetup] = useState(true);
+  const [showSetup, setShowSetup] = useState(!embedded);
   const [isGenericMode, setIsGenericMode] = useState(false);
-  const [hasNoTarget, setHasNoTarget] = useState(false);
+  const [hasNoTarget, setHasNoTarget] = useState(embedded);
+  const setPath = (next: "project" | "general") => {
+    if (next === "general") {
+      setIsGenericMode(true);
+      setProjectName("Generic Contribution");
+    } else {
+      setIsGenericMode(false);
+      setProjectName((name) => (name === "Generic Contribution" ? "" : name));
+    }
+  };
   
   // Contributor data
   const [contributorName, setContributorName] = useState('');
@@ -293,11 +326,13 @@ export default function CrowdPoolingTool() {
     
     if (projectParam) {
       setProjectName(decodeURIComponent(projectParam));
+      setIsGenericMode(false);
     }
     if (targetParam) {
       const targetValue = parseFloat(targetParam);
       if (!isNaN(targetValue) && targetValue > 0) {
         setTargetAmount(targetValue);
+        setHasNoTarget(false);
       }
     }
     if (currencyParam && currencies.some(c => c.code === currencyParam)) {
@@ -425,9 +460,21 @@ export default function CrowdPoolingTool() {
       console.error('Failed to parse saved contributions:', e);
     }
     
+    setIsGenericMode(savedContribution.projectName === "Generic Contribution" || !savedContribution.projectName);
     setShowLoadDialog(false);
+    setShowSetup(false);
     toast.success(`Loaded: ${savedContribution.name}`);
   };
+
+  const loadedSavedId = useRef<string | null>(null);
+  useEffect(() => {
+    const savedId = urlParams.get("savedId");
+    if (!savedId || loadedSavedId.current === savedId || !savedContributionsQuery.data) return;
+    const found = savedContributionsQuery.data.find((row) => String(row.id) === savedId);
+    if (!found) return;
+    loadedSavedId.current = savedId;
+    loadFromProfile(found);
+  }, [savedContributionsQuery.data]);
   
   // UI state
   const [activeSection, setActiveSection] = useState<'immediate' | 'future'>('immediate');
@@ -460,6 +507,36 @@ export default function CrowdPoolingTool() {
     });
     return totals;
   }, [immediateContributions, futureContributions]);
+
+  const giftRecord = useMemo(() => {
+    const drafts: GiftDraft[] = [
+      ...immediateContributions.map((item) => ({
+        capital: item.capital,
+        description: item.description || immediateCategories.find((cat) => cat.id === item.category)?.name || "",
+        value: item.value,
+        kind: "gift" as const,
+      })),
+      ...futureContributions.map((item) => ({
+        capital: item.capital,
+        description: item.roleName,
+        value: item.weeks * item.hoursPerWeek * item.hourlyRate,
+        kind: "role" as const,
+      })),
+    ];
+    return buildGiftRecord(drafts);
+  }, [immediateContributions, futureContributions]);
+
+  const giftContext: GiftMapContext = {
+    path: isGenericMode ? "general" : "project",
+    setPath,
+    snap: {
+      ...standingFromRecord(giftRecord),
+      lines: giftRecord.lines,
+      quietLine: giftRecord.quietLine,
+      empty: giftRecord.empty,
+      currencySymbol,
+    },
+  };
 
   // Add immediate contribution
   const addImmediateContribution = () => {
@@ -591,24 +668,26 @@ export default function CrowdPoolingTool() {
     doc.text(`Date: ${new Date().toLocaleDateString()}`, margin, yPos + 6);
     
     yPos += 20;
-    
-    // Progress bar
-    doc.setFillColor(230, 230, 230);
-    doc.roundedRect(margin, yPos, pageWidth - margin * 2, 8, 2, 2, 'F');
-    doc.setFillColor(...primaryGreen);
-    doc.roundedRect(margin, yPos, (pageWidth - margin * 2) * (progressPercentage / 100), 8, 2, 2, 'F');
-    
-    yPos += 15;
-    
+
+    if (!hasNoTarget && targetAmount > 0) {
+      doc.setFillColor(230, 230, 230);
+      doc.roundedRect(margin, yPos, pageWidth - margin * 2, 8, 2, 2, 'F');
+      doc.setFillColor(...primaryGreen);
+      doc.roundedRect(margin, yPos, (pageWidth - margin * 2) * (progressPercentage / 100), 8, 2, 2, 'F');
+      yPos += 15;
+    }
+
     // Total summary
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(...darkGreen);
     doc.text(`Total Contribution: ${formatCurrency(grandTotal, currencySymbol)}`, pageWidth / 2, yPos, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Target: ${formatCurrency(targetAmount, currencySymbol)} (${progressPercentage.toFixed(1)}%)`, pageWidth / 2, yPos + 6, { align: 'center' });
+    if (!hasNoTarget && targetAmount > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Target: ${formatCurrency(targetAmount, currencySymbol)} (${progressPercentage.toFixed(1)}%)`, pageWidth / 2, yPos + 6, { align: 'center' });
+    }
     
     yPos += 20;
     
@@ -672,8 +751,8 @@ export default function CrowdPoolingTool() {
     toast.success('PDF downloaded successfully!');
   };
   
-  // Project setup screen
-  if (showSetup) {
+  // Project setup screen. The sheet layout skips this and keeps one page.
+  if (showSetup && !embedded) {
     return (
       <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
         {/* Header */}
@@ -1010,8 +1089,8 @@ export default function CrowdPoolingTool() {
     );
   }
   
-  // Results screen
-  if (showResults) {
+  // Results screen. The sheet keeps the gift record on the page instead.
+  if (showResults && !embedded) {
     return (
       <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
         {/* Header */}
@@ -1196,8 +1275,7 @@ export default function CrowdPoolingTool() {
     );
   }
   
-  // Main contribution form
-  return (
+  const entryForm = (
     <div className="bg-gradient-to-br from-[#f0f7f0] to-[#f0ebe3] rounded-2xl p-6 md:p-8 border border-[#7dd87d]/30">
       {/* Header with progress */}
       <div className="flex items-center justify-between mb-4">
@@ -1207,11 +1285,12 @@ export default function CrowdPoolingTool() {
           </div>
           <div>
             <h3 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-              {projectName}
+              {projectName || "Gifts now"}
             </h3>
-            <p className="text-xs text-[#1a472a]/80">Crowd Pooling Tool</p>
+            <p className="text-xs text-[#1a472a]/80">Crowd pooling</p>
           </div>
         </div>
+        {!embedded && (
         <Button
           variant="ghost"
           size="sm"
@@ -1220,9 +1299,10 @@ export default function CrowdPoolingTool() {
         >
           Edit Setup
         </Button>
+        )}
       </div>
       
-      {/* Progress tracker */}
+      {!hasNoTarget && (
       <div className="bg-white rounded-xl p-4 mb-6 border border-[#7dd87d]/30">
         <div className="flex justify-between text-sm mb-2">
           <span className="text-[#1a472a]/80">Your Contribution</span>
@@ -1240,7 +1320,8 @@ export default function CrowdPoolingTool() {
           {progressPercentage.toFixed(1)}% of target
         </p>
       </div>
-      
+      )}
+
       {/* Section tabs */}
       <div className="flex gap-2 mb-6">
         <button
@@ -1253,9 +1334,11 @@ export default function CrowdPoolingTool() {
         >
           <Package className="w-4 h-4 inline mr-2" />
           Immediate
+          {immediateTotal > 0 && (
           <span className="ml-2 text-xs opacity-80">
             {formatCurrency(immediateTotal, currencySymbol)}
           </span>
+          )}
         </button>
         <button
           onClick={() => setActiveSection('future')}
@@ -1267,9 +1350,11 @@ export default function CrowdPoolingTool() {
         >
           <Clock className="w-4 h-4 inline mr-2" />
           Future Value
+          {futureTotal > 0 && (
           <span className="ml-2 text-xs opacity-80">
             {formatCurrency(futureTotal, currencySymbol)}
           </span>
+          )}
         </button>
       </div>
       
@@ -1656,7 +1741,7 @@ export default function CrowdPoolingTool() {
         </div>
       )}
 
-      {/* View Results button */}
+      {!embedded && (
       <div className="mt-6 pt-4 border-t border-[#7dd87d]/20">
         <Button
           onClick={() => setShowResults(true)}
@@ -1667,8 +1752,9 @@ export default function CrowdPoolingTool() {
           <ChevronRight className="w-4 h-4 ml-2" />
         </Button>
       </div>
-      
-      {/* Help improve this tool */}
+      )}
+
+      {!embedded && (
       <div className="mt-4 pt-4 border-t border-[#7dd87d]/20 text-center">
         <SuggestUpgradesSheet 
           onSelectRole={(role) => {
@@ -1687,6 +1773,78 @@ export default function CrowdPoolingTool() {
           }}
         />
       </div>
+      )}
+    </div>
+  );
+
+  if (!embedded) return entryForm;
+
+  return (
+    <div>
+      {aboveRecord?.(giftContext)}
+      <GiftRecord
+        lines={giftContext.snap.lines}
+        quietLine={giftContext.snap.quietLine}
+        empty={giftContext.snap.empty}
+        currencySymbol={currencySymbol}
+      />
+      <div className="sheet-actions">
+        <button type="button" className="sheet-action sheet-action-gold" onClick={generatePDF}>
+          Download PDF
+        </button>
+        <button type="button" className="sheet-action" onClick={handleSaveToProfile}>
+          Save Gift Map
+        </button>
+      </div>
+      {giftContext.path === "project" && (
+        <div className="sheet-section">
+          <label className="sheet-muted" htmlFor="gift-project-name">Project name</label>
+          <input
+            id="gift-project-name"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            placeholder="Land project"
+            className="sheet-field"
+          />
+        </div>
+      )}
+      <div className="sheet-section">{entryForm}</div>
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="bg-white md:max-w-md md:rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-[#1a472a]">Save Gift Map</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-[#1a472a] mb-1" htmlFor="gift-map-name">Name</label>
+              <Input
+                id="gift-map-name"
+                value={saveName}
+                onChange={(e) => setSaveName(e.target.value)}
+                placeholder="My gift map"
+                className="bg-white border-[#7dd87d]/30"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="saveGiftAsDefault"
+                checked={saveAsDefault}
+                onChange={(e) => setSaveAsDefault(e.target.checked)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="saveGiftAsDefault" className="text-sm text-[#1a472a]">Set as the default gift map</label>
+            </div>
+          </div>
+          <div className="flex gap-2 mt-2">
+            <Button type="button" onClick={() => setShowSaveDialog(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
+            <Button type="button" onClick={confirmSaveToProfile} disabled={createSavedContribution.isPending} className="flex-1 rounded-xl bg-[#4a7c59] text-white">
+              {createSavedContribution.isPending ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {belowForm}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { getGameVariableOr } from "../game";
 import { eq, sql, count, and, or, like, isNotNull } from "drizzle-orm";
 import { playerProfiles, playerContributions, questCompletions, activeQuestSignals, questEndorsements, orgClaims, questSuggestions, forumCategories, bannedEmails, users, playerCapitalScores, vouches, seasonalIntentions, type PlayerProfile } from "../../drizzle/schema";
 import { CAPITAL_TYPES, QUEST_CATEGORY_TO_CAPITAL, zeroCapitalScores, type CapitalType } from "@shared/capitals";
+import { normalizeCharacterChoice } from "@shared/characterSheet";
 import { COOP } from "@shared/fund";
 import { CROWDPOOLING_WORDING } from "../lib/content-canon";
 import { invokeLLM } from "../_core/llm";
@@ -63,6 +64,8 @@ export const PUBLIC_PLAYER_PROFILE_FIELDS = [
   "dreamingOf",
   "currentlyWorkingOn",
   "website",
+  "primaryArchetypeKey",
+  "partyArchetypeKeys",
   // Coarse place only. The bioregion is a region-sized public grouping;
   // the lat/lng pair and the free-text label stay private.
   "bioregionId",
@@ -324,6 +327,32 @@ export const playerProfilesRouter = router({
       }
 
       return { success: true };
+    }),
+
+  // Choose the class that fronts this profile. Party keys are the other
+  // classes on the sheet. Unknown keys are dropped. Gifts are not stored here.
+  setCharacter: protectedProcedure
+    .input(z.object({
+      primaryArchetypeKey: z.string().nullable(),
+      partyArchetypeKeys: z.array(z.string()).max(8),
+      portraitPresentation: z.enum(["f", "m"]).nullable().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const profile = await db.getPlayerProfileByUserId(ctx.user.id);
+      if (!profile) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Create a profile first" });
+      }
+      const choice = normalizeCharacterChoice({
+        primaryArchetypeKey: input.primaryArchetypeKey,
+        partyArchetypeKeys: input.partyArchetypeKeys,
+        portraitPresentation: input.portraitPresentation ?? null,
+      });
+      await db.updatePlayerProfile(profile.id, {
+        primaryArchetypeKey: choice.primaryArchetypeKey,
+        partyArchetypeKeys: choice.partyArchetypeKeys,
+        portraitPresentation: choice.portraitPresentation,
+      });
+      return choice;
     }),
 
   // Update email digest frequency preference
