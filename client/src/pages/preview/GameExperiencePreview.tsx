@@ -2,20 +2,21 @@
  * Design mockup for a unified game feel.
  * Example data only. Not linked from nav, sitemap, or live pages.
  * Route: /preview/game
+ *
+ * Each screen answers one player question. Nature frames the information.
  */
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode, type UIEvent } from "react";
 import { SEO } from "@/components/SEO";
-import CharacterSheet from "@/components/character/CharacterSheet";
 import { ARCHETYPES } from "@shared/archetypes";
 import {
   POOL_CAPITALS,
-  POOL_EVERYDAY,
   classPortraitSrc,
   type PortraitPresentation,
 } from "@shared/characterSheet";
 import { CAPITAL_LABELS } from "@shared/crowdpoolingTaxonomy";
 import { HOLOS_REGEN_CIVICS_URL, HYLO_SEEDS_URL } from "@shared/communityLinks";
 import { JOIN_URL } from "@shared/sessionLinks";
+import { boardStages, PROJECT_PHASES } from "@shared/sessionBoard";
 import { VILLAGE_OS_OFFER } from "@shared/villageOsOffer";
 import "./game-preview.css";
 
@@ -37,25 +38,38 @@ const SCREENS = [
 
 type ScreenId = (typeof SCREENS)[number]["id"];
 type Emote = "sprout" | "sun" | "rain" | "heart";
+type MarkKind = Emote | "stem" | "leaf" | "drop" | "bud";
 
-const LEVELS = ["Seed", "Sprout", "Sapling", "Tree"] as const;
-const SEASON_PATHS = ["Investor", "Village Steward", "Resident", "Prosperity Creator"] as const;
-const ROOM = [
-  "Example player",
-  "Example player 2",
-  "Example player 3",
-  "Example player 4",
-  "Example player 5",
-  "Example player 6",
-  "Example player 7",
-  "Example player 8",
-] as const;
+const SESSION = boardStages(2).filter((stage) => stage.kind !== "getvillageos");
+const NOW_INDEX = Math.max(0, SESSION.findIndex((stage) => stage.kind === "circle"));
+const NOW_STAGE = SESSION[NOW_INDEX];
+const NEXT_STAGE = SESSION[NOW_INDEX + 1] ?? SESSION[NOW_INDEX];
+const SPROUT = PROJECT_PHASES.find((phase) => phase.key === "sprout") ?? PROJECT_PHASES[2];
+const ROOT = PROJECT_PHASES.find((phase) => phase.key === "root") ?? PROJECT_PHASES[1];
+
+const PLAYERS: Array<{ name: string; cls: string; mark: MarkKind }> = [
+  { name: "Example player", cls: "Spaceholder", mark: "heart" },
+  { name: "Example player 2", cls: "Builder", mark: "stem" },
+  { name: "Example player 3", cls: "Architect", mark: "sun" },
+  { name: "Example player 4", cls: "Catalyst", mark: "rain" },
+  { name: "Example player 5", cls: "Storyteller", mark: "leaf" },
+  { name: "Example player 6", cls: "Builder", mark: "stem" },
+  { name: "Example player 7", cls: "Spaceholder", mark: "heart" },
+  { name: "Example player 8", cls: "Catalyst", mark: "rain" },
+];
 
 const QUEST_STEPS = [
-  { id: "call", title: "Join the call", href: JOIN_URL },
-  { id: "need", title: "Share one need" },
-  { id: "gift", title: "Name a gift" },
-  { id: "sit", title: "Sit with a project" },
+  { id: "call", title: "Join the call", href: JOIN_URL, reward: "A seat in the room" },
+  { id: "need", title: "Share one need", reward: "A note on the board" },
+  { id: "gift", title: "Name a gift", reward: "A ring on your sheet" },
+  { id: "sit", title: "Sit with a project", reward: "A bud on a guild" },
+] as const;
+
+const SEASON_PATHS = [
+  { name: "Investor", steps: "2 steps", who: "Brings resources in", get: "A path into the village" },
+  { name: "Village Steward", steps: "12 steps", who: "Tends the village week to week", get: "A role on the land" },
+  { name: "Resident", steps: "14 steps", who: "Lives on the land", get: "A home in the game" },
+  { name: "Prosperity Creator", steps: "10 steps", who: "Makes a livelihood here", get: "Work that stays" },
 ] as const;
 
 const CALENDAR_HREF =
@@ -65,6 +79,15 @@ const CALENDAR_HREF =
   encodeURIComponent("Join the call: https://regencivics.earth/join") +
   "&location=" +
   encodeURIComponent(JOIN_URL);
+
+const SLOT_FILL: Record<string, string> = {
+  living: "Valley plot",
+  material: "Tools",
+  financial: "Open",
+  experiential: "10 hrs carpentry",
+  social: "The table",
+  cultural: "Open",
+};
 
 function isScreen(value: string | null): value is ScreenId {
   return SCREENS.some((screen) => screen.id === value);
@@ -93,31 +116,6 @@ function useReducedMotion(): boolean {
   return reduced;
 }
 
-function useRoll(target: number, reduced: boolean): number {
-  const [value, setValue] = useState(target);
-  const from = useRef(target);
-  useEffect(() => {
-    if (reduced || from.current === target) {
-      from.current = target;
-      setValue(target);
-      return;
-    }
-    const start = from.current;
-    const t0 = performance.now();
-    let frame = 0;
-    const tick = (now: number) => {
-      const t = Math.min(1, (now - t0) / 720);
-      const eased = 1 - (1 - t) ** 3;
-      setValue(Math.round(start + (target - start) * eased));
-      if (t < 1) frame = requestAnimationFrame(tick);
-      else from.current = target;
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [target, reduced]);
-  return value;
-}
-
 function lightTap() {
   try {
     navigator.vibrate?.(12);
@@ -126,49 +124,40 @@ function lightTap() {
   }
 }
 
-function Head({ kicker, title, children }: { kicker: string; title: string; children?: ReactNode }) {
+function Ex() {
+  return <span className="gx-ex-tag">example</span>;
+}
+
+function Head({ kicker, title }: { kicker: string; title: string }) {
   return (
     <header className="gx-head">
-      <div className="gx-kicker-row">
-        <p className="sheet-kicker">{kicker}</p>
-        {children}
-      </div>
+      <p className="sheet-kicker">{kicker}</p>
       <h1 className="sheet-display gx-title">{title}</h1>
     </header>
   );
 }
 
-function Mark({ kind }: { kind: Emote | "stem" | "leaf" | "drop" }) {
+function Mark({ kind }: { kind: MarkKind }) {
   if (kind === "sun") {
     return (
       <svg viewBox="0 0 32 32" aria-hidden="true">
-        <circle cx="16" cy="16" r="5.5" fill="currentColor" />
-        <g fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
-          <path d="M16 4v3.2M16 24.8V28M4 16h3.2M24.8 16H28M7.2 7.2l2.2 2.2M22.6 22.6l2.2 2.2M24.8 7.2l-2.2 2.2M9.4 22.6l-2.2 2.2" />
-        </g>
+        <circle cx="16" cy="16" r="5" fill="currentColor" />
+        <path d="M16 4v4M16 24v4M4 16h4M24 16h4M7 7l3 3M22 22l3 3M25 7l-3 3M10 22l-3 3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
       </svg>
     );
   }
   if (kind === "rain") {
     return (
       <svg viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M8 14c0-4 3-7 7-7 2.4 0 4.5 1.2 5.8 3.1C22 9.4 23.4 9 25 9c3 0 5 2.2 5 5 0 .4 0 .7-.1 1H8.2C8.1 14.7 8 14.4 8 14z" fill="currentColor" opacity="0.85" />
-        <path d="M12 20c1.2 3 1.2 5 0 7M18 19c1.2 3 1.2 5 0 7M24 20c1.2 3 1.2 5 0 7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M8 14a7 7 0 0 1 13-2 5 5 0 0 1 1 10H8a5 5 0 0 1 0-8z" fill="currentColor" />
+        <path d="M12 24c1 2 1 3.5 0 5M18 23c1 2 1 3.5 0 5M24 24c1 2 1 3.5 0 5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
     );
   }
   if (kind === "heart") {
     return (
       <svg viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M16 27C8 20 6 15 8.5 11.5 10.5 8.8 14 9.2 16 12c2-2.8 5.5-3.2 7.5-.5C26 15 24 20 16 27z" fill="currentColor" />
-      </svg>
-    );
-  }
-  if (kind === "stem") {
-    return (
-      <svg viewBox="0 0 32 48" aria-hidden="true">
-        <path d="M16 46 V16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M16 22c-7-1-9-7-8-12 6 1 9 6 8 12z" fill="currentColor" />
+        <path d="M16 26C9 20 7 16 9 12.5 11 10 14 10.5 16 13c2-2.5 5-3 7-.5C25 16 23 20 16 26z" fill="currentColor" />
       </svg>
     );
   }
@@ -176,22 +165,36 @@ function Mark({ kind }: { kind: Emote | "stem" | "leaf" | "drop" }) {
     return (
       <svg viewBox="0 0 32 32" aria-hidden="true">
         <path d="M6 24c8-1 14-8 16-18-8 2-14 8-16 18z" fill="currentColor" />
-        <path d="M10 22c3-4 6-8 10-12" fill="none" stroke="var(--sheet-ground)" strokeWidth="1" />
+      </svg>
+    );
+  }
+  if (kind === "bud") {
+    return (
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 28V16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M16 17c-4-1-6-4-5-8 4 1 5.5 3.5 5 8zM16 17c4-1 6-4 5-8-4 1-5.5 3.5-5 8z" fill="currentColor" />
       </svg>
     );
   }
   if (kind === "drop") {
     return (
       <svg viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M16 5c4 7 8 11 8 16a8 8 0 0 1-16 0c0-5 4-9 8-16z" fill="currentColor" />
+        <path d="M16 5c4 6 8 10 8 15a8 8 0 0 1-16 0c0-5 4-9 8-15z" fill="currentColor" />
+      </svg>
+    );
+  }
+  if (kind === "stem") {
+    return (
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 28V12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+        <path d="M16 16c-6-1-8-6-7-10 5 1 8 5 7 10z" fill="currentColor" />
       </svg>
     );
   }
   return (
     <svg viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M16 28V15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M16 18c-7-1-9-7-8-12 6 1.2 9 6 8 12z" fill="currentColor" />
-      <path d="M16 16c7-1 9-7 8-12-6 1.2-9 6-8 12z" fill="currentColor" opacity="0.8" />
+      <path d="M16 28V14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <path d="M16 16c-6-1-8-6-7-10 5 1 8 5 7 10zM16 15c6-1 8-6 7-10-5 1-8 5-7 10z" fill="currentColor" />
     </svg>
   );
 }
@@ -207,172 +210,143 @@ function Silhouette() {
 
 function SproutArt({ grown }: { grown: boolean }) {
   return (
-    <svg className={grown ? "gx-sprout gx-sprout-grown" : "gx-sprout"} viewBox="0 0 200 220" aria-hidden="true">
-      <ellipse cx="100" cy="190" rx="70" ry="16" fill="var(--sheet-raised)" />
-      <path d="M100 188 V92" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      <path d="M100 120c-28-4-40-28-34-52 26 4 40 24 34 52z" fill="currentColor" />
-      <path d="M100 108c28-4 40-28 34-52-26 4-40 24-34 52z" fill="currentColor" />
-      <circle cx="100" cy="188" r="5" fill="var(--sheet-gold)" />
+    <svg className={grown ? "gx-sprout gx-sprout-grown" : "gx-sprout"} viewBox="0 0 80 90" aria-hidden="true">
+      <path d="M40 82 V36" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+      <path d="M40 48c-14-2-20-14-16-26 12 2 18 12 16 26z" fill="currentColor" />
+      <path d="M40 42c14-2 20-14 16-26-12 2-18 12-16 26z" fill="currentColor" />
     </svg>
   );
 }
-
-const STILL_EMOTES: Array<{ kind: Emote; x: string; drift: string; rise: string }> = [
-  { kind: "sprout", x: "22%", drift: "-16px", rise: "-78px" },
-  { kind: "sun", x: "48%", drift: "20px", rise: "-120px" },
-  { kind: "heart", x: "68%", drift: "8px", rise: "-52px" },
-];
 
 function WeekScreen({
   shot,
   hand,
   onHand,
   portrait,
+  inset,
 }: {
   shot: boolean;
   hand: boolean;
   onHand: () => void;
   portrait: string | null;
+  inset?: boolean;
 }) {
   const [floaters, setFloaters] = useState<Array<{ id: number; kind: Emote; x: string; drift: string }>>([]);
   const [cue, setCue] = useState("");
   const nextId = useRef(1);
-
   const send = (kind: Emote) => {
     const id = nextId.current++;
-    const drift = `${Math.round((Math.random() - 0.4) * 48)}px`;
-    const x = `${18 + Math.round(Math.random() * 55)}%`;
-    setFloaters((list) => [...list.slice(-5), { id, kind, x, drift }]);
+    setFloaters((list) => [...list.slice(-4), { id, kind, x: `${18 + Math.round(Math.random() * 58)}%`, drift: `${Math.round((Math.random() - 0.4) * 28)}px` }]);
     setCue(kind === "rain" ? "Water drop" : "Wind through leaves");
   };
-
   return (
-    <>
-      <Head kicker="Example week" title="Who's here">
-        <span className="gx-ex-tag">Live</span>
-      </Head>
-      <div className="gx-week">
-        <div className="gx-room">
-          <svg className="gx-mycelium" viewBox="0 0 400 180" preserveAspectRatio="none" aria-hidden="true">
-            <path d="M20 120 C 80 40, 140 150, 200 80 S 320 30, 380 90" />
-            <path d="M30 90 C 100 140, 180 40, 260 100 S 340 150, 390 70" />
-          </svg>
-          <div className="gx-float-layer" aria-hidden="true">
-            {shot
-              ? STILL_EMOTES.map((item) => (
-                  <span
-                    key={item.kind}
-                    className={`gx-floater gx-floater-still${item.kind === "sun" ? " gx-floater-sun" : ""}`}
-                    style={{ left: item.x, ["--gx-drift" as string]: item.drift, ["--gx-rise" as string]: item.rise } as CSSProperties}
-                  >
-                    <Mark kind={item.kind} />
-                  </span>
-                ))
-              : floaters.map((item) => (
-                  <span
-                    key={item.id}
-                    className={`gx-floater${item.kind === "sun" ? " gx-floater-sun" : ""}`}
-                    style={{ left: item.x, ["--gx-drift" as string]: item.drift } as CSSProperties}
-                    onAnimationEnd={() => setFloaters((list) => list.filter((floater) => floater.id !== item.id))}
-                  >
-                    <Mark kind={item.kind} />
-                  </span>
-                ))}
+    <div className={inset ? "gx-board gx-board-inset" : "gx-board"}>
+      {inset ? null : <Head kicker="This call" title="What's happening" />}
+      <section className="gx-panel gx-now">
+        <div className="gx-now-top">
+          <div>
+            <p className="sheet-kicker">Stage {NOW_INDEX + 1} of {SESSION.length}</p>
+            <h2 className="sheet-display gx-h2">{NOW_STAGE.name}</h2>
           </div>
-          <div className="gx-avatars">
-            {ROOM.map((name, index) => (
-              <div key={name} className="gx-avatar" title={name}>
-                {index === 0 && hand ? (
-                  <span className="gx-stem gx-stem-grown">
-                    <Mark kind="stem" />
-                  </span>
-                ) : null}
-                {index === 0 && portrait ? (
-                  <img src={portrait} alt={name} />
-                ) : (
-                  <Silhouette />
-                )}
-              </div>
-            ))}
-            <div className="gx-avatar gx-plus" aria-hidden="true">+4</div>
-          </div>
-          <p className="gx-ex" style={{ position: "relative", margin: "0.8rem 0 0" }}>
-            <b className="sheet-display">12</b>
-            <span>here</span>
-            <span className="gx-ex-tag">example</span>
-          </p>
+          <p className="gx-timer"><b className="sheet-display">18:40</b><Ex /></p>
         </div>
-        <div>
-          <div className="gx-dock" role="group" aria-label="Emotes">
-            {(["sprout", "sun", "rain", "heart"] as const).map((kind) => (
-              <button
-                key={kind}
-                type="button"
-                className="gx-emote"
-                data-testid={`emote-${kind}`}
-                aria-label={kind === "heart" ? "Heart leaf" : kind}
-                onClick={() => send(kind)}
-              >
-                <Mark kind={kind} />
-              </button>
-            ))}
-            <button
-              type="button"
-              className="gx-btn gx-btn-quiet gx-hand"
-              data-testid="raise-hand"
-              aria-pressed={hand}
-              onClick={onHand}
+        <p className="gx-line">{NOW_STAGE.line}</p>
+        <p className="gx-cue">{NOW_STAGE.min} min on the plan. Updates as they happen.</p>
+      </section>
+      <section className="gx-panel gx-people">
+        <div className="gx-panel-label"><span>Who&apos;s here</span><span className="gx-count"><b>{PLAYERS.length}</b> <Ex /></span></div>
+        <ul className="gx-roster">
+          {PLAYERS.map((player, index) => (
+            <li key={player.name} className="gx-person">
+              <span className="gx-avatar">
+                {index === 0 && hand ? <span className="gx-stem gx-stem-grown"><Mark kind="stem" /></span> : null}
+                {index === 0 && portrait ? <img src={portrait} alt="" /> : <Silhouette />}
+                <i className="gx-class-icon" title={player.cls}><Mark kind={player.mark} /></i>
+              </span>
+              <span className="gx-person-name">{player.name}</span>
+              <span className="gx-person-class">{player.cls}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="gx-panel gx-spot">
+        <p className="sheet-kicker">Some projects at the table</p>
+        <h2 className="sheet-display gx-h2">Example Grove <Ex /></h2>
+        <p className="gx-meta"><b>{SPROUT.title}</b> · Example valley</p>
+        <p className="gx-line">{SPROUT.desc}</p>
+      </section>
+      <section className="gx-panel gx-do">
+        <div className="gx-float-layer" aria-hidden="true">
+          {(shot
+            ? [
+                { id: 1, kind: "sprout" as const, x: "12%", drift: "-6px" },
+                { id: 2, kind: "sun" as const, x: "28%", drift: "8px" },
+                { id: 3, kind: "heart" as const, x: "44%", drift: "2px" },
+              ]
+            : floaters
+          ).map((item) => (
+            <span
+              key={item.id}
+              className={`gx-floater${shot ? " gx-floater-still" : ""}${item.kind === "sun" ? " gx-floater-sun" : ""}`}
+              style={{ left: item.x, ["--gx-drift" as string]: item.drift, ["--gx-rise" as string]: "-36px" } as CSSProperties}
+              onAnimationEnd={() => setFloaters((list) => list.filter((floater) => floater.id !== item.id))}
             >
-              Raise a hand
-            </button>
-          </div>
-          <p className="gx-cue" role="status" style={{ minHeight: "1.2rem", marginTop: "0.35rem" }}>{cue}</p>
-          <p style={{ margin: "0.45rem 0" }}>
-            <a className="gx-link" href={JOIN_URL}>Join the call</a>
-          </p>
-          <details className="gx-details">
-            <summary>Live room</summary>
-            <p>Updates arrive as they happen. Someone arrives, reacts, or raises a hand, and the room shows it.</p>
-          </details>
+              <Mark kind={item.kind} />
+            </span>
+          ))}
         </div>
-      </div>
-    </>
+        <div className="gx-dock" role="group" aria-label="Emotes">
+          {(["sprout", "sun", "rain", "heart"] as const).map((kind) => (
+            <button key={kind} type="button" className="gx-emote" data-testid={`emote-${kind}`} aria-label={kind === "heart" ? "Heart leaf" : kind} onClick={() => send(kind)}>
+              <Mark kind={kind} />
+            </button>
+          ))}
+          <button type="button" className="gx-btn gx-btn-quiet gx-hand" data-testid="raise-hand" aria-pressed={hand} onClick={onHand}>Raise a hand</button>
+          <a className="gx-link" href={JOIN_URL}>Join the call</a>
+        </div>
+        <p className="gx-cue" role="status">{cue}</p>
+      </section>
+      <section className="gx-panel gx-next">
+        <p className="sheet-kicker">Next</p>
+        <p className="gx-meta"><b className="sheet-display">{NEXT_STAGE.name}</b> · {NEXT_STAGE.min} min</p>
+        <p className="gx-line">{NEXT_STAGE.line}</p>
+      </section>
+    </div>
   );
 }
 
-function RewardScreen({
-  gifts,
-  bloomed,
-  onAdd,
-  reduced,
-}: {
-  gifts: number;
-  bloomed: boolean;
-  onAdd: () => void;
-  reduced: boolean;
-}) {
-  const shown = useRoll(gifts, reduced);
+function RewardScreen({ gifts, bloomed, onAdd }: { gifts: number; bloomed: boolean; onAdd: () => void; reduced: boolean }) {
   return (
-    <div className="gx-reward">
-      <Head kicker="Example gift" title="A gift lands" />
-      <div className="gx-reward-stage">
-        <span className={bloomed ? "gx-ripple gx-ripple-on" : "gx-ripple"} aria-hidden="true" />
-        <span className={bloomed ? "gx-ripple gx-ripple-on" : "gx-ripple"} aria-hidden="true" style={{ animationDelay: "0.18s" }} />
-        <SproutArt grown={bloomed} />
-        <span className={bloomed ? "gx-leaf gx-leaf-open" : "gx-leaf"} aria-hidden="true">
-          <Mark kind="leaf" />
-        </span>
-      </div>
-      <div className="gx-reward-read">
-        <p className="gx-roll" aria-live="polite">
-          <b className="sheet-display">{shown}</b>
-          <span className="gx-ex-tag">example gifts</span>
-        </p>
-        <button type="button" className="gx-btn" data-testid="add-gift" onClick={onAdd}>
-          Add an example gift
-        </button>
-        <p className="gx-cue" role="status">{bloomed ? "Water drop. Light tap on Android." : ""}</p>
-      </div>
+    <div className="gx-gift">
+      <Head kicker="Your gift" title="What it did" />
+      <section className="gx-panel gx-gave">
+        <p className="sheet-kicker">You gave</p>
+        <h2 className="sheet-display gx-h2">10 hrs carpentry <Ex /></h2>
+        <p className="gx-meta">Experiential · to Example Grove</p>
+      </section>
+      <section className="gx-panel gx-land">
+        <p className="sheet-kicker">Where it landed</p>
+        <ul className="gx-slots gx-slots-mini">
+          {POOL_CAPITALS.map((capital) => {
+            const on = capital === "experiential" || capital === "living" || capital === "social";
+            const hero = capital === "experiential";
+            return (
+              <li key={capital} className={on ? "gx-slot gx-slot-on" : "gx-slot"}>
+                {hero ? <SproutArt grown={bloomed} /> : <span className="gx-slot-icon"><Mark kind={capital === "living" ? "leaf" : capital === "material" ? "stem" : capital === "financial" ? "sprout" : capital === "social" ? "rain" : "heart"} /></span>}
+                <b>{CAPITAL_LABELS[capital].label}</b>
+                <small>{hero ? "10 hrs carpentry" : (SLOT_FILL[capital] ?? "Open")}</small>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+      <section className="gx-panel gx-changed">
+        <p className="sheet-kicker">What changed</p>
+        <p className="gx-line">{gifts} rings on your sheet. Quest step Name a gift is done. <Ex /></p>
+        <p className="gx-cue">{bloomed ? "Water drop. Light tap on Android." : ""}</p>
+        <p className="gx-meta">Next: Sit with a project</p>
+        <button type="button" className="gx-btn" data-testid="add-gift" onClick={onAdd}>Add an example gift</button>
+      </section>
     </div>
   );
 }
@@ -383,7 +357,6 @@ function SheetScreen({
   gifts,
   onArchetype,
   onLook,
-  onAdd,
 }: {
   archetype: string | null;
   look: PortraitPresentation | null;
@@ -392,91 +365,68 @@ function SheetScreen({
   onLook: (look: PortraitPresentation) => void;
   onAdd: () => void;
 }) {
-  const showArt = Boolean(archetype && look);
-  const filled = new Set<string>(["living", "social", "experiential"]);
-  if (gifts >= 3) filled.add("material");
-  const rings = [46, 38, 30, 22];
+  const picked = ARCHETYPES.find((item) => item.key === archetype);
+  const portrait = archetype && look ? classPortraitSrc(archetype, look) : null;
   return (
-    <div className="gx-sheet-screen">
-      <h1 className="sr-only">Example player</h1>
-      <div className="gx-sheetwrap">
-        <svg className="gx-rings" viewBox="0 0 100 100" aria-hidden="true">
-          {rings.map((radius, index) => {
-            const length = 2 * Math.PI * radius;
-            const on = index < Math.min(gifts, rings.length);
+    <div className="gx-who">
+      <Head kicker="Your sheet" title="Who you are" />
+      <div className="gx-who-grid">
+        <section className="gx-panel gx-identity" data-rings={String(Math.min(4, Math.max(1, gifts)))}>
+          <div className="gx-portrait">
+            {portrait ? <img src={portrait} alt="" /> : <Silhouette />}
+          </div>
+          <div>
+            <h2 className="sheet-display gx-h2">Example player</h2>
+            <p className="gx-meta">{picked ? picked.name : "No class yet"}</p>
+            <p className="gx-line">{picked ? picked.subtitle : "Pick a class below."}</p>
+          </div>
+        </section>
+        <div className="gx-carousel" role="group" aria-label="Classes">
+          <button type="button" className="gx-card-art" aria-pressed={archetype === null} onClick={() => onArchetype(null)}>
+            <Silhouette />
+            <span>None</span>
+          </button>
+          {ARCHETYPES.map((item) => {
+            const src = classPortraitSrc(item.key, look ?? "f");
             return (
-              <circle
-                key={radius}
-                className={on ? "gx-ring gx-ring-on" : "gx-ring"}
-                cx="50"
-                cy="50"
-                r={radius}
-                strokeWidth={index === 0 ? 1.6 : 1.15}
-                strokeDasharray={length}
-                style={{ ["--gx-c" as string]: String(length) } as CSSProperties}
-              />
+              <button key={item.key} type="button" className="gx-card-art" aria-pressed={archetype === item.key} onClick={() => onArchetype(item.key)}>
+                {src ? <img src={src} alt="" /> : <Silhouette />}
+                <span>{item.name.replace(/^The\s+/i, "")}</span>
+              </button>
             );
           })}
-        </svg>
-        {!showArt ? (
-          <div className="gx-face-fallback">
-            <Silhouette />
-          </div>
-        ) : null}
-        <CharacterSheet
-          displayName="Example player"
-          primaryKey={archetype}
-          partyKeys={[]}
-          portraitPresentation={showArt ? look : null}
-          signedIn
-          stageIndex={Math.max(0, gifts - 1)}
-          stageCount={6}
-          statusLine=""
-        />
+        </div>
+        <div className="gx-looks" role="group" aria-label="Class illustration">
+          <button type="button" className="gx-btn gx-btn-quiet" aria-pressed={look === "f"} onClick={() => onLook("f")}>Illustration one</button>
+          <button type="button" className="gx-btn gx-btn-quiet" aria-pressed={look === "m"} onClick={() => onLook("m")}>Illustration two</button>
+        </div>
+        <section className="gx-panel gx-capitals">
+          <p className="sheet-kicker">Capitals</p>
+          <ul className="gx-slots">
+            {POOL_CAPITALS.map((capital) => {
+              const on = SLOT_FILL[capital] !== "Open";
+              return (
+                <li key={capital} className={on ? "gx-slot gx-slot-on" : "gx-slot"}>
+                  <span className="gx-slot-icon"><Mark kind={capital === "living" ? "leaf" : capital === "material" ? "stem" : capital === "financial" ? "sprout" : capital === "experiential" ? "sun" : capital === "social" ? "rain" : "heart"} /></span>
+                  <b>{CAPITAL_LABELS[capital].label}</b>
+                  <small>{SLOT_FILL[capital]} <Ex /></small>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+        <section className="gx-panel gx-party">
+          <p className="sheet-kicker">Guild</p>
+          <p className="gx-meta"><b>Example Grove</b> <Ex /></p>
+          <p className="gx-line">With Example player 2, Example player 4</p>
+        </section>
+        <section className="gx-panel gx-questprog">
+          <p className="sheet-kicker">This week</p>
+          <p className="gx-meta"><b>2 of 4</b> steps <Ex /></p>
+          <div className="gx-bar gx-bar-on" aria-hidden="true"><span style={{ width: "50%" }} /></div>
+          <p className="gx-line">Next: Name a gift</p>
+        </section>
       </div>
-      <div className="gx-carousel" role="group" aria-label="Classes">
-        <button
-          type="button"
-          className="gx-card-art"
-          aria-pressed={archetype === null}
-          onClick={() => onArchetype(null)}
-        >
-          <Silhouette />
-          <span>Silhouette</span>
-        </button>
-        {ARCHETYPES.map((item) => {
-          const src = classPortraitSrc(item.key, look ?? "f");
-          return (
-            <button
-              key={item.key}
-              type="button"
-              className="gx-card-art"
-              aria-pressed={archetype === item.key}
-              onClick={() => onArchetype(item.key)}
-            >
-              {src ? <img src={src} alt="" /> : <Silhouette />}
-              <span>{item.name.replace(/^The\s+/i, "")}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="gx-looks" role="group" aria-label="Class illustration">
-        <button type="button" className="gx-btn gx-btn-quiet" aria-pressed={look === "f"} onClick={() => onLook("f")}>Illustration one</button>
-        <button type="button" className="gx-btn gx-btn-quiet" aria-pressed={look === "m"} onClick={() => onLook("m")}>Illustration two</button>
-      </div>
-      <div className="gx-slots" aria-label="Six capitals">
-        {POOL_CAPITALS.map((capital) => {
-          const everyday = POOL_EVERYDAY[capital];
-          const on = filled.has(capital);
-          return (
-            <div key={capital} className={on ? "gx-slot gx-slot-on" : "gx-slot"}>
-              <b className="sheet-display">{CAPITAL_LABELS[capital].label}</b>
-              <small>{everyday ?? (on ? "example" : "open")}</small>
-            </div>
-          );
-        })}
-      </div>
-      <button type="button" className="gx-btn" onClick={onAdd}>Add an example gift</button>
     </div>
   );
 }
@@ -485,29 +435,132 @@ function QuestScreen({ done, onAdvance }: { done: number; onAdvance: () => void 
   const segments = QUEST_STEPS.length - 1;
   const offset = 100 * (1 - Math.min(1, done / segments));
   return (
-    <div className="gx-quest-screen">
-      <Head kicker="This week" title="Quest log" />
-      <ol className="gx-quest">
-        <svg className="gx-vine gx-vine-v" viewBox="0 0 40 280" preserveAspectRatio="none" aria-hidden="true">
-          <path pathLength="100" d="M20 4 C 20 50 30 70 20 110 C 8 160 32 190 20 230 C 12 255 20 270 20 276" strokeDasharray="100" strokeDashoffset={offset} />
-        </svg>
-        <svg className="gx-vine gx-vine-h" viewBox="0 0 640 40" preserveAspectRatio="none" aria-hidden="true">
-          <path pathLength="100" d="M4 22 C 80 4 140 36 220 18 C 320 0 400 36 500 16 C 560 8 600 22 636 20" strokeDasharray="100" strokeDashoffset={offset} />
-        </svg>
-        {QUEST_STEPS.map((step, index) => {
-          const complete = index < done;
-          const now = index === done;
-          const className = complete ? "gx-qstep gx-qstep-done" : now ? "gx-qstep gx-qstep-now" : "gx-qstep";
+    <div className="gx-qlog">
+      <Head kicker="This week" title="What to do next" />
+      <div className="gx-qlog-grid">
+        <ol className="gx-quest">
+          <svg className="gx-vine gx-vine-v" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
+            <path pathLength="100" d="M10 0 V100" strokeDasharray="100" strokeDashoffset={offset} />
+          </svg>
+          {QUEST_STEPS.map((step, index) => {
+            const complete = index < done;
+            const now = index === done;
+            const state = complete ? "gx-qstep gx-qstep-done" : now ? "gx-qstep gx-qstep-now" : "gx-qstep gx-qstep-bud";
+            return (
+              <li key={step.id} className={state}>
+                <span className="gx-node"><Mark kind={complete ? "leaf" : now ? "sprout" : "bud"} /></span>
+                <span className="gx-qcopy">
+                  {"href" in step ? (
+                    <a className="gx-step-hit" href={step.href}>{step.title}</a>
+                  ) : (
+                    <span className="gx-step-name">{step.title}</span>
+                  )}
+                  <small>{complete ? "Done" : now ? "Now" : "Later"} · {step.reward}</small>
+                  {now ? (
+                    <button type="button" className="gx-btn" data-testid="quest-advance" onClick={onAdvance}>
+                      {step.title}
+                    </button>
+                  ) : null}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <section className="gx-panel gx-season-card">
+          <p className="sheet-kicker">Season</p>
+          <p className="gx-meta"><b>Week 2 of 13</b> <Ex /></p>
+          <p className="gx-line">Streak: 2 calls</p>
+          <div className="gx-bar gx-bar-on" aria-hidden="true"><span style={{ width: "15%" }} /></div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function LockedScreen() {
+  const cards = [
+    { name: "Example Grove", why: "Your carpentry meets a build week" },
+    { name: "Example Watershed", why: "A water need sits open" },
+    { name: "Example Orchard", why: "A harvest role is unfilled" },
+  ];
+  return (
+    <div className="gx-match">
+      <Head kicker="Project matching" title="What's coming" />
+      <section className="gx-panel gx-progress-card">
+        <p className="gx-meta"><b className="sheet-display gx-h2">48</b> of 111 campaigns <Ex /></p>
+        <div className="gx-bar gx-bar-on" role="progressbar" aria-valuemin={0} aria-valuemax={111} aria-valuenow={48} aria-valuetext="Example count, 48 of 111 active campaigns"><span /></div>
+        <p className="gx-line">At 111, the sheet can suggest projects that fit your gifts.</p>
+      </section>
+      <ul className="gx-matches">
+        {cards.map((card) => (
+          <li key={card.name} className="gx-panel gx-match-card">
+            <span className="gx-bud-icon" aria-hidden="true"><Mark kind="bud" /></span>
+            <div>
+              <p className="sheet-kicker">Budding</p>
+              <b className="sheet-display">{card.name}</b> <Ex />
+              <p className="gx-line">{card.why}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <section className="gx-panel">
+        <p className="sheet-kicker">How you help it grow</p>
+        <p className="gx-line">Name a gift on your sheet. Each gift moves the count.</p>
+        <button type="button" className="gx-btn">Name a gift</button>
+      </section>
+    </div>
+  );
+}
+
+function PathsScreen({ season, onSeason }: { gate: string; season: string; onGate: (key: string) => void; onSeason: (name: string) => void }) {
+  return (
+    <div className="gx-paths">
+      <Head kicker="Season 2" title="Which path is yours" />
+      <div className="gx-path-grid">
+        {SEASON_PATHS.map((path) => (
+          <article key={path.name} className={season === path.name ? "gx-panel gx-path gx-path-on" : "gx-panel gx-path"}>
+            <h2 className="sheet-display gx-h2">{path.name}</h2>
+            <p className="gx-line"><b>Who</b> {path.who} <Ex /></p>
+            <p className="gx-line"><b>Do</b> {path.steps}</p>
+            <p className="gx-line"><b>Get</b> {path.get} <Ex /></p>
+            <button type="button" className="gx-btn" aria-pressed={season === path.name} onClick={() => onSeason(path.name)}>
+              {season === path.name ? "Chosen" : "Choose"}
+            </button>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HostingScreen({ level, onLevel }: { level: number; onLevel: (level: number) => void }) {
+  const steps = VILLAGE_OS_OFFER.howHostingWorks;
+  const current = steps[level - 1] ?? steps[1];
+  const next = steps[level] ?? null;
+  return (
+    <div className="gx-host">
+      <Head kicker="Example village" title="Where hosting stands" />
+      <section className="gx-panel gx-host-now">
+        <p className="sheet-kicker">Now · Level {level} <Ex /></p>
+        <h2 className="sheet-display gx-h2">{current.title}</h2>
+        <p className="gx-line">{current.body}</p>
+      </section>
+      {next ? (
+        <section className="gx-panel">
+          <p className="sheet-kicker">Next · Level {level + 1}</p>
+          <h2 className="sheet-display gx-h2">{next.title}</h2>
+          <p className="gx-line">{next.body}</p>
+        </section>
+      ) : null}
+      <ol className="gx-ladder">
+        {steps.map((step, index) => {
+          const n = index + 1;
+          const cls = n === level ? "gx-ladder-now" : n < level ? "gx-ladder-done" : "";
           return (
-            <li key={step.id} className={className}>
-              <span className="gx-bloom" aria-hidden="true"><Mark kind="leaf" /></span>
-              {"href" in step ? (
-                <a className="gx-step-hit" href={step.href}>{step.title}</a>
-              ) : (
-                <button type="button" data-testid={now ? "quest-advance" : undefined} onClick={() => (now ? onAdvance() : undefined)}>
-                  {step.title}
-                </button>
-              )}
+            <li key={step.title}>
+              <button type="button" className={cls} aria-pressed={n === level} onClick={() => onLevel(n)}>
+                <b>{n}</b> {step.title}
+              </button>
             </li>
           );
         })}
@@ -516,142 +569,19 @@ function QuestScreen({ done, onAdvance }: { done: number; onAdvance: () => void 
   );
 }
 
-function LockedScreen() {
-  return (
-    <div className="gx-locked">
-      <Head kicker="Project matching" title="Under the soil">
-        <span className="gx-ex">
-          <b className="sheet-display">48</b>
-          <span>of 111</span>
-          <span className="gx-ex-tag">example count</span>
-        </span>
-      </Head>
-      <div className="gx-soil" aria-hidden="true">
-        <svg viewBox="0 0 360 200">
-          <rect width="360" height="200" fill="var(--sheet-panel)" />
-          <path d="M0 92 C 80 70 140 110 200 88 C 270 64 320 100 360 84 V 0 H 0 Z" fill="var(--sheet-ground)" opacity="0.55" />
-          <path d="M0 108 C 70 128 150 90 220 112 C 290 132 330 100 360 114 V 200 H 0 Z" fill="var(--sheet-raised)" />
-          <ellipse cx="176" cy="146" rx="11" ry="15" fill="var(--sheet-gold)" />
-          <path d="M176 132 C 176 112 164 98 154 86" fill="none" stroke="var(--sheet-living)" strokeWidth="2" />
-          <ellipse cx="150" cy="78" rx="9" ry="14" fill="var(--sheet-living)" />
-        </svg>
-      </div>
-      <div
-        className="gx-bar gx-bar-on"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={111}
-        aria-valuenow={48}
-        aria-valuetext="Example count, 48 of 111 active campaigns"
-      >
-        <span />
-      </div>
-      <p className="sheet-kicker" style={{ margin: 0 }}>Some projects at the table</p>
-      <div className="gx-glimpse">
-        <div><strong className="sheet-display">Example Grove</strong><span>a closed bud</span></div>
-        <div><strong className="sheet-display">Example Watershed</strong><span>a closed bud</span></div>
-      </div>
-      <details className="gx-details">
-        <summary>What opens</summary>
-        <p>At 111 active campaigns, this sheet can suggest projects that fit the gifts on it.</p>
-      </details>
-    </div>
-  );
-}
-
-function PathsScreen({
-  gate,
-  season,
-  onGate,
-  onSeason,
-}: {
-  gate: string;
-  season: string;
-  onGate: (key: string) => void;
-  onSeason: (name: string) => void;
-}) {
-  const gates = [VILLAGE_OS_OFFER.self, VILLAGE_OS_OFFER.hosted, VILLAGE_OS_OFFER.custom];
-  return (
-    <div className="gx-paths">
-      <Head kicker="Village OS" title="Choose a path" />
-      <div className="gx-pick-row">
-        {gates.map((card) => (
-          <button
-            key={card.key}
-            type="button"
-            className={gate === card.key ? "gx-pick gx-pick-on" : "gx-pick"}
-            aria-pressed={gate === card.key}
-            onClick={() => onGate(card.key)}
-          >
-            <span className="gx-mark-lg"><Mark kind={card.key === "hosted" ? "stem" : card.key === "custom" ? "leaf" : "sprout"} /></span>
-            <span>
-              <small>{card.gate}</small>
-              <strong className="sheet-display">{card.title}</strong>
-            </span>
-          </button>
-        ))}
-      </div>
-      <p className="sheet-kicker" style={{ margin: "0.2rem 0 0" }}>Season 2 paths</p>
-      <div className="gx-season-row">
-        {SEASON_PATHS.map((name) => (
-          <button
-            key={name}
-            type="button"
-            className="gx-season"
-            aria-pressed={season === name}
-            onClick={() => onSeason(name)}
-          >
-            <span className="sheet-display">{name}</span>
-          </button>
-        ))}
-      </div>
-      <details className="gx-details">
-        <summary>Notes</summary>
-        <p>{gates.find((card) => card.key === gate)?.blurb}</p>
-      </details>
-    </div>
-  );
-}
-
-function HostingScreen({ level, onLevel }: { level: number; onLevel: (level: number) => void }) {
-  return (
-    <div className="gx-host">
-      <Head kicker="Example village" title="Levels 1 to 4">
-        <span className="gx-ex-tag">example</span>
-      </Head>
-      <div className="gx-level-row">
-        {VILLAGE_OS_OFFER.howHostingWorks.map((step, index) => {
-          const n = index + 1;
-          const cls = n === level ? "gx-level gx-level-now" : n < level ? "gx-level gx-level-done" : "gx-level";
-          return (
-            <button key={step.title} type="button" className={cls} aria-pressed={n === level} onClick={() => onLevel(n)}>
-              <span className="gx-mark-lg"><Mark kind={n === 1 ? "sprout" : n === 4 ? "leaf" : "stem"} /></span>
-              <span>
-                <small>Level {n} · {LEVELS[index]}</small>
-                <strong className="sheet-display">{step.title}</strong>
-              </span>
-              <span className="gx-growth" aria-hidden="true"><i /></span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function ChromeStudy({ phase, shot }: { phase: "before" | "after"; shot: boolean }) {
+function ChromeStudy({ phase, shot, hand, onHand, portrait }: { phase: "before" | "after"; shot: boolean; hand: boolean; onHand: () => void; portrait: string | null }) {
   const [away, setAway] = useState(shot && phase === "after");
   const [film, setFilm] = useState(false);
   const last = useRef(0);
   const onScroll = (event: UIEvent<HTMLDivElement>) => {
     if (phase !== "after") return;
     const top = event.currentTarget.scrollTop;
-    if (top > last.current + 6 && top > 12) setAway(true);
+    if (top > last.current + 6 && top > 8) setAway(true);
     else if (top + 6 < last.current) setAway(false);
     last.current = top;
   };
   return (
-    <>
+    <div className="gx-chrome-screen">
       <Head kicker={phase === "before" ? "Before" : "After"} title={phase === "before" ? "First visit" : "After the scroll"} />
       <div className={`gx-chrome gx-chrome-${phase}`}>
         <header className={away ? "gx-site-header gx-header-away" : "gx-site-header"}>
@@ -662,16 +592,8 @@ function ChromeStudy({ phase, shot }: { phase: "before" | "after"; shot: boolean
           <button type="button" className="gx-film" onClick={() => setFilm((open) => !open)}>Film</button>
         ) : null}
         <div className="gx-chrome-body" onScroll={onScroll}>
-          <p className="sheet-kicker">Who&apos;s here</p>
-          <div className="gx-avatars">
-            {ROOM.slice(0, 5).map((name) => (
-              <div key={name} className="gx-avatar"><Silhouette /></div>
-            ))}
-          </div>
-          {phase === "after" && !shot ? <div className="gx-scroll-pad" /> : null}
-          {film ? (
-            <p className="gx-cue">The welcome film waits here until you ask for it.</p>
-          ) : null}
+          <WeekScreen shot={shot} hand={hand} onHand={onHand} portrait={portrait} inset />
+          {film ? <p className="gx-cue">The welcome film waits here until you ask for it.</p> : null}
         </div>
         {phase === "before" ? (
           <div className="gx-cookie">
@@ -693,11 +615,10 @@ function ChromeStudy({ phase, shot }: { phase: "before" | "after"; shot: boolean
             <div className="gx-modal-card">
               <img className="gx-hero" src="/images/backgrounds/community-hero-mobile.webp" alt="" />
               <div className="gx-modal-copy">
-                <img src="/images/logos/regen-civics-emblem.webp" alt="" width={56} height={56} />
+                <img src="/images/logos/regen-civics-emblem.webp" alt="" width={40} height={40} />
                 <h2 className="sheet-display">Welcome to ReGen Civics</h2>
                 <div className="gx-dock" style={{ justifyContent: "center" }}>
                   <button type="button" className="gx-btn">Skip, I&apos;m ready</button>
-                  <button type="button" className="gx-btn gx-btn-quiet">What is Regeneration?</button>
                 </div>
               </div>
             </div>
@@ -706,116 +627,90 @@ function ChromeStudy({ phase, shot }: { phase: "before" | "after"; shot: boolean
         <nav className="gx-tabbar" aria-label="Phone bar">
           {["Home", "Quests", "Community", "Profile", "More"].map((item) => <span key={item}>{item}</span>)}
         </nav>
-        <nav className="gx-desktopbar" aria-label="Desktop phone bar">
+        <nav className="gx-desktopbar" aria-label="Desktop bar">
           {["Quests", "Map", "Profile", "Music", "More"].map((item) => <span key={item}>{item}</span>)}
         </nav>
       </div>
-    </>
+    </div>
   );
 }
 
 function RecapScreen() {
   return (
     <div className="gx-recap">
-      <Head kicker="Example session" title="The room" />
-      <div className="gx-stats">
-        <article className="gx-stat">
-          <Mark kind="leaf" />
-          <div>
-            <p className="sheet-kicker" style={{ margin: 0 }}>Shared</p>
-            <div className="gx-chips">
-              <i>Water</i><i>A bed</i><i>Tools</i>
-            </div>
-            <span className="gx-ex-tag">example</span>
+      <Head kicker="Example session" title="What we did" />
+      <div className="gx-recap-grid">
+        <section className="gx-panel">
+          <p className="sheet-kicker">The room shared</p>
+          <p className="gx-line">Water, a bed, tools <Ex /></p>
+          <p className="gx-meta"><b>4</b> hands raised <Ex /></p>
+        </section>
+        <section className="gx-panel">
+          <p className="sheet-kicker">Some projects at the table</p>
+          <p className="gx-meta"><b>Example Grove</b> <Ex /></p>
+          <p className="gx-line">{ROOT.title} to {SPROUT.title}</p>
+          <p className="gx-meta"><b>Example Watershed</b> <Ex /></p>
+          <p className="gx-line">Stayed at {ROOT.title}</p>
+        </section>
+        <section className="gx-panel">
+          <p className="sheet-kicker">You</p>
+          <p className="gx-line">10 hrs carpentry, Experiential, to Example Grove <Ex /></p>
+        </section>
+        <section className="gx-panel gx-next-call">
+          <p className="sheet-kicker">Next call</p>
+          <p className="gx-meta"><b className="sheet-display gx-h2">6 days</b> <Ex /></p>
+          <div className="gx-dock">
+            <a className="gx-link" href={JOIN_URL}>Join the call</a>
+            <a className="gx-link gx-btn-quiet" href={CALENDAR_HREF} target="_blank" rel="noopener noreferrer">Add to calendar</a>
           </div>
-        </article>
-        <article className="gx-stat">
-          <Mark kind="stem" />
-          <div>
-            <p className="gx-ex"><b className="sheet-display">4</b><span>hands</span><span className="gx-ex-tag">example</span></p>
-          </div>
-        </article>
-        <article className="gx-stat">
-          <svg className="gx-clock" viewBox="0 0 80 80" aria-hidden="true">
-            <circle cx="40" cy="40" r="32" fill="none" stroke="var(--sheet-edge)" strokeWidth="4" />
-            <circle cx="40" cy="40" r="32" fill="none" stroke="var(--sheet-gold)" strokeWidth="4" strokeDasharray="150 201" strokeLinecap="round" transform="rotate(-90 40 40)" />
-            <text x="40" y="46" textAnchor="middle" fill="var(--sheet-gold-lit)" fontSize="18" fontFamily="var(--sheet-display)">6</text>
-          </svg>
-          <div>
-            <p className="gx-ex"><b className="sheet-display">6</b><span>days</span><span className="gx-ex-tag">example</span></p>
-          </div>
-        </article>
-        <article className="gx-stat">
-          <Mark kind="sprout" />
-          <div>
-            <p className="sheet-kicker" style={{ margin: 0 }}>Some projects at the table</p>
-            <p style={{ margin: "0.2rem 0 0" }}>Example Grove, seed to sprout.</p>
-          </div>
-        </article>
-      </div>
-      <div className="gx-dock">
-        <a className="gx-link" href={JOIN_URL}>Join the call</a>
-        <a className="gx-link gx-btn-quiet" href={CALENDAR_HREF} target="_blank" rel="noopener noreferrer">Add to calendar</a>
+        </section>
       </div>
     </div>
   );
 }
 
-function Banner({ kind }: { kind: "leaf" | "water" | "fruit" | "table" }) {
-  return (
-    <span className="gx-banner" aria-hidden="true">
-      <svg viewBox="0 0 80 64">
-        <path d="M8 6 h64 v40 c-10 10-22 14-32 14 S18 56 8 46 Z" fill="var(--sheet-raised)" stroke="currentColor" />
-        {kind === "water" ? (
-          <path d="M40 16c6 8 12 12 12 18a12 12 0 0 1-24 0c0-6 6-10 12-18z" fill="var(--sheet-living)" />
-        ) : kind === "fruit" ? (
-          <circle cx="40" cy="32" r="10" fill="var(--sheet-gold)" />
-        ) : kind === "table" ? (
-          <path d="M18 40c8-16 36-16 44 0" fill="none" stroke="var(--sheet-living)" strokeWidth="2" />
-        ) : (
-          <path d="M28 44c10-2 18-12 20-24-12 2-20 12-20 24z" fill="var(--sheet-living)" />
-        )}
-      </svg>
-    </span>
-  );
-}
-
 function GuildsScreen() {
-  const projects = [
-    { name: "Example Grove", kind: "leaf" as const, href: HYLO_SEEDS_URL, where: "Example Hylo space" },
-    { name: "Example Watershed", kind: "water" as const, href: HOLOS_REGEN_CIVICS_URL, where: "Example Holos space" },
-    { name: "Example Orchard", kind: "fruit" as const, href: HYLO_SEEDS_URL, where: "Example Hylo space" },
-  ];
   return (
     <div className="gx-guilds">
-      <Head kicker="Guilds" title="Some projects at the table" />
-      <article className="gx-guild">
-        <Banner kind="table" />
+      <Head kicker="Guilds" title="Your crew" />
+      <section className="gx-panel gx-my-guild">
+        <div className="gx-banner" aria-hidden="true"><Mark kind="leaf" /></div>
         <div>
-          <h2 className="sheet-display">The table</h2>
-          <div className="gx-roster" aria-hidden="true"><i /><i /><i /><i /></div>
-          <div className="gx-gather">
-            <a className="gx-link" href={HYLO_SEEDS_URL} target="_blank" rel="noopener noreferrer">Gather</a>
-            <span className="gx-ex-tag">Hylo, SEEDS group</span>
-            <a className="gx-link" href={HOLOS_REGEN_CIVICS_URL} target="_blank" rel="noopener noreferrer">Gather</a>
-            <span className="gx-ex-tag">Holos, Regen Civics holon</span>
-          </div>
+          <p className="sheet-kicker">Your guild</p>
+          <h2 className="sheet-display gx-h2">Example Grove <Ex /></h2>
+          <ul className="gx-member-line">
+            <li>Example player · Spaceholder</li>
+            <li>Example player 2 · Builder</li>
+            <li>Example player 4 · Catalyst</li>
+          </ul>
+          <p className="gx-line">Latest: named 10 hrs carpentry</p>
+          <a className="gx-link" href={HYLO_SEEDS_URL} target="_blank" rel="noopener noreferrer">Gather</a>
+          <span className="gx-ex-tag">Example Hylo space</span>
         </div>
-      </article>
-      {projects.map((project) => (
-        <article key={project.name} className="gx-guild">
-          <Banner kind={project.kind} />
-          <div>
-            <h2 className="sheet-display">{project.name}</h2>
-            <span className="gx-ex-tag">example</span>
-            <div className="gx-roster" aria-hidden="true"><i /><i /><i /></div>
-            <div className="gx-gather">
-              <a className="gx-link" href={project.href} target="_blank" rel="noopener noreferrer">Gather</a>
-              <span className="gx-cue">{project.where}</span>
+      </section>
+      <p className="sheet-kicker">Also gather</p>
+      <div className="gx-dock">
+        <a className="gx-link" href={HYLO_SEEDS_URL} target="_blank" rel="noopener noreferrer">Gather</a>
+        <span className="gx-ex-tag">Hylo, SEEDS group</span>
+        <a className="gx-link" href={HOLOS_REGEN_CIVICS_URL} target="_blank" rel="noopener noreferrer">Gather</a>
+        <span className="gx-ex-tag">Holos, Regen Civics holon</span>
+      </div>
+      <ul className="gx-other-guilds">
+        {[
+          { name: "Example Watershed", where: "Example Holos space", href: HOLOS_REGEN_CIVICS_URL, mark: "drop" as const, note: "Shared a water need" },
+          { name: "Example Orchard", where: "Example Hylo space", href: HYLO_SEEDS_URL, mark: "bud" as const, note: "Opened a harvest role" },
+        ].map((guild) => (
+          <li key={guild.name} className="gx-panel gx-guild-row">
+            <span className="gx-banner"><Mark kind={guild.mark} /></span>
+            <div>
+              <b className="sheet-display">{guild.name}</b> <Ex />
+              <p className="gx-line">{guild.note}</p>
+              <a className="gx-link" href={guild.href} target="_blank" rel="noopener noreferrer">Gather</a>
+              <span className="gx-cue">{guild.where}</span>
             </div>
-          </div>
-        </article>
-      ))}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -835,7 +730,7 @@ function SplashScreen({ splashKey, onReplay, shot }: { splashKey: number; onRepl
         </svg>
         <h1 className="sheet-display gx-splash-word">ReGen</h1>
       </div>
-      <p className="gx-cue">Wind chime</p>
+      <p className="gx-cue">Session alerts. Wind chime.</p>
       {shot ? null : (
         <button type="button" className="gx-btn gx-btn-quiet" data-testid="splash-replay" onClick={onReplay}>Again</button>
       )}
@@ -844,29 +739,31 @@ function SplashScreen({ splashKey, onReplay, shot }: { splashKey: number; onRepl
 }
 
 function InstallScreen() {
+  const benefits = [
+    { title: "Session alerts", line: "A note when the room opens.", cue: "Birdsong" },
+    { title: "The call, one tap", line: "Join the call from the home screen.", cue: "" },
+    { title: "Your sheet", line: "Gifts, quests, and your guild stay one tap away.", cue: "" },
+  ];
   return (
     <div className="gx-install">
-      <div className="gx-home" aria-label="Home screen">
-        <div className="gx-appicon">
-          <img className="gx-icon-live" src="/images/logos/regen-civics-emblem.webp" alt="ReGen" />
-          ReGen
-        </div>
-        {["Leaf", "Rain", "Soil"].map((name) => (
-          <div key={name} className="gx-appicon">
-            <span className="gx-icon-fallback" />
-            {name}
-          </div>
+      <Head kicker="On your phone" title="Why install" />
+      <ul className="gx-benefits">
+        {benefits.map((item) => (
+          <li key={item.title} className="gx-panel">
+            <b className="sheet-display">{item.title}</b>
+            <p className="gx-line">{item.line}</p>
+            {item.cue ? <p className="gx-cue">{item.cue}</p> : null}
+          </li>
         ))}
-      </div>
-      <div className="gx-prompt">
-        <h1 className="sheet-display">Session starting</h1>
-        <p>A note when the room opens.</p>
-        <div className="gx-prompt-actions">
-          <button type="button" className="gx-btn">Allow</button>
-          <button type="button" className="gx-btn gx-btn-quiet">Not now</button>
+      </ul>
+      <section className="gx-panel gx-install-action">
+        <div className="gx-appicon">
+          <img className="gx-icon-live" src="/images/logos/regen-civics-emblem.webp" alt="" />
+          <span>ReGen</span>
         </div>
-        <p className="gx-cue">Birdsong</p>
-      </div>
+        <button type="button" className="gx-btn">Install</button>
+        <button type="button" className="gx-btn gx-btn-quiet">Not now</button>
+      </section>
     </div>
   );
 }
@@ -882,8 +779,7 @@ export default function GameExperiencePreview() {
   const [done, setDone] = useState(shot ? 2 : 1);
   const [archetype, setArchetype] = useState<string | null>(shot ? "facilitating" : null);
   const [look, setLook] = useState<PortraitPresentation | null>(shot ? "f" : null);
-  const [gate, setGate] = useState("hosted");
-  const [season, setSeason] = useState<string>(SEASON_PATHS[1]);
+  const [season, setSeason] = useState<string>(SEASON_PATHS[1].name);
   const [level, setLevel] = useState(2);
   const [splashKey, setSplashKey] = useState(0);
 
@@ -910,15 +806,6 @@ export default function GameExperiencePreview() {
 
   const addGift = () => {
     lightTap();
-    if (bloomed && gifts >= 3) {
-      setBloomed(false);
-      setGifts(2);
-      window.setTimeout(() => {
-        setGifts(3);
-        setBloomed(true);
-      }, 40);
-      return;
-    }
     setGifts((count) => Math.min(4, count + 1));
     setBloomed(true);
   };
@@ -927,11 +814,9 @@ export default function GameExperiencePreview() {
   const portrait = archetype && look ? classPortraitSrc(archetype, look) : null;
 
   let body: ReactNode = null;
-  if (screen === "week") {
-    body = <WeekScreen shot={shot} hand={hand} onHand={() => setHand((value) => !value)} portrait={portrait} />;
-  } else if (screen === "reward") {
-    body = <RewardScreen gifts={gifts} bloomed={bloomed} onAdd={addGift} reduced={reduced || shot} />;
-  } else if (screen === "sheet") {
+  if (screen === "week") body = <WeekScreen shot={shot} hand={hand} onHand={() => setHand((value) => !value)} portrait={portrait} />;
+  else if (screen === "reward") body = <RewardScreen gifts={gifts} bloomed={bloomed} onAdd={addGift} reduced={reduced || shot} />;
+  else if (screen === "sheet") {
     body = (
       <SheetScreen
         archetype={archetype}
@@ -945,13 +830,12 @@ export default function GameExperiencePreview() {
         onAdd={addGift}
       />
     );
-  } else if (screen === "quests") {
-    body = <QuestScreen done={done} onAdvance={() => setDone((count) => Math.min(QUEST_STEPS.length, count + 1))} />;
-  } else if (screen === "locked") body = <LockedScreen />;
-  else if (screen === "paths") body = <PathsScreen gate={gate} season={season} onGate={setGate} onSeason={setSeason} />;
+  } else if (screen === "quests") body = <QuestScreen done={done} onAdvance={() => setDone((count) => Math.min(QUEST_STEPS.length, count + 1))} />;
+  else if (screen === "locked") body = <LockedScreen />;
+  else if (screen === "paths") body = <PathsScreen gate="hosted" season={season} onGate={() => undefined} onSeason={setSeason} />;
   else if (screen === "hosting") body = <HostingScreen level={level} onLevel={setLevel} />;
-  else if (screen === "phone-before") body = <ChromeStudy phase="before" shot={shot} />;
-  else if (screen === "phone-after") body = <ChromeStudy phase="after" shot={shot} />;
+  else if (screen === "phone-before") body = <ChromeStudy phase="before" shot={shot} hand={hand} onHand={() => setHand((value) => !value)} portrait={portrait} />;
+  else if (screen === "phone-after") body = <ChromeStudy phase="after" shot={shot} hand={hand} onHand={() => setHand((value) => !value)} portrait={portrait} />;
   else if (screen === "recap") body = <RecapScreen />;
   else if (screen === "guilds") body = <GuildsScreen />;
   else if (screen === "splash") body = <SplashScreen splashKey={splashKey} shot={shot} onReplay={() => setSplashKey((key) => key + 1)} />;
