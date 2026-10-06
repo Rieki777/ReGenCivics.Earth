@@ -21,6 +21,8 @@ import {
   parseReadyList,
   sessionBoardHref,
   sessionBoardShareUrl,
+  sessionClosedAt,
+  sessionElapsedMs,
   sessionMinutes,
   shareTime,
   voteTarget,
@@ -182,6 +184,22 @@ describe("the facilitator's actions", () => {
     expect(applyBoardAction(base, { type: "plan", stage: 4, minutes: 0 }, t0).plan[4]).toBe(1);
     expect(applyBoardAction(base, { type: "plan", stage: 4, minutes: 999 }, t0).plan[4]).toBe(BOARD_LIMITS.maxStageMinutes);
     expect(applyBoardAction(base, { type: "shareSecs", secs: 5 }, t0).speaker.secs).toBe(BOARD_LIMITS.minShareSecs);
+  });
+
+  it("ends when the presenter ends it, or when the planned length passes, and the clock stops there", () => {
+    const started = applyBoardAction(base, { type: "startSession" }, t0);
+    const planned = sessionMinutes(started.plan, boardStages(2)) * 60_000;
+    expect(sessionClosedAt(started, planned, t0 + 60_000)).toBeNull();
+    expect(sessionElapsedMs(started, planned, t0 + planned + 90_000)).toBe(planned);
+    expect(sessionClosedAt(started, planned, t0 + planned)).toBe(t0 + planned);
+    const ended = applyBoardAction(started, { type: "endSession" }, t0 + 1_000);
+    expect(ended.endedAt).toBe(t0 + 1_000);
+    expect(sessionClosedAt(ended, planned, t0 + 50_000)).toBe(t0 + 1_000);
+    expect(sessionElapsedMs(ended, planned, t0 + 50_000)).toBe(1_000);
+    const restarted = applyBoardAction(ended, { type: "restartClocks" }, t0 + 80_000);
+    expect(restarted.sessionStartedAt).toBeNull();
+    expect(restarted.endedAt).toBeNull();
+    expect(sessionClosedAt(restarted, planned, t0 + 90_000)).toBeNull();
   });
 });
 
