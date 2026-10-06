@@ -706,7 +706,7 @@ export const NEED_MARKER = {
  */
 export const SEASON_DEFAULTS = {
   upcoming: (date: string, seasonNumber: number) =>
-    `Default opening day: ${date}. Season ${seasonNumber} crowdpooling opens together at the December solstice, when the Resource Season opens on the Year wheel. Each project can choose its own day.`,
+    `Default opening day: ${date}. Season ${seasonNumber} crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project can choose its own day.`,
   open: (date: string, seasonNumber: number) =>
     `Season ${seasonNumber} crowdpooling opened on ${date}, the default opening day on the Year wheel. Each project can choose its own day.`,
   lookForLead: "What we look for, by default: ",

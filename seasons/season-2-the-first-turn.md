@@ -75,12 +75,12 @@ Art: generated 2026-09-24 with the `regen-seasonal-roles` template (card + scene
 | **Card / scene** | `/images/roles/resource-season-organizer-card.webp`, `-scene.webp` |
 
 **Deliverables:**
-- Receive the wheel at the December solstice and run the shared crowdpool launch with the cohort and every community project that's ready
+- Receive the wheel at the December solstice, and launch the shared crowdpool at the March equinox with the cohort and every community project that's ready
 - Keep the campaign calendar: stories, live moments, matching pushes, investor conversations
 - Help people find and claim needs and roles on every campaign; publish a weekly crowdpool recap
 - Host the March equinox recap and pass off to the Build Season Organizer
 
-**Seed:** The shared launch goes live at the solstice with every graduating project and every community project that's ready.
+**Seed:** The shared launch goes live at the March equinox with every graduating project and every community project that's ready.
 **Harvest:** Graduating projects reach their in-kind asks by close (target: most at 100% of the in-kind ask).
 
 **Powers:** Set the Resource Season calendar; feature campaigns across the site and letters; coordinate the Storyteller and Outreach Writer on the push; call the March recap and passoff.

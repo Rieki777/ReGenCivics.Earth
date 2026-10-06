@@ -772,7 +772,7 @@ See you in the game!`,
     slug: 'how-to-apply-for-season-2',
     title: 'How to Apply for Season 2: Complete Application Guide',
     excerpt: 'Step-by-step tutorial on submitting your land project application for the next ReGen Civics season. Learn what information you need and how to present your project effectively.',
-    content: `**Update, October 2026:** Season 2 applications are open again, on a rolling basis, until the crowdpooling round opens on December 21. We review them as they come in. Being accepted means your project meets the minimum criteria to take part in crowdpooling. From there it's up to each village and project to follow along, join the sessions, watch any you missed, and do the parts your project needs to join the crowdpooling round. The weekly time and the sessions so far are on the [Season Schedule](/season-schedule). The steps below still describe how to apply.
+    content: `**Update, October 2026:** Season 2 applications are open again, on a rolling basis, until the crowdpooling round opens on March 20. We review them as they come in. Being accepted means your project meets the minimum criteria to take part in crowdpooling. From there it's up to each village and project to follow along, join the sessions, watch any you missed, and do the parts your project needs to join the crowdpooling round. The weekly time and the sessions so far are on the [Season Schedule](/season-schedule). The steps below still describe how to apply.
 
 Ready to apply? This guide walks you through every step of the application process.
 

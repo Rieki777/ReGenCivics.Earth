@@ -146,8 +146,8 @@ describe("shared/crowdpoolCopy", () => {
     );
     expect(copy.FOLLOW.emailDone("Harmony Valley")).toBe("You're on the list for news from Harmony Valley.");
     expect(copy.NEED_MARKER.statsLine(2, 3)).toBe("Needed to start: 2 of 3 met.");
-    expect(copy.SEASON_DEFAULTS.upcoming("21 December 2026", 2)).toBe(
-      "Default opening day: 21 December 2026. Season 2 crowdpooling opens together at the December solstice, when the Resource Season opens on the Year wheel. Each project can choose its own day.",
+    expect(copy.SEASON_DEFAULTS.upcoming("20 March 2027", 2)).toBe(
+      "Default opening day: 20 March 2027. Season 2 crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project can choose its own day.",
     );
     expect(copy.SEASON_DEFAULTS.open("21 December 2026", 2)).toBe(
       "Season 2 crowdpooling opened on 21 December 2026, the default opening day on the Year wheel. Each project can choose its own day.",

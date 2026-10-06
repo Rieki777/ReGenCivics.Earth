@@ -357,7 +357,7 @@ export default function Land() {
                 <p>
                   We help you get ready to raise support through economic modeling, impact metrics,
                   legal structure, and governance design. Graduating projects launch their crowdpooling
-                  campaigns together at the end of the season, where people bring time, things, skills,
+                  campaigns together at the March equinox, where people bring time, things, skills,
                   land and money. Money goes through outside partners each project holds, never through
                   ReGen Civics.
                 </p>

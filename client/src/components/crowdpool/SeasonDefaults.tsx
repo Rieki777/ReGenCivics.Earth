@@ -3,8 +3,8 @@
  * section 14; research question 14, ruled 2026-09-27).
  *
  * Two things, each labelled as a default: the shared opening day from the
- * Year wheel (the December solstice, when the Resource Season opens;
- * shared/crowdpoolCalendar.ts) and "What we look for", which links to the
+ * Year wheel (the March equinox, when the Build Season opens;
+ * shared/crowdpoolCalendar.ts, ADR-70) and "What we look for", which links to the
  * Ready to crowdpool list. Each project can choose its own day (ruling
  * 2026-09-24). Sits under the explanatory callout and above the tabs, so it
  * heads both the gallery and the Needs tab.

@@ -57,8 +57,8 @@ The Game's seasons run one season ahead of the northern calendar, and the timeli
 | Season (pattern) | Opens at | Opening gathering |
 |---|---|---|
 | Design (winter) | September equinox (~Sep 22) | The Handoff Festival and Selection Day |
-| Resource (spring) | December solstice (~Dec 21) | Recap and passoff, and the crowdpool launch |
-| Build (summer) | March equinox (~Mar 20) | Recap and passoff |
+| Resource (spring) | December solstice (~Dec 21) | Recap and passoff |
+| Build (summer) | March equinox (~Mar 20) | Recap and passoff, and the crowdpool launch |
 | Rest (fall) | June solstice (~Jun 21) | Recap and passoff |
 
 A numbered Season runs a full year, one turn of the wheel; the ritual spine repeats its weekly rhythm through each of the four seasons, and each season's organizer runs its recap and passoff.
