@@ -299,6 +299,42 @@ export function sessionClosedAt(state: BoardState, plannedMs: number, now: numbe
   return now >= end ? end : null;
 }
 
+/** Where an input sits relative to the session. Closing time is not stored. */
+export type BoardMoment = "before" | "live" | "after";
+
+export function boardMoment(createdAtMs: number, state: BoardState, plannedMs: number): BoardMoment {
+  if (!state.sessionStartedAt || createdAtMs < state.sessionStartedAt) return "before";
+  const end = sessionClosedAt(state, plannedMs, createdAtMs);
+  if (end != null && createdAtMs >= end) return "after";
+  return "live";
+}
+
+/**
+ * The next session after this board's week. An early end must not name the
+ * week people are already on.
+ */
+export function nextBoardSession<T extends { week: number; status: string; start: Date }>(
+  sessions: readonly T[],
+  boardWeek: number,
+  afterMs: number,
+): T | null {
+  let best: T | null = null;
+  for (const session of sessions) {
+    if (session.week <= boardWeek) continue;
+    if (session.status === "cancelled" || session.status === "completed") continue;
+    if (session.start.getTime() <= afterMs) continue;
+    if (!best || session.start.getTime() < best.start.getTime()) best = session;
+  }
+  return best;
+}
+
+export function closedBoardBanner(week: number): string {
+  return `This board is the record of Week ${week}. You can still add your word, your project and your notes.`;
+}
+
+export const CLOSE_BOARD_CONFIRM =
+  "Close the board? The room's controls stop and it stays up as this week's record. People can still add to it.";
+
 /** Elapsed session time, frozen once the session is over and never past the plan. */
 export function sessionElapsedMs(state: BoardState, plannedMs: number, now: number): number | null {
   if (!state.sessionStartedAt) return null;

@@ -21,6 +21,10 @@ import {
   parseReadyList,
   sessionBoardHref,
   sessionBoardShareUrl,
+  boardMoment,
+  closedBoardBanner,
+  CLOSE_BOARD_CONFIRM,
+  nextBoardSession,
   sessionClosedAt,
   sessionElapsedMs,
   sessionMinutes,
@@ -200,6 +204,27 @@ describe("the facilitator's actions", () => {
     expect(restarted.sessionStartedAt).toBeNull();
     expect(restarted.endedAt).toBeNull();
     expect(sessionClosedAt(restarted, planned, t0 + 90_000)).toBeNull();
+  });
+
+  it("classifies an input as before, live, or after the session", () => {
+    const started = applyBoardAction(base, { type: "startSession" }, t0);
+    const planned = sessionMinutes(started.plan, boardStages(2)) * 60_000;
+    expect(boardMoment(t0 - 1, started, planned)).toBe("before");
+    expect(boardMoment(t0 + 1_000, started, planned)).toBe("live");
+    expect(boardMoment(t0 + planned, started, planned)).toBe("after");
+    const ended = applyBoardAction(started, { type: "endSession" }, t0 + 5_000);
+    expect(boardMoment(t0 + 4_000, ended, planned)).toBe("live");
+    expect(boardMoment(t0 + 5_000, ended, planned)).toBe("after");
+  });
+
+  it("skips the board's own week when it names the next session", () => {
+    const sessions = [
+      { week: 2, status: "scheduled", start: new Date(t0 + 86_400_000) },
+      { week: 3, status: "scheduled", start: new Date(t0 + 86_400_000 * 8) },
+      { week: 4, status: "cancelled", start: new Date(t0 + 86_400_000 * 2) },
+    ];
+    expect(nextBoardSession(sessions, 2, t0)?.week).toBe(3);
+    expect(nextBoardSession(sessions, 3, t0)).toBeNull();
   });
 });
 

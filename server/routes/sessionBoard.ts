@@ -21,7 +21,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
 import type { TrpcContext } from "../_core/context";
 import { getDb } from "../db";
 import {
@@ -70,6 +70,9 @@ import {
 } from "../lib/sessionBoard";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
+import { BOARD_FOLLOW_UP_FROM } from "@shared/boardSignup";
+import { leaveContactOnBoard, linkBrowserOnBoard } from "../lib/boardContact";
+import { loadBoardPeople } from "../lib/sessionBoardPeople";
 
 /** Per-visitor ceilings. Generous for a live room; there to make loops slow. */
 const WRITE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -112,14 +115,22 @@ function requireKeys(keys: string[]): string[] {
   return keys;
 }
 
-/** The board as a participant may write to it: it exists and is still open, unless they facilitate. */
-async function writableBoard(db: Db, week: number, facilitator: boolean) {
+/**
+ * Tests pass a made-up season so they never write a real Season 2 board.
+ * Production leaves this null.
+ */
+let seasonOverride: string | null = null;
+export function setSessionBoardSeasonForTests(season: string | null) {
+  seasonOverride = season;
+}
+function boardSeason() {
+  return seasonOverride ?? SESSION_BOARD_SEASON;
+}
+
+/** The board a participant may write to. Closed still accepts words, projects, votes and hands. */
+async function participantBoard(db: Db, week: number) {
   assertWeek(week);
-  const board = await ensureBoard(db, SESSION_BOARD_SEASON, week);
-  if (board.status !== "open" && !facilitator) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "This board is closed. It stays up as the week's record." });
-  }
-  return board;
+  return ensureBoard(db, boardSeason(), week);
 }
 
 async function projectOnBoard(db: Db, boardId: number, projectId: number) {
@@ -333,7 +344,7 @@ export const sessionBoardRouter = router({
       const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
       const db = await database();
       const facilitator = await canFacilitate(db, ctx.user);
-      const board = await writableBoard(db, input.week, facilitator);
+      const board = await participantBoard(db, input.week);
 
       const text = cleanBoardLine(input.text, maxTextFor(input.kind));
       if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "Write something first." });
@@ -382,7 +393,7 @@ export const sessionBoardRouter = router({
       const db = await database();
       const facilitator = await canFacilitate(db, ctx.user);
       const keys = callerKeys(ctx.user, input.voterKey);
-      const board = await writableBoard(db, input.week, facilitator);
+      const board = await participantBoard(db, input.week);
       const item = await itemOnBoard(db, board.id, input.itemId);
       if (!item) return { ok: true as const };
       if (!facilitator && !(item.authorKey && keys.includes(item.authorKey))) {
@@ -412,7 +423,7 @@ export const sessionBoardRouter = router({
       const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
       const db = await database();
       const facilitator = await canFacilitate(db, ctx.user);
-      const board = await writableBoard(db, input.week, facilitator);
+      const board = await participantBoard(db, input.week);
       const name = cleanBoardLine(input.name, BOARD_LIMITS.projectName);
       if (!name) throw new TRPCError({ code: "BAD_REQUEST", message: "Give your project a name." });
       const url = cleanRepoUrl(input.url);
@@ -445,7 +456,7 @@ export const sessionBoardRouter = router({
       const db = await database();
       const facilitator = await canFacilitate(db, ctx.user);
       const keys = callerKeys(ctx.user, input.voterKey);
-      const board = await writableBoard(db, input.week, facilitator);
+      const board = await participantBoard(db, input.week);
       const p = await projectOnBoard(db, board.id, input.projectId);
       if (!p) throw new TRPCError({ code: "NOT_FOUND", message: "That project is not on this board." });
       if (!facilitator && !(p.authorKey && keys.includes(p.authorKey))) {
@@ -482,7 +493,7 @@ export const sessionBoardRouter = router({
     .mutation(async ({ ctx, input }) => {
       const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
       const db = await database();
-      const board = await writableBoard(db, input.week, false);
+      const board = await participantBoard(db, input.week);
       const target = voteTarget.item(input.itemId);
       if (!input.on) {
         await db.delete(sessionBoardVotes).where(and(
@@ -521,7 +532,7 @@ export const sessionBoardRouter = router({
     .mutation(async ({ ctx, input }) => {
       const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
       const db = await database();
-      const board = await writableBoard(db, input.week, false);
+      const board = await participantBoard(db, input.week);
       if (input.forWeek <= input.week) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Hands are for the weeks still to come." });
       }
@@ -552,7 +563,7 @@ export const sessionBoardRouter = router({
         throw new TRPCError({ code: "BAD_REQUEST", message: "This week's board has no hands to raise for that." });
       }
       const db = await database();
-      const board = await writableBoard(db, input.week, false);
+      const board = await participantBoard(db, input.week);
       const target = voteTarget.offer(input.offer);
       if (input.on) {
         await db
@@ -572,8 +583,8 @@ export const sessionBoardRouter = router({
 
   /**
    * Public: leave a name and email for coaching or building. The contact is
-   * kept after the board closes and after the session ends. While the board
-   * is open and the session is still going, this also raises the hand.
+   * kept after the board closes and after the session ends, and the hand
+   * count moves then too.
    */
   signUp: publicProcedure
     .use(rateLimited(VOTE_LIMIT))
@@ -585,7 +596,36 @@ export const sessionBoardRouter = router({
       email: z.string().trim().email().max(320),
       note: z.string().max(200).optional(),
     }))
-    .mutation(({ ctx, input }) => signUpOnBoard(ctx, input)),
+    .mutation(({ ctx, input }) => signUpOnBoard(ctx, input, { season: boardSeason() })),
+
+  /**
+   * Public: leave a name and email after writing on the board. One row per
+   * email per week. A closed board still accepts it, and it does not notify.
+   */
+  leaveContact: publicProcedure
+    .use(rateLimited(WRITE_LIMIT))
+    .input(z.object({
+      week: weekInput,
+      voterKey: voterKeySchema.optional(),
+      fullName: z.string().trim().min(1).max(120),
+      email: z.string().trim().email().max(320),
+      from: z.enum(BOARD_FOLLOW_UP_FROM).optional(),
+    }))
+    .mutation(({ ctx, input }) => leaveContactOnBoard(ctx, input, { season: boardSeason() })),
+
+  /** Signed in: link this browser's guest key to the account. No inquiry row. */
+  linkBrowser: publicProcedure
+    .use(rateLimited(WRITE_LIMIT))
+    .input(z.object({ week: weekInput, voterKey: voterKeySchema.optional() }))
+    .mutation(({ ctx, input }) => linkBrowserOnBoard(ctx, input)),
+
+  /** Admin: everyone who typed on one week's board, joined into people. */
+  adminPeople: adminProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ input }) => {
+      assertWeek(input.week);
+      return loadBoardPeople(await database(), boardSeason(), input.week);
+    }),
 
   /* ---------------------------------------------------------- facilitator */
 

@@ -31,8 +31,11 @@ import {
   offerPeople,
   readBoardRows,
 } from "./lib/sessionBoard";
+import { NOT_ADMIN_ERR_MSG } from "@shared/const";
 import { defaultBoardState, normalizeBoardState, voteTarget } from "@shared/sessionBoard";
 import { signUpOnBoard } from "./lib/boardSignup";
+import { setSessionBoardSeasonForTests } from "./routes/sessionBoard";
+import { loadBoardPeople } from "./lib/sessionBoardPeople";
 
 function makeCtx(user: TrpcContext["user"] | null, ip = "127.0.0.1"): TrpcContext {
   return {
@@ -129,6 +132,20 @@ describe("session board: what the router accepts", () => {
     expect(callerKeys(null, KEY)).toEqual([`k:${KEY}`]);
     expect(callerKeys(null, undefined)).toEqual([]);
     expect(callerKeys(null, "no spaces allowed")).toEqual([]);
+  });
+
+  it("rejects a follow-up with a bad email before it touches the board", async () => {
+    const caller = appRouter.createCaller(makeCtx(null));
+    await expect(caller.sessionBoard.leaveContact({
+      week: 2,
+      fullName: "Ada",
+      email: "not-an-email",
+    })).rejects.toThrow();
+  });
+
+  it("keeps the week board people list to admins", async () => {
+    const caller = appRouter.createCaller(makeCtx(PLAYER));
+    await expect(caller.sessionBoard.adminPeople({ week: 2 })).rejects.toThrow(NOT_ADMIN_ERR_MSG);
   });
 });
 
@@ -276,7 +293,9 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
         userId: null,
       });
       const tags = (await getContactTags("inquiry", Number(result.id))).map((t) => t.tag).sort();
-      expect(tags).toEqual(["builder", "season2-week-board", "week-2"]);
+      expect(tags).toEqual(expect.arrayContaining(["builder", "season2-week-board", "week-2"]));
+      expect(tags.filter((tag) => tag.startsWith("board-key:"))).toHaveLength(1);
+      expect(tags).toHaveLength(4);
       const votes = await db
         .select({ target: sessionBoardVotes.target })
         .from(sessionBoardVotes)
@@ -288,7 +307,7 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
     }
   });
 
-  it("a sign-up on a closed board stores the inquiry and does not vote", async () => {
+  it("a sign-up on a closed board stores the inquiry and raises the hand", async () => {
     const db = (await getDb())!;
     const board = await ensureBoard(db, SEASON, 2);
     if (!boardIds.includes(board.id)) boardIds.push(board.id);
@@ -304,22 +323,23 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
         email: "coach.ada@board-signup.test",
       }, { season: SEASON });
       inquiryIds.push(Number(result.id));
-      expect(result.handed).toBe(false);
+      expect(result.handed).toBe(true);
       const row = await getGeneralInquiryById(Number(result.id));
       expect(row?.pathType).toBe("something_else");
       expect(row?.roleInterest).toBe("coach");
       expect(row?.referralSource).toBe("season2-week-board:week-2");
       const votes = await db
-        .select({ id: sessionBoardVotes.id })
+        .select({ target: sessionBoardVotes.target })
         .from(sessionBoardVotes)
         .where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
-      expect(votes).toHaveLength(0);
+      expect(votes.map((v) => v.target)).toEqual([voteTarget.offer("coach")]);
     } finally {
+      await db.delete(sessionBoardVotes).where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
       await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
     }
   });
 
-  it("a sign-up after the session has ended stores the inquiry and does not vote", async () => {
+  it("a sign-up after the session has ended stores the inquiry and raises the hand", async () => {
     const db = (await getDb())!;
     const board = await ensureBoard(db, SEASON, 2);
     if (!boardIds.includes(board.id)) boardIds.push(board.id);
@@ -336,13 +356,92 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
         email: "late.pat@board-signup.test",
       }, { season: SEASON, now: 1_700_000_200_000 });
       inquiryIds.push(Number(result.id));
-      expect(result.handed).toBe(false);
+      expect(result.handed).toBe(true);
       const votes = await db
-        .select({ id: sessionBoardVotes.id })
+        .select({ target: sessionBoardVotes.target })
         .from(sessionBoardVotes)
         .where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
-      expect(votes).toHaveLength(0);
+      expect(votes.map((v) => v.target)).toEqual([voteTarget.offer("coach")]);
     } finally {
+      await db.delete(sessionBoardVotes).where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
+      await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
+    }
+  });
+
+  it("a guest can still write on a closed board, and a stranger cannot facilitate", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 2);
+    if (!boardIds.includes(board.id)) boardIds.push(board.id);
+    const prev = { status: board.status, state: board.state };
+    const key = "closedwritekey001";
+    const stranger = { id: 900000001, role: "user" };
+    expect(await canFacilitate(db, stranger)).toBe(false);
+    await db.update(sessionBoards).set({ status: "closed", state: null }).where(eq(sessionBoards.id, board.id));
+    setSessionBoardSeasonForTests(SEASON);
+    try {
+      const caller = appRouter.createCaller(makeCtx(null, "198.51.100.40"));
+      const word = await caller.sessionBoard.addItem({ week: 2, voterKey: key, kind: "arrive", text: "Still here" });
+      expect(word.id).toBeGreaterThan(0);
+      const project = await caller.sessionBoard.addProject({ week: 2, voterKey: key, name: "Closed Garden" });
+      expect(project.id).toBeGreaterThan(0);
+      const opp = await caller.sessionBoard.addItem({ week: 2, voterKey: key, kind: "opp", text: "Shared meals", projectId: project.id });
+      await caller.sessionBoard.vote({ week: 2, voterKey: key, itemId: opp.id, on: true });
+      await caller.sessionBoard.hand({ week: 2, voterKey: key, forWeek: 3, on: true });
+      await caller.sessionBoard.offer({ week: 2, voterKey: key, offer: "coach", on: true });
+      const mine = await mineOnBoard(db, board.id, [`k:${key}`]);
+      expect(mine.targets).toEqual(expect.arrayContaining([voteTarget.item(opp.id), voteTarget.week(3), voteTarget.offer("coach")]));
+      const host = appRouter.createCaller(makeCtx(stranger as unknown as TrpcContext["user"], "198.51.100.41"));
+      await expect(host.sessionBoard.setStatus({ week: 2, status: "open" })).rejects.toThrow(/facilitator/);
+    } finally {
+      setSessionBoardSeasonForTests(null);
+      await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
+    }
+  });
+
+  it("leaveContact stores one follow-up per email and links a second browser", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 2);
+    if (!boardIds.includes(board.id)) boardIds.push(board.id);
+    const prev = { status: board.status, state: board.state };
+    const keyA = "followkey00000001";
+    const keyB = "followkey00000002";
+    await db.update(sessionBoards).set({ status: "closed", state: null }).where(eq(sessionBoards.id, board.id));
+    setSessionBoardSeasonForTests(SEASON);
+    try {
+      const first = appRouter.createCaller(makeCtx(null, "198.51.100.42"));
+      const created = await first.sessionBoard.leaveContact({
+        week: 2,
+        voterKey: keyA,
+        fullName: "Pat Lee",
+        email: "pat.lee@board-signup.test",
+        from: "arrive",
+      });
+      inquiryIds.push(created.id);
+      expect(created.created).toBe(true);
+      const again = await first.sessionBoard.leaveContact({
+        week: 2,
+        voterKey: keyB,
+        fullName: "Pat Lee",
+        email: "Pat.Lee@board-signup.test",
+        from: "vote",
+      });
+      expect(again.created).toBe(false);
+      expect(again.id).toBe(created.id);
+      const row = await getGeneralInquiryById(created.id);
+      expect(row?.roleInterest).toBe("follow-up");
+      expect(row?.referralSource).toBe("season2-week-board:week-2");
+      expect(row?.additionalNotes).toContain("arrival word");
+      const tags = (await getContactTags("inquiry", created.id)).map((t) => t.tag);
+      expect(tags.filter((tag) => tag.startsWith("board-key:"))).toHaveLength(2);
+      await first.sessionBoard.addItem({ week: 2, voterKey: keyA, kind: "arrive", text: "Grateful", displayName: "Pat Lee" });
+      const people = await loadBoardPeople(db, SEASON, 2);
+      const person = people.people.find((p) => p.email === "pat.lee@board-signup.test");
+      expect(person?.name).toBe("Pat Lee");
+      expect(person?.arrivalWords).toContain("Grateful");
+      expect(JSON.stringify(people)).not.toContain(keyA);
+      expect(JSON.stringify(people)).not.toContain(keyB);
+    } finally {
+      setSessionBoardSeasonForTests(null);
       await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
     }
   });

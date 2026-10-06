@@ -63,3 +63,41 @@ export function interestFromRole(roleInterest: string | null | undefined): "Coac
 export function boardSignupTags(week: number, offer: BoardOfferKey): string[] {
   return [BOARD_SIGNUP_SOURCE_PREFIX, `week-${week}`, boardOfferInterest(offer).tag];
 }
+
+export const BOARD_FOLLOW_UP_FROM = [
+  "arrive",
+  "leave",
+  "pain",
+  "opp",
+  "game",
+  "project",
+  "vote",
+  "hand",
+  "offer",
+  "nextMove",
+] as const;
+
+export type BoardFollowUpFrom = (typeof BOARD_FOLLOW_UP_FROM)[number];
+
+const FOLLOW_UP_LABEL: Record<BoardFollowUpFrom, string> = {
+  arrive: "an arrival word",
+  leave: "a closing word",
+  pain: "a pain point",
+  opp: "an opportunity",
+  game: "a game note",
+  project: "a project",
+  vote: "a vote",
+  hand: "a week hand",
+  offer: "an offer",
+  nextMove: "one move",
+};
+
+/** additionalNotes for a follow-up left on the board. */
+export function followUpNotes(week: number, from?: BoardFollowUpFrom | null): string {
+  const label = from ? FOLLOW_UP_LABEL[from] : "a note";
+  return `Left on the week ${week} board after: ${label}`;
+}
+
+export function isBoardHandRole(roleInterest: string | null | undefined): boolean {
+  return roleInterest === "coach" || roleInterest === "builder";
+}
