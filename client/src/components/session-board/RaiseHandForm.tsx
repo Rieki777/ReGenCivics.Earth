@@ -7,6 +7,7 @@ import { useEffect, useId, useMemo, useState, type FormEvent } from "react";
 import type { BoardOfferKey } from "@shared/sessionBoard";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { readBoardContact, readBoardName, saveBoardContact } from "./boardContactStore";
 import { sessionVoterKey } from "./useSessionBoard";
 import "./raise-hand.css";
 
@@ -61,7 +62,7 @@ export function RaiseHand({
 }) {
   const formId = useId();
   const voterKey = useMemo(sessionVoterKey, []);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -73,13 +74,17 @@ export function RaiseHand({
   const signUp = trpc.sessionBoard.signUp.useMutation();
 
   useEffect(() => {
-    if (seeded || !user) return;
-    const accountName = typeof user.name === "string" ? user.name.trim() : "";
-    const accountEmail = typeof user.email === "string" ? user.email.trim() : "";
-    if (accountName) setName((current) => current || accountName.slice(0, 120));
-    if (accountEmail) setEmail((current) => current || accountEmail.slice(0, 320));
+    if (seeded || loading) return;
+    const stored = readBoardContact();
+    const storedEmail = stored && "email" in stored ? stored.email : "";
+    const accountName = typeof user?.name === "string" ? user.name.trim() : "";
+    const accountEmail = typeof user?.email === "string" ? user.email.trim() : "";
+    const nextName = accountName || readBoardName();
+    const nextEmail = accountEmail || storedEmail;
+    if (nextName) setName((current) => current || nextName.slice(0, 120));
+    if (nextEmail) setEmail((current) => current || nextEmail.slice(0, 320));
     setSeeded(true);
-  }, [user, seeded]);
+  }, [user, seeded, loading]);
 
   const canLower = boardOpen && raised;
   const hands = `${count} ${count === 1 ? "hand" : "hands"}`;
@@ -104,6 +109,7 @@ export function RaiseHand({
         note: note.trim() || undefined,
       });
       if (result.handed) onHanded();
+      saveBoardContact({ name: name.trim(), email: email.trim() });
       setThanks({ name: firstName(name), email: email.trim() });
       setOpen(false);
     } catch (err) {
