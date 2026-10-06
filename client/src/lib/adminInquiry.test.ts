@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inquiryTypeForPath, isOtherHubInquiry, getAgeInfo, filterByProject, oldestWaiting, inquiryListBlurb } from "./adminInquiry";
+import { inquiryTypeForPath, isBoardHandInquiry, isOtherHubInquiry, getAgeInfo, filterByProject, oldestWaiting, inquiryListBlurb } from "./adminInquiry";
 
 describe("admin inquiry helpers", () => {
   it("maps form paths onto hub types", () => {
@@ -16,6 +16,10 @@ describe("admin inquiry helpers", () => {
     expect(isOtherHubInquiry({ pathType: "finance", referralSource: null })).toBe(true);
     expect(isOtherHubInquiry({ pathType: "something_else", referralSource: "season2-week-board:week-2" })).toBe(false);
     expect(isOtherHubInquiry({ pathType: "live", referralSource: null })).toBe(false);
+    expect(isBoardHandInquiry({ referralSource: "season2-week-board:week-2", roleInterest: "coach" })).toBe(true);
+    expect(isBoardHandInquiry({ referralSource: "season2-week-board:week-2", roleInterest: "builder" })).toBe(true);
+    expect(isBoardHandInquiry({ referralSource: "season2-week-board:week-2", roleInterest: "follow-up" })).toBe(false);
+    expect(isOtherHubInquiry({ pathType: "something_else", referralSource: "season2-week-board:week-2" })).toBe(false);
   });
 
   it("marks inquiries older than 48h as overdue", () => {

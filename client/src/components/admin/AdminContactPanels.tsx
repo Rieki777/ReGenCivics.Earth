@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare, Trash2, Clock, UserCheck, Tag, Loader2, Plus, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { isBoardKeyTag } from "@shared/boardIdentityLink";
 import { toast } from "sonner";
 
 export function ContactNotesPanel({ contactType, contactId }: { contactType: string; contactId: number }) {
@@ -213,7 +214,7 @@ export function ContactTagsPanel({ contactType, contactId }: { contactType: stri
     <div className="border-t border-[#1a472a]/10 pt-4 space-y-2">
       <p className="text-xs font-semibold text-[#1a472a]/80 uppercase tracking-wide">Tags</p>
       <div className="flex flex-wrap gap-1.5">
-        {tags?.map((t: any) => (
+        {tags?.filter((t: any) => !isBoardKeyTag(t.tag)).map((t: any) => (
           <span
             key={t.id}
             className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7dd87d]/20 border border-[#4a7c59]/30 text-xs text-[#1a472a]"

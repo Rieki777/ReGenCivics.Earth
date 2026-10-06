@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Columns3, Home, Palette, Handshake, UserCheck, HelpCircle, Sprout } from "lucide-react";
-import { isBoardSignupSource } from "@shared/boardSignup";
+import { ChevronDown, Columns3, Home, Palette, Handshake, UserCheck, HelpCircle, Sprout, Users } from "lucide-react";
+import { parseBoardSignupSource } from "@shared/boardSignup";
 import { InquirySection } from "./AdminInquirySection";
 import { AdminBoardHands } from "./AdminBoardHands";
+import { AdminBoardPeople } from "./AdminBoardPeople";
 import { AdminKanbanTab } from "./AdminKanbanTab";
 import { AdminRoleTab } from "./AdminAllianceTab";
-import { inquiryTypeForPath, isOtherHubInquiry, type InquiryHubType } from "@/lib/adminInquiry";
+import { inquiryTypeForPath, isBoardHandInquiry, isOtherHubInquiry, type InquiryHubType } from "@/lib/adminInquiry";
+import { trpc } from "@/lib/trpc";
 
 const TYPE_CARDS: Array<{
-  id: InquiryHubType | "kanban" | "hands";
+  id: InquiryHubType | "kanban" | "hands" | "board-people";
   label: string;
   blurb: string;
   icon: typeof Home;
@@ -19,12 +21,14 @@ const TYPE_CARDS: Array<{
   { id: "role", label: "Role inquiries", blurb: "People offering a role in ReGen Civics", icon: UserCheck },
   { id: "other", label: "Other inquiries", blurb: "Finance, learn, and everything else", icon: HelpCircle },
   { id: "hands", label: "Season board hands", blurb: "Names and emails from the season week board", icon: Sprout },
+  { id: "board-people", label: "Week board people", blurb: "Everyone who typed into a Season 2 week board", icon: Users },
   { id: "kanban", label: "Pipeline board", blurb: "Move contacts across the board", icon: Columns3 },
 ];
 
-function countFor(id: string, inquiries: any[]) {
+function countFor(id: string, inquiries: any[], peopleCount: number) {
   if (id === "kanban") return inquiries.length;
-  if (id === "hands") return inquiries.filter((i: any) => isBoardSignupSource(i.referralSource)).length;
+  if (id === "hands") return inquiries.filter((i: any) => isBoardHandInquiry(i)).length;
+  if (id === "board-people") return peopleCount;
   if (id === "other") return inquiries.filter((i: any) => isOtherHubInquiry(i)).length;
   return inquiries.filter((i: any) => i.pathType === id).length;
 }
@@ -37,6 +41,8 @@ export function AdminInquiriesHub({
   initialType,
   onOpenIdChange,
   onTypeChange,
+  boardWeek = 2,
+  onBoardWeekChange,
 }: {
   inquiries: any[] | undefined;
   investors: any[] | undefined;
@@ -45,9 +51,12 @@ export function AdminInquiriesHub({
   initialType?: string | null;
   onOpenIdChange?: (id: number | null) => void;
   onTypeChange?: (type: string | null) => void;
+  boardWeek?: number;
+  onBoardWeekChange?: (week: number) => void;
 }) {
   const rows = inquiries || [];
   const [openType, setOpenType] = useState<string | null>(() => initialType || "live");
+  const people = trpc.sessionBoard.adminPeople.useQuery({ week: boardWeek });
 
   const selectType = (id: string | null) => {
     setOpenType(id);
@@ -61,16 +70,22 @@ export function AdminInquiriesHub({
   useEffect(() => {
     if (openId == null) return;
     const row = rows.find((i: any) => i.id === openId);
-    if (row) setOpenType(isBoardSignupSource(row.referralSource) ? "hands" : inquiryTypeForPath(row.pathType));
-  }, [openId, rows]);
+    if (!row) return;
+    if (isBoardHandInquiry(row)) setOpenType("hands");
+    else if (parseBoardSignupSource(row.referralSource)) {
+      setOpenType("board-people");
+      const week = parseBoardSignupSource(row.referralSource)?.week;
+      if (week) onBoardWeekChange?.(week);
+    } else setOpenType(inquiryTypeForPath(row.pathType));
+  }, [openId, rows, onBoardWeekChange]);
 
   const pendingByType = useMemo(() => {
     const map: Record<string, number> = {};
     for (const card of TYPE_CARDS) {
-      map[card.id] = countFor(card.id, rows);
+      map[card.id] = countFor(card.id, rows, people.data?.totals.people ?? 0);
     }
     return map;
-  }, [rows]);
+  }, [rows, people.data?.totals.people]);
 
   return (
     <div className="space-y-3">
@@ -120,7 +135,14 @@ export function AdminInquiriesHub({
                     <AdminRoleTab />
                   </div>
                 ) : card.id === "hands" ? (
-                  <AdminBoardHands rows={rows.filter((i: any) => isBoardSignupSource(i.referralSource))} />
+                  <AdminBoardHands rows={rows.filter((i: any) => isBoardHandInquiry(i))} />
+                ) : card.id === "board-people" ? (
+                  <AdminBoardPeople
+                    week={boardWeek}
+                    onWeekChange={(next) => onBoardWeekChange?.(next)}
+                    result={people.data}
+                    loading={people.isLoading}
+                  />
                 ) : (
                   <InquirySection
                     pathType={card.id}
