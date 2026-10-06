@@ -8,6 +8,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useSearch } from 'wouter';
 import { projectPathForApplication, projectPathForCampaignFocus } from '@shared/projectKey';
 import { TaoSpinner } from '@/components/TaoSpinner';
+import ProfileCharacter from '@/components/character/ProfileCharacter';
 import {
   User,
   Wallet,
@@ -1976,7 +1977,7 @@ function ContributionsTab({
                     <p className="text-white text-xs font-medium truncate">{calc.name || "Untitled Calculation"}</p>
                     {calc.projectName && <p className="text-white/60 text-xs truncate">{calc.projectName}</p>}
                   </div>
-                  <Link href={`/calculator?savedId=${calc.id}`}>
+                  <Link href={`/crowd-pooling?savedId=${calc.id}`}>
                     <span className="text-[#7dd87d]/70 text-xs hover:text-[#7dd87d] whitespace-nowrap">Edit →</span>
                   </Link>
                 </div>
@@ -2372,7 +2373,7 @@ function SubmissionsTab() {
             status={sc.isDefault ? "default" : "saved"}
             statusColor="green"
             updatedAt={sc.updatedAt}
-            primaryAction={{ label: "Edit", href: `/calculator?savedId=${sc.id}` }}
+            primaryAction={{ label: "Edit", href: `/crowd-pooling?savedId=${sc.id}` }}
           />
         )}
         emptyMessage="No saved contribution profiles."
@@ -2598,7 +2599,10 @@ export default function PlayerProfile() {
       <section className="py-8 px-4">
         <div className="container mx-auto max-w-2xl">
           {!isAuthenticated ? (
-            // Not logged in
+            <div className="space-y-6">
+            <div className="sheet-night rounded-2xl p-4">
+              <ProfileCharacter />
+            </div>
             <AnimatedSection animation="slide-up">
               <Card className="bg-white/95 backdrop-blur-sm border-2 border-[#7dd87d]/30">
                 <CardHeader className="text-center">
@@ -2622,6 +2626,7 @@ export default function PlayerProfile() {
                 </CardContent>
               </Card>
             </AnimatedSection>
+            </div>
           ) : !profile ? (
             // Logged in but no profile
             <AnimatedSection animation="slide-up">
@@ -2687,6 +2692,9 @@ export default function PlayerProfile() {
               {activeTab === "overview" && (
                 <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
                   <div className="space-y-6">
+                    <div className="sheet-night rounded-2xl p-4">
+                      <ProfileCharacter showRecordLink />
+                    </div>
                     <AnimatedSection animation="slide-up">
                       <ProfileCard
                         profile={profile}

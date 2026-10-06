@@ -1,0 +1,5 @@
+Marcellus
+Copyright 2012 The Marcellus Project Authors (https://github.com/googlefonts/marcellus)
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+The license is available at https://openfontlicense.org

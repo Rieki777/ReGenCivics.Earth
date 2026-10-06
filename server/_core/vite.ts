@@ -311,7 +311,7 @@ export function serveStatic(app: Express) {
     "/ally":        { title: "Allies & Partners: ReGen Civics", description: "Organizations and individuals working alongside ReGen Civics to build the ReGenerative Renaissance." },
     "/seasons":     { title: "Seasons: The ReGen Civics Year", description: "The ReGen Civics year turns through four seasons: land projects design their games in winter, crowdpool in spring, build on the land in summer, and rest in fall.", image: `${BASE_URL}/og/seasons.jpg` },
     "/team":        { title: "Team: ReGen Civics", description: "The people behind ReGen Civics. Community builders, developers, land stewards, and movement catalysts.", image: `${BASE_URL}/og/team.jpg` },
-    "/crowd-pooling": { title: "Crowd Pooling: ReGen Civics", description: CROWDPOOLING, image: `${BASE_URL}/og/crowd-pooling.jpg` },
+    "/crowd-pooling": { title: "Map your Character Gifts: ReGen Civics", description: CROWDPOOLING, image: `${BASE_URL}/og/crowd-pooling.jpg` },
     "/economy":     { title: "The Regenerative Economy: ReGen Civics", description: "A real economic system built through gameplay. Contribution scores, gratitude tokens, seasonal harvests.", image: `${BASE_URL}/og/economy.jpg` },
     "/proposals":   { title: "Community Proposals: ReGen Civics", description: "Shape the direction of ReGen Civics. Submit proposals, signal your support, help the community decide.", image: `${BASE_URL}/og/proposals.jpg` },
     "/game-mechanics": { title: "Game Mechanics: ReGen Civics", description: "See every variable that powers the game. Simulate changes. Export proposals.", image: `${BASE_URL}/og/game-mechanics.jpg` },
