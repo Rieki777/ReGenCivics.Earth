@@ -695,6 +695,12 @@ export const playerProfiles = mysqlTable("player_profiles", {
   githubId: int("githubId"),
   githubLinkedAt: timestamp("githubLinkedAt"),
 
+  // Local character class. Village OS owns the canonical character.
+  // See shared/characterSheet.ts for the later Hypha public-profile pull.
+  primaryArchetypeKey: varchar("primaryArchetypeKey", { length: 32 }),
+  partyArchetypeKeys: json("partyArchetypeKeys").$type<string[]>(),
+  portraitPresentation: mysqlEnum("portraitPresentation", ["f", "m"]),
+
   // Metadata
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -1106,6 +1112,9 @@ export const savedContributions = mysqlTable("saved_contributions", {
   // Contributor info
   contributorName: varchar("contributorName", { length: 255 }),
   contributorEmail: varchar("contributorEmail", { length: 320 }),
+
+  // Stamped from the profile when a gift map is saved and the member has a class.
+  primaryArchetypeKey: varchar("primaryArchetypeKey", { length: 32 }),
   
   // Contributions data (JSON)
   immediateContributions: text("immediateContributions"), // JSON array of immediate contributions

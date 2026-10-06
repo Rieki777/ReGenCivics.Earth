@@ -87,6 +87,33 @@ export const AMORA_CIRCLES_URL = `${AMORA_VILLAGE_URL}/map/circles`;
  */
 export const AMORA_CIRCLES_EMBED_URL = `${AMORA_VILLAGE_URL}/embed/circles`;
 export const CORE_SITE_URL = "https://core.regencivics.earth";
+/** Shown when churchDonations.zeffyEnabled has no form. */
+export const CORE_DONATE_PAGE_URL = `${CORE_SITE_URL}/donate`;
+
+/**
+ * The public Zeffy form page for an embed URL from churchDonations.zeffyEnabled.
+ *
+ * The endpoint returns the dashboard embed address
+ * (`/embed/donation-form/<id>`). Donate links to the same form without `/embed/`,
+ * so it opens as a page. Query and hash are dropped. Monthly-as-default is a
+ * Zeffy dashboard setting, so this adds no parameter. Anything that is not an
+ * https donation-form URL returns null.
+ */
+export function zeffyFormPageUrl(embedUrl: string | null | undefined): string | null {
+  if (typeof embedUrl !== "string" || !embedUrl.trim()) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(embedUrl.trim());
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "https:") return null;
+  parsed.pathname = parsed.pathname.replace(/\/embed\/(?=donation-form\/)/, "/");
+  if (!/\/donation-form\/[^/]+\/?$/.test(parsed.pathname)) return null;
+  parsed.search = "";
+  parsed.hash = "";
+  return parsed.toString().replace(/\/$/, "");
+}
 
 /** Hosting this season is for accepted Season 2 projects (Rye, 2026-10-02). */
 export const HOSTING_SEASON = 2;
@@ -104,22 +131,46 @@ export function isAcceptedForHosting(app: { status: string | null | undefined; s
 export type OfferCard = {
   key: "self" | "hosted" | "custom";
   kicker: string;
+  gate: string;
+  path: string;
   title: string;
   tag: string;
+  blurb: string;
   lines: string[];
+  priceBadge?: string;
 };
 
 export const VILLAGE_OS_OFFER = {
+  /** Link text on other pages. The /village-os heading is heroTitle. */
   title: "Get your Village OS",
+  heroTitle: "Start your own game",
   lede:
-    "Village OS is where a village's Game runs: its circles and roles, its quests, its gratitude and its Game Guide. Amora runs on it today. There are two ways to start yours.",
+    "Village OS is an open-source, infinitely customizable foundation, with an open library of modules we openly share for how we create our Games. The Game includes a Game Guide. Amora runs on it today.",
   amoraLine: "See a village running on it at amora.regencivics.earth.",
+  /**
+   * The four modules Village OS ships with and will not let a village switch
+   * off (village-os docs/MODULES.md, "The four core modules"). Stages & Roles
+   * is the module this site already describes as circles and seats. Profiles
+   * is the fourth. The registry also says "journeys" on Profiles; that word
+   * is banned in member-facing copy, so the line names the rest. Game Guide
+   * is in the lede and is not one of the four.
+   */
+  standardLabel: "Games come standard with:",
+  standardModules: [
+    { name: "Quests", line: "Post work, claim it, submit it, and consent to release recognition." },
+    { name: "Gratitude", line: "Recognition sends, lunar cycles, and the value pool distributed at each close." },
+    { name: "Stages & Roles", line: "Circles and seats: stages, capabilities, and appointed roles." },
+    { name: "Profiles", line: "Handles, balances, and each member's own ledger." },
+  ],
 
   self: {
     key: "self",
     kicker: "Option 1",
+    gate: "Gate 1",
+    path: "Build it",
     title: "Run it yourself",
     tag: "Free and open source",
+    blurb: "Host it on your own server, and change any part of the code.",
     lines: [
       "Village OS is free and open source. Host it on your own server, choose your settings and modules, and change any part of the code.",
       "Give the setup guide to an AI assistant that can run commands on your computer and it walks you through each step. If you're technical, follow it yourself.",
@@ -141,8 +192,11 @@ export const VILLAGE_OS_OFFER = {
   hosted: {
     key: "hosted",
     kicker: "Option 2",
+    gate: "Gate 2",
+    path: "We host it",
     title: "We host it for you",
     tag: "Free for accepted Season 2 projects",
+    blurb: "We run your village at its own web address and draft a first version from your Season 2 application.",
     lines: [
       "The ReGen Civics team runs your village at its own web address and keeps it updated.",
       "We draft a first version of your village from your Season 2 application. You review it and choose what goes live.",
@@ -155,8 +209,13 @@ export const VILLAGE_OS_OFFER = {
   custom: {
     key: "custom",
     kicker: "Or",
+    gate: "Gate 3",
+    path: "Contract the team",
     title: "A custom build with our team",
     tag: "A paid build",
+    /** At a glance. The milestone sentence stays in lines. */
+    priceBadge: "A paid build, $20,000",
+    blurb: "A personal contract with the ReGen Civics team, beside CORE's donation-supported hosting.",
     lines: [
       "For a project that wants its Game designed and built with the core team over a season.",
       "It is a $20,000 build, paid in milestones. You own the result completely.",
@@ -165,21 +224,63 @@ export const VILLAGE_OS_OFFER = {
   customButton: "See custom builds",
 
   circle: {
-    kicker: "The founders circle",
-    title: "Weekly support from CORE",
+    kicker: "Weekly support",
+    title: "Sessions for Game Creators",
     /**
      * lines[1] is the membership sentence. /village-os shows it only once
      * VILLAGE_OS_MEMBERSHIP_URL is set, after the Legal session rules on it.
      */
     lines: [
-      "The Church of the Regenerative Earth (CORE) is starting a small weekly circle for founders doing this work: a place to be met, to share what's hard, and to support each other.",
+      "The Church of the Regenerative Earth (CORE) is the spiritual heart of ReGen Civics. We are the Earth, choosing to heal itself.",
       "Setting up a recurring gift to CORE makes you a member of the church, and members join the founders circles.",
+      "Hosting is provided by CORE as part of our spiritual purpose. We run on donations.",
+      "Each week, Game Creators meet to walk through starting a village on Village OS.",
       "Circles offer spiritual and peer support. For medical or mental health care, please see a licensed professional.",
     ],
     button: "Become a member of CORE",
-    /** Shown while membership is off. Promises no date and no path through hosting. */
-    pending: "More about the founders circles will be here.",
+    donateButton: "Donate",
+    joinButton: "Join the call",
   },
+
+  forge: {
+    kicker: "Your own module",
+    title: "Forge your own module",
+    body: "Plug in your own AI agents to build modules and bring your Game to life in a way we can all learn from. New modules you offer back to the shared Module Library get reviewed and can reach every village.",
+  },
+
+  /**
+   * Tools integrating with Village OS. Add a row to grow the list.
+   * Hypha and LocalScale URLs are the ones already used on this site.
+   * Saberra has no public URL in this repo (village-os module `saberra`,
+   * Organisational Memory). Spell the name as Saberra.
+   */
+  tools: {
+    kicker: "Interoperability",
+    title: "Tools in the ecosystem",
+    integrateTitle: "Integrate your tool",
+    integrateBody: "Tool builders join the interoperability sessions to bring a tool into the Village OS ecosystem we're co-creating.",
+    integrateButton: "Join the interoperability sessions",
+    integrateHref: "/interop-sessions",
+    items: [
+      { name: "Hypha", url: "https://app.hypha.earth/", line: "Governance and DAO tooling." },
+      { name: "LocalScale", url: "https://localscale.org/", line: "Bioregional economic tools." },
+      {
+        name: "Saberra",
+        url: "",
+        line: "Keeps a record of how a village is organized, and suggests changes to its circles and roles.",
+      },
+    ],
+  },
+
+  questTitle: "The hosting quest",
+  fieldGuide: {
+    kicker: "Field guide",
+    title: "Good to know",
+    open: "Open the field guide",
+    close: "Close the field guide",
+  },
+  notesOpen: "Open the notes",
+  notesClose: "Hide the notes",
 
   howHostingWorks: [
     { title: "Ask", body: "Sign in, pick your accepted Season 2 application, and tell us a few things about your village." },

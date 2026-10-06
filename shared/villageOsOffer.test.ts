@@ -29,6 +29,7 @@ import {
   hostingRequestInput,
   isAcceptedForHosting,
   notEligibleCopy,
+  zeffyFormPageUrl,
 } from "./villageOsOffer";
 import { intakeStatus } from "./applicationWindow";
 
@@ -142,6 +143,38 @@ describe("the self-host links and the setup prompt", () => {
 describe("hosting and giving", () => {
   it("hosting never depends on giving", () => {
     expect(HOSTING_DEPENDS_ON_GIFT).toBe(false);
+  });
+});
+
+describe("the modules a game ships with, and the tools beside them", () => {
+  it("names the four core modules, in registry order", () => {
+    expect(VILLAGE_OS_OFFER.standardModules.map((m) => m.name)).toEqual([
+      "Quests",
+      "Gratitude",
+      "Stages & Roles",
+      "Profiles",
+    ]);
+  });
+
+  it("turns the Zeffy embed address into the form page and drops any query", () => {
+    expect(zeffyFormPageUrl("https://www.zeffy.com/en-US/embed/donation-form/donation-312")).toBe(
+      "https://www.zeffy.com/en-US/donation-form/donation-312",
+    );
+    expect(zeffyFormPageUrl("https://www.zeffy.com/en-US/embed/donation-form/donation-312?monthly=1")).toBe(
+      "https://www.zeffy.com/en-US/donation-form/donation-312",
+    );
+    expect(zeffyFormPageUrl("https://www.zeffy.com/en-US/donation-form/donation-312")).toBe(
+      "https://www.zeffy.com/en-US/donation-form/donation-312",
+    );
+    expect(zeffyFormPageUrl(null)).toBeNull();
+    expect(zeffyFormPageUrl("")).toBeNull();
+    expect(zeffyFormPageUrl("http://www.zeffy.com/en-US/embed/donation-form/donation-312")).toBeNull();
+  });
+
+  it("lists Hypha, LocalScale and Saberra, and only links the ones that have an address here", () => {
+    expect(VILLAGE_OS_OFFER.tools.items.map((t) => t.name)).toEqual(["Hypha", "LocalScale", "Saberra"]);
+    expect(VILLAGE_OS_OFFER.tools.items.find((t) => t.name === "Saberra")?.url).toBe("");
+    expect(VILLAGE_OS_OFFER.tools.integrateHref).toBe("/interop-sessions");
   });
 });
 

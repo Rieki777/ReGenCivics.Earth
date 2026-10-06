@@ -239,7 +239,7 @@ export const pageSEO = {
     url: '/fund'
   },
   crowdPooling: {
-    title: 'Crowd Pooling Tool | ReGen Civics',
+    title: 'Map your Character Gifts | ReGen Civics',
     description: CROWDPOOLING,
     keywords: 'crowdpooling, crowd pooling, land project needs, contribute to land projects, nine forms of capital',
     image: 'https://regencivics.earth/og/crowd-pooling.jpg',

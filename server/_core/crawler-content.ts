@@ -424,17 +424,9 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
   "/crowd-pooling": {
     html: `
       <article>
-        <h1>Crowd Pooling: contribute land, money, skills, time and knowledge</h1>
-        <p>Crowd pooling lets a person contribute directly to regenerative land projects at a scale that works for them, with money, land, skills, time and knowledge rather than money alone. You set a budget, pick projects, and see how a contribution compounds with others. Land projects use the same tool to pool capital from many contributors and aggregate the total.</p>
-        <h2>Why crowd pooling</h2>
-        <ul>
-          <li><strong>Reduce the financial burden.</strong> Recognising all forms of capital, not just money, lowers the funding a project appears to need.</li>
-          <li><strong>Reach assets that were never for sale.</strong> Land that is not on the market can still join a vision.</li>
-          <li><strong>Equal contributions over time.</strong> A process where everyone can bring an equal contribution regardless of their financial situation.</li>
-          <li><strong>Regenerative foundations from the start.</strong> The diverse base of a regenerative economic system, built in at the onset rather than retrofitted.</li>
-        </ul>
-        <h2>How to use the tool</h2>
-        <p>Name the project and a target total value, add immediate contributions such as land, money or equipment, add future value commitments such as roles you will fill, then download a contribution summary to share with projects. A reusable proposal can be submitted to more than one project.</p>
+        <h1>Map your Character Gifts</h1>
+        <p>Crowd pooling on this page is a character sheet. Choose a specific land project, or map your gifts in general and share that sheet with many projects. Living, Material, Financial, Experiential, Social, and Cultural pool into one land project. Those are land, equipment, money, skills and roles, social, and cultural.</p>
+        <p>Add the gifts you can bring now, add future roles, then download a PDF or save the gift map to your profile. Project matching stays closed until 111 land-project campaigns are active.</p>
         <p>Related: <a href="/campaigns">land project campaigns</a>, the <a href="/calculator">contribution calculator</a> across the nine forms of capital, and <a href="/season2">the Season Two cohort launch</a>.</p>
       </article>
     `,
