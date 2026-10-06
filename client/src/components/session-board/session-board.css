@@ -117,8 +117,13 @@
 textarea.sb-field { min-height: 92px; resize: vertical; line-height: 1.5; }
 select.sb-field { width: auto; min-height: 44px; padding: 4px 10px; font-size: 16px; color-scheme: light; background-color: var(--sb-field); color: var(--sb-ink); }
 .sb-app select option, .sb-app select optgroup { background-color: #ffffff; color: #0a1f14; }
-.sb-add { display: flex; gap: 8px; }
+.sb-add { display: flex; gap: 8px; align-items: flex-start; }
 .sb-add .sb-field { flex: 1; min-width: 0; }
+.sb-dictate { display: flex; gap: 8px; align-items: flex-start; }
+.sb-dictate > :first-child { flex: 1; min-width: 0; }
+button.sb-mic { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; color: var(--sb-ink) !important; background: var(--sb-field) !important; border-color: var(--sb-line-strong) !important; }
+button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; color: var(--sb-on-spring) !important; border-color: var(--sb-spring) !important; }
+.sb-app [data-testid="dictation-listening"] { color: var(--sb-spring-ink) !important; }
 .sb-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
 .sb-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; background: var(--sb-chip); border: 1px solid var(--sb-line); font-weight: 700; max-width: 100%; min-width: 0; }
 .sb-chip.sb-has-x { padding-right: 6px; }
