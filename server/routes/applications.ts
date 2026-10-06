@@ -431,11 +431,11 @@ export const applicationsRouter = router({
           },
           approved: {
             subject: `Congratulations! Your Application is Approved - ${updatedApp.projectName}`,
-            content: `Wonderful news! Your application for **${updatedApp.projectName}** has been approved!\n\nWelcome to the ReGen Civics community. We're excited to support your regenerative journey.\n\n**Next Steps:**\n- Our team will reach out to schedule an onboarding call\n- You'll receive access to our partner resources\n- Connect with other projects in our network\n\nWe look forward to co-creating a regenerative future together!`,
+            content: `Wonderful news! Your application for **${updatedApp.projectName}** has been approved!\n\nWelcome to the ReGen Civics community. We're excited to support your regenerative work.\n\n**Next Steps:**\n- Our team will reach out to schedule an onboarding call\n- You'll receive access to our partner resources\n- Connect with other projects in our network\n\nWe look forward to co-creating a regenerative future together!`,
           },
           rejected: {
             subject: `Application Update - ${updatedApp.projectName}`,
-            content: `Thank you for your application for **${updatedApp.projectName}**.\n\nAfter careful review, we've determined that your project isn't the right fit for our current season. This doesn't reflect on the value of your work - it simply means our current focus areas don't align.\n\n**What you can do:**\n- Review our feedback (if provided)\n- Consider reapplying in a future season\n- Stay connected through our newsletter\n\nWe appreciate your interest in regenerative development and wish you success in your journey.`,
+            content: `Thank you for your application for **${updatedApp.projectName}**.\n\nAfter careful review, we've determined that your project isn't the right fit for our current season. This doesn't reflect on the value of your work - it simply means our current focus areas don't align.\n\n**What you can do:**\n- Review our feedback (if provided)\n- Consider reapplying in a future season\n- Stay connected through our newsletter\n\nWe appreciate your interest in regenerative development and wish you success in your work.`,
           },
           changes_requested: {
             subject: `Changes Requested - ${updatedApp.projectName}`,

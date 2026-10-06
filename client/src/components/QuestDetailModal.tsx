@@ -286,20 +286,20 @@ export const questDetailsData: Record<string, QuestDetails> = {
   },
   "quest-8": {
     id: "quest-8",
-    title: "Quest 8: Medicine Journey",
+    title: "Quest 8: Medicine Path",
     subtitle: "Inner Exploration",
-    description: "A guided journey into the depths of consciousness, exploring the medicine within and around us. Intentional inner journey, properly supported and integrated.",
+    description: "A guided passage into the depths of consciousness, exploring the medicine within and around us. Intentional inner practice, properly supported and integrated.",
     storyCard: "Something happens when a person goes deep enough into themselves that they cannot maintain the story they have been telling. The scaffolding comes down. And in that space, things become visible that ordinary consciousness keeps behind glass. These practices have been used by cultures around the world for thousands of years to facilitate healing, initiation, and contact with deeper dimensions of reality. They are not entertainment. They are not shortcuts. Used well, they are among the most powerful catalysts for transformation available to a human being. Integration is the work of taking what you found in the depths and actually living differently because of it.",
     rewards: { regen: 222, rvoice: 1 },
-    deliverable: "A documented reflection on your journey and its integration, shared with the community",
+    deliverable: "A documented reflection on your practice and its integration, shared with the community",
     estimatedTime: "Preparation weeks to months, ceremony 1 to several days, integration ongoing",
     steps: [
-      { step: 1, title: "Choose your practice", description: "Identify the form of inner journey you are called to. Ensure you are working legally within your jurisdiction, with appropriate support, and with clear intention." },
-      { step: 2, title: "Prepare intentionally", description: "Preparation is not just dietary. Clear your calendar, tell the people close to you, set a clear intention for what you are entering the journey to meet. Write your intention down." },
-      { step: 3, title: "Enter with good support", description: "A genuine guide or facilitator matters enormously. Someone who has walked this path many times, who knows how to hold space. Do not do a significant inner journey alone without experience." },
-      { step: 4, title: "Come back with care", description: "The first 24-72 hours after a deep journey are critical. Protect them. Do not rush back to work, screens, or social situations. Rest. Write. Walk." },
+      { step: 1, title: "Choose your practice", description: "Identify the form of inner practice you are called to. Ensure you are working legally within your jurisdiction, with appropriate support, and with clear intention." },
+      { step: 2, title: "Prepare intentionally", description: "Preparation is not just dietary. Clear your calendar, tell the people close to you, set a clear intention for what you are entering to meet. Write your intention down." },
+      { step: 3, title: "Enter with good support", description: "A genuine guide or facilitator matters enormously. Someone who has walked this path many times, who knows how to hold space. Do not do a significant inner practice alone without experience." },
+      { step: 4, title: "Come back with care", description: "The first 24-72 hours after a deep practice are critical. Protect them. Do not rush back to work, screens, or social situations. Rest. Write. Walk." },
       { step: 5, title: "Integrate over time", description: "Genuine integration takes weeks to months. Journal regularly. Talk with someone who can hold the complexity. Notice where the experience wants to change how you live." },
-      { step: 6, title: "Create and share your artifact", description: "Write, record, or capture a reflection on your journey and its integration. What did you enter with? What did you find? What is different now?" }
+      { step: 6, title: "Create and share your artifact", description: "Write, record, or capture a reflection on your practice and its integration. What did you enter with? What did you find? What is different now?" }
     ],
     resources: [
       { title: "MAPS: research on therapeutic uses of plant medicines", url: "https://maps.org" },

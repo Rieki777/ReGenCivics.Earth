@@ -32,7 +32,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
       'We live in a time when it is getting harder and harder to know what is real. More effective and more personalized marketing and propaganda means the logical mind alone cannot keep up. We cannot reason our way out of illusions that were designed specifically to bypass reason.',
       'This is why we start here. Not with a plan, not with a strategy, but with a fire. A willingness to look at what we have inherited, what we have built, what we believe about ourselves and the world, and to ask honestly: does this still serve us?',
       'Who are you? Like the rest of us. Nobody. And like the rest of us, a God, a whole person on a path to remembering that wholeness. The fire is where that remembering begins.',
-      'When you share your fire with this community you are not just telling us what you believe. You are beginning the initiatory journey. The fire you share here will be referenced again and again as you move through the quests. It is your starting point, your baseline, the you before the game began.',
+      'When you share your fire with this community you are not just telling us what you believe. You are beginning the initiation. The fire you share here will be referenced again and again as you move through the quests. It is your starting point, your baseline, the you before the game began.',
     ],
     storyTeaser: [
       'We start with the fire.',
@@ -404,7 +404,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     timeEstimate: 'Varies (preparation weeks to months, ceremony 1 to several days, integration ongoing)',
     storyCard: [
       'Something happens when a person goes deep enough into themselves that they cannot maintain the story they have been telling. The scaffolding comes down. And in that space, things become visible that ordinary consciousness keeps behind glass.',
-      'This quest is about intentional inner journey. That can mean plant medicine ceremony. It can mean a vision quest, a fasting retreat, an extended meditation intensive, a sweat lodge, a dark retreat, or any other form of held practice that creates the conditions for genuine depth. What matters is that it is intentional, supported, and integrated.',
+      'This quest is about intentional inner practice. That can mean plant medicine ceremony. It can mean a vision quest, a fasting retreat, an extended meditation intensive, a sweat lodge, a dark retreat, or any other form of held practice that creates the conditions for genuine depth. What matters is that it is intentional, supported, and integrated.',
       'These practices have been used by cultures around the world for thousands of years to facilitate healing, initiation, and contact with deeper dimensions of reality. They are not entertainment. They are not shortcuts. Used well, they are among the most powerful catalysts for transformation available to a human being.',
       'Used carelessly, they can harm. The container matters. The preparation matters. Integration matters most of all. A profound experience with no integration is just a story you tell. Integration is the work of taking what you found in the depths and actually living differently because of it.',
       'Whatever you find in the depths belongs partly to you and partly to this community. The regenerative movement needs people who have genuinely been changed. Your integration artifact, shared honestly, is a contribution to the collective intelligence of this Game.',
@@ -413,19 +413,19 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
       'Something happens when a person goes deep enough into themselves that they cannot maintain the story they have been telling. The scaffolding comes down. And in that space, things become visible that ordinary consciousness keeps behind glass.',
     ],
     howToSteps: [
-      { heading: 'Step 1: Choose your practice.', body: 'Identify the form of inner journey you are called to. If you are working with plant medicines, ensure you are doing so legally within your jurisdiction, with appropriate ceremonial support, and with clear intention. If you are doing a vision quest, fasting retreat, or meditation intensive, the same principles apply: container, intention, and support.' },
-      { heading: 'Step 2: Prepare intentionally.', body: 'Preparation is not just dietary (though that matters). It is clearing your calendar, telling the people close to you what you are doing, setting a clear intention for what you are entering the journey to meet. Write your intention down. Bring it with you.' },
-      { heading: 'Step 3: Enter with good support.', body: 'A genuine guide or facilitator matters enormously. Someone who has walked this path many times, who knows how to hold space for what arises, who will not abandon you when it gets difficult. Do not do a significant inner journey alone without experience.' },
-      { heading: 'Step 4: Come back with care.', body: 'The first 24 to 72 hours after a deep journey are critical. Protect them. Do not rush back to work, screens, or social situations. Rest. Write. Walk. Let what happened settle.' },
+      { heading: 'Step 1: Choose your practice.', body: 'Identify the form of inner practice you are called to. If you are working with plant medicines, ensure you are doing so legally within your jurisdiction, with appropriate ceremonial support, and with clear intention. If you are doing a vision quest, fasting retreat, or meditation intensive, the same principles apply: container, intention, and support.' },
+      { heading: 'Step 2: Prepare intentionally.', body: 'Preparation is not just dietary (though that matters). It is clearing your calendar, telling the people close to you what you are doing, setting a clear intention for what you are entering to meet. Write your intention down. Bring it with you.' },
+      { heading: 'Step 3: Enter with good support.', body: 'A genuine guide or facilitator matters enormously. Someone who has walked this path many times, who knows how to hold space for what arises, who will not abandon you when it gets difficult. Do not do a significant inner practice alone without experience.' },
+      { heading: 'Step 4: Come back with care.', body: 'The first 24 to 72 hours after a deep practice are critical. Protect them. Do not rush back to work, screens, or social situations. Rest. Write. Walk. Let what happened settle.' },
       { heading: 'Step 5: Integrate over time.', body: 'Genuine integration takes weeks to months. The insights are fragile at first. Journal regularly. Talk with someone who can hold the complexity of what you experienced. Notice where the experience wants to change how you live. Follow those threads.' },
-      { heading: 'Step 6: Create and share your artifact.', body: 'Write, record, or otherwise capture a reflection on your journey and its integration. What did you enter with? What did you find? What is different now? Share it with this community at whatever level of depth you choose.' },
+      { heading: 'Step 6: Create and share your artifact.', body: 'Write, record, or otherwise capture a reflection on your practice and its integration. What did you enter with? What did you find? What is different now? Share it with this community at whatever level of depth you choose.' },
     ],
-    deliverable: 'A documented reflection on your journey and integration, shared with the community.',
+    deliverable: 'A documented reflection on your practice and integration, shared with the community.',
     tips: [
       'Preparation determines outcome more than people expect. How you enter shapes what you find.',
       'Your guide or facilitator is the most important decision you make. More important than the medicine or the practice itself. Do your research.',
       'Integration is not complete when you feel good. It is complete when you live differently. Watch for the moments when the old pattern comes up and you have a new response available. That is integration working.',
-      'Not every journey is blissful. Some of the most important ones are the hardest. Difficulty is not failure.',
+      'Not every practice is blissful. Some of the most important ones are the hardest. Difficulty is not failure.',
     ],
     resources: [
       { label: 'Psychedelic Integration Alliance (psychedelicintegration.com) for finding integration therapists and guides', url: '' },
@@ -436,7 +436,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       comesBefore: [0],
       referencedBy: [
-        'Comes after: Quests 1-4. A healthy body creates a cleaner container for inner journey',
+        'Comes after: Quests 1-4. A healthy body creates a cleaner container for inner practice',
         'Feeds into: Quest 10 (NVC). What you find in the depths often includes things about how you relate',
       ],
     },
@@ -609,7 +609,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     ],
     connections: {
       referencedBy: [
-        'Pairs with: Quest 9 (Medicine Journey). Both practices access non-ordinary states for insight and healing',
+        'Pairs with: Quest 9 (Medicine Path). Both practices access non-ordinary states for insight and healing',
         'Feeds into: EPIC Quests. The futures you vision here are the ones you build in the EPIC tier',
       ],
     },
@@ -653,7 +653,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       referencedBy: [
         'Pairs with: Quest 1 (Potions). Fasting clears space that the living foods then fill',
-        'Pairs with: Quest 9 (Medicine Journey). Extended fasts produce altered states and deep inner access',
+        'Pairs with: Quest 9 (Medicine Path). Extended fasts produce altered states and deep inner access',
         'Reinforces: All quests. The discipline and clarity of fasting supports every other practice in the game',
       ],
     },
@@ -682,7 +682,7 @@ export const QUEST_MASTER_CONTENT: Record<number | string, QuestMasterContent> =
     connections: {
       referencedBy: [
         'Pairs with: Quest 13 (Fasting) - both practices teach you to listen to the body instead of overriding it',
-        'Pairs with: Quest 8 (Medicine Journey) - body scanning builds the awareness muscle that makes inner exploration safer',
+        'Pairs with: Quest 8 (Medicine Path). Body scanning builds the awareness muscle that makes inner exploration safer',
         'Reinforces: All quests - a body that feels heard and loved has more energy for everything else',
       ],
     },

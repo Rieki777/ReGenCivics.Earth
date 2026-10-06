@@ -439,7 +439,7 @@ export const emailRouter = router({
                 <li>Explore other ways to participate in the regenerative movement</li>
               </ul>
             </div>
-            <p style="color: #333;">Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your journey!</p>
+            <p style="color: #333;">Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your work!</p>
             <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
               <p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p>
             </div>
@@ -534,11 +534,11 @@ export const emailRouter = router({
         },
         acceptance: {
           subject: `Welcome to ReGen Civics!`,
-          body: `Hi ${input.recipientName},\n\nGreat news! We are thrilled to welcome you to the ReGen Civics community.\n\nYour application has been reviewed and we believe you would be a wonderful addition to our regenerative alliance.\n\nNext steps:\n1. Join our next Open Session to meet the community\n2. Complete your player profile at our website\n3. Schedule a call to discuss your journey: ${calendlyLink}\n\nWe are excited to have you on board!\n\nWarm regards,\nThe ReGen Civics Team`,
+          body: `Hi ${input.recipientName},\n\nGreat news! We are thrilled to welcome you to the ReGen Civics community.\n\nYour application has been reviewed and we believe you would be a wonderful addition to our regenerative alliance.\n\nNext steps:\n1. Join our next Open Session to meet the community\n2. Complete your player profile at our website\n3. Schedule a call to discuss your work: ${calendlyLink}\n\nWe are excited to have you on board!\n\nWarm regards,\nThe ReGen Civics Team`,
         },
         not_selected: {
           subject: `Update on Your ReGen Civics Application`,
-          body: `Hi ${input.recipientName},\n\nThank you for your interest in ReGen Civics and for taking the time to submit your application.\n\nAfter careful consideration, we have decided not to move forward at this time. This decision was not easy, as we received many wonderful applications.\n\nWe encourage you to:\n- Stay connected through our newsletter\n- Join our Open Sessions to learn more\n- Consider reapplying in future seasons\n\nWe appreciate your passion for regeneration and wish you all the best in your journey.\n\nWarm regards,\nThe ReGen Civics Team`,
+          body: `Hi ${input.recipientName},\n\nThank you for your interest in ReGen Civics and for taking the time to submit your application.\n\nAfter careful consideration, we have decided not to move forward at this time. This decision was not easy, as we received many wonderful applications.\n\nWe encourage you to:\n- Stay connected through our newsletter\n- Join our Open Sessions to learn more\n- Consider reapplying in future seasons\n\nWe appreciate your passion for regeneration and wish you all the best in your work.\n\nWarm regards,\nThe ReGen Civics Team`,
         },
         request_info: {
           subject: `Additional Information Needed - ReGen Civics`,
@@ -550,7 +550,7 @@ export const emailRouter = router({
         },
         land_project_accepted: {
           subject: `Congratulations! Your Project Passed Our Quality Check - ReGen Civics`,
-          body: `Hi ${input.recipientName},\n\nGreat news! Your land project has passed our first quality check for ReGen Civics Season 2.\n\nWhat this means:\n- Your project meets our criteria for regenerative land projects\n- Final participation in the season is dependent on the community governance process\n- We highly encourage you to follow along the journey regardless of the final selection\n\nImportant: If you complete all the steps in our process, you may still be eligible for joining the alliance even if not selected in this round!\n\nNext steps:\n1. Join our Open Sessions to stay connected\n2. Complete any remaining application materials\n3. Participate in the governance process\n\nSchedule a call to discuss: ${calendlyLink}\n\nWe are excited about your project and look forward to the journey ahead!\n\nWarm regards,\nThe ReGen Civics Team`,
+          body: `Hi ${input.recipientName},\n\nGreat news! Your land project has passed our first quality check for ReGen Civics Season 2.\n\nWhat this means:\n- Your project meets our criteria for regenerative land projects\n- Final participation in the season is dependent on the community governance process\n- We highly encourage you to follow the season regardless of the final selection\n\nImportant: If you complete all the steps in our process, you may still be eligible for joining the alliance even if not selected in this round!\n\nNext steps:\n1. Join our Open Sessions to stay connected\n2. Complete any remaining application materials\n3. Participate in the governance process\n\nSchedule a call to discuss: ${calendlyLink}\n\nWe are excited about your project and look forward to what we build next!\n\nWarm regards,\nThe ReGen Civics Team`,
         },
         custom: {
           subject: input.customSubject || "Message from ReGen Civics",
@@ -716,7 +716,7 @@ export const emailRouter = router({
         case "notSelected":
           emailContent = {
             subject: "ReGen Civics Application Update",
-            html: `<h2 style="color: #1a472a; margin-top: 0;">Hello ${testName},</h2><p style="color: #333; line-height: 1.6;">Thank you so much for your interest in ReGen Civics and for taking the time to share your vision with us.</p><p style="color: #333; line-height: 1.6;">After careful consideration, we've decided not to move forward with your application at this time. This decision doesn't reflect on the value of your work. We simply have limited capacity and must make difficult choices.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">What You Can Do</h3><ul style="color: #333; line-height: 1.8;"><li>Stay connected with our community through our newsletter and events</li><li>Reapply in future seasons as your project evolves</li><li>Explore other ways to participate in the regenerative movement</li></ul></div><p style="color: #333;">Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your journey!</p><div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p></div>`,
+            html: `<h2 style="color: #1a472a; margin-top: 0;">Hello ${testName},</h2><p style="color: #333; line-height: 1.6;">Thank you so much for your interest in ReGen Civics and for taking the time to share your vision with us.</p><p style="color: #333; line-height: 1.6;">After careful consideration, we've decided not to move forward with your application at this time. This decision doesn't reflect on the value of your work. We simply have limited capacity and must make difficult choices.</p><div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;"><h3 style="color: #4a7c59; margin-top: 0;">What You Can Do</h3><ul style="color: #333; line-height: 1.8;"><li>Stay connected with our community through our newsletter and events</li><li>Reapply in future seasons as your project evolves</li><li>Explore other ways to participate in the regenerative movement</li></ul></div><p style="color: #333;">Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your work!</p><div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e0e0e0;"><p style="color: #4a7c59; font-weight: bold; margin-bottom: 5px;">The ReGen Civics Team</p></div>`,
           };
           break;
         case "scheduleCall":

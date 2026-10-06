@@ -78,7 +78,7 @@ import {
 const SEED_EVENTS = [
   {
     title: "Season 2 Community Session",
-    description: "Join us for an open introduction to Season 2! Learn about the program, meet the community, discover if this journey is right for your land project, and help us select the best day/time for the 13-week episodes.",
+    description: "Join us for an open introduction to Season 2! Learn about the program, meet the community, discover if this season is right for your land project, and help us select the best day/time for the 13-week episodes.",
     type: "open" as const,
     startTime: new Date("2026-03-29T18:00:00Z"),
     endTime: new Date("2026-03-29T20:00:00Z"),

@@ -313,7 +313,7 @@ export function QuestProgressTracker() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Quest Progress</h2>
-                  <p className="text-white/80 text-sm">Track your journey</p>
+                  <p className="text-white/80 text-sm">Track your path</p>
                 </div>
               </div>
               

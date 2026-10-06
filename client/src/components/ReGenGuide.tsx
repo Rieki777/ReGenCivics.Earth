@@ -15,7 +15,7 @@ import { useSpeech, useSilentPreference, useVoicePreference } from "@/components
 
 const PATH_WELCOMES: Record<string, string> = {
   investor: "Welcome back! I'm your personal ReGen Guide, here to walk you through the cooperative we are designing, the seasonal accelerator, or your next step. What's on your mind?",
-  land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project journey: showcasing your work, crowdpooling what your project needs, or making the most of the accelerator. Where would you like to start?",
+  land_project: "Welcome back! Glad you're here. I'm your guide for everything on the land project path: showcasing your work, crowdpooling what your project needs, or making the most of the accelerator. Where would you like to start?",
   ally: "Welcome back! I'm here to help you find where your organisation fits in the ReGen Civics ecosystem: understanding alliance partnerships, the value exchange model, or how to get involved. What would you like to explore?",
   player: "Welcome back, Player! I'm your guide to Quests, the Infinite Game, and all the ways you can contribute and co-create in the regenerative movement. What would you like to know?",
 };

@@ -354,7 +354,7 @@ const SYLVA_FIELD_KEYS = SECTIONS.flatMap((s) => s.fields.map((f) => f.key));
 
 /** Trusted grounding so Sylva can answer product questions with real facts. */
 const SYLVA_CONTEXT = [
-  "This is the Custom Games application on regencivics.earth. A land project gets its own coordination game: a web app on their domain, in their brand, holding their data, guiding their personas through journeys.",
+  "This is the Custom Games application on regencivics.earth. A land project gets its own coordination game: a web app on their domain, in their brand, holding their data, guiding their personas through paths.",
   "Facts you can share if asked: the build costs $20,000, paid in milestones (50% kickoff, 25% first playable draft, 25% handoff). They own the finished game completely: code, data, keys, no subscription required.",
   "Delivery takes 3 to 6 months depending on their team's availability; a firm estimate comes at contract. Hosting by our team goes through Village OS at regencivics.earth/village-os, free for accepted Season 2 projects; there is no monthly hosting price, so never quote one.",
   "After they submit: we review, then an intro call, then they receive their Blueprint doc, the rendered design of their game, and from there contract and kickoff.",
@@ -738,7 +738,7 @@ export default function CustomGamesApply() {
                 </li>
                 <li className="flex gap-3">
                   <span className="shrink-0 w-7 h-7 rounded-full bg-[#1a472a] text-white text-sm font-bold flex items-center justify-center">3</span>
-                  <p className="text-[#1a472a]/90 text-sm leading-relaxed"><strong>Your Blueprint doc.</strong> The rendered design of your game: personas, journeys, economy, your guide. From there, contract and kickoff.</p>
+                  <p className="text-[#1a472a]/90 text-sm leading-relaxed"><strong>Your Blueprint doc.</strong> The rendered design of your game: personas, paths, economy, your guide. From there, contract and kickoff.</p>
                 </li>
               </ol>
               <Link href="/custom-games">

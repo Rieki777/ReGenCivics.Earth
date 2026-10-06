@@ -14,7 +14,7 @@ export const questData = {
     title: "Quest 0: Fire",
     subtitle: "Transforming the Stories That No Longer Serve Us",
     description:
-      "Introduction to Quests, background, and intention setting for this journey. An invitation to burn the stories that are no longer serving you to make room for new stories to emerge.",
+      "Introduction to Quests, background, and intention setting for this quest. An invitation to burn the stories that are no longer serving you to make room for new stories to emerge.",
     reward: { regen: 111, rvoice: 1 },
     icon: Flame,
     color: "from-orange-500/20 to-amber-500/20",
@@ -130,13 +130,13 @@ export const questData = {
     {
       id: 8,
       slug: "medicine-journey",
-      title: "Medicine Journey",
+      title: "Medicine Path",
       subtitle: "Inner Exploration",
       description:
-        "A guided journey into the depths of consciousness, exploring the medicine within and around us.",
+        "A guided passage into the depths of consciousness, exploring the medicine within and around us.",
       reward: { regen: 222, rvoice: 1 },
       icon: Circle,
-      deliverable: "Reflection on your medicine journey",
+      deliverable: "Reflection on your medicine practice",
       focus: "Consciousness, Healing, Spirit",
       forumSlug: "rites-quest-8-medicine-journey",
       forumUrl: "/community/post/615",

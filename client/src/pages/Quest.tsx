@@ -460,7 +460,7 @@ function Quest0FlipCard() {
           </p>
           <div className="bg-white/50 p-4 rounded-xl mb-4">
             <p className="text-sm text-[#1a472a]/75 mb-2"><strong>What you'll gain:</strong></p>
-            <p className="text-sm text-[#1a472a]/80">A clear vision and intention for what you're wanting to achieve with this journey.</p>
+            <p className="text-sm text-[#1a472a]/80">A clear vision and intention for what you want this quest to do.</p>
             <p className="text-sm text-[#1a472a]/75 mt-2"><strong>What the community gains:</strong></p>
             <p className="text-sm text-[#1a472a]/80">Another inspired and clear-sighted friend and ally!</p>
           </div>
@@ -581,7 +581,7 @@ function ContinueYourJourneyBanner() {
     <section className="py-10 bg-gradient-to-b from-[#f0ebe3] to-[#faf6f1]">
       <div className="container max-w-3xl mx-auto text-center">
         <h2 className="text-2xl md:text-3xl font-bold text-[#1a472a] mb-2" style={{ fontFamily: "var(--font-display)" }}>
-          Continue Your Journey <ForYouLabel />
+          Continue Your Path <ForYouLabel />
         </h2>
         <p className="text-[#1a472a]/75 text-base mb-4">{bannerSub}</p>
         {nextQuest?.prompt && (
@@ -1078,7 +1078,7 @@ export default function Quest() {
                 className="text-xl font-bold text-[#1a472a] mb-4 text-center"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Quest Arc for the Rites of Passage: full journey!
+                Quest Arc for the Rites of Passage: the full arc!
               </h2>
               <QuestArcMap onSelectQuest={openQuestDetails} />
             </div>
@@ -1181,7 +1181,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Grow & Learn Together</h3>
-                      <p className="text-sm text-[#1a472a]/75">Share our journey and insights with each other & our communities</p>
+                      <p className="text-sm text-[#1a472a]/75">Share our story and insights with each other and our communities</p>
                     </div>
                   </div>
                   
@@ -1211,7 +1211,7 @@ export default function Quest() {
                     </div>
                     <div>
                       <h3 className="font-bold text-[#1a472a] mb-1">Regenerate Relationships</h3>
-                      <p className="text-sm text-[#1a472a]/75">With each other and the more-than-human world as we journey into new civilizations together</p>
+                      <p className="text-sm text-[#1a472a]/75">With each other and the more-than-human world as we build new civilizations together</p>
                     </div>
                   </div>
                 </div>
@@ -1272,7 +1272,7 @@ export default function Quest() {
               className="text-3xl md:text-4xl font-bold mb-8 text-[#1a472a] text-center"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Start Your <span className="text-[#2d5a3d]">Journey</span>
+              Start Your <span className="text-[#2d5a3d]">Path</span>
             </h2>
             
             {/* Quest 0 - Flip Card */}
@@ -1353,7 +1353,7 @@ export default function Quest() {
           <div className="max-w-4xl mx-auto">
             <div className="bg-white p-8 rounded-2xl border-2 border-[#7dd87d]/30 shadow-lg">
               <p className="text-lg text-[#1a472a]/90 leading-relaxed text-center italic">
-                "Each Quest focuses on healing one aspect of our reality. Starting with our Gut and digestion (and how that extends into our soils) - a core to our health and energy levels - and moving through relationships with plants, animals, our community, language, love and each other. As we journey through the quests we heal ourselves, our cells and our Earth (which we are but cells of)."
+                "Each Quest focuses on healing one aspect of our reality. Starting with our Gut and digestion (and how that extends into our soils) - a core to our health and energy levels - and moving through relationships with plants, animals, our community, language, love and each other. As we walk the quests we heal ourselves, our cells and our Earth (which we are but cells of)."
               </p>
             </div>
           </div>

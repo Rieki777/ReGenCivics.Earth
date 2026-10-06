@@ -667,7 +667,7 @@ export default function Game() {
                     </div>
                   </div>
                   <p className="text-sm text-[#1a472a]/75 mb-4 text-left">
-                    Begin your journey by burning the stories that no longer serve you. Create a 2-3 minute video sharing who you are and why you're here.
+                    Begin by burning the stories that no longer serve you. Create a 2-3 minute video sharing who you are and why you're here.
                   </p>
                   <div className="flex items-center gap-2 mb-4">
                     <span className="px-3 py-1 bg-[#7dd87d]/20 text-[#1a472a] rounded-full text-xs font-bold">+111 $Regen</span>
@@ -1171,7 +1171,7 @@ export default function Game() {
                       <BookOpen className="w-6 h-6 text-[#7dd87d] flex-shrink-0 mt-1" />
                       <div>
                         <h4 className="font-bold text-[#1a472a] mb-1">Grow & Learn Together</h4>
-                        <p className="text-sm text-[#1a472a]/75">Share our journey and insights with communities. This is the contribution our tokens record.</p>
+                        <p className="text-sm text-[#1a472a]/75">Share our story and insights with communities. This is the contribution our tokens record.</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3 p-4 bg-[#f0f7f0] rounded-xl">
@@ -1386,7 +1386,7 @@ export default function Game() {
                       </h4>
                     </div>
                     <p className="text-[#1a472a]/80">
-                      Play is joyful, and it works. We believe the journey to regeneration should feel as good as the destination. When we design for wellbeing, everyone wins.
+                      Play is joyful, and it works. The path toward regeneration should feel as good as arriving. When we design for wellbeing, everyone wins.
                     </p>
                   </div>
                   
@@ -1496,7 +1496,7 @@ export default function Game() {
                 style={{ fontFamily: 'var(--font-display)' }}
               >
                 The ReGen Game{" "}
-                <span className="text-[#7dd87d]">Journey</span>
+                <span className="text-[#7dd87d]">Path</span>
               </h2>
               <p className="text-xl text-white/80 max-w-3xl mx-auto mb-6">
                 We guide land projects through essential milestones to co-create your unique "Game"
@@ -1517,7 +1517,7 @@ export default function Game() {
             <div className="max-w-4xl mx-auto mb-12">
               <img
                 src={cdnImg("https://assets.regencivics.earth/LbIXEUcDdcOLOHmP.jpg")}
-                alt="ReGen Game Journey Map"
+                alt="ReGen Game path map"
                 width="1200"
                 height="800"
                 loading="lazy"
@@ -1530,7 +1530,7 @@ export default function Game() {
               <CollapsibleTrigger className="w-full">
                 <div className="bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-[#7dd87d]/30 flex items-center justify-between hover:bg-white/15 transition-colors cursor-pointer">
                   <span className="text-white font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                    Explore the Journey Steps
+                    Explore the path steps
                   </span>
                   <ChevronDown className="w-5 h-5 text-[#7dd87d]" />
                 </div>
@@ -1811,7 +1811,7 @@ export default function Game() {
                 className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
                 style={{ fontFamily: 'var(--font-accent)' }}
               >
-                <span className="mr-2">🧙</span> Start Your Quest Journey
+                <span className="mr-2">🧙</span> Start Your Quest Path
               </Button>
             </Link>
             <Link href="/seasons">

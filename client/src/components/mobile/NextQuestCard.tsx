@@ -66,7 +66,7 @@ export function NextQuestCard({ onSelect }: Props) {
               Explore Epic Quests
             </div>
             <div className="text-white/60 text-xs leading-snug mt-0.5">
-              All Rites complete. Ready for long-form land transformation journeys.
+              All Rites complete. Ready for long-form land work.
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-[#7dd87d] flex-shrink-0" />
@@ -94,7 +94,7 @@ export function NextQuestCard({ onSelect }: Props) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-white/70 text-xs uppercase tracking-wider font-semibold mb-0.5">
-            Continue Your Journey
+            Continue Your Path
           </div>
           <div className="text-white font-bold text-sm leading-tight truncate" style={{ fontFamily: "var(--font-display)" }}>
             {seasonEmoji && <span className="mr-1">{seasonEmoji}</span>}

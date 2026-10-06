@@ -401,7 +401,7 @@ export default function Schedule() {
                 Seasons are streamed live on YouTube!
               </p>
               <p className="text-white/70 mb-4 max-w-2xl mx-auto">
-                You can follow along with the journey even if your project isn't selected. Add the whole season to your calendar and tune in each week. Sometimes there are opportunities for the audience to ask questions and participate.
+                You can follow the season even if your project isn't selected. Add the whole season to your calendar and tune in each week. Sometimes there are opportunities for the audience to ask questions and participate.
                 {APPLICATIONS.followAlong && (
                   <>
                     {` ${CROWDPOOL_ROUND_LINE} `}

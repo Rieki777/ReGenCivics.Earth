@@ -108,7 +108,7 @@ if (!questsCatId) {
   console.warn('\nSKIP: quests-gameplay category not found — skipping quest threads');
 } else {
   const quests = [
-    { title: 'Quest 0 — Welcome to the Infinite Game',    content: 'Discussion thread for Quest 0. Share your experience stepping into the game for the first time, ask questions, and connect with others just beginning their journey.' },
+    { title: 'Quest 0 — Welcome to the Infinite Game',    content: 'Discussion thread for Quest 0. Share your experience stepping into the game for the first time, ask questions, and connect with others just beginning their path.' },
     { title: 'Quest 1 — Discover Your Biome',             content: 'Discussion thread for Quest 1. Share your biome discoveries, the ecosystems around you, and what you are learning about the living world where you are.' },
     { title: 'Quest 2 — Saving Seeds',                    content: 'Discussion thread for Quest 2. Share your seed saving experiences, varieties you are preserving, and tips for other players working with seeds.' },
     { title: 'Quest 3 — Water Wisdom',                    content: 'Discussion thread for Quest 3. Share your water stewardship practices, observations about water in your landscape, and what you are learning.' },
@@ -120,7 +120,7 @@ if (!questsCatId) {
     { title: 'Quest 9 — Land Stewardship',                content: 'Discussion thread for Quest 9. Share your land stewardship practices, observations, and the relationship you are cultivating with your land.' },
     { title: 'Quest 10 — Alliance Building',              content: 'Discussion thread for Quest 10. Share how you are building alliances, connecting projects, and weaving the regenerative network.' },
     { title: 'Quest 11 — The Living Lab',                 content: 'Discussion thread for Quest 11. Share your experiments, observations, and insights from turning your land or community into a living laboratory.' },
-    { title: 'Quest 12 — Season Completion',              content: 'Discussion thread for Quest 12. Celebrate completing a full season, reflect on your journey, and share what you are taking forward.' },
+    { title: 'Quest 12 — Season Completion',              content: 'Discussion thread for Quest 12. Celebrate completing a full season, reflect on the season, and share what you are taking forward.' },
     { title: 'Food Foresting — Practitioner Discussion',  content: 'A space for practitioners actively engaged in food forest design and establishment. Share detailed experiences, species combinations, and lessons learned.' },
   ];
 

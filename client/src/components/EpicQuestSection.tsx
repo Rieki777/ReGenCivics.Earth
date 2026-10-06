@@ -256,7 +256,7 @@ export function EpicQuestSection() {
             Epic Quests {isLocked && <Lock className="inline w-7 h-7 text-white/30 ml-2" />}
           </h2>
           <p className="text-white/70 text-lg max-w-xl mx-auto">
-            Land Transformation Journeys. Long-form challenges for committed regenerators. These are seasons of real work.
+            Land transformation paths. Long-form challenges for committed regenerators. These are seasons of real work.
           </p>
           <div className="mt-4 flex items-center justify-center gap-3">
             <SeasonProgressRing completedSeasons={unlocks?.completedSeasons ?? []} compact />

@@ -161,7 +161,7 @@ If that is you, raise your flag. Apply to keep her, and let us talk.`,
     id: 'more-than-one-honeymoon',
     slug: 'more-than-one-honeymoon',
     title: "You're Allowed to Have More Than One Honeymoon",
-    excerpt: 'You are allowed to take a week, put your love at the center of it, and go. The old ritual was a full moon of honey and healing. You should get to take that journey as many times as your love needs it.',
+    excerpt: 'You are allowed to take a week, put your love at the center of it, and go. The old ritual was a full moon of honey and healing. You should get to take that week as many times as your love needs it.',
     content: `Consider this a permission slip.
 
 Maybe you've been married twenty years. Maybe you met three months ago and can't stop grinning. Maybe you're somewhere in the long middle, where love is real and steady and a little buried under logistics. Wherever you are, the permission is the same: you're allowed to have more than one honeymoon. You're allowed to take a week, put your love at the center of it, and go.
@@ -172,7 +172,7 @@ The old story goes like this. Before a couple stepped into the next season of th
 
 Etymologists argue about where the word really comes from, and that's fine. What matters is what the ritual points at: the season after you choose each other is for becoming healthy together. Somewhere along the way we shrank that into a one-time vacation, taken once, right after the wedding, mostly spent recovering from the wedding.
 
-We think you should get to take that journey as many times as your love needs it.
+We think you should get to take that week as many times as your love needs it.
 
 ![A couple resting by a campfire under Cascadia dusk](/images/ship/ship-campfire-dusk.jpg)
 
@@ -182,7 +182,7 @@ The ReGen Ship is a regenerative pirate ship, complete with your treasure chest 
 
 Here's what a week aboard looks like. The ship's concierge draws you a treasure map through Cascadia: springs to drink from, waterfalls to swim under, food forests to harvest, land projects to serve. You plant seeds from the treasure chest everywhere you go. You eat local fruit and save the seeds. You put your hands in soil next to the person you love, building something that will outlive you both. And when you sail home to her anchorage, you plant your saved seeds in the healing hole and watch a food forest grow from every crew that ever sailed.
 
-This is the part we've come to trust: healing together heals the relationship. When two people spend a week caring for their own bodies, for each other, for a piece of land, and for a community, old wounds between them start to close on their own. Love grows in the direction of what you tend. Couples who are struggling and want to deepen, this journey is for you too. Not a last resort. A place to fall back in.
+This is the part we've come to trust: healing together heals the relationship. When two people spend a week caring for their own bodies, for each other, for a piece of land, and for a community, old wounds between them start to close on their own. Love grows in the direction of what you tend. Couples who are struggling and want to deepen, this week is for you too. Not a last resort. A place to fall back in.
 
 Because healing was never only about us. It reaches the community around us and the more-than-human world that holds us. The land heals your love while your love heals the land. That's the exchange. That's the whole design.
 
@@ -386,7 +386,7 @@ Decisions in ReGen Civics happen through our Decentralized Human Organization (D
 
 ## 7. SEEDS Legacy Recognition & 10+ Years
 
-Many of our community members participated in the SEEDS ecosystem before ReGen Civics emerged. We believe that contribution should be honored. We learned a lot on that journey that started June Solstice 2017. Explore more about this journey in the next blog post!
+Many of our community members participated in the SEEDS ecosystem before ReGen Civics emerged. We believe that contribution should be honored. We learned a lot on that path that started June Solstice 2017. Explore more about this story in the next blog post!
 
 Welcome to the Infinite Game.`,
     author: 'ReGen Civics Team',
@@ -436,7 +436,7 @@ To all the Season 1 land stewards: thank you for being the first to play this Ga
     excerpt: 'From a bold question to a global movement. The story of how SEEDS began, crashed, and rose again with a new vision for regenerative economics.',
     content: `Every movement has an origin story. Ours begins with a question that seemed almost naive in its ambition: What if we could design an economic system that rewards regeneration instead of extraction?
 
-Watch the short video above or enjoy the [whole journey here](https://youtu.be/YrNw_PdJd68?si=RipVLOIHSq5VZVYE) to learn about the journey of SEEDS and how it evolved into ReGen Civics.
+Watch the short video above or enjoy the [whole story here](https://youtu.be/YrNw_PdJd68?si=RipVLOIHSq5VZVYE) to learn about the story of SEEDS and how it evolved into ReGen Civics.
 
 ## The Birth of SEEDS
 
@@ -444,7 +444,7 @@ SEEDS (Sowing Ecological, Economic, and Democratic Systems) emerged from the int
 
 ## The Experiment
 
-At its peak, SEEDS had thousands of members across dozens of countries. People were earning tokens by planting trees, cleaning rivers, teaching permaculture, and building community and over 400 democratic community formed and governed proposals in a massive learning journey in large scale decentralised governance.
+At its peak, SEEDS had thousands of members across dozens of countries. People were earning tokens by planting trees, cleaning rivers, teaching permaculture, and building community and over 400 democratic community formed and governed proposals in a massive learning season in large scale decentralised governance.
 
 ## Our Renewed Focus
 
@@ -480,7 +480,7 @@ Some might wonder: why does a regenerative land project alliance need blockchain
 
 **Participation**: With Hypha's intuitive interface, anyone can submit proposals, vote on decisions, and track the flow of resources. You do not need to be a crypto expert to participate.
 
-**Permanence**: Decisions made on-chain cannot be erased or altered. This creates an immutable record of our collective journey, a living history that future generations can learn from.
+**Permanence**: Decisions made on-chain cannot be erased or altered. This creates an immutable record of what we decided together, a living history that future generations can learn from.
 
 ## Why Base?
 
@@ -706,7 +706,7 @@ Think of it like a role-playing game, but instead of fighting dragons, you are:
 
 ## The Quest System
 
-Quests are structured challenges that guide your journey through the ReGen Civics ecosystem. Each quest has clear objectives, rewards, and learning outcomes.
+Quests are structured challenges that guide your path through the ReGen Civics ecosystem. Each quest has clear objectives, rewards, and learning outcomes.
 
 **Starter Quests** help newcomers understand the basics:
 - Create your player profile
@@ -723,7 +723,7 @@ Quests are structured challenges that guide your journey through the ReGen Civic
 **Epic Quests** represent major achievements:
 - Launch a Minimum Viable Economy
 - Bring a new alliance partner into the network
-- Complete a full seasonal journey
+- Complete a full season
 
 ## Earning Tokens Through Play
 

@@ -248,7 +248,7 @@ export function QuestBadges() {
                     Quest Badges
                   </h2>
                   <p className="text-white/80 mt-1">
-                    Earn badges by completing quests and proving your regenerative journey
+                    Earn badges by completing quests and showing your regenerative work
                   </p>
                 </div>
                 <div className="flex items-center gap-2">

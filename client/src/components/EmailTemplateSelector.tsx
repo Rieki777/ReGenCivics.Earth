@@ -108,7 +108,7 @@ We encourage you to:
 - Reapply in future seasons as your project evolves
 - Explore other ways to participate in the regenerative movement
 
-Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your journey!
+Thank you for being part of the ReGenerative Renaissance. We wish you all the best in your work!
 
 Warm regards,
 The ReGen Civics Team`,
@@ -169,7 +169,7 @@ Great news! Your land project has passed our first quality check for ReGen Civic
 What this means:
 - Your project meets our criteria for regenerative land projects
 - Final participation in the season is dependent on the community governance process
-- We highly encourage you to follow along the journey regardless of the final selection
+- We highly encourage you to follow the season regardless of the final selection
 
 > Important: If you complete all the steps in our process, you may still be eligible for joining the alliance even if not selected in this round.
 
@@ -182,7 +182,7 @@ Next steps:
 
 [Schedule a call](https://calendly.com/rieki-cordon/30min)
 
-We are excited about your project and look forward to the journey ahead!
+We are excited about your project and look forward to what we build next!
 
 Warm regards,
 The ReGen Civics Team`,

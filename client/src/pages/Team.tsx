@@ -49,7 +49,7 @@ import { LazyImage } from "@/components/LazyImage";
 import { cdnImg } from "@/lib/utils";
 
 const coreValues = [
-  { icon: Heart, title: "Honesty (with Empathy)", description: "We speak truth with care, balancing directness with compassion for each other's journeys." },
+  { icon: Heart, title: "Honesty (with Empathy)", description: "We speak truth with care, pairing directness with compassion for each other's paths." },
   { icon: Eye, title: "Transparency", description: "Our processes, decisions, and finances are open for all members to see and understand." },
   { icon: Users, title: "Responsibility", description: "We own our commitments and hold ourselves accountable to the community." },
   { icon: Compass, title: "Focus", description: "We channel our energy toward what matters most for the ReGenerative Renaissance." },
@@ -84,8 +84,8 @@ const archetypes = [
   { 
     emoji: "📖", 
     title: "Storytelling & Communicating", 
-    description: "Sharing our vision, documenting our journey, and inspiring others to join.",
-    examples: ["Amplifying the story of our movement", "Creating content that inspires", "Documenting our journey", "Managing social media presence"]
+    description: "Sharing our vision, documenting the work, and inviting others in.",
+    examples: ["Amplifying the story of our movement", "Creating content that inspires", "Documenting the work", "Managing social media presence"]
   }
 ];
 
@@ -143,7 +143,7 @@ const howWeWork = [
 const openRoles = [
   {
     title: "Season Facilitator",
-    purpose: "Guide and support the 13 land projects through their incubation journey each season",
+    purpose: "Guide and support the 13 land projects through incubation each season",
     circle: "Incubation Circle",
     accountability: "Facilitate weekly sessions, track project progress, ensure resources flow to projects",
     domain: "Season incubation process and project support protocols",

@@ -37,7 +37,7 @@ const PAGES: PageEntry[] = [
   { label: "Cooperative Interest Form", description: "Tell us you're interested in the cooperative", href: "/loi", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Cooperative", keywords: "interest cooperative co-op" },
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
-  { label: "Quests", description: "Start your questing journey", href: "/quest", icon: <Scroll className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
+  { label: "Quests", description: "Start questing", href: "/quest", icon: <Scroll className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Bounties", description: "Earn $ReGen for real work", href: "/bounties", icon: <Sparkles className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Crowd Pool Campaigns", description: "Browse land project campaigns", href: "/campaigns", icon: <Users className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Schedule", description: "Book a call or join a session", href: "/schedule", icon: <Calendar className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },

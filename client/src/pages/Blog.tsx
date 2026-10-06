@@ -274,7 +274,7 @@ export default function Blog() {
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
       <SEO
         title="Blog: Stories & Updates | ReGen Civics"
-        description="Stories, insights, and updates from our journey toward a regenerative civilization."
+        description="Stories, insights, and updates from the work of building a regenerative civilization."
         url="/blog"
         image={cdnImg("https://assets.regencivics.earth/pKiFMAPaeLLVmxyg.png")}
         breadcrumbs={[{ name: "Home", url: "/" }, { name: "Blog", url: "/blog" }]}
@@ -318,7 +318,7 @@ export default function Blog() {
             </h1>
             
             <p className="text-xl text-white/80 max-w-2xl mx-auto safe-prose">
-              Stories, insights, and updates from our journey toward a regenerative civilization.
+              Stories, insights, and updates from the work of building a regenerative civilization.
             </p>
           </AnimatedSection>
         </div>

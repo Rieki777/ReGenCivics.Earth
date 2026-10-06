@@ -698,7 +698,7 @@ export default function ReGenCoCreatorsGuide() {
                 Path of Growth
               </h2>
               <p className="text-emerald-200 text-lg max-w-2xl mx-auto">
-                Your journey through ReGen Civics, from first exploration to deepest
+                Your path through ReGen Civics, from first exploration to deepest
                 co-creation. Each stage has its own rights, responsibilities, and opportunities.
               </p>
             </div>
