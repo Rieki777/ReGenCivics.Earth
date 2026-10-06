@@ -18,6 +18,7 @@ import {
   boardWelcome,
   type ProjectPhase,
   breathAt,
+  CLOSE_BOARD_CONFIRM,
   sessionMinutes,
   shareTime,
   TOGETHER_COPY,
@@ -43,13 +44,15 @@ export type StageProps = {
   stages: BoardStage[];
   index: number;
   facilitator: boolean;
-  /** Participants can add to the board (it is open), or this viewer facilitates. */
+  /** The board has loaded. People can keep adding after it closes. */
   canWrite: boolean;
   mine: Mine;
   actions: BoardActions;
   now: number;
   serverNow: () => number;
   go: (i: number) => void;
+  /** The board is open and the session has not ended. Room controls use this. */
+  roomLive: boolean;
 };
 
 const THEME_TITLE: Record<string, string> = Object.fromEntries(OPPORTUNITY_THEMES.map((t) => [t.key, t.title]));
@@ -670,7 +673,7 @@ export function Together({ board, stages, index, facilitator, mine, actions, wee
                 pressedLabel={o.on}
                 count={board.offers[o.key] ?? 0}
                 raised={mine.offers.has(o.key)}
-                boardOpen={board.status === "open"}
+                boardOpen
                 facilitator={facilitator}
                 who={facilitator ? people?.[o.key] : undefined}
                 onLower={() => void actions.offer(o.key, false)}
@@ -776,7 +779,7 @@ function AddProject({ actions, onAdded, displayName, setDisplayName }: { actions
 }
 
 export function Circle(props: StageProps & { displayName: string; setDisplayName: (v: string) => void }) {
-  const { board, stages, index, facilitator, canWrite, mine, actions, now } = props;
+  const { board, stages, index, facilitator, canWrite, mine, actions, now, roomLive } = props;
   const { sel, setLocalSel } = useSelected(board, facilitator);
   const next = upNext(board.projects, sel?.id ?? null);
   const [confirmHide, setConfirmHide] = useState(false);
@@ -842,7 +845,7 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
                   <LiveField className="sb-sp-place" value={sel.place ?? ""} readOnly={!editable} placeholder={editable ? "Where on Earth" : ""} label="Where on Earth" max={BOARD_LIMITS.place} onSave={(v) => void actions.updateProject({ projectId: sel.id, place: v })} />
                   {sel.url ? <a className="sb-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.url.replace(/^https?:\/\//, "")}<span className="sr-only"> (opens in a new tab)</span></a> : null}
                 </div>
-                {sp.projectId === sel.id ? (
+                {roomLive && sp.projectId === sel.id ? (
                   <div className="sb-timer">
                     <div className={`sb-ring${left < 0 ? " sb-over" : left <= 30 ? " sb-warn" : ""}`} role="timer" aria-label="Time left for this share">
                       <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -970,7 +973,7 @@ export function Harvest({ board, stages, index, facilitator, canWrite, mine, act
   return (
     <>
       <StageHead stages={stages} index={index} title="Harvest the opportunities" lede="Every growth opportunity from the circle in one place. Sort them by theme, then vote for the ones we design our game around.">
-        {board.status === "open" ? <p className="sb-hint">You have three votes. {votesLeft > 0 ? `${plural(votesLeft, "vote", "votes")} left.` : "All three used. Take one back to move it."}</p> : null}
+        <p className="sb-hint">You have three votes. {votesLeft > 0 ? `${plural(votesLeft, "vote", "votes")} left.` : "All three used. Take one back to move it."}</p>
       </StageHead>
       {all.length ? (
         <div className="sb-row" role="group" aria-label="Filter by theme">
@@ -999,9 +1002,7 @@ export function Harvest({ board, stages, index, facilitator, canWrite, mine, act
                         {facilitator ? <button type="button" className="sb-mini" aria-label="One more room vote" onClick={() => actions.curateItem({ itemId: o.id, roomVotes: o.roomVotes + 1 })}>+</button> : null}
                       </div>
                       <div className="sb-row">
-                        {board.status === "open" ? (
-                          <button type="button" className="sb-toggle" aria-pressed={voted} disabled={!voted && votesLeft <= 0} onClick={() => void actions.vote(o.id, !voted)}>{voted ? "Voted" : "Vote"}</button>
-                        ) : null}
+                        <button type="button" className="sb-toggle" aria-pressed={voted} disabled={!voted && votesLeft <= 0} onClick={() => void actions.vote(o.id, !voted)}>{voted ? "Voted" : "Vote"}</button>
                         {facilitator ? (
                           <button type="button" className="sb-toggle" aria-pressed={o.chosen} onClick={() => actions.curateItem({ itemId: o.id, chosen: !o.chosen })}>{o.chosen ? "Chosen" : "Choose"}</button>
                         ) : o.chosen ? <span className="sb-badge">Chosen</span> : null}
@@ -1113,7 +1114,7 @@ export function Ahead({ board, week, stages, index, facilitator, canWrite, mine,
                 <div className="sb-wk-main"><strong>{e.title}</strong><p>{e.description}</p></div>
                 <div className="sb-hands">
                   <span className="sb-h-n">{plural(n, "hand", "hands")}</span>
-                  {board.status === "open" ? <button type="button" className="sb-toggle" aria-pressed={raised} onClick={() => void actions.hand(e.week, !raised)}>{raised ? "I'll be there" : "Raise a hand"}</button> : null}
+                  <button type="button" className="sb-toggle" aria-pressed={raised} onClick={() => void actions.hand(e.week, !raised)}>{raised ? "I'll be there" : "Raise a hand"}</button>
                 </div>
               </li>
             );
@@ -1197,7 +1198,7 @@ export function Close({ board, week, stages, index, facilitator, canWrite, mine,
           {board.status === "open" ? (
             confirm ? (
               <>
-                <span>Close the board? It stays up as this week's record, and only you can change it after.</span>
+                <span>{CLOSE_BOARD_CONFIRM}</span>
                 <button type="button" className="sb-btn sb-small" onClick={() => { actions.setStatus("closed"); setConfirm(false); }}>Close the board</button>
                 <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => setConfirm(false)}>Keep it open</button>
               </>

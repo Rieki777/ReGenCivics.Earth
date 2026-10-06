@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BOARD_OFFERS, TOGETHER_COPY, boardStages } from "./sessionBoard";
+import { BOARD_OFFERS, CLOSE_BOARD_CONFIRM, TOGETHER_COPY, boardStages, closedBoardBanner } from "./sessionBoard";
 import {
   boardOfferInterest,
   boardSignupSource,
   boardSignupTags,
+  followUpNotes,
   interestFromRole,
+  isBoardHandRole,
   isBoardSignupSource,
   parseBoardSignupSource,
 } from "./boardSignup";
@@ -57,5 +59,25 @@ describe("board sign-up source tag", () => {
       expect(line.toLowerCase()).not.toContain("riverside");
       expect(line).not.toContain("\u2014");
     }
+  });
+
+  it("the closed-board and follow-up lines stay plain", () => {
+    const lines = [
+      closedBoardBanner(2),
+      CLOSE_BOARD_CONFIRM,
+      followUpNotes(2, "arrive"),
+      "Want us to follow up?",
+      "Thanks, Ada. We'll write to ada@example.com.",
+    ];
+    for (const line of lines) {
+      expect(line.toLowerCase()).not.toContain("riverside");
+      expect(line.toLowerCase()).not.toContain("chat");
+      expect(line.toLowerCase()).not.toContain("everything is free");
+      expect(line).not.toContain("\u2014");
+    }
+    expect(followUpNotes(2, "arrive")).toBe("Left on the week 2 board after: an arrival word");
+    expect(isBoardHandRole("coach")).toBe(true);
+    expect(isBoardHandRole("builder")).toBe(true);
+    expect(isBoardHandRole("follow-up")).toBe(false);
   });
 });

@@ -1,9 +1,9 @@
 /**
- * Raise a hand on the Season week board: a Contact Us inquiry, plus a live
- * hand count while the board is open and the session is still going.
+ * Raise a hand on the Season week board: a Contact Us inquiry, plus the hand
+ * count. The count still moves after the board closes and after the session ends.
  *
- * A closed board, or a session that has ended, still keeps the name and email.
- * It does not throw, and it does not write a vote.
+ * A closed board, and a session that has ended, still keep the name and email
+ * and still count the hand. The contact is saved even when the vote is not.
  */
 import { TRPCError } from "@trpc/server";
 import { sql } from "drizzle-orm";
@@ -17,12 +17,10 @@ import {
   boardIdentity,
   boardStages,
   cleanBoardLine,
-  normalizeBoardState,
-  sessionClosedAt,
-  sessionMinutes,
   voteTarget,
   type BoardOfferKey,
 } from "@shared/sessionBoard";
+import { boardKeyTagFor } from "@shared/boardIdentityLink";
 import { sessionBoardVotes } from "../../drizzle/schema";
 import type { TrpcContext } from "../_core/context";
 import { getDb } from "../db";
@@ -48,12 +46,6 @@ function identityKeys(user: TrpcContext["user"], voterKey: string | undefined): 
   const guest = boardIdentity(null, voterKey ?? null);
   if (guest) keys.push(guest);
   return keys;
-}
-
-function sessionHasEnded(state: unknown, week: number, now: number): boolean {
-  const normalized = normalizeBoardState(state, week);
-  const plannedMs = sessionMinutes(normalized.plan, boardStages(week)) * 60_000;
-  return sessionClosedAt(normalized, plannedMs, now) != null;
 }
 
 /**
@@ -87,8 +79,15 @@ export async function signUpOnBoard(
   const inquiryId = Number(saved.id);
   if (Number.isFinite(inquiryId) && inquiryId > 0) {
     try {
-      for (const tag of boardSignupTags(input.week, input.offer)) {
+      const tags = [...boardSignupTags(input.week, input.offer)];
+      for (const identity of identityKeys(ctx.user, input.voterKey)) {
+        tags.push(await boardKeyTagFor(identity));
+      }
+      const existing = new Set((await dbApi.getContactTags("inquiry", inquiryId)).map((t) => t.tag));
+      for (const tag of tags) {
+        if (existing.has(tag)) continue;
         await dbApi.addContactTag({ contactType: "inquiry", contactId: inquiryId, tag });
+        existing.add(tag);
       }
     } catch (e) {
       console.warn("Board sign-up tags were not saved:", e);
@@ -108,11 +107,8 @@ async function raiseHandIfLive(
   const db = await getDb();
   if (!db) return false;
   const season = opts?.season ?? SESSION_BOARD_SEASON;
-  const now = opts?.now ?? Date.now();
   try {
     const board = await ensureBoard(db, season, input.week);
-    if (board.status !== "open") return false;
-    if (sessionHasEnded(board.state, input.week, now)) return false;
     const target = voteTarget.offer(input.offer);
     await db
       .insert(sessionBoardVotes)

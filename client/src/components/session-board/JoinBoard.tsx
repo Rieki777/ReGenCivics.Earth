@@ -6,6 +6,8 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { QR_DARK, QR_LIGHT, QR_QUIET, qrDarkPath, qrMatrix } from "@shared/boardQr";
 import { sessionBoardShareUrl } from "@shared/sessionBoard";
+import { useAskBoardContact } from "./useBoardContact";
+import "./follow-up.css";
 
 const JOIN_CALL_URL = "https://regencivics.earth/join";
 
@@ -130,11 +132,15 @@ export function JoinBoard({ week }: { week: number }) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const contact = useAskBoardContact();
 
   return (
     <div className="sb-panel sb-join">
       <h2 className="sb-h3">Type in with us</h2>
       <p className="sb-hint">Open this board on your own screen. Your words, your project and your votes land here live.</p>
+      {contact?.showLink ? (
+        <button type="button" className="sb-follow-optin" onClick={contact.ask}>Leave your name and email</button>
+      ) : null}
       <p className="sb-join-url"><SlashBreaks text={label} /></p>
       <div className="sb-join-actions">
         <a className="sb-btn" href={JOIN_CALL_URL}>Join the call</a>

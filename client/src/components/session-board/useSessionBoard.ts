@@ -26,6 +26,7 @@ import {
   patchProject,
   type BoardWriter,
 } from "./boardWriter";
+import { markBoardContribution } from "./boardContactStore";
 
 const VOTER_KEY_STORAGE = "season-voter-key";
 const NAME_STORAGE = "session-board:name";
@@ -288,6 +289,7 @@ export function useSessionBoard(week: number) {
         return r;
       });
       const result = await done;
+      if (result.ok && result.value) markBoardContribution(input.kind);
       return result.ok ? result.value : null;
     },
     removeItem: (itemId: number) => {
@@ -333,6 +335,7 @@ export function useSessionBoard(week: number) {
         return r;
       });
       const result = await done;
+      if (result.ok && result.value) markBoardContribution("project");
       return result.ok ? result.value : null;
     },
     updateProject: (input: ProjectWrite) => {
@@ -355,7 +358,10 @@ export function useSessionBoard(week: number) {
           return { ...m, votes };
         });
         paint((b) => adjustVotes(b, itemId, on ? 1 : -1));
-      }, (next) => voteM.mutateAsync({ week, voterKey, itemId, on: next }));
+      }, async (next) => {
+        await voteM.mutateAsync({ week, voterKey, itemId, on: next });
+        if (next) markBoardContribution("vote");
+      });
     },
     hand: (forWeek: number, on: boolean) => {
       writer.coalesce(`hand:${forWeek}`, on, () => {
@@ -365,7 +371,10 @@ export function useSessionBoard(week: number) {
           return { ...m, hands };
         });
         paint((b) => adjustMap(b, "hands", forWeek, on ? 1 : -1));
-      }, (next) => handM.mutateAsync({ week, voterKey, forWeek, on: next }));
+      }, async (next) => {
+        await handM.mutateAsync({ week, voterKey, forWeek, on: next });
+        if (next) markBoardContribution("hand");
+      });
     },
     offer: (key: BoardOfferKey, on: boolean) => {
       writer.coalesce(`offer:${key}`, on, () => {
@@ -375,7 +384,10 @@ export function useSessionBoard(week: number) {
           return { ...m, offers };
         });
         paint((b) => adjustMap(b, "offers", key, on ? 1 : -1));
-      }, (next) => offerM.mutateAsync({ week, voterKey, offer: key, on: next }));
+      }, async (next) => {
+        await offerM.mutateAsync({ week, voterKey, offer: key, on: next });
+        if (next) markBoardContribution("offer");
+      });
     },
     /** The sign-up already wrote the vote. Paint the hand without writing it again. */
     paintOffer: (key: BoardOfferKey) => {

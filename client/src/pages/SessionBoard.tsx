@@ -18,7 +18,9 @@ import { SEO } from "@/components/SEO";
 import {
   LAST_BOARD_WEEK,
   boardStages,
+  closedBoardBanner,
   hasSessionBoard,
+  nextBoardSession,
   sessionBoardHref,
   sessionClosedAt,
   sessionElapsedMs,
@@ -27,6 +29,7 @@ import {
 } from "@shared/sessionBoard";
 import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
 import { episodeByWeek } from "@shared/season2Curriculum";
+import { BoardContactCard, BoardContactProvider } from "@/components/session-board/useBoardContact";
 import { useSessionBoard } from "@/components/session-board/useSessionBoard";
 import {
   Ahead,
@@ -86,16 +89,14 @@ function Board({ week }: { week: number }) {
   const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName } = useSessionBoard(week);
   const facilitator = !!board?.canFacilitate;
   const open = board?.status !== "closed";
-  const canWrite = !!board && (open || facilitator);
+  const canWrite = !!board;
 
-  // Where this screen is. Everyone follows the room's stage unless they step
-  // away to look at another one; "Back to live" brings them back.
+  // Where this screen is. While the room is live, everyone follows its stage
+  // unless they step away. After the session ends, or once the board is the
+  // week's record, the screen stays where they left it.
   const live = board?.state.stage ?? 0;
   const [view, setView] = useState(0);
   const [following, setFollowing] = useState(true);
-  useEffect(() => {
-    if (following || facilitator) setView(live);
-  }, [live, following, facilitator]);
 
   const go = useCallback((i: number) => {
     const to = Math.max(0, Math.min(stages.length - 1, i));
@@ -161,14 +162,17 @@ function Board({ week }: { week: number }) {
   const planFor = (i: number) => state?.plan[i] ?? stages[i].min;
   const plannedMs = total * 60_000;
   const closedAt = state ? sessionClosedAt(state, plannedMs, now) : null;
+  const roomLive = !!board && open && !closedAt;
+  useEffect(() => {
+    if (!roomLive) return;
+    if (following || facilitator) setView(live);
+  }, [live, following, facilitator, roomLive]);
   const sessionElapsed = state ? sessionElapsedMs(state, plannedMs, now) : null;
   const schedule = useSeasonSchedule();
   const nextSession = useMemo(() => {
     if (!closedAt || !schedule.ready) return null;
-    return schedule.sessions
-      .filter((s) => s.status !== "cancelled" && s.status !== "completed" && s.start.getTime() > closedAt)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())[0] ?? null;
-  }, [closedAt, schedule.ready, schedule.sessions]);
+    return nextBoardSession(schedule.sessions, week, closedAt);
+  }, [closedAt, schedule.ready, schedule.sessions, week]);
   const stageElapsed = state && view === state.stage && state.stageStartedAt ? (closedAt ?? now) - state.stageStartedAt : null;
   const planMin = planFor(view);
   const planMs = planMin * 60_000;
@@ -183,10 +187,11 @@ function Board({ week }: { week: number }) {
   const endedDate = closedAt ? boardDate(state?.sessionStartedAt ?? closedAt) : null;
 
   const stageProps: StageProps | null = board
-    ? { board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go }
+    ? { board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go, roomLive }
     : null;
 
   return (
+    <BoardContactProvider week={week}>
     <div className="sb-app">
       <SEO title={`${title} · Live board`} description={`The live board for Season 2, ${title}. Type in your project, your pain points and the growth opportunities you see.`} />
       <header className="sb-top">
@@ -226,7 +231,7 @@ function Board({ week }: { week: number }) {
 
       <section className="sb-main" ref={mainRef} id="board" aria-label="Week board">
         <section className={`sb-stage${WIDE.includes(stage.kind) ? " sb-wide" : ""}`} aria-label={stage.name}>
-          {!open ? <p className="sb-banner">This board is closed and kept as the record of {title}. Browse every stage with the arrows.</p> : null}
+          {!open ? <p className="sb-banner">{closedBoardBanner(week)}</p> : null}
           {open && endedDate ? (
             <p className="sb-banner">
               This session ended {endedDate}.{nextSession ? ` Next session: Week ${nextSession.week}, ${boardDate(nextSession.start.getTime())}.` : ""}
@@ -246,6 +251,7 @@ function Board({ week }: { week: number }) {
             : stage.kind === "getvillageos" ? <GetVillageOS {...stageProps} />
             : <Close {...stageProps} />}
         </section>
+        <BoardContactCard />
       </section>
 
       <footer className="sb-foot">
@@ -258,7 +264,7 @@ function Board({ week }: { week: number }) {
         </div>
         <button type="button" className="sb-btn sb-primary" disabled={view === stages.length - 1} onClick={() => go(view + 1)}>{view < stages.length - 1 ? stages[view + 1].short : "Done"} →</button>
         <div className="sb-foot-tools">
-          {!facilitator && view !== live && open ? (
+          {!facilitator && view !== live && roomLive ? (
             <button type="button" className="sb-btn sb-ghost" onClick={() => { setFollowing(true); setView(live); }}>Back to live</button>
           ) : null}
           {facilitator ? (
@@ -287,5 +293,6 @@ function Board({ week }: { week: number }) {
         </aside>
       ) : null}
     </div>
+    </BoardContactProvider>
   );
 }

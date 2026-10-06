@@ -53,6 +53,9 @@ describe("admin nav", () => {
     expect(adminTabHref("inquiries", { type: "live", open: "12" })).toBe(
       "/admin?tab=inquiries&type=live&open=12",
     );
+    expect(adminTabHref("inquiries", { type: "board-people", week: "2" })).toBe(
+      "/admin?tab=inquiries&type=board-people&week=2",
+    );
   });
 
   it("keeps application scoring on the applications tab with status in the URL", () => {

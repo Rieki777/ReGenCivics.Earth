@@ -29,6 +29,7 @@ import {
   queueOutboundWriteFill,
 } from "@shared/outboundWriteFill";
 import { isLetterLayout } from "@shared/letterLayout";
+import { LAST_BOARD_WEEK } from "@shared/sessionBoard";
 import { writeAdminContinueFromTab, canonicalizeAdminTab, parseOutboundSurface, type AdminHrefExtras, type OutboundSurface } from "@/lib/adminNav";
 
 const AdminApplicationsTab = lazy(() => import("@/components/admin/AdminApplicationsTab").then(m => ({ default: m.AdminApplicationsTab })));
@@ -61,6 +62,12 @@ function readSearch() {
   }
 }
 
+function boardWeekFrom(raw: string | null): number {
+  const n = Number(raw);
+  if (Number.isInteger(n) && n >= 2 && n <= LAST_BOARD_WEEK) return n;
+  return 2;
+}
+
 function resolveAdminTab(rawTab: string): { tab: string; surface?: OutboundSurface } {
   const canon = canonicalizeAdminTab(rawTab);
   if (LEGACY_INQUIRY_TABS.has(canon.tab)) return { tab: "inquiries" };
@@ -78,6 +85,7 @@ function AdminDashboard() {
   const [inquiryType, setInquiryType] = useState<string | null>(() =>
     LEGACY_INQUIRY_TABS.has(rawTab) ? (rawTab === "kanban" ? "kanban" : rawTab) : params.get("type"),
   );
+  const [boardWeek, setBoardWeek] = useState(() => boardWeekFrom(params.get("week")));
   const [openRecordId, setOpenRecordId] = useState<number | null>(() => {
     const open = params.get("open");
     return open ? Number(open) : null;
@@ -109,9 +117,10 @@ function AdminDashboard() {
     }
     if (LEGACY_INQUIRY_TABS.has(tab)) {
       setInquiryType(tab === "kanban" ? "kanban" : tab);
-    } else if (extras?.type) {
+    } else     if (extras?.type) {
       setInquiryType(extras.type);
     }
+    if (extras?.week !== undefined) setBoardWeek(boardWeekFrom(extras.week));
     if (extras?.open) setOpenRecordId(Number(extras.open));
     else if (nextTab !== activeTab) setOpenRecordId(null);
     if (extras?.status !== undefined) setAppStatus(extras.status || null);
@@ -133,6 +142,8 @@ function AdminDashboard() {
       else url.searchParams.set("tab", activeTab);
       if (activeTab === "inquiries" && inquiryType) url.searchParams.set("type", inquiryType);
       else url.searchParams.delete("type");
+      if (activeTab === "inquiries" && inquiryType === "board-people") url.searchParams.set("week", String(boardWeek));
+      else url.searchParams.delete("week");
       if (openRecordId) url.searchParams.set("open", String(openRecordId));
       else url.searchParams.delete("open");
       if (activeTab === "applications" && appStatus) url.searchParams.set("status", appStatus);
@@ -153,7 +164,7 @@ function AdminDashboard() {
         window.history.pushState(null, "", next);
       }
     } catch { /* history unavailable */ }
-  }, [activeTab, inquiryType, openRecordId, appStatus, appView, outboundSurface, investorStatusFilter, eventsFilter]);
+  }, [activeTab, inquiryType, openRecordId, appStatus, appView, outboundSurface, investorStatusFilter, eventsFilter, boardWeek]);
 
   useEffect(() => {
     const onPop = () => {
@@ -163,6 +174,7 @@ function AdminDashboard() {
       setActiveTabState(resolved.tab);
       setOutboundSurface(parseOutboundSurface(p.get("surface")) ?? resolved.surface ?? "write");
       setInquiryType(LEGACY_INQUIRY_TABS.has(tab) ? (tab === "kanban" ? "kanban" : tab) : p.get("type"));
+      setBoardWeek(boardWeekFrom(p.get("week")));
       const open = p.get("open");
       setOpenRecordId(open ? Number(open) : null);
       setAppStatus(p.get("status"));
@@ -361,6 +373,8 @@ function AdminDashboard() {
               initialType={inquiryType}
               onOpenIdChange={setOpenRecordId}
               onTypeChange={setInquiryType}
+              boardWeek={boardWeek}
+              onBoardWeekChange={setBoardWeek}
             />
           </TabsContent>
 

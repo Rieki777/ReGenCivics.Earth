@@ -78,8 +78,15 @@ const PATH_LABELS: Record<string, string> = {
   something_else: "Other Inquiry",
 };
 
-/** Rate-limit, store, and notify. Same result generalInquiries.submit has always returned. */
-export async function submitGeneralInquiry(ctx: TrpcContext, input: GeneralInquirySubmitInput) {
+/**
+ * Rate-limit, store, and notify. Same result generalInquiries.submit has always returned.
+ * `notify: false` skips the owner and applicant notices. Contact Us leaves it on.
+ */
+export async function submitGeneralInquiry(
+  ctx: TrpcContext,
+  input: GeneralInquirySubmitInput,
+  opts?: { notify?: boolean },
+) {
   await checkRateLimit(ctx, "general_inquiry");
   const inquiryId = await db.createGeneralInquiry({
     userId: ctx.user?.id || null,
@@ -120,21 +127,23 @@ export async function submitGeneralInquiry(ctx: TrpcContext, input: GeneralInqui
     newsletterOptIn: input.newsletterOptIn ? 1 : 0,
   });
 
-  // Notify owner of new inquiry
-  try {
-    const notifType = getNotificationTypeForPath(input.pathType);
-    await notifyIfEnabled(notifType, {
-      title: `New Inquiry: ${PATH_LABELS[input.pathType]}`,
-      content: `A new inquiry has been submitted!\n\n**Path:** ${PATH_LABELS[input.pathType]}\n**Email:** ${input.email}\n**Name:** ${input.fullName || "Not provided"}\n\nReview it in the admin dashboard.`,
-    });
+  if (opts?.notify !== false) {
+    // Notify owner of new inquiry
+    try {
+      const notifType = getNotificationTypeForPath(input.pathType);
+      await notifyIfEnabled(notifType, {
+        title: `New Inquiry: ${PATH_LABELS[input.pathType]}`,
+        content: `A new inquiry has been submitted!\n\n**Path:** ${PATH_LABELS[input.pathType]}\n**Email:** ${input.email}\n**Name:** ${input.fullName || "Not provided"}\n\nReview it in the admin dashboard.`,
+      });
 
-    // Send confirmation notification (applicant copy) - always send
-    await notifyOwner({
-      title: `Inquiry Confirmation - ${PATH_LABELS[input.pathType]}`,
-      content: `**CONFIRMATION COPY FOR APPLICANT**\n\nThank you for connecting with ReGen Civics!\n\n**Applicant Email:** ${input.email}\n**Name:** ${input.fullName || "Not provided"}\n**Inquiry Type:** ${PATH_LABELS[input.pathType]}\n\nWe will review your submission and get back to you soon.\n\n---\nPlease forward this confirmation to the applicant at ${input.email}`,
-    });
-  } catch (e) {
-    console.warn("Failed to send notification:", e);
+      // Send confirmation notification (applicant copy) - always send
+      await notifyOwner({
+        title: `Inquiry Confirmation - ${PATH_LABELS[input.pathType]}`,
+        content: `**CONFIRMATION COPY FOR APPLICANT**\n\nThank you for connecting with ReGen Civics!\n\n**Applicant Email:** ${input.email}\n**Name:** ${input.fullName || "Not provided"}\n**Inquiry Type:** ${PATH_LABELS[input.pathType]}\n\nWe will review your submission and get back to you soon.\n\n---\nPlease forward this confirmation to the applicant at ${input.email}`,
+      });
+    } catch (e) {
+      console.warn("Failed to send notification:", e);
+    }
   }
 
   return { id: inquiryId, success: true as const };

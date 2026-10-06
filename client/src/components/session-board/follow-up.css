@@ -1,0 +1,143 @@
+/* Follow-up name and email, stuck to the bottom of the stage area. */
+
+.sb-follow {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 8px 16px 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--sb-panel);
+  color: var(--sb-ink);
+  border: 1px solid rgba(125, 216, 125, 0.45);
+  box-shadow: 0 -8px 24px rgba(8, 24, 14, 0.35);
+}
+
+.sb-follow-title {
+  margin: 0 0 8px;
+  font-weight: 800;
+  font-size: 17px;
+}
+
+.sb-follow-form,
+.sb-follow-fields {
+  display: grid;
+  gap: 6px;
+}
+
+.sb-follow-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--sb-ink);
+  margin-top: 4px;
+}
+
+.sb-follow-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 216, 125, 0.55);
+  background: var(--sb-field);
+  color: var(--sb-ink);
+  font-size: 16px;
+}
+
+.sb-follow-input::placeholder {
+  color: #c5d4c8;
+  opacity: 1;
+}
+
+.sb-follow-input:focus-visible,
+.sb-follow-send:focus-visible,
+.sb-follow-later:focus-visible,
+.sb-follow-optin:focus-visible {
+  outline: 2px solid var(--sb-spring);
+  outline-offset: 2px;
+}
+
+.sb-follow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sb-follow-send,
+.sb-follow-later {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.sb-follow-send {
+  background: var(--sb-spring);
+  color: var(--sb-on-spring);
+  border: 1px solid transparent;
+}
+
+.sb-follow-send:hover { background: var(--sb-spring-hover); }
+.sb-follow-send:disabled { opacity: 0.45; cursor: default; }
+
+.sb-follow-later {
+  background: transparent;
+  color: var(--sb-ink);
+  border: 1px solid rgba(125, 216, 125, 0.55);
+}
+
+.sb-follow-error {
+  color: #ffd0ce;
+  font-weight: 700;
+  margin: 4px 0 0;
+}
+
+.sb-follow-thanks {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.sb-follow-thanks p { margin: 0; }
+
+.sb-follow-sprout {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  color: #b6e7b0;
+}
+
+.sb-follow-optin {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--sb-ink);
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .sb-follow {
+    max-height: 40vh;
+    overflow: auto;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sb-follow-sprout { animation: sb-follow-grow 0.45s ease-out; }
+}
+
+@keyframes sb-follow-grow {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

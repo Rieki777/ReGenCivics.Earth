@@ -1,5 +1,5 @@
 import type { ElementType } from "react";
-import { isBoardSignupSource } from "@shared/boardSignup";
+import { isBoardHandRole, isBoardSignupSource } from "@shared/boardSignup";
 import { toast } from "sonner";
 import {
   Handshake,
@@ -201,6 +201,21 @@ export function exportToCSV(data: any[], filename: string, projectName?: string)
       ]),
     );
     downloadCSV([headers.join(","), ...rows].join("\n"), filename + (projectName ? "_" + projectName : ""));
+  } else if (filename.includes("board_people")) {
+    const headers = [
+      "Name", "Email", "User id", "Guest id", "Projects", "Arrival words", "Closing words",
+      "Notes", "Votes", "Week hands", "Offers", "Schedule project", "Schedule link",
+      "Application", "First seen (PT)", "Last seen (PT)",
+    ];
+    const rows = data.map((person: any) =>
+      csvRow([
+        person.name, person.email, person.userId, person.guestId, person.projects,
+        person.arrivalWords, person.closingWords, person.notesCount, person.votes,
+        person.weekHands, person.offers, person.scheduleProject, person.scheduleLink,
+        person.application, person.firstSeen, person.lastSeen,
+      ]),
+    );
+    downloadCSV([headers.join(","), ...rows].join("\n"), filename);
   } else if (filename.includes("application")) {
     const headers = [
       "Project Name", "Contact Name", "Contact Email", "Location", "Size (ha)", "Current People",
@@ -251,7 +266,12 @@ export function filterByProject(inquiries: any[], projectId: string): any[] {
 export const INQUIRY_HUB_TYPES = ["live", "create", "alliance", "role", "other"] as const;
 export type InquiryHubType = (typeof INQUIRY_HUB_TYPES)[number];
 
-/** Other inquiries, minus season-board hands, which have their own card. */
+/** Season board hands are coach and builder rows. Follow-ups have their own card. */
+export function isBoardHandInquiry(row: { referralSource?: string | null; roleInterest?: string | null }): boolean {
+  return isBoardSignupSource(row.referralSource) && isBoardHandRole(row.roleInterest);
+}
+
+/** Other inquiries, minus season-board rows, which have their own cards. */
 export function isOtherHubInquiry(row: { pathType?: string | null; referralSource?: string | null }): boolean {
   if (isBoardSignupSource(row.referralSource)) return false;
   const path = row.pathType ?? "";
