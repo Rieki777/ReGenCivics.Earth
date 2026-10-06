@@ -20,6 +20,10 @@ import VillageOs from "@/pages/VillageOs";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
+import SessionBoard from "@/pages/SessionBoard";
+import { Router, Route } from "wouter";
+import { memoryLocation } from "wouter/memory-location";
+import { defaultBoardState } from "@shared/sessionBoard";
 
 export type Story = {
   title: string;
@@ -453,6 +457,74 @@ export const STORIES: Record<string, Story> = {
         </div>
       </div>
     ),
+  },
+
+  /**
+   * Week board shell. `stage` is the room's stage index. The live Week 2 plan
+   * is Rieki's minutes, including 6 for Get your Village OS.
+   */
+  "week-board-welcome": {
+    title: "Week board: Welcome, today's total",
+    setup: () => {
+      const state = defaultBoardState(2);
+      state.stage = 0;
+      state.plan = [5, 8, 10, 10, 5, 42, 12, 15, 7, 3, 6];
+      mockData["sessionBoard.get"] = {
+        week: 2,
+        status: "open",
+        version: 1,
+        serverNow: Date.now(),
+        state,
+        canFacilitate: true,
+        notes: [],
+        hands: {},
+        offers: {},
+        offerPeople: null,
+        projects: [],
+        items: [],
+      };
+      mockData["sessionBoard.version"] = { version: 1, status: "open" };
+    },
+    render: () => {
+      const { hook } = memoryLocation({ path: "/season2/week/2", static: true });
+      return (
+        <Router hook={hook}>
+          <Route path="/season2/week/:week"><SessionBoard /></Route>
+        </Router>
+      );
+    },
+  },
+
+  "week-board-village": {
+    title: "Week board: Building in Village OS",
+    setup: () => {
+      const state = defaultBoardState(2);
+      state.stage = 3;
+      state.plan = [5, 8, 10, 10, 5, 42, 12, 15, 7, 3, 6];
+      mockData["sessionBoard.get"] = {
+        week: 2,
+        status: "open",
+        version: 1,
+        serverNow: Date.now(),
+        state,
+        canFacilitate: false,
+        notes: [],
+        hands: {},
+        offers: {},
+        offerPeople: null,
+        projects: [],
+        items: [],
+      };
+      mockData["sessionBoard.version"] = { version: 1, status: "open" };
+    },
+    render: () => {
+      const { hook } = memoryLocation({ path: "/season2/week/2", static: true });
+      return (
+        <Router hook={hook}>
+          <Route path="/season2/week/:week"><SessionBoard /></Route>
+        </Router>
+      );
+    },
   },
 
   /** /village-os with both offer switches off, which is how the page ships. */

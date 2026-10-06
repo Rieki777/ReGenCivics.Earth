@@ -558,25 +558,31 @@ function RoleCardsPreview() {
       <p className="sb-hint">A first look at what's being built. Every seat in a Game gets a card, and a new role starts as a proposal the circle decides on. The seats and the person on them here are made-up examples.</p>
       <div className="sb-rolecard-row">
         <figure className="sb-rolecard">
-          <img
-            src="/images/session-board/role-card-seat.webp"
-            width={1648}
-            height={1504}
-            loading="lazy"
-            decoding="async"
-            alt="A sample role card for a Water Steward seat, opened flat. On the left: its art, its aim (every household has clean water and the systems that carry it are cared for), a Raise your hand button, and who holds it: Mara, an agent, and one open place waiting for a hand. On the right: three places, two held and one open; five of its seven commitments written down; what it decides on, the four things it answers for, why it matters, a term ending 21 March 2027, and consent as its way of deciding."
-          />
+          <a href="/images/session-board/role-card-seat.webp" target="_blank" rel="noopener noreferrer">
+            <img
+              src="/images/session-board/role-card-seat.webp"
+              width={1648}
+              height={1504}
+              loading="lazy"
+              decoding="async"
+              alt="A sample role card for a Water Steward seat, opened flat. On the left: its art, its aim (every household has clean water and the systems that carry it are cared for), a Raise your hand button, and who holds it: Mara, an agent, and one open place waiting for a hand. On the right: three places, two held and one open; five of its seven commitments written down; what it decides on, the four things it answers for, why it matters, a term ending 21 March 2027, and consent as its way of deciding."
+            />
+            {NEW_TAB}
+          </a>
           <figcaption>A seat's card, front and back side by side: who holds it, the open place waiting for a hand, and what the seat does.</figcaption>
         </figure>
         <figure className="sb-rolecard">
-          <img
-            src="/images/session-board/role-card-proposal.webp"
-            width={752}
-            height={1596}
-            loading="lazy"
-            decoding="async"
-            alt="A sample role card for a Treasury Keeper: one place, nobody seated yet, a vote fills it, and two powers it carries (list tokens, post prices and stock the treasury; confirm that a member was paid and destroy the tokens they redeemed). The rung it asks for is Contributor or above, on a ladder of twelve rungs from Visitor to Sage."
-          />
+          <a href="/images/session-board/role-card-proposal.webp" target="_blank" rel="noopener noreferrer">
+            <img
+              src="/images/session-board/role-card-proposal.webp"
+              width={752}
+              height={1596}
+              loading="lazy"
+              decoding="async"
+              alt="A sample role card for a Treasury Keeper: one place, nobody seated yet, a vote fills it, and two powers it carries (list tokens, post prices and stock the treasury; confirm that a member was paid and destroy the tokens they redeemed). The rung it asks for is Contributor or above, on a ladder of twelve rungs from Visitor to Sage."
+            />
+            {NEW_TAB}
+          </a>
           <figcaption>The card someone sees while proposing a role: the powers it carries and the rung it asks for.</figcaption>
         </figure>
       </div>
