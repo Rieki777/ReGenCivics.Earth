@@ -22,7 +22,7 @@ export function shouldDeferWeekBoardReload(
 
 export type ControllerReload = "skip" | "reload" | "defer";
 
-/** One decision for both the controllerchange event and a workbox update. */
+/** One decision for the controllerchange event. */
 export function controllerReloadAction(input: {
   hadController: boolean;
   refreshing: boolean;

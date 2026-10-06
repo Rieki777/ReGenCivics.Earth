@@ -11,6 +11,13 @@ export default defineConfig(({ mode }): UserConfig => ({
     // VitePWA generates sw.js at build time — do not create a manual public/sw.js
     VitePWA({
       registerType: "autoUpdate",
+      // ServiceWorkerRegister calls navigator.serviceWorker.register("/sw.js")
+      // and decides whether to reload. Leave this false: the default "auto"
+      // injects registerSW.js, which reloads as soon as a new worker activates
+      // and would skip the week-board hold. skipWaiting and clientsClaim stay
+      // explicit below; the plugin only sets them itself when injectRegister
+      // is "auto" or null.
+      injectRegister: false,
       strategies: "generateSW",
       workbox: {
         // Web push lives in an isolated hand-written file that the generated

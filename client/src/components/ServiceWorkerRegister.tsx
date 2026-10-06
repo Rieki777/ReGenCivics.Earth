@@ -7,10 +7,15 @@
  * That first claim is not an update. A later claim, while a controller was
  * already running, reloads once. On a week board, a focused field or a live
  * mic holds the reload until the tab is hidden, and a button offers it sooner.
+ *
+ * Registration is navigator.serviceWorker.register("/sw.js"). The Vite PWA
+ * plugin is set to injectRegister: false so it does not also inject
+ * registerSW.js, which reloads on every update and would skip this hold.
+ * Importing virtual:pwa-register pulls workbox-window into the app bundle
+ * and the production build cannot resolve it.
  */
 
 import { useEffect, useState } from "react";
-import { registerSW } from "virtual:pwa-register";
 import {
   controllerReloadAction,
   SW_REFRESH_LABEL,
@@ -38,6 +43,7 @@ export function ServiceWorkerRegister() {
     let refreshing = false;
     let deferred = false;
     let timer = 0;
+    let cancelled = false;
     const cleanups: Array<() => void> = [];
 
     const reload = () => {
@@ -71,27 +77,23 @@ export function ServiceWorkerRegister() {
     navigator.serviceWorker.addEventListener("controllerchange", onChange);
     cleanups.push(() => navigator.serviceWorker.removeEventListener("controllerchange", onChange));
 
-    registerSW({
-      immediate: true,
-      onNeedReload: onChange,
-      onRegisteredSW(_url, registration) {
-        if (!registration) return;
-        const check = () => {
-          registration.update().catch((e) => console.error("[SW] Update check failed:", e));
-        };
-        timer = window.setInterval(check, 6 * 60 * 60 * 1000);
-        const onVis = () => {
-          if (document.visibilityState === "visible") check();
-        };
-        document.addEventListener("visibilitychange", onVis);
-        cleanups.push(() => document.removeEventListener("visibilitychange", onVis));
-      },
-      onRegisterError(error) {
-        console.error("[SW] Service worker registration failed:", error);
-      },
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).then((registration) => {
+      if (cancelled) return;
+      const check = () => {
+        registration.update().catch((e) => console.error("[SW] Update check failed:", e));
+      };
+      timer = window.setInterval(check, 6 * 60 * 60 * 1000);
+      const onVis = () => {
+        if (document.visibilityState === "visible") check();
+      };
+      document.addEventListener("visibilitychange", onVis);
+      cleanups.push(() => document.removeEventListener("visibilitychange", onVis));
+    }).catch((error) => {
+      console.error("[SW] Service worker registration failed:", error);
     });
 
     return () => {
+      cancelled = true;
       if (timer) window.clearInterval(timer);
       for (const fn of cleanups) fn();
     };
