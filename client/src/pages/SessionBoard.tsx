@@ -117,7 +117,18 @@ function Board({ week }: { week: number }) {
 
   const [cuesOpen, setCuesOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
+  const railRef = useRef<HTMLOListElement>(null);
   useEffect(() => { mainRef.current?.scrollTo({ top: 0 }); }, [view]);
+  // The phone rail scrolls inside itself. Keep the stage people are on in that window.
+  useEffect(() => {
+    const rail = railRef.current;
+    const btn = rail?.querySelector<HTMLElement>(":scope > li.sb-now > .sb-rail-btn");
+    if (!rail || !btn) return;
+    const railBox = rail.getBoundingClientRect();
+    const btnBox = btn.getBoundingClientRect();
+    if (btnBox.left >= railBox.left - 1 && btnBox.right <= railBox.right + 1) return;
+    rail.scrollLeft += btnBox.left - railBox.left - (railBox.width - btnBox.width) / 2;
+  }, [view]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -185,7 +196,7 @@ function Board({ week }: { week: number }) {
         </Link>
         <div className="sb-rail-wrap">
           <p className="sb-rail-current">{stage.name}</p>
-          <ol className="sb-rail" aria-label="Session stages">
+          <ol className="sb-rail" aria-label="Session stages" ref={railRef}>
             {stages.map((s, i) => (
               <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : ""].filter(Boolean).join(" ")}>
                 <button type="button" className="sb-rail-btn" title={s.name} aria-label={s.name} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>

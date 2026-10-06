@@ -29,8 +29,12 @@
   --sb-mark: "Righteous", "Quicksand", system-ui, sans-serif;
   color-scheme: dark;
   overflow-x: clip;
+  width: 100%;
+  max-width: 100%;
   height: 100dvh;
   display: grid;
+  /* Stay the viewport width. A long clock or the stage rail scrolls inside the header. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   background: var(--sb-ground);
   color: var(--sb-ink);
@@ -48,6 +52,7 @@
 .sb-app :is(button, summary):active:not(:disabled) { transform: scale(0.97); }
 
 /* ---------- top ---------- */
+.sb-top, .sb-main, .sb-foot { min-width: 0; }
 .sb-top { display: flex; align-items: center; gap: clamp(12px, 2vw, 28px); padding-block: 10px; padding-inline: clamp(16px, 3vw, 40px); background: var(--sb-ground-2); border-bottom: 1px solid var(--sb-line); }
 .sb-mark { display: flex; flex-direction: column; line-height: 1.15; flex: none; text-decoration: none; color: inherit; }
 .sb-mark-name { font-family: var(--sb-mark); font-size: 18px; letter-spacing: 0.02em; }
@@ -384,14 +389,14 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 @media (max-width: 760px) {
   .sb-top { flex-wrap: wrap; padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
   .sb-rail-wrap { display: flex; align-items: center; gap: 10px; order: 3; flex-basis: 100%; min-width: 0; }
-  .sb-rail-current { display: block; flex: none; max-width: 46%; font-family: var(--sb-display); font-weight: 700; font-size: 15px; line-height: 1.2; }
+  .sb-rail-current { display: block; flex: 0 1 auto; max-width: 46%; min-width: 0; font-family: var(--sb-display); font-weight: 700; font-size: 15px; line-height: 1.2; overflow-wrap: anywhere; }
   .sb-rail .sb-lbl { display: none; }
   .sb-rail li.sb-now .sb-lbl { display: none; position: static; transform: none; }
   .sb-rail-btn { width: 44px; min-width: 44px; min-height: 44px; padding: 0; }
-  .sb-rail { order: 0; flex: 1; flex-basis: auto; overflow-x: auto; }
+  .sb-rail { order: 0; flex: 1 1 0; min-width: 0; overflow-x: auto; }
   .sb-rail li { flex: 0 0 44px; }
   .sb-rail li::before { top: 50%; }
-  .sb-status { margin-left: auto; }
+  .sb-status { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 100%; min-width: 0; row-gap: 2px; }
   .sb-sp-two, .sb-canvas, .sb-modules, .sb-vos-cards { grid-template-columns: minmax(0, 1fr); }
   .sb-ready-grid { grid-template-columns: minmax(0, 1fr); }
   .sb-foot { flex-wrap: wrap; }
