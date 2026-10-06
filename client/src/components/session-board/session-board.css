@@ -106,7 +106,7 @@
 .sb-field { width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--sb-line-strong); background: var(--sb-field); color: var(--sb-ink); }
 .sb-field::placeholder { color: var(--sb-muted); opacity: 0.85; }
 .sb-field:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 1px; }
-.sb-field:read-only { border-color: var(--sb-line); background: transparent; }
+.sb-field:read-only:not(select) { border-color: var(--sb-line); background: transparent; }
 textarea.sb-field { min-height: 92px; resize: vertical; line-height: 1.5; }
 select.sb-field { width: auto; min-height: 44px; padding: 4px 10px; font-size: 16px; color-scheme: light; background-color: var(--sb-field); color: var(--sb-ink); }
 .sb-app select option, .sb-app select optgroup { background-color: #ffffff; color: #0a1f14; }
@@ -412,7 +412,7 @@ select.sb-field { width: auto; min-height: 44px; padding: 4px 10px; font-size: 1
 .sb-qr-details { width: 100%; }
 .sb-qr-details summary { cursor: pointer; font-weight: 800; min-height: 44px; display: flex; align-items: center; }
 .sb-qr-details .sb-qr { margin-top: 8px; }
-.sb-qr-presenter { position: fixed; inset: 0; z-index: 80; background: rgba(10, 31, 20, 0.72); display: grid; place-items: center; padding: 16px; }
+.sb-qr-presenter { position: fixed; inset: 0; z-index: 10000; background: rgba(10, 31, 20, 0.72); display: grid; place-items: center; padding: 16px; }
 .sb-qr-sheet { width: min(920px, 100%); background: #ffffff; color: #0a1f14; border-radius: 20px; padding: clamp(16px, 3vw, 36px); display: grid; justify-items: center; gap: 16px; }
 .sb-qr-sheet-title { color: #0a1f14; font-size: clamp(28px, 3vw, 40px); }
 .sb-qr-huge { width: min(78vmin, 720px); }
@@ -420,4 +420,6 @@ select.sb-field { width: auto; min-height: 44px; padding: 4px 10px; font-size: 1
 @media (min-width: 900px) {
   .sb-qr { width: min(100%, 360px); }
 }
+/* After the wide-screen cap, so the presenter QR stays room-sized. */
+.sb-qr.sb-qr-huge { width: min(78vmin, 720px); }
 
