@@ -2,7 +2,7 @@
  * The stages of a live session board (ADR-68). Each one is a screen the room
  * moves through together; anyone can type into it, and the facilitator runs it.
  */
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode, type Ref, type RefObject } from "react";
 import { CROWDPOOL_READINESS, GAME_NEEDS, GAME_NEEDS_LABEL, GAME_NEEDS_LEAD } from "@shared/crowdpoolReadiness";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 import {
@@ -16,6 +16,7 @@ import {
   OPPORTUNITY_THEMES,
   PROJECT_PHASES,
   boardWelcome,
+  type ProjectPhase,
   breathAt,
   sessionMinutes,
   shareTime,
@@ -29,9 +30,11 @@ import {
   VILLAGE_OS_OFFER,
   VILLAGE_OS_PATH,
 } from "@shared/villageOsOffer";
+import { DictationButton, dictationSupported } from "@/components/admin/dictation";
 import { trpc } from "@/lib/trpc";
 import { JoinBoard } from "./JoinBoard";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
+import { foldSpokenPunctuation, phaseFromSpeech } from "./spokenStage";
 
 export type StageProps = {
   board: SessionBoardData;
@@ -69,13 +72,50 @@ function StageHead({ stages, index, title, lede, children }: { stages: BoardStag
   );
 }
 
-/** One input that adds a note on Enter. */
+function speakLabel(label: string): string {
+  return label.startsWith("Add ") ? `Speak ${label.slice(4)}` : `Speak into ${label}`;
+}
+
+/** The shared admin mic, hidden when this browser cannot listen. */
+function BoardMic({
+  value,
+  onChange,
+  targetRef,
+  label,
+  disabled,
+  onListeningChange,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  targetRef?: RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
+  label: string;
+  disabled?: boolean;
+  onListeningChange?: (listening: boolean) => void;
+}) {
+  if (!dictationSupported()) return null;
+  return (
+    <DictationButton
+      className="sb-mic"
+      errorAlign="end"
+      label={label}
+      value={value}
+      onChange={onChange}
+      targetRef={targetRef}
+      disabled={disabled}
+      onListeningChange={onListeningChange}
+    />
+  );
+}
+
+/** One input that adds a note on Enter, or when the mic is turned off. */
 function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placeholder: string; max: number; label: string; onAdd: (text: string) => Promise<unknown> | void; button?: boolean }) {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    const v = text.trim();
+  const fieldRef = useRef<HTMLInputElement | null>(null);
+  const textRef = useRef(text);
+  textRef.current = text;
+  const commit = async (raw: string) => {
+    const v = foldSpokenPunctuation(raw);
     if (!v || busy) return;
     setBusy(true);
     try {
@@ -85,9 +125,23 @@ function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placehol
       setBusy(false);
     }
   };
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    void commit(text);
+  };
   return (
     <form className="sb-add" onSubmit={submit}>
-      <input className="sb-field" value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete="off" />
+      <input ref={fieldRef} className="sb-field" value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete="off" />
+      <BoardMic
+        label={speakLabel(label)}
+        value={text}
+        targetRef={fieldRef}
+        disabled={busy}
+        onChange={setText}
+        onListeningChange={(on) => {
+          if (!on) void commit(textRef.current);
+        }}
+      />
       {button ? <button className="sb-btn" type="submit" disabled={busy}>Add</button> : null}
     </form>
   );
@@ -121,10 +175,15 @@ function LiveField({ value, onSave, readOnly, multiline, className, placeholder,
 }) {
   const [draft, setDraft] = useState(value);
   const focused = useRef(false);
+  const listening = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSaved = useRef(value);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const fieldRef = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
   useEffect(() => {
-    if (!focused.current) {
+    // Someone else is writing this field on another screen. Leave a local draft alone.
+    if (!focused.current && !listening.current) {
       setDraft(value);
       lastSaved.current = value;
     }
@@ -138,6 +197,10 @@ function LiveField({ value, onSave, readOnly, multiline, className, placeholder,
       onSave(v);
     }
   };
+  const schedule = (v: string) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => save(v), 900);
+  };
   const common = {
     className,
     value: draft,
@@ -146,15 +209,46 @@ function LiveField({ value, onSave, readOnly, multiline, className, placeholder,
     "aria-label": label,
     maxLength: max,
     onFocus: () => { focused.current = true; },
-    onBlur: () => { focused.current = false; save(draft); },
+    onBlur: () => {
+      if (listening.current) return;
+      focused.current = false;
+      save(draftRef.current);
+    },
     onChange: (e: { target: { value: string } }) => {
       const v = e.target.value;
       setDraft(v);
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => save(v), 900);
+      schedule(v);
     },
   };
-  return multiline ? <textarea {...common} /> : <input {...common} autoComplete="off" />;
+  const field = multiline
+    ? <textarea ref={fieldRef as Ref<HTMLTextAreaElement>} {...common} />
+    : <input ref={fieldRef as Ref<HTMLInputElement>} {...common} autoComplete="off" />;
+  if (readOnly) return field;
+  return (
+    <div className="sb-dictate">
+      {field}
+      <BoardMic
+        label={speakLabel(label)}
+        value={draft}
+        targetRef={fieldRef}
+        onChange={(next) => {
+          focused.current = true;
+          listening.current = true;
+          setDraft(next);
+          schedule(next);
+        }}
+        onListeningChange={(on) => {
+          listening.current = on;
+          if (on) {
+            focused.current = true;
+            return;
+          }
+          save(draftRef.current);
+          if (fieldRef.current !== document.activeElement) focused.current = false;
+        }}
+      />
+    </div>
+  );
 }
 
 /* ================================================================ welcome */
@@ -623,6 +717,44 @@ function upNext(projects: BoardProject[], currentId: number | null): BoardProjec
   return order.find((p) => !p.shared && !p.hidden) ?? null;
 }
 
+function SpokenLine({ value, onChange, placeholder, max, label, autoComplete = "off" }: {
+  value: string; onChange: (v: string) => void; placeholder: string; max: number; label: string; autoComplete?: string;
+}) {
+  const fieldRef = useRef<HTMLInputElement | null>(null);
+  return (
+    <div className="sb-dictate">
+      <input ref={fieldRef} className="sb-field" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete={autoComplete} />
+      <BoardMic label={speakLabel(label)} value={value} onChange={onChange} targetRef={fieldRef} />
+    </div>
+  );
+}
+
+/** A mic beside the stage chips. "Sprout" presses Sprout. It does not read the notes. */
+function StageMic({ onPhase }: { onPhase: (phase: ProjectPhase) => void }) {
+  const [heard, setHeard] = useState("");
+  const last = useRef<ProjectPhase | null>(null);
+  return (
+    <BoardMic
+      label="Speak the stage"
+      value={heard}
+      onChange={(next) => {
+        setHeard(next);
+        const phase = phaseFromSpeech(next);
+        if (phase && phase !== last.current) {
+          last.current = phase;
+          onPhase(phase);
+        }
+      }}
+      onListeningChange={(on) => {
+        if (!on) {
+          setHeard("");
+          last.current = null;
+        }
+      }}
+    />
+  );
+}
+
 function AddProject({ actions, onAdded, displayName, setDisplayName }: { actions: BoardActions; onAdded: (id: number) => void; displayName: string; setDisplayName: (v: string) => void }) {
   const [name, setName] = useState("");
   const [place, setPlace] = useState("");
@@ -645,9 +777,9 @@ function AddProject({ actions, onAdded, displayName, setDisplayName }: { actions
   return (
     <form className="sb-add-project" onSubmit={submit}>
       <p className="sb-label">Add your project</p>
-      <input className="sb-field" value={name} onChange={(e) => setName(e.target.value)} placeholder="Project name" maxLength={BOARD_LIMITS.projectName} aria-label="Project name" autoComplete="off" />
-      <input className="sb-field" value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Where on Earth" maxLength={BOARD_LIMITS.place} aria-label="Where on Earth" autoComplete="off" />
-      <input className="sb-field" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your name (optional)" maxLength={BOARD_LIMITS.displayName} aria-label="Your name" autoComplete="name" />
+      <SpokenLine value={name} onChange={setName} placeholder="Project name" max={BOARD_LIMITS.projectName} label="Project name" />
+      <SpokenLine value={place} onChange={setPlace} placeholder="Where on Earth" max={BOARD_LIMITS.place} label="Where on Earth" />
+      <SpokenLine value={displayName} onChange={setDisplayName} placeholder="Your name (optional)" max={BOARD_LIMITS.displayName} label="Your name" autoComplete="name" />
       <button className="sb-btn" type="submit" disabled={busy || !name.trim()}>Add to the circle</button>
     </form>
   );
@@ -749,8 +881,9 @@ export function Circle(props: StageProps & { displayName: string; setDisplayName
                     <button key={p.key} type="button" className="sb-toggle" aria-pressed={sel.phase === p.key} disabled={!editable}
                       onClick={() => void actions.updateProject({ projectId: sel.id, phase: sel.phase === p.key ? null : p.key })}>{p.title}</button>
                   ))}
+                  {editable ? <StageMic onPhase={(key) => { if (sel.phase !== key) void actions.updateProject({ projectId: sel.id, phase: key }); }} /> : null}
                 </div>
-                <p className="sb-hint">{phase ? phase.desc : editable ? "Pick the stage that fits best." : ""}</p>
+                <p className="sb-hint">{phase ? phase.desc : editable ? (dictationSupported() ? "Pick the stage that fits best, or say its name." : "Pick the stage that fits best.") : ""}</p>
                 {editable || sel.whereNow ? (
                   <LiveField multiline className="sb-field" value={sel.whereNow ?? ""} readOnly={!editable} placeholder="Land, people, what's built, what's running" label="Where the project is now" max={BOARD_LIMITS.whereNow} onSave={(v) => void actions.updateProject({ projectId: sel.id, whereNow: v })} />
                 ) : null}
