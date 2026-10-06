@@ -287,6 +287,27 @@ export function sessionMinutes(plan: number[], stages: BoardStage[]): number {
   return plan.reduce((a, m, i) => (stages[i]?.kind === "getvillageos" ? a : a + m), 0);
 }
 
+/**
+ * The moment a running session is over. The presenter can end it, and it also
+ * ends when the planned length has passed. Null while it is still going, or
+ * before anyone has started it.
+ */
+export function sessionClosedAt(state: BoardState, plannedMs: number, now: number): number | null {
+  if (!state.sessionStartedAt) return null;
+  if (state.endedAt) return state.endedAt;
+  const end = state.sessionStartedAt + Math.max(0, plannedMs);
+  return now >= end ? end : null;
+}
+
+/** Elapsed session time, frozen once the session is over and never past the plan. */
+export function sessionElapsedMs(state: BoardState, plannedMs: number, now: number): number | null {
+  if (!state.sessionStartedAt) return null;
+  const cap = Math.max(0, plannedMs);
+  const closed = sessionClosedAt(state, cap, now);
+  const at = closed ?? now;
+  return Math.min(cap, Math.max(0, at - state.sessionStartedAt));
+}
+
 /** What a week's welcome says. Week 2 has its own words; the rest read the curriculum. */
 export function boardWelcome(week: number): { title: string; lede: string; leaveWith: string[] } {
   const ep = episodeByWeek(week);
@@ -437,6 +458,8 @@ export type BoardState = {
   stage: number;
   stageStartedAt: number | null;
   sessionStartedAt: number | null;
+  /** Set when the presenter ends the session early. The planned length ends it too. */
+  endedAt: number | null;
   /** Planned minutes, one per stage. */
   plan: number[];
   breath: { pattern: BreathKey; rounds: number; startedAt: number | null };
@@ -448,6 +471,7 @@ export function defaultBoardState(week: number): BoardState {
     stage: 0,
     stageStartedAt: null,
     sessionStartedAt: null,
+    endedAt: null,
     plan: boardStages(week).map((s) => s.min),
     breath: { pattern: "settle", rounds: 6, startedAt: null },
     speaker: { projectId: null, secs: 180, startedAt: null, accum: 0 },
@@ -486,6 +510,7 @@ export function normalizeBoardState(raw: unknown, week: number): BoardState {
     stage: clampInt(src.stage, 0, count - 1, 0),
     stageStartedAt: stampOrNull(src.stageStartedAt),
     sessionStartedAt: stampOrNull(src.sessionStartedAt),
+    endedAt: stampOrNull(src.endedAt),
     plan: base.plan.map((dflt, i) => clampInt(planIn[i], 1, BOARD_LIMITS.maxStageMinutes, dflt)),
     breath: {
       pattern,
@@ -505,6 +530,7 @@ export function normalizeBoardState(raw: unknown, week: number): BoardState {
 export type BoardAction =
   | { type: "go"; stage: number }
   | { type: "startSession" }
+  | { type: "endSession" }
   | { type: "restartClocks" }
   | { type: "plan"; stage: number; minutes: number }
   | { type: "breath"; pattern?: BreathKey; rounds?: number; run?: boolean }
@@ -537,10 +563,16 @@ export function applyBoardAction(state: BoardState, action: BoardAction, now: nu
     case "startSession":
       s.sessionStartedAt = now;
       s.stageStartedAt = now;
+      s.endedAt = null;
+      return s;
+    case "endSession":
+      if (!s.sessionStartedAt) s.sessionStartedAt = now;
+      if (!s.endedAt) s.endedAt = now;
       return s;
     case "restartClocks":
       s.sessionStartedAt = null;
       s.stageStartedAt = now;
+      s.endedAt = null;
       return s;
     case "plan": {
       const i = Math.round(action.stage);

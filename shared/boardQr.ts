@@ -17,6 +17,29 @@ export type QrMatrix = {
   dark: (x: number, y: number) => boolean;
 };
 
+/**
+ * One SVG path of the dark modules, joined into horizontal runs.
+ * Separate squares leave hairline gaps when the CSS size is not a whole
+ * number of pixels per module, and a phone scanner misses the code.
+ */
+export function qrDarkPath(matrix: QrMatrix): string {
+  const parts: string[] = [];
+  for (let y = 0; y < matrix.size; y++) {
+    let x = 0;
+    while (x < matrix.size) {
+      if (!matrix.dark(x, y)) {
+        x++;
+        continue;
+      }
+      const x0 = x;
+      while (x < matrix.size && matrix.dark(x, y)) x++;
+      const w = x - x0;
+      parts.push(`M${x0 + QR_QUIET} ${y + QR_QUIET}h${w}v1h-${w}z`);
+    }
+  }
+  return parts.join("");
+}
+
 /** High error correction: a fold or a glare on a projection still scans. */
 export function qrMatrix(text: string): QrMatrix {
   const qr = QRCode.create(text, { errorCorrectionLevel: "H" });

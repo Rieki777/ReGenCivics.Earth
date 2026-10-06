@@ -153,6 +153,7 @@ const facilitatorProcedure = protectedProcedure.use(rateLimited(FACILITATE_LIMIT
 const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("go"), stage: z.number().int().min(0).max(20) }),
   z.object({ type: z.literal("startSession") }),
+  z.object({ type: z.literal("endSession") }),
   z.object({ type: z.literal("restartClocks") }),
   z.object({ type: z.literal("plan"), stage: z.number().int().min(0).max(20), minutes: z.number().int().min(1).max(BOARD_LIMITS.maxStageMinutes) }),
   z.object({

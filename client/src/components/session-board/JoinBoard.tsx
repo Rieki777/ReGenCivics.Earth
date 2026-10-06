@@ -3,9 +3,19 @@
  * On a phone the QR stays folded (they are already here). On a wide screen it
  * is large, and a tap opens it across the whole frame for a projector.
  */
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { QR_DARK, QR_LIGHT, QR_QUIET, qrMatrix } from "@shared/boardQr";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { QR_DARK, QR_LIGHT, QR_QUIET, qrDarkPath, qrMatrix } from "@shared/boardQr";
 import { sessionBoardShareUrl } from "@shared/sessionBoard";
+
+const JOIN_CALL_URL = "https://regencivics.earth/join";
+
+/** Break a URL only at slashes, so "week" stays one word on a narrow screen. */
+function SlashBreaks({ text }: { text: string }): ReactNode {
+  const bits = text.split("/");
+  return bits.map((bit, i) => (
+    <span key={`${i}-${bit}`}>{i > 0 ? <><wbr />/</> : null}{bit}</span>
+  ));
+}
 
 function useMinWidth(px: number): boolean {
   const query = `(min-width: ${px}px)`;
@@ -24,21 +34,34 @@ function useMinWidth(px: number): boolean {
 
 export function BoardQr({ text, className }: { text: string; className?: string }) {
   const matrix = useMemo(() => qrMatrix(text), [text]);
-  const cells: { x: number; y: number }[] = [];
-  for (let y = 0; y < matrix.size; y++) {
-    for (let x = 0; x < matrix.size; x++) {
-      if (matrix.dark(x, y)) cells.push({ x, y });
-    }
-  }
+  const path = useMemo(() => qrDarkPath(matrix), [matrix]);
   const n = matrix.size + QR_QUIET * 2;
+  const ref = useRef<SVGSVGElement>(null);
+  // Snap to a whole number of pixels per module. A fractional size draws
+  // gaps between modules, and a scanner reads those gaps as white.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const parent = el?.parentElement;
+    if (!el || !parent) return;
+    const fit = () => {
+      el.style.width = "";
+      el.style.height = "";
+      const cssWidth = el.getBoundingClientRect().width;
+      if (cssWidth < n) return;
+      const scale = Math.max(1, Math.floor(cssWidth / n));
+      const px = String(scale * n);
+      el.style.width = `${px}px`;
+      el.style.height = `${px}px`;
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [n]);
   return (
-    <svg className={className ?? "sb-qr"} viewBox={`0 0 ${n} ${n}`} role="img" aria-label={`QR code for ${text}`}>
+    <svg ref={ref} className={className ?? "sb-qr"} viewBox={`0 0 ${n} ${n}`} shapeRendering="crispEdges" role="img" aria-label={`QR code for ${text}`}>
       <rect width={n} height={n} fill={QR_LIGHT} />
-      <g fill={QR_DARK}>
-        {cells.map((c) => (
-          <rect key={`${c.x}-${c.y}`} x={c.x + QR_QUIET} y={c.y + QR_QUIET} width="1" height="1" />
-        ))}
-      </g>
+      <path d={path} fill={QR_DARK} />
     </svg>
   );
 }
@@ -90,8 +113,10 @@ function QrPresenter({ url, label, onClose }: { url: string; label: string; onCl
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id={titleId} className="sb-qr-sheet-title">Type in with us</h2>
-        <BoardQr text={url} className="sb-qr sb-qr-huge" />
-        <p className="sb-qr-sheet-url">{label}</p>
+        <div className="sb-qr-sheet-fit">
+          <BoardQr text={url} className="sb-qr sb-qr-huge" />
+        </div>
+        <p className="sb-qr-sheet-url"><SlashBreaks text={label} /></p>
         <button ref={closeRef} type="button" className="sb-btn" onClick={onClose}>Close</button>
       </div>
     </div>
@@ -110,8 +135,9 @@ export function JoinBoard({ week }: { week: number }) {
     <div className="sb-panel sb-join">
       <h2 className="sb-h3">Type in with us</h2>
       <p className="sb-hint">Open this board on your own screen. Your words, your project and your votes land here live.</p>
-      <p className="sb-join-url">{label}</p>
+      <p className="sb-join-url"><SlashBreaks text={label} /></p>
       <div className="sb-join-actions">
+        <a className="sb-btn" href={JOIN_CALL_URL}>Join the call</a>
         <CopyButton text={url} />
         {canShare ? (
           <button

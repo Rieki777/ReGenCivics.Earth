@@ -682,6 +682,15 @@ export default function Season2() {
                 </Button>
               </Link>
             )}
+            <a href="https://regencivics.earth/join">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-xl px-8 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                Join the call
+              </Button>
+            </a>
             <Link href="/apply">
               <Button
                 size="lg"
@@ -2051,15 +2060,26 @@ export default function Season2() {
             {SEASON_ONE_FACTS.applied}.
           </p>
 
-          <Link href="/apply">
-            <Button
-              size="lg"
-              className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-10"
-            >
-              {APPLY_BUTTON_LABEL}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-wrap justify-center gap-4">
+            <a href="https://regencivics.earth/join">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-xl px-10 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
+              >
+                Join the call
+              </Button>
+            </a>
+            <Link href="/apply">
+              <Button
+                size="lg"
+                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-10"
+              >
+                {APPLY_BUTTON_LABEL}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
 
           {/* What happens next */}
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-left">
