@@ -53,6 +53,8 @@ export type DictationButtonProps = {
   label?: string;
   /** Where the error bubble grows from the button. Use "end" when the mic sits on the right of a tight panel. */
   errorAlign?: "start" | "end";
+  /** Fires when listening starts or stops. A pause in Chrome does not stop it. */
+  onListeningChange?: (listening: boolean) => void;
 };
 
 export function DictationButton({
@@ -63,6 +65,7 @@ export function DictationButton({
   disabled = false,
   label = "Dictate",
   errorAlign = "start",
+  onListeningChange,
 }: DictationButtonProps) {
   const dictation = useDictation({ value, onChange, targetRef, disabled });
   const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -150,6 +153,11 @@ export function DictationButton({
   }, [showHelp, dictation]);
 
   const listening = dictation.listening;
+  const onListeningChangeRef = useRef(onListeningChange);
+  onListeningChangeRef.current = onListeningChange;
+  useEffect(() => {
+    onListeningChangeRef.current?.(listening);
+  }, [listening]);
   const blocked = dictation.state === "unsupported" || dictation.state === "denied";
   const title = listening
     ? "Listening. Click or release to stop."
