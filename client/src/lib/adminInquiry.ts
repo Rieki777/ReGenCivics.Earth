@@ -1,4 +1,5 @@
 import type { ElementType } from "react";
+import { isBoardSignupSource } from "@shared/boardSignup";
 import { toast } from "sonner";
 import {
   Handshake,
@@ -249,6 +250,13 @@ export function filterByProject(inquiries: any[], projectId: string): any[] {
 
 export const INQUIRY_HUB_TYPES = ["live", "create", "alliance", "role", "other"] as const;
 export type InquiryHubType = (typeof INQUIRY_HUB_TYPES)[number];
+
+/** Other inquiries, minus season-board hands, which have their own card. */
+export function isOtherHubInquiry(row: { pathType?: string | null; referralSource?: string | null }): boolean {
+  if (isBoardSignupSource(row.referralSource)) return false;
+  const path = row.pathType ?? "";
+  return !["live", "create", "alliance", "role"].includes(path);
+}
 
 export function inquiryTypeForPath(pathType: string | undefined | null): InquiryHubType {
   if (!pathType) return "live";

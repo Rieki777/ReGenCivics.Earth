@@ -9,6 +9,8 @@ import { appRouter } from "./routers";
 import { createContext } from "./_core/context";
 import { NOT_ADMIN_ERR_MSG } from "../shared/const";
 import type { Request, Response } from "express";
+import { getGeneralInquiryById } from "./db";
+import { notifyOwner } from "./_core/notification";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 
@@ -240,6 +242,34 @@ describe("General Inquiry Procedures (Catch-All Form)", () => {
     };
     
     await expect(caller.generalInquiries.submit(invalidData)).rejects.toThrow();
+  });
+
+  it.skipIf(skipIfNoDb)("stores the fields the form sent, and still notifies", async () => {
+    const ctx = await createMockContext();
+    (ctx.req as { headers: Record<string, string> }).headers = { "cf-connecting-ip": "198.51.100.44" };
+    const caller = appRouter.createCaller(ctx);
+    const before = vi.mocked(notifyOwner).mock.calls.length;
+    const result = await caller.generalInquiries.submit({
+      pathType: "something_else",
+      email: "unchanged.submit@example.com",
+      fullName: "Unchanged Submit",
+      additionalNotes: "Same path as before",
+      referralSource: "a friend",
+      newsletterOptIn: true,
+    });
+    expect(result.success).toBe(true);
+    const row = await getGeneralInquiryById(Number(result.id));
+    expect(row).toMatchObject({
+      pathType: "something_else",
+      email: "unchanged.submit@example.com",
+      fullName: "Unchanged Submit",
+      additionalNotes: "Same path as before",
+      referralSource: "a friend",
+      status: "new",
+      newsletterOptIn: 1,
+      userId: null,
+    });
+    expect(vi.mocked(notifyOwner).mock.calls.length).toBeGreaterThan(before);
   });
 
   it("should reject inquiry with invalid path type", async () => {

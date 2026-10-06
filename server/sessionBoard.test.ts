@@ -12,8 +12,10 @@ import { and, eq, inArray } from "drizzle-orm";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { addItemInput, callerKeys, updateProjectInput } from "./routes/sessionBoard";
-import { getDb } from "./db";
+import { getContactTags, getDb, getGeneralInquiryById } from "./db";
 import {
+  contactTags,
+  generalInquiries,
   sessionBoardItems,
   sessionBoardProjects,
   sessionBoardVotes,
@@ -29,17 +31,23 @@ import {
   offerPeople,
   readBoardRows,
 } from "./lib/sessionBoard";
-import { normalizeBoardState } from "@shared/sessionBoard";
+import { defaultBoardState, normalizeBoardState, voteTarget } from "@shared/sessionBoard";
+import { signUpOnBoard } from "./lib/boardSignup";
 
-function makeCtx(user: TrpcContext["user"] | null): TrpcContext {
+function makeCtx(user: TrpcContext["user"] | null, ip = "127.0.0.1"): TrpcContext {
   return {
     user,
     req: {
       protocol: "https",
       method: "POST",
-      headers: { origin: "https://regencivics.earth", host: "regencivics.earth" },
+      headers: {
+        origin: "https://regencivics.earth",
+        host: "regencivics.earth",
+        "cf-connecting-ip": ip,
+      },
       cookies: {},
-      socket: { remoteAddress: "127.0.0.1" },
+      socket: { remoteAddress: ip },
+      ip,
     } as unknown as TrpcContext["req"],
     res: {} as TrpcContext["res"],
   } as TrpcContext;
@@ -95,6 +103,27 @@ describe("session board: what the router accepts", () => {
     await expect(caller.sessionBoard.offer({ week: 3, voterKey: KEY, offer: "coach", on: true })).rejects.toThrow(/no hands to raise/);
   });
 
+  it("a sign-up needs a real email, a known offer, and a week that has the stage", async () => {
+    const caller = appRouter.createCaller(makeCtx(null, "198.51.100.21"));
+    await expect(caller.sessionBoard.signUp({
+      week: 2, voterKey: KEY, offer: "coach", fullName: "Ada", email: "not-an-email",
+    })).rejects.toThrow();
+    await expect(caller.sessionBoard.signUp({
+      week: 2,
+      voterKey: KEY,
+      // @ts-expect-error not an offer
+      offer: "invest",
+      fullName: "Ada",
+      email: "ada@example.com",
+    })).rejects.toThrow();
+    await expect(caller.sessionBoard.signUp({
+      week: 2, voterKey: KEY, offer: "coach", fullName: "Ada", email: "ada@example.com", note: "x".repeat(201),
+    })).rejects.toThrow();
+    await expect(caller.sessionBoard.signUp({
+      week: 3, voterKey: KEY, offer: "coach", fullName: "Ada", email: "ada@example.com",
+    })).rejects.toThrow(/no hands to raise/);
+  });
+
   it("a caller writes as their account and owns what their browser key wrote", () => {
     expect(callerKeys(PLAYER, KEY)).toEqual(["u:2", `k:${KEY}`]);
     expect(callerKeys(null, KEY)).toEqual([`k:${KEY}`]);
@@ -108,10 +137,16 @@ const SEASON = "Board Test 2030";
 
 describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
   const boardIds: number[] = [];
+  const inquiryIds: number[] = [];
 
   afterAll(async () => {
     const db = await getDb();
-    if (!db || boardIds.length === 0) return;
+    if (!db) return;
+    if (inquiryIds.length > 0) {
+      await db.delete(contactTags).where(and(eq(contactTags.contactType, "inquiry"), inArray(contactTags.contactId, inquiryIds)));
+      await db.delete(generalInquiries).where(inArray(generalInquiries.id, inquiryIds));
+    }
+    if (boardIds.length === 0) return;
     await db.delete(sessionBoardVotes).where(inArray(sessionBoardVotes.boardId, boardIds));
     await db.delete(sessionBoardItems).where(inArray(sessionBoardItems.boardId, boardIds));
     await db.delete(sessionBoardProjects).where(inArray(sessionBoardProjects.boardId, boardIds));
@@ -207,5 +242,108 @@ describe.skipIf(skipIfNoDb)("session board: the database layer", () => {
     expect(await canFacilitate(db, null)).toBe(false);
     expect(await canFacilitate(db, { id: 1, role: "admin" })).toBe(true);
     expect(await canFacilitate(db, { id: 987654321, role: "user" })).toBe(false);
+  });
+
+  it("a sign-up on an open board stores the inquiry and raises the hand", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 2);
+    if (!boardIds.includes(board.id)) boardIds.push(board.id);
+    const prev = { status: board.status, state: board.state };
+    const key = "boardhandopen0001";
+    await db.update(sessionBoards).set({ status: "open", state: null }).where(eq(sessionBoards.id, board.id));
+    try {
+      const result = await signUpOnBoard(makeCtx(null, "198.51.100.31"), {
+        week: 2,
+        voterKey: key,
+        offer: "build",
+        fullName: "  Module  Maker  ",
+        email: "module.maker@board-signup.test",
+        note: "  I like  ledgers  ",
+      }, { season: SEASON, now: 1_700_000_000_000 });
+      inquiryIds.push(Number(result.id));
+      expect(result.success).toBe(true);
+      expect(result.handed).toBe(true);
+      const row = await getGeneralInquiryById(Number(result.id));
+      expect(row).toMatchObject({
+        pathType: "something_else",
+        email: "module.maker@board-signup.test",
+        fullName: "Module Maker",
+        status: "new",
+        roleInterest: "builder",
+        roleArchetypes: JSON.stringify(["Builder"]),
+        referralSource: "season2-week-board:week-2",
+        additionalNotes: "I like ledgers",
+        userId: null,
+      });
+      const tags = (await getContactTags("inquiry", Number(result.id))).map((t) => t.tag).sort();
+      expect(tags).toEqual(["builder", "season2-week-board", "week-2"]);
+      const votes = await db
+        .select({ target: sessionBoardVotes.target })
+        .from(sessionBoardVotes)
+        .where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
+      expect(votes.map((v) => v.target)).toEqual([voteTarget.offer("build")]);
+    } finally {
+      await db.delete(sessionBoardVotes).where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
+      await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
+    }
+  });
+
+  it("a sign-up on a closed board stores the inquiry and does not vote", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 2);
+    if (!boardIds.includes(board.id)) boardIds.push(board.id);
+    const prev = { status: board.status, state: board.state };
+    const key = "boardhandclosed01";
+    await db.update(sessionBoards).set({ status: "closed", state: null }).where(eq(sessionBoards.id, board.id));
+    try {
+      const result = await signUpOnBoard(makeCtx(null, "198.51.100.32"), {
+        week: 2,
+        voterKey: key,
+        offer: "coach",
+        fullName: "Coach Ada",
+        email: "coach.ada@board-signup.test",
+      }, { season: SEASON });
+      inquiryIds.push(Number(result.id));
+      expect(result.handed).toBe(false);
+      const row = await getGeneralInquiryById(Number(result.id));
+      expect(row?.pathType).toBe("something_else");
+      expect(row?.roleInterest).toBe("coach");
+      expect(row?.referralSource).toBe("season2-week-board:week-2");
+      const votes = await db
+        .select({ id: sessionBoardVotes.id })
+        .from(sessionBoardVotes)
+        .where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
+      expect(votes).toHaveLength(0);
+    } finally {
+      await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
+    }
+  });
+
+  it("a sign-up after the session has ended stores the inquiry and does not vote", async () => {
+    const db = (await getDb())!;
+    const board = await ensureBoard(db, SEASON, 2);
+    if (!boardIds.includes(board.id)) boardIds.push(board.id);
+    const prev = { status: board.status, state: board.state };
+    const key = "boardhandended001";
+    const ended = { ...defaultBoardState(2), sessionStartedAt: 1_700_000_000_000, endedAt: 1_700_000_100_000 };
+    await db.update(sessionBoards).set({ status: "open", state: JSON.stringify(ended) }).where(eq(sessionBoards.id, board.id));
+    try {
+      const result = await signUpOnBoard(makeCtx(null, "198.51.100.33"), {
+        week: 2,
+        voterKey: key,
+        offer: "coach",
+        fullName: "Late Pat",
+        email: "late.pat@board-signup.test",
+      }, { season: SEASON, now: 1_700_000_200_000 });
+      inquiryIds.push(Number(result.id));
+      expect(result.handed).toBe(false);
+      const votes = await db
+        .select({ id: sessionBoardVotes.id })
+        .from(sessionBoardVotes)
+        .where(and(eq(sessionBoardVotes.boardId, board.id), eq(sessionBoardVotes.voterKey, `k:${key}`)));
+      expect(votes).toHaveLength(0);
+    } finally {
+      await db.update(sessionBoards).set({ status: prev.status, state: prev.state }).where(eq(sessionBoards.id, board.id));
+    }
   });
 });

@@ -1,0 +1,117 @@
+/* Raise a hand (Season week board, stage "together"). Scoped to this form. */
+
+.sb-hand {
+  flex: 1 0 100%;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.sb-hand-form {
+  display: grid;
+  gap: 6px;
+}
+
+.sb-hand-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--sb-ink);
+  margin-top: 6px;
+}
+
+.sb-hand-opt {
+  font-weight: 700;
+  color: var(--sb-ink-2);
+}
+
+.sb-hand-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(125, 216, 125, 0.55);
+  background: var(--sb-field);
+  color: var(--sb-ink);
+  font-size: 16px;
+}
+
+.sb-hand-input::placeholder {
+  color: #c5d4c8;
+  opacity: 1;
+}
+
+.sb-hand-input:focus-visible {
+  outline: 2px solid var(--sb-spring);
+  outline-offset: 1px;
+}
+
+.sb-hand-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sb-hand-send,
+.sb-hand-close {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sb-hand-send {
+  background: var(--sb-spring);
+  color: var(--sb-on-spring);
+  border: 1px solid transparent;
+}
+
+.sb-hand-send:hover { background: var(--sb-spring-hover); }
+.sb-hand-send:disabled { opacity: 0.45; cursor: default; }
+
+.sb-hand-close {
+  background: transparent;
+  color: var(--sb-ink);
+  border: 1px solid rgba(125, 216, 125, 0.55);
+}
+
+.sb-hand-send:focus-visible,
+.sb-hand-close:focus-visible {
+  outline: 2px solid var(--sb-spring);
+  outline-offset: 2px;
+}
+
+.sb-hand-error {
+  color: #ffd0ce;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sb-hand-thanks {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  color: var(--sb-ink);
+}
+
+.sb-hand-thanks p { margin: 0; }
+
+.sb-hand-sprout {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  color: #b6e7b0;
+}
+
+.sb-hand-who { flex-basis: 100%; }
+.sb-hand-who summary { min-height: 44px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .sb-hand-sprout { animation: sb-hand-grow 0.45s ease-out; }
+}
+
+@keyframes sb-hand-grow {
+  from { transform: scale(0.7); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

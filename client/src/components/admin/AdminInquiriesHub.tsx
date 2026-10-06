@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Columns3, Home, Palette, Handshake, UserCheck, HelpCircle } from "lucide-react";
+import { ChevronDown, Columns3, Home, Palette, Handshake, UserCheck, HelpCircle, Sprout } from "lucide-react";
+import { isBoardSignupSource } from "@shared/boardSignup";
 import { InquirySection } from "./AdminInquirySection";
+import { AdminBoardHands } from "./AdminBoardHands";
 import { AdminKanbanTab } from "./AdminKanbanTab";
 import { AdminRoleTab } from "./AdminAllianceTab";
-import { inquiryTypeForPath, type InquiryHubType } from "@/lib/adminInquiry";
+import { inquiryTypeForPath, isOtherHubInquiry, type InquiryHubType } from "@/lib/adminInquiry";
 
 const TYPE_CARDS: Array<{
-  id: InquiryHubType | "kanban";
+  id: InquiryHubType | "kanban" | "hands";
   label: string;
   blurb: string;
   icon: typeof Home;
@@ -16,14 +18,14 @@ const TYPE_CARDS: Array<{
   { id: "alliance", label: "Alliance partners", blurb: "Organizations asking to join the alliance", icon: Handshake },
   { id: "role", label: "Role inquiries", blurb: "People offering a role in ReGen Civics", icon: UserCheck },
   { id: "other", label: "Other inquiries", blurb: "Finance, learn, and everything else", icon: HelpCircle },
+  { id: "hands", label: "Season board hands", blurb: "Names and emails from the season week board", icon: Sprout },
   { id: "kanban", label: "Pipeline board", blurb: "Move contacts across the board", icon: Columns3 },
 ];
 
 function countFor(id: string, inquiries: any[]) {
   if (id === "kanban") return inquiries.length;
-  if (id === "other") {
-    return inquiries.filter((i: any) => !["live", "create", "alliance", "role"].includes(i.pathType)).length;
-  }
+  if (id === "hands") return inquiries.filter((i: any) => isBoardSignupSource(i.referralSource)).length;
+  if (id === "other") return inquiries.filter((i: any) => isOtherHubInquiry(i)).length;
   return inquiries.filter((i: any) => i.pathType === id).length;
 }
 
@@ -59,7 +61,7 @@ export function AdminInquiriesHub({
   useEffect(() => {
     if (openId == null) return;
     const row = rows.find((i: any) => i.id === openId);
-    if (row) setOpenType(inquiryTypeForPath(row.pathType));
+    if (row) setOpenType(isBoardSignupSource(row.referralSource) ? "hands" : inquiryTypeForPath(row.pathType));
   }, [openId, rows]);
 
   const pendingByType = useMemo(() => {
@@ -117,12 +119,14 @@ export function AdminInquiriesHub({
                   <div className="p-3">
                     <AdminRoleTab />
                   </div>
+                ) : card.id === "hands" ? (
+                  <AdminBoardHands rows={rows.filter((i: any) => isBoardSignupSource(i.referralSource))} />
                 ) : (
                   <InquirySection
                     pathType={card.id}
                     inquiries={card.id === "other"
                       ? rows
-                          .filter((i: any) => !["live", "create", "alliance", "role"].includes(i.pathType))
+                          .filter((i: any) => isOtherHubInquiry(i))
                           .map((i: any) => ({ ...i, pathType: "other" }))
                       : rows}
                     openId={openId}
