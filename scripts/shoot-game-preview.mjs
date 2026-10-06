@@ -156,9 +156,9 @@ try {
   await page.waitForTimeout(1500);
   const video = page.video();
   await context.close();
-  const raw = await video.path();
+  const videoPath = await video.path();
   const target = path.join(out, "game-experience-motion.webm");
-  fs.copyFileSync(raw, target);
+  fs.copyFileSync(videoPath, target);
   console.log(target);
 } finally {
   await browser.close();

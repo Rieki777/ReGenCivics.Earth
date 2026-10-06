@@ -253,6 +253,13 @@ function WeekScreen({
         <p className="gx-line">{NOW_STAGE.line}</p>
         <p className="gx-cue">{NOW_STAGE.min} min on the plan. Updates as they happen.</p>
       </section>
+      <ol className="gx-plan">
+        {SESSION.map((stage, index) => (
+          <li key={stage.kind} className={index === NOW_INDEX ? "gx-plan-now" : index < NOW_INDEX ? "gx-plan-done" : ""}>
+            <b>{index + 1}</b> {stage.short}
+          </li>
+        ))}
+      </ol>
       <section className="gx-panel gx-people">
         <div className="gx-panel-label"><span>Who&apos;s here</span><span className="gx-count"><b>{PLAYERS.length}</b> <Ex /></span></div>
         <ul className="gx-roster">
@@ -439,9 +446,9 @@ function QuestScreen({ done, onAdvance }: { done: number; onAdvance: () => void 
       <Head kicker="This week" title="What to do next" />
       <div className="gx-qlog-grid">
         <ol className="gx-quest">
-          <svg className="gx-vine gx-vine-v" viewBox="0 0 20 100" preserveAspectRatio="none" aria-hidden="true">
-            <path pathLength="100" d="M10 0 V100" strokeDasharray="100" strokeDashoffset={offset} />
-          </svg>
+          <span className="gx-vine-bar" aria-hidden="true">
+            <i style={{ height: `${Math.round((1 - offset / 100) * 100)}%` }} />
+          </span>
           {QUEST_STEPS.map((step, index) => {
             const complete = index < done;
             const now = index === done;
@@ -535,31 +542,23 @@ function PathsScreen({ season, onSeason }: { gate: string; season: string; onGat
 
 function HostingScreen({ level, onLevel }: { level: number; onLevel: (level: number) => void }) {
   const steps = VILLAGE_OS_OFFER.howHostingWorks;
-  const current = steps[level - 1] ?? steps[1];
-  const next = steps[level] ?? null;
   return (
     <div className="gx-host">
       <Head kicker="Example village" title="Where hosting stands" />
-      <section className="gx-panel gx-host-now">
-        <p className="sheet-kicker">Now · Level {level} <Ex /></p>
-        <h2 className="sheet-display gx-h2">{current.title}</h2>
-        <p className="gx-line">{current.body}</p>
-      </section>
-      {next ? (
-        <section className="gx-panel">
-          <p className="sheet-kicker">Next · Level {level + 1}</p>
-          <h2 className="sheet-display gx-h2">{next.title}</h2>
-          <p className="gx-line">{next.body}</p>
-        </section>
-      ) : null}
-      <ol className="gx-ladder">
+      <ol className="gx-host-steps">
         {steps.map((step, index) => {
           const n = index + 1;
-          const cls = n === level ? "gx-ladder-now" : n < level ? "gx-ladder-done" : "";
+          const state = n === level ? "now" : n === level + 1 ? "next" : n < level ? "done" : "later";
           return (
-            <li key={step.title}>
-              <button type="button" className={cls} aria-pressed={n === level} onClick={() => onLevel(n)}>
-                <b>{n}</b> {step.title}
+            <li key={step.title} className={`gx-panel gx-host-step gx-host-${state}`}>
+              <button type="button" aria-pressed={n === level} onClick={() => onLevel(n)}>
+                <p className="sheet-kicker">
+                  {state === "now" ? "Now" : state === "next" ? "Next" : state === "done" ? "Done" : "Later"}
+                  {" · Level "}{n}
+                  {state === "now" ? <> <Ex /></> : null}
+                </p>
+                <h2 className="sheet-display gx-h2">{step.title}</h2>
+                <p className="gx-line">{step.body}</p>
               </button>
             </li>
           );
@@ -642,8 +641,12 @@ function RecapScreen() {
       <div className="gx-recap-grid">
         <section className="gx-panel">
           <p className="sheet-kicker">The room shared</p>
-          <p className="gx-line">Water, a bed, tools <Ex /></p>
-          <p className="gx-meta"><b>4</b> hands raised <Ex /></p>
+          <ul className="gx-stat-list">
+            <li>Water <Ex /></li>
+            <li>A bed <Ex /></li>
+            <li>Tools <Ex /></li>
+            <li><b>4</b> hands raised <Ex /></li>
+          </ul>
         </section>
         <section className="gx-panel">
           <p className="sheet-kicker">Some projects at the table</p>

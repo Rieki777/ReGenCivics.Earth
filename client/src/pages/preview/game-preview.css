@@ -565,7 +565,8 @@
 .gx-vine path {
   fill: none;
   stroke: var(--sheet-living);
-  stroke-width: 3;
+  stroke-width: 4px;
+  vector-effect: non-scaling-stroke;
   stroke-linecap: round;
   transition: stroke-dashoffset 1.15s var(--gx-ease);
 }
@@ -1129,6 +1130,7 @@
   .gx-sprout-grown { opacity: 1; transform: none; transition: opacity 0.4s ease; }
   .gx-leaf { transform: none; }
   .gx-vine path,
+  .gx-vine-bar i,
   .gx-bar span,
   .gx-site-header,
   .gx-pick,
@@ -1254,12 +1256,29 @@
     0 0 0 10px var(--sheet-living);
   pointer-events: none;
 }
-.gx-quest { position: relative; display: flex; flex-direction: column; gap: 0.28rem; padding-left: 0.2rem; }
-.gx-vine-v { left: 0.55rem; top: 0.7rem; bottom: 0.7rem; width: 0.4rem; }
-.gx-qstep { grid-template-columns: 1.6rem minmax(0, 1fr); gap: 0.35rem; }
-.gx-node { width: 1.45rem; height: 1.45rem; }
-.gx-node svg { width: 0.85rem; height: 0.85rem; }
-.gx-qcopy { min-height: 0; padding: 0.28rem 0.45rem; }
+.gx-quest { position: relative; display: flex; flex-direction: column; gap: 0.4rem; padding-left: 0.15rem; }
+.gx-vine-bar {
+  position: absolute;
+  left: calc(0.15rem + 0.85rem - 2px);
+  top: 1rem;
+  bottom: 1rem;
+  width: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sheet-edge) 80%, transparent);
+  overflow: hidden;
+}
+.gx-vine-bar i {
+  display: block;
+  width: 100%;
+  height: 0;
+  background: var(--sheet-living);
+  border-radius: inherit;
+  transition: height 1.05s var(--gx-ease);
+}
+.gx-qstep { grid-template-columns: 1.7rem minmax(0, 1fr); gap: 0.4rem; }
+.gx-node { width: 1.6rem; height: 1.6rem; }
+.gx-node svg { width: 0.9rem; height: 0.9rem; }
+.gx-qcopy { min-height: 3.6rem; padding: 0.4rem 0.55rem; justify-content: center; }
 .gx-qcopy small { display: block; }
 .gx-qstep .gx-btn { height: 2rem; min-height: 2rem; max-height: 2rem; margin-top: 0.2rem; font-size: 0.78rem; }
 .gx-step-name { display: block; font-size: 0.85rem; }
@@ -1270,6 +1289,34 @@
   max-height: 2rem;
   margin-top: 0.25rem;
 }
+.gx-plan { display: none; list-style: none; margin: 0; padding: 0; }
+.gx-host-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.gx-host-step { padding: 0; }
+.gx-host-step button {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  text-align: left;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 0.55rem 0.6rem;
+  cursor: pointer;
+  border-radius: inherit;
+}
+.gx-host-now { box-shadow: inset 0 0 0 1px var(--sheet-gold); }
+.gx-host-next { box-shadow: inset 0 0 0 1px var(--sheet-living); }
+.gx-host-done { opacity: 0.78; }
+.gx-host-later { border-color: var(--sheet-edge); }
+.gx-path-on { box-shadow: inset 0 0 0 1px var(--sheet-gold); }
+.gx-season-card .gx-meta b { color: var(--sheet-gold-lit); }
+.gx-stat-list { list-style: none; margin: 0.15rem 0 0; padding: 0; display: grid; gap: 0.2rem; }
+.gx-stat-list li { font-size: 0.92rem; }
+.gx-recap .gx-panel, .gx-match .gx-panel, .gx-host .gx-panel { padding: 0.55rem 0.65rem; }
+.gx-next-call .gx-h2 { font-size: 2rem; }
+.gx-progress-card .gx-h2 { font-size: 1.8rem; }
 .gx-ladder { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; }
 .gx-ladder button {
   width: 100%;
@@ -1310,6 +1357,7 @@
     grid-template-areas:
       "head head"
       "now now"
+      "plan plan"
       "people spot"
       "people do"
       "next next";
@@ -1364,8 +1412,36 @@
   .gx-questprog { grid-area: questp; }
   .gx-path-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: start; }
   .gx-matches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
-  .gx-host { display: grid; grid-template-columns: 1fr 1fr; align-items: start; align-content: start; }
-  .gx-host > .gx-head, .gx-ladder { grid-column: 1 / -1; }
+  .gx-host { display: flex; flex-direction: column; align-items: stretch; }
+  .gx-host-steps { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+  .gx-plan {
+    grid-area: plan;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .gx-plan li {
+    border-radius: 999px;
+    border: 1px solid var(--sheet-edge);
+    background: var(--sheet-panel);
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    color: var(--sheet-dim);
+  }
+  .gx-plan b { color: var(--sheet-ink); font-weight: 600; margin-right: 0.2rem; }
+  .gx-plan li.gx-plan-done { color: var(--sheet-living); border-color: var(--sheet-living); }
+  .gx-plan li.gx-plan-now { color: var(--sheet-ground); background: var(--sheet-gold); border-color: var(--sheet-gold); }
+  .gx-plan li.gx-plan-now b { color: var(--sheet-ground); }
+  .gx-title { font-size: 1.55rem; }
+  .gx-h2 { font-size: 1.25rem; }
+  .gx-line, .gx-meta { font-size: 0.92rem; }
+  .gx-panel { padding: 0.6rem 0.75rem; }
+  .gx-people .gx-avatar { width: 2.8rem; height: 2.8rem; }
+  .gx-person-name { font-size: 0.78rem; }
+  .gx-person-class { font-size: 0.7rem; }
+  .gx-slot { min-height: 4.4rem; padding: 0.4rem 0.3rem; }
+  .gx-slot b { font-size: 0.8rem; }
+  .gx-slot small { font-size: 0.7rem; }
   .gx-other-guilds { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; align-items: start; }
   .gx-my-guild { align-self: start; }
   .gx-benefits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
