@@ -287,6 +287,30 @@
     -webkit-tap-highlight-color: rgba(125, 216, 125, 0.15);
     touch-action: manipulation;
   }
+  /* 44px touch targets on phones and coarse pointers. Desktop mice keep
+     the denser control sizes. max-width covers a resized browser that
+     still reports a fine pointer. */
+  @media (pointer: coarse), (max-width: 767px) {
+    button,
+    [role="button"],
+    summary,
+    header a,
+    header button,
+    nav a {
+      min-height: 44px;
+    }
+    button,
+    [role="button"],
+    header a,
+    header button,
+    nav a,
+    .tap-44 {
+      min-width: 44px;
+    }
+    .tap-44 {
+      min-height: 44px;
+    }
+  }
   /* The site is color-scheme: dark. Several engines then paint a native
      select popup white and inherit the light text, so the list is unreadable
      except on hover. A light scheme on the select makes the popup a light
@@ -363,7 +387,7 @@
        Scoped to these nav regions so inline prose links are never affected. */
     nav[aria-label="Breadcrumb"] a,
     footer a[href] {
-      min-height: 40px;
+      min-height: 44px;
       display: inline-flex;
       align-items: center;
     }
@@ -3342,7 +3366,125 @@ html[data-contrast="high"] *:focus-visible {
 }
 .sheet-link {
   color: var(--sheet-gold-lit);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+}
+/* Gold #f2ce85 on the night ground is about 11:1. The underline is what
+   separates it from the muted #9cb0a3 sentence around it (1.52:1). */
+.sheet-link:hover {
+  color: #ffe3a3;
+}
+
+/* Contribution card on the character sheet. One night palette with the
+   sheet around it. Field text #e9efe6 on #1c2b23 is 12.6:1. Placeholder
+   #d5e3da on #1c2b23 is 11.1:1. Muted lines use --sheet-dim at 6.4:1. */
+.sheet-gift {
+  background: var(--sheet-panel);
+  color: var(--sheet-ink);
+  border: 1px solid var(--sheet-gold);
+  border-radius: 16px;
+  padding: 1.25rem 1.1rem;
+  box-shadow: inset 0 0 0 1px rgba(223, 171, 77, 0.28);
+}
+.sheet-gift h3,
+.sheet-gift h4,
+.sheet-gift .font-bold {
+  color: var(--sheet-ink);
+}
+.sheet-gift p,
+.sheet-gift label,
+.sheet-gift .text-xs {
+  color: var(--sheet-dim);
+}
+.sheet-gift button {
+  color: var(--sheet-ink);
+}
+.sheet-gift .text-white,
+.sheet-gift [class*="text-white"],
+.sheet-gift button[class*="text-white"] {
+  color: #f4fff6;
+}
+/* Hardcoded forest ink was for the old cream card. On the night panel it
+   drops under 4.5:1, so those utilities read as sheet ink or living green. */
+.sheet-gift [class*="text-[#1a472a]"] {
+  color: var(--sheet-ink);
+}
+.sheet-gift [class*="text-[#4a7c59]"] {
+  color: var(--sheet-living);
+}
+.sheet-gift [class*="border-[#4a7c59]"] {
+  border-color: var(--sheet-living);
+}
+.sheet-gift [class*="bg-white"],
+.sheet-gift [class*="bg-[#f0f7f0]"] {
+  background-color: var(--sheet-raised);
+  color: var(--sheet-ink);
+  border-color: var(--sheet-edge);
+}
+.sheet-gift .bg-amber-50,
+.sheet-gift [class*="bg-amber"] {
+  background-color: #2a2418;
+  border-color: var(--sheet-gold);
+  color: var(--sheet-ink);
+}
+.sheet-gift .text-amber-800,
+.sheet-gift .text-amber-700,
+.sheet-gift .text-amber-600 {
+  color: var(--sheet-gold-lit);
+}
+.sheet-gift input,
+.sheet-gift textarea,
+.sheet-gift select,
+.sheet-gift [data-slot="input"],
+.sheet-gift [data-slot="select-trigger"],
+.sheet-gift [data-slot="select-value"] {
+  background-color: var(--sheet-raised);
+  color: var(--sheet-ink);
+  border-color: var(--sheet-edge);
+}
+.sheet-gift [data-slot="select-trigger"] {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+  white-space: normal;
+}
+.sheet-gift [data-slot="select-value"] {
+  white-space: normal;
+  overflow: visible;
+  display: block;
+  line-clamp: unset;
+  -webkit-line-clamp: unset;
+}
+.sheet-gift input::placeholder,
+.sheet-gift textarea::placeholder,
+.sheet-gift [data-slot="select-value"][data-placeholder] {
+  color: #d5e3da;
+  opacity: 1;
+}
+.sheet-gift .border-dashed {
+  border-color: var(--sheet-edge);
+  background-color: transparent;
+}
+
+/* Press feedback lands on pointer-down, before the new row paints. */
+.touch-press {
+  transition: transform 70ms ease, filter 70ms ease;
+}
+.touch-press:active {
+  transform: scale(0.97);
+  filter: brightness(1.12);
+}
+
+/* Toasts sit above the fixed phone tab bar (4rem) plus the home indicator.
+   Sonner uses --mobile-offset-bottom below 600px and --offset-bottom above that.
+   The tab bar is visible until 768px, so both variables move. */
+@media (max-width: 767px) {
+  [data-sonner-toaster] {
+    --offset-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)) !important;
+    --mobile-offset-bottom: calc(6rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
 }
 .sheet-field {
   display: block;

@@ -76,8 +76,8 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`relative flex items-center gap-2 ${className}`}>
-      <div className="relative flex-1 max-w-xs">
+    <form onSubmit={handleSubmit} className={`relative flex flex-wrap items-center gap-2 min-w-0 ${className}`}>
+      <div className="relative min-w-0 w-full">
         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
         <Input
           type="email"
@@ -86,7 +86,7 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
           placeholder="your@email.com"
           aria-label="Email address for the ReGen Civics newsletter"
           required
-          className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-[#7dd87d]/50 text-sm"
+          className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-[#7dd87d]/50 text-sm w-full min-w-0"
           style={{ fontFamily: "var(--font-body)" }}
         />
       </div>

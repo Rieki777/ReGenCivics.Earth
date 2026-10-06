@@ -170,7 +170,7 @@ function ProfileTransitionAnimation() {
       </div>
       <div className="text-center space-y-1">
         <p className="text-[#7dd87d] font-semibold">Profile created!</p>
-        <p className="text-white/60 text-sm">Your regenerative journey begins…</p>
+        <p className="text-white/60 text-sm">Your regenerative path begins…</p>
       </div>
     </div>
   );
@@ -1532,7 +1532,7 @@ const ALL_QUESTS = [
   { id: "quest-5", title: "Rites of Love" },
   { id: "quest-6", title: "Healing Circles" },
   { id: "quest-7", title: "Wild Foraging" },
-  { id: "quest-8", title: "Medicine Journey" },
+  { id: "quest-8", title: "Medicine Path" },
   { id: "quest-9", title: "Tree Talk" },
   { id: "quest-10", title: "Communication Patterns" },
   { id: "quest-11", title: "Coordination Patterns" },
@@ -2612,13 +2612,13 @@ export default function PlayerProfile() {
                   <CardTitle className="text-2xl text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
                     Join the ReGen Civics Game
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-[#14331f]">
                     Create your player profile to track your contributions, earn tokens, and connect with the regenerative movement.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <a href={getLoginUrl()}>
-                    <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
+                  <a href={getLoginUrl()} className="inline-flex">
+                    <Button className="touch-press bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
                       Sign In to Continue
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
@@ -2636,7 +2636,7 @@ export default function PlayerProfile() {
                     <Star className="w-6 h-6 text-[#7dd87d]" />
                     Create Your Player Profile
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-[#14331f]">
                     Your profile here and in Hypha is how you earn tokens and track contributions
                   </CardDescription>
                 </CardHeader>
@@ -3051,7 +3051,7 @@ export default function PlayerProfile() {
                     href="https://app.hypha.earth/en/network"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] text-sm font-semibold hover:bg-[#8de89d] transition-colors"
+                    className="tap-44 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#7dd87d] text-[#1a472a] text-sm font-semibold hover:bg-[#8de89d] transition-colors"
                   >
                     Set up on Hypha <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -3089,8 +3089,8 @@ export default function PlayerProfile() {
       {/* Back to Home */}
       <section className="py-8 px-4">
         <div className="container mx-auto max-w-4xl text-center">
-          <Link href="/">
-            <Button variant="ghost" className="text-white/60 hover:text-white hover:bg-white/10">
+          <Link href="/" className="inline-flex">
+            <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
               Back to Home
             </Button>
           </Link>

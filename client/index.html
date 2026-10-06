@@ -54,16 +54,18 @@
     <!-- Preload primary body font only (others load on demand via font-display: swap) -->
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/quicksand-latin.woff2" />
     
-    <!-- Preload homepage background for faster LCP (local file, not R2 which 403s for browsers) -->
-    <link rel="preload" as="image" href="/images/backgrounds/home-desktop.webp?v=14" media="(min-width: 768px)" fetchpriority="high" />
-    <link rel="preload" as="image" href="/images/backgrounds/home-mobile.webp?v=14" media="(max-width: 767px)" fetchpriority="high" />
-
-    <!-- Route-aware LCP preload: inject the right hero image as soon as the HTML parses -->
+    <!-- Route-aware LCP preload. The homepage night painting is ~732 KB and
+         only the home hero paints it, so other routes must not preload it. -->
     <script nonce="{{NONCE}}">
       (function() {
         var p = location.pathname;
         var href = null;
-        if (p === '/bionomics' || p === '/economy' || p === '/local-food-economy') {
+        if (p === '/' || p === '') {
+          var wide = window.matchMedia('(min-width: 768px)').matches;
+          href = wide
+            ? '/images/backgrounds/home-desktop.webp?v=14'
+            : '/images/backgrounds/home-mobile.webp?v=14';
+        } else if (p === '/bionomics' || p === '/economy' || p === '/local-food-economy') {
           href = '/blog-hero-bridging-worlds.webp';
         }
         if (href) {

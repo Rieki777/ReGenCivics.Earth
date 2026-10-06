@@ -109,14 +109,14 @@ export default function SiteFooter() {
                 <Info className="w-4 h-4 text-[#d4a574]/70 cursor-help" tabIndex={0} aria-label="What gratitude is" />
                 <span
                   role="tooltip"
-                  className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-[#0f2a1a] border border-[#d4a574]/30 px-3 py-2 text-[11px] leading-snug text-[#f3e6cf] text-left opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-50 shadow-xl"
+                  className="pointer-events-none hidden group-hover:block group-focus-within:block absolute bottom-full right-0 mb-2 w-64 max-w-[calc(100vw-2rem)] rounded-lg bg-[#0f2a1a] border border-[#d4a574]/30 px-3 py-2 text-[11px] leading-snug text-[#f3e6cf] text-left z-50 shadow-xl"
                 >
                   Gratitude is a new way of distributing resources in this economy. We thank each other for the contributions we bring. When you see someone bring a contribution, come here and send them gratitude.
                 </span>
               </span>
             </div>
             <p className="text-white/70 text-sm mb-3">
-              Acknowledge someone who made a difference in your journey.
+              Acknowledge someone who made a difference in your work.
             </p>
             <button
               onClick={() => setGratitudeOpen(true)}
@@ -130,7 +130,7 @@ export default function SiteFooter() {
         <SendGratitudeModal open={gratitudeOpen} onOpenChange={setGratitudeOpen} />
 
         {/* Middle row: Navigation columns */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8 text-sm [&>*]:min-w-0">
           {/* Explore */}
           <div>
             <h2

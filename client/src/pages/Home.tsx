@@ -634,7 +634,7 @@ export default function Home() {
                         type="button"
                         onClick={() => setExpandedPathCard(isExpanded ? null : card.id)}
                         aria-expanded={isExpanded}
-                        className="md:hidden mt-3 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-white/65 hover:text-white transition-colors"
+                        className="md:hidden mt-3 inline-flex items-center gap-1 px-2 py-2 min-h-11 text-[10px] font-semibold uppercase tracking-wider text-white/80 hover:text-white transition-colors"
                       >
                         <ChevronDown
                           className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
