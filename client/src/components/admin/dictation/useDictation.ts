@@ -41,8 +41,11 @@ export type DictationState = "idle" | "listening" | "unsupported" | "denied";
 
 export const DICTATION_UNSUPPORTED_MESSAGE =
   "This browser cannot listen. Type instead, or try Chrome.";
-export const DICTATION_DENIED_MESSAGE =
-  "Microphone access was blocked. Type instead, or allow the mic in the browser.";
+export const DICTATION_DENIED_MESSAGE = "Mic blocked";
+export const DICTATION_NO_SPEECH_MESSAGE =
+  "No speech heard. Check which mic Chrome is using, or type instead.";
+export const DICTATION_NETWORK_MESSAGE = "Speech service unavailable, type instead";
+export const DICTATION_NO_MIC_MESSAGE = "No microphone found";
 export const DICTATION_GENERIC_ERROR =
   "Listening stopped. Type instead, or try the mic again.";
 export const DICTATION_SENSITIVE_MESSAGE =
@@ -215,8 +218,10 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   const engineDiedRef = useRef(false);
   const startedAtRef = useRef(0);
   const spanHadResultRef = useRef(false);
-  /** Consecutive instant ends with no transcript. Two of those is a dead recognizer, not a pause. */
-  const rapidEmptyRef = useRef(0);
+  /** Consecutive recognizer sessions that ended with no transcript. Two stops the loop. */
+  const emptyRunsRef = useRef(0);
+  /** True after this hook called stop() or abort(), so a matching "aborted" error stays quiet. */
+  const userStopRef = useRef(false);
   const sessionRef = useRef<{
     base: string;
     start: number;
@@ -350,14 +355,17 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
       const { interim: nextInterim, spoken } = collectSpeech(event.results);
       if (spoken.trim()) {
         spanHadResultRef.current = true;
-        rapidEmptyRef.current = 0;
+        emptyRunsRef.current = 0;
       }
       engineRef.current.applyCollected(spoken, nextInterim);
     };
     rec.onerror = (event) => {
       if (!liveRef.current) return;
       const kind = event?.error ?? "error";
-      if (kind === "no-speech" || kind === "aborted") return;
+      // "aborted" is silent only when we stopped the recognizer ourselves.
+      if (kind === "aborted" && userStopRef.current) return;
+      // no-speech is counted when the session ends. One quiet stretch is a pause.
+      if (kind === "no-speech") return;
       wantRef.current = false;
       engineRef.current.commitSession();
       acceptResultsRef.current = false;
@@ -369,7 +377,9 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
         return;
       }
       setState("idle");
-      setError(DICTATION_GENERIC_ERROR);
+      if (kind === "network") setError(DICTATION_NETWORK_MESSAGE);
+      else if (kind === "audio-capture") setError(DICTATION_NO_MIC_MESSAGE);
+      else setError(DICTATION_GENERIC_ERROR);
     };
     rec.onend = () => {
       if (!liveRef.current) return;
@@ -393,19 +403,19 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
         setError(DICTATION_GENERIC_ERROR);
         return;
       }
-      const emptyBurst = !spanHadResultRef.current && (Date.now() - startedAtRef.current) < 400;
+      const empty = !spanHadResultRef.current;
       spanHadResultRef.current = false;
-      if (emptyBurst) {
-        rapidEmptyRef.current += 1;
-        if (rapidEmptyRef.current >= 2) {
+      if (empty) {
+        emptyRunsRef.current += 1;
+        if (emptyRunsRef.current >= 2) {
           engineDiedRef.current = true;
           wantRef.current = false;
           setState("idle");
-          setError(DICTATION_GENERIC_ERROR);
+          setError(DICTATION_NO_SPEECH_MESSAGE);
           return;
         }
       } else {
-        rapidEmptyRef.current = 0;
+        emptyRunsRef.current = 0;
       }
       try {
         engineDiedRef.current = false;
@@ -423,12 +433,14 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     return () => {
       liveRef.current = false;
       wantRef.current = false;
+      userStopRef.current = true;
       recRef.current = null;
       try { rec.abort(); } catch { /* already stopped */ }
     };
   }, [lang, supported]);
 
   const stop = useCallback(() => {
+    userStopRef.current = true;
     wantRef.current = false;
     try { recRef.current?.stop(); } catch { /* nothing listening */ }
     // onend commits when the browser fires it. If it does not, keep the preview.
@@ -450,6 +462,7 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
   }, [stop]);
 
   const markDenied = useCallback(() => {
+    userStopRef.current = true;
     wantRef.current = false;
     setInterim("");
     setState("denied");
@@ -493,6 +506,8 @@ export function useDictation(opts: UseDictationOptions): UseDictationResult {
     setError(null);
     // Keep blockedHelp open across a failed recheck so "try again" does not
     // flash the modal closed when permission is still denied.
+    userStopRef.current = false;
+    emptyRunsRef.current = 0;
     wantRef.current = true;
 
     // Start in this turn, before permissions.query. Awaiting first drops

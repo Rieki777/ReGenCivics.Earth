@@ -28,7 +28,11 @@
   --sb-body: "Nunito", system-ui, sans-serif;
   --sb-mark: "Righteous", "Quicksand", system-ui, sans-serif;
   color-scheme: dark;
-  overflow-x: clip;
+  /* Positioned so screen-reader spans stay inside this shell. overflow: clip
+     keeps them from stretching the page, which would slide the 100dvh board
+     up and leave empty ground under the footer. */
+  position: relative;
+  overflow: clip;
   width: 100%;
   max-width: 100%;
   height: 100dvh;
@@ -81,7 +85,7 @@
 .sb-pill.sb-host .sb-pill-dot { background: var(--sb-lantern); }
 
 /* ---------- stage ---------- */
-.sb-main { overflow: auto; min-height: 0; }
+.sb-main { position: relative; overflow: auto; overscroll-behavior: contain; min-height: 0; }
 .sb-stage { max-width: 1240px; margin: 0 auto; padding-block: clamp(22px, 4vh, 48px) 56px; padding-inline: clamp(16px, 3vw, 40px); display: grid; gap: clamp(20px, 3vh, 32px); align-content: start; }
 .sb-wide { max-width: 1420px; }
 .sb-kicker { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sb-spring-ink); font-weight: 800; }
@@ -124,6 +128,9 @@ select.sb-field { width: auto; min-height: 44px; padding: 4px 10px; font-size: 1
 button.sb-mic { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; color: var(--sb-ink) !important; background: var(--sb-field) !important; border-color: var(--sb-line-strong) !important; }
 button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; color: var(--sb-on-spring) !important; border-color: var(--sb-spring) !important; }
 .sb-app [data-testid="dictation-listening"] { color: var(--sb-spring-ink) !important; }
+/* The error bubble is portaled to document.body, outside .sb-app. Dark red on
+   white stays readable against the board's forest background. */
+[data-testid="dictation-error"] { background: #ffffff; color: #7f1d1d; border-color: #fecaca; }
 .sb-chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
 .sb-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; background: var(--sb-chip); border: 1px solid var(--sb-line); font-weight: 700; max-width: 100%; min-width: 0; }
 .sb-chip.sb-has-x { padding-right: 6px; }
@@ -241,6 +248,7 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-amora-shot img, .sb-rolecard img { display: block; width: 100%; height: auto; }
 .sb-rolecard-row { display: grid; grid-template-columns: minmax(0, 2.33fr) minmax(0, 1fr); gap: clamp(14px, 2vw, 24px); max-width: 1100px; align-items: start; }
 .sb-rolecard { margin: 0; display: grid; gap: 8px; }
+.sb-rolecard a { display: block; }
 .sb-rolecard img { border-radius: 12px; }
 .sb-rolecard figcaption { font-size: 15px; color: var(--sb-muted); }
 
@@ -374,15 +382,19 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-cues ul { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; }
 
 /* ---------- narrow ---------- */
+@media (max-width: 1200px) {
+  .sb-rolecard-row { grid-template-columns: minmax(0, 1fr); max-width: none; }
+  .sb-rolecard:last-child { max-width: 420px; }
+}
 @media (max-width: 1100px) {
   .sb-ready-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sb-lbl { font-size: 11.5px; }
+  .sb-rail li:not(.sb-now) .sb-lbl { display: none; }
+  .sb-rail li.sb-now .sb-lbl { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+  .sb-rail-btn { padding-bottom: 18px; }
 }
 @media (max-width: 900px) {
   .sb-welcome, .sb-breath, .sb-two, .sb-circle, .sb-harvest, .sb-game, .sb-ahead, .sb-close, .sb-together, .sb-tg-offers { grid-template-columns: minmax(0, 1fr); }
-  .sb-rail li:not(.sb-now) .sb-lbl { display: none; }
-  .sb-rail li.sb-now .sb-lbl { position: absolute; top: 30px; left: 50%; transform: translateX(-50%); }
-  .sb-rail-btn { padding-bottom: 18px; }
   .sb-side { justify-items: stretch; }
   .sb-wheel { justify-self: center; }
 }

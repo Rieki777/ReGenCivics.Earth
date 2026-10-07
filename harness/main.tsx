@@ -26,10 +26,12 @@ class Boundary extends Component<{ children: ReactNode }, { error: Error | null 
 }
 
 const keys = Object.keys(STORIES);
-const requested = new URLSearchParams(location.search).get("story");
+const params = new URLSearchParams(location.search);
+const requested = params.get("story");
 const active = requested && STORIES[requested] ? requested : keys[0];
 const story = STORIES[active];
 story?.setup?.();
+const bare = params.get("bare") === "1";
 
 function Shell() {
   return (
@@ -55,4 +57,15 @@ function Shell() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<Shell />);
+if (bare) {
+  document.documentElement.style.background = "#0d2818";
+  document.body.style.margin = "0";
+  document.body.style.background = "#0d2818";
+  createRoot(document.getElementById("root")!).render(
+    <div data-harness-story={active}>
+      <Boundary>{story?.render() ?? null}</Boundary>
+    </div>,
+  );
+} else {
+  createRoot(document.getElementById("root")!).render(<Shell />);
+}

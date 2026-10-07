@@ -71,6 +71,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
+import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { getLoginUrl } from "./const";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { GoogleTranslateProvider } from "@/components/GoogleTranslate";
@@ -188,18 +189,18 @@ try {
         <GoogleTranslateProvider>
           <LanguageProvider>
             <App />
+            <ServiceWorkerRegister />
           </LanguageProvider>
         </GoogleTranslateProvider>
       </QueryClientProvider>
     </trpc.Provider>
   );
 // ── Service Worker lifecycle ────────────────────────────────────────────────
-// Force reload when a new SW activates so users always get fresh assets.
+// Reloads live in ServiceWorkerRegister. This block only checks for updates
+// and drops caches that an older worker left behind. A controllerchange
+// listener here reloaded every fresh visit: skipWaiting + clientsClaim fires
+// that event on the first install, about 17s after the page opens.
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
-  });
-
   // Proactive update checks: 30s after load, then every 10 minutes.
   // Without this, the browser only checks on navigation or every ~24h,
   // so deployed fixes can take a full day to reach open tabs.

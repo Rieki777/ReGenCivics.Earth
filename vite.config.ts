@@ -11,6 +11,13 @@ export default defineConfig(({ mode }): UserConfig => ({
     // VitePWA generates sw.js at build time — do not create a manual public/sw.js
     VitePWA({
       registerType: "autoUpdate",
+      // ServiceWorkerRegister calls navigator.serviceWorker.register("/sw.js")
+      // and decides whether to reload. Leave this false: the default "auto"
+      // injects registerSW.js, which reloads as soon as a new worker activates
+      // and would skip the week-board hold. skipWaiting and clientsClaim stay
+      // explicit below; the plugin only sets them itself when injectRegister
+      // is "auto" or null.
+      injectRegister: false,
       strategies: "generateSW",
       workbox: {
         // Web push lives in an isolated hand-written file that the generated
@@ -34,9 +41,9 @@ export default defineConfig(({ mode }): UserConfig => ({
         navigateFallback: null,
         // Clean up precache entries from older SW versions on activation
         cleanupOutdatedCaches: true,
-        // skipWaiting + clientsClaim: new SW activates immediately on install,
-        // no waiting for old tabs to close. Combined with the controllerchange
-        // listener in main.tsx, this forces a page reload on every deploy.
+        // skipWaiting + clientsClaim: new SW activates immediately on install.
+        // ServiceWorkerRegister owns the reload and skips the first claim, so
+        // a brand-new visit is not refreshed out from under the form.
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [

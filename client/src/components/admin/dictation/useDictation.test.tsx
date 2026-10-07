@@ -5,6 +5,9 @@ import {
   useDictation,
   dictationSupported,
   DICTATION_DENIED_MESSAGE,
+  DICTATION_NO_SPEECH_MESSAGE,
+  DICTATION_NETWORK_MESSAGE,
+  DICTATION_NO_MIC_MESSAGE,
   DICTATION_BLOCKED_TITLE,
   DICTATION_BLOCKED_LEAD,
   DICTATION_SENSITIVE_MESSAGE,
@@ -12,6 +15,9 @@ import {
   DICTATION_GENERIC_ERROR,
 } from "./useDictation";
 import { DictationButton } from "./DictationButton";
+import { Breath } from "@/components/session-board/stages";
+import { boardStages, defaultBoardState } from "@shared/sessionBoard";
+import type { StageProps } from "@/components/session-board/stages";
 
 class FakeSpeechRecognition {
   continuous = false;
@@ -566,6 +572,101 @@ describe("useDictation", () => {
     password.remove();
   });
 
+  it("stops after two quiet sessions and says no speech was heard", async () => {
+    const orig = FakeSpeechRecognition.prototype.start;
+    let starts = 0;
+    FakeSpeechRecognition.prototype.start = function (this: FakeSpeechRecognition) {
+      starts += 1;
+      return orig.call(this);
+    };
+    function Field() {
+      const ref = useRef<HTMLInputElement>(null);
+      const [value, setValue] = useState("");
+      const d = useDictation({ value, onChange: setValue, targetRef: ref });
+      return (
+        <>
+          <input ref={ref} value={value} onChange={(e) => setValue(e.target.value)} aria-label="Arrival word" />
+          <button type="button" onClick={d.start} data-testid="start">start</button>
+          <span data-testid="listening">{d.listening ? "yes" : "no"}</span>
+          <span data-testid="err">{d.error ?? ""}</span>
+        </>
+      );
+    }
+    try {
+      render(<Field />);
+      await act(async () => { fireEvent.click(screen.getByTestId("start")); });
+      expect(starts).toBe(1);
+      const rec = FakeSpeechRecognition.latest!;
+      rec.started = false;
+      act(() => {
+        rec.onerror?.({ error: "no-speech" });
+        rec.onend?.();
+      });
+      expect(starts).toBe(2);
+      expect(screen.getByTestId("listening").textContent).toBe("yes");
+      rec.started = false;
+      act(() => {
+        rec.onerror?.({ error: "no-speech" });
+        rec.onend?.();
+      });
+      expect(starts).toBe(2);
+      expect(screen.getByTestId("listening").textContent).toBe("no");
+      expect(screen.getByTestId("err").textContent).toBe(DICTATION_NO_SPEECH_MESSAGE);
+      expect(screen.getByLabelText("Arrival word")).toHaveProperty("value", "");
+    } finally {
+      FakeSpeechRecognition.prototype.start = orig;
+    }
+  });
+
+  it("names a network failure instead of the generic line", async () => {
+    const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
+    await act(async () => { await result.current.start(); });
+    const rec = FakeSpeechRecognition.latest!;
+    rec.started = false;
+    act(() => {
+      rec.onerror?.({ error: "network" });
+      rec.onend?.();
+    });
+    expect(result.current.listening).toBe(false);
+    expect(result.current.error).toBe("Speech service unavailable, type instead");
+    expect(result.current.error).toBe(DICTATION_NETWORK_MESSAGE);
+    expect(rec.started).toBe(false);
+  });
+
+  it("says the mic is blocked, and keeps the allow-steps flag", async () => {
+    const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
+    await act(async () => { await result.current.start(); });
+    act(() => FakeSpeechRecognition.latest?.onerror?.({ error: "not-allowed" }));
+    expect(result.current.error).toBe("Mic blocked");
+    expect(result.current.error).toBe(DICTATION_DENIED_MESSAGE);
+    expect(result.current.state).toBe("denied");
+    expect(result.current.blockedHelp).toBe(true);
+    expect(result.current.listening).toBe(false);
+  });
+
+  it("says when no microphone can be captured", async () => {
+    const { result } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
+    await act(async () => { await result.current.start(); });
+    act(() => FakeSpeechRecognition.latest?.onerror?.({ error: "audio-capture" }));
+    expect(result.current.listening).toBe(false);
+    expect(result.current.error).toBe(DICTATION_NO_MIC_MESSAGE);
+  });
+
+  it("stays quiet when we abort, and speaks up when the browser aborts on its own", async () => {
+    const { result } = renderHook(() => useDictation({ value: "kept", onChange: () => {} }));
+    await act(async () => { await result.current.start(); });
+    const rec = FakeSpeechRecognition.latest!;
+    act(() => { result.current.stop(); });
+    act(() => { rec.onerror?.({ error: "aborted" }); });
+    expect(result.current.error).toBeNull();
+
+    await act(async () => { await result.current.start(); });
+    const again = FakeSpeechRecognition.latest!;
+    act(() => { again.onerror?.({ error: "aborted" }); });
+    expect(result.current.listening).toBe(false);
+    expect(result.current.error).toBe(DICTATION_GENERIC_ERROR);
+  });
+
   it("aborts recognition on unmount", async () => {
     const { result, unmount } = renderHook(() => useDictation({ value: "", onChange: () => {} }));
     await act(async () => { await result.current.start(); });
@@ -722,5 +823,115 @@ describe("DictationButton", () => {
     expect(screen.queryByTestId("dictation-mic-help")).toBeNull();
     expect(btn.getAttribute("aria-pressed")).toBe("true");
     expect(FakeSpeechRecognition.latest?.started).toBe(true);
+  });
+});
+
+function arrivalProps(addItem: StageProps["actions"]["addItem"] = async () => ({ ok: true as const, id: 1 })): StageProps {
+  const stages = boardStages(2);
+  return {
+    board: {
+      week: 2,
+      status: "open",
+      version: 1,
+      serverNow: Date.now(),
+      state: defaultBoardState(2),
+      canFacilitate: false,
+      notes: [],
+      hands: {},
+      offers: {},
+      offerPeople: null,
+      projects: [],
+      items: [],
+    } as unknown as StageProps["board"],
+    week: 2,
+    stages,
+    index: 1,
+    facilitator: false,
+    canWrite: true,
+    mine: { itemIds: new Set(), projectIds: new Set(), votes: new Set(), hands: new Set(), offers: new Set() },
+    actions: { addItem } as unknown as StageProps["actions"],
+    now: Date.now(),
+    serverNow: () => Date.now(),
+    go: () => {},
+  };
+}
+
+describe("arrival word on the week board", () => {
+  beforeEach(() => {
+    installSpeech();
+    removeMicPermission();
+    removeGetUserMedia();
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
+    });
+  });
+  afterEach(() => {
+    removeSpeech();
+    removeMicPermission();
+    removeGetUserMedia();
+  });
+
+  it("writes interim speech into the arrival field and replaces it with the final word", async () => {
+    render(<Breath {...arrivalProps()} />);
+    const input = screen.getByLabelText("Arrival word") as HTMLInputElement;
+    await act(async () => { fireEvent.pointerDown(screen.getByTestId("dictation-button")); });
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: false, 0: { transcript: "grate" } }],
+      });
+    });
+    expect(input.value).toBe("grate");
+    act(() => {
+      FakeSpeechRecognition.latest?.onresult?.({
+        resultIndex: 0,
+        results: [{ isFinal: true, 0: { transcript: "grateful" } }],
+      });
+    });
+    expect(input.value).toBe("grateful");
+  });
+
+  it("shows no-speech on the board after two quiet sessions and does not add an empty word", async () => {
+    const addItem = vi.fn(async () => ({ ok: true as const, id: 1 }));
+    const orig = FakeSpeechRecognition.prototype.start;
+    let starts = 0;
+    FakeSpeechRecognition.prototype.start = function (this: FakeSpeechRecognition) {
+      starts += 1;
+      return orig.call(this);
+    };
+    try {
+      render(<Breath {...arrivalProps(addItem)} />);
+      await act(async () => { fireEvent.pointerDown(screen.getByTestId("dictation-button")); });
+      const rec = FakeSpeechRecognition.latest!;
+      rec.started = false;
+      act(() => {
+        rec.onerror?.({ error: "no-speech" });
+        rec.onend?.();
+      });
+      rec.started = false;
+      act(() => {
+        rec.onerror?.({ error: "no-speech" });
+        rec.onend?.();
+      });
+      expect(starts).toBe(2);
+      expect(screen.getByTestId("dictation-button").getAttribute("data-listening")).toBe("false");
+      expect(screen.getByTestId("dictation-error").textContent).toBe(DICTATION_NO_SPEECH_MESSAGE);
+      expect(screen.getByLabelText("Arrival word")).toHaveProperty("value", "");
+      expect(addItem).not.toHaveBeenCalled();
+    } finally {
+      FakeSpeechRecognition.prototype.start = orig;
+    }
+  });
+
+  it("leaves the arrival word in the field when the add fails", async () => {
+    const addItem = vi.fn(async () => null);
+    render(<Breath {...arrivalProps(addItem)} />);
+    const input = screen.getByLabelText("Arrival word");
+    fireEvent.change(input, { target: { value: "grateful" } });
+    await act(async () => { fireEvent.submit(input.closest("form")!); });
+    expect(addItem).toHaveBeenCalledWith({ kind: "arrive", text: "grateful" });
+    expect(input).toHaveProperty("value", "grateful");
   });
 });
