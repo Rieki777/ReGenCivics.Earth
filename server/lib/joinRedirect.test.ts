@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { HOLOS_REGEN_CIVICS_URL, HYLO_SEEDS_URL } from "@shared/communityLinks";
-import { RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
+import { RIVERSIDE_ROOM_URL, SITE_ORIGIN } from "@shared/sessionLinks";
 import {
   hostIsOldStudio,
   joinLandingHtml,
@@ -102,6 +102,9 @@ describe("joinLandingHtml", () => {
       "https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit",
     );
     expect(html).toContain(`<a class="join-call" href="${RIVERSIDE_ROOM_URL}">Join the call</a>`);
+    expect(html).toContain(`<a class="vote-times" href="${SITE_ORIGIN}/season-schedule">Vote on call times here</a>`);
+    expect(html).toContain(".vote-times");
+    expect(html.indexOf('class="join-call"')).toBeLessThan(html.indexOf('class="vote-times"'));
     expect(html).toContain("min-height: 72px");
     expect(html).toContain("min-height: 64px");
     expect(html).toContain("width: 100%");

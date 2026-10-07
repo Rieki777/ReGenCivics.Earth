@@ -99,7 +99,7 @@ export function joinLandingHtml(): string {
     box-sizing: border-box;
     width: 100%;
     min-height: 72px;
-    margin: 0 0 1.75rem;
+    margin: 0 0 0.75rem;
     padding: 1rem 1.25rem;
     background: #1a472a;
     color: #ffffff;
@@ -115,6 +115,29 @@ export function joinLandingHtml(): string {
   .join-call:visited { color: #ffffff; background: #1a472a; }
   .join-call:hover { background: #143d24; border-color: #143d24; color: #ffffff; }
   .join-call:focus { outline: 3px solid #111111; outline-offset: 4px; }
+  .vote-times {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 64px;
+    margin: 0 0 1.75rem;
+    padding: 0.75rem 1.25rem;
+    background: transparent;
+    color: #1a472a;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.375rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    border: 3px solid #1a472a;
+    border-radius: 0.75rem;
+  }
+  .vote-times:visited { color: #1a472a; background: transparent; }
+  .vote-times:hover { background: #1a472a; color: #ffffff; }
+  .vote-times:focus { outline: 3px solid #111111; outline-offset: 4px; }
   p { font-size: 1.125rem; line-height: 1.5; }
   ul { padding-left: 1.25rem; }
   li { margin: 0.5rem 0; }
@@ -123,6 +146,7 @@ export function joinLandingHtml(): string {
   @media (max-width: 640px) {
     main { padding: 1.25rem 0.75rem 3rem; }
     .join-call { min-height: 64px; font-size: 1.5rem; }
+    .vote-times { min-height: 64px; font-size: 1.25rem; }
   }
 </style>
 </head>
@@ -130,6 +154,7 @@ export function joinLandingHtml(): string {
 <main>
   <h1>Join the call</h1>
   <a class="join-call" href="${RIVERSIDE_ROOM_URL}">Join the call</a>
+  <a class="vote-times" href="${SITE_ORIGIN}/season-schedule">Vote on call times here</a>
   <p>Meet the community on Holos or Hylo. Session recordings are on YouTube.</p>
   <ul class="more">
     <li><a href="${HOLOS_REGEN_CIVICS_URL}">Holos</a></li>
