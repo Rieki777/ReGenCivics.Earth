@@ -12,37 +12,26 @@
 export const SITE_ORIGIN = "https://regencivics.earth";
 
 /**
- * The old shared studio. Calendar code uses this to recognize stored copies
- * of that room and keep them pointed at /join. GET /join does not redirect here.
- *
- * Changed 2026-09-14 from the token link
- * (`rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b`) to the room link Rye
- * named as the correct one. The token link is still what riversideRoomUrl holds
- * on every events row, which is why isDefaultRoomUrl matches the studio rather
- * than this one exact string.
+ * Guest invite for the live studio. The /join button opens this URL.
+ * Change it here. Nothing reads a Railway env var for the room.
  */
 export const RIVERSIDE_ROOM_URL =
   "https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit";
 
-const STUDIO_URL = "https://riverside.com/studio/rieki-cordon-riekis-studio";
-
 /**
- * True for any link into our one studio, in any form it has been stored.
- *
- * An exact comparison against RIVERSIDE_ROOM_URL breaks the moment the constant
- * changes: every row still holding the old token link would read as "a
- * different per-event room" and pass that old link straight into invites and
- * join buttons. Matching the studio path means every stored variant resolves to
- * /join, while a genuinely different room (another studio, a Zoom link) still
- * passes through.
+ * True for the guest invite and for older stored copies of this same studio
+ * (the path without the room code, or a `?t=` token). A different room returns false.
  */
 export function isDefaultRoomUrl(url: string | null | undefined): boolean {
   const value = url?.trim().toLowerCase().replace(/^http:/, "https:");
   if (!value) return false;
+  const guest = RIVERSIDE_ROOM_URL.toLowerCase();
+  const studio = guest.replace(/\/[^/]+$/, "");
   return (
-    value === STUDIO_URL ||
-    value.startsWith(`${STUDIO_URL}/`) ||
-    value.startsWith(`${STUDIO_URL}?`)
+    value === guest ||
+    value === studio ||
+    value.startsWith(`${studio}/`) ||
+    value.startsWith(`${studio}?`)
   );
 }
 
