@@ -9,25 +9,21 @@ export type AppliedProjectPick = {
 /**
  * The land-project line on the season time vote.
  * A list of applied projects fills the name and links the vote.
- * Typing a name still works. With no list, the apply button sits beside the field.
+ * Typing a name still works. The apply link stays up even when the list has rows.
  */
 export function LandProjectVoteField({
   project,
   picks,
-  ready,
   onProjectChange,
   onPick,
   onBlur,
 }: {
   project: string;
   picks: AppliedProjectPick[];
-  ready: boolean;
   onProjectChange: (name: string) => void;
   onPick: (pick: AppliedProjectPick) => void;
   onBlur?: () => void;
 }) {
-  const showApply = ready && picks.length === 0;
-
   return (
     <div className="block sm:col-span-2">
       <span className="mb-2 block text-sm text-white/60">Your land project (needed to vote)</span>
@@ -49,26 +45,22 @@ export function LandProjectVoteField({
           ))}
         </select>
       )}
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <input
-          type="text"
-          value={project}
-          maxLength={120}
-          onChange={(e) => onProjectChange(e.target.value)}
-          onBlur={onBlur}
-          placeholder="Project name"
-          aria-label="Your land project"
-          className="min-h-11 w-full flex-1 rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-base text-white placeholder-white/40 focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
-        />
-        {showApply && (
-          <Link
-            href="/apply"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl border-[3px] border-white bg-white px-4 text-center text-base font-bold text-[#1a472a] no-underline hover:bg-[#f6f3ea] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
-          >
-            Apply with your project
-          </Link>
-        )}
-      </div>
+      <input
+        type="text"
+        value={project}
+        maxLength={120}
+        onChange={(e) => onProjectChange(e.target.value)}
+        onBlur={onBlur}
+        placeholder="Project name"
+        aria-label="Your land project"
+        className="min-h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-base text-white placeholder-white/40 focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
+      />
+      <Link
+        href="/apply"
+        className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-[#7dd87d] bg-[#0d2818] px-3 text-sm font-bold text-[#7dd87d] no-underline hover:bg-[#143d24] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
+      >
+        Not listed? Apply with your project
+      </Link>
     </div>
   );
 }

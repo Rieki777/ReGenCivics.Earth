@@ -152,8 +152,6 @@ export default function SeasonSchedule() {
         const pick = appliedPick(row.id, row.projectName);
         return pick ? [pick] : [];
       });
-  const picksReady = !authLoading && (!user || mineQuery.isFetched) && (minePicks.length > 0 || publicQuery.isFetched || publicQuery.isError);
-
   const [voterKey, setVoterKey] = useState("");
   const [mySlots, setMySlots] = useState<SeasonSlotKey[]>([]);
   const [name, setName] = useState("");
@@ -442,7 +440,6 @@ export default function SeasonSchedule() {
                   <LandProjectVoteField
                     project={project}
                     picks={projectPicks}
-                    ready={picksReady}
                     onProjectChange={setProject}
                     onPick={chooseProject}
                     onBlur={() => saveNames()}
