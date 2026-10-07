@@ -14,6 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import express from "express";
 import type { Server } from "node:http";
+import { RIVERSIDE_ROOM_URL } from "@shared/sessionLinks";
 import { registerCalendarFeedRoutes } from "./routes/calendarFeed";
 
 let server: Server;
@@ -114,9 +115,9 @@ describe("/join", () => {
     const res = await fetch(base + "/join", { redirect: "manual" });
     const body = await res.text();
     expect(res.status).toBe(200);
-    expect(res.headers.get("location") ?? "").not.toMatch(/riverside/i);
+    expect(res.headers.get("location") ?? "").toBe("");
     expect(body).toContain("Join the call");
-    expect(body.toLowerCase()).not.toContain("riverside");
+    expect(body).toContain(`class="join-call" href="${RIVERSIDE_ROOM_URL}"`);
   });
 
   it("is the indirection the invites rely on", async () => {

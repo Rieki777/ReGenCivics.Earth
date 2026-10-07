@@ -96,11 +96,22 @@ describe("resolveJoinRedirectTarget", () => {
 });
 
 describe("joinLandingHtml", () => {
-  it("names Holos and Hylo and does not name the old studio", () => {
+  it("leads with a studio join button and keeps the other gather places", () => {
     const html = joinLandingHtml();
-    expect(html).toContain("Join the call");
+    expect(RIVERSIDE_ROOM_URL).toBe(
+      "https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit",
+    );
+    expect(html).toContain(`<a class="join-call" href="${RIVERSIDE_ROOM_URL}">Join the call</a>`);
+    expect(html).toContain("min-height: 72px");
+    expect(html).toContain("min-height: 64px");
+    expect(html).toContain("width: 100%");
+    expect(html).toContain("background: #1a472a");
+    expect(html).toContain("color: #ffffff");
+    expect(html).toContain("outline: 3px solid #111111");
     expect(html).toContain(HOLOS_REGEN_CIVICS_URL);
     expect(html).toContain(HYLO_SEEDS_URL);
-    expect(html.toLowerCase()).not.toContain("riverside");
+    expect(html).toContain("Watch on YouTube");
+    expect(html).toContain("/schedule");
+    expect(html.indexOf('class="join-call"')).toBeLessThan(html.indexOf(HOLOS_REGEN_CIVICS_URL));
   });
 });

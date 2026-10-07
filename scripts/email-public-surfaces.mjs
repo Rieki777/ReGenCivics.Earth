@@ -6,8 +6,8 @@
  * follow redirects, and it does not send mail.
  *
  * /join may answer 200 on this site, or 302 somewhere else. A Location
- * header that contains "riverside" fails the check. The body of a 200 is
- * also scanned for that name.
+ * header that contains "riverside" fails the check. The page itself may
+ * link the studio. It must not redirect there.
  *
  * /checkin is not asserted.
  *
@@ -31,10 +31,9 @@ const checks = [
  * @param {string} body
  * @returns {string | null} failure reason, or null when the join response is allowed
  */
-export function joinSurfaceFailure(status, location, body) {
+export function joinSurfaceFailure(status, location, _body) {
   const loc = location ?? "";
   if (/riverside/i.test(loc)) return "Location contains riverside";
-  if (/riverside/i.test(body)) return "body contains riverside";
   if (status === 200 && !loc) return null;
   if (status >= 300 && status < 400 && loc) return null;
   return `status ${status} is not an on-site page or a non-riverside redirect`;
@@ -48,7 +47,9 @@ function selfTest() {
   if (joinSurfaceFailure(302, "https://enterholos.com/holon?h=regen-civics-seeds", "") != null) {
     problems.push("non-studio redirect was rejected");
   }
-  if (joinSurfaceFailure(200, null, "meet on riverside") == null) problems.push("named studio in the body was allowed");
+  if (joinSurfaceFailure(200, null, `<a href="${studio}">Join the call</a>`) != null) {
+    problems.push("studio link on the join page was rejected");
+  }
   if (problems.length > 0) {
     console.error(problems.join("\n"));
     process.exit(1);
