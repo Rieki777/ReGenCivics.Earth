@@ -116,5 +116,10 @@ describe("joinLandingHtml", () => {
     expect(html).toContain("Watch on YouTube");
     expect(html).toContain("/schedule");
     expect(html.indexOf('class="join-call"')).toBeLessThan(html.indexOf(HOLOS_REGEN_CIVICS_URL));
+    expect(html).toContain('property="og:title" content="Join the Season 2 Call | ReGen Civics"');
+    expect(html).toContain('property="og:description" content="Join the live Season 2 call."');
+    expect(html).toContain('property="og:image" content="https://regencivics.earth/og/s2/join.jpg"');
+    expect(html).toContain('name="twitter:card" content="summary_large_image"');
+    expect(html).toContain('property="og:url" content="https://regencivics.earth/join"');
   });
 });

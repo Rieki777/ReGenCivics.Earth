@@ -1,6 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
+import { season2PreviewFor } from "@shared/season2Previews";
 import { CheckCircle2, Clock, Circle, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 
@@ -33,7 +34,12 @@ export default function ApplyStatus() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#f0ebe3] flex items-center justify-center p-4">
-        <SEO title="Application Status | ReGen Civics" description="Check your land project application status." />
+        <SEO
+          title={season2PreviewFor("/apply/status")!.title}
+          description={season2PreviewFor("/apply/status")!.description}
+          image={season2PreviewFor("/apply/status")!.image}
+          url={season2PreviewFor("/apply/status")!.url}
+        />
         <div className="text-center">
           <h1 className="text-2xl font-bold text-[#1a472a] mb-4">Sign in to view your application</h1>
           <Link href="/apply"><a className="text-[#4a7c59] underline">Return to Apply</a></Link>
@@ -46,7 +52,12 @@ export default function ApplyStatus() {
 
   return (
     <div className="min-h-screen bg-[#f0ebe3] py-12 px-4">
-      <SEO title="Application Status | ReGen Civics" description="Track your land project application through the review process." url="/apply/status" />
+      <SEO
+        title={season2PreviewFor("/apply/status")!.title}
+        description={season2PreviewFor("/apply/status")!.description}
+        image={season2PreviewFor("/apply/status")!.image}
+        url={season2PreviewFor("/apply/status")!.url}
+      />
       <div className="max-w-2xl mx-auto">
         <Link href="/apply" className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1 mb-6">
           &larr; Back to Apply

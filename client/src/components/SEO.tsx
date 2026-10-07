@@ -8,7 +8,7 @@ import { useLocation } from 'wouter';
 import { schemas } from "@/components/JsonLD";
 import { COOP } from "@shared/fund";
 import { SITE_DESCRIPTION } from "@shared/siteCopy";
-import { APPLICATIONS_SHORT } from "@shared/applicationWindow";
+import { season2PreviewFor } from "@shared/season2Previews";
 
 // The crowdpool lane's binding wording (Phase 0 spec), verbatim wherever a
 // surface describes crowdpooling.
@@ -162,10 +162,10 @@ export const pageSEO = {
     url: '/seasons'
   },
   schedule: {
-    title: 'Schedule: Community Sessions & Events',
-    description: 'Join ReGen Civics community sessions, open calls, and events. Connect with fellow regenerators, learn about our governance model, and participate in the Infinite Game.',
+    title: season2PreviewFor('/schedule')!.title,
+    description: season2PreviewFor('/schedule')!.description,
     keywords: 'regenerative community, online events, community sessions, open calls, ecovillage network',
-    image: '/og/schedule.jpg',
+    image: season2PreviewFor('/schedule')!.image,
     url: '/schedule'
   },
   game: {
@@ -204,10 +204,10 @@ export const pageSEO = {
     url: '/socials'
   },
   apply: {
-    title: 'Apply: Land Project Application | ReGen Civics',
-    description: `Apply to bring your regenerative land project into the ReGen Civics ecosystem. ${APPLICATIONS_SHORT}.`,
+    title: season2PreviewFor('/apply')!.title,
+    description: season2PreviewFor('/apply')!.description,
     keywords: 'land project application, regenerative project funding, ecovillage application, sustainable land development, regenerative community application',
-    image: '/og/seasons.jpg',
+    image: season2PreviewFor('/apply')!.image,
     url: '/apply'
   },
   loi: {

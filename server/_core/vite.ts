@@ -12,6 +12,7 @@ import { resolveCrawlerContent, escapeHtml, wrapForInjection, type CrawlerConten
 import { isCoreHost, getCorePageContent } from "./core-crawler";
 import { LEARN_SLUGS } from "@shared/learnContent";
 import { matchesAppRoute } from "@shared/appRoutes";
+import { season2PreviewFor } from "@shared/season2Previews";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -41,7 +42,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 export function injectMetaTags(
   shell: string,
-  meta: { title: string; description: string; canonical: string; ogImage: string },
+  meta: { title: string; description: string; canonical: string; ogImage: string; imageAlt?: string },
 ): string {
   const title = escapeHtml(meta.title);
   const desc = escapeHtml(meta.description);
@@ -57,7 +58,7 @@ export function injectMetaTags(
   // saying "we need $20,000" put the attribute's closing quote in the middle
   // of og:description and cut it off (escaping does not touch "$").
   const attr = (value: string) => (_m: string, open: string, close: string) => `${open}${value}${close}`;
-  return shell
+  let out = shell
     .replace(/<title>[^<]*<\/title>/, () => `<title>${title}</title>`)
     .replace(/(<meta name="description" content=")[^"]*(")/, attr(desc))
     // Open Graph
@@ -71,6 +72,13 @@ export function injectMetaTags(
     .replace(/(<meta name="twitter:url" content=")[^"]*(")/, attr(canonical))
     .replace(/(<meta name="twitter:image" content=")[^"]*(")/, attr(ogImage))
     .replace(/(<link rel="canonical" href=")[^"]*(")/, attr(canonical));
+  if (meta.imageAlt) {
+    const alt = escapeHtml(meta.imageAlt);
+    out = out
+      .replace(/(<meta property="og:image:alt" content=")[^"]*(")/, attr(alt))
+      .replace(/(<meta name="twitter:image:alt" content=")[^"]*(")/, attr(alt));
+  }
+  return out;
 }
 
 /**
@@ -514,17 +522,34 @@ export function serveStatic(app: Express) {
     if (crawlerContent?.title) meta = { ...meta, title: crawlerContent.title };
     if (crawlerContent?.description) meta = { ...meta, description: crawlerContent.description };
 
+    // Season 2 cards win over the homepage default and over the longer
+    // crawler title (for example /schedule's "Upcoming sessions"). The
+    // crawler body stays in the page. WhatsApp only reads these head tags.
+    const season2Preview = season2PreviewFor(reqPath);
+    if (season2Preview) {
+      meta = {
+        ...meta,
+        title: season2Preview.title,
+        description: season2Preview.description,
+        image: season2Preview.image,
+      };
+      ogImage = season2Preview.image;
+    }
+
     // A project page answers any slug for its id; the crawler content names
     // the real path, so an old slug never nominates itself as canonical.
     const pageCanonical = projectMatch && !isNotFound && crawlerContent?.canonicalPath
       ? `${BASE_URL}${crawlerContent.canonicalPath}`
-      : canonical;
+      : season2Preview && !isNotFound
+        ? season2Preview.url
+        : canonical;
 
     const injected = injectMetaTags(indexHtmlCache, {
       title: meta.title,
       description: meta.description,
       canonical: pageCanonical,
       ogImage,
+      imageAlt: season2Preview?.imageTitle,
     });
 
     // Inject crawler content: JSON-LD into <head>, prose before <div id="root">

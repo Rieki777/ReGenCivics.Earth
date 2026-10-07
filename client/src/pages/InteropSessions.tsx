@@ -22,6 +22,7 @@ import { SubscribeButtons } from '@/components/CalendarCta';
 import { AuthDialog } from '@/components/AuthDialog';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { SEO } from '@/components/SEO';
+import { season2PreviewFor } from '@shared/season2Previews';
 import { PageWrapper } from '@/components/PageWrapper';
 import { BackButton } from '@/components/BackButton';
 import { AnimatedSection } from '@/components/AnimatedSection';
@@ -240,9 +241,10 @@ export default function InteropSessions() {
   return (
     <PageWrapper>
       <SEO
-        title="Interoperability Circle | ReGen Civics"
-        description="Two ways to build with us: ReGen Civics Season Two for land projects, and the weekly Interoperability Circle for the people building the tools underneath them. Pick the Circle's time here."
-        url="https://regencivics.earth/interop-sessions"
+        title={season2PreviewFor("/interop-sessions")!.title}
+        description={season2PreviewFor("/interop-sessions")!.description}
+        image={season2PreviewFor("/interop-sessions")!.image}
+        url={season2PreviewFor("/interop-sessions")!.url}
       />
 
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#14301f] to-[#0d2818]">
