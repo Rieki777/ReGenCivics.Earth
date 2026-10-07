@@ -15,6 +15,10 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { LandProjectVoteField, type AppliedProjectPick } from "@/components/LandProjectVoteField";
+import { SITE_ORIGIN } from "@shared/sessionLinks";
+import { projectPathForApplication } from "@shared/projectKey";
 import { Calendar, CheckCircle2, Clock, ExternalLink, MessageSquare, Sprout, Users, Video, Youtube } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -58,6 +62,18 @@ const NAME_STORAGE = "season-schedule:name";
 const PROJECT_STORAGE = "season-schedule:project";
 const LINK_STORAGE = "season-schedule:link";
 const voteStorage = (season: string) => `season-schedule:${season}:vote`;
+
+const APPLIED_STATUSES = new Set(["submitted", "under_review", "approved", "active", "changes_requested"]);
+
+function appliedPick(id: number, name: string | null | undefined): AppliedProjectPick | null {
+  const projectName = (name ?? "").trim();
+  if (!projectName) return null;
+  return {
+    id,
+    name: projectName,
+    href: `${SITE_ORIGIN}${projectPathForApplication(id, projectName)}`,
+  };
+}
 
 /** 32 hex characters of CSPRNG output, or a last-resort fallback where crypto is absent. Same as the Circle's. */
 function randomKeyBody(): string {
@@ -114,7 +130,29 @@ function pacificDay(d: Date): string {
 
 export default function SeasonSchedule() {
   const { config, data, sessions, scheduled, query, loaded, ready } = useSeasonSchedule(ACTIVE_SEASON, { poll: true });
+  const { user, loading: authLoading } = useAuth();
   const season = config.season;
+  const mineQuery = trpc.applications.myApplications.useQuery(undefined, { enabled: !!user });
+  const minePicks = useMemo(() => {
+    const rows = mineQuery.data ?? [];
+    const picks: AppliedProjectPick[] = [];
+    for (const row of rows) {
+      if (!APPLIED_STATUSES.has(row.status ?? "")) continue;
+      const pick = appliedPick(row.id, row.projectName);
+      if (pick) picks.push(pick);
+    }
+    return picks;
+  }, [mineQuery.data]);
+  const publicQuery = trpc.community.activeLandProjects.useQuery(undefined, {
+    enabled: !authLoading && (!user || (mineQuery.isFetched && minePicks.length === 0)),
+  });
+  const projectPicks = minePicks.length > 0
+    ? minePicks
+    : (publicQuery.data ?? []).flatMap((row) => {
+        const pick = appliedPick(row.id, row.projectName);
+        return pick ? [pick] : [];
+      });
+  const picksReady = !authLoading && (!user || mineQuery.isFetched) && (minePicks.length > 0 || publicQuery.isFetched || publicQuery.isError);
 
   const [voterKey, setVoterKey] = useState("");
   const [mySlots, setMySlots] = useState<SeasonSlotKey[]>([]);
@@ -253,18 +291,26 @@ export default function SeasonSchedule() {
    * Save the name, project and link on their own, so they reach the register
    * whether or not any hands are up.
    */
-  function saveNames() {
+  function saveNames(next?: { project?: string; link?: string }) {
+    const projectName = next?.project ?? project;
+    const projectLink = next?.link ?? link;
     writeStored(NAME_STORAGE, name);
-    writeStored(PROJECT_STORAGE, project);
-    writeStored(LINK_STORAGE, link);
-    if (!voterKey || (!name.trim() && !project.trim() && !link.trim())) return;
+    writeStored(PROJECT_STORAGE, projectName);
+    writeStored(LINK_STORAGE, projectLink);
+    if (!voterKey || (!name.trim() && !projectName.trim() && !projectLink.trim())) return;
     saveProject.mutate({
       season,
       voterKey,
       displayName: name.trim() || undefined,
-      projectName: project.trim() || undefined,
-      projectUrl: link.trim() || undefined,
+      projectName: projectName.trim() || undefined,
+      projectUrl: projectLink.trim() || undefined,
     });
+  }
+
+  function chooseProject(pick: AppliedProjectPick) {
+    setProject(pick.name);
+    setLink(pick.href);
+    saveNames({ project: pick.name, link: pick.href });
   }
 
   return (
@@ -393,18 +439,14 @@ export default function SeasonSchedule() {
               </p>
 
                 <div className="grid sm:grid-cols-2 gap-3 mb-6">
-                  <label className="block">
-                    <span className="block text-white/60 text-sm mb-2">Your land project (needed to vote)</span>
-                    <input
-                      type="text"
-                      value={project}
-                      maxLength={120}
-                      onChange={(e) => setProject(e.target.value)}
-                      onBlur={saveNames}
-                      placeholder="Project name"
-                      className="w-full min-h-11 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
-                    />
-                  </label>
+                  <LandProjectVoteField
+                    project={project}
+                    picks={projectPicks}
+                    ready={picksReady}
+                    onProjectChange={setProject}
+                    onPick={chooseProject}
+                    onBlur={() => saveNames()}
+                  />
                   <label className="block">
                     <span className="block text-white/60 text-sm mb-2">Link to your project (optional)</span>
                     <input
@@ -413,7 +455,7 @@ export default function SeasonSchedule() {
                       value={link}
                       maxLength={500}
                       onChange={(e) => setLink(e.target.value)}
-                      onBlur={saveNames}
+                      onBlur={() => saveNames()}
                       placeholder="yourproject.org"
                       className="w-full min-h-11 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                     />
@@ -425,7 +467,7 @@ export default function SeasonSchedule() {
                       value={name}
                       maxLength={80}
                       onChange={(e) => setName(e.target.value)}
-                      onBlur={saveNames}
+                      onBlur={() => saveNames()}
                       placeholder="Name"
                       className="w-full min-h-11 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                     />
