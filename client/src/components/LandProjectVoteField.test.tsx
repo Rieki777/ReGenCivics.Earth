@@ -3,7 +3,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { LandProjectVoteField, type AppliedProjectPick } from "./LandProjectVoteField";
 
 vi.mock("wouter", () => ({
-  Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+  Link: ({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) => (
+    <a href={href} className={className}>{children}</a>
+  ),
 }));
 
 const picks: AppliedProjectPick[] = [
@@ -18,13 +20,13 @@ describe("LandProjectVoteField", () => {
       <LandProjectVoteField
         project=""
         picks={picks}
-        ready
         onProjectChange={onProjectChange}
         onPick={onPick}
       />,
     );
 
-    expect(screen.queryByRole("link", { name: "Apply with your project" })).toBeNull();
+    const apply = screen.getByRole("link", { name: "Not listed? Apply with your project" });
+    expect(apply.getAttribute("href")).toBe("/apply");
     fireEvent.change(screen.getByLabelText("Your applied project"), { target: { value: "7" } });
     expect(onPick).toHaveBeenCalledWith(picks[0]);
 
@@ -32,30 +34,17 @@ describe("LandProjectVoteField", () => {
     expect(onProjectChange).toHaveBeenCalledWith("A new name");
   });
 
-  it("offers apply when no project list is available", () => {
+  it("keeps the apply link when no project list is available", () => {
     render(
       <LandProjectVoteField
         project=""
         picks={[]}
-        ready
         onProjectChange={() => {}}
         onPick={() => {}}
       />,
     );
-    expect(screen.getByRole("link", { name: "Apply with your project" }).getAttribute("href")).toBe("/apply");
+    expect(screen.getByRole("link", { name: "Not listed? Apply with your project" }).getAttribute("href")).toBe("/apply");
     expect(screen.getByLabelText("Your land project")).toBeTruthy();
-  });
-
-  it("waits to show apply while the project list is still loading", () => {
-    render(
-      <LandProjectVoteField
-        project=""
-        picks={[]}
-        ready={false}
-        onProjectChange={() => {}}
-        onPick={() => {}}
-      />,
-    );
-    expect(screen.queryByRole("link", { name: "Apply with your project" })).toBeNull();
+    expect(screen.queryByLabelText("Your applied project")).toBeNull();
   });
 });
