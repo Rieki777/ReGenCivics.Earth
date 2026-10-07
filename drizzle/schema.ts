@@ -2975,6 +2975,13 @@ export const recordings = mysqlTable("recordings", {
   youtubeVideoId: varchar("youtubeVideoId", { length: 32 }),
   recordingKind: mysqlEnum("recordingKind", ["raw", "edited"]).default("raw").notNull(),
   editedYoutubeUrl: varchar("editedYoutubeUrl", { length: 512 }),
+  // Edited cut attached to this session recording (migration 0290).
+  // descriptionChaptersJson is the YouTube description list. chaptersJson stays the AI pass.
+  editedYoutubeVideoId: varchar("editedYoutubeVideoId", { length: 32 }),
+  editedCutAttachedAt: timestamp("editedCutAttachedAt"),
+  editedCutMatch: varchar("editedCutMatch", { length: 255 }),
+  editedEmailSent: tinyint("editedEmailSent").default(0).notNull(),
+  descriptionChaptersJson: json("descriptionChaptersJson"),
   overview: text("overview"),
   decisionsJson: json("decisionsJson"),
   actionItemsJson: json("actionItemsJson"),
@@ -2988,10 +2995,25 @@ export const recordings = mysqlTable("recordings", {
   index("recordings_sessionDate_idx").on(table.sessionDate),
   index("recordings_featured_idx").on(table.featured),
   index("recordings_youtubeVideoId_idx").on(table.youtubeVideoId),
+  index("recordings_editedYoutubeVideoId_idx").on(table.editedYoutubeVideoId),
 ]));
 
 export type Recording = typeof recordings.$inferSelect;
 export type InsertRecording = typeof recordings.$inferInsert;
+
+/** Attach / email audit for an edited cut. Migration 0290. */
+export const recordingCutEvents = mysqlTable("recording_cut_events", {
+  id: int("id").autoincrement().primaryKey(),
+  recordingId: int("recordingId").notNull(),
+  action: varchar("action", { length: 40 }).notNull(),
+  youtubeVideoId: varchar("youtubeVideoId", { length: 32 }),
+  detail: varchar("detail", { length: 500 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("recording_cut_events_recording_idx").on(table.recordingId, table.createdAt),
+]));
+
+export type RecordingCutEvent = typeof recordingCutEvents.$inferSelect;
 
 /**
  * Community-call intelligence (Stage 7). One cached extraction pass per

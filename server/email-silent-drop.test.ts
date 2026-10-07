@@ -61,6 +61,20 @@ describe("sendEmail records drops and does not burn the cap", () => {
     expect(__emailRateLimitsForTests.counts().hour).toBe(0);
   });
 
+  it("treats a provider 429 as rate_limited and does not burn the hour", async () => {
+    resendSend.mockResolvedValueOnce({ data: null, error: { statusCode: 429, message: "Too many requests" } });
+    const result = await sendEmail({
+      to: "limited@example.com",
+      subject: "Slow down",
+      html: "<p>no</p>",
+      template: "probe",
+    });
+    expect(result).toMatchObject({ id: null, status: "rate_limited" });
+    const statuses = writeEmailAttempt.mock.calls.map((call) => (call[0] as { status: string }).status);
+    expect(statuses).toEqual(["queued", "blocked"]);
+    expect(__emailRateLimitsForTests.counts().hour).toBe(0);
+  });
+
   it("counts the hour only after Resend accepts", async () => {
     const result = await sendEmail({
       to: "ok@example.com",

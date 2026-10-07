@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
 import { isLetterLayout } from "@shared/letterLayout";
 import { CourseTimestamps } from "@/components/admin/CourseTimestamps";
+import { chapterStamp, chapterWatchUrl, coerceChapters } from "@shared/youtubeChapters";
+import { extractYoutubeVideoId } from "@shared/youtubeVideoId";
 
 export function AdminRecordingsTab() {
   const { data: recs = [], refetch, isLoading } = trpc.recordings.adminList.useQuery();
@@ -50,6 +52,20 @@ export function AdminRecordingsTab() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
   const [editSummary, setEditSummary] = useState('');
+  const [confirmEditedId, setConfirmEditedId] = useState<number | null>(null);
+  const preview = trpc.recordings.editedEmailPreview.useQuery(
+    { id: confirmEditedId ?? 0 },
+    { enabled: confirmEditedId != null },
+  );
+  const { data: ledger = [] } = trpc.recordings.emailLedger.useQuery();
+  const sendEdited = trpc.recordings.sendEditedEmail.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Edited-recording email sent to ${data.sent} people`);
+      setConfirmEditedId(null);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message || "Could not send the edited-recording email"),
+  });
 
   function startEdit(rec: (typeof recs)[0]) {
     setEditingId(rec.id);
@@ -145,6 +161,17 @@ export function AdminRecordingsTab() {
                 {rec.aiSummary && (
                   <p className="text-sm text-[#1a472a]/85 line-clamp-3">{rec.aiSummary}</p>
                 )}
+                <EditedCutPanel
+                  rec={rec}
+                  ledger={ledger}
+                  confirming={confirmEditedId === rec.id}
+                  recipientCount={preview.data?.recordingId === rec.id ? preview.data.count : null}
+                  previewLoading={confirmEditedId === rec.id && preview.isLoading}
+                  sending={sendEdited.isPending}
+                  onAsk={() => setConfirmEditedId(rec.id)}
+                  onCancel={() => setConfirmEditedId(null)}
+                  onConfirm={() => sendEdited.mutate({ id: rec.id, confirm: true })}
+                />
               </div>
             )}
 
@@ -152,7 +179,7 @@ export function AdminRecordingsTab() {
               <Button size="sm" variant="outline" onClick={() => startEdit(rec)}>
                 <Edit className="w-3 h-3 mr-1" /> Edit
               </Button>
-              {!rec.emailSent && (
+              {!rec.emailSent && !rec.editedEmailSent && (
                 <Button
                   size="sm"
                   className="bg-green-700 hover:bg-green-800 text-white"
@@ -161,6 +188,17 @@ export function AdminRecordingsTab() {
                 >
                   <Send className="w-3 h-3 mr-1" />
                   {sendEmailMutation.isPending ? 'Sending…' : 'Send Email Summary'}
+                </Button>
+              )}
+              {!rec.emailSent && !!rec.editedEmailSent && !!(rec.aiSummary || rec.overview) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => sendEmailMutation.mutate({ id: rec.id })}
+                  disabled={sendEmailMutation.isPending}
+                >
+                  <Send className="w-3 h-3 mr-1" />
+                  {sendEmailMutation.isPending ? 'Sending…' : 'Send session notes'}
                 </Button>
               )}
               {rec.emailSent && (
@@ -210,6 +248,106 @@ export function AdminRecordingsTab() {
           <p className="text-xs text-[#1a472a]/85 mt-2">The older Riverside webhook is off. It turns on only if <code className="bg-muted px-1 rounded">RIVERSIDE_WEBHOOK_SECRET</code> is set in Railway.</p>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+type LedgerRow = {
+  inquiryId: number | null;
+  template: string | null;
+  status: string;
+  n: number | string;
+};
+
+function ledgerText(rows: LedgerRow[], recordingId: number, template: string): string {
+  const mine = rows.filter((row) => row.inquiryId === recordingId && row.template === template);
+  if (!mine.length) return "";
+  return mine.map((row) => `${Number(row.n)} ${row.status}`).join(", ");
+}
+
+function EditedCutPanel({
+  rec,
+  ledger,
+  confirming,
+  recipientCount,
+  previewLoading,
+  sending,
+  onAsk,
+  onCancel,
+  onConfirm,
+}: {
+  rec: {
+    id: number;
+    editedYoutubeUrl: string | null;
+    editedYoutubeVideoId: string | null;
+    editedEmailSent: number;
+    descriptionChaptersJson: unknown;
+  };
+  ledger: LedgerRow[];
+  confirming: boolean;
+  recipientCount: number | null;
+  previewLoading: boolean;
+  sending: boolean;
+  onAsk: () => void;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const chapters = coerceChapters(rec.descriptionChaptersJson);
+  const videoId = extractYoutubeVideoId(rec.editedYoutubeVideoId) || extractYoutubeVideoId(rec.editedYoutubeUrl);
+  if (!rec.editedYoutubeUrl && chapters.length === 0 && !rec.editedEmailSent) return null;
+  const counts = ledgerText(ledger, rec.id, "recording_edited");
+  const people = recipientCount == null
+    ? "Checking how many people are subscribed to recordings."
+    : `This sends one letter to each person subscribed to recordings. ${recipientCount} ${recipientCount === 1 ? "person" : "people"}.`;
+  return (
+    <div className="rounded-md border border-[#1a472a]/15 bg-[#f0f7f0] p-3 space-y-2" data-testid="edited-cut-panel">
+      {rec.editedYoutubeUrl && (
+        <a href={rec.editedYoutubeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-[#1a472a] font-semibold hover:underline">
+          <ExternalLink className="w-3 h-3" /> Edited cut
+        </a>
+      )}
+      <p className="text-xs text-[#1a472a]">
+        Edited email: {rec.editedEmailSent ? "sent" : "not sent"}
+        {counts ? ` (${counts})` : ""}
+      </p>
+      {chapters.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold text-[#1a472a] mb-1">Jump to a moment</p>
+          <ul className="max-h-48 overflow-auto text-sm space-y-1">
+            {chapters.map((chapter) => (
+              <li key={`${chapter.tSeconds}-${chapter.title}`}>
+                {videoId ? (
+                  <a href={chapterWatchUrl(videoId, chapter.tSeconds)} target="_blank" rel="noopener noreferrer" className="text-[#1a472a] hover:underline">
+                    <span className="inline-block w-16 tabular-nums font-semibold text-[#2d5a3d]">{chapterStamp(chapter)}</span>
+                    {chapter.title}
+                  </a>
+                ) : (
+                  <span className="text-[#1a472a]">
+                    <span className="inline-block w-16 tabular-nums font-semibold text-[#2d5a3d]">{chapterStamp(chapter)}</span>
+                    {chapter.title}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {rec.editedYoutubeUrl && !confirming && (
+        <Button type="button" size="sm" className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#7dd87d]/90" onClick={onAsk}>
+          <Send className="w-3 h-3 mr-1" /> Send edited-recording email
+        </Button>
+      )}
+      {confirming && (
+        <div className="space-y-2" data-testid="edited-email-confirm">
+          <p className="text-sm text-[#1a472a]">{previewLoading ? "Checking how many people are subscribed to recordings." : people}</p>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" className="bg-[#1a472a] text-white hover:bg-[#1a472a]/90" disabled={sending || previewLoading || recipientCount == null} onClick={onConfirm}>
+              {sending ? "Sending…" : "Send now"}
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={onCancel}>Cancel</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

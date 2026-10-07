@@ -28,7 +28,7 @@ import { eq } from "drizzle-orm";
 import { timingSafeEqualStr } from "../_core/security";
 import { logger } from "../_core/logger";
 import { ENV } from "../_core/env";
-import { finalizeRecording, sendRecordingEmail } from "../lib/recording-finalize";
+import { finalizeRecording } from "../lib/recording-finalize";
 
 const log = logger("riverside-webhook");
 
@@ -192,11 +192,12 @@ export function registerRiversideWebhookRoutes(app: Express) {
       const [rec] = await database.select().from(recordings).where(eq(recordings.id, id)).limit(1);
       if (!rec) return res.status(404).json({ error: "Recording not found" });
 
-      const sent = await sendRecordingEmail(rec);
-      if (sent.dropped === 0) {
+      const { deliverSubscriberMail } = await import("../lib/recording-finalize");
+      const sent = await deliverSubscriberMail(rec, { resend: true });
+      if (sent.kind !== "skip" && sent.dropped === 0) {
         await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, id));
       }
-      res.json({ sent: sent.dropped === 0, accepted: sent.accepted, dropped: sent.dropped });
+      res.json({ sent: sent.kind !== "skip" && sent.dropped === 0, accepted: sent.accepted, dropped: sent.dropped, kind: sent.kind });
     }
   );
 }
