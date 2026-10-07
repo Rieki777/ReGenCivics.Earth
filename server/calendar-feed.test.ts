@@ -123,10 +123,9 @@ describe("Links in the invite", () => {
     }
   });
 
-  it("never puts a raw studio URL in an invite, in any stored form", () => {
-    // Every events row stores the old `?t=` token link, while the constant now
-    // holds the room link. Both have to come out as /join, or a row's stored
-    // value slips past the redirect the moment the constant changes.
+  it("puts the guest invite in an invite, and keeps /join as the next line", () => {
+    // Every events row stores the old `?t=` token link. That token must not
+    // ship. The guest invite does, with the on-site page on the next line.
     const legacy =
       "https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b";
     const ics = unfold(
@@ -139,11 +138,13 @@ describe("Links in the invite", () => {
         "all",
       ),
     );
-    expect(ics).not.toContain("riverside.com");
+    expect(ics).toContain(RIVERSIDE_ROOM_URL);
+    expect(ics).toContain(`Join the call: ${RIVERSIDE_ROOM_URL}`);
     expect(ics).toContain(JOIN_URL);
-    expect(roomUrl(row({ riversideRoomUrl: RIVERSIDE_ROOM_URL }))).toBe(JOIN_URL);
-    expect(roomUrl(row({ riversideRoomUrl: legacy }))).toBe(JOIN_URL);
-    expect(roomUrl(row({ riversideRoomUrl: null }))).toBe(JOIN_URL);
+    expect(ics).not.toContain("t=243a36b4d9fdbc785c4b");
+    expect(roomUrl(row({ riversideRoomUrl: RIVERSIDE_ROOM_URL }))).toBe(RIVERSIDE_ROOM_URL);
+    expect(roomUrl(row({ riversideRoomUrl: legacy }))).toBe(RIVERSIDE_ROOM_URL);
+    expect(roomUrl(row({ riversideRoomUrl: null }))).toBe(RIVERSIDE_ROOM_URL);
   });
 
   it("passes a genuinely different per-event room straight through", () => {
@@ -164,10 +165,11 @@ describe("Links in the invite", () => {
       row({ episodeNumber: 5 }),
       row({ episodeNumber: 13 }),
     ]) {
-      expect(eventLocation(r)).toBe(JOIN_URL);
+      expect(eventLocation(r)).toBe(RIVERSIDE_ROOM_URL);
     }
     // The livestream stays in the cohort description.
     const cohort = eventDescription(row({ episodeNumber: 5 }));
+    expect(cohort.startsWith(`Join the call: ${RIVERSIDE_ROOM_URL}`)).toBe(true);
     expect(cohort).toContain(SEEDS_YOUTUBE_URL);
     expect(cohort).toContain(JOIN_URL);
     expect(isPublicSession(row({ episodeNumber: 5 }))).toBe(false);
@@ -180,7 +182,7 @@ describe("Links in the invite", () => {
       expect(events.length, kind).toBeGreaterThan(0);
       for (const ev of events) {
         const loc = ev.split("\r\n").find((l) => l.startsWith("LOCATION:"));
-        expect(loc, kind).toBe(`LOCATION:${JOIN_URL}`);
+        expect(loc, kind).toBe(`LOCATION:${RIVERSIDE_ROOM_URL}`);
       }
     }
   });

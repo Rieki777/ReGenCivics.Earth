@@ -107,21 +107,24 @@ describe("Feed URLs", () => {
 });
 
 describe("resolveRoomUrl", () => {
-  it("swaps any link into our studio for the durable /join redirect", () => {
-    expect(resolveRoomUrl(RIVERSIDE_ROOM_URL)).toBe(JOIN_URL);
+  it("returns the guest invite for our studio, including stored copies", () => {
+    expect(resolveRoomUrl(RIVERSIDE_ROOM_URL)).toBe(RIVERSIDE_ROOM_URL);
+    expect(RIVERSIDE_ROOM_URL).toBe(
+      "https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit",
+    );
     // What every events row actually stores.
     expect(
       resolveRoomUrl("https://riverside.com/studio/rieki-cordon-riekis-studio?t=243a36b4d9fdbc785c4b"),
-    ).toBe(JOIN_URL);
-    expect(resolveRoomUrl(null)).toBe(JOIN_URL);
-    expect(resolveRoomUrl("  ")).toBe(JOIN_URL);
+    ).toBe(RIVERSIDE_ROOM_URL);
+    expect(resolveRoomUrl(null)).toBe(RIVERSIDE_ROOM_URL);
+    expect(resolveRoomUrl("  ")).toBe(RIVERSIDE_ROOM_URL);
   });
 
-  it("never returns a raw meeting URL — always the site /join hook", () => {
-    expect(resolveRoomUrl("https://riverside.com/studio/other")).toBe(JOIN_URL);
-    expect(resolveRoomUrl("https://zoom.us/j/999")).toBe(JOIN_URL);
+  it("returns the guest invite rather than a different stored room", () => {
+    expect(resolveRoomUrl("https://riverside.com/studio/other")).toBe(RIVERSIDE_ROOM_URL);
+    expect(resolveRoomUrl("https://zoom.us/j/999")).toBe(RIVERSIDE_ROOM_URL);
     expect(resolveRoomUrl("https://riverside.com/studio/rieki-cordon-riekis-studio-2")).toBe(
-      JOIN_URL,
+      RIVERSIDE_ROOM_URL,
     );
   });
 });
@@ -148,14 +151,18 @@ describe("one-shot adds on the session cards", () => {
 
   it("sets the Google event location to the join link", () => {
     const url = new URL(googleCalUrl(opts));
-    expect(url.searchParams.get("location")).toBe(JOIN_URL);
-    expect(url.searchParams.get("details")).toContain(`Join us live: ${JOIN_URL}`);
+    expect(url.searchParams.get("location")).toBe(RIVERSIDE_ROOM_URL);
+    const details = url.searchParams.get("details") ?? "";
+    expect(details.startsWith(`Join the call: ${RIVERSIDE_ROOM_URL}`)).toBe(true);
+    expect(details).toContain(JOIN_URL);
   });
 
-  it("sets the Apple/Outlook LOCATION to the join link", () => {
+  it("sets the Apple/Outlook LOCATION to the guest invite", () => {
     const dataUrl = icsDataUrl({ uid: "u@regencivics.earth", summary: opts.title, ...opts });
     const ics = decodeURIComponent(dataUrl.replace(/^data:text\/calendar;charset=utf8,/, ""));
-    expect(ics).toContain(`LOCATION:${JOIN_URL}`);
+    expect(ics).toContain(`LOCATION:${RIVERSIDE_ROOM_URL}`);
+    expect(ics).toContain(`Join the call: ${RIVERSIDE_ROOM_URL}`);
+    expect(ics).toContain(JOIN_URL);
     expect(ics).not.toContain("Online via Riverside");
   });
 });

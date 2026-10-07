@@ -15,7 +15,11 @@ export {
   SEEDS_YOUTUBE_URL,
   SEEDS_YOUTUBE_SUBSCRIBE_URL,
 } from "@shared/sessionLinks";
-import { JOIN_URL as JOIN, SEEDS_YOUTUBE_URL as SEEDS } from "@shared/sessionLinks";
+import {
+  RIVERSIDE_ROOM_URL,
+  SEEDS_YOUTUBE_URL as SEEDS,
+  sessionCalendarJoinLines,
+} from "@shared/sessionLinks";
 
 export {
   SESSION_TIME_ZONE,
@@ -178,25 +182,21 @@ export function buildIcsEvent(opts: {
 
 /**
  * The body of a one-shot Google or Apple add.
- *
- * The room link is /join, never the Riverside studio URL, because that URL
- * carries a session token and this text lands on somebody's phone until April.
- * See shared/sessionLinks.ts.
+ * The guest invite leads. The on-site join page is the next line.
  */
 function calendarDetails(description: string): string {
-  return `${description}\n\nJoin us live: ${JOIN}\n\nWatch live or catch the rerun on YouTube: ${SEEDS}`;
+  const body = description.trim();
+  const watch = `Watch live or catch the rerun on YouTube: ${SEEDS}`;
+  return body ? `${sessionCalendarJoinLines()}\n\n${body}\n\n${watch}` : `${sessionCalendarJoinLines()}\n\n${watch}`;
 }
 
 /**
  * The one-shot Google add behind each session card's "Google Calendar" button.
- *
- * `location` is the join link rather than the words "Online via Riverside",
- * which is what it said until 2026-09-14: calendar apps turn a URL in the
- * location field into something you can tap, and a phrase into nothing.
+ * LOCATION is the guest invite, which calendar apps turn into a tappable link.
  */
 export function googleCalUrl(opts: { title: string; startUtc: string; endUtc: string; description: string }): string {
   const details = encodeURIComponent(calendarDetails(opts.description));
-  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(opts.title)}&dates=${opts.startUtc}/${opts.endUtc}&details=${details}&location=${encodeURIComponent(JOIN)}`;
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(opts.title)}&dates=${opts.startUtc}/${opts.endUtc}&details=${details}&location=${encodeURIComponent(RIVERSIDE_ROOM_URL)}`;
 }
 
 export function icsDataUrl(opts: {
@@ -214,9 +214,7 @@ export function icsDataUrl(opts: {
     endUtc: opts.endUtc,
     sequence: opts.sequence ?? ICS_SEQUENCE,
     description: calendarDetails(opts.description),
-    // The join link, not the words "Online via Riverside": a URL here is
-    // tappable in Apple Calendar and Outlook, a phrase is not.
-    location: JOIN,
+    location: RIVERSIDE_ROOM_URL,
   });
   const ics = `BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//ReGen Civics//Events//EN\n${event}\nEND:VCALENDAR`;
   return `data:text/calendar;charset=utf8,${encodeURIComponent(ics)}`;

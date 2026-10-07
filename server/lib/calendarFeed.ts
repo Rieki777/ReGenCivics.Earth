@@ -39,10 +39,11 @@ import {
   PUBLIC_EPISODE_WEEKS,
 } from "@shared/season2Curriculum";
 import {
-  JOIN_URL,
+  RIVERSIDE_ROOM_URL,
   isDefaultRoomUrl,
   SEEDS_YOUTUBE_URL,
   SITE_ORIGIN,
+  sessionCalendarJoinLines,
 } from "@shared/sessionLinks";
 import { openAccessDescription } from "@shared/openAccess";
 import { INTEROP_CIRCLE_SEASON } from "@shared/interopCircle";
@@ -124,17 +125,14 @@ export function isPublicSession(row: FeedRow): boolean {
 }
 
 /**
- * The room link an invite carries: /join, for our studio.
+ * The room link an invite carries.
  *
- * Every events row in production stores a Riverside studio URL in
- * riversideRoomUrl (the old `?t=` token link, verified 2026-09-07). Passing that
- * through would put a raw studio link on subscribers' calendars and defeat the
- * /join redirect, so any link into our studio, in any stored form, resolves to
- * /join. A genuinely different room passes through untouched.
+ * Our studio, including older stored forms of it, resolves to the guest invite
+ * in RIVERSIDE_ROOM_URL. A genuinely different room passes through untouched.
  */
 export function roomUrl(row: FeedRow): string {
   const stored = row.riversideRoomUrl?.trim();
-  if (!stored || isDefaultRoomUrl(stored)) return JOIN_URL;
+  if (!stored || isDefaultRoomUrl(stored)) return RIVERSIDE_ROOM_URL;
   return stored;
 }
 
@@ -152,14 +150,11 @@ export function eventDescription(row: FeedRow): string {
   const watch = row.youtubeUrl ?? SEEDS_YOUTUBE_URL;
   const details = row.id != null ? `${SITE_ORIGIN}/events/${row.id}` : `${SITE_ORIGIN}/schedule`;
 
-  const lines = [body, ""];
-  if (isPublicSession(row)) {
-    lines.push(`Join us live: ${room}`, `Watch live or catch the rerun on YouTube: ${watch}`);
-  } else {
-    lines.push(
-      `Watch live or catch the rerun on YouTube: ${watch}`,
-      `Cohort room (Season 2 projects): ${room}`,
-    );
+  const lines = [sessionCalendarJoinLines(room), ""];
+  if (body) lines.push(body, "");
+  lines.push(`Watch live or catch the rerun on YouTube: ${watch}`);
+  if (!isPublicSession(row) && room !== RIVERSIDE_ROOM_URL) {
+    lines.push(`Cohort room (Season 2 projects): ${room}`);
   }
   lines.push("", `Full details and any changes: ${details}`);
   return lines.join("\n").trim();
@@ -194,9 +189,10 @@ function categories(row: FeedRow): string[] {
  * was touched, so without this every event would have gone out carrying the
  * same SEQUENCE and DTSTAMP as the old version. A client already holding the
  * UID is entitled to skip an update like that, and the old LOCATION would have
- * stayed on subscribers' calendars.
+ * stayed on subscribers' calendars. Bumped again on 2026-10-07 when LOCATION
+ * moved to the guest invite.
  */
-export const FEED_CONTENT_REVISED_AT = new Date("2026-09-14T00:00:00Z");
+export const FEED_CONTENT_REVISED_AT = new Date("2026-10-07T17:00:00Z");
 
 /** The later of the row's last edit and the last change to how rows render. */
 export function lastChanged(row: FeedRow): Date {

@@ -1,9 +1,9 @@
 /**
  * Every link that goes into a calendar invite, defined once.
  *
- * Invites carry `regencivics.earth/join`. A calendar invite lives on a
- * subscriber's phone for months. GET /join serves the on-site join page
- * unless that event has a stored room on another host.
+ * LOCATION and the first description line use the guest invite,
+ * RIVERSIDE_ROOM_URL. `regencivics.earth/join` stays on the next line.
+ * A calendar invite lives on a subscriber's phone for months.
  *
  * Open Access Sessions and all thirteen Season Two episodes share this one room
  * on purpose (Rye, 2026-09-14). There is no second room.
@@ -49,6 +49,14 @@ export function siteJoinUrl(eventId?: number | null): string {
     return `${JOIN_URL}?e=${eventId}`;
   }
   return JOIN_URL;
+}
+
+/**
+ * First lines of a session calendar description.
+ * The guest invite leads. The on-site join page is the next line.
+ */
+export function sessionCalendarJoinLines(location: string = RIVERSIDE_ROOM_URL): string {
+  return `Join the call: ${location}\n${JOIN_URL}`;
 }
 
 /** SEEDS carries the livestream and the reruns for every season. */

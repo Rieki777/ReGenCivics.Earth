@@ -125,6 +125,7 @@ describe("/join", () => {
     // points at a dead link. It is not decoration.
     const feed = await (await fetch(base + "/calendar/all.ics")).text();
     const unfolded = feed.split("\r\n ").join("");
+    expect(unfolded).toContain("https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit");
     expect(unfolded).toContain("https://regencivics.earth/join");
     expect(unfolded).not.toContain("t=243a36b4d9fdbc785c4b");
   });
