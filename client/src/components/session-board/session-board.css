@@ -425,6 +425,36 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 @media (prefers-reduced-motion: reduce) {
   .sb-ring-fg, .sb-dot { transition: none; }
   .sb-app :is(button, summary):active:not(:disabled) { transform: none; }
+  .sb-sprout .sb-sprout-mark { animation: none; }
+}
+
+/* ---------- week course ---------- */
+.sb-course { display: grid; gap: 8px; margin: 0; padding: 10px; border: 1px solid var(--sb-line); border-radius: 14px; background: rgba(10, 31, 20, 0.45); }
+.sb-course-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sb-course-toggle { display: inline-flex; border: 1px solid var(--sb-line-strong); border-radius: 999px; overflow: hidden; }
+.sb-course-toggle button { min-height: 36px; padding: 6px 14px; background: transparent; border: 0; color: var(--sb-muted); font-weight: 800; cursor: pointer; }
+.sb-course-toggle button[aria-pressed="true"] { background: var(--sb-spring); color: var(--sb-on-spring); }
+.sb-course-toggle button:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: -2px; }
+.sb-course-side, .sb-course-range { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--sb-muted); font-size: 14px; }
+.sb-course-resume { margin-left: auto; }
+.sb-course-play { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--sb-line-strong); background: var(--sb-panel); text-align: left; cursor: pointer; font-weight: 800; }
+.sb-course-play:hover { border-color: var(--sb-spring); }
+.sb-course-play:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 2px; }
+.sb-course-play-mark { width: 0; height: 0; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent var(--sb-spring); flex: none; }
+.sb-course-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 42vh; border-radius: 12px; overflow: hidden; background: #04140c; }
+.sb-course-frame > div, .sb-course-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.sb-course-miss { color: var(--sb-muted); font-weight: 700; }
+.sb-course-next { justify-self: start; }
+.sb-course-note { color: var(--sb-muted); font-size: 14px; }
+.sb-course-note summary { cursor: pointer; font-weight: 800; min-height: 36px; display: flex; align-items: center; color: var(--sb-ink-2); }
+.sb-course-note p { margin-top: 4px; }
+.sb-rail-btn { position: relative; }
+.sb-sprout-mark { position: absolute; top: 0; right: 8px; width: 12px; height: 12px; color: var(--sb-spring); pointer-events: none; }
+.sb-sprout .sb-sprout-mark { animation: sb-sprout 0.7s ease; }
+@keyframes sb-sprout { from { transform: scale(0.3) translateY(3px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (max-width: 760px) {
+  .sb-sprout-mark { top: 1px; right: 1px; }
+  .sb-course-resume { margin-left: 0; }
 }
 
 /* ---------- type in with us ---------- */

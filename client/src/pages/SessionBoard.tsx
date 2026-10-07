@@ -43,6 +43,7 @@ import {
   type StageProps,
 } from "@/components/session-board/stages";
 import "@/components/session-board/session-board.css";
+import { CoursePlayer, CourseSprout, useWeekCourse } from "@/components/session-board/CoursePlayer";
 
 function boardDate(ms: number): string {
   return new Date(ms).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -155,6 +156,8 @@ function Board({ week }: { week: number }) {
 
   const ep = episodeByWeek(week);
   const title = ep ? `Week ${week}: ${ep.title}` : `Week ${week}`;
+  const course = useWeekCourse(week, stages.length);
+  const watched = new Set(course.progress.watched);
   const stage = stages[view];
   const state = board?.state;
   const total = sessionMinutes(state?.plan ?? stages.map((s) => s.min), stages);
@@ -198,8 +201,9 @@ function Board({ week }: { week: number }) {
           <p className="sb-rail-current">{stage.name}</p>
           <ol className="sb-rail" aria-label="Session stages" ref={railRef}>
             {stages.map((s, i) => (
-              <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : ""].filter(Boolean).join(" ")}>
-                <button type="button" className="sb-rail-btn" title={s.name} aria-label={s.name} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
+              <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : "", watched.has(i) ? "sb-sprout" : ""].filter(Boolean).join(" ")}>
+                <button type="button" className="sb-rail-btn" title={s.name} aria-label={watched.has(i) ? `${s.name}, watched` : s.name} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
+                  {watched.has(i) ? <CourseSprout /> : null}
                   <span className="sb-dot" />
                   <span className="sb-lbl">{s.short}</span>
                 </button>
@@ -232,6 +236,16 @@ function Board({ week }: { week: number }) {
               This session ended {endedDate}.{nextSession ? ` Next session: Week ${nextSession.week}, ${boardDate(nextSession.start.getTime())}.` : ""}
             </p>
           ) : null}
+          <CoursePlayer
+            week={week}
+            stageIndex={view}
+            stages={stages}
+            map={course.map}
+            progress={course.progress}
+            setMode={course.setMode}
+            markWatched={course.markWatched}
+            onGo={go}
+          />
           {loading || !stageProps ? (
             <p className="sb-empty">{error ? "The board didn't load. Check your connection and refresh the page." : "Opening the board..."}</p>
           ) : stage.kind === "welcome" ? <Welcome {...stageProps} />
