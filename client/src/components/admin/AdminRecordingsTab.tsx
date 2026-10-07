@@ -19,6 +19,7 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { queueOutboundWriteFill } from "@shared/outboundWriteFill";
 import { isLetterLayout } from "@shared/letterLayout";
+import { CourseTimestamps } from "@/components/admin/CourseTimestamps";
 
 export function AdminRecordingsTab() {
   const { data: recs = [], refetch, isLoading } = trpc.recordings.adminList.useQuery();
@@ -68,6 +69,8 @@ export function AdminRecordingsTab() {
           <p className="text-[#1a472a]/85 text-sm mt-1">Recordings received from the recording platform via webhook. Add YouTube URLs and send email summaries from here.</p>
         </div>
       </div>
+
+      <CourseTimestamps />
 
       {isLoading && <div className="text-[#1a472a]/85">Loading recordings…</div>}
 

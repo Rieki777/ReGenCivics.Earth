@@ -25,6 +25,7 @@ import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import { ENV } from "../_core/env";
 import { linkRecordingToMatchingEvent } from "./recordingEventLink";
 import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
+import { courseWeekFromRecording } from "@shared/sessionCourse";
 
 const log = logger("recording-finalize");
 
@@ -204,6 +205,7 @@ export async function sendRecordingEmail(recording: {
   }
 
   const forumUrl = recording.forumPostId ? `${APP_BASE_URL}/community/post/${recording.forumPostId}` : null;
+  const courseLink = await courseUrlForRecording(recording);
   let accepted = 0;
   let dropped = 0;
   let stop = false;
@@ -226,6 +228,8 @@ export async function sendRecordingEmail(recording: {
       riversideUrl: recording.riversideUrl,
       aiSummary: recording.aiSummary,
       forumUrl,
+      courseUrl: courseLink?.href ?? null,
+      courseLabel: courseLink?.label ?? null,
       prefsUrl,
     });
     const result = await sendEmail({
@@ -262,6 +266,31 @@ function watchLinkMd(r: { youtubeUrl: string | null; riversideUrl: string | null
       : "";
 }
 
+async function courseUrlForRecording(recording: { id?: number; title: string }): Promise<{ href: string; label: string } | null> {
+  let season: string | null = null;
+  let episodeNumber: number | null = null;
+  let eventTitle: string | null = null;
+  if (recording.id != null) {
+    try {
+      const database = await getDb();
+      if (database) {
+        const [event] = await database
+          .select({ season: events.season, episodeNumber: events.episodeNumber, title: events.title })
+          .from(events)
+          .where(eq(events.recordingId, recording.id))
+          .limit(1);
+        season = event?.season ?? null;
+        episodeNumber = event?.episodeNumber ?? null;
+        eventTitle = event?.title ?? null;
+      }
+    } catch (err) {
+      log.error("course link lookup failed", err);
+    }
+  }
+  const week = courseWeekFromRecording({ title: recording.title, eventTitle, season, episodeNumber });
+  return week ? { href: `${APP_BASE_URL}/season2/week/${week}`, label: `Week ${week} board` } : null;
+}
+
 function buildEmailHtml(opts: {
   title: string;
   sessionDate: string;
@@ -269,6 +298,8 @@ function buildEmailHtml(opts: {
   riversideUrl?: string | null;
   aiSummary?: string | null;
   forumUrl?: string | null;
+  courseUrl?: string | null;
+  courseLabel?: string | null;
   prefsUrl: string;
 }): string {
   const watchBtn = opts.youtubeUrl
@@ -276,6 +307,9 @@ function buildEmailHtml(opts: {
     : "";
   const forumBtn = opts.forumUrl
     ? `<a href="${opts.forumUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin:0 8px 8px 0;">💬 Join the Discussion</a>`
+    : "";
+  const courseBtn = opts.courseUrl
+    ? `<a href="${opts.courseUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin:0 8px 8px 0;">${opts.courseLabel || "Week board"}</a>`
     : "";
   const summaryBlock = opts.aiSummary
     ? `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:16px 20px;border-radius:0 8px 8px 0;margin:20px 0;">
@@ -304,6 +338,7 @@ function buildEmailHtml(opts: {
         <div style="margin: 24px 0;">
           ${watchBtn}
           ${forumBtn}
+          ${courseBtn}
         </div>
       </div>
 

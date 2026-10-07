@@ -6708,6 +6708,57 @@ export const sessionBoards = mysqlTable("session_boards", {
 ]));
 export type SessionBoard = typeof sessionBoards.$inferSelect;
 
+/**
+ * Self-paced course for a session board (migration 0289).
+ * liveVideoId / editedVideoId are 11-character YouTube ids.
+ * Spans are one row per stage. adminEdited = 1 means an admin saved that
+ * stage, and auto-map must not replace a time already stored on it.
+ * Progress is per signed-in user. Guests keep the same fact in localStorage.
+ */
+export const sessionCourseMaps = mysqlTable("session_course_maps", {
+  id: int("id").autoincrement().primaryKey(),
+  season: varchar("season", { length: 50 }).notNull(),
+  week: int("week").notNull(),
+  liveVideoId: varchar("liveVideoId", { length: 16 }),
+  editedVideoId: varchar("editedVideoId", { length: 16 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("session_course_maps_week_idx").on(table.season, table.week),
+]));
+
+export const sessionCourseSpans = mysqlTable("session_course_spans", {
+  id: int("id").autoincrement().primaryKey(),
+  season: varchar("season", { length: 50 }).notNull(),
+  week: int("week").notNull(),
+  stageIndex: int("stageIndex").notNull(),
+  liveStart: int("liveStart"),
+  liveEnd: int("liveEnd"),
+  editedStart: int("editedStart"),
+  editedEnd: int("editedEnd"),
+  liveConfidence: varchar("liveConfidence", { length: 8 }),
+  editedConfidence: varchar("editedConfidence", { length: 8 }),
+  confidence: varchar("confidence", { length: 8 }).default("low").notNull(),
+  evidence: varchar("evidence", { length: 500 }).default("").notNull(),
+  adminEdited: tinyint("adminEdited").default(0).notNull(),
+}, (table) => ([
+  uniqueIndex("session_course_spans_stage_idx").on(table.season, table.week, table.stageIndex),
+]));
+
+export const sessionCourseProgress = mysqlTable("session_course_progress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  season: varchar("season", { length: 50 }).notNull(),
+  week: int("week").notNull(),
+  stageIndex: int("stageIndex").notNull(),
+  watchedAt: timestamp("watchedAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("session_course_progress_stage_idx").on(table.userId, table.season, table.week, table.stageIndex),
+]));
+
+export type SessionCourseMapRow = typeof sessionCourseMaps.$inferSelect;
+export type SessionCourseSpanRow = typeof sessionCourseSpans.$inferSelect;
+
 /** A land project in a board's circle (migration 0283). */
 export const sessionBoardProjects = mysqlTable("session_board_projects", {
   id: int("id").autoincrement().primaryKey(),

@@ -38,6 +38,7 @@ import { ENV } from "../_core/env";
 import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallback } from "../lib/videoSummary";
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
+import { mapRecordingOntoCourse } from "../lib/sessionCourseStore";
 import {
   computeBountyAmount,
   SCOPE_TIERS,
@@ -646,6 +647,13 @@ export async function runCoordinationPipeline(opts: {
       report.errors.push(`finalize ${entry.videoId}: ${(e as Error).message}`);
     }
 
+    // Map board stages onto this recording. A miss here leaves the course as it was.
+    try {
+      await mapRecordingOntoCourse(rec.id);
+    } catch (e) {
+      report.errors.push(`course map ${entry.videoId}: ${(e as Error).message}`);
+    }
+
     processed += 1;
   }
 
@@ -728,6 +736,7 @@ export async function reprocessRecording(recordingId: number): Promise<{
 
   // Publish once. Guards on emailSent + forumPostId make this idempotent.
   try { await finalizeRecording(rec.id); } catch { /* finalize errors are non-fatal */ }
+  try { await mapRecordingOntoCourse(rec.id); } catch { /* course map errors are non-fatal */ }
 
   return { ok: true, transcript: true, synthesized, tasksProposed };
 }

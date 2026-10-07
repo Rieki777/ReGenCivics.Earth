@@ -21,7 +21,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
 import type { TrpcContext } from "../_core/context";
 import { getDb } from "../db";
 import {
@@ -70,6 +70,7 @@ import {
 } from "../lib/sessionBoard";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
+import { courseProgress, getCourseMap, markCourseWatched, presentCourse, saveCourseMap } from "../lib/sessionCourseStore";
 
 /** Per-visitor ceilings. Generous for a live room; there to make loops slow. */
 const WRITE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -728,5 +729,68 @@ export const sessionBoardRouter = router({
         .set({ status: input.status, version: sql`${sessionBoards.version} + 1` })
         .where(eq(sessionBoards.id, board.id));
       return { ok: true as const };
+    }),
+
+  /** Public: the week's clips. Low-confidence times stay off this response. */
+  course: publicProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ input }) => {
+      assertWeek(input.week);
+      const map = await getCourseMap(input.week);
+      if (!map) throw new TRPCError({ code: "NOT_FOUND" });
+      return presentCourse(map);
+    }),
+
+  /** Signed-in progress. Guests keep the same list in localStorage. */
+  courseProgress: protectedProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ ctx, input }) => {
+      assertWeek(input.week);
+      const watched = await courseProgress(ctx.user.id, input.week);
+      return { watched };
+    }),
+
+  markCourseWatched: protectedProcedure
+    .input(z.object({ week: weekInput, stageIndex: z.number().int().min(0).max(30) }))
+    .mutation(async ({ ctx, input }) => {
+      assertWeek(input.week);
+      const stored = await markCourseWatched(ctx.user.id, input.week, input.stageIndex);
+      return { ok: true as const, stored };
+    }),
+
+  /** Admin: every stage, including low-confidence matches still under review. */
+  courseAdmin: adminProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ input }) => {
+      assertWeek(input.week);
+      const map = await getCourseMap(input.week);
+      if (!map) throw new TRPCError({ code: "NOT_FOUND" });
+      const stages = boardStages(input.week).map((stage) => ({ name: stage.name, short: stage.short }));
+      return { ...map, stages };
+    }),
+
+  saveCourse: adminProcedure
+    .input(z.object({
+      week: weekInput,
+      liveVideoId: z.string().max(80).nullable(),
+      editedVideoId: z.string().max(80).nullable(),
+      spans: z.array(z.object({
+        stageIndex: z.number().int().min(0).max(30),
+        liveStart: z.number().int().min(0).max(86400).nullable(),
+        liveEnd: z.number().int().min(0).max(86400).nullable(),
+        editedStart: z.number().int().min(0).max(86400).nullable(),
+        editedEnd: z.number().int().min(0).max(86400).nullable(),
+        evidence: z.string().max(500),
+      })).max(40),
+    }))
+    .mutation(async ({ input }) => {
+      assertWeek(input.week);
+      try {
+        const map = await saveCourseMap(input);
+        return { ok: true as const, map };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Could not save the course.";
+        throw new TRPCError({ code: "PRECONDITION_FAILED", message });
+      }
     }),
 });
