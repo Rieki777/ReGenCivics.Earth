@@ -275,14 +275,6 @@ export function joinLandingHtml(sessions?: readonly JoinSession[], now: Date = n
   .when, .topic { margin: 0; color: #ffffff; }
   .when { font-size: 1.05rem; font-weight: 700; }
   .topic { margin-top: 0.2rem; font-size: 1rem; }
-  .portal {
-    width: 10rem;
-    height: 2.75rem;
-    margin: 0.35rem auto 0.15rem;
-    background: radial-gradient(ellipse at center, rgba(190, 245, 196, 0.7), rgba(125, 216, 125, 0.12) 62%, transparent 74%);
-    animation: join-glow 4.8s ease-in-out infinite;
-    pointer-events: none;
-  }
   .join-call, .vote-times {
     display: flex;
     align-items: center;
@@ -299,11 +291,12 @@ export function joinLandingHtml(sessions?: readonly JoinSession[], now: Date = n
   }
   .join-call {
     min-height: 72px;
-    margin: 0 0 0.75rem;
+    margin: 1rem 0 0.75rem;
     background: #7dd87d;
     color: #0d2818;
     font-size: 1.75rem;
     border: 3px solid #7dd87d;
+    box-shadow: 0 0 22px rgba(125, 216, 125, 0.45);
     animation: join-glow 4.8s ease-in-out infinite;
   }
   .join-call:visited { color: #0d2818; background: #7dd87d; }
@@ -348,7 +341,7 @@ export function joinLandingHtml(sessions?: readonly JoinSession[], now: Date = n
     100% { box-shadow: 0 0 0 8px rgba(125, 216, 125, 0); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .join-call, .portal, .live .dot { animation: none; }
+    .join-call, .live .dot { animation: none; }
   }
   @media (max-width: 640px) {
     .sheet { padding: 0 0.75rem 2.5rem; }
@@ -369,7 +362,6 @@ export function joinLandingHtml(sessions?: readonly JoinSession[], now: Date = n
 </header>
 <main class="sheet">
   ${statusHtml}
-  <div class="portal" aria-hidden="true"></div>
   <a class="join-call" href="${RIVERSIDE_ROOM_URL}">Join the call</a>
   <a class="vote-times" href="${SITE_ORIGIN}/season-schedule">Vote on call times here</a>
   <p class="note">Meet on Holos or Hylo. Recordings are on YouTube.</p>

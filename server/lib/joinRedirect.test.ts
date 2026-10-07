@@ -173,6 +173,8 @@ describe("joinLandingHtml", () => {
     expect(html).toContain("color: #ffffff");
     expect(html).toContain("outline: 3px solid #ffffff");
     expect(html).toContain("prefers-reduced-motion");
+    expect(html).not.toContain('class="portal"');
+    expect(html).toContain("box-shadow: 0 0 22px rgba(125, 216, 125, 0.45)");
     expect(html).toContain("Quicksand");
     expect(html).toContain("Next session");
     expect(html).toContain("Season 2 · Week 3 ·");
