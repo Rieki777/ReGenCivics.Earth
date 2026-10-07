@@ -34,7 +34,15 @@ import {
 import { eq } from "drizzle-orm";
 import { getDb } from "../db";
 import { events } from "../../drizzle/schema";
-import { joinLandingHtml, parseJoinEventId, resolveJoinRedirectTarget } from "../lib/joinRedirect";
+import { ACTIVE_SEASON } from "@shared/seasonSchedule";
+import { seasonEpisodeRows } from "../lib/seasonSchedule";
+import {
+  joinLandingHtml,
+  joinSessionsFromRows,
+  parseJoinEventId,
+  resolveJoinRedirectTarget,
+  type JoinSession,
+} from "../lib/joinRedirect";
 
 const log = logger("calendar-feed");
 
@@ -163,6 +171,17 @@ export function registerCalendarFeedRoutes(app: Express): void {
       return;
     }
 
-    res.status(200).type("html").send(joinLandingHtml());
+    let sessions: JoinSession[] | undefined;
+    try {
+      const database = await getDb();
+      if (database) {
+        const rows = await seasonEpisodeRows(database, ACTIVE_SEASON);
+        if (rows.length > 0) sessions = joinSessionsFromRows(rows);
+      }
+    } catch (err) {
+      log.error("join session lookup failed", err);
+    }
+
+    res.status(200).type("html").send(joinLandingHtml(sessions));
   });
 }

@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { HOLOS_REGEN_CIVICS_URL, HYLO_SEEDS_URL } from "@shared/communityLinks";
-import { RIVERSIDE_ROOM_URL, SITE_ORIGIN } from "@shared/sessionLinks";
+import { JOIN_HERO, RIVERSIDE_ROOM_URL, SITE_ORIGIN } from "@shared/sessionLinks";
 import {
+  catalogJoinSessions,
   hostIsOldStudio,
   joinLandingHtml,
+  joinSessionsFromRows,
+  joinStatusLine,
   parseJoinEventId,
   resolveJoinRedirectTarget,
   safeExternalHttpUrl,
+  type JoinSession,
 } from "./joinRedirect";
 
 describe("parseJoinEventId", () => {
@@ -95,12 +99,67 @@ describe("resolveJoinRedirectTarget", () => {
   });
 });
 
+describe("joinStatusLine", () => {
+  const week = (n: number, start: string, title: string): JoinSession => ({
+    week: n,
+    title,
+    start: new Date(start),
+    end: new Date(new Date(start).getTime() + 2 * 3_600_000),
+    status: "upcoming",
+  });
+
+  it("names the next session before it starts", () => {
+    const line = joinStatusLine(catalogJoinSessions(), new Date("2026-10-07T20:00:00Z"));
+    expect(line?.label).toBe("Next session");
+    expect(line?.live).toBe(false);
+    expect(line?.when).toContain("Season 2 · Week 3 ·");
+    expect(line?.when).toContain("PT");
+    expect(line?.title.length).toBeGreaterThan(0);
+  });
+
+  it("marks the session live while it is running", () => {
+    const sessions = [week(3, "2026-10-10T18:00:00Z", "Game & Organisation Co-Creation Part 1")];
+    const line = joinStatusLine(sessions, new Date("2026-10-10T18:30:00Z"));
+    expect(line).toEqual({
+      live: true,
+      label: "Live now",
+      when: "Season 2 · Week 3 · Oct 10 · 11am PT",
+      title: "Game & Organisation Co-Creation Part 1",
+    });
+  });
+
+  it("strips a stored Week prefix and skips cancelled rows", () => {
+    const sessions = joinSessionsFromRows([
+      {
+        week: 4,
+        title: "Week 4: Game & Organisation Co-Creation Part 2",
+        startTime: new Date("2026-10-17T17:00:00Z"),
+        endTime: null,
+        status: "upcoming",
+      },
+      {
+        week: 3,
+        title: "Week 3: skipped",
+        startTime: new Date("2026-10-10T17:00:00Z"),
+        endTime: null,
+        status: "cancelled",
+      },
+    ]);
+    const line = joinStatusLine(sessions, new Date("2026-10-07T20:00:00Z"));
+    expect(line?.title).toBe("Game & Organisation Co-Creation Part 2");
+    expect(line?.when).toContain("Week 4");
+  });
+});
+
 describe("joinLandingHtml", () => {
   it("leads with a studio join button and keeps the other gather places", () => {
-    const html = joinLandingHtml();
+    const html = joinLandingHtml(undefined, new Date("2026-10-07T20:00:00Z"));
     expect(RIVERSIDE_ROOM_URL).toBe(
       "https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit",
     );
+    expect(JOIN_HERO.wide).toContain("join-hero-tree.webp");
+    expect(html).toContain(`src="${JOIN_HERO.wide}"`);
+    expect(html).toContain(`srcset="${JOIN_HERO.phone}"`);
     expect(html).toContain(`<a class="join-call" href="${RIVERSIDE_ROOM_URL}">Join the call</a>`);
     expect(html).toContain(`<a class="vote-times" href="${SITE_ORIGIN}/season-schedule">Vote on call times here</a>`);
     expect(html).toContain(".vote-times");
@@ -108,13 +167,22 @@ describe("joinLandingHtml", () => {
     expect(html).toContain("min-height: 72px");
     expect(html).toContain("min-height: 64px");
     expect(html).toContain("width: 100%");
-    expect(html).toContain("background: #1a472a");
+    expect(html).toContain("background: #0d2818");
+    expect(html).toContain("background: #7dd87d");
+    expect(html).toContain("color: #0d2818");
     expect(html).toContain("color: #ffffff");
-    expect(html).toContain("outline: 3px solid #111111");
+    expect(html).toContain("outline: 3px solid #ffffff");
+    expect(html).toContain("prefers-reduced-motion");
+    expect(html).toContain("Quicksand");
+    expect(html).toContain("Next session");
+    expect(html).toContain("Season 2 · Week 3 ·");
+    expect(html).not.toContain("Georgia");
     expect(html).toContain(HOLOS_REGEN_CIVICS_URL);
     expect(html).toContain(HYLO_SEEDS_URL);
+    expect(html.indexOf(HOLOS_REGEN_CIVICS_URL)).toBeLessThan(html.indexOf(HYLO_SEEDS_URL));
     expect(html).toContain("Watch on YouTube");
     expect(html).toContain("/schedule");
+    expect(html).toContain('class="tile"');
     expect(html.indexOf('class="join-call"')).toBeLessThan(html.indexOf(HOLOS_REGEN_CIVICS_URL));
   });
 });
