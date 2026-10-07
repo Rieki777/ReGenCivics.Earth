@@ -18,7 +18,7 @@
  *    have to come from one zone. Here they do.
  */
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
-import { JOIN_URL, siteJoinUrl } from "@shared/sessionLinks";
+import { RIVERSIDE_ROOM_URL, siteJoinUrl } from "@shared/sessionLinks";
 
 export { siteJoinUrl };
 
@@ -77,12 +77,11 @@ export function eventFeed(eventId: number): CalendarFeed {
 }
 
 /**
- * The room link to show for a session. Always the site /join hook — never a
- * raw meeting-platform URL. Prefer siteJoinUrl(eventId) when the session id is
- * known so GET /join can route to that event's stored room.
+ * The room link for a session. The guest invite, from RIVERSIDE_ROOM_URL.
+ * Prefer siteJoinUrl(eventId) when the link should land on the /join page.
  */
 export function resolveRoomUrl(_stored?: string | null): string {
-  return JOIN_URL;
+  return RIVERSIDE_ROOM_URL;
 }
 
 // ── Times, in the reader's own zone ─────────────────────────────────────────
