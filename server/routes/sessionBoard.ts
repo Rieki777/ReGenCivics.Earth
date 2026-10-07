@@ -69,6 +69,7 @@ import {
   type Db,
 } from "../lib/sessionBoard";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
+import { signUpOnBoard } from "../lib/boardSignup";
 
 /** Per-visitor ceilings. Generous for a live room; there to make loops slow. */
 const WRITE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -568,6 +569,23 @@ export const sessionBoardRouter = router({
       await bumpVersion(db, board.id);
       return { ok: true as const };
     }),
+
+  /**
+   * Public: leave a name and email for coaching or building. The contact is
+   * kept after the board closes and after the session ends. While the board
+   * is open and the session is still going, this also raises the hand.
+   */
+  signUp: publicProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({
+      week: weekInput,
+      voterKey: voterKeySchema.optional(),
+      offer: z.enum(BOARD_OFFER_KEYS),
+      fullName: z.string().trim().min(1).max(120),
+      email: z.string().trim().email().max(320),
+      note: z.string().max(200).optional(),
+    }))
+    .mutation(({ ctx, input }) => signUpOnBoard(ctx, input)),
 
   /* ---------------------------------------------------------- facilitator */
 

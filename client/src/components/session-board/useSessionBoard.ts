@@ -41,7 +41,7 @@ function randomKeyBody(): string {
 }
 
 /** A random id this browser keeps. It is a bearer credential. */
-function readVoterKey(): string {
+export function sessionVoterKey(): string {
   const fresh = "s" + randomKeyBody();
   try {
     const existing = window.localStorage.getItem(VOTER_KEY_STORAGE);
@@ -114,7 +114,7 @@ type CurateItemWrite = {
 
 export function useSessionBoard(week: number) {
   const utils = trpc.useUtils();
-  const voterKey = useMemo(readVoterKey, []);
+  const voterKey = useMemo(sessionVoterKey, []);
   const [displayName, setDisplayNameState] = useState(() => readStored(NAME_STORAGE));
   const setDisplayName = useCallback((v: string) => {
     setDisplayNameState(v);
@@ -376,6 +376,20 @@ export function useSessionBoard(week: number) {
         });
         paint((b) => adjustMap(b, "offers", key, on ? 1 : -1));
       }, (next) => offerM.mutateAsync({ week, voterKey, offer: key, on: next }));
+    },
+    /** The sign-up already wrote the vote. Paint the hand without writing it again. */
+    paintOffer: (key: BoardOfferKey) => {
+      let already = false;
+      setMine((m) => {
+        if (m.offers.has(key)) {
+          already = true;
+          return m;
+        }
+        const offers = new Set(m.offers);
+        offers.add(key);
+        return { ...m, offers };
+      });
+      if (!already) paint((b) => adjustMap(b, "offers", key, 1));
     },
     act: (action: Parameters<typeof actM.mutate>[0]["action"]) => {
       writer.fifo("act", () => {

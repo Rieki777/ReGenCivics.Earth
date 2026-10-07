@@ -129,7 +129,7 @@ export const TOGETHER_COPY = {
   },
   hands: {
     title: "Raise a hand",
-    hint: "Raise a hand for either, and tell me your name in the chat so I can reach you after the session.",
+    hint: "Leave your name and email and we'll reach out about coaching or building.",
   },
 } as const;
 
@@ -193,7 +193,7 @@ const WEEK_2: BoardStage[] = [
       "Village OS is a Game we all play: open source, owned in common, crowdbuilt.",
       "Modules: anyone can build one. The builders' pool shares $ReGen by how much villages use each module.",
       "Name coaching as paid work and your own income today. Ask who wants to grow it with you.",
-      "Ask for hands, then names in the chat.",
+      "Ask for hands. The form takes names and emails.",
     ],
   },
   {

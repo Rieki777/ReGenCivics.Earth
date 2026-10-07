@@ -33,6 +33,7 @@ import {
 import { DictationButton, dictationSupported } from "@/components/admin/dictation";
 import { trpc } from "@/lib/trpc";
 import { JoinBoard } from "./JoinBoard";
+import { RaiseHand } from "./RaiseHandForm";
 import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
 import { foldSpokenPunctuation, phaseFromSpeech } from "./spokenStage";
 
@@ -627,7 +628,7 @@ export function VillageOS({ stages, index }: StageProps) {
 /* =============================================================== together */
 
 /** Village OS as a Game we all build: open source, modules that count, coaches for villages. */
-export function Together({ board, stages, index, facilitator, mine, actions }: StageProps) {
+export function Together({ board, stages, index, facilitator, mine, actions, week }: StageProps) {
   const c = TOGETHER_COPY;
   // The repo's address follows the same switch as /village-os (VILLAGE_OS_SHOW_REPO,
   // ADR-69): until it is on, the panel points to the front door instead.
@@ -668,34 +669,23 @@ export function Together({ board, stages, index, facilitator, mine, actions }: S
         <h3 id="sb-tg-hands-h" className="sb-h3">{c.hands.title}</h3>
         <p className="sb-hint">{c.hands.hint}</p>
         <ul className="sb-tg-offers">
-          {BOARD_OFFERS.map((o) => {
-            const n = board.offers[o.key] ?? 0;
-            const raised = mine.offers.has(o.key);
-            const who = facilitator ? people?.[o.key] : undefined;
-            return (
-              <li key={o.key} className="sb-tg-offer">
-                <strong>{o.label}</strong>
-                <span className="sb-h-n">{plural(n, "hand", "hands")}</span>
-                {board.status === "open" ? (
-                  <button type="button" className="sb-toggle" aria-pressed={raised} onClick={() => void actions.offer(o.key, !raised)}>
-                    {raised ? o.on : "Raise a hand"}
-                    <span className="sr-only"> to {o.label.toLowerCase()}</span>
-                  </button>
-                ) : null}
-                {/* Names stay folded: the facilitator's screen is the one on the stream. */}
-                {who && (who.names.length || who.guests) ? (
-                  <details className="sb-tg-who">
-                    <summary>Who raised a hand (only facilitators see this)</summary>
-                    <p>
-                      {who.names.length ? <>Signed in: {who.names.join(", ")}.</> : null}
-                      {who.names.length && who.guests ? " " : null}
-                      {who.guests ? <>{plural(who.guests, "guest", "guests")} without an account.</> : null}
-                    </p>
-                  </details>
-                ) : null}
-              </li>
-            );
-          })}
+          {BOARD_OFFERS.map((o) => (
+            <li key={o.key} className="sb-tg-offer">
+              <RaiseHand
+                week={week}
+                offerKey={o.key}
+                label={o.label}
+                pressedLabel={o.on}
+                count={board.offers[o.key] ?? 0}
+                raised={mine.offers.has(o.key)}
+                boardOpen={board.status === "open"}
+                facilitator={facilitator}
+                who={facilitator ? people?.[o.key] : undefined}
+                onLower={() => void actions.offer(o.key, false)}
+                onHanded={() => actions.paintOffer(o.key)}
+              />
+            </li>
+          ))}
         </ul>
       </section>
     </>
