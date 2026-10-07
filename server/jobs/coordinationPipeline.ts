@@ -39,6 +39,7 @@ import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallb
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
 import { mapRecordingOntoCourse } from "../lib/sessionCourseStore";
+import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest";
 import {
   computeBountyAmount,
   SCOPE_TIERS,
@@ -453,6 +454,7 @@ export interface PipelineReport {
   alreadySeen: number;
   skippedByTitle: number;
   skippedByDuration: number;
+  editedAttached: number;
   ingested: number;
   transcribed: number;
   synthesized: number;
@@ -496,6 +498,7 @@ export async function runCoordinationPipeline(opts: {
     alreadySeen: 0,
     skippedByTitle: 0,
     skippedByDuration: 0,
+    editedAttached: 0,
     ingested: 0,
     transcribed: 0,
     synthesized: 0,
@@ -529,6 +532,13 @@ export async function runCoordinationPipeline(opts: {
   const holders = await loadHolders(db);
   const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
 
+  let cutCache: Awaited<ReturnType<typeof loadEditedCutCache>> | null = null;
+  try {
+    cutCache = await loadEditedCutCache(db);
+  } catch (e) {
+    report.errors.push(`edited-cut lookup: ${(e as Error).message}`);
+  }
+
   for (const entry of entries) {
     if (processed >= maxNew) break;
 
@@ -542,6 +552,26 @@ export async function runCoordinationPipeline(opts: {
 
     // Title-based skip pattern.
     if (skipRe && skipRe.test(entry.title)) { report.skippedByTitle += 1; continue; }
+
+    // Edited cut of a session we already have: attach it and mail subscribers.
+    // This does not insert a second recording and does not wait on a transcript.
+    if (cutCache) {
+      try {
+        const cut = await handleEditedCutPoll(db, entry, cutCache);
+        if (cut.action !== "none") {
+          if (cut.emailError) report.errors.push(cut.emailError);
+          if (cut.action === "attached") {
+            report.editedAttached += 1;
+            processed += 1;
+          } else {
+            report.alreadySeen += 1;
+          }
+          continue;
+        }
+      } catch (e) {
+        report.errors.push(`edited cut ${entry.videoId}: ${(e as Error).message}`);
+      }
+    }
 
     // Best-effort duration check. Unknown -> don't block.
     const duration = await fetchYouTubeDuration(entry.videoId);

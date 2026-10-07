@@ -3,6 +3,8 @@
  * Uses siteContext canonical URLs for the primary CTA.
  */
 import { pickAudienceCta, type AudienceCta } from "./audienceCta";
+import { extractYoutubeVideoId } from "./youtubeVideoId";
+import { chapterWatchUrl, formatChapterStamp } from "./youtubeChapters";
 
 export const POST_SESSION_LETTER_KEY_PREFIX = "post-session-letter:rec:";
 
@@ -78,16 +80,6 @@ function formatSessionDate(d: Date | string | null | undefined): string {
   });
 }
 
-function fmtTs(sec: number): string {
-  const s = Math.max(0, Math.floor(sec));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const ss = s % 60;
-  return h > 0
-    ? `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`
-    : `${m}:${String(ss).padStart(2, "0")}`;
-}
-
 function normalizeActionItems(
   items: PostSessionLetterInput["actionItems"],
 ): Array<{ owner: string; item: string }> {
@@ -142,7 +134,7 @@ export function buildPostSessionLetter(input: PostSessionLetterInput): {
   if (covered) {
     lines.push(covered);
   } else {
-    lines.push("_Summary landing after processing — admin can fill this in Write._");
+    lines.push("_Summary landing after processing. An admin can fill this in from Write._");
   }
   lines.push("");
 
@@ -162,23 +154,19 @@ export function buildPostSessionLetter(input: PostSessionLetterInput): {
     lines.push("");
   }
 
-  if (chapters.length > 0 && watch) {
-    lines.push("## Chapters");
+  if (chapters.length > 0) {
+    lines.push("## Jump to a moment");
     lines.push("");
+    const videoId = extractYoutubeVideoId(watch);
     for (const c of chapters) {
       const t = typeof c.tSeconds === "number" ? c.tSeconds : 0;
       const label = String(c.title ?? "Chapter").trim() || "Chapter";
-      const sep = watch.includes("?") ? "&" : "?";
-      lines.push(`- [${fmtTs(t)} — ${label}](${watch}${sep}t=${Math.max(0, Math.floor(t))}s)`);
-    }
-    lines.push("");
-  } else if (chapters.length > 0) {
-    lines.push("## Chapters");
-    lines.push("");
-    for (const c of chapters) {
-      const t = typeof c.tSeconds === "number" ? c.tSeconds : 0;
-      const label = String(c.title ?? "Chapter").trim() || "Chapter";
-      lines.push(`- ${fmtTs(t)} — ${label}`);
+      const stamp = formatChapterStamp(t);
+      if (videoId) lines.push(`- [${stamp} ${label}](${chapterWatchUrl(videoId, t)})`);
+      else if (watch) {
+        const sep = watch.includes("?") ? "&" : "?";
+        lines.push(`- [${stamp} ${label}](${watch}${sep}t=${Math.max(0, Math.floor(t))})`);
+      } else lines.push(`- ${stamp} ${label}`);
     }
     lines.push("");
   }

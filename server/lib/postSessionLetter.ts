@@ -12,6 +12,9 @@ import {
 } from "../../shared/postSessionLetter";
 import { preferredRecordingYoutubeUrl } from "./recordingEventLink";
 import { logger } from "../_core/logger";
+import { chaptersForSend } from "./youtubeDescription";
+import { extractYoutubeVideoId } from "../../shared/youtubeVideoId";
+import { coerceChapters } from "../../shared/youtubeChapters";
 
 const log = logger("post-session-letter");
 
@@ -71,6 +74,19 @@ export async function draftPostSessionLetter(opts: {
     (rec.riversideUrl ?? "").trim() ||
     null;
 
+  const videoId = extractYoutubeVideoId(rec.editedYoutubeVideoId)
+    || extractYoutubeVideoId(rec.editedYoutubeUrl)
+    || extractYoutubeVideoId(rec.youtubeVideoId)
+    || extractYoutubeVideoId(watchUrl);
+  const fresh = await chaptersForSend({ videoId, stored: rec.descriptionChaptersJson });
+  if (fresh.fromDescription) {
+    await database
+      .update(recordings)
+      .set({ descriptionChaptersJson: fresh.chapters })
+      .where(eq(recordings.id, rec.id));
+  }
+  const chapters = fresh.chapters.length ? fresh.chapters : coerceChapters(rec.chaptersJson);
+
   const letter = buildPostSessionLetter({
     recordingId: rec.id,
     title: rec.title,
@@ -78,7 +94,7 @@ export async function draftPostSessionLetter(opts: {
     overview: rec.overview,
     aiSummary: rec.aiSummary,
     actionItems: parseJsonArray(rec.actionItemsJson),
-    chapters: parseJsonArray(rec.chaptersJson),
+    chapters,
     watchUrl,
     event: linkedEvent
       ? { type: linkedEvent.type, season: linkedEvent.season, title: linkedEvent.title }

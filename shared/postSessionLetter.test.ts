@@ -42,7 +42,9 @@ describe("buildPostSessionLetter", () => {
     expect(letter.body).toContain("Watch the session");
     expect(letter.body).toContain("See upcoming sessions");
     expect(letter.body).toContain(`${SITE_ORIGIN}/schedule`);
-    expect(letter.body).toContain("t=90s");
+    expect(letter.body).toContain("https://youtu.be/dQw4w9WgXcQ?t=90");
+    expect(letter.body).toContain("1:30 Welcome");
+    expect(letter.body).not.toContain("—");
     expect(letter.layout).toBe("announcement");
   });
 

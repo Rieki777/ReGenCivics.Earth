@@ -6,8 +6,8 @@
 import { adminProcedure, publicProcedure, router } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
-import { recordings, events as eventsTable, roleHolders } from "../../drizzle/schema";
-import { desc, eq } from "drizzle-orm";
+import { recordings, events as eventsTable, roleHolders, emailLogs, recordingCutEvents } from "../../drizzle/schema";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
   RECORDING_CLOSEOUT_FILTERS,
@@ -147,13 +147,53 @@ export const recordingsRouter = router({
         .limit(1);
       if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
 
-      const { sendRecordingEmail } = await import("../lib/recording-finalize");
-      const sent = await sendRecordingEmail(rec);
-      if (sent.dropped === 0) {
+      const { deliverSubscriberMail } = await import("../lib/recording-finalize");
+      const sent = await deliverSubscriberMail(rec, { resend: true });
+      if (sent.kind !== "skip" && sent.dropped === 0) {
         await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, input.id));
       }
-      return { sent: sent.accepted, dropped: sent.dropped };
+      return { sent: sent.accepted, dropped: sent.dropped, kind: sent.kind };
     }),
+
+  // How many people would receive the edited-recording letter. Does not send.
+  editedEmailPreview: adminProcedure
+    .input(z.object({ id: z.number().int().positive() }))
+    .query(async ({ input }) => {
+      const { audienceForTopic } = await import("../lib/emailPrefs");
+      const subscribers = await audienceForTopic("recordings");
+      return { recordingId: input.id, count: subscribers.length };
+    }),
+
+  // Admin: send the edited-recording letter. confirm is required so a click cannot bulk-send.
+  sendEditedEmail: adminProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      confirm: z.literal(true),
+    }))
+    .mutation(async ({ input }) => {
+      const { sendEditedRecordingEmail } = await import("../lib/editedCutEmailSend");
+      const sent = await sendEditedRecordingEmail(input.id);
+      return { sent: sent.accepted, dropped: sent.dropped, chapters: sent.chapters };
+    }),
+
+  // Per-recipient ledger counts for the recording letters.
+  emailLedger: adminProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) return [];
+    return database
+      .select({
+        inquiryId: emailLogs.inquiryId,
+        template: emailLogs.template,
+        status: emailLogs.status,
+        n: sql<number>`count(*)`,
+      })
+      .from(emailLogs)
+      .where(and(
+        eq(emailLogs.inquiryType, "recording"),
+        inArray(emailLogs.template, ["recording_edited", "recording_summary", "recording_notes"]),
+      ))
+      .groupBy(emailLogs.inquiryId, emailLogs.template, emailLogs.status);
+  }),
 
   // Admin: delete a recording record (doesn't touch Riverside, just removes from our DB)
   delete: adminProcedure
@@ -213,15 +253,29 @@ export const recordingsRouter = router({
       if (!rec) throw new TRPCError({ code: "NOT_FOUND" });
       const raw = input.editedYoutubeUrl?.trim() ?? "";
       let normalized: string | null = null;
+      let videoId: string | null = null;
       if (raw.length > 0) {
+        const { extractYoutubeVideoId } = await import("../../shared/youtubeVideoId");
         const candidate = raw.startsWith("http") ? raw : `https://www.youtube.com/watch?v=${raw}`;
         try { new URL(candidate); } catch { throw new TRPCError({ code: "BAD_REQUEST", message: "Not a valid URL or video id" }); }
-        normalized = candidate;
+        videoId = extractYoutubeVideoId(candidate);
+        if (!videoId) throw new TRPCError({ code: "BAD_REQUEST", message: "Not a YouTube video id or URL" });
+        normalized = `https://www.youtube.com/watch?v=${videoId}`;
       }
       await database
         .update(recordings)
-        .set({ editedYoutubeUrl: normalized })
+        .set({
+          editedYoutubeUrl: normalized,
+          editedYoutubeVideoId: videoId,
+          ...(normalized ? { editedCutAttachedAt: new Date() } : { editedCutAttachedAt: null }),
+        })
         .where(eq(recordings.id, input.recordingId));
+      await database.insert(recordingCutEvents).values({
+        recordingId: input.recordingId,
+        action: normalized ? "manual_attach" : "manual_clear",
+        youtubeVideoId: videoId,
+        detail: normalized ? "Admin attached an edited cut" : "Admin cleared the edited cut",
+      });
       return { ok: true, notified: 0 };
     }),
 

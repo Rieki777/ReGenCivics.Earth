@@ -16,7 +16,6 @@ import * as db from "../db";
 import { recordings, events, forumCategories } from "../../drizzle/schema";
 import { eq, gte, lte, isNotNull, and } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
-import { providerAccepted } from "./emailAttempt";
 import { emailsAcceptedForInquiry } from "../emailTracking";
 import { notifyRecordingReady } from "../_core/notify";
 import { logger } from "../_core/logger";
@@ -26,10 +25,48 @@ import { ENV } from "../_core/env";
 import { linkRecordingToMatchingEvent } from "./recordingEventLink";
 import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
 import { courseWeekFromRecording } from "@shared/sessionCourse";
+import { automaticRecordingMail, priorLetterAlreadySent } from "../../shared/editedCut";
+import { chaptersEmailSection } from "../../shared/editedCutEmail";
+import { chaptersJumpMarkdown, coerceChapters, type YoutubeChapter } from "../../shared/youtubeChapters";
+import { extractYoutubeVideoId } from "../../shared/youtubeVideoId";
+import { chaptersForSend } from "./youtubeDescription";
+import { sendPacedEmails } from "./pacedEmail";
+import { sendSessionNotesEmail } from "./editedCutEmailSend";
+import { isMissingSchema, recordingWithoutEditedCutColumns } from "./schemaTolerance";
 
 const log = logger("recording-finalize");
 
 type RecordingRow = typeof recordings.$inferSelect;
+type Database = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+
+/** Full row when 0290 is applied. Otherwise the pre-migration columns, with the new fields empty. */
+async function loadRecordingRow(database: Database, recordingId: number): Promise<RecordingRow | null> {
+  try {
+    const [recording] = await database
+      .select()
+      .from(recordings)
+      .where(eq(recordings.id, recordingId))
+      .limit(1);
+    return recording ?? null;
+  } catch (err) {
+    if (!isMissingSchema(err)) throw err;
+    log.warn(`recording ${recordingId} loaded without edited-cut columns; migration 0290 is not applied`);
+    const [recording] = await database
+      .select(recordingWithoutEditedCutColumns())
+      .from(recordings)
+      .where(eq(recordings.id, recordingId))
+      .limit(1);
+    if (!recording) return null;
+    return {
+      ...recording,
+      editedYoutubeVideoId: null,
+      editedCutAttachedAt: null,
+      editedCutMatch: null,
+      editedEmailSent: 0,
+      descriptionChaptersJson: null,
+    };
+  }
+}
 
 /**
  * Run the community-publish + event-link steps for a recording that is already
@@ -41,15 +78,13 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     log.error("Database unavailable");
     return;
   }
-  const [recording] = await database
-    .select()
-    .from(recordings)
-    .where(eq(recordings.id, recordingId))
-    .limit(1);
+  const recording = await loadRecordingRow(database, recordingId);
   if (!recording) {
     log.warn(`finalizeRecording: recording ${recordingId} not found`);
     return;
   }
+
+  await refreshDescriptionChapters(database, recording);
 
   // ── 1. Forum thread: reply to a matched event thread, or create a fresh post ──
   if (!recording.forumPostId) {
@@ -74,7 +109,7 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
         // Reply to the pre-event thread with the recording link.
         const sessionDateStr = formatSessionDate(recording.sessionDate);
         const summarySection = recording.aiSummary ? `\n\n**What we covered**\n\n${recording.aiSummary}` : "";
-        const replyContent = `The recording from ${sessionDateStr} is ready.\n\n${watchLinkMd(recording)}${summarySection}\n\nDrop any follow-up thoughts below.`;
+        const replyContent = `The recording from ${sessionDateStr} is ready.\n\n${watchLinkMd(recording)}${summarySection}${chapterBlock(recording)}\n\nDrop any follow-up thoughts below.`;
 
         const replyId = await db
           .createForumReply({ postId: matchedEvent.forumThreadId, authorId: 1, content: replyContent })
@@ -117,13 +152,30 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
   }
 
   // ── 2. Email subscribers (once per recording) ──
-  if (!recording.emailSent && (recording.youtubeUrl || recording.riversideUrl)) {
+  // The edited-cut letter already said the recording is up. This step then
+  // either waits, or sends one different "Session notes" letter when a summary exists.
+  // Week 2's edited cut already went out before editedEmailSent existed.
+  if (
+    priorLetterAlreadySent(
+      recording.youtubeVideoId,
+      recording.youtubeUrl,
+      recording.editedYoutubeVideoId,
+      recording.editedYoutubeUrl,
+    ) && !recording.emailSent
+  ) {
+    await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, recordingId));
+    recording.emailSent = 1;
+    log.info(`recording ${recordingId} already has the Week 2 edited letter; skipping another send`);
+  }
+  if (!recording.emailSent && (recording.youtubeUrl || recording.riversideUrl || recording.editedYoutubeUrl)) {
     try {
-      const outcome = await sendRecordingEmail(recording);
-      if (outcome.dropped === 0) {
+      const outcome = await deliverSubscriberMail(recording, {
+        chapters: descriptionOrAiChapters(recording),
+      });
+      if (outcome.kind !== "skip" && outcome.dropped === 0) {
         await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, recordingId));
-        log.info(`Email sent for recording ${recordingId}`);
-      } else {
+        log.info(`Email sent for recording ${recordingId} (${outcome.kind})`);
+      } else if (outcome.kind !== "skip") {
         log.info(`Recording ${recordingId} email incomplete: ${outcome.accepted} accepted, ${outcome.dropped} not sent`);
       }
     } catch (err) {
@@ -165,7 +217,7 @@ async function createRecordingForumPost(recording: RecordingRow): Promise<number
       ? `\n\n**[Watch the recording](${recording.riversideUrl})**`
       : "";
   const summarySection = recording.aiSummary ? `\n\n## What we covered\n\n${recording.aiSummary}` : "";
-  const content = `Recording from ${sessionDateStr}${durationStr ? ` (${durationStr})` : ""}.${watchLink}${summarySection}\n\nWhat stood out to you? What questions came up? Drop your thoughts below.`;
+  const content = `Recording from ${sessionDateStr}${durationStr ? ` (${durationStr})` : ""}.${watchLink}${summarySection}${chapterBlock(recording)}\n\nWhat stood out to you? What questions came up? Drop your thoughts below.`;
 
   const postId = await db.createForumPost({
     categoryId,
@@ -180,15 +232,73 @@ async function createRecordingForumPost(recording: RecordingRow): Promise<number
 
 // ── Email sending (exported so the admin resend route can reuse it) ──
 
-export async function sendRecordingEmail(recording: {
+type SubscriberRecording = {
   id?: number;
   title: string;
   sessionDate: Date | null;
   youtubeUrl: string | null;
+  youtubeVideoId?: string | null;
+  editedYoutubeUrl?: string | null;
+  editedYoutubeVideoId?: string | null;
+  editedEmailSent?: number | null;
+  emailSent?: number | null;
   riversideUrl: string | null;
   aiSummary: string | null;
+  overview?: string | null;
   forumPostId: number | null;
-}): Promise<{ accepted: number; dropped: number }> {
+  descriptionChaptersJson?: unknown;
+  chaptersJson?: unknown;
+};
+
+/**
+ * Recording-ready, or session notes when the edited letter already went out.
+ * `resend` lets an admin send to people who were not in the first pass.
+ * It still will not send a second "recording is up" after the edited letter.
+ */
+export async function deliverSubscriberMail(
+  recording: SubscriberRecording,
+  opts?: { resend?: boolean; chapters?: YoutubeChapter[] },
+): Promise<{ accepted: number; dropped: number; kind: "recording_ready" | "session_notes" | "skip" }> {
+  if (priorLetterAlreadySent(
+    recording.youtubeVideoId,
+    recording.youtubeUrl,
+    recording.editedYoutubeVideoId,
+    recording.editedYoutubeUrl,
+  )) {
+    return { accepted: 0, dropped: 0, kind: "skip" };
+  }
+  const plan = automaticRecordingMail({
+    editedEmailSent: Boolean(recording.editedEmailSent),
+    emailSent: opts?.resend ? false : Boolean(recording.emailSent),
+    hasSummary: Boolean((recording.aiSummary || recording.overview || "").trim()),
+    hasWatchUrl: Boolean(recording.youtubeUrl || recording.riversideUrl || recording.editedYoutubeUrl),
+  });
+  if (plan === "skip") return { accepted: 0, dropped: 0, kind: "skip" };
+  if (plan === "session_notes" && recording.id == null) return { accepted: 0, dropped: 1, kind: "session_notes" };
+  if (plan === "session_notes" && recording.id != null) {
+    const sent = await sendSessionNotesEmail({
+      id: recording.id,
+      title: recording.title,
+      youtubeUrl: recording.youtubeUrl,
+      youtubeVideoId: recording.youtubeVideoId ?? null,
+      editedYoutubeUrl: recording.editedYoutubeUrl ?? null,
+      editedYoutubeVideoId: recording.editedYoutubeVideoId ?? null,
+      editedCutMatch: null,
+      aiSummary: recording.aiSummary,
+      overview: recording.overview ?? null,
+      descriptionChaptersJson: recording.descriptionChaptersJson,
+      chaptersJson: recording.chaptersJson,
+    }, { chapters: opts?.chapters });
+    return { ...sent, kind: "session_notes" };
+  }
+  const sent = await sendRecordingEmail(recording, opts?.chapters);
+  return { ...sent, kind: "recording_ready" };
+}
+
+export async function sendRecordingEmail(
+  recording: SubscriberRecording,
+  chapters?: YoutubeChapter[],
+): Promise<{ accepted: number; dropped: number }> {
   const subscribers = await audienceForTopic("recordings");
   if (!subscribers.length) {
     log.info("No recording subscribers, skipping email");
@@ -206,51 +316,101 @@ export async function sendRecordingEmail(recording: {
 
   const forumUrl = recording.forumPostId ? `${APP_BASE_URL}/community/post/${recording.forumPostId}` : null;
   const courseLink = await courseUrlForRecording(recording);
-  let accepted = 0;
-  let dropped = 0;
-  let stop = false;
-
-  for (const subscriber of subscribers) {
-    const key = subscriber.email.trim().toLowerCase();
-    if (already.has(key)) {
-      accepted += 1;
-      continue;
+  const videoId = extractYoutubeVideoId(recording.youtubeVideoId)
+    || extractYoutubeVideoId(recording.youtubeUrl)
+    || extractYoutubeVideoId(recording.editedYoutubeVideoId)
+    || extractYoutubeVideoId(recording.editedYoutubeUrl);
+  let chapterList = chapters;
+  if (!chapterList && videoId) {
+    const fresh = await chaptersForSend({ videoId, stored: recording.descriptionChaptersJson });
+    if (fresh.fromDescription && recording.id != null) {
+      const database = await getDb();
+      if (database) {
+        try {
+          await database
+            .update(recordings)
+            .set({ descriptionChaptersJson: fresh.chapters })
+            .where(eq(recordings.id, recording.id));
+        } catch (err) {
+          if (!isMissingSchema(err)) log.error("description chapters persist failed", err);
+        }
+      }
     }
-    if (stop) {
-      dropped += 1;
-      continue;
-    }
-    const prefsUrl = await managePreferencesUrl(subscriber.email, { mute: "recordings" });
-    const html = buildEmailHtml({
-      title: recording.title,
-      sessionDate: formatSessionDate(recording.sessionDate),
-      youtubeUrl: recording.youtubeUrl,
-      riversideUrl: recording.riversideUrl,
-      aiSummary: recording.aiSummary,
-      forumUrl,
-      courseUrl: courseLink?.href ?? null,
-      courseLabel: courseLink?.label ?? null,
-      prefsUrl,
-    });
-    const result = await sendEmail({
-      to: subscriber.email,
-      subject: `Recording ready: ${recording.title}`,
-      html,
-      template: "recording_summary",
-      inquiryType: "recording",
-      inquiryId: recording.id,
-    });
-    if (providerAccepted(result)) accepted += 1;
-    else {
-      dropped += 1;
-      if (result.status === "rate_limited" || result.status === "held") stop = true;
-    }
+    chapterList = fresh.chapters.length ? fresh.chapters : coerceChapters(recording.chaptersJson);
   }
-  log.info(`Recording email accepted ${accepted}, not sent ${dropped}, of ${subscribers.length}`);
-  return { accepted, dropped };
+  chapterList = chapterList ?? descriptionOrAiChapters(recording);
+  const result = await sendPacedEmails({
+    recipients: subscribers.map((row) => row.email),
+    alreadyAccepted: already,
+    sendOne: async (email) => {
+      const prefsUrl = await managePreferencesUrl(email, { mute: "recordings" });
+      const html = buildEmailHtml({
+        title: recording.title,
+        sessionDate: formatSessionDate(recording.sessionDate),
+        youtubeUrl: recording.youtubeUrl,
+        riversideUrl: recording.riversideUrl,
+        aiSummary: recording.aiSummary,
+        forumUrl,
+        courseUrl: courseLink?.href ?? null,
+        courseLabel: courseLink?.label ?? null,
+        prefsUrl,
+        chaptersHtml: videoId ? chaptersEmailSection(chapterList ?? [], videoId) : "",
+      });
+      return sendEmail({
+        to: email,
+        subject: `Recording ready: ${recording.title}`,
+        html,
+        template: "recording_summary",
+        inquiryType: "recording",
+        inquiryId: recording.id,
+      });
+    },
+  });
+  log.info(`Recording email accepted ${result.accepted}, not sent ${result.dropped}, of ${subscribers.length}`);
+  return { accepted: result.accepted, dropped: result.dropped };
 }
 
 // ── Helpers ──
+
+function descriptionOrAiChapters(recording: {
+  descriptionChaptersJson?: unknown;
+  chaptersJson?: unknown;
+}): YoutubeChapter[] {
+  const fromDescription = coerceChapters(recording.descriptionChaptersJson);
+  if (fromDescription.length) return fromDescription;
+  return coerceChapters(recording.chaptersJson);
+}
+
+function chapterBlock(recording: RecordingRow): string {
+  const videoId = extractYoutubeVideoId(recording.editedYoutubeVideoId)
+    || extractYoutubeVideoId(recording.editedYoutubeUrl)
+    || extractYoutubeVideoId(recording.youtubeVideoId)
+    || extractYoutubeVideoId(recording.youtubeUrl);
+  const markdown = chaptersJumpMarkdown(descriptionOrAiChapters(recording), videoId);
+  return markdown ? `\n\n${markdown}` : "";
+}
+
+async function refreshDescriptionChapters(
+  database: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  recording: RecordingRow,
+): Promise<void> {
+  const videoId = extractYoutubeVideoId(recording.editedYoutubeVideoId)
+    || extractYoutubeVideoId(recording.editedYoutubeUrl)
+    || extractYoutubeVideoId(recording.youtubeVideoId)
+    || extractYoutubeVideoId(recording.youtubeUrl);
+  if (!videoId) return;
+  try {
+    const fresh = await chaptersForSend({ videoId, stored: recording.descriptionChaptersJson });
+    if (!fresh.fromDescription) return;
+    recording.descriptionChaptersJson = fresh.chapters;
+    await database
+      .update(recordings)
+      .set({ descriptionChaptersJson: fresh.chapters })
+      .where(eq(recordings.id, recording.id));
+  } catch (err) {
+    log.error("description chapters failed", err);
+  }
+}
 
 function formatSessionDate(d: Date | null): string {
   return d
@@ -301,6 +461,7 @@ function buildEmailHtml(opts: {
   courseUrl?: string | null;
   courseLabel?: string | null;
   prefsUrl: string;
+  chaptersHtml?: string;
 }): string {
   const watchBtn = opts.youtubeUrl
     ? `<a href="${opts.youtubeUrl}" style="display:inline-block;background:#FF0000;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">▶ Watch Recording</a>`
@@ -340,6 +501,7 @@ function buildEmailHtml(opts: {
           ${forumBtn}
           ${courseBtn}
         </div>
+        ${opts.chaptersHtml ?? ""}
       </div>
 
       <div style="background: #f0f7f0; padding: 20px 24px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">

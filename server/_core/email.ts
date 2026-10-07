@@ -377,6 +377,14 @@ function attemptRecipients(params: SendEmailParams): Array<{ email: string; name
   }));
 }
 
+function isProviderRateLimit(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const row = error as { statusCode?: number; name?: string; message?: string };
+  if (row.statusCode === 429) return true;
+  const msg = `${row.name ?? ""} ${row.message ?? ""}`.toLowerCase();
+  return msg.includes("too many requests") || msg.includes("rate limit");
+}
+
 function logAttempt(status: EmailSendStatus, template: string | undefined, recipientCount: number, budget?: "auth"): void {
   const payload = { template: template ?? null, recipientCount, status, budget: budget ?? "shared" };
   if (status === "sent") log.info("email attempt", payload);
@@ -481,6 +489,11 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     if (response.error || !response.data?.id) {
       const detail = response.error ? JSON.stringify(response.error).slice(0, 500) : "Resend returned no id";
       log.error("Failed to send", undefined, { responseError: response.error ?? null });
+      if (isProviderRateLimit(response.error)) {
+        await record("blocked", detail);
+        logAttempt("rate_limited", template, recipientCount, params.budget);
+        return { id: null, status: "rate_limited" };
+      }
       await record("failed", detail);
       logAttempt("provider_error", template, recipientCount, params.budget);
       return { id: null, status: "provider_error" };
@@ -507,6 +520,11 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
   } catch (error) {
     log.error("Error sending email", error);
     const detail = error instanceof Error ? error.message : "send threw";
+    if (isProviderRateLimit(error)) {
+      await record("blocked", detail);
+      logAttempt("rate_limited", params.template, recipientCount, params.budget);
+      return { id: null, status: "rate_limited" };
+    }
     await record("failed", detail);
     logAttempt("provider_error", params.template, recipientCount, params.budget);
     return { id: null, status: "provider_error" };
