@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "wouter";
 import { SEO } from "@/components/SEO";
+import { season2PreviewFor } from "@shared/season2Previews";
 import {
   LAST_BOARD_WEEK,
   boardStages,
@@ -188,7 +189,12 @@ function Board({ week }: { week: number }) {
 
   return (
     <div className="sb-app">
-      <SEO title={`${title} · Live board`} description={`The live board for Season 2, ${title}. Type in your project, your pain points and the growth opportunities you see.`} />
+      <SEO
+        title={season2PreviewFor(`/season2/week/${week}`)?.title ?? `${title} · Live board`}
+        description={season2PreviewFor(`/season2/week/${week}`)?.description ?? `The live board for Season 2, ${title}. Type in your project, your pain points and the growth opportunities you see.`}
+        image={season2PreviewFor(`/season2/week/${week}`)?.image}
+        url={season2PreviewFor(`/season2/week/${week}`)?.url}
+      />
       <header className="sb-top">
         <Link href="/season2" className="sb-mark">
           <span className="sb-mark-name">ReGen Civics</span>

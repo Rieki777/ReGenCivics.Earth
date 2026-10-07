@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
+import { season2PreviewFor } from "@shared/season2Previews";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,8 +99,10 @@ export default function ShapeNextSession() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] to-[#1a472a] flex items-center justify-center p-6">
         <SEO
-          title="Thanks for shaping the next session"
-          description="Your input helps us build sessions worth showing up for."
+          title={season2PreviewFor("/shape-next-session")!.title}
+          description={season2PreviewFor("/shape-next-session")!.description}
+          image={season2PreviewFor("/shape-next-session")!.image}
+          url={season2PreviewFor("/shape-next-session")!.url}
         />
         <div className="max-w-md w-full text-center space-y-6">
           <div className="flex justify-center">
@@ -134,9 +137,10 @@ export default function ShapeNextSession() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] to-[#1a472a]">
       <SEO
-        title="Shape the Next Session"
-        description="Tell us what you want covered and whether you'll be there."
-        url="/shape-next-session"
+        title={season2PreviewFor("/shape-next-session")!.title}
+        description={season2PreviewFor("/shape-next-session")!.description}
+        image={season2PreviewFor("/shape-next-session")!.image}
+        url={season2PreviewFor("/shape-next-session")!.url}
       />
 
       <div className="max-w-lg mx-auto px-6 py-16 space-y-10">

@@ -21,6 +21,7 @@ import { SITE_ORIGIN } from "@shared/sessionLinks";
 import { projectPathForApplication } from "@shared/projectKey";
 import { Calendar, CheckCircle2, Clock, ExternalLink, MessageSquare, Sprout, Users, Video, Youtube } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { season2PreviewFor } from "@shared/season2Previews";
 import { PageWrapper } from "@/components/PageWrapper";
 import { BackButton } from "@/components/BackButton";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -316,9 +317,10 @@ export default function SeasonSchedule() {
   return (
     <PageWrapper>
       <SEO
-        title="Season Schedule | ReGen Civics"
-        description={`Sign up for ${config.name} and vote on when it meets each week. Tap every time that works for your project; the time most projects can make becomes the Season's time, and it keeps following the vote.`}
-        url="https://regencivics.earth/season-schedule"
+        title={season2PreviewFor("/season-schedule")!.title}
+        description={season2PreviewFor("/season-schedule")!.description}
+        image={season2PreviewFor("/season-schedule")!.image}
+        url={season2PreviewFor("/season-schedule")!.url}
       />
 
       <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#14301f] to-[#0d2818]">

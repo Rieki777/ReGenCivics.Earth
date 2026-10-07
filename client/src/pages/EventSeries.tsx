@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO } from "@/components/SEO";
+import { season2PreviewFor } from "@shared/season2Previews";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 
@@ -33,12 +34,15 @@ export default function EventSeries() {
   const upcomingEvents = events.filter(e => new Date(e.startTime) >= now && e.status !== "completed" && e.status !== "cancelled");
 
   const description = SEASON_DESCRIPTIONS[season] ?? `All events for ${season}.`;
+  const preview = season2PreviewFor(`/series/${season}`);
 
   return (
     <PageWrapper>
       <SEO
-        title={`${season} Events | ReGen Civics`}
-        description={description}
+        title={preview?.title ?? `${season} Events | ReGen Civics`}
+        description={preview?.description ?? description}
+        image={preview?.image}
+        url={preview?.url}
       />
 
       <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">

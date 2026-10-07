@@ -74,6 +74,7 @@ import { AnimatedSection } from "@/components/AnimatedSection";
 import { ReadableScrim } from "@/components/ReadableScrim";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { SEO } from "@/components/SEO";
+import { season2PreviewFor } from "@shared/season2Previews";
 import { Season2Calendar } from "@/components/Season2Calendar";
 import { ViewportTriggeredVideo } from "@/components/ViewportTriggeredVideo";
 import { APPLICATIONS_CLOSE } from "@/lib/seasonEvents";
@@ -624,9 +625,10 @@ export default function Season2() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
-        title="Season Two: Show Us Your Play in the Infinite Game"
-        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort, with every community project that's ready, into one shared crowdpooling campaign. The cohort is the start of a cooperative network of land projects for the ReGenerative Renaissance, now in design."
-        image="/og/season2.jpg"
+        title={season2PreviewFor("/season2")!.title}
+        description={season2PreviewFor("/season2")!.description}
+        image={season2PreviewFor("/season2")!.image}
+        url="/season2"
       />
 
       {/* ── HERO ── */}

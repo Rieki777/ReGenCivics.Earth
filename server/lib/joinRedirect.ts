@@ -8,6 +8,7 @@
  */
 
 import { HOLOS_REGEN_CIVICS_URL, HYLO_SEEDS_URL } from "@shared/communityLinks";
+import { season2PreviewHead } from "@shared/season2Previews";
 import { RIVERSIDE_ROOM_URL, SEEDS_YOUTUBE_URL, SITE_ORIGIN } from "@shared/sessionLinks";
 
 /** Positive integer event id from `?e=`, or null if missing/invalid. */
@@ -87,7 +88,7 @@ export function joinLandingHtml(): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Join the call</title>
+${season2PreviewHead("/join")}
 <style>
   body { margin: 0; background: #f6f3ea; color: #142416; font-family: Georgia, "Times New Roman", serif; }
   main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
