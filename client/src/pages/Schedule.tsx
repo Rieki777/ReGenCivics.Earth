@@ -490,6 +490,11 @@ export default function Schedule() {
               Historical
             </button>
           </div>
+          <p className="text-center mb-8">
+            <Link href="/recordings" className="text-[#7dd87d] text-sm font-semibold hover:underline">
+              All recordings
+            </Link>
+          </p>
 
           <div className="space-y-4">
             {filteredEvents.length === 0 && (

@@ -23,6 +23,7 @@ import { getDb } from "../db";
 import { sweepEventStatuses } from "../lib/eventStatusSweep";
 import { events, eventSignups, eventAttendance, eventAutoReminders, eventAutoReminderSends, regenTokenLedger, agendaSuggestions, type Event } from "../../drizzle/schema";
 import { recordings, applications, users } from "../../drizzle/schema";
+import { isMissingSchema } from "../lib/schemaTolerance";
 import { resolveAutoReminderRecipients, sendToAlwaysIncluded } from "../jobs/eventReminders";
 import { sendSignupReminderBlast } from "../lib/signupReminderBlast";
 import { formatEventWhen, reminderJoinLabel, reminderJoinUrl } from "../lib/eventReminderEmail";
@@ -1270,12 +1271,30 @@ export const eventsRouter = router({
 
       let recording = null;
       if (event.recordingId) {
-        const [rec] = await database
-          .select({ youtubeUrl: recordings.youtubeUrl, aiSummary: recordings.aiSummary })
-          .from(recordings)
-          .where(eq(recordings.id, event.recordingId))
-          .limit(1);
-        if (rec) recording = rec;
+        const recordingCols = {
+          youtubeUrl: recordings.youtubeUrl,
+          editedYoutubeUrl: recordings.editedYoutubeUrl,
+          youtubeVideoId: recordings.youtubeVideoId,
+          aiSummary: recordings.aiSummary,
+          overview: recordings.overview,
+          chaptersJson: recordings.chaptersJson,
+        };
+        try {
+          const [rec] = await database
+            .select({ ...recordingCols, descriptionChaptersJson: recordings.descriptionChaptersJson })
+            .from(recordings)
+            .where(eq(recordings.id, event.recordingId))
+            .limit(1);
+          if (rec) recording = rec;
+        } catch (err) {
+          if (!isMissingSchema(err)) throw err;
+          const [rec] = await database
+            .select(recordingCols)
+            .from(recordings)
+            .where(eq(recordings.id, event.recordingId))
+            .limit(1);
+          if (rec) recording = { ...rec, descriptionChaptersJson: null };
+        }
       }
 
       // Public projection: the spread here used to carry checkinToken and the

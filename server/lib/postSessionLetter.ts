@@ -11,10 +11,9 @@ import {
   postSessionLetterIdempotencyKey,
 } from "../../shared/postSessionLetter";
 import { preferredRecordingYoutubeUrl } from "./recordingEventLink";
-import { logger } from "../_core/logger";
-import { chaptersForSend } from "./youtubeDescription";
+import { chaptersForRecap } from "./youtubeWatchMeta";
 import { extractYoutubeVideoId } from "../../shared/youtubeVideoId";
-import { coerceChapters } from "../../shared/youtubeChapters";
+import { logger } from "../_core/logger";
 
 const log = logger("post-session-letter");
 
@@ -78,14 +77,11 @@ export async function draftPostSessionLetter(opts: {
     || extractYoutubeVideoId(rec.editedYoutubeUrl)
     || extractYoutubeVideoId(rec.youtubeVideoId)
     || extractYoutubeVideoId(watchUrl);
-  const fresh = await chaptersForSend({ videoId, stored: rec.descriptionChaptersJson });
-  if (fresh.fromDescription) {
-    await database
-      .update(recordings)
-      .set({ descriptionChaptersJson: fresh.chapters })
-      .where(eq(recordings.id, rec.id));
-  }
-  const chapters = fresh.chapters.length ? fresh.chapters : coerceChapters(rec.chaptersJson);
+  const chapters = await chaptersForRecap({
+    videoId,
+    descriptionChapters: rec.descriptionChaptersJson,
+    aiChapters: rec.chaptersJson,
+  });
 
   const letter = buildPostSessionLetter({
     recordingId: rec.id,

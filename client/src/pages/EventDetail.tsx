@@ -23,6 +23,7 @@ import {
   ArrowLeft,
   MessageSquare,
 } from 'lucide-react';
+import { ChapterJumpList } from "@/components/recording/ChapterJumpList";
 import { trpc } from '@/lib/trpc';
 import { SEO } from '@/components/SEO';
 import { PageWrapper } from '@/components/PageWrapper';
@@ -228,9 +229,9 @@ export default function EventDetail() {
                   <p className="text-white/70 text-sm mb-3">This event has ended.</p>
 
                   {/* Recording replay */}
-                  {event.recording?.youtubeUrl && (
+                  {(event.recording?.editedYoutubeUrl || event.recording?.youtubeUrl) && (
                     <a
-                      href={event.recording.youtubeUrl}
+                      href={event.recording.editedYoutubeUrl || event.recording.youtubeUrl || "#"}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-medium transition-colors mr-2 mb-2"
@@ -254,11 +255,19 @@ export default function EventDetail() {
                 </div>
 
                 {/* AI Summary */}
-                {event.recording?.aiSummary && (
+                {(event.recording?.overview || event.recording?.aiSummary) && (
                   <div className="bg-[#f0f7f0]/10 border-l-4 border-[#7dd87d] rounded-r-xl p-4">
                     <p className="text-[#7dd87d] font-medium text-sm mb-2">Session Summary</p>
-                    <p className="text-white/70 text-sm leading-relaxed">{event.recording.aiSummary}</p>
+                    <p className="text-white/70 text-sm leading-relaxed">{event.recording.overview || event.recording.aiSummary}</p>
                   </div>
+                )}
+                {event.recording && (
+                  <ChapterJumpList
+                    descriptionChapters={event.recording.descriptionChaptersJson}
+                    aiChapters={event.recording.chaptersJson}
+                    videoId={event.recording.youtubeVideoId}
+                    watchUrl={event.recording.editedYoutubeUrl || event.recording.youtubeUrl}
+                  />
                 )}
               </div>
             )}

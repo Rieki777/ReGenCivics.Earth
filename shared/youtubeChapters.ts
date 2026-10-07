@@ -99,6 +99,13 @@ export function coerceChapters(raw: unknown): YoutubeChapter[] {
   return out;
 }
 
+/** Description chapters when the upload has them. AI chapters only fill the gap. */
+export function preferredChapters(descriptionChapters: unknown, aiChapters: unknown): YoutubeChapter[] {
+  const fromDescription = coerceChapters(descriptionChapters);
+  if (fromDescription.length > 0) return fromDescription;
+  return coerceChapters(aiChapters);
+}
+
 export function chaptersJumpMarkdown(chapters: YoutubeChapter[], videoId: string | null): string {
   if (!chapters.length) return "";
   const lines = ["## Jump to a moment", ""];

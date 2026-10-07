@@ -13,7 +13,9 @@ import { getDb } from "../db";
 import { recordings, events } from "../../drizzle/schema";
 import { and, eq, isNull, ne, or, sql } from "drizzle-orm";
 import { extractYoutubeVideoId } from "../../shared/youtubeVideoId";
+import { matchEventToRecordings, matchRecordingToEvents } from "../../shared/recordingSessionMatch";
 import { logger } from "../_core/logger";
+import { isMissingSchema } from "./schemaTolerance";
 
 const log = logger("recording-event-link");
 
@@ -44,7 +46,7 @@ export type LinkDecision =
       action: "link";
       eventId: number;
       recordingId: number;
-      reason: "youtube_id" | "unique_session_window";
+      reason: "youtube_id" | "unique_session_window" | "session_title";
       fillYoutubeUrl: string | null;
     };
 
@@ -245,6 +247,14 @@ async function applyLink(decision: Extract<LinkDecision, { action: "link" }>): P
  * After ingest/finalize: link this recording to a uniquely matching unlinked event.
  * Safe to call repeatedly. Independent of forumPostId.
  */
+/** Ambiguous matches and a session that already has a recording must not publish again. */
+export function linkBlocksPublish(decision: LinkDecision): boolean {
+  return (
+    decision.action === "none" &&
+    (decision.reason.startsWith("ambiguous") || decision.reason === "session_already_has_recording")
+  );
+}
+
 export async function linkRecordingToMatchingEvent(recordingId: number): Promise<LinkDecision> {
   const database = await getDb();
   if (!database) return { action: "none", reason: "no_db" };
@@ -252,6 +262,7 @@ export async function linkRecordingToMatchingEvent(recordingId: number): Promise
   const [rec] = await database
     .select({
       id: recordings.id,
+      title: recordings.title,
       sessionDate: recordings.sessionDate,
       youtubeUrl: recordings.youtubeUrl,
       editedYoutubeUrl: recordings.editedYoutubeUrl,
@@ -291,19 +302,21 @@ export async function linkRecordingToMatchingEvent(recordingId: number): Promise
   const rows = await database
     .select({
       id: events.id,
+      title: events.title,
       startTime: events.startTime,
       youtubeUrl: events.youtubeUrl,
       recordingId: events.recordingId,
       forumThreadId: events.forumThreadId,
       status: events.status,
+      episodeNumber: events.episodeNumber,
     })
     .from(events)
-    .where(and(isNull(events.recordingId), ne(events.status, "cancelled")))
+    .where(ne(events.status, "cancelled"))
     .orderBy(sql`${events.startTime} DESC`)
     .limit(200);
 
-  const candidates = rows.filter((e) => {
-    if (e.recordingId != null) return false;
+  const unlinked = rows.filter((e) => e.recordingId == null);
+  const candidates = unlinked.filter((e) => {
     const inWindow =
       !!session &&
       e.startTime instanceof Date &&
@@ -317,6 +330,25 @@ export async function linkRecordingToMatchingEvent(recordingId: number): Promise
   const decision = decideRecordingEventLink(rec, candidates);
   if (decision.action === "link") {
     await applyLink(decision);
+    return decision;
+  }
+  if (decision.reason.startsWith("ambiguous")) return decision;
+
+  const titled = matchRecordingToEvents(rec, rows);
+  if (titled.action === "link") {
+    const event = rows.find((e) => e.id === titled.eventId);
+    const full: LinkDecision = {
+      action: "link",
+      eventId: titled.eventId,
+      recordingId: rec.id,
+      reason: "session_title",
+      fillYoutubeUrl: event?.youtubeUrl?.trim() ? null : preferredRecordingYoutubeUrl(rec),
+    };
+    await applyLink(full);
+    return full;
+  }
+  if (titled.reason === "ambiguous_title" || titled.reason === "session_already_has_recording") {
+    return { action: "none", reason: titled.reason };
   }
   return decision;
 }
@@ -334,11 +366,13 @@ export async function repairPastEventRecordingLinks(opts?: {
   const unlinked = await database
     .select({
       id: events.id,
+      title: events.title,
       startTime: events.startTime,
       youtubeUrl: events.youtubeUrl,
       recordingId: events.recordingId,
       forumThreadId: events.forumThreadId,
       status: events.status,
+      episodeNumber: events.episodeNumber,
     })
     .from(events)
     .where(and(isNull(events.recordingId), ne(events.status, "cancelled")))
@@ -348,6 +382,7 @@ export async function repairPastEventRecordingLinks(opts?: {
   const allRecs = await database
     .select({
       id: recordings.id,
+      title: recordings.title,
       sessionDate: recordings.sessionDate,
       youtubeUrl: recordings.youtubeUrl,
       editedYoutubeUrl: recordings.editedYoutubeUrl,
@@ -368,7 +403,20 @@ export async function repairPastEventRecordingLinks(opts?: {
   let linked = 0;
   let filledYoutubeOnly = 0;
   for (const ev of unlinked) {
-    const decision = decideEventRecordingLink(ev, allRecs, owned);
+    let decision = decideEventRecordingLink(ev, allRecs, owned);
+    if (decision.action === "none" && !decision.reason.startsWith("ambiguous")) {
+      const titled = matchEventToRecordings(ev, allRecs);
+      if (titled.action === "link" && !owned.has(titled.recordingId)) {
+        const rec = allRecs.find((r) => r.id === titled.recordingId);
+        decision = {
+          action: "link",
+          eventId: ev.id,
+          recordingId: titled.recordingId,
+          reason: "session_title",
+          fillYoutubeUrl: ev.youtubeUrl?.trim() ? null : rec ? preferredRecordingYoutubeUrl(rec) : null,
+        };
+      }
+    }
     if (decision.action === "link") {
       const ok = await applyLink(decision);
       if (ok) {
@@ -421,6 +469,8 @@ export async function findRecordingForEventPublic(eventId: number): Promise<{
   overview: string | null;
   aiSummary: string | null;
   forumPostId: number | null;
+  chaptersJson: unknown;
+  descriptionChaptersJson: unknown;
 } | null> {
   const database = await getDb();
   if (!database) return null;
@@ -435,7 +485,7 @@ export async function findRecordingForEventPublic(eventId: number): Promise<{
     .limit(1);
   if (!event) return null;
 
-  const selectCols = {
+  const baseCols = {
     id: recordings.id,
     title: recordings.title,
     youtubeUrl: recordings.youtubeUrl,
@@ -447,14 +497,28 @@ export async function findRecordingForEventPublic(eventId: number): Promise<{
     aiSummary: recordings.aiSummary,
     forumPostId: recordings.forumPostId,
     youtubeVideoId: recordings.youtubeVideoId,
+    chaptersJson: recordings.chaptersJson,
+  };
+  const selectCols = { ...baseCols, descriptionChaptersJson: recordings.descriptionChaptersJson };
+
+  const loadRows = async (whereId?: number) => {
+    const query = database.select(selectCols).from(recordings);
+    try {
+      return whereId == null
+        ? await query.limit(300)
+        : await query.where(eq(recordings.id, whereId)).limit(1);
+    } catch (err) {
+      if (!isMissingSchema(err)) throw err;
+      const bare = database.select(baseCols).from(recordings);
+      const rows = whereId == null
+        ? await bare.limit(300)
+        : await bare.where(eq(recordings.id, whereId)).limit(1);
+      return rows.map((row) => ({ ...row, descriptionChaptersJson: null }));
+    }
   };
 
   if (event.recordingId) {
-    const [recording] = await database
-      .select(selectCols)
-      .from(recordings)
-      .where(eq(recordings.id, event.recordingId))
-      .limit(1);
+    const [recording] = await loadRows(event.recordingId);
     if (recording) {
       const { youtubeVideoId: _vid, ...publicFields } = recording;
       return publicFields;
@@ -465,7 +529,7 @@ export async function findRecordingForEventPublic(eventId: number): Promise<{
   if (!eventYt) return null;
 
   // Soft match: only when exactly one recording shares this video id.
-  const rows = await database.select(selectCols).from(recordings).limit(300);
+  const rows = await loadRows();
   const matches = rows.filter((r) => recordingYoutubeIds(r).includes(eventYt));
   if (matches.length !== 1) return null;
   const { youtubeVideoId: _vid, ...publicFields } = matches[0];

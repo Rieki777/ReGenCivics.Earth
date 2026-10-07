@@ -160,7 +160,7 @@ export async function getTranscriptSegments(videoId: string): Promise<Transcript
   if (!segments) segments = await fetchYouTubeTranscriptSegments(videoId);
   if (!segments) {
     const fallback = await transcribeFallback(videoId);
-    segments = fallback?.segments?.length ? fallback.segments : null;
+    segments = fallback?.ok && fallback.segments.length ? fallback.segments : null;
   }
 
   // Simple size cap: drop the oldest entry when full.

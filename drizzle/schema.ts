@@ -2987,6 +2987,10 @@ export const recordings = mysqlTable("recordings", {
   actionItemsJson: json("actionItemsJson"),
   chaptersJson: json("chaptersJson"),         // [{ tSeconds, title }] from the synthesize pass
   transcriptJson: json("transcriptJson"),     // [{ start, text }] timestamped transcript segments
+  // Retry bookkeeping (migration 0291). descriptionChaptersJson is added in 0290.
+  processAttempts: int("processAttempts").default(0).notNull(),
+  lastError: varchar("lastError", { length: 500 }),
+  nextRetryAt: timestamp("nextRetryAt"),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

@@ -20,6 +20,7 @@ Backend selection (first that is configured wins):
 Set TRANSCRIBE_BACKEND=local|groq|openai to force one explicitly.
 """
 
+import logging
 import os
 import re
 import tempfile
@@ -38,6 +39,7 @@ BACKEND = os.environ.get("TRANSCRIBE_BACKEND", "").lower().strip()
 VIDEO_ID_RE = re.compile(r"^[a-zA-Z0-9_-]{11}$")
 
 app = FastAPI(title="ReGen Civics transcription worker")
+logger = logging.getLogger("transcription-worker")
 
 
 class TranscribeRequest(BaseModel):
@@ -156,6 +158,7 @@ def transcribe(req: TranscribeRequest, authorization: str = Header(default="")) 
         try:
             audio = download_audio(video_id, tmp)
         except Exception as e:  # surface the real yt-dlp reason to the caller + logs
+            logger.error("yt-dlp failed for %s: %s", video_id, e)
             raise HTTPException(status_code=502, detail=str(e))
         if backend == "groq":
             result = transcribe_hosted(

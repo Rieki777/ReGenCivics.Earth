@@ -168,6 +168,13 @@ export const pageSEO = {
     image: '/og/schedule.jpg',
     url: '/schedule'
   },
+  recordings: {
+    title: 'Session recordings',
+    description: 'Watch ReGen Civics sessions: Season 2, open sessions, and earlier SEEDS calls, with chapters you can jump to.',
+    keywords: 'session recordings, season 2, open access, SEEDS, community calls',
+    image: '/og/schedule.jpg',
+    url: '/recordings'
+  },
   game: {
     title: 'The Game: How ReGen Civics Works',
     description: 'An infinite game with no finish line. A growing civilization we\'re building together. Here\'s how the ReGen Civics game works.',

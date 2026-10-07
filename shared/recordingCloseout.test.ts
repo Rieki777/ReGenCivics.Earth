@@ -8,6 +8,7 @@ import {
   hasPublishedEditedCut,
   isCloseoutOverdue,
   parseCloseoutMetaBag,
+  recordingInCloseoutQueue,
   resolveCloseoutRow,
   resolveCloseoutStatus,
 } from "./recordingCloseout";
@@ -131,5 +132,34 @@ describe("filters and deep links", () => {
     expect(buildCloseoutDeepLinks(9, 44).eventsHref).toBe(
       "/admin?tab=events&filter=past&open=44",
     );
+  });
+});
+
+describe("recordingInCloseoutQueue", () => {
+  it("keeps linked recordings and anything from September 2026 on", () => {
+    expect(
+      recordingInCloseoutQueue({
+        sessionDate: "2023-04-01T00:00:00.000Z",
+        linkedToEvent: false,
+      }),
+    ).toBe(false);
+    expect(
+      recordingInCloseoutQueue({
+        sessionDate: "2023-04-01T00:00:00.000Z",
+        linkedToEvent: true,
+      }),
+    ).toBe(true);
+    expect(
+      recordingInCloseoutQueue({
+        createdAt: "2026-09-01T00:00:00.000Z",
+        linkedToEvent: false,
+      }),
+    ).toBe(true);
+    expect(
+      recordingInCloseoutQueue({
+        sessionDate: "2026-08-31T23:59:59.000Z",
+        linkedToEvent: false,
+      }),
+    ).toBe(false);
   });
 });

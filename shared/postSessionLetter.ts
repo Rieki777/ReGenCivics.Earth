@@ -3,8 +3,8 @@
  * Uses siteContext canonical URLs for the primary CTA.
  */
 import { pickAudienceCta, type AudienceCta } from "./audienceCta";
+import { chapterStamp, chapterWatchUrl, coerceChapters } from "./youtubeChapters";
 import { extractYoutubeVideoId } from "./youtubeVideoId";
-import { chapterWatchUrl, formatChapterStamp } from "./youtubeChapters";
 
 export const POST_SESSION_LETTER_KEY_PREFIX = "post-session-letter:rec:";
 
@@ -115,7 +115,7 @@ export function buildPostSessionLetter(input: PostSessionLetterInput): {
   const dateLabel = formatSessionDate(input.sessionDate);
   const covered = (input.overview ?? input.aiSummary ?? "").trim();
   const actions = normalizeActionItems(input.actionItems);
-  const chapters = Array.isArray(input.chapters) ? input.chapters : [];
+  const chapters = coerceChapters(input.chapters);
   const watch = (input.watchUrl ?? "").trim();
   const cta = pickPostSessionCta(input.event);
   const templateKey = postSessionLetterIdempotencyKey(input.recordingId);
@@ -159,14 +159,10 @@ export function buildPostSessionLetter(input: PostSessionLetterInput): {
     lines.push("");
     const videoId = extractYoutubeVideoId(watch);
     for (const c of chapters) {
-      const t = typeof c.tSeconds === "number" ? c.tSeconds : 0;
-      const label = String(c.title ?? "Chapter").trim() || "Chapter";
-      const stamp = formatChapterStamp(t);
-      if (videoId) lines.push(`- [${stamp} ${label}](${chapterWatchUrl(videoId, t)})`);
-      else if (watch) {
-        const sep = watch.includes("?") ? "&" : "?";
-        lines.push(`- [${stamp} ${label}](${watch}${sep}t=${Math.max(0, Math.floor(t))})`);
-      } else lines.push(`- ${stamp} ${label}`);
+      const label = c.title.replace(/[\[\]]/g, "").trim() || "Chapter";
+      const stamp = chapterStamp(c);
+      if (videoId) lines.push(`- [${stamp} ${label}](${chapterWatchUrl(videoId, c.tSeconds)})`);
+      else lines.push(`- ${stamp} ${label}`);
     }
     lines.push("");
   }

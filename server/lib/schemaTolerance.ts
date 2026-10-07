@@ -14,6 +14,19 @@ const EDITED_CUT_COLUMNS = [
   "descriptionChaptersJson",
 ] as const;
 
+/** drizzle/0291_recording_pipeline_retry.sql. descriptionChaptersJson stays on 0290. */
+const PIPELINE_RETRY_COLUMNS = [
+  "processAttempts",
+  "lastError",
+  "nextRetryAt",
+] as const;
+
+export function recordingColumnsOmitting(keys: readonly string[]) {
+  const cols = { ...getTableColumns(recordings) };
+  for (const key of keys) delete cols[key as keyof typeof cols];
+  return cols;
+}
+
 export function isMissingSchema(err: unknown): boolean {
   const seen = new Set<unknown>();
   let current: unknown = err;
@@ -32,7 +45,10 @@ export function isMissingSchema(err: unknown): boolean {
 
 /** Columns that exist before drizzle/0290_edited_cut_email.sql. */
 export function recordingWithoutEditedCutColumns() {
-  const cols = { ...getTableColumns(recordings) };
-  for (const key of EDITED_CUT_COLUMNS) delete cols[key];
-  return cols;
+  return recordingColumnsOmitting([...EDITED_CUT_COLUMNS, ...PIPELINE_RETRY_COLUMNS]);
+}
+
+/** 0290 is applied and 0291 is not. */
+export function recordingWithoutPipelineRetryColumns() {
+  return recordingColumnsOmitting(PIPELINE_RETRY_COLUMNS);
 }

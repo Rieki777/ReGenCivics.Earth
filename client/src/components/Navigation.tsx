@@ -12,7 +12,7 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp, SlidersHorizontal, Vote } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, X, Users, Calendar, Layers, BookOpen, Calculator, UsersRound, User, LogIn, LogOut, Settings, Sparkles, Globe, Coins, Sprout, Handshake, Heart, MessageCircle, Search, Lightbulb, Wrench, TrendingUp, SlidersHorizontal, Vote, Video } from "lucide-react";
 import { Drawer } from "vaul";
 
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -48,6 +48,7 @@ const prefetch = (path: string) => {
     "/quest": () => import("@/pages/Quest"),
     "/seasons": () => import("@/pages/Seasons"),
     "/schedule": () => import("@/pages/Schedule"),
+    "/recordings": () => import("@/pages/Recordings"),
     "/team": () => import("@/pages/Team"),
     "/map": () => import("@/pages/Map"),
     "/blog": () => import("@/pages/Blog"),
@@ -104,7 +105,7 @@ export default function Navigation() {
   const isPlayGameActive = location === '/game' || location === '/play' || location === '/calculator' || location === '/profile' || location === '/quest' || location.startsWith('/bounties') || location === '/campaigns' || location === '/crowd-pooling-projects' || location === '/crowd-pooling' || location === '/create-campaign' || location.startsWith('/campaign/') || location.startsWith('/project/') || location === '/local-food-economy' || location === '/tools' || location.startsWith('/tools/');
   
   // Check if current location is in Seasons + Schedule section
-  const isSeasonsActive = location === '/seasons' || location === '/schedule';
+  const isSeasonsActive = location === '/seasons' || location === '/schedule' || location === '/recordings';
 
   // Check if current location is in Explore + Connect
   const isSocialsBlogActive = location === '/blog' || location.startsWith('/blog/') || location === '/socials' || location.startsWith('/community') || location === '/economy' || location === '/bionomics' || location === '/tokenomics' || location === '/game-mechanics';
@@ -370,6 +371,13 @@ export default function Navigation() {
                   <Calendar className="w-5 h-5 mr-3 text-amber-400" />
                   <span style={{ fontFamily: 'var(--font-accent)' }}>Schedule</span>
                 </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                  onClick={() => window.location.href = '/recordings'}
+                >
+                  <Video className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Recordings</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             </div>
@@ -449,6 +457,13 @@ export default function Navigation() {
                   >
                     <Calendar className="w-5 h-5 mr-3 text-amber-400" />
                     <span style={{ fontFamily: 'var(--font-accent)' }}>Schedule</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
+                    onClick={() => window.location.href = '/recordings'}
+                  >
+                    <Video className="w-5 h-5 mr-3 text-[#7dd87d]" />
+                    <span style={{ fontFamily: 'var(--font-accent)' }}>Recordings</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
@@ -1069,6 +1084,19 @@ export default function Navigation() {
                     >
                       <Calendar className="w-[22px] h-[22px]" />
                       Schedule
+                    </Link>
+                    <Link
+                      href="/recordings"
+                      className={`flex items-center gap-2 px-4 py-3 pl-10 rounded-xl transition-all ${
+                        location === '/recordings'
+                          ? 'bg-[#7dd87d] text-[#1a472a]'
+                          : 'text-white/70 hover:bg-[#7dd87d]/20 hover:text-white'
+                      }`}
+                      style={{ fontFamily: 'var(--font-accent)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Video className="w-[22px] h-[22px]" />
+                      Recordings
                     </Link>
                   </div>
                 )}
