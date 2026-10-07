@@ -68,6 +68,7 @@ import {
   formatRangeWithReference,
   formatStartWithReference,
 } from "@/lib/calendarLinks";
+import { VoteCallTimesCta } from "@/components/VoteCallTimesCta";
 
 
 
@@ -296,6 +297,9 @@ export default function Schedule() {
           <p className="text-xl text-white/80 max-w-2xl mx-auto safe-prose">
             Join our gatherings and be part of the ReGenerative Renaissance. Add events to your calendar and tune in!
           </p>
+          <div className="mt-8">
+            <VoteCallTimesCta />
+          </div>
         </div>
       </section>
 

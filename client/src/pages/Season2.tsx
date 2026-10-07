@@ -92,6 +92,7 @@ import { SEASON_ONE as SEASON_ONE_FACTS } from "@shared/regenYear";
 import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 import { COOP } from "@shared/fund";
 import { VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { VoteCallTimesCta } from "@/components/VoteCallTimesCta";
 
 const display = { fontFamily: "var(--font-display)" } as const;
 
@@ -669,6 +670,10 @@ export default function Season2() {
               Renaissance, now in design.
             </p>
           </ReadableScrim>
+
+          <div className="mb-8">
+            <VoteCallTimesCta />
+          </div>
 
           <div className="flex flex-wrap justify-center gap-4">
             {APPLICATIONS.followAlong && (
