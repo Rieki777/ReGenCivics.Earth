@@ -919,9 +919,9 @@ async function startServer() {
     const ok = cronAuthOk(req.headers.authorization, secret);
     if (!ok) return res.status(401).json({ error: "Unauthorized" });
     try {
-      const { runCoordinationPipeline } = await import("../jobs/coordinationPipeline");
-      const report = await runCoordinationPipeline({});
-      return res.json({ ok: true, ...report });
+      const { startCoordinationPipelineBackground } = await import("../jobs/coordinationPipeline");
+      const { started } = startCoordinationPipelineBackground();
+      return res.status(202).json({ ok: true, started, background: true });
     } catch (err: any) {
       log.error("cron coordination-pipeline failed", err);
       return res.status(500).json({ error: err.message });

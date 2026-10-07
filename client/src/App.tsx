@@ -111,6 +111,7 @@ const Socials = lazy(() => import("./pages/Socials"));
 const Seasons = lazy(() => import("./pages/Seasons"));
 const Season2 = lazy(() => import("./pages/Season2"));
 const Schedule = lazy(() => import("./pages/Schedule"));
+const Recordings = lazy(() => import("./pages/Recordings"));
 const InteropSessions = lazy(() => import("./pages/InteropSessions"));
 const SeasonSchedule = lazy(() => import("./pages/SeasonSchedule"));
 const SessionBoard = lazy(() => import("./pages/SessionBoard"));
@@ -349,6 +350,7 @@ function Router() {
       <Route path={"/village-os"}><EB><VillageOs /></EB></Route>
       <Route path={"/village-os/host"}><EB><VillageOsHost /></EB></Route>
       <Route path={"/schedule"}><EB><Schedule /></EB></Route>
+      <Route path={"/recordings"}><EB><Recordings /></EB></Route>
       <Route path={"/interop-sessions"}><EB><InteropSessions /></EB></Route>
       <Route path={"/season-schedule"}><EB><SeasonSchedule /></EB></Route>
       <Route path={"/checkin"}><EB><Checkin /></EB></Route>

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   chapterWatchUrl,
   parseDescriptionChapters,
+  preferredChapters,
   timestampToSeconds,
 } from "./youtubeChapters";
 
@@ -75,5 +76,20 @@ describe("parseDescriptionChapters", () => {
     expect(chapters.map((c) => c.tSeconds)).toEqual([0, 59, 3840]);
     expect(chapters[0].title).toBe("Welcome");
     expect(chapters[2].title).toBe("Community tools, project profiles, and getting involved");
+  });
+});
+
+describe("preferredChapters", () => {
+  it("uses description chapters before AI chapters", () => {
+    const picked = preferredChapters(
+      [{ tSeconds: 64, title: "From the description" }],
+      [{ tSeconds: 1, title: "From the model" }],
+    );
+    expect(picked.map((c) => c.title)).toEqual(["From the description"]);
+  });
+
+  it("falls back to AI chapters when the description has none", () => {
+    const picked = preferredChapters(null, [{ tSeconds: 1, title: "From the model" }]);
+    expect(picked.map((c) => c.title)).toEqual(["From the model"]);
   });
 });

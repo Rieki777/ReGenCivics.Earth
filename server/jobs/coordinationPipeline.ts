@@ -31,15 +31,22 @@
  * (bounties.consentAndPay -> payRole), which uses `creditPrivateTokens` with
  * source tag `call_task_bounty`.
  */
-import { sql, eq } from "drizzle-orm";
+import { and, eq, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { ENV } from "../_core/env";
+import { logger } from "../_core/logger";
 import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallback } from "../lib/videoSummary";
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
 import { mapRecordingOntoCourse } from "../lib/sessionCourseStore";
 import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest";
+import { linkRecordingToMatchingEvent } from "../lib/recordingEventLink";
+import { fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
+import { createSingleFlight } from "../lib/singleFlight";
+import { MAX_PROCESS_ATTEMPTS, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
+import type { YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
+import { isMissingSchema } from "../lib/schemaTolerance";
 import {
   computeBountyAmount,
   SCOPE_TIERS,
@@ -138,22 +145,9 @@ export async function fetchYouTubeRss(channelId: string): Promise<RssEntry[]> {
  * rather than dropping the video.
  */
 export async function fetchYouTubeDuration(videoId: string): Promise<number | null> {
-  try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; ReGenCivicsBot/1.0)" },
-    });
-    if (!res.ok) return null;
-    const html = await res.text();
-    const iso = html.match(/itemprop="duration"\s+content="([^"]+)"/)?.[1];
-    if (!iso) return null;
-    // ISO 8601 duration parser, scoped to the H/M/S we expect from YouTube.
-    const m = iso.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/);
-    if (!m) return null;
-    const h = Number(m[1] ?? 0), min = Number(m[2] ?? 0), s = Number(m[3] ?? 0);
-    return h * 3600 + min * 60 + s;
-  } catch {
-    return null;
-  }
+  const meta = await fetchYouTubeWatchMeta(videoId);
+  if (meta.status !== "ok") return null;
+  return meta.durationSeconds;
 }
 
 // ── Sanitization ─────────────────────────────────────────────────────
@@ -455,7 +449,9 @@ export interface PipelineReport {
   skippedByTitle: number;
   skippedByDuration: number;
   editedAttached: number;
+  skippedLive: number;
   ingested: number;
+  retried: number;
   transcribed: number;
   synthesized: number;
   tasksProposed: number;
@@ -499,7 +495,9 @@ export async function runCoordinationPipeline(opts: {
     skippedByTitle: 0,
     skippedByDuration: 0,
     editedAttached: 0,
+    skippedLive: 0,
     ingested: 0,
+    retried: 0,
     transcribed: 0,
     synthesized: 0,
     tasksProposed: 0,
@@ -527,8 +525,6 @@ export async function runCoordinationPipeline(opts: {
   const maxNew = opts.maxNew ?? 5;
   let processed = 0;
 
-  // Pre-fetch every roleHolders row once (cheap, ~20 rows) and pass
-  // into the extract-tasks pass instead of querying per-video.
   const holders = await loadHolders(db);
   const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
 
@@ -542,7 +538,6 @@ export async function runCoordinationPipeline(opts: {
   for (const entry of entries) {
     if (processed >= maxNew) break;
 
-    // Idempotency: skip anything we've already ingested.
     const [existing] = await db
       .select({ id: recordings.id })
       .from(recordings)
@@ -550,7 +545,6 @@ export async function runCoordinationPipeline(opts: {
       .limit(1);
     if (existing) { report.alreadySeen += 1; continue; }
 
-    // Title-based skip pattern.
     if (skipRe && skipRe.test(entry.title)) { report.skippedByTitle += 1; continue; }
 
     // Edited cut of a session we already have: attach it and mail subscribers.
@@ -573,118 +567,90 @@ export async function runCoordinationPipeline(opts: {
       }
     }
 
-    // Best-effort duration check. Unknown -> don't block.
-    const duration = await fetchYouTubeDuration(entry.videoId);
-    if (duration !== null && duration < MIN_DURATION_SECONDS) {
+    const meta = await fetchYouTubeWatchMeta(entry.videoId);
+    if (meta.status === "unknown") {
+      report.errors.push(`${entry.videoId}: watch page had no player data`);
+      continue;
+    }
+    if (!meta.ended) {
+      report.skippedLive += 1;
+      continue;
+    }
+    if ((meta.durationSeconds ?? 0) < MIN_DURATION_SECONDS) {
       report.skippedByDuration += 1;
       continue;
     }
 
-    // Upsert recordings row at kind='raw'. riversideId is required +
-    // unique, so we synthesize a deterministic value tied to the
-    // YouTube id when no Riverside webhook produced this recording.
     const youtubeUrl = `https://www.youtube.com/watch?v=${entry.videoId}`;
-    const syntheticRiversideId = `yt:${entry.videoId}`;
+    const title = (meta.title || entry.title).slice(0, 255);
+    const inserted = {
+      riversideId: `yt:${entry.videoId}`,
+      riversideUrl: null,
+      title,
+      sessionDate: meta.startTimestamp,
+      durationSeconds: meta.durationSeconds,
+      youtubeUrl,
+      youtubeVideoId: entry.videoId,
+      recordingKind: "raw" as const,
+      thumbnailUrl: `https://i.ytimg.com/vi/${entry.videoId}/hqdefault.jpg`,
+    };
     try {
-      await db.insert(recordings).values({
-        riversideId: syntheticRiversideId,
-        riversideUrl: null,
-        title: entry.title,
-        sessionDate: new Date(entry.publishedAt),
-        durationSeconds: duration ?? null,
-        youtubeUrl,
-        youtubeVideoId: entry.videoId,
-        recordingKind: "raw",
-        thumbnailUrl: `https://i.ytimg.com/vi/${entry.videoId}/hqdefault.jpg`,
-      });
+      try {
+        await db.insert(recordings).values({ ...inserted, descriptionChaptersJson: meta.chapters });
+      } catch (e) {
+        if (!isMissingSchema(e)) throw e;
+        await db.insert(recordings).values(inserted);
+      }
       report.ingested += 1;
     } catch (e) {
-      // Unique-constraint races (parallel cron + redeploy) land here.
       report.errors.push(`upsert ${entry.videoId}: ${(e as Error).message}`);
       continue;
     }
 
-    // Re-read the inserted row to get the id for bounties.recordingId.
-    const [rec] = await db
-      .select({ id: recordings.id })
-      .from(recordings)
-      .where(eq(recordings.youtubeVideoId, entry.videoId))
-      .limit(1);
+    let rec: { id: number; title: string; processAttempts: number } | undefined;
+    try {
+      const [row] = await db
+        .select({ id: recordings.id, title: recordings.title, processAttempts: recordings.processAttempts })
+        .from(recordings)
+        .where(eq(recordings.youtubeVideoId, entry.videoId))
+        .limit(1);
+      rec = row;
+    } catch (e) {
+      if (!isMissingSchema(e)) throw e;
+      const [row] = await db
+        .select({ id: recordings.id, title: recordings.title })
+        .from(recordings)
+        .where(eq(recordings.youtubeVideoId, entry.videoId))
+        .limit(1);
+      rec = row ? { ...row, processAttempts: 0 } : undefined;
+    }
     if (!rec) continue;
 
-    // Transcript (best effort).
-    // Timestamped segments (best effort) so chapters + the transcript panel
-    // deep-link into the player. Null when captions carry no timing.
-    let transcript = await fetchYouTubeTranscript(entry.videoId);
-    let transcriptSegments = transcript ? await fetchYouTubeTranscriptSegments(entry.videoId) : null;
-    if (!transcript) {
-      // No YouTube captions: try the configured Whisper fallback worker (Phase 4).
-      const fb = await transcribeFallback(entry.videoId);
-      if (fb) {
-        transcript = fb.text;
-        transcriptSegments = fb.segments;
-      }
-    }
-    if (!transcript) {
-      processed += 1;
-      continue;
-    }
-    report.transcribed += 1;
-    await db
-      .update(recordings)
-      .set({ transcript, transcriptJson: transcriptSegments ?? null })
-      .where(eq(recordings.id, rec.id));
-
-    // Synthesize.
-    const synth = await runSynthesizePass({ title: entry.title, transcript });
-    if (synth) {
-      await db
-        .update(recordings)
-        .set({
-          overview: synth.overview || null,
-          decisionsJson: synth.decisions,
-          actionItemsJson: synth.actionItems,
-          chaptersJson: synth.chapters.map((c) => ({
-            tSeconds: Math.max(0, Math.floor(c.timestampSeconds || 0)),
-            title: c.title,
-          })),
-          // Keep aiSummary in sync with overview so older surfaces (the
-          // byEventId card, admin editorial list) still show something useful.
-          aiSummary: synth.overview || null,
-        })
-        .where(eq(recordings.id, rec.id));
-      report.synthesized += 1;
-    }
-
-    // Extract tasks + insert as proposed bounty rows (sourceType='call_task').
-    const drafts = await runExtractTasksPass({ title: entry.title, transcript, holders });
-    for (const draft of drafts) {
-      const matched = draft.roleSlug ? holderByRole.get(draft.roleSlug) : null;
-      try {
-        await persistProposedBounty(db, draft, rec.id, matched);
-        report.tasksProposed += 1;
-      } catch (e) {
-        report.errors.push(`insert task for ${entry.videoId}: ${(e as Error).message}`);
-      }
-    }
-
-    // Publish to the community + link the event (shared with the Riverside
-    // webhook). Idempotent via the recording's emailSent + forumPostId guards,
-    // so re-runs never double-post.
     try {
-      await finalizeRecording(rec.id);
+      await linkRecordingToMatchingEvent(rec.id);
     } catch (e) {
-      report.errors.push(`finalize ${entry.videoId}: ${(e as Error).message}`);
+      report.errors.push(`link ${entry.videoId}: ${(e as Error).message}`);
     }
 
-    // Map board stages onto this recording. A miss here leaves the course as it was.
+    const understood = await understandRecording(db, rec, holders, holderByRole);
+    if (understood.transcript) report.transcribed += 1;
+    if (understood.synthesized) report.synthesized += 1;
+    report.tasksProposed += understood.tasksProposed;
+    if (understood.error) report.errors.push(`${entry.videoId}: ${understood.error}`);
+
     try {
       await mapRecordingOntoCourse(rec.id);
     } catch (e) {
       report.errors.push(`course map ${entry.videoId}: ${(e as Error).message}`);
     }
-
     processed += 1;
+  }
+
+  try {
+    await sweepRecordingRetries(db, report, holders, holderByRole);
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+    report.errors.push("recording retry columns are not migrated yet");
   }
 
   rollDayIfNeeded();
@@ -692,53 +658,137 @@ export async function runCoordinationPipeline(opts: {
   return report;
 }
 
-/**
- * Force one already-ingested recording through the understand + publish path.
- *
- * Same steps as the main loop — transcript, synthesize, extract tasks, finalize
- * — but against one existing row instead of a freshly polled RSS entry. Used
- * by the admin recordings.reprocess mutation. Idempotent: finalize guards on
- * emailSent + forumPostId, and re-running overwrites the synthesize columns.
- */
-export async function reprocessRecording(recordingId: number): Promise<{
-  ok: boolean;
-  transcript: boolean;
-  synthesized: boolean;
-  tasksProposed: number;
-  reason?: string;
-}> {
-  const db = await getDb();
-  if (!db) return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "no_db" };
+const pipelineLog = logger("coordination-pipeline");
+const MAX_RETRIES_PER_RUN = 2;
 
-  const [rec] = await db
-    .select({ id: recordings.id, title: recordings.title, youtubeVideoId: recordings.youtubeVideoId })
-    .from(recordings)
-    .where(eq(recordings.id, recordingId))
-    .limit(1);
-  if (!rec || !rec.youtubeVideoId) {
-    return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "not_found_or_no_video" };
+type HolderRow = Awaited<ReturnType<typeof loadHolders>>[number];
+
+async function markProcessFailure(
+  db: DbInstance,
+  recordingId: number,
+  attempts: number,
+  error: string,
+): Promise<void> {
+  const processAttempts = attempts + 1;
+  try {
+    await db
+      .update(recordings)
+      .set({
+        processAttempts,
+        lastError: error.slice(0, 500),
+        nextRetryAt: nextProcessRetry(processAttempts, new Date()),
+      })
+      .where(eq(recordings.id, recordingId));
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+  }
+}
+
+async function loadTranscript(videoId: string): Promise<
+  | { ok: true; text: string; segments: Array<{ start: number; text: string }> | null }
+  | { ok: false; error: string }
+> {
+  const transcript = await fetchYouTubeTranscript(videoId);
+  if (transcript) {
+    const segments = await fetchYouTubeTranscriptSegments(videoId);
+    return { ok: true, text: transcript, segments };
+  }
+  const fb = await transcribeFallback(videoId);
+  if (!fb) return { ok: false, error: "no captions and transcription worker is not configured" };
+  if (!fb.ok) return { ok: false, error: fb.error || "transcription worker failed" };
+  return { ok: true, text: fb.text, segments: fb.segments };
+}
+
+async function refreshEndedMeta(
+  db: DbInstance,
+  recordingId: number,
+  meta: Extract<YoutubeWatchMeta, { status: "ok" }>,
+): Promise<void> {
+  const patch: {
+    title?: string;
+    durationSeconds?: number | null;
+    sessionDate?: Date;
+    descriptionChaptersJson?: YoutubeWatchMeta extends never ? never : unknown;
+  } = {};
+  if (meta.title) patch.title = meta.title.slice(0, 255);
+  if (meta.durationSeconds) patch.durationSeconds = meta.durationSeconds;
+  if (meta.startTimestamp) patch.sessionDate = meta.startTimestamp;
+  if (meta.description != null) patch.descriptionChaptersJson = meta.chapters;
+  if (Object.keys(patch).length === 0) return;
+  try {
+    await db.update(recordings).set(patch).where(eq(recordings.id, recordingId));
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+    const { descriptionChaptersJson: _chapters, ...rest } = patch;
+    if (Object.keys(rest).length > 0) {
+      await db.update(recordings).set(rest).where(eq(recordings.id, recordingId));
+    }
+  }
+}
+
+async function understandRecording(
+  db: DbInstance,
+  rec: { id: number; title: string; processAttempts: number },
+  holders: HolderRow[],
+  holderByRole: Map<string, HolderRow>,
+): Promise<{ transcript: boolean; synthesized: boolean; tasksProposed: number; error?: string }> {
+  let row: { youtubeVideoId: string | null; processAttempts: number; title: string } | undefined;
+  try {
+    const [loaded] = await db
+      .select({
+        youtubeVideoId: recordings.youtubeVideoId,
+        processAttempts: recordings.processAttempts,
+        title: recordings.title,
+      })
+      .from(recordings)
+      .where(eq(recordings.id, rec.id))
+      .limit(1);
+    row = loaded;
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+    const [loaded] = await db
+      .select({
+        youtubeVideoId: recordings.youtubeVideoId,
+        title: recordings.title,
+      })
+      .from(recordings)
+      .where(eq(recordings.id, rec.id))
+      .limit(1);
+    row = loaded ? { ...loaded, processAttempts: 0 } : undefined;
+  }
+  const videoId = row?.youtubeVideoId;
+  if (!videoId) return { transcript: false, synthesized: false, tasksProposed: 0, error: "no youtube id" };
+
+  const loaded = await loadTranscript(videoId);
+  if (!loaded.ok) {
+    await markProcessFailure(db, rec.id, row?.processAttempts ?? rec.processAttempts, loaded.error);
+    pipelineLog.error(`transcript failed for recording ${rec.id}: ${loaded.error}`);
+    return { transcript: false, synthesized: false, tasksProposed: 0, error: loaded.error };
   }
 
-  const holders = await loadHolders(db);
-  const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
-
-  // Captions first, Whisper worker second.
-  let transcript = await fetchYouTubeTranscript(rec.youtubeVideoId);
-  let transcriptSegments = transcript ? await fetchYouTubeTranscriptSegments(rec.youtubeVideoId) : null;
-  if (!transcript) {
-    const fb = await transcribeFallback(rec.youtubeVideoId);
-    if (fb) { transcript = fb.text; transcriptSegments = fb.segments; }
+  try {
+    await db
+      .update(recordings)
+      .set({
+        transcript: loaded.text,
+        transcriptJson: loaded.segments ?? null,
+        lastError: null,
+        nextRetryAt: null,
+      })
+      .where(eq(recordings.id, rec.id));
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+    await db
+      .update(recordings)
+      .set({
+        transcript: loaded.text,
+        transcriptJson: loaded.segments ?? null,
+      })
+      .where(eq(recordings.id, rec.id));
   }
-  if (!transcript) {
-    return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "no_transcript" };
-  }
-  await db.update(recordings)
-    .set({ transcript, transcriptJson: transcriptSegments ?? null })
-    .where(eq(recordings.id, rec.id));
 
-  // Synthesize.
   let synthesized = false;
-  const synth = await runSynthesizePass({ title: rec.title, transcript });
+  const synth = await runSynthesizePass({ title: row?.title || rec.title, transcript: loaded.text });
   if (synth) {
     await db.update(recordings).set({
       overview: synth.overview || null,
@@ -753,23 +803,168 @@ export async function reprocessRecording(recordingId: number): Promise<{
     synthesized = true;
   }
 
-  // Extract tasks -> proposed bounties, same as the main loop.
   let tasksProposed = 0;
-  const drafts = await runExtractTasksPass({ title: rec.title, transcript, holders });
+  const drafts = await runExtractTasksPass({ title: row?.title || rec.title, transcript: loaded.text, holders });
   for (const draft of drafts) {
     const matched = draft.roleSlug ? holderByRole.get(draft.roleSlug) : null;
     try {
       await persistProposedBounty(db, draft, rec.id, matched);
       tasksProposed += 1;
-    } catch { /* skip on insert error, same as main loop */ }
+    } catch (e) {
+      pipelineLog.error(`insert task for recording ${rec.id}`, e);
+    }
   }
 
-  // Publish once. Guards on emailSent + forumPostId make this idempotent.
-  try { await finalizeRecording(rec.id); } catch { /* finalize errors are non-fatal */ }
+  try {
+    await finalizeRecording(rec.id);
+  } catch (e) {
+    pipelineLog.error(`finalize recording ${rec.id}`, e);
+  }
   try { await mapRecordingOntoCourse(rec.id); } catch { /* course map errors are non-fatal */ }
 
-  return { ok: true, transcript: true, synthesized, tasksProposed };
+  return { transcript: true, synthesized, tasksProposed };
 }
 
-// Suppress unused-import warning when sql is only referenced by a future helper.
-void sql;
+async function sweepRecordingRetries(
+  db: DbInstance,
+  report: PipelineReport,
+  holders: HolderRow[],
+  holderByRole: Map<string, HolderRow>,
+): Promise<void> {
+  const now = new Date();
+  const due = await db
+    .select({
+      id: recordings.id,
+      title: recordings.title,
+      youtubeVideoId: recordings.youtubeVideoId,
+      transcript: recordings.transcript,
+      overview: recordings.overview,
+      aiSummary: recordings.aiSummary,
+      processAttempts: recordings.processAttempts,
+      nextRetryAt: recordings.nextRetryAt,
+    })
+    .from(recordings)
+    .where(and(
+      sql`${recordings.youtubeVideoId} IS NOT NULL`,
+      or(isNull(recordings.transcript), eq(recordings.transcript, "")),
+      or(isNull(recordings.overview), eq(recordings.overview, "")),
+      or(isNull(recordings.aiSummary), eq(recordings.aiSummary, "")),
+      lt(recordings.processAttempts, MAX_PROCESS_ATTEMPTS),
+      or(isNull(recordings.nextRetryAt), lte(recordings.nextRetryAt, now)),
+    ))
+    .limit(MAX_RETRIES_PER_RUN);
+
+  for (const row of due) {
+    if (!recordingNeedsAutoRetry(row, now) || !row.youtubeVideoId) continue;
+    report.retried += 1;
+    const meta = await fetchYouTubeWatchMeta(row.youtubeVideoId);
+    if (meta.status === "unknown") {
+      const error = "YouTube watch page had no player data";
+      await markProcessFailure(db, row.id, row.processAttempts, error);
+      report.errors.push(`${row.youtubeVideoId}: ${error}`);
+      continue;
+    }
+    if (!meta.ended) {
+      if (meta.title) {
+        await db.update(recordings).set({ title: meta.title.slice(0, 255) }).where(eq(recordings.id, row.id));
+      }
+      const error = `stream has not ended (${meta.liveBroadcastContent})`;
+      await markProcessFailure(db, row.id, row.processAttempts, error);
+      report.errors.push(`${row.youtubeVideoId}: ${error}`);
+      continue;
+    }
+    await refreshEndedMeta(db, row.id, meta);
+    try {
+      await linkRecordingToMatchingEvent(row.id);
+    } catch (e) {
+      report.errors.push(`link ${row.youtubeVideoId}: ${(e as Error).message}`);
+    }
+    const understood = await understandRecording(db, row, holders, holderByRole);
+    if (understood.transcript) report.transcribed += 1;
+    if (understood.synthesized) report.synthesized += 1;
+    report.tasksProposed += understood.tasksProposed;
+    if (understood.error) report.errors.push(`${row.youtubeVideoId}: ${understood.error}`);
+  }
+}
+
+/**
+ * Force one already-ingested recording through metadata refresh, transcript,
+ * synthesize, tasks, and finalize. Does not clear emailSent, so a letter that
+ * already went out is not sent again.
+ */
+export async function reprocessRecording(recordingId: number): Promise<{
+  ok: boolean;
+  transcript: boolean;
+  synthesized: boolean;
+  tasksProposed: number;
+  reason?: string;
+}> {
+  const db = await getDb();
+  if (!db) return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "no_db" };
+
+  const [rec] = await db
+    .select({
+      id: recordings.id,
+      title: recordings.title,
+      youtubeVideoId: recordings.youtubeVideoId,
+      processAttempts: recordings.processAttempts,
+    })
+    .from(recordings)
+    .where(eq(recordings.id, recordingId))
+    .limit(1);
+  if (!rec || !rec.youtubeVideoId) {
+    return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: "not_found_or_no_video" };
+  }
+
+  const meta = await fetchYouTubeWatchMeta(rec.youtubeVideoId);
+  if (meta.status === "ok" && !meta.ended) {
+    if (meta.title) {
+      await db.update(recordings).set({ title: meta.title.slice(0, 255) }).where(eq(recordings.id, rec.id));
+    }
+    const error = `stream has not ended (${meta.liveBroadcastContent})`;
+    await markProcessFailure(db, rec.id, rec.processAttempts, error);
+    return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: error };
+  }
+  if (meta.status === "ok") {
+    await refreshEndedMeta(db, rec.id, meta);
+    try { await linkRecordingToMatchingEvent(rec.id); } catch { /* link errors are non-fatal */ }
+  }
+
+  const holders = await loadHolders(db);
+  const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
+  const understood = await understandRecording(db, rec, holders, holderByRole);
+  if (!understood.transcript) {
+    return {
+      ok: false,
+      transcript: false,
+      synthesized: false,
+      tasksProposed: 0,
+      reason: understood.error || "no_transcript",
+    };
+  }
+  return {
+    ok: true,
+    transcript: true,
+    synthesized: understood.synthesized,
+    tasksProposed: understood.tasksProposed,
+  };
+}
+
+const kickCoordinationPipeline = createSingleFlight(async () => {
+  try {
+    const report = await runCoordinationPipeline({});
+    pipelineLog.info("background pipeline finished", {
+      ingested: report.ingested,
+      retried: report.retried,
+      transcribed: report.transcribed,
+      errors: report.errors.length,
+    });
+  } catch (err) {
+    pipelineLog.error("background pipeline failed", err);
+  }
+});
+
+/** Ack the cron HTTP call, then keep working on this process. Overlapping crons do not stack. */
+export function startCoordinationPipelineBackground(): { started: boolean } {
+  return kickCoordinationPipeline();
+}

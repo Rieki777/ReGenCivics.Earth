@@ -14,7 +14,7 @@
 import { getDb } from "../db";
 import * as db from "../db";
 import { recordings, events, forumCategories } from "../../drizzle/schema";
-import { eq, gte, lte, isNotNull, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { emailsAcceptedForInquiry } from "../emailTracking";
 import { notifyRecordingReady } from "../_core/notify";
@@ -22,7 +22,7 @@ import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import { ENV } from "../_core/env";
-import { linkRecordingToMatchingEvent } from "./recordingEventLink";
+import { linkBlocksPublish, linkRecordingToMatchingEvent, preferredRecordingYoutubeUrl } from "./recordingEventLink";
 import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
 import { courseWeekFromRecording } from "@shared/sessionCourse";
 import { automaticRecordingMail, priorLetterAlreadySent } from "../../shared/editedCut";
@@ -32,7 +32,8 @@ import { extractYoutubeVideoId } from "../../shared/youtubeVideoId";
 import { chaptersForSend } from "./youtubeDescription";
 import { sendPacedEmails } from "./pacedEmail";
 import { sendSessionNotesEmail } from "./editedCutEmailSend";
-import { isMissingSchema, recordingWithoutEditedCutColumns } from "./schemaTolerance";
+import { isMissingSchema, recordingWithoutEditedCutColumns, recordingWithoutPipelineRetryColumns } from "./schemaTolerance";
+import { chaptersForRecap } from "./youtubeWatchMeta";
 
 const log = logger("recording-finalize");
 
@@ -50,6 +51,23 @@ async function loadRecordingRow(database: Database, recordingId: number): Promis
     return recording ?? null;
   } catch (err) {
     if (!isMissingSchema(err)) throw err;
+    try {
+      const [recording] = await database
+        .select(recordingWithoutPipelineRetryColumns())
+        .from(recordings)
+        .where(eq(recordings.id, recordingId))
+        .limit(1);
+      if (!recording) return null;
+      log.warn(`recording ${recordingId} loaded without retry columns; migration 0291 is not applied`);
+      return {
+        ...recording,
+        processAttempts: 0,
+        lastError: null,
+        nextRetryAt: null,
+      };
+    } catch (retryErr) {
+      if (!isMissingSchema(retryErr)) throw retryErr;
+    }
     log.warn(`recording ${recordingId} loaded without edited-cut columns; migration 0290 is not applied`);
     const [recording] = await database
       .select(recordingWithoutEditedCutColumns())
@@ -64,6 +82,9 @@ async function loadRecordingRow(database: Database, recordingId: number): Promis
       editedCutMatch: null,
       editedEmailSent: 0,
       descriptionChaptersJson: null,
+      processAttempts: 0,
+      lastError: null,
+      nextRetryAt: null,
     };
   }
 }
@@ -84,52 +105,46 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     return;
   }
 
-  await refreshDescriptionChapters(database, recording);
+  // Link first. An ambiguous match, or a session that already has another
+  // recording, must not create a forum post or send email.
+  let link;
+  try {
+    link = await linkRecordingToMatchingEvent(recordingId);
+  } catch (err) {
+    log.error("recording event link failed:", err);
+    link = { action: "none" as const, reason: "link_failed" };
+  }
+  if (linkBlocksPublish(link)) {
+    log.info(`recording ${recordingId} not published (${link.reason})`);
+    return;
+  }
 
-  // ── 1. Forum thread: reply to a matched event thread, or create a fresh post ──
+  await refreshDescriptionChapters(database, recording);
+  const chapterMd = await chapterMarkdown(recording);
+
+  // ── 1. Forum thread: reply on the linked event, or a fresh post when nothing matched ──
   if (!recording.forumPostId) {
     try {
-      const recordingTime = recording.sessionDate instanceof Date ? recording.sessionDate : new Date();
-      const windowStart = new Date(recordingTime.getTime() - 4 * 3600000);
-      const windowEnd = new Date(recordingTime.getTime() + 4 * 3600000);
-
-      const [matchedEvent] = await database
+      const [owner] = await database
         .select({ forumThreadId: events.forumThreadId, id: events.id })
         .from(events)
-        .where(and(
-          gte(events.startTime, windowStart),
-          lte(events.startTime, windowEnd),
-          isNotNull(events.forumThreadId),
-        ))
+        .where(eq(events.recordingId, recordingId))
         .limit(1);
 
       let forumPostId: number | null = null;
 
-      if (matchedEvent?.forumThreadId) {
-        // Reply to the pre-event thread with the recording link.
+      if (owner?.forumThreadId) {
         const sessionDateStr = formatSessionDate(recording.sessionDate);
         const summarySection = recording.aiSummary ? `\n\n**What we covered**\n\n${recording.aiSummary}` : "";
-        const replyContent = `The recording from ${sessionDateStr} is ready.\n\n${watchLinkMd(recording)}${summarySection}${chapterBlock(recording)}\n\nDrop any follow-up thoughts below.`;
+        const replyContent = `The recording from ${sessionDateStr} is ready.\n\n${watchLinkMd(recording)}${summarySection}${chapterMd ? `\n\n${chapterMd}` : ""}\n\nDrop any follow-up thoughts below.`;
 
         const replyId = await db
-          .createForumReply({ postId: matchedEvent.forumThreadId, authorId: 1, content: replyContent })
+          .createForumReply({ postId: owner.forumThreadId, authorId: 1, content: replyContent })
           .catch(() => null);
-        forumPostId = matchedEvent.forumThreadId;
-        if (replyId) log.info(`Replied to forum thread ${matchedEvent.forumThreadId} for recording ${recordingId}`);
-
-        // Link recording to event for the Schedule page replay button; mirror
-        // youtubeUrl onto the event so the Historical card renders without a join.
-        await database
-          .update(events)
-          .set({
-            recordingId,
-            status: "completed",
-            ...(recording.youtubeUrl ? { youtubeUrl: recording.youtubeUrl } : {}),
-          })
-          .where(eq(events.id, matchedEvent.id));
-        log.info(`Linked recording ${recordingId} to event ${matchedEvent.id}`);
-      } else {
-        forumPostId = await createRecordingForumPost(recording);
+        forumPostId = owner.forumThreadId;
+        if (replyId) log.info(`Replied to forum thread ${owner.forumThreadId} for recording ${recordingId}`);
+      } else if (!owner) {
+        forumPostId = await createRecordingForumPost(recording, chapterMd);
       }
 
       if (forumPostId) {
@@ -140,15 +155,6 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     } catch (err) {
       log.error("Forum post creation failed:", err);
     }
-  }
-
-  // ── 1b. Event link (independent of forum): unique YouTube id or ±4h session ──
-  // Prefer filling event.youtubeUrl + recordingId so Historical Watch works even
-  // when the event never got a forumThreadId. Idempotent / refuses ambiguity.
-  try {
-    await linkRecordingToMatchingEvent(recordingId);
-  } catch (err) {
-    log.error("recording↔event link failed:", err);
   }
 
   // ── 2. Email subscribers (once per recording) ──
@@ -197,7 +203,19 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
 
 // ── Forum post creation (fallback when no event thread matches) ──
 
-async function createRecordingForumPost(recording: RecordingRow): Promise<number | null> {
+async function chapterMarkdown(recording: RecordingRow): Promise<string> {
+  const videoId =
+    recording.youtubeVideoId ||
+    extractYoutubeVideoId(preferredRecordingYoutubeUrl(recording));
+  const chapters = await chaptersForRecap({
+    videoId,
+    descriptionChapters: recording.descriptionChaptersJson,
+    aiChapters: recording.chaptersJson,
+  });
+  return chaptersJumpMarkdown(chapters, videoId);
+}
+
+async function createRecordingForumPost(recording: RecordingRow, chapterMd = ""): Promise<number | null> {
   const SYSTEM_AUTHOR_ID = 1;
   const database = await getDb();
   if (!database) return null;
@@ -217,7 +235,8 @@ async function createRecordingForumPost(recording: RecordingRow): Promise<number
       ? `\n\n**[Watch the recording](${recording.riversideUrl})**`
       : "";
   const summarySection = recording.aiSummary ? `\n\n## What we covered\n\n${recording.aiSummary}` : "";
-  const content = `Recording from ${sessionDateStr}${durationStr ? ` (${durationStr})` : ""}.${watchLink}${summarySection}${chapterBlock(recording)}\n\nWhat stood out to you? What questions came up? Drop your thoughts below.`;
+  const chaptersSection = chapterMd ? `\n\n${chapterMd}` : "";
+  const content = `Recording from ${sessionDateStr}${durationStr ? ` (${durationStr})` : ""}.${watchLink}${summarySection}${chaptersSection}\n\nWhat stood out to you? What questions came up? Drop your thoughts below.`;
 
   const postId = await db.createForumPost({
     categoryId,
@@ -379,15 +398,6 @@ function descriptionOrAiChapters(recording: {
   const fromDescription = coerceChapters(recording.descriptionChaptersJson);
   if (fromDescription.length) return fromDescription;
   return coerceChapters(recording.chaptersJson);
-}
-
-function chapterBlock(recording: RecordingRow): string {
-  const videoId = extractYoutubeVideoId(recording.editedYoutubeVideoId)
-    || extractYoutubeVideoId(recording.editedYoutubeUrl)
-    || extractYoutubeVideoId(recording.youtubeVideoId)
-    || extractYoutubeVideoId(recording.youtubeUrl);
-  const markdown = chaptersJumpMarkdown(descriptionOrAiChapters(recording), videoId);
-  return markdown ? `\n\n${markdown}` : "";
 }
 
 async function refreshDescriptionChapters(

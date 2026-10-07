@@ -15,11 +15,13 @@ import {
   closeoutFilterMatch,
   countCloseoutFilters,
   isRecordingCloseoutFilter,
+  recordingInCloseoutQueue,
   resolveCloseoutRow,
   type RecordingCloseoutFilter,
   type RecordingCloseoutStatus,
 } from "../../shared/recordingCloseout";
 import { loadCloseoutMetaBag, patchCloseoutMeta } from "../lib/recordingCloseoutStore";
+import { isMissingSchema } from "../lib/schemaTolerance";
 
 export const recordingsRouter = router({
   // Public: list recordings (for a future /recordings page)
@@ -55,28 +57,36 @@ export const recordingsRouter = router({
     .query(async ({ input }) => {
       const database = await getDb();
       if (!database) return null;
-      const [rec] = await database
-        .select({
-          id: recordings.id,
-          title: recordings.title,
-          sessionDate: recordings.sessionDate,
-          durationSeconds: recordings.durationSeconds,
-          youtubeUrl: recordings.youtubeUrl,
-          editedYoutubeUrl: recordings.editedYoutubeUrl,
-          riversideUrl: recordings.riversideUrl,
-          thumbnailUrl: recordings.thumbnailUrl,
-          overview: recordings.overview,
-          aiSummary: recordings.aiSummary,
-          decisionsJson: recordings.decisionsJson,
-          actionItemsJson: recordings.actionItemsJson,
-          chaptersJson: recordings.chaptersJson,
-          transcriptJson: recordings.transcriptJson,
-          forumPostId: recordings.forumPostId,
-        })
-        .from(recordings)
-        .where(eq(recordings.id, input.id))
-        .limit(1);
-      return rec ?? null;
+      const cols = {
+        id: recordings.id,
+        title: recordings.title,
+        sessionDate: recordings.sessionDate,
+        durationSeconds: recordings.durationSeconds,
+        youtubeUrl: recordings.youtubeUrl,
+        editedYoutubeUrl: recordings.editedYoutubeUrl,
+        riversideUrl: recordings.riversideUrl,
+        thumbnailUrl: recordings.thumbnailUrl,
+        overview: recordings.overview,
+        aiSummary: recordings.aiSummary,
+        decisionsJson: recordings.decisionsJson,
+        actionItemsJson: recordings.actionItemsJson,
+        chaptersJson: recordings.chaptersJson,
+        youtubeVideoId: recordings.youtubeVideoId,
+        transcriptJson: recordings.transcriptJson,
+        forumPostId: recordings.forumPostId,
+      };
+      try {
+        const [rec] = await database
+          .select({ ...cols, descriptionChaptersJson: recordings.descriptionChaptersJson })
+          .from(recordings)
+          .where(eq(recordings.id, input.id))
+          .limit(1);
+        return rec ?? null;
+      } catch (err) {
+        if (!isMissingSchema(err)) throw err;
+        const [rec] = await database.select(cols).from(recordings).where(eq(recordings.id, input.id)).limit(1);
+        return rec ? { ...rec, descriptionChaptersJson: null } : null;
+      }
     }),
 
   // Public: get recording linked to a specific event (or unique YouTube match)
@@ -227,10 +237,81 @@ export const recordingsRouter = router({
         .limit(input?.limit ?? 50);
     }),
 
+  // Public library: every recording, with its event and description chapters.
+  library: publicProcedure.query(async () => {
+    const database = await getDb();
+    if (!database) return [];
+    const { events } = await import("../../drizzle/schema");
+    const { recordingSeries } = await import("../../shared/recordingLibrary");
+    const libraryCols = {
+      id: recordings.id,
+      title: recordings.title,
+      sessionDate: recordings.sessionDate,
+      durationSeconds: recordings.durationSeconds,
+      youtubeUrl: recordings.youtubeUrl,
+      editedYoutubeUrl: recordings.editedYoutubeUrl,
+      youtubeVideoId: recordings.youtubeVideoId,
+      thumbnailUrl: recordings.thumbnailUrl,
+      overview: recordings.overview,
+      aiSummary: recordings.aiSummary,
+      chaptersJson: recordings.chaptersJson,
+      eventId: events.id,
+      eventTitle: events.title,
+      eventSeason: events.season,
+    };
+    const libraryQuery = () => database
+      .select(libraryCols)
+      .from(recordings)
+      .leftJoin(events, eq(events.recordingId, recordings.id))
+      .orderBy(desc(recordings.sessionDate), desc(recordings.createdAt))
+      .limit(200);
+    let rows;
+    try {
+      rows = await database
+        .select({ ...libraryCols, descriptionChaptersJson: recordings.descriptionChaptersJson })
+        .from(recordings)
+        .leftJoin(events, eq(events.recordingId, recordings.id))
+        .orderBy(desc(recordings.sessionDate), desc(recordings.createdAt))
+        .limit(200);
+    } catch (err) {
+      if (!isMissingSchema(err)) throw err;
+      rows = (await libraryQuery()).map((row) => ({ ...row, descriptionChaptersJson: null }));
+    }
+    const seen = new Set<number>();
+    const out = [];
+    for (const row of rows) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      out.push({
+        id: row.id,
+        title: row.title,
+        sessionDate: row.sessionDate,
+        durationSeconds: row.durationSeconds,
+        youtubeUrl: row.youtubeUrl,
+        editedYoutubeUrl: row.editedYoutubeUrl,
+        youtubeVideoId: row.youtubeVideoId,
+        thumbnailUrl: row.thumbnailUrl,
+        overview: row.overview,
+        aiSummary: row.aiSummary,
+        descriptionChaptersJson: row.descriptionChaptersJson,
+        chaptersJson: row.chaptersJson,
+        event: row.eventId
+          ? { id: row.eventId, title: row.eventTitle, season: row.eventSeason }
+          : null,
+        series: recordingSeries({
+          title: row.title,
+          eventTitle: row.eventTitle,
+          eventSeason: row.eventSeason,
+        }),
+      });
+    }
+    return out;
+  }),
+
   // Admin: force an already-ingested recording through the understand + publish path.
-  // Runs transcript -> synthesize -> extract-tasks -> finalize; idempotent.
+  // confirm is required so an unconfirmed call cannot run. emailSent is left alone.
   reprocess: adminProcedure
-    .input(z.object({ id: z.number().int().positive() }))
+    .input(z.object({ id: z.number().int().positive(), confirm: z.literal(true) }))
     .mutation(async ({ input }) => {
       const { reprocessRecording } = await import("../jobs/coordinationPipeline");
       return reprocessRecording(input.id);
@@ -281,6 +362,7 @@ export const recordingsRouter = router({
 
   // Admin: backfill unique recording↔event links for honesty (Historical Watch).
   repairEventLinks: adminProcedure
+    .input(z.object({ confirm: z.literal(true) }))
     .mutation(async () => {
       const { repairPastEventRecordingLinks } = await import("../lib/recordingEventLink");
       return repairPastEventRecordingLinks({ limit: 200 });
@@ -376,7 +458,7 @@ export const recordingsRouter = router({
           })
           .from(recordings)
           .orderBy(desc(recordings.sessionDate), desc(recordings.createdAt))
-          .limit(limit),
+          .limit(1000),
         database
           .select({
             id: eventsTable.id,
@@ -404,7 +486,12 @@ export const recordingsRouter = router({
       }
 
       const nowMs = Date.now();
-      const resolved = recRows.map((row) => {
+      const eligibleRows = recRows.filter((row) => recordingInCloseoutQueue({
+        sessionDate: row.sessionDate,
+        createdAt: row.createdAt,
+        linkedToEvent: eventByRecording.has(row.id),
+      }));
+      const resolved = eligibleRows.map((row) => {
         const meta = bag[String(row.id)] ?? null;
         const event = eventByRecording.get(row.id);
         const r = resolveCloseoutRow(row, meta, {
@@ -433,7 +520,7 @@ export const recordingsRouter = router({
       });
 
       const counts = countCloseoutFilters(resolved);
-      const rows = resolved.filter((r) => closeoutFilterMatch(r, filter));
+      const rows = resolved.filter((r) => closeoutFilterMatch(r, filter)).slice(0, limit);
 
       const roleOptions = holderRows
         .filter((h) => Number(h.isActive) === 1)

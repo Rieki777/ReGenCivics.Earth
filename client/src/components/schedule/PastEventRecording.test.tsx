@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { PastEventCtaGate, PastEventExpandedPanel } from "./PastEventRecording";
+import { expandedSummaryText, PastEventCtaGate, PastEventExpandedPanel } from "./PastEventRecording";
 import { CALENDAR_LABELS } from "@/components/CalendarCta";
 
 vi.mock("@/lib/trpc", () => ({
@@ -101,7 +101,7 @@ describe("PastEventExpandedPanel", () => {
     );
     expect(screen.getByTestId("past-event-discuss")).toHaveTextContent("Discuss");
     expect(screen.getByTestId("recording-detail")).toBeTruthy();
-    expect(screen.getByText("Chapters")).toBeTruthy();
+    expect(screen.getByText("Jump to a moment")).toBeTruthy();
     expect(screen.getByText("Follow-ups")).toBeTruthy();
     expect(screen.getByText("Intro")).toBeTruthy();
 
@@ -142,5 +142,14 @@ describe("PastEventExpandedPanel", () => {
       />,
     );
     expect(screen.getByTestId("past-event-audience-cta")).toHaveAttribute("href", "/connect");
+  });
+});
+
+describe("expandedSummaryText", () => {
+  it("shows a hand-written summary when overview is empty", () => {
+    expect(expandedSummaryText(null, "Hand-written notes from the call.")).toBe(
+      "Hand-written notes from the call.",
+    );
+    expect(expandedSummaryText("Overview wins.", "Hand-written notes.")).toBe("Overview wins.");
   });
 });

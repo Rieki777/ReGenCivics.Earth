@@ -33,6 +33,25 @@ export function AdminRecordingsTab() {
     },
   });
   const deleteMutation = trpc.recordings.delete.useMutation({ onSuccess: () => refetch() });
+  const reprocess = trpc.recordings.reprocess.useMutation({
+    onSuccess: (data) => {
+      if (data.ok) toast.success("Reprocess finished. Emails already sent stay sent.");
+      else toast.error(data.reason ? `Processing failed: ${data.reason}` : "Reprocess did not finish");
+      setConfirmReprocessId(null);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const repairLinks = trpc.recordings.repairEventLinks.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Repair links checked ${data.examined} events and linked ${data.linked}.`);
+      setConfirmRepair(false);
+      refetch();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const [confirmReprocessId, setConfirmReprocessId] = useState<number | null>(null);
+  const [confirmRepair, setConfirmRepair] = useState(false);
   const draftLetter = trpc.recordings.draftPostSessionLetter.useMutation({
     onSuccess: (res) => {
       queueOutboundWriteFill({
@@ -84,7 +103,26 @@ export function AdminRecordingsTab() {
           <h2 className="text-2xl font-bold text-[#1a472a]">Recordings</h2>
           <p className="text-[#1a472a]/85 text-sm mt-1">Recordings received from the recording platform via webhook. Add YouTube URLs and send email summaries from here.</p>
         </div>
+        <Button variant="outline" onClick={() => setConfirmRepair(true)}>Repair links</Button>
       </div>
+      {confirmRepair && (
+        <div className="rounded-xl border border-[#1a472a]/20 bg-[#f0f7f0] p-4" data-testid="repair-links-confirm">
+          <p className="text-sm text-[#1a472a] mb-3">
+            Repair links attaches a recording to an event when the YouTube id, the session time, or the episode title matches one event.
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="bg-[#1a472a] text-white"
+              disabled={repairLinks.isPending}
+              onClick={() => repairLinks.mutate({ confirm: true })}
+            >
+              {repairLinks.isPending ? "Repairing…" : "Repair links"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmRepair(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
 
       <CourseTimestamps />
 
@@ -161,6 +199,21 @@ export function AdminRecordingsTab() {
                 {rec.aiSummary && (
                   <p className="text-sm text-[#1a472a]/85 line-clamp-3">{rec.aiSummary}</p>
                 )}
+                {rec.lastError && (
+                  <p className="text-sm text-red-700" data-testid="recording-last-error">
+                    Processing failed: {rec.lastError}
+                  </p>
+                )}
+                {(rec.processAttempts > 0 || rec.nextRetryAt) && (
+                  <p className="text-xs text-[#1a472a]/70">
+                    Tried {rec.processAttempts} {rec.processAttempts === 1 ? "time" : "times"}
+                    {rec.nextRetryAt
+                      ? `. Next retry ${new Date(rec.nextRetryAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}`
+                      : rec.processAttempts > 0
+                        ? ". Automatic retries are finished"
+                        : ""}
+                  </p>
+                )}
                 <EditedCutPanel
                   rec={rec}
                   ledger={ledger}
@@ -179,6 +232,26 @@ export function AdminRecordingsTab() {
               <Button size="sm" variant="outline" onClick={() => startEdit(rec)}>
                 <Edit className="w-3 h-3 mr-1" /> Edit
               </Button>
+              {confirmReprocessId === rec.id ? (
+                <div className="flex flex-wrap items-center gap-2" data-testid="reprocess-confirm">
+                  <p className="text-xs text-[#1a472a]">
+                    Reprocess this recording? People who already got the letter will not get another one.
+                  </p>
+                  <Button
+                    size="sm"
+                    className="bg-[#1a472a] text-white"
+                    disabled={reprocess.isPending}
+                    onClick={() => reprocess.mutate({ id: rec.id, confirm: true })}
+                  >
+                    {reprocess.isPending ? "Reprocessing…" : "Reprocess"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setConfirmReprocessId(null)}>Cancel</Button>
+                </div>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setConfirmReprocessId(rec.id)}>
+                  Reprocess
+                </Button>
+              )}
               {!rec.emailSent && !rec.editedEmailSent && (
                 <Button
                   size="sm"

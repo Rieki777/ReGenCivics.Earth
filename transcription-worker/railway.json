@@ -7,6 +7,7 @@
   "deploy": {
     "startCommand": "sh -c 'uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}'",
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 3
+    "restartPolicyMaxRetries": 3,
+    "watchPatterns": ["transcription-worker/**"]
   }
 }

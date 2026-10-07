@@ -14,6 +14,16 @@ import {
   truncateOneLine,
 } from "@/lib/eventTemporal";
 import { pickAudienceCta } from "@shared/audienceCta";
+import { chapterWatchUrl, preferredChapters } from "@shared/youtubeChapters";
+import { extractYoutubeVideoId } from "@shared/youtubeVideoId";
+import { ChapterJumpList } from "@/components/recording/ChapterJumpList";
+
+export function expandedSummaryText(
+  overview?: string | null,
+  aiSummary?: string | null,
+): string {
+  return (overview ?? "").trim() || (aiSummary ?? "").trim();
+}
 
 function fmtTs(sec: number): string {
   const s = Math.max(0, Math.floor(sec));
@@ -23,11 +33,6 @@ function fmtTs(sec: number): string {
   return h > 0
     ? `${h}:${String(m).padStart(2, "0")}:${String(ss).padStart(2, "0")}`
     : `${m}:${String(ss).padStart(2, "0")}`;
-}
-
-function chapterUrl(youtubeUrl: string, tSeconds: number): string {
-  const sep = youtubeUrl.includes("?") ? "&" : "?";
-  return `${youtubeUrl}${sep}t=${Math.max(0, Math.floor(tSeconds))}s`;
 }
 
 export type PastEventRecordingProps = {
@@ -180,8 +185,8 @@ export function RecordingDetail({ id }: { id: number }) {
     );
   }
 
-  const chapters =
-    (data.chaptersJson as Array<{ tSeconds: number; title: string }> | null) ?? [];
+  const summary = expandedSummaryText(data.overview, data.aiSummary);
+  const chapters = preferredChapters(data.descriptionChaptersJson, data.chaptersJson);
   const decisions = (data.decisionsJson as string[] | null) ?? [];
   const actionItems =
     (data.actionItemsJson as Array<{ owner: string; item: string }> | null) ?? [];
@@ -195,7 +200,7 @@ export function RecordingDetail({ id }: { id: number }) {
     }) ?? null;
 
   const hasSummary =
-    !!data.overview ||
+    !!summary ||
     chapters.length > 0 ||
     decisions.length > 0 ||
     actionItems.length > 0 ||
@@ -217,43 +222,16 @@ export function RecordingDetail({ id }: { id: number }) {
       className="pt-3 space-y-4 text-sm border-t border-white/10"
       data-testid="recording-detail"
     >
-      {data.overview && (
-        <p className="text-white/80 leading-relaxed">{data.overview}</p>
+      {summary && (
+        <p className="text-white/80 leading-relaxed">{summary}</p>
       )}
 
-      {chapters.length > 0 && (
-        <div>
-          <h5 className="text-[#7dd87d] font-semibold text-[11px] uppercase tracking-wide mb-2">
-            Chapters
-          </h5>
-          <ul className="space-y-1">
-            {chapters.map((c, i) => (
-              <li key={i}>
-                {yt ? (
-                  <a
-                    href={chapterUrl(yt, c.tSeconds)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white/80 hover:text-[#7dd87d] transition-colors"
-                  >
-                    <span className="text-[#7dd87d]/70 font-mono mr-2">
-                      {fmtTs(c.tSeconds)}
-                    </span>
-                    {c.title}
-                  </a>
-                ) : (
-                  <span className="text-white/80">
-                    <span className="text-white/60 font-mono mr-2">
-                      {fmtTs(c.tSeconds)}
-                    </span>
-                    {c.title}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ChapterJumpList
+        descriptionChapters={data.descriptionChaptersJson}
+        aiChapters={data.chaptersJson}
+        videoId={data.youtubeVideoId ?? extractYoutubeVideoId(yt)}
+        watchUrl={yt}
+      />
 
       {decisions.length > 0 && (
         <div>
@@ -302,9 +280,9 @@ export function RecordingDetail({ id }: { id: number }) {
             <div className="mt-2 max-h-64 overflow-y-auto space-y-1 pr-2">
               {transcript.map((seg, i) => (
                 <p key={i} className="text-white/60 leading-relaxed">
-                  {yt ? (
+                  {yt && (data.youtubeVideoId || extractYoutubeVideoId(yt)) ? (
                     <a
-                      href={chapterUrl(yt, seg.start)}
+                      href={chapterWatchUrl(data.youtubeVideoId || extractYoutubeVideoId(yt) || "", seg.start)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#7dd87d]/60 font-mono mr-2 hover:text-[#7dd87d]"

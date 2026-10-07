@@ -157,11 +157,12 @@ function decodeCaptionText(raw: string): string {
  * back { text, segments }. The worker (Rye-deployed) does the audio extraction
  * + Whisper call; keeping it external means no heavy audio dependency here and
  * matches deterministic-first (no new LLM reasoning call in-process). Returns
- * null when unconfigured or on any failure, so the pipeline degrades safely.
+ * null when the worker is not configured. A worker failure returns the response
+ * body (yt-dlp stderr lives in the FastAPI `detail`) so the pipeline can store it.
  */
 export async function transcribeFallback(
   videoId: string
-): Promise<{ text: string; segments: TranscriptSegment[] } | null> {
+): Promise<{ ok: true; text: string; segments: TranscriptSegment[] } | { ok: false; error: string } | null> {
   const url = process.env.TRANSCRIPTION_WORKER_URL;
   const key = process.env.TRANSCRIPTION_API_KEY;
   if (!url || !key) return null;
@@ -171,18 +172,36 @@ export async function transcribeFallback(
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({ videoId, youtubeUrl: `https://www.youtube.com/watch?v=${videoId}` }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text();
+      return { ok: false, error: workerErrorText(body, res.status).slice(0, 500) };
+    }
     const data = (await res.json()) as { text?: string; segments?: Array<{ start?: number; text?: string }> };
-    if (!data.text || data.text.length < 50) return null;
+    if (!data.text || data.text.length < 50) {
+      return { ok: false, error: "transcript too short or empty" };
+    }
     const segments: TranscriptSegment[] = Array.isArray(data.segments)
       ? data.segments
           .map((s) => ({ start: Math.max(0, Math.floor(s.start || 0)), text: String(s.text || "").trim() }))
           .filter((s) => s.text)
       : [];
-    return { text: data.text, segments };
-  } catch {
-    return null;
+    return { ok: true, text: data.text, segments };
+  } catch (err) {
+    return { ok: false, error: (err instanceof Error ? err.message : "transcription worker request failed").slice(0, 500) };
   }
+}
+
+function workerErrorText(body: string, status: number): string {
+  const trimmed = body.trim();
+  if (!trimmed) return `transcription worker HTTP ${status}`;
+  try {
+    const parsed = JSON.parse(trimmed) as { detail?: unknown };
+    if (typeof parsed.detail === "string" && parsed.detail.trim()) return parsed.detail.trim();
+    if (parsed.detail != null) return JSON.stringify(parsed.detail);
+  } catch {
+    /* plain text body */
+  }
+  return trimmed;
 }
 
 // ── Rate limiting (in-memory, resets at midnight UTC) ───────────────────────

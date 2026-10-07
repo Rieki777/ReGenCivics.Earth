@@ -142,6 +142,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/regen-community-onboarding",
   "/regen-games",
   "/risk-disclosure",
+  "/recordings",
   "/schedule",
   "/season-schedule",
   "/season2",

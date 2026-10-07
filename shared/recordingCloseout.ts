@@ -373,3 +373,23 @@ export function applyCloseoutMetaPatch(
   }
   return out;
 }
+
+/** Closeout ignores old unlinked archive rows. Linked sessions stay in the queue. */
+export const CLOSEOUT_CUTOFF_MS = Date.parse("2026-09-01T00:00:00.000Z");
+
+function closeoutTimeMs(value: Date | string | null | undefined): number | null {
+  if (value == null || value === "") return null;
+  const ms = value instanceof Date ? value.getTime() : Date.parse(String(value));
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function recordingInCloseoutQueue(row: {
+  sessionDate?: Date | string | null;
+  createdAt?: Date | string | null;
+  linkedToEvent: boolean;
+}): boolean {
+  if (row.linkedToEvent) return true;
+  const ms = closeoutTimeMs(row.sessionDate) ?? closeoutTimeMs(row.createdAt);
+  if (ms == null) return false;
+  return ms >= CLOSEOUT_CUTOFF_MS;
+}
