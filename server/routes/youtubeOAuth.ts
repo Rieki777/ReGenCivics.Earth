@@ -13,12 +13,15 @@ import { saveYoutubeChannelConnection } from "../lib/youtubeOwnerAuth";
 
 const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl";
 const STATE_TTL_MS = 15 * 60 * 1000;
+/** Registered on the YouTube OAuth client. Production always uses this exact URI. */
+export const YOUTUBE_OAUTH_REDIRECT_URI = "https://regencivics.earth/api/youtube/oauth/callback";
 
 function b64url(buf: Buffer): string {
   return buf.toString("base64url");
 }
 
 export function youtubeRedirectUri(): string {
+  if (!ENV.appUrl || ENV.appUrl.startsWith("https://regencivics.earth")) return YOUTUBE_OAUTH_REDIRECT_URI;
   return `${ENV.appUrl}/api/youtube/oauth/callback`;
 }
 
@@ -72,12 +75,12 @@ export function registerYoutubeOAuthRoutes(app: Express) {
       res.redirect(302, back("not_admin"));
       return;
     }
-    if (!ENV.googleClientId || !ENV.googleClientSecret || !ENV.cookieSecret) {
+    if (!ENV.youtubeOAuthClientId || !ENV.youtubeOAuthClientSecret || !ENV.cookieSecret) {
       res.redirect(302, back("missing_client"));
       return;
     }
     const params = new URLSearchParams({
-      client_id: ENV.googleClientId,
+      client_id: ENV.youtubeOAuthClientId,
       redirect_uri: youtubeRedirectUri(),
       response_type: "code",
       scope: YOUTUBE_SCOPE,
@@ -140,8 +143,8 @@ async function exchangeCode(code: string): Promise<{ accessToken: string; refres
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         code,
-        client_id: ENV.googleClientId,
-        client_secret: ENV.googleClientSecret,
+        client_id: ENV.youtubeOAuthClientId,
+        client_secret: ENV.youtubeOAuthClientSecret,
         redirect_uri: youtubeRedirectUri(),
         grant_type: "authorization_code",
       }),

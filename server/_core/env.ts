@@ -38,6 +38,10 @@ export const ENV = {
   // Google OAuth
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+  // Channel-owner caption download. Separate from player sign-in so the
+  // everyday Google login does not ask for youtube.force-ssl.
+  youtubeOAuthClientId: process.env.YOUTUBE_OAUTH_CLIENT_ID ?? "",
+  youtubeOAuthClientSecret: process.env.YOUTUBE_OAUTH_CLIENT_SECRET ?? "",
   // Apple OAuth
   appleClientId: process.env.APPLE_CLIENT_ID ?? "",
   appleTeamId: process.env.APPLE_TEAM_ID ?? "",

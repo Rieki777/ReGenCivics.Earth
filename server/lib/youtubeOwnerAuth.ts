@@ -116,8 +116,8 @@ export async function getYoutubeOwnerAccessToken(forceRefresh = false): Promise<
     return { ok: false, connected: true, error: "stored YouTube connection could not be read" };
   }
   if (!refreshToken) return { ok: false, connected: false, error: "YouTube channel is not connected" };
-  if (!ENV.googleClientId || !ENV.googleClientSecret) {
-    return { ok: false, connected: true, error: "Google client is not configured" };
+  if (!ENV.youtubeOAuthClientId || !ENV.youtubeOAuthClientSecret) {
+    return { ok: false, connected: true, error: "YouTube OAuth client is not configured" };
   }
 
   const ctrl = new AbortController();
@@ -127,8 +127,8 @@ export async function getYoutubeOwnerAccessToken(forceRefresh = false): Promise<
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: ENV.googleClientId,
-        client_secret: ENV.googleClientSecret,
+        client_id: ENV.youtubeOAuthClientId,
+        client_secret: ENV.youtubeOAuthClientSecret,
         refresh_token: refreshToken,
         grant_type: "refresh_token",
       }),
