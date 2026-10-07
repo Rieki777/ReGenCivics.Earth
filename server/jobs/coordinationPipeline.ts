@@ -9,7 +9,7 @@
  *   3. Apply guard rails (title skip pattern, optional duration floor).
  *   4. Upsert a `recordings` row at recordingKind='raw' so the site can
  *      show the live cut immediately on the Schedule page.
- *   5. Best-effort transcript via YouTube's public timedtext endpoint.
+ *   5. Transcript from the channel owner's YouTube captions, then public timedtext.
  *   6. Two LLM passes:
  *        synthesize    -> overview + chapters + decisions + actionItems
  *        extractTasks  -> role-tagged proposals (every task requires an
@@ -36,7 +36,7 @@ import { getDb } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
-import { fetchYouTubeTranscript, fetchYouTubeTranscriptSegments, transcribeFallback } from "../lib/videoSummary";
+import { loadYouTubeTranscript } from "../lib/youtubeCaptions";
 import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/schema";
 import { finalizeRecording } from "../lib/recording-finalize";
 import { mapRecordingOntoCourse } from "../lib/sessionCourseStore";
@@ -684,19 +684,8 @@ async function markProcessFailure(
   }
 }
 
-async function loadTranscript(videoId: string): Promise<
-  | { ok: true; text: string; segments: Array<{ start: number; text: string }> | null }
-  | { ok: false; error: string }
-> {
-  const transcript = await fetchYouTubeTranscript(videoId);
-  if (transcript) {
-    const segments = await fetchYouTubeTranscriptSegments(videoId);
-    return { ok: true, text: transcript, segments };
-  }
-  const fb = await transcribeFallback(videoId);
-  if (!fb) return { ok: false, error: "no captions and transcription worker is not configured" };
-  if (!fb.ok) return { ok: false, error: fb.error || "transcription worker failed" };
-  return { ok: true, text: fb.text, segments: fb.segments };
+async function loadTranscript(videoId: string) {
+  return loadYouTubeTranscript(videoId);
 }
 
 async function refreshEndedMeta(
@@ -771,7 +760,8 @@ async function understandRecording(
       .update(recordings)
       .set({
         transcript: loaded.text,
-        transcriptJson: loaded.segments ?? null,
+        transcriptJson: loaded.segments,
+        transcriptSource: loaded.source,
         lastError: null,
         nextRetryAt: null,
       })
@@ -813,6 +803,13 @@ async function understandRecording(
     } catch (e) {
       pipelineLog.error(`insert task for recording ${rec.id}`, e);
     }
+  }
+
+  try {
+    const { extractCallInsights } = await import("../lib/call-insights");
+    await extractCallInsights(rec.id);
+  } catch (e) {
+    pipelineLog.error(`call insights for recording ${rec.id}`, e);
   }
 
   try {

@@ -49,6 +49,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes, CHAT_SYSTEM_PROMPT } from "./oauth";
+import { registerYoutubeOAuthRoutes } from "../routes/youtubeOAuth";
 import { streamLLM } from "./llm";
 import { sdk } from "./sdk";
 import { buildGuidePersona, buildGuideContext, fetchGuidePreferences } from "../lib/guide-companion";
@@ -285,6 +286,7 @@ async function startServer() {
   app.use('/api/chat/stream', rateLimitMiddleware(60 * 1000, 20));
   app.use('/api/auth/email/request', rateLimitMiddleware(60 * 1000, 5));
   app.use('/api/oauth', rateLimitMiddleware(60 * 1000, 10));
+  app.use('/api/youtube/oauth', rateLimitMiddleware(60 * 1000, 10));
   app.use('/api/webhooks', rateLimitMiddleware(60 * 1000, 30));
   // Forum and messaging rate limits (anti-spam)
   app.use('/api/trpc/forum.createPost', rateLimitMiddleware(60 * 1000, 5));
@@ -587,8 +589,10 @@ async function startServer() {
   app.get('/llms-full.txt', servePublicFile('llms-full.txt', 'text/plain; charset=utf-8'));
   app.get('/feed.xml', servePublicFile('feed.xml', 'application/rss+xml; charset=utf-8'));
 
-  // OAuth + email auth routes
+  // OAuth + email auth routes. Channel-owner YouTube connect is a separate
+  // callback so player sign-in does not request youtube.force-ssl.
   registerOAuthRoutes(app);
+  registerYoutubeOAuthRoutes(app);
 
   // AI chat streaming endpoint
   app.post('/api/chat/stream', async (req, res) => {

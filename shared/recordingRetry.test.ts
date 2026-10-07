@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  HOURLY_ATTEMPTS,
+  CAPTION_RETRY_DELAYS_MS,
   MAX_PROCESS_ATTEMPTS,
   nextProcessRetry,
   recordingNeedsAutoRetry,
@@ -9,22 +9,17 @@ import {
 const NOW = new Date("2026-10-07T20:00:00.000Z");
 
 describe("nextProcessRetry", () => {
-  it("waits an hour for the first 48 attempts", () => {
-    const first = nextProcessRetry(1, NOW);
-    const lastHourly = nextProcessRetry(HOURLY_ATTEMPTS, NOW);
-    expect(first?.toISOString()).toBe("2026-10-07T21:00:00.000Z");
-    expect(lastHourly?.toISOString()).toBe("2026-10-07T21:00:00.000Z");
+  it("waits 15 minutes, 1 hour, 6 hours, then 24 hours", () => {
+    expect(nextProcessRetry(1, NOW)?.toISOString()).toBe("2026-10-07T20:15:00.000Z");
+    expect(nextProcessRetry(2, NOW)?.toISOString()).toBe("2026-10-07T21:00:00.000Z");
+    expect(nextProcessRetry(3, NOW)?.toISOString()).toBe("2026-10-08T02:00:00.000Z");
+    expect(nextProcessRetry(4, NOW)?.toISOString()).toBe("2026-10-08T20:00:00.000Z");
+    expect(CAPTION_RETRY_DELAYS_MS).toHaveLength(4);
   });
 
-  it("waits a day for the next week of attempts", () => {
-    const firstDaily = nextProcessRetry(HOURLY_ATTEMPTS + 1, NOW);
-    const last = nextProcessRetry(MAX_PROCESS_ATTEMPTS, NOW);
-    expect(firstDaily?.toISOString()).toBe("2026-10-08T20:00:00.000Z");
-    expect(last?.toISOString()).toBe("2026-10-08T20:00:00.000Z");
-  });
-
-  it("stops after the daily window", () => {
-    expect(nextProcessRetry(MAX_PROCESS_ATTEMPTS + 1, NOW)).toBeNull();
+  it("stops after the last try", () => {
+    expect(nextProcessRetry(MAX_PROCESS_ATTEMPTS, NOW)).toBeNull();
+    expect(MAX_PROCESS_ATTEMPTS).toBe(5);
   });
 });
 

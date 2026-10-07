@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +23,25 @@ import { CourseTimestamps } from "@/components/admin/CourseTimestamps";
 import { chapterStamp, chapterWatchUrl, coerceChapters } from "@shared/youtubeChapters";
 import { extractYoutubeVideoId } from "@shared/youtubeVideoId";
 
+const YOUTUBE_CONNECT_ERRORS: Record<string, string> = {
+  missing_client: "Google sign-in is not configured on the server yet.",
+  not_admin: "Sign in as an admin, then connect the channel.",
+  bad_state: "That connect link expired. Click Connect YouTube channel again.",
+  no_refresh: "Google did not return a long-lived connection. Click Connect YouTube channel again.",
+  no_channel: "That Google account has no YouTube channel. Sign in as the channel owner.",
+  denied: "The Google prompt was closed before the channel connected.",
+  exchange: "Google did not finish the connection. Click Connect YouTube channel again.",
+};
+
+function transcriptSourceLabel(source: string | null | undefined): string | null {
+  if (source === "youtube_owner") return "Transcript source: YouTube channel captions";
+  if (source === "youtube_timedtext") return "Transcript source: public captions";
+  return null;
+}
+
 export function AdminRecordingsTab() {
   const { data: recs = [], refetch, isLoading } = trpc.recordings.adminList.useQuery();
+  const youtube = trpc.recordings.youtubeConnection.useQuery();
   const updateMutation = trpc.recordings.update.useMutation({ onSuccess: () => refetch() });
   const sendEmailMutation = trpc.recordings.sendEmail.useMutation({
     onSuccess: (data) => {
@@ -68,6 +85,16 @@ export function AdminRecordingsTab() {
     },
     onError: (err) => toast.error(err.message || "Could not create draft"),
   });
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const flag = params.get("youtube");
+    if (flag === "connected") toast.success("YouTube channel connected.");
+    if (flag === "error") {
+      const reason = params.get("reason") ?? "";
+      toast.error(YOUTUBE_CONNECT_ERRORS[reason] ?? "YouTube channel was not connected.");
+    }
+  }, []);
+
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
   const [editSummary, setEditSummary] = useState('');
@@ -104,6 +131,29 @@ export function AdminRecordingsTab() {
           <p className="text-[#1a472a]/85 text-sm mt-1">Recordings received from the recording platform via webhook. Add YouTube URLs and send email summaries from here.</p>
         </div>
         <Button variant="outline" onClick={() => setConfirmRepair(true)}>Repair links</Button>
+      </div>
+      <div className="rounded-xl border border-[#1a472a]/20 bg-white p-4" data-testid="youtube-connect">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[#1a472a]">YouTube captions</p>
+            <p className="text-sm text-[#1a472a]" data-testid="youtube-status">
+              {youtube.isLoading
+                ? "Checking the YouTube connection."
+                : youtube.data?.migrationPending
+                  ? "The database migration for this connection has not been applied yet."
+                  : youtube.data?.connected
+                    ? `Connected${youtube.data.channelTitle ? ` as ${youtube.data.channelTitle}` : ""}. Transcripts come from the channel owner's captions.`
+                    : "Not connected. Transcripts use public captions when YouTube has published them."}
+            </p>
+          </div>
+          <Button
+            className="bg-[#1a472a] text-white"
+            data-testid="connect-youtube"
+            onClick={() => { window.location.href = "/api/youtube/oauth/start"; }}
+          >
+            {youtube.data?.connected ? "Reconnect YouTube channel" : "Connect YouTube channel"}
+          </Button>
+        </div>
       </div>
       {confirmRepair && (
         <div className="rounded-xl border border-[#1a472a]/20 bg-[#f0f7f0] p-4" data-testid="repair-links-confirm">
@@ -198,6 +248,11 @@ export function AdminRecordingsTab() {
                 </div>
                 {rec.aiSummary && (
                   <p className="text-sm text-[#1a472a]/85 line-clamp-3">{rec.aiSummary}</p>
+                )}
+                {transcriptSourceLabel(rec.transcriptSource) && (
+                  <p className="text-xs text-[#1a472a]/80" data-testid="transcript-source">
+                    {transcriptSourceLabel(rec.transcriptSource)}
+                  </p>
                 )}
                 {rec.lastError && (
                   <p className="text-sm text-red-700" data-testid="recording-last-error">

@@ -32,10 +32,17 @@ import { extractYoutubeVideoId } from "../../shared/youtubeVideoId";
 import { chaptersForSend } from "./youtubeDescription";
 import { sendPacedEmails } from "./pacedEmail";
 import { sendSessionNotesEmail } from "./editedCutEmailSend";
-import { isMissingSchema, recordingWithoutEditedCutColumns, recordingWithoutPipelineRetryColumns } from "./schemaTolerance";
+import { isMissingSchema, recordingWithoutCaptionColumn, recordingWithoutEditedCutColumns, recordingWithoutPipelineRetryColumns } from "./schemaTolerance";
 import { chaptersForRecap } from "./youtubeWatchMeta";
 
 const log = logger("recording-finalize");
+
+/**
+ * Week 2's edited cut (recording 57, JS8YoJE1PUI) already went to 27 people
+ * on 2026-10-07. Recording ready must not send for that video again.
+ * Other recordings are covered by emailSent and email_logs.
+ */
+const PRIOR_LETTER_VIDEO_IDS = new Set(["JS8YoJE1PUI"]);
 
 type RecordingRow = typeof recordings.$inferSelect;
 type Database = NonNullable<Awaited<ReturnType<typeof getDb>>>;
@@ -53,6 +60,18 @@ async function loadRecordingRow(database: Database, recordingId: number): Promis
     if (!isMissingSchema(err)) throw err;
     try {
       const [recording] = await database
+        .select(recordingWithoutCaptionColumn())
+        .from(recordings)
+        .where(eq(recordings.id, recordingId))
+        .limit(1);
+      if (!recording) return null;
+      log.warn(`recording ${recordingId} loaded without caption source; migration 0292 is not applied`);
+      return { ...recording, transcriptSource: null };
+    } catch (captionErr) {
+      if (!isMissingSchema(captionErr)) throw captionErr;
+    }
+    try {
+      const [recording] = await database
         .select(recordingWithoutPipelineRetryColumns())
         .from(recordings)
         .where(eq(recordings.id, recordingId))
@@ -64,6 +83,7 @@ async function loadRecordingRow(database: Database, recordingId: number): Promis
         processAttempts: 0,
         lastError: null,
         nextRetryAt: null,
+        transcriptSource: null,
       };
     } catch (retryErr) {
       if (!isMissingSchema(retryErr)) throw retryErr;
@@ -85,6 +105,7 @@ async function loadRecordingRow(database: Database, recordingId: number): Promis
       processAttempts: 0,
       lastError: null,
       nextRetryAt: null,
+      transcriptSource: null,
     };
   }
 }
