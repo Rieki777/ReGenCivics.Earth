@@ -333,6 +333,28 @@ export async function emailsAcceptedSince(template: string, since: Date): Promis
   return acceptedEmailSet(rows);
 }
 
+/**
+ * True when any accepted letter is already logged for this inquiry.
+ * Recording-ready uses this so an edited-cut letter (template recording_edited)
+ * blocks a second "Recording ready" send for the same recording id.
+ * Throws when the database is unavailable. Callers skip the send on that error
+ * and leave emailSent unchanged.
+ */
+export async function inquiryHasAcceptedEmail(inquiryType: string, inquiryId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("database unavailable");
+  const rows = await db
+    .select({ id: emailLogs.id })
+    .from(emailLogs)
+    .where(and(
+      eq(emailLogs.inquiryType, inquiryType),
+      eq(emailLogs.inquiryId, inquiryId),
+      inArray(emailLogs.status, [...ACCEPTED_LOG_STATUSES]),
+    ))
+    .limit(1);
+  return rows.length > 0;
+}
+
 /** Addresses already accepted for one logical send (event fan-out, recording, and so on). */
 export async function emailsAcceptedForInquiry(
   template: string,

@@ -21,6 +21,9 @@ const PIPELINE_RETRY_COLUMNS = [
   "nextRetryAt",
 ] as const;
 
+/** drizzle/0292_youtube_captions.sql */
+const CAPTION_COLUMNS = ["transcriptSource"] as const;
+
 export function recordingColumnsOmitting(keys: readonly string[]) {
   const cols = { ...getTableColumns(recordings) };
   for (const key of keys) delete cols[key as keyof typeof cols];
@@ -45,10 +48,15 @@ export function isMissingSchema(err: unknown): boolean {
 
 /** Columns that exist before drizzle/0290_edited_cut_email.sql. */
 export function recordingWithoutEditedCutColumns() {
-  return recordingColumnsOmitting([...EDITED_CUT_COLUMNS, ...PIPELINE_RETRY_COLUMNS]);
+  return recordingColumnsOmitting([...EDITED_CUT_COLUMNS, ...PIPELINE_RETRY_COLUMNS, ...CAPTION_COLUMNS]);
 }
 
 /** 0290 is applied and 0291 is not. */
 export function recordingWithoutPipelineRetryColumns() {
-  return recordingColumnsOmitting(PIPELINE_RETRY_COLUMNS);
+  return recordingColumnsOmitting([...PIPELINE_RETRY_COLUMNS, ...CAPTION_COLUMNS]);
+}
+
+/** 0290 and 0291 are applied and 0292 is not. */
+export function recordingWithoutCaptionColumn() {
+  return recordingColumnsOmitting(CAPTION_COLUMNS);
 }

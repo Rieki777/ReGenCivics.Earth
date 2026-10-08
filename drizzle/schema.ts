@@ -2991,6 +2991,8 @@ export const recordings = mysqlTable("recordings", {
   processAttempts: int("processAttempts").default(0).notNull(),
   lastError: varchar("lastError", { length: 500 }),
   nextRetryAt: timestamp("nextRetryAt"),
+  /** youtube_owner or youtube_timedtext. Null until a transcript lands. */
+  transcriptSource: varchar("transcriptSource", { length: 32 }),
 
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -3018,6 +3020,20 @@ export const recordingCutEvents = mysqlTable("recording_cut_events", {
 ]));
 
 export type RecordingCutEvent = typeof recordingCutEvents.$inferSelect;
+
+/**
+ * One row (id = 1) for the YouTube channel that owns the session recordings.
+ * refreshTokenEnc is AES-GCM ciphertext. Never select it into a tRPC response
+ * or a log line.
+ */
+export const youtubeChannelAuth = mysqlTable("youtube_channel_auth", {
+  id: int("id").primaryKey(),
+  refreshTokenEnc: text("refreshTokenEnc").notNull(),
+  channelId: varchar("channelId", { length: 64 }),
+  channelTitle: varchar("channelTitle", { length: 255 }),
+  connectedAt: timestamp("connectedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
 
 /**
  * Community-call intelligence (Stage 7). One cached extraction pass per

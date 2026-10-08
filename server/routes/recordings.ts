@@ -97,6 +97,12 @@ export const recordingsRouter = router({
       return findRecordingForEventPublic(input.eventId);
     }),
 
+  // Admin: channel-owner caption connection. Never returns the refresh token.
+  youtubeConnection: adminProcedure.query(async () => {
+    const { youtubeConnectionStatus } = await import("../lib/youtubeOwnerAuth");
+    return youtubeConnectionStatus();
+  }),
+
   // Admin: full list with all fields
   adminList: adminProcedure.query(async () => {
     const database = await getDb();

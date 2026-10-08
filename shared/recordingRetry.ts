@@ -1,25 +1,25 @@
 /**
- * Backoff for a recording that still has no transcript and no summary.
- * Hourly for 48 attempts, then daily for 7, then stop. Admin reprocess
- * can still run after the window.
+ * Backoff while YouTube captions are still missing.
+ * Auto-captions often appear a while after upload, so the waits are
+ * 15 minutes, 1 hour, 6 hours, and 24 hours. The fifth miss stops
+ * automatic retries. Admin reprocess can still run after that.
  */
 
-export const HOURLY_ATTEMPTS = 48;
-export const DAILY_ATTEMPTS = 7;
-export const MAX_PROCESS_ATTEMPTS = HOURLY_ATTEMPTS + DAILY_ATTEMPTS;
+export const CAPTION_RETRY_DELAYS_MS = [
+  15 * 60 * 1000,
+  60 * 60 * 1000,
+  6 * 60 * 60 * 1000,
+  24 * 60 * 60 * 1000,
+] as const;
 
-const HOUR_MS = 60 * 60 * 1000;
-const DAY_MS = 24 * HOUR_MS;
+/** Four scheduled waits, then one last try that marks the row finished. */
+export const MAX_PROCESS_ATTEMPTS = CAPTION_RETRY_DELAYS_MS.length + 1;
 
 /** Next time to try, or null when automatic retries are finished. */
 export function nextProcessRetry(attemptCount: number, now: Date): Date | null {
-  if (attemptCount <= HOURLY_ATTEMPTS) {
-    return new Date(now.getTime() + HOUR_MS);
-  }
-  if (attemptCount <= MAX_PROCESS_ATTEMPTS) {
-    return new Date(now.getTime() + DAY_MS);
-  }
-  return null;
+  const delay = CAPTION_RETRY_DELAYS_MS[attemptCount - 1];
+  if (delay == null) return null;
+  return new Date(now.getTime() + delay);
 }
 
 export function recordingNeedsAutoRetry(
