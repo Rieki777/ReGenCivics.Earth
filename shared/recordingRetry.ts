@@ -25,12 +25,23 @@ export function falseStreamNotEnded(lastError: string | null | undefined): boole
   return (lastError ?? "").trim() === FALSE_NOT_ENDED_ERROR;
 }
 
+/**
+ * The owner list came back empty before we recorded the track count.
+ * That miss should not wait out the caption backoff.
+ */
+export const EMPTY_OWNER_CAPTION_LIST_ERROR =
+  "owner caption list had no tracks; public captions were not available";
+
+export function emptyOwnerCaptionList(lastError: string | null | undefined): boolean {
+  return (lastError ?? "").trim() === EMPTY_OWNER_CAPTION_LIST_ERROR;
+}
+
 /** A false "not ended" miss sorts with the rows that have never been tried. */
 export function effectiveRetryAttempts(row: {
   processAttempts?: number | null;
   lastError?: string | null;
 }): number {
-  if (falseStreamNotEnded(row.lastError)) return 0;
+  if (falseStreamNotEnded(row.lastError) || emptyOwnerCaptionList(row.lastError)) return 0;
   return row.processAttempts ?? 0;
 }
 
@@ -86,7 +97,7 @@ export function recordingNeedsAutoRetry(
   if ((row.overview ?? "").trim() || (row.aiSummary ?? "").trim()) return false;
   const attempts = row.processAttempts ?? 0;
   if (attempts >= MAX_PROCESS_ATTEMPTS) return false;
-  if (falseStreamNotEnded(row.lastError)) return true;
+  if (falseStreamNotEnded(row.lastError) || emptyOwnerCaptionList(row.lastError)) return true;
   if (row.nextRetryAt) {
     const at = row.nextRetryAt instanceof Date ? row.nextRetryAt : new Date(row.nextRetryAt);
     if (Number.isFinite(at.getTime()) && at.getTime() > now.getTime()) return false;

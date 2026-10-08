@@ -44,7 +44,7 @@ import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest"
 import { linkRecordingToMatchingEvent } from "../lib/recordingEventLink";
 import { fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
 import { createSingleFlight } from "../lib/singleFlight";
-import { FALSE_NOT_ENDED_ERROR, MAX_PROCESS_ATTEMPTS, captionRetryDespiteWatch, compareRetryQueue, effectiveRetryAttempts, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
+import { EMPTY_OWNER_CAPTION_LIST_ERROR, FALSE_NOT_ENDED_ERROR, MAX_PROCESS_ATTEMPTS, captionRetryDespiteWatch, compareRetryQueue, effectiveRetryAttempts, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
 import type { YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
 import { isMissingSchema } from "../lib/schemaTolerance";
 import {
@@ -853,6 +853,7 @@ async function sweepRecordingRetries(
         isNull(recordings.nextRetryAt),
         lte(recordings.nextRetryAt, now),
         eq(recordings.lastError, FALSE_NOT_ENDED_ERROR),
+        eq(recordings.lastError, EMPTY_OWNER_CAPTION_LIST_ERROR),
       ),
     ));
 

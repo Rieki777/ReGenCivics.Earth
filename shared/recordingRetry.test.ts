@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CAPTION_RETRY_DELAYS_MS,
   MAX_PROCESS_ATTEMPTS,
+  EMPTY_OWNER_CAPTION_LIST_ERROR,
   FALSE_NOT_ENDED_ERROR,
   captionRetryDespiteWatch,
   compareRetryQueue,
@@ -90,6 +91,32 @@ describe("caption retry queue", () => {
       { id: 40, processAttempts: 2 },
     ];
     expect(rows.sort(compareRetryQueue).map((row) => row.id)).toEqual([57, 56, 3, 40]);
+  });
+
+  it("retries the empty owner caption list ahead of the backoff", () => {
+    const future = new Date(NOW.getTime() + 6 * 60 * 60 * 1000);
+    const row = {
+      youtubeVideoId: "23cRivDtorQ",
+      transcript: null,
+      overview: null,
+      aiSummary: null,
+      processAttempts: 3,
+      nextRetryAt: future,
+      lastError: EMPTY_OWNER_CAPTION_LIST_ERROR,
+    };
+    expect(recordingNeedsAutoRetry(row, NOW)).toBe(true);
+    expect(effectiveRetryAttempts(row)).toBe(0);
+    const rows = [
+      { id: 40, processAttempts: 0, lastError: null as string | null },
+      { id: 56, processAttempts: 3, lastError: EMPTY_OWNER_CAPTION_LIST_ERROR },
+      { id: 57, processAttempts: 1, lastError: EMPTY_OWNER_CAPTION_LIST_ERROR },
+    ];
+    const queued = rows
+      .map((item) => ({ ...item, processAttempts: effectiveRetryAttempts(item) }))
+      .sort(compareRetryQueue)
+      .slice(0, 2)
+      .map((item) => item.id);
+    expect(queued).toEqual([57, 56]);
   });
 
   it("puts the edited cut and the false not-ended livestream in the next pair", () => {
