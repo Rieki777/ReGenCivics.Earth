@@ -22,6 +22,34 @@ export function nextProcessRetry(attemptCount: number, now: Date): Date | null {
   return new Date(now.getTime() + delay);
 }
 
+/**
+ * A saved recording already made it into the table, so a missing watch page
+ * is a bot wall, not a reason to skip captions. Wait only when YouTube still
+ * says the stream is live or upcoming.
+ */
+export function captionRetryDespiteWatch(meta: {
+  status: "unknown" | "ok";
+  liveBroadcastContent?: "live" | "upcoming" | "none";
+}): "fetch" | "wait" {
+  if (
+    meta.status === "ok" &&
+    (meta.liveBroadcastContent === "live" || meta.liveBroadcastContent === "upcoming")
+  ) {
+    return "wait";
+  }
+  return "fetch";
+}
+
+/** Never-tried rows first, then the newest recording. Matches the retry sweep. */
+export function compareRetryQueue(
+  a: { id: number; processAttempts?: number | null },
+  b: { id: number; processAttempts?: number | null },
+): number {
+  const attempts = (a.processAttempts ?? 0) - (b.processAttempts ?? 0);
+  if (attempts !== 0) return attempts;
+  return b.id - a.id;
+}
+
 export function recordingNeedsAutoRetry(
   row: {
     youtubeVideoId?: string | null;
