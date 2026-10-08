@@ -68,17 +68,45 @@ function parseStart(raw: string | null): Date | null {
   return Number.isFinite(d.getTime()) ? d : null;
 }
 
+function decodeTitle(raw: string): string {
+  return raw
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\\n/g, " ")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\")
+    .replace(/&amp;/g, "&")
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** A bare number is a player field, not the video name. The retry must not store it. */
+function usableTitle(raw: string | null | undefined): string | null {
+  const title = raw ? decodeTitle(raw) : "";
+  if (!title || /^\d+$/.test(title)) return null;
+  return title;
+}
+
 function videoTitle(html: string): string | null {
+  const og = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/i)?.[1]
+    ?? html.match(/<meta\s+content="([^"]*)"\s+property="og:title"/i)?.[1];
+  const fromOg = usableTitle(og);
+  if (fromOg) return fromOg;
   const fromDetails = html.match(/"videoDetails":\{"videoId":"[^"]+","title":"((?:\\.|[^"\\])*)"/);
-  if (fromDetails?.[1]) {
-    return fromDetails[1]
-      .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-      .replace(/\\n/g, " ")
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, "\\")
-      .trim();
-  }
-  return extractJsonString(html, "title");
+  const details = usableTitle(fromDetails?.[1]);
+  if (details) return details;
+  // A consent wall still embeds the watch title here. The like button's "title":"3" is not it.
+  const primary = html.match(/"videoPrimaryInfoRenderer":\{"title":\{"runs":\[\{"text":"((?:\\.|[^"\\])*)"/);
+  const fromPrimary = usableTitle(primary?.[1]);
+  if (fromPrimary) return fromPrimary;
+  const overlay = html.match(/"playerOverlayVideoDetailsRenderer":\{"title":\{"simpleText":"((?:\\.|[^"\\])*)"/);
+  const fromOverlay = usableTitle(overlay?.[1]);
+  if (fromOverlay) return fromOverlay;
+  const doc = html.match(/<title>([^<]+)<\/title>/i)?.[1];
+  const fromDoc = usableTitle(doc?.replace(/\s+-\s+YouTube\s*$/i, ""));
+  if (fromDoc) return fromDoc;
+  return null;
 }
 
 /**
