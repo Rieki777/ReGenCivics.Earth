@@ -2,6 +2,15 @@
  * Edited-recording letter, and the later session-notes letter.
  * Inline HTML. Callers pass a fresh chapter list from the description at send time.
  */
+import {
+  EMAIL_BANNER_BG,
+  EMAIL_BODY_TEXT,
+  EMAIL_CARD_BG,
+  EMAIL_HEADER_TEXT,
+  EMAIL_SUMMARY_BG,
+  emailBannerHtml,
+  emailDocumentHtml,
+} from "./emailChrome";
 import { newsletterLegalFooterHtml } from "./letterHtml";
 import { NEWSLETTER_POSTAL_ADDRESS } from "./letterLayout";
 import { SITE_ORIGIN } from "./siteContext";
@@ -34,20 +43,20 @@ export function chaptersEmailSection(chapters: YoutubeChapter[], videoId: string
     const stamp = esc(chapterStamp(chapter));
     const title = esc(chapter.title);
     const href = esc(chapterWatchUrl(videoId, chapter.tSeconds));
-    return `<li style="margin:0 0 10px 0;line-height:1.45;"><a href="${href}" style="color:#1a472a;text-decoration:none;"><span style="display:inline-block;min-width:4.6em;font-variant-numeric:tabular-nums;color:#2d5a3d;font-weight:700;">${stamp}</span>${title}</a></li>`;
+    return `<li style="margin:0 0 10px 0;line-height:1.45;"><a href="${href}" style="color:${EMAIL_BODY_TEXT};text-decoration:none;"><span style="display:inline-block;min-width:4.6em;font-variant-numeric:tabular-nums;color:${EMAIL_BANNER_BG};font-weight:700;">${stamp}</span>${title}</a></li>`;
   }).join("");
-  return `<p style="color:#1a472a;font-weight:700;font-size:16px;margin:28px 0 10px;">Jump to a moment</p><ul style="list-style:none;padding:0;margin:0;">${items}</ul>`;
+  return `<p class="rc-heading" style="color:${EMAIL_BODY_TEXT};font-weight:700;font-size:16px;margin:28px 0 10px;">Jump to a moment</p><ul style="list-style:none;padding:0;margin:0;">${items}</ul>`;
 }
 
 function watchButton(videoId: string): string {
   const href = esc(`https://youtu.be/${videoId}`);
-  return `<a href="${href}" style="display:block;background:#7dd87d;color:#1a472a;text-align:center;padding:18px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:18px;line-height:1.3;">Watch the recording</a>`;
+  return `<a class="rc-button" href="${href}" style="display:block;background-color:${EMAIL_BANNER_BG};color:${EMAIL_HEADER_TEXT};text-align:center;padding:18px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:18px;line-height:1.3;">Watch the recording</a>`;
 }
 
 function relatedLinks(week: number | null, origin: string): string {
   const schedule = esc(`${origin}/season-schedule`);
-  const board = week ? `<p style="margin:0 0 8px 0;"><a href="${esc(`${origin}/season2/week/${week}`)}" style="color:#1a472a;font-weight:700;">Week ${week} board</a></p>` : "";
-  return `<div style="margin:22px 0 0 0;">${board}<p style="margin:0;"><a href="${schedule}" style="color:#1a472a;font-weight:700;">Vote on call times</a></p></div>`;
+  const board = week ? `<p style="margin:0 0 8px 0;"><a href="${esc(`${origin}/season2/week/${week}`)}" style="color:${EMAIL_BODY_TEXT};font-weight:700;">Week ${week} board</a></p>` : "";
+  return `<div style="margin:22px 0 0 0;">${board}<p style="margin:0;"><a href="${schedule}" style="color:${EMAIL_BODY_TEXT};font-weight:700;">Vote on call times</a></p></div>`;
 }
 
 function shell(opts: {
@@ -64,25 +73,23 @@ function shell(opts: {
 }): string {
   const origin = opts.origin ?? SITE_ORIGIN;
   const chapters = chaptersEmailSection(opts.chapters, opts.videoId);
-  return `
+  const body = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-      <div style="background:#1a472a;padding:28px 20px;text-align:center;border-radius:8px 8px 0 0;">
-        <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-        <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:12px;">${esc(opts.eyebrow)}</p>
-      </div>
-      <div style="padding:28px 24px;background:#ffffff;border:1px solid #e0e0e0;border-top:none;">
-        <h2 style="color:#1a472a;margin:0 0 12px 0;font-size:22px;line-height:1.3;">${esc(opts.heading)}</h2>
-        <p style="color:#1a472a;line-height:1.6;margin:0 0 22px 0;">${esc(opts.intro)}</p>
+      ${emailBannerHtml(opts.eyebrow)}
+      <div class="rc-card" style="padding:28px 24px;background-color:${EMAIL_CARD_BG};border:1px solid #e0e0e0;border-top:none;">
+        <h2 class="rc-heading" style="color:${EMAIL_BODY_TEXT};margin:0 0 12px 0;font-size:22px;line-height:1.3;">${esc(opts.heading)}</h2>
+        <p class="rc-text" style="color:${EMAIL_BODY_TEXT};line-height:1.6;margin:0 0 22px 0;">${esc(opts.intro)}</p>
         ${watchButton(opts.videoId)}
         ${relatedLinks(opts.week, origin)}
         ${opts.extra ?? ""}
         ${chapters}
       </div>
-      <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+      <div class="rc-card" style="background-color:${EMAIL_SUMMARY_BG};padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
         ${newsletterLegalFooterHtml(opts.prefsUrl, opts.postalAddress ?? NEWSLETTER_POSTAL_ADDRESS)}
       </div>
     </div>
   `;
+  return emailDocumentHtml(body, opts.heading);
 }
 
 export function buildEditedRecordingEmailHtml(opts: {
@@ -121,7 +128,7 @@ export function buildSessionNotesEmailHtml(opts: {
   const named = opts.week ? `Week ${opts.week}, ${opts.title}` : opts.title;
   const summary = opts.summary.trim();
   const extra = summary
-    ? `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:16px 20px;border-radius:0 8px 8px 0;margin:22px 0 0 0;"><p style="color:#1a472a;font-weight:700;margin:0 0 8px 0;">What we covered</p><p style="color:#2d5a3d;margin:0;line-height:1.7;">${esc(summary)}</p></div>`
+    ? `<div class="rc-summary" style="background-color:${EMAIL_SUMMARY_BG};border-left:4px solid ${EMAIL_BANNER_BG};padding:16px 20px;border-radius:0 8px 8px 0;margin:22px 0 0 0;"><p class="rc-heading" style="color:${EMAIL_BODY_TEXT};font-weight:700;margin:0 0 8px 0;">What we covered</p><p class="rc-text" style="color:${EMAIL_BODY_TEXT};margin:0;line-height:1.7;">${esc(summary)}</p></div>`
     : "";
   return shell({
     eyebrow: "Session notes",

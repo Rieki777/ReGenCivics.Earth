@@ -155,14 +155,14 @@ function circleWhen(start: Date): string {
 
 function circleEmailShell(heading: string, bodyHtml: string, footerHtml: string): string {
   return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-    <div style="background-color:#1a472a;background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-      <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-      <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">${INTEROP_CIRCLE_TITLE}</p>
+    <div class="rc-banner" bgcolor="#1a472a" style="background-color:#1a472a;padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+      <h1 class="rc-banner-title" style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
+      <p class="rc-banner-eyebrow" style="color:#ffffff;margin:6px 0 0 0;font-size:13px;">${INTEROP_CIRCLE_TITLE}</p>
     </div>
     <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
       <h2 style="color:#1a472a;margin:0 0 10px 0;">${heading}</h2>
       ${bodyHtml}
-      <a href="${APP_BASE_URL}/interop-sessions" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin-top:8px;">Circle page and time vote</a>
+      <a href="${APP_BASE_URL}/interop-sessions" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #ffffff;margin-top:8px;">Circle page and time vote</a>
     </div>
     <div style="background:#f0f7f0;padding:16px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
       <p style="color:#888;font-size:12px;margin:0;">${footerHtml}</p>

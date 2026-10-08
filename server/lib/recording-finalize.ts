@@ -20,8 +20,9 @@ import { emailsAcceptedForInquiry } from "../emailTracking";
 import { notifyRecordingReady } from "../_core/notify";
 import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
-import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import { ENV } from "../_core/env";
+import { buildRecordingReadyEmailHtml } from "../../shared/recordingReadyEmail";
+import { guardRecordingSubscriberMail } from "./recordingMailGate";
 import { linkBlocksPublish, linkRecordingToMatchingEvent, preferredRecordingYoutubeUrl } from "./recordingEventLink";
 import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
 import { courseWeekFromRecording } from "@shared/sessionCourse";
@@ -199,9 +200,11 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
       const outcome = await deliverSubscriberMail(recording, {
         chapters: descriptionOrAiChapters(recording),
       });
-      if (outcome.kind !== "skip" && outcome.dropped === 0) {
+      if (!outcome.held && outcome.kind !== "skip" && outcome.dropped === 0) {
         await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, recordingId));
         log.info(`Email sent for recording ${recordingId} (${outcome.kind})`);
+      } else if (outcome.held) {
+        log.info(`Recording ${recordingId} email held (${outcome.held})`);
       } else if (outcome.kind !== "skip") {
         log.info(`Recording ${recordingId} email incomplete: ${outcome.accepted} accepted, ${outcome.dropped} not sent`);
       }
@@ -282,6 +285,7 @@ type SubscriberRecording = {
   editedYoutubeVideoId?: string | null;
   editedEmailSent?: number | null;
   emailSent?: number | null;
+  createdAt?: Date | string | null;
   riversideUrl: string | null;
   aiSummary: string | null;
   overview?: string | null;
@@ -298,14 +302,14 @@ type SubscriberRecording = {
 export async function deliverSubscriberMail(
   recording: SubscriberRecording,
   opts?: { resend?: boolean; chapters?: YoutubeChapter[] },
-): Promise<{ accepted: number; dropped: number; kind: "recording_ready" | "session_notes" | "skip" }> {
+): Promise<{ accepted: number; dropped: number; kind: "recording_ready" | "session_notes" | "skip"; held: "skip_old" | "needs_review" | "claimed" | null }> {
   if (priorLetterAlreadySent(
     recording.youtubeVideoId,
     recording.youtubeUrl,
     recording.editedYoutubeVideoId,
     recording.editedYoutubeUrl,
   )) {
-    return { accepted: 0, dropped: 0, kind: "skip" };
+    return { accepted: 0, dropped: 0, kind: "skip", held: null };
   }
   const plan = automaticRecordingMail({
     editedEmailSent: Boolean(recording.editedEmailSent),
@@ -313,8 +317,12 @@ export async function deliverSubscriberMail(
     hasSummary: Boolean((recording.aiSummary || recording.overview || "").trim()),
     hasWatchUrl: Boolean(recording.youtubeUrl || recording.riversideUrl || recording.editedYoutubeUrl),
   });
-  if (plan === "skip") return { accepted: 0, dropped: 0, kind: "skip" };
-  if (plan === "session_notes" && recording.id == null) return { accepted: 0, dropped: 1, kind: "session_notes" };
+  const mail = {
+    automatic: !opts?.resend,
+    alreadySent: Boolean(opts?.resend && recording.emailSent),
+  };
+  if (plan === "skip") return { accepted: 0, dropped: 0, kind: "skip", held: null };
+  if (plan === "session_notes" && recording.id == null) return { accepted: 0, dropped: 1, kind: "session_notes", held: "needs_review" };
   if (plan === "session_notes" && recording.id != null) {
     const sent = await sendSessionNotesEmail({
       id: recording.id,
@@ -328,14 +336,34 @@ export async function deliverSubscriberMail(
       overview: recording.overview ?? null,
       descriptionChaptersJson: recording.descriptionChaptersJson,
       chaptersJson: recording.chaptersJson,
-    }, { chapters: opts?.chapters });
+      sessionDate: recording.sessionDate,
+      createdAt: recording.createdAt ?? null,
+    }, { chapters: opts?.chapters, ...mail });
     return { ...sent, kind: "session_notes" };
   }
-  const sent = await sendRecordingEmail(recording, opts?.chapters);
+  const sent = await sendRecordingEmail(recording, opts?.chapters, mail);
   return { ...sent, kind: "recording_ready" };
 }
 
 export async function sendRecordingEmail(
+  recording: SubscriberRecording,
+  chapters?: YoutubeChapter[],
+  mail?: { automatic?: boolean; alreadySent?: boolean },
+): Promise<{ accepted: number; dropped: number; held: "skip_old" | "needs_review" | "claimed" | null }> {
+  if (recording.id == null) return { accepted: 0, dropped: 1, held: "needs_review" };
+  return guardRecordingSubscriberMail({
+    id: recording.id,
+    title: recording.title,
+    sessionDate: recording.sessionDate,
+    createdAt: recording.createdAt ?? null,
+    automatic: mail?.automatic !== false,
+    claim: "emailSent",
+    alreadySent: Boolean(mail?.alreadySent),
+    send: () => sendRecordingEmailBody(recording, chapters),
+  });
+}
+
+async function sendRecordingEmailBody(
   recording: SubscriberRecording,
   chapters?: YoutubeChapter[],
 ): Promise<{ accepted: number; dropped: number }> {
@@ -384,7 +412,7 @@ export async function sendRecordingEmail(
     alreadyAccepted: already,
     sendOne: async (email) => {
       const prefsUrl = await managePreferencesUrl(email, { mute: "recordings" });
-      const html = buildEmailHtml({
+      const html = buildRecordingReadyEmailHtml({
         title: recording.title,
         sessionDate: formatSessionDate(recording.sessionDate),
         youtubeUrl: recording.youtubeUrl,
@@ -395,6 +423,7 @@ export async function sendRecordingEmail(
         courseLabel: courseLink?.label ?? null,
         prefsUrl,
         chaptersHtml: videoId ? chaptersEmailSection(chapterList ?? [], videoId) : "",
+        postalAddress: ENV.harvestPostalAddress,
       });
       return sendEmail({
         to: email,
@@ -403,6 +432,7 @@ export async function sendRecordingEmail(
         template: "recording_summary",
         inquiryType: "recording",
         inquiryId: recording.id,
+        skipBrandedWrap: true,
       });
     },
   });
@@ -482,62 +512,3 @@ async function courseUrlForRecording(recording: { id?: number; title: string }):
   return week ? { href: `${APP_BASE_URL}/season2/week/${week}`, label: `Week ${week} board` } : null;
 }
 
-function buildEmailHtml(opts: {
-  title: string;
-  sessionDate: string;
-  youtubeUrl?: string | null;
-  riversideUrl?: string | null;
-  aiSummary?: string | null;
-  forumUrl?: string | null;
-  courseUrl?: string | null;
-  courseLabel?: string | null;
-  prefsUrl: string;
-  chaptersHtml?: string;
-}): string {
-  const watchBtn = opts.youtubeUrl
-    ? `<a href="${opts.youtubeUrl}" style="display:inline-block;background:#FF0000;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">▶ Watch Recording</a>`
-    : "";
-  const forumBtn = opts.forumUrl
-    ? `<a href="${opts.forumUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin:0 8px 8px 0;">💬 Join the Discussion</a>`
-    : "";
-  const courseBtn = opts.courseUrl
-    ? `<a href="${opts.courseUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin:0 8px 8px 0;">${opts.courseLabel || "Week board"}</a>`
-    : "";
-  const summaryBlock = opts.aiSummary
-    ? `<div style="background:#f0f7f0;border-left:4px solid #7dd87d;padding:16px 20px;border-radius:0 8px 8px 0;margin:20px 0;">
-        <p style="color:#1a472a;font-weight:bold;margin:0 0 8px 0;">What we covered</p>
-        <p style="color:#2d5a3d;margin:0;line-height:1.7;">${opts.aiSummary}</p>
-       </div>`
-    : "";
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-        <h1 style="color: #7dd87d; margin: 0; font-size: 22px;">ReGen Civics</h1>
-        <p style="color: #a8e6a8; margin: 6px 0 0 0; font-size: 12px;">Recording ready</p>
-      </div>
-
-      <div style="padding: 30px 24px; background: #fff; border: 1px solid #e0e0e0; border-top: none;">
-        <h2 style="color: #1a472a; margin: 0 0 6px 0; font-size: 20px;">${opts.title}</h2>
-        <p style="color: #888; font-size: 13px; margin: 0 0 20px 0;">${opts.sessionDate}</p>
-
-        ${summaryBlock}
-
-        <p style="color: #444; line-height: 1.7; margin: 20px 0;">
-          The recording from our latest community session is ready. Watch it back, share it, or drop a reply in the forum.
-        </p>
-
-        <div style="margin: 24px 0;">
-          ${watchBtn}
-          ${forumBtn}
-          ${courseBtn}
-        </div>
-        ${opts.chaptersHtml ?? ""}
-      </div>
-
-      <div style="background: #f0f7f0; padding: 20px 24px; text-align: center; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0; border-top: none;">
-        ${newsletterLegalFooterHtml(opts.prefsUrl, ENV.harvestPostalAddress)}
-      </div>
-    </div>
-  `;
-}

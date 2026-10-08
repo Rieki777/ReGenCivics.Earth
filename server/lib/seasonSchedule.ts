@@ -397,9 +397,9 @@ function moveEmailHtml(opts: {
     ? `The land projects picked the weekly time.${opts.next ? ` The next session is ${escapeHtml(opts.next)}.` : ""} Here is every session still to come:`
     : "The land projects' vote moved the weekly time. Here is every session still to come:";
   return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-    <div style="background-color:#1a472a;background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-      <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-      <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">${escapeHtml(opts.seasonName)} Season Schedule</p>
+    <div class="rc-banner" bgcolor="#1a472a" style="background-color:#1a472a;padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+      <h1 class="rc-banner-title" style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
+      <p class="rc-banner-eyebrow" style="color:#ffffff;margin:6px 0 0 0;font-size:13px;">${escapeHtml(opts.seasonName)} Season Schedule</p>
     </div>
     <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
       <h2 style="color:#1a472a;margin:0 0 10px 0;">${heading}</h2>
@@ -408,7 +408,7 @@ function moveEmailHtml(opts: {
       <ul ${p}>${opts.list}</ul>
       <p ${p}>If you subscribed to the ${escapeHtml(opts.seasonName)} calendar, it already shows these times. Reminders still come before each session.</p>
       <p ${p}>If your week changes, change your picks on the Season Schedule and the time moves with the group.</p>
-      <a href="${APP_BASE_URL}/season-schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;margin-top:8px;">The Season Schedule</a>
+      <a href="${APP_BASE_URL}/season-schedule" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #ffffff;margin-top:8px;">The Season Schedule</a>
       ${opts.footer}
     </div>
   </div>`;

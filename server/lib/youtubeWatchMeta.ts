@@ -8,6 +8,11 @@ import {
 } from "../../shared/youtubeChapters";
 import { oembedTitle, ownerSnippetMeta, parseYouTubeWatchHtml, type YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
 import { getYoutubeOwnerAccessToken } from "./youtubeOwnerAuth";
+import {
+  isYoutubeQuotaExceeded,
+  noteYoutubeQuotaExceeded,
+  youtubeDataApiBlocked,
+} from "./youtubeQuota";
 
 const WATCH_HEADERS = {
   "User-Agent":
@@ -43,6 +48,7 @@ export async function fetchYouTubeOwnerSnippet(
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ title: string | null; chapters: YoutubeChapter[] } | null> {
   if (!/^[\w-]{11}$/.test(videoId)) return null;
+  if (youtubeDataApiBlocked()) return null;
   const token = await getYoutubeOwnerAccessToken();
   if (!token.ok) return null;
   const ctrl = new AbortController();
@@ -55,7 +61,11 @@ export async function fetchYouTubeOwnerSnippet(
         headers: { Authorization: `Bearer ${token.token}`, Accept: "application/json" },
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      const body = await res.text();
+      if (isYoutubeQuotaExceeded(res.status, body)) noteYoutubeQuotaExceeded();
+      return null;
+    }
     return ownerSnippetMeta(await res.json());
   } catch {
     return null;

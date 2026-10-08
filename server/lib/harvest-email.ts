@@ -28,6 +28,7 @@ import { providerAccepted } from "./emailAttempt";
 import { ENV } from "../_core/env";
 import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl, previewManagePreferencesUrl } from "./emailPrefs";
+import { emailBannerHtml, emailDocumentHtml, EMAIL_BODY_TEXT } from "../../shared/emailChrome";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 
 const log = logger("harvest-email");
@@ -81,19 +82,17 @@ export function splitSubject(body: string): { subject: string; text: string } {
 function renderHtml(text: string, prefsUrl: string): string {
   const escaped = text
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const paragraphs = escaped.split(/\n{2,}/).map((p) => `<p style="color:#2d3a2d;line-height:1.7;margin:0 0 16px 0;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
-  return `
+  const paragraphs = escaped.split(/\n{2,}/).map((p) => `<p class="rc-text" style="color:${EMAIL_BODY_TEXT};line-height:1.7;margin:0 0 16px 0;">${p.replace(/\n/g, "<br/>")}</p>`).join("");
+  return emailDocumentHtml(`
   <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-    <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 26px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-      <h1 style="color: #7dd87d; margin: 0; font-size: 22px;">ReGen Civics</h1>
-    </div>
-    <div style="padding: 26px 22px; background: #ffffff; border: 1px solid #e8e4de; border-top: none;">
+    ${emailBannerHtml("A note from ReGen Civics")}
+    <div class="rc-card" style="padding: 26px 22px; background: #ffffff; border: 1px solid #e8e4de; border-top: none;">
       ${paragraphs}
     </div>
-    <div style="padding: 14px 22px; background: #f8f5f0; border-radius: 0 0 8px 8px; border: 1px solid #e8e4de; border-top: none;">
+    <div class="rc-card" style="padding: 14px 22px; background: #f4f7f4; border-radius: 0 0 8px 8px; border: 1px solid #e8e4de; border-top: none;">
       ${newsletterLegalFooterHtml(prefsUrl, ENV.harvestPostalAddress)}
     </div>
-  </div>`;
+  </div>`);
 }
 
 export type PreviewResult = {

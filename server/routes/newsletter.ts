@@ -749,14 +749,14 @@ export const emailRouter = router({
         </head>
         <body style="margin: 0; padding: 20px; background-color: #f5f5f5; font-family: 'Nunito', Arial, sans-serif;">
           <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-              <h1 style="color: #7dd87d; margin: 0; font-size: 24px;">ReGen Civics</h1>
-              <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
+            <div class="rc-banner" bgcolor="#1a472a" style="background-color: #1a472a; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 class="rc-banner-title" style="color: #ffffff; margin: 0; font-size: 24px;">ReGen Civics</h1>
+              <p class="rc-banner-eyebrow" style="color: #ffffff; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
             </div>
             <div style="padding: 30px 25px;">
               ${emailContent.html}
             </div>
-            <div style="background: #f0f7f0; padding: 25px 20px; margin-top: 30px; border-radius: 0 0 8px 8px; border-top: 3px solid #7dd87d;">
+            <div style="background: #f4f7f4; padding: 25px 20px; margin-top: 30px; border-radius: 0 0 8px 8px; border-top: 3px solid #1a472a;">
               <div style="text-align: center; margin-bottom: 20px;">
                 <p style="color: #1a472a; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
                 <p style="color: #4a7c59; font-size: 12px;">WhatsApp | Discord | YouTube</p>

@@ -267,7 +267,7 @@ export const roleHoldersRouter = router({
         html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto">
           <h2 style="color:#1a472a">You're invited, ${input.name.replace(/[<>]/g, "")}</h2>
           <p style="color:#444;line-height:1.6">You've been invited to hold a role in ReGen Civics. Sign in with this email to accept and pick up your role.</p>
-          <p><a href="${signInUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Accept your invite</a></p>
+          <p><a href="${signInUrl}" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">Accept your invite</a></p>
           <p style="color:#888;font-size:12px">If you didn't expect this, you can ignore it.</p>
         </div>`,
         template: "role_invite",

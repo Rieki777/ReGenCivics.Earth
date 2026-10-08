@@ -21,6 +21,14 @@ import {
 import { logger } from "../_core/logger";
 import { fetchYouTubeTranscriptSegments } from "./videoSummary";
 import { getYoutubeOwnerAccessToken, youtubeConnectionStatus } from "./youtubeOwnerAuth";
+import {
+  isYoutubeQuotaExceeded,
+  isYoutubeQuotaStop,
+  noteYoutubeQuotaExceeded,
+  takeCaptionDownloadSlot,
+  YOUTUBE_QUOTA_STOP_ERROR,
+  youtubeDataApiBlocked,
+} from "./youtubeQuota";
 
 const captionLog = logger("youtube-captions");
 
@@ -157,6 +165,9 @@ async function googleFetch(
   url: string,
   accessToken: string,
 ): Promise<{ ok: true; status: number; body: string } | { ok: false; status: number; error: string }> {
+  if (youtubeDataApiBlocked()) {
+    return { ok: false, status: 403, error: YOUTUBE_QUOTA_STOP_ERROR };
+  }
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(), 15_000);
   try {
@@ -166,6 +177,10 @@ async function googleFetch(
     });
     const body = await res.text();
     if (!res.ok) {
+      if (isYoutubeQuotaExceeded(res.status, body)) {
+        noteYoutubeQuotaExceeded();
+        return { ok: false, status: 403, error: YOUTUBE_QUOTA_STOP_ERROR };
+      }
       return { ok: false, status: res.status, error: redactOauthSecrets(`owner captions HTTP ${res.status} ${body}`).slice(0, 300) };
     }
     return { ok: true, status: res.status, body };
@@ -261,12 +276,22 @@ export async function loadYouTubeTranscript(videoId: string): Promise<LoadedTran
   if (!VIDEO_ID.test(videoId)) {
     return { ok: false, error: "video id was not a YouTube id" };
   }
-  let owner: OwnerCaptionAttempt;
-  try {
-    owner = await ownerCaptions(videoId);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "owner captions failed";
-    owner = { status: "error", error: redactOauthSecrets(message).slice(0, 300) };
+  if (youtubeDataApiBlocked()) {
+    return { ok: false, error: YOUTUBE_QUOTA_STOP_ERROR };
+  }
+  let owner: OwnerCaptionAttempt = { status: "skipped" };
+  if (takeCaptionDownloadSlot()) {
+    try {
+      owner = await ownerCaptions(videoId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "owner captions failed";
+      owner = { status: "error", error: redactOauthSecrets(message).slice(0, 300) };
+    }
+  } else {
+    captionLog.info("caption download cap reached; skipping owner captions", { videoId });
+  }
+  if (owner.status === "error" && isYoutubeQuotaStop(owner.error)) {
+    return { ok: false, error: owner.error };
   }
   if (owner.status === "ok" && transcriptIsUsable(owner.text)) {
     return assembleTranscriptResult(owner, null);

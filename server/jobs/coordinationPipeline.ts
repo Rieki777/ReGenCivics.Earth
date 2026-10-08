@@ -41,6 +41,9 @@ import { recordings, roleHolders, bounties, bountyRoles } from "../../drizzle/sc
 import { finalizeRecording } from "../lib/recording-finalize";
 import { mapRecordingOntoCourse } from "../lib/sessionCourseStore";
 import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest";
+import { beginRecordingMailRun, endRecordingMailRun } from "../lib/recordingMailBudget";
+import { recordRecordingCrash } from "../lib/recordingProcessGuard";
+import { beginYoutubeQuotaRun, endYoutubeQuotaRun, isYoutubeQuotaStop } from "../lib/youtubeQuota";
 import { linkRecordingToMatchingEvent } from "../lib/recordingEventLink";
 import { fetchYouTubeOembedTitle, fetchYouTubeOwnerSnippet, fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
 import { replacementVideoTitle, usableVideoTitle } from "../../shared/youtubeWatchMeta";
@@ -517,6 +520,22 @@ export async function runCoordinationPipeline(opts: {
     return report;
   }
 
+  beginRecordingMailRun();
+  beginYoutubeQuotaRun();
+  try {
+    return await runCoordinationPass(db, report, channelId, opts);
+  } finally {
+    endYoutubeQuotaRun();
+    endRecordingMailRun();
+  }
+}
+
+async function runCoordinationPass(
+  db: DbInstance,
+  report: PipelineReport,
+  channelId: string,
+  opts: { maxNew?: number },
+): Promise<PipelineReport> {
   const entries = await fetchYouTubeRss(channelId);
   report.pollFetched = entries.length;
   const skipRe = (() => {
@@ -729,6 +748,26 @@ async function understandRecording(
   holders: HolderRow[],
   holderByRole: Map<string, HolderRow>,
 ): Promise<{ transcript: boolean; synthesized: boolean; tasksProposed: number; error?: string }> {
+  try {
+    return await understandRecordingBody(db, rec, holders, holderByRole);
+  } catch (error) {
+    const message = await recordRecordingCrash({
+      recordingId: rec.id,
+      attempts: rec.processAttempts,
+      error,
+      markFailure: (id, attempts, text) => markProcessFailure(db, id, attempts, text),
+      log: (line) => pipelineLog.error(line),
+    });
+    return { transcript: false, synthesized: false, tasksProposed: 0, error: message };
+  }
+}
+
+async function understandRecordingBody(
+  db: DbInstance,
+  rec: { id: number; title: string; processAttempts: number },
+  holders: HolderRow[],
+  holderByRole: Map<string, HolderRow>,
+): Promise<{ transcript: boolean; synthesized: boolean; tasksProposed: number; error?: string }> {
   let row: { youtubeVideoId: string | null; processAttempts: number; title: string } | undefined;
   try {
     const [loaded] = await db
@@ -758,6 +797,10 @@ async function understandRecording(
 
   const loaded = await loadTranscript(videoId);
   if (!loaded.ok) {
+    if (isYoutubeQuotaStop(loaded.error)) {
+      pipelineLog.error(`recording ${rec.id} youtube quota stop; attempt not counted`);
+      return { transcript: false, synthesized: false, tasksProposed: 0, error: loaded.error };
+    }
     await markProcessFailure(db, rec.id, row?.processAttempts ?? rec.processAttempts, loaded.error);
     pipelineLog.error(`transcript failed for recording ${rec.id}: ${loaded.error}`);
     return { transcript: false, synthesized: false, tasksProposed: 0, error: loaded.error };
@@ -923,6 +966,7 @@ async function sweepRecordingRetries(
     .slice(0, MAX_RETRIES_PER_RUN);
 
   for (const row of queued) {
+    try {
     if (!row.youtubeVideoId) continue;
     report.retried += 1;
     pipelineLog.info(`retry recording ${row.id} ${row.youtubeVideoId} attempt ${row.processAttempts ?? 0}`);
@@ -961,6 +1005,16 @@ async function sweepRecordingRetries(
     if (understood.synthesized) report.synthesized += 1;
     report.tasksProposed += understood.tasksProposed;
     if (understood.error) report.errors.push(`${row.youtubeVideoId}: ${understood.error}`);
+    } catch (error) {
+      const message = await recordRecordingCrash({
+        recordingId: row.id,
+        attempts: row.processAttempts ?? 0,
+        error,
+        markFailure: (id, attempts, text) => markProcessFailure(db, id, attempts, text),
+        log: (line) => pipelineLog.error(line),
+      });
+      report.errors.push(`${row.id} ${row.youtubeVideoId}: ${message}`);
+    }
   }
 }
 

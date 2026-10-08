@@ -22,6 +22,7 @@ import { isLetterLayout } from "@shared/letterLayout";
 import { CourseTimestamps } from "@/components/admin/CourseTimestamps";
 import { chapterStamp, chapterWatchUrl, coerceChapters } from "@shared/youtubeChapters";
 import { extractYoutubeVideoId } from "@shared/youtubeVideoId";
+import { recordingTitleNeedsReview } from "@shared/recordingMailGuard";
 
 const YOUTUBE_CONNECT_ERRORS: Record<string, string> = {
   missing_client: "Google sign-in is not configured on the server yet.",
@@ -190,7 +191,11 @@ export function AdminRecordingsTab() {
         </Card>
       )}
 
-      {recs.map((rec) => (
+      {recs.map((rec) => {
+        const titleNeedsReview = recordingTitleNeedsReview(rec.title);
+        const heldForReview = (rec.lastError ?? "").startsWith("needs review");
+        const needsReview = (titleNeedsReview || heldForReview) && !rec.emailSent;
+        return (
         <Card key={rec.id} className={rec.emailSent ? 'border-green-500/30' : ''}>
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
@@ -202,7 +207,9 @@ export function AdminRecordingsTab() {
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {rec.emailSent ? (
+                {needsReview ? (
+                  <Badge variant="outline" className="border-amber-700 text-amber-800" data-testid="recording-needs-review">Needs review</Badge>
+                ) : rec.emailSent ? (
                   <Badge variant="outline" className="border-green-500 text-green-600">Email sent</Badge>
                 ) : (
                   <Badge variant="outline" className="border-yellow-500 text-yellow-600">Email pending</Badge>
@@ -255,8 +262,8 @@ export function AdminRecordingsTab() {
                   </p>
                 )}
                 {rec.lastError && (
-                  <p className="text-sm text-red-700" data-testid="recording-last-error">
-                    Processing failed: {rec.lastError}
+                  <p className={heldForReview ? "text-sm text-amber-900" : "text-sm text-red-700"} data-testid="recording-last-error">
+                    {heldForReview ? rec.lastError : `Processing failed: ${rec.lastError}`}
                   </p>
                 )}
                 {(rec.processAttempts > 0 || rec.nextRetryAt) && (
@@ -307,7 +314,7 @@ export function AdminRecordingsTab() {
                   Reprocess
                 </Button>
               )}
-              {!rec.emailSent && !rec.editedEmailSent && (
+              {!titleNeedsReview && !rec.emailSent && !rec.editedEmailSent && (
                 <Button
                   size="sm"
                   className="bg-green-700 hover:bg-green-800 text-white"
@@ -318,7 +325,7 @@ export function AdminRecordingsTab() {
                   {sendEmailMutation.isPending ? 'Sending…' : 'Send Email Summary'}
                 </Button>
               )}
-              {!rec.emailSent && !!rec.editedEmailSent && !!(rec.aiSummary || rec.overview) && (
+              {!titleNeedsReview && !rec.emailSent && !!rec.editedEmailSent && !!(rec.aiSummary || rec.overview) && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -329,7 +336,7 @@ export function AdminRecordingsTab() {
                   {sendEmailMutation.isPending ? 'Sending…' : 'Send session notes'}
                 </Button>
               )}
-              {rec.emailSent && (
+              {!titleNeedsReview && rec.emailSent && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -367,7 +374,8 @@ export function AdminRecordingsTab() {
             </div>
           </CardContent>
         </Card>
-      ))}
+        );
+      })}
 
       <Card className="border-dashed">
         <CardContent className="py-6">

@@ -11,6 +11,15 @@ import type { EmailTopicKey } from "@shared/emailPrefs";
 import { SESSION_TIME_ZONE } from "@shared/sessionClock";
 import { JOIN_URL } from "@shared/sessionLinks";
 import { localTimeCtaHtml } from "@shared/localTimeCta";
+import {
+  EMAIL_BODY_TEXT,
+  EMAIL_HEADER_TEXT,
+  EMAIL_MUTED_TEXT,
+  EMAIL_SUMMARY_BG,
+  emailBannerHtml,
+  emailDocumentHtml,
+  emailPrimaryButton,
+} from "@shared/emailChrome";
 
 type ReminderEmailInput = {
   title: string;
@@ -44,10 +53,10 @@ type ReminderEmailInput = {
 };
 
 function footerHtml(input: ReminderEmailInput): string {
-  const schedule = `<a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a>`;
+  const schedule = `<a href="${APP_BASE_URL}/schedule" style="color:${EMAIL_BODY_TEXT};">View all events</a>`;
   if (input.alwaysIncluded) {
     const stop = `${APP_BASE_URL}${ALWAYS_INCLUDED_STOP_PATH}`;
-    return `${escapeHtml(ALWAYS_INCLUDED_FOOTER_TEXT)} <a href="${stop}" style="color:#7dd87d;">${escapeHtml(stop.replace(/^https?:\/\//, ""))}</a>.<br/>
+    return `${escapeHtml(ALWAYS_INCLUDED_FOOTER_TEXT)} <a href="${stop}" style="color:${EMAIL_BODY_TEXT};">${escapeHtml(stop.replace(/^https?:\/\//, ""))}</a>.<br/>
             ${schedule}`;
   }
   const stop = input.eventStopUrl
@@ -148,7 +157,7 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
   const { dateStr, timeStr } = formatSessionWhen(input.startTime);
   const body = (input.bodyText ?? input.description ?? "").trim();
   const title = escapeHtml(input.title);
-  const bodyHtml = body ? `<p style="color:#444;line-height:1.7;margin:0 0 24px 0;">${escapeHtml(body)}</p>` : "";
+  const bodyHtml = body ? `<p class="rc-text" style="color:${EMAIL_BODY_TEXT};line-height:1.7;margin:0 0 24px 0;">${escapeHtml(body)}</p>` : "";
   // Reminder emails always use the durable /join hook (never a raw room URL).
   const joinUrl = reminderJoinUrl({ eventId: input.eventId });
   const joinLabel = reminderJoinLabel();
@@ -156,23 +165,20 @@ export function buildAutoReminderHtml(input: ReminderEmailInput): string {
     input.now ? offsetLeadFromRemaining(input.startTime, input.now) : offsetLead(input.offsetMinutes),
   );
 
-  return `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Event reminder</p>
-          </div>
-          <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:13px;margin:0 0 6px 0;">${lead}</p>
-            <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${title}</h2>
-            <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${escapeHtml(dateStr)} at ${escapeHtml(timeStr)}${localTimeCtaHtml(input.startTime, { title: input.title })}</p>
+  return emailDocumentHtml(`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
+          ${emailBannerHtml("Event reminder")}
+          <div class="rc-card" style="padding:30px 24px;background:#ffffff;border:1px solid #e0e0e0;border-top:none;">
+            <p class="rc-muted" style="color:${EMAIL_MUTED_TEXT};font-size:13px;margin:0 0 6px 0;">${lead}</p>
+            <h2 class="rc-heading" style="color:${EMAIL_BODY_TEXT};margin:0 0 6px 0;font-size:20px;">${title}</h2>
+            <p class="rc-text" style="color:${EMAIL_BODY_TEXT};font-size:15px;margin:0 0 20px 0;">${escapeHtml(dateStr)} at ${escapeHtml(timeStr)}${localTimeCtaHtml(input.startTime, { title: input.title })}</p>
             ${bodyHtml}
-            <a href="${joinUrl}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${escapeHtml(joinLabel)}</a>
-            <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
+            <a href="${joinUrl}" style="display:inline-block;background:#5b21b6;color:${EMAIL_HEADER_TEXT};padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${escapeHtml(joinLabel)}</a>
+            ${emailPrimaryButton(`${APP_BASE_URL}/schedule`, "View Schedule")}
           </div>
-          <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:12px;margin:0;">${footerHtml(input)}</p>
+          <div class="rc-card" style="background:${EMAIL_SUMMARY_BG};padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
+            <p class="rc-muted" style="color:${EMAIL_MUTED_TEXT};font-size:12px;margin:0;">${footerHtml(input)}</p>
           </div>
-        </div>`;
+        </div>`);
 }
 
 /**

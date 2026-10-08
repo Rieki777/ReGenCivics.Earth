@@ -7,6 +7,7 @@ import { providerAccepted } from "../lib/emailAttempt";
 import { emailsAcceptedSince } from "../emailTracking";
 import { rewriteLegacySiteUrls } from "../../shared/siteContext";
 import { audienceForTopic, managePreferencesUrl } from "../lib/emailPrefs";
+import { emailDocumentHtml } from "../../shared/emailChrome";
 import { newsletterLegalFooterHtml } from "../../shared/letterHtml";
 import {
   WHATSAPP_COMMUNITY_URL,
@@ -201,7 +202,7 @@ export function buildCommunityDigestHtml(input: {
             <td style="padding: 16px 0; border-bottom: 1px solid #e8e4de;">
               <a href="${postUrl}" style="font-size: 16px; font-weight: 600; color: #1a472a; text-decoration: none;">${i + 1}. ${p.title}</a>
               <p style="margin: 6px 0 8px; font-size: 14px; color: #4a5568; line-height: 1.5;">${excerpt}${excerpt.length >= 180 ? '...' : ''}</p>
-              <span style="font-size: 12px; color: #7dd87d;">${p.replyCount} ${p.replyCount === 1 ? 'reply' : 'replies'}</span>
+              <span class="rc-muted" style="font-size: 12px; color: #1a1a1a;">${p.replyCount} ${p.replyCount === 1 ? 'reply' : 'replies'}</span>
             </td>
           </tr>`;
       }).join('');
@@ -211,7 +212,7 @@ export function buildCommunityDigestHtml(input: {
         <table style="width: 100%; border-collapse: collapse;">${postRows}</table>
         <div style="text-align: center; margin-top: 28px;">
           <a href="${digestPublicUrl("/community?utm_source=email&utm_medium=digest&utm_campaign=weekly")}"
-             style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
+             class="rc-button" style="display: inline-block; background: #1a472a; color: #ffffff; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
             Join the conversation
           </a>
         </div>`;
@@ -234,7 +235,7 @@ export function buildCommunityDigestHtml(input: {
         <table style="width: 100%; border-collapse: collapse;">${blogRows}</table>
         <div style="text-align: center; margin-top: 28px;">
           <a href="${digestPublicUrl("/community?utm_source=email&utm_medium=digest&utm_campaign=weekly")}"
-             style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
+             class="rc-button" style="display: inline-block; background: #1a472a; color: #ffffff; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
             Start a conversation
           </a>
         </div>`;
@@ -245,8 +246,8 @@ export function buildCommunityDigestHtml(input: {
     const sitePickUrl = digestPublicUrl(`${sitePick.url}?utm_source=email&utm_medium=digest&utm_campaign=site-explore`);
 
     const siteSection = `
-      <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
-        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #7dd87d; margin: 0 0 6px; font-weight: bold;">Worth exploring</p>
+      <div style="background: #f0f7f0; border-left: 4px solid #1a472a; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
+        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #1a1a1a; margin: 0 0 6px; font-weight: bold;">Worth exploring</p>
         <p style="font-size: 15px; font-weight: 600; color: #1a472a; margin: 0 0 6px;">Have you seen <a href="${sitePickUrl}" style="color: #1a472a;">${sitePick.label}</a>?</p>
         <p style="font-size: 13px; color: #4a5568; margin: 0 0 12px; line-height: 1.6;">${sitePick.desc}</p>
         <a href="${sitePickUrl}" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Take a look</a>
@@ -268,9 +269,9 @@ export function buildCommunityDigestHtml(input: {
 
   const bodyHtml = rewriteLegacySiteUrls(`
       <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
-        <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 32px 40px; text-align: center;">
-          <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Weekly Round-Up · ${weekLabel}</p>
-          <h1 style="color: #ffffff; font-size: 24px; margin: 0; font-family: Georgia, serif;">ReGen Civics Community Update</h1>
+        <div class="rc-banner" bgcolor="#1a472a" style="background-color: #1a472a; padding: 32px 40px; text-align: center;">
+          <p class="rc-banner-eyebrow" style="color: #ffffff; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Weekly Round-Up · ${weekLabel}</p>
+          <h1 class="rc-banner-title" style="color: #ffffff; font-size: 24px; margin: 0; font-family: Georgia, serif;">ReGen Civics Community Update</h1>
         </div>
         <div style="padding: 32px 40px;">
           ${mainSection}
@@ -278,12 +279,12 @@ export function buildCommunityDigestHtml(input: {
           ${siteSection}
           ${connectSection}
         </div>
-        <div style="padding: 24px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
+        <div style="padding: 24px 40px; background: #f4f7f4; text-align: center; font-size: 12px; color: #1a1a1a;">
           {{PREFS_FOOTER}}
         </div>
       </div>`);
 
-  return bodyHtml;
+  return emailDocumentHtml(bodyHtml);
 }
 
 async function sendDigestEmails(
@@ -328,8 +329,8 @@ async function sendDigestEmails(
         if (Number(c.passedThisWeek) > 0) parts.push(`${c.passedThisWeek} passed this week`);
         if (parts.length > 0) {
           assemblySection = `
-      <div style="background: #f0f7f0; border-left: 4px solid #7dd87d; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
-        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #7dd87d; margin: 0 0 6px; font-weight: bold;">The Assembly</p>
+      <div style="background: #f0f7f0; border-left: 4px solid #1a472a; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 32px;">
+        <p style="font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #1a1a1a; margin: 0 0 6px; font-weight: bold;">The Assembly</p>
         <p style="font-size: 14px; color: #1a472a; margin: 0 0 12px; line-height: 1.6;">${parts.join(" · ")}</p>
         <a href="${digestPublicUrl("/assembly?utm_source=email&utm_medium=digest&utm_campaign=weekly")}" style="font-size: 13px; color: #1a472a; font-weight: bold; text-decoration: underline;">Visit the Assembly</a>
       </div>`;

@@ -11,6 +11,14 @@ import { COOP } from '../../shared/fund';
 import { decodeBasicEntities, textForEmail, textForSubject } from '../../shared/htmlText';
 import { configuredPublicBaseUrl, rewriteLegacySiteUrls } from '../../shared/siteContext';
 import {
+  EMAIL_BANNER_BG,
+  EMAIL_BODY_TEXT,
+  EMAIL_HEADER_TEXT,
+  EMAIL_MUTED_TEXT,
+  emailBannerHtml,
+  emailColorSchemeHead,
+} from '../../shared/emailChrome';
+import {
   WHATSAPP_COMMUNITY_URL,
   DISCORD_INVITE_URL,
   YOUTUBE_CHANNEL_URL,
@@ -108,12 +116,7 @@ export interface SendEmailParams {
  * Generate branded email header
  */
 function getEmailHeader(): string {
-  return `
-    <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0;">
-      <h1 style="color: #7dd87d; margin: 0; font-family: 'Quicksand', sans-serif; font-size: 24px;">ReGen Civics</h1>
-      <p style="color: #a8e6a8; margin: 5px 0 0 0; font-size: 12px;">An Infinite Game for the ReGenerative Renaissance</p>
-    </div>
-  `;
+  return emailBannerHtml("An Infinite Game for the ReGenerative Renaissance");
 }
 
 /**
@@ -121,57 +124,57 @@ function getEmailHeader(): string {
  */
 function getEmailFooter(): string {
   return `
-    <div style="background: #f0f7f0; padding: 25px 20px; margin-top: 30px; border-radius: 0 0 8px 8px; border-top: 3px solid #7dd87d;">
+    <div class="rc-card" style="background: #f4f7f4; padding: 25px 20px; margin-top: 30px; border-radius: 0 0 8px 8px; border-top: 3px solid ${EMAIL_BANNER_BG};">
       <div style="text-align: center; margin-bottom: 20px;">
-        <p style="color: #1a472a; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
+        <p class="rc-heading" style="color: ${EMAIL_BODY_TEXT}; font-size: 14px; font-weight: bold; margin: 0 0 10px 0;">Connect With Us</p>
         <div style="margin: 15px 0;">
-          <a href="${HYLO_SEEDS_URL}" style="display: inline-block; margin: 0 8px; color: #2d6a4f; text-decoration: none; font-size: 14px; font-weight: bold;">
+          <a href="${HYLO_SEEDS_URL}" style="display: inline-block; margin: 0 8px; color: ${EMAIL_BODY_TEXT}; text-decoration: none; font-size: 14px; font-weight: bold;">
             Hylo
           </a>
-          <a href="${HOLOS_REGEN_CIVICS_URL}" style="display: inline-block; margin: 0 8px; color: #6b5b95; text-decoration: none; font-size: 14px; font-weight: bold;">
+          <a href="${HOLOS_REGEN_CIVICS_URL}" style="display: inline-block; margin: 0 8px; color: ${EMAIL_BODY_TEXT}; text-decoration: none; font-size: 14px; font-weight: bold;">
             Holos
           </a>
-          <a href="${WHATSAPP_COMMUNITY_URL}" style="display: inline-block; margin: 0 8px; color: #25D366; text-decoration: none; font-size: 14px; font-weight: bold;">
-            &#x1F4AC; WhatsApp
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="display: inline-block; margin: 0 8px; color: ${EMAIL_BODY_TEXT}; text-decoration: none; font-size: 14px; font-weight: bold;">
+            WhatsApp
           </a>
-          <a href="${DISCORD_INVITE_URL}" style="display: inline-block; margin: 0 8px; color: #5865F2; text-decoration: none; font-size: 14px; font-weight: bold;">
-            &#x1F3AE; Discord
+          <a href="${DISCORD_INVITE_URL}" style="display: inline-block; margin: 0 8px; color: ${EMAIL_BODY_TEXT}; text-decoration: none; font-size: 14px; font-weight: bold;">
+            Discord
           </a>
-          <a href="${YOUTUBE_CHANNEL_URL}" style="display: inline-block; margin: 0 8px; color: #FF0000; text-decoration: none; font-size: 14px; font-weight: bold;">
-            &#x25B6; YouTube
+          <a href="${YOUTUBE_CHANNEL_URL}" style="display: inline-block; margin: 0 8px; color: ${EMAIL_BODY_TEXT}; text-decoration: none; font-size: 14px; font-weight: bold;">
+            YouTube
           </a>
         </div>
       </div>
       
-      <div style="background: #f0f7f0; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-        <p style="color: #1a472a; font-size: 13px; margin: 0 0 10px 0; text-align: center;">
+      <div class="rc-card" style="background: #ffffff; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+        <p class="rc-heading" style="color: ${EMAIL_BODY_TEXT}; font-size: 13px; margin: 0 0 10px 0; text-align: center;">
           <strong>Questions or want to engage?</strong>
         </p>
-        <p style="color: #4a7c59; font-size: 13px; margin: 0 0 10px 0; text-align: center;">
+        <p class="rc-text" style="color: ${EMAIL_BODY_TEXT}; font-size: 13px; margin: 0 0 10px 0; text-align: center;">
           We don't respond to emails directly. To reach us, fill out the
           short form on our Connect page and we'll route it to the right
           person.
         </p>
         <p style="text-align: center; margin: 0;">
-          <a href="https://regencivics.earth/connect?path=something_else" style="display: inline-block; background: #1a472a; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: bold;">
+          <a class="rc-button" href="https://regencivics.earth/connect?path=something_else" style="display: inline-block; background: ${EMAIL_BANNER_BG}; color: ${EMAIL_HEADER_TEXT}; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: bold;">
             Open the Connect form
           </a>
         </p>
-        <p style="color: #4a7c59; font-size: 12px; margin: 12px 0 0 0; text-align: center;">
+        <p class="rc-text" style="color: ${EMAIL_BODY_TEXT}; font-size: 12px; margin: 12px 0 0 0; text-align: center;">
           We also gather on
-          <a href="${HYLO_SEEDS_URL}" style="color: #2d6a4f;">Hylo</a>,
-          <a href="${HOLOS_REGEN_CIVICS_URL}" style="color: #6b5b95;">Holos</a>,
-          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: #25D366;">WhatsApp</a>
+          <a href="${HYLO_SEEDS_URL}" style="color: ${EMAIL_BODY_TEXT};">Hylo</a>,
+          <a href="${HOLOS_REGEN_CIVICS_URL}" style="color: ${EMAIL_BODY_TEXT};">Holos</a>,
+          <a href="${WHATSAPP_COMMUNITY_URL}" style="color: ${EMAIL_BODY_TEXT};">WhatsApp</a>
           and
-          <a href="${DISCORD_INVITE_URL}" style="color: #5865F2;">Discord</a>.
+          <a href="${DISCORD_INVITE_URL}" style="color: ${EMAIL_BODY_TEXT};">Discord</a>.
         </p>
       </div>
       
-      <div style="text-align: center; border-top: 1px solid #c8e6c9; padding-top: 15px;">
-        <p style="color: #4a7c59; font-size: 12px; margin: 0;">
-          <a href="https://regencivics.earth" style="color: #4a7c59;">regencivics.earth</a>
+      <div style="text-align: center; border-top: 1px solid #d5ddd6; padding-top: 15px;">
+        <p class="rc-text" style="color: ${EMAIL_BODY_TEXT}; font-size: 12px; margin: 0;">
+          <a href="https://regencivics.earth" style="color: ${EMAIL_BODY_TEXT};">regencivics.earth</a>
         </p>
-        <p style="color: #888; font-size: 11px; margin: 10px 0 0 0;">
+        <p class="rc-muted" style="color: ${EMAIL_MUTED_TEXT}; font-size: 11px; margin: 10px 0 0 0;">
           This is an automated message. Please do not reply to this email.
         </p>
       </div>
@@ -189,12 +192,13 @@ function wrapWithBrandedTemplate(content: string): string {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      ${emailColorSchemeHead()}
       <title>ReGen Civics</title>
     </head>
-    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Nunito', Arial, sans-serif;">
-      <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+    <body class="rc-page" style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+      <div class="rc-card" style="max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px;">
         ${getEmailHeader()}
-        <div style="padding: 30px 25px;">
+        <div class="rc-text" style="padding: 30px 25px; color: ${EMAIL_BODY_TEXT};">
           ${content}
         </div>
         ${getEmailFooter()}

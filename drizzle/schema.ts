@@ -2958,8 +2958,9 @@ export const recordings = mysqlTable("recordings", {
   youtubeUrl: varchar("youtubeUrl", { length: 512 }),
   thumbnailUrl: varchar("thumbnailUrl", { length: 512 }),
 
-  // AI-generated content (may arrive via second webhook after transcription)
-  transcript: text("transcript"),
+  // AI-generated content (may arrive via second webhook after transcription).
+  // MEDIUMTEXT: a full caption file is often larger than TEXT (64KB).
+  transcript: mediumtext("transcript"),
   aiSummary: text("aiSummary"),
 
   // Admin controls

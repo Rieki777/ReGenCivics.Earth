@@ -21,6 +21,7 @@
  */
 
 import { sendEmail, APP_BASE_URL } from "../_core/email";
+import { emailDocumentHtml } from "../../shared/emailChrome";
 import { sql } from "drizzle-orm";
 import { projectPathForCampaign, projectPathForCampaignFocus, projectRefFor } from "../../shared/projectKey";
 import { isHoursNeed } from "../../shared/roleCapacity";
@@ -202,8 +203,8 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
 
   const html = `
     <div style="max-width: 600px; margin: 0 auto; font-family: Georgia, serif; background: #fff;">
-      <div style="background-color: #1a472a; background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); padding: 28px 40px;">
-        <p style="color: #7dd87d; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Steward digest</p>
+      <div class="rc-banner" bgcolor="#1a472a" style="background-color: #1a472a; padding: 28px 40px;">
+        <p class="rc-banner-eyebrow" style="color: #ffffff; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 8px;">Steward digest</p>
         <h1 style="color: #ffffff; font-size: 22px; margin: 0; font-family: Georgia, serif;">${esc(data.campaignTitle)}</h1>
       </div>
       <div style="padding: 28px 40px;">
@@ -211,18 +212,18 @@ export function composeStewardDigest(data: StewardDigestData): { subject: string
         ${sections.join("")}
         <div style="text-align: center; margin-top: 32px;">
           <a href="${manage("steward-tools")}"
-             style="display: inline-block; background: #7dd87d; color: #1a472a; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
+             class="rc-button" style="display: inline-block; background: #1a472a; color: #ffffff; padding: 12px 32px; border-radius: 9999px; font-weight: bold; text-decoration: none; font-size: 15px;">
             Open your project page
           </a>
         </div>
       </div>
-      <div style="padding: 22px 40px; background: #f8f5f0; text-align: center; font-size: 12px; color: #6b7280;">
+      <div style="padding: 22px 40px; background: #f4f7f4; text-align: center; font-size: 12px; color: #1a1a1a;">
         <p style="margin: 0 0 6px;">You get this because you steward a land project with a live campaign on ReGen Civics.</p>
         <p style="margin: 0;"><a href="${APP_BASE_URL}/profile?${utm}" style="color: #1a472a;">Update email preferences</a></p>
       </div>
     </div>`;
 
-  return { subject, html };
+  return { subject, html: emailDocumentHtml(html) };
 }
 
 // ─── Default db loaders (raw SQL, matches the batch-job style) ──────────────
