@@ -37,6 +37,45 @@ describe("parseYouTubeWatchHtml", () => {
     expect(meta.chapters.map((c) => c.tSeconds)).toEqual([0, 3840]);
   });
 
+  it("ignores a numeric title field and keeps the og:title", () => {
+    const html = `
+      "title":"3"
+      <meta property="og:title" content="S2E2 CLEAN - Journey to ReGenerative Civilization - Incubator Overview">
+      "liveBroadcastContent":"none"
+      "lengthSeconds":"0"
+      <title>S2E2 CLEAN - Journey to ReGenerative Civilization - Incubator Overview - YouTube</title>
+    `;
+    const meta = parseYouTubeWatchHtml(html);
+    expect(meta.status).toBe("ok");
+    if (meta.status !== "ok") return;
+    expect(meta.title).toBe("S2E2 CLEAN - Journey to ReGenerative Civilization - Incubator Overview");
+    expect(meta.ended).toBe(true);
+  });
+
+  it("reads the watch title beside the like button's numeric title", () => {
+    const html = `
+      "title":"3"
+      "videoPrimaryInfoRenderer":{"title":{"runs":[{"text":"S2E2 LIVE - Journey to ReGenerative Civilization - Incubator Overview"}]}}
+      "playerOverlayVideoDetailsRenderer":{"title":{"simpleText":"S2E2 LIVE - Journey to ReGenerative Civilization - Incubator Overview"}}
+      "liveBroadcastContent":"none"
+      "lengthSeconds":"0"
+    `;
+    const meta = parseYouTubeWatchHtml(html);
+    expect(meta.status).toBe("ok");
+    if (meta.status !== "ok") return;
+    expect(meta.title).toBe("S2E2 LIVE - Journey to ReGenerative Civilization - Incubator Overview");
+    expect(meta.ended).toBe(true);
+  });
+
+  it("does not store a numeric title when that is the only title field", () => {
+    const html = `"title":"3" "liveBroadcastContent":"none" "lengthSeconds":"0"`;
+    const meta = parseYouTubeWatchHtml(html);
+    expect(meta.status).toBe("ok");
+    if (meta.status !== "ok") return;
+    expect(meta.title).toBeNull();
+    expect(meta.ended).toBe(true);
+  });
+
   it("treats liveBroadcastContent none as ended even when lengthSeconds is 0", () => {
     const html = `
       "videoDetails":{"videoId":"23cRivDtorQ","title":"S2E2 LIVE - Incubator Overview","lengthSeconds":"0"}
