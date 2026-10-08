@@ -15,6 +15,25 @@ export const CAPTION_RETRY_DELAYS_MS = [
 /** Four scheduled waits, then one last try that marks the row finished. */
 export const MAX_PROCESS_ATTEMPTS = CAPTION_RETRY_DELAYS_MS.length + 1;
 
+/**
+ * Written when a finished livestream still had lengthSeconds 0, so the old
+ * ended check said it was not over. That delay should not keep the row waiting.
+ */
+export const FALSE_NOT_ENDED_ERROR = "stream has not ended (none)";
+
+export function falseStreamNotEnded(lastError: string | null | undefined): boolean {
+  return (lastError ?? "").trim() === FALSE_NOT_ENDED_ERROR;
+}
+
+/** A false "not ended" miss sorts with the rows that have never been tried. */
+export function effectiveRetryAttempts(row: {
+  processAttempts?: number | null;
+  lastError?: string | null;
+}): number {
+  if (falseStreamNotEnded(row.lastError)) return 0;
+  return row.processAttempts ?? 0;
+}
+
 /** Next time to try, or null when automatic retries are finished. */
 export function nextProcessRetry(attemptCount: number, now: Date): Date | null {
   const delay = CAPTION_RETRY_DELAYS_MS[attemptCount - 1];
@@ -58,6 +77,7 @@ export function recordingNeedsAutoRetry(
     aiSummary?: string | null;
     processAttempts?: number | null;
     nextRetryAt?: Date | string | null;
+    lastError?: string | null;
   },
   now: Date,
 ): boolean {
@@ -66,6 +86,7 @@ export function recordingNeedsAutoRetry(
   if ((row.overview ?? "").trim() || (row.aiSummary ?? "").trim()) return false;
   const attempts = row.processAttempts ?? 0;
   if (attempts >= MAX_PROCESS_ATTEMPTS) return false;
+  if (falseStreamNotEnded(row.lastError)) return true;
   if (row.nextRetryAt) {
     const at = row.nextRetryAt instanceof Date ? row.nextRetryAt : new Date(row.nextRetryAt);
     if (Number.isFinite(at.getTime()) && at.getTime() > now.getTime()) return false;

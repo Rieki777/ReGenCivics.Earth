@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   CAPTION_RETRY_DELAYS_MS,
   MAX_PROCESS_ATTEMPTS,
+  FALSE_NOT_ENDED_ERROR,
   captionRetryDespiteWatch,
   compareRetryQueue,
+  effectiveRetryAttempts,
   nextProcessRetry,
   recordingNeedsAutoRetry,
 } from "./recordingRetry";
@@ -53,6 +55,20 @@ describe("recordingNeedsAutoRetry", () => {
     ).toBe(false);
   });
 
+  it("does not wait when the last miss was a finished livestream marked none", () => {
+    expect(
+      recordingNeedsAutoRetry(
+        {
+          ...base,
+          processAttempts: 2,
+          nextRetryAt: new Date("2026-10-08T09:02:00.000Z"),
+          lastError: FALSE_NOT_ENDED_ERROR,
+        },
+        NOW,
+      ),
+    ).toBe(true);
+  });
+
   it("stops after the attempt cap", () => {
     expect(recordingNeedsAutoRetry({ ...base, processAttempts: MAX_PROCESS_ATTEMPTS }, NOW)).toBe(false);
   });
@@ -74,5 +90,20 @@ describe("caption retry queue", () => {
       { id: 40, processAttempts: 2 },
     ];
     expect(rows.sort(compareRetryQueue).map((row) => row.id)).toEqual([57, 56, 3, 40]);
+  });
+
+  it("puts the edited cut and the false not-ended livestream in the next pair", () => {
+    const rows = [
+      { id: 40, processAttempts: 0, lastError: null },
+      { id: 56, processAttempts: 2, lastError: FALSE_NOT_ENDED_ERROR },
+      { id: 57, processAttempts: 0, lastError: null },
+      { id: 3, processAttempts: 2, lastError: FALSE_NOT_ENDED_ERROR },
+    ];
+    const queued = rows
+      .map((row) => ({ ...row, processAttempts: effectiveRetryAttempts(row) }))
+      .sort(compareRetryQueue)
+      .slice(0, 2)
+      .map((row) => row.id);
+    expect(queued).toEqual([57, 56]);
   });
 });
