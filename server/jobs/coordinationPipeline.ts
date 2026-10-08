@@ -42,7 +42,8 @@ import { finalizeRecording } from "../lib/recording-finalize";
 import { mapRecordingOntoCourse } from "../lib/sessionCourseStore";
 import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest";
 import { linkRecordingToMatchingEvent } from "../lib/recordingEventLink";
-import { fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
+import { fetchYouTubeOembedTitle, fetchYouTubeOwnerSnippet, fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
+import { replacementVideoTitle, usableVideoTitle } from "../../shared/youtubeWatchMeta";
 import { createSingleFlight } from "../lib/singleFlight";
 import { EMPTY_OWNER_CAPTION_LIST_ERROR, FALSE_NOT_ENDED_ERROR, MAX_PROCESS_ATTEMPTS, captionRetryDespiteWatch, compareRetryQueue, effectiveRetryAttempts, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
 import type { YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
@@ -647,6 +648,13 @@ export async function runCoordinationPipeline(opts: {
   }
 
   try {
+    await repairPlaceholderTitles(db);
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+    report.errors.push("recording title repair is not available yet");
+  }
+
+  try {
     await sweepRecordingRetries(db, report, holders, holderByRole);
   } catch (e) {
     if (!isMissingSchema(e)) throw e;
@@ -823,6 +831,55 @@ async function understandRecording(
   return { transcript: true, synthesized, tasksProposed };
 }
 
+/** A stored numeric title is the like-button count. oEmbed has the real name. */
+async function repairPlaceholderTitle(
+  db: DbInstance,
+  recordingId: number,
+  storedTitle: string,
+  videoId: string,
+  watchTitle: string | null,
+): Promise<void> {
+  if (usableVideoTitle(storedTitle)) return;
+  const owner = await fetchYouTubeOwnerSnippet(videoId);
+  const candidate = watchTitle || owner?.title || await fetchYouTubeOembedTitle(videoId);
+  const next = replacementVideoTitle(storedTitle, candidate);
+  const chapters = owner?.chapters ?? [];
+  if (!next && chapters.length === 0) return;
+  const patch: { title?: string; descriptionChaptersJson?: typeof chapters } = {};
+  if (next) patch.title = next;
+  if (chapters.length > 0) patch.descriptionChaptersJson = chapters;
+  try {
+    await db
+      .update(recordings)
+      .set(patch)
+      .where(and(eq(recordings.id, recordingId), eq(recordings.title, storedTitle)));
+  } catch (e) {
+    if (!isMissingSchema(e)) throw e;
+    if (!next) return;
+    await db
+      .update(recordings)
+      .set({ title: next })
+      .where(and(eq(recordings.id, recordingId), eq(recordings.title, storedTitle)));
+  }
+  pipelineLog.info(`repaired title for recording ${recordingId}`, { chapters: chapters.length });
+}
+
+async function repairPlaceholderTitles(db: DbInstance): Promise<void> {
+  const rows = await db
+    .select({
+      id: recordings.id,
+      title: recordings.title,
+      youtubeVideoId: recordings.youtubeVideoId,
+    })
+    .from(recordings)
+    .where(sql`${recordings.youtubeVideoId} IS NOT NULL AND ${recordings.title} REGEXP '^[0-9]+$'`)
+    .limit(5);
+  for (const row of rows) {
+    if (!row.youtubeVideoId) continue;
+    await repairPlaceholderTitle(db, row.id, row.title ?? "", row.youtubeVideoId, null);
+  }
+}
+
 async function sweepRecordingRetries(
   db: DbInstance,
   report: PipelineReport,
@@ -885,6 +942,15 @@ async function sweepRecordingRetries(
     } else {
       await refreshEndedMeta(db, row.id, meta);
     }
+    if (row.youtubeVideoId) {
+      await repairPlaceholderTitle(
+        db,
+        row.id,
+        row.title ?? "",
+        row.youtubeVideoId,
+        meta.status === "ok" ? meta.title : null,
+      );
+    }
     try {
       await linkRecordingToMatchingEvent(row.id);
     } catch (e) {
@@ -941,6 +1007,13 @@ export async function reprocessRecording(recordingId: number): Promise<{
     await refreshEndedMeta(db, rec.id, meta);
     try { await linkRecordingToMatchingEvent(rec.id); } catch { /* link errors are non-fatal */ }
   }
+  await repairPlaceholderTitle(
+    db,
+    rec.id,
+    rec.title ?? "",
+    rec.youtubeVideoId,
+    meta.status === "ok" ? meta.title : null,
+  );
 
   const holders = await loadHolders(db);
   const holderByRole = new Map(holders.map((h) => [h.roleSlug, h] as const));
