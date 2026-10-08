@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   CAPTION_RETRY_DELAYS_MS,
   MAX_PROCESS_ATTEMPTS,
+  captionRetryDespiteWatch,
+  compareRetryQueue,
   nextProcessRetry,
   recordingNeedsAutoRetry,
 } from "./recordingRetry";
@@ -37,6 +39,10 @@ describe("recordingNeedsAutoRetry", () => {
     expect(recordingNeedsAutoRetry(base, NOW)).toBe(true);
   });
 
+  it("queues a saved recording that has never been retried", () => {
+    expect(recordingNeedsAutoRetry({ ...base, processAttempts: 0, nextRetryAt: null }, NOW)).toBe(true);
+  });
+
   it("stops when a hand-written summary is already stored", () => {
     expect(recordingNeedsAutoRetry({ ...base, aiSummary: "We covered the incubator." }, NOW)).toBe(false);
   });
@@ -49,5 +55,24 @@ describe("recordingNeedsAutoRetry", () => {
 
   it("stops after the attempt cap", () => {
     expect(recordingNeedsAutoRetry({ ...base, processAttempts: MAX_PROCESS_ATTEMPTS }, NOW)).toBe(false);
+  });
+});
+
+describe("caption retry queue", () => {
+  it("fetches captions when the watch page is a bot wall or already ended", () => {
+    expect(captionRetryDespiteWatch({ status: "unknown" })).toBe("fetch");
+    expect(captionRetryDespiteWatch({ status: "ok", liveBroadcastContent: "none" })).toBe("fetch");
+    expect(captionRetryDespiteWatch({ status: "ok", liveBroadcastContent: "live" })).toBe("wait");
+    expect(captionRetryDespiteWatch({ status: "ok", liveBroadcastContent: "upcoming" })).toBe("wait");
+  });
+
+  it("puts never-tried newest recordings ahead of older misses", () => {
+    const rows = [
+      { id: 3, processAttempts: 0 },
+      { id: 56, processAttempts: 0 },
+      { id: 57, processAttempts: 0 },
+      { id: 40, processAttempts: 2 },
+    ];
+    expect(rows.sort(compareRetryQueue).map((row) => row.id)).toEqual([57, 56, 3, 40]);
   });
 });

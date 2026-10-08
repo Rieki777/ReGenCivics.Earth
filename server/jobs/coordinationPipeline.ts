@@ -44,7 +44,7 @@ import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest"
 import { linkRecordingToMatchingEvent } from "../lib/recordingEventLink";
 import { fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
 import { createSingleFlight } from "../lib/singleFlight";
-import { MAX_PROCESS_ATTEMPTS, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
+import { MAX_PROCESS_ATTEMPTS, captionRetryDespiteWatch, compareRetryQueue, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
 import type { YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
 import { isMissingSchema } from "../lib/schemaTolerance";
 import {
@@ -776,6 +776,7 @@ async function understandRecording(
       })
       .where(eq(recordings.id, rec.id));
   }
+  pipelineLog.info(`transcript saved for recording ${rec.id} from ${loaded.source}`);
 
   let synthesized = false;
   const synth = await runSynthesizePass({ title: row?.title || rec.title, transcript: loaded.text });
@@ -848,29 +849,33 @@ async function sweepRecordingRetries(
       or(isNull(recordings.aiSummary), eq(recordings.aiSummary, "")),
       lt(recordings.processAttempts, MAX_PROCESS_ATTEMPTS),
       or(isNull(recordings.nextRetryAt), lte(recordings.nextRetryAt, now)),
-    ))
-    .limit(MAX_RETRIES_PER_RUN);
+    ));
 
-  for (const row of due) {
-    if (!recordingNeedsAutoRetry(row, now) || !row.youtubeVideoId) continue;
+  const queued = due
+    .filter((row) => recordingNeedsAutoRetry(row, now) && !!row.youtubeVideoId)
+    .sort(compareRetryQueue)
+    .slice(0, MAX_RETRIES_PER_RUN);
+
+  for (const row of queued) {
+    if (!row.youtubeVideoId) continue;
     report.retried += 1;
+    pipelineLog.info(`retry recording ${row.id} ${row.youtubeVideoId} attempt ${row.processAttempts ?? 0}`);
     const meta = await fetchYouTubeWatchMeta(row.youtubeVideoId);
-    if (meta.status === "unknown") {
-      const error = "YouTube watch page had no player data";
-      await markProcessFailure(db, row.id, row.processAttempts, error);
-      report.errors.push(`${row.youtubeVideoId}: ${error}`);
-      continue;
-    }
-    if (!meta.ended) {
-      if (meta.title) {
+    if (captionRetryDespiteWatch(meta) === "wait") {
+      if (meta.status === "ok" && meta.title) {
         await db.update(recordings).set({ title: meta.title.slice(0, 255) }).where(eq(recordings.id, row.id));
       }
-      const error = `stream has not ended (${meta.liveBroadcastContent})`;
+      const state = meta.status === "ok" ? meta.liveBroadcastContent : "unknown";
+      const error = `stream has not ended (${state})`;
       await markProcessFailure(db, row.id, row.processAttempts, error);
-      report.errors.push(`${row.youtubeVideoId}: ${error}`);
+      report.errors.push(`${row.id} ${row.youtubeVideoId}: ${error}`);
       continue;
     }
-    await refreshEndedMeta(db, row.id, meta);
+    if (meta.status === "unknown") {
+      pipelineLog.info(`retry recording ${row.id}: watch page had no player data; trying owner captions`);
+    } else {
+      await refreshEndedMeta(db, row.id, meta);
+    }
     try {
       await linkRecordingToMatchingEvent(row.id);
     } catch (e) {
@@ -914,11 +919,12 @@ export async function reprocessRecording(recordingId: number): Promise<{
   }
 
   const meta = await fetchYouTubeWatchMeta(rec.youtubeVideoId);
-  if (meta.status === "ok" && !meta.ended) {
-    if (meta.title) {
+  if (captionRetryDespiteWatch(meta) === "wait") {
+    if (meta.status === "ok" && meta.title) {
       await db.update(recordings).set({ title: meta.title.slice(0, 255) }).where(eq(recordings.id, rec.id));
     }
-    const error = `stream has not ended (${meta.liveBroadcastContent})`;
+    const state = meta.status === "ok" ? meta.liveBroadcastContent : "unknown";
+    const error = `stream has not ended (${state})`;
     await markProcessFailure(db, rec.id, rec.processAttempts, error);
     return { ok: false, transcript: false, synthesized: false, tasksProposed: 0, reason: error };
   }
@@ -954,7 +960,7 @@ const kickCoordinationPipeline = createSingleFlight(async () => {
       ingested: report.ingested,
       retried: report.retried,
       transcribed: report.transcribed,
-      errors: report.errors.length,
+      errors: report.errors.slice(0, 8),
     });
   } catch (err) {
     pipelineLog.error("background pipeline failed", err);
