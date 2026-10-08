@@ -22,6 +22,7 @@ import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
 import { ENV } from "../_core/env";
 import { buildRecordingReadyEmailHtml } from "../../shared/recordingReadyEmail";
+import { loadRecapDigest } from "./recapForEmail";
 import { guardRecordingSubscriberMail } from "./recordingMailGate";
 import { linkBlocksPublish, linkRecordingToMatchingEvent, preferredRecordingYoutubeUrl } from "./recordingEventLink";
 import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
@@ -407,6 +408,16 @@ async function sendRecordingEmailBody(
     chapterList = fresh.chapters.length ? fresh.chapters : coerceChapters(recording.chaptersJson);
   }
   chapterList = chapterList ?? descriptionOrAiChapters(recording);
+  const courseHref = courseLink?.href ?? null;
+  const digest = recording.id != null
+    ? await loadRecapDigest({
+      recordingId: recording.id,
+      summary: recording.aiSummary || recording.overview,
+      videoId,
+      weekBoardHref: courseHref,
+      origin: APP_BASE_URL,
+    })
+    : { gist: [], insights: [], steps: [] };
   const result = await sendPacedEmails({
     recipients: subscribers.map((row) => row.email),
     alreadyAccepted: already,
@@ -417,9 +428,12 @@ async function sendRecordingEmailBody(
         sessionDate: formatSessionDate(recording.sessionDate),
         youtubeUrl: recording.youtubeUrl,
         riversideUrl: recording.riversideUrl,
-        aiSummary: recording.aiSummary,
+        aiSummary: recording.aiSummary || recording.overview,
+        gist: digest.gist,
+        insights: digest.insights,
+        steps: digest.steps,
         forumUrl,
-        courseUrl: courseLink?.href ?? null,
+        courseUrl: courseHref,
         courseLabel: courseLink?.label ?? null,
         prefsUrl,
         chaptersHtml: videoId ? chaptersEmailSection(chapterList ?? [], videoId) : "",

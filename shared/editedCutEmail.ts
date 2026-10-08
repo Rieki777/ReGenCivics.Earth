@@ -13,6 +13,7 @@ import {
 } from "./emailChrome";
 import { newsletterLegalFooterHtml } from "./letterHtml";
 import { NEWSLETTER_POSTAL_ADDRESS } from "./letterLayout";
+import { gistBullets, recapSectionsHtml, type RecapItem } from "./recapDigest";
 import { SITE_ORIGIN } from "./siteContext";
 import {
   chapterStamp,
@@ -62,14 +63,13 @@ function relatedLinks(week: number | null, origin: string): string {
 function shell(opts: {
   eyebrow: string;
   heading: string;
-  intro: string;
   videoId: string;
   week: number | null;
   chapters: YoutubeChapter[];
   prefsUrl: string;
+  digest?: string;
   postalAddress?: string;
   origin?: string;
-  extra?: string;
 }): string {
   const origin = opts.origin ?? SITE_ORIGIN;
   const chapters = chaptersEmailSection(opts.chapters, opts.videoId);
@@ -77,12 +77,11 @@ function shell(opts: {
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
       ${emailBannerHtml(opts.eyebrow)}
       <div class="rc-card" style="padding:28px 24px;background-color:${EMAIL_CARD_BG};border:1px solid #e0e0e0;border-top:none;">
-        <h2 class="rc-heading" style="color:${EMAIL_BODY_TEXT};margin:0 0 12px 0;font-size:22px;line-height:1.3;">${esc(opts.heading)}</h2>
-        <p class="rc-text" style="color:${EMAIL_BODY_TEXT};line-height:1.6;margin:0 0 22px 0;">${esc(opts.intro)}</p>
+        <h2 class="rc-heading" style="color:${EMAIL_BODY_TEXT};margin:0 0 18px 0;font-size:22px;line-height:1.3;">${esc(opts.heading)}</h2>
+        ${opts.digest ?? ""}
         ${watchButton(opts.videoId)}
-        ${relatedLinks(opts.week, origin)}
-        ${opts.extra ?? ""}
         ${chapters}
+        ${relatedLinks(opts.week, origin)}
       </div>
       <div class="rc-card" style="background-color:${EMAIL_SUMMARY_BG};padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
         ${newsletterLegalFooterHtml(opts.prefsUrl, opts.postalAddress ?? NEWSLETTER_POSTAL_ADDRESS)}
@@ -92,24 +91,41 @@ function shell(opts: {
   return emailDocumentHtml(body, opts.heading);
 }
 
+function digestHtml(opts: {
+  summary?: string | null;
+  gist?: string[];
+  insights?: RecapItem[];
+  steps?: RecapItem[];
+}): string {
+  const gist = opts.gist?.length ? opts.gist : gistBullets(opts.summary);
+  return recapSectionsHtml({
+    gist,
+    insights: opts.insights,
+    steps: opts.steps,
+  });
+}
+
 export function buildEditedRecordingEmailHtml(opts: {
   week: number | null;
   title: string;
   videoId: string;
   chapters: YoutubeChapter[];
   prefsUrl: string;
+  summary?: string | null;
+  gist?: string[];
+  insights?: RecapItem[];
+  steps?: RecapItem[];
   postalAddress?: string;
   origin?: string;
 }): string {
-  const named = opts.week ? `Week ${opts.week}, ${opts.title}` : opts.title;
   return shell({
     eyebrow: "Edited recording",
     heading: opts.title,
-    intro: `The edited recording of ${named} is up.`,
     videoId: opts.videoId,
     week: opts.week,
     chapters: opts.chapters,
     prefsUrl: opts.prefsUrl,
+    digest: digestHtml(opts),
     postalAddress: opts.postalAddress,
     origin: opts.origin,
   });
@@ -122,24 +138,21 @@ export function buildSessionNotesEmailHtml(opts: {
   summary: string;
   chapters: YoutubeChapter[];
   prefsUrl: string;
+  gist?: string[];
+  insights?: RecapItem[];
+  steps?: RecapItem[];
   postalAddress?: string;
   origin?: string;
 }): string {
-  const named = opts.week ? `Week ${opts.week}, ${opts.title}` : opts.title;
-  const summary = opts.summary.trim();
-  const extra = summary
-    ? `<div class="rc-summary" style="background-color:${EMAIL_SUMMARY_BG};border-left:4px solid ${EMAIL_BANNER_BG};padding:16px 20px;border-radius:0 8px 8px 0;margin:22px 0 0 0;"><p class="rc-heading" style="color:${EMAIL_BODY_TEXT};font-weight:700;margin:0 0 8px 0;">What we covered</p><p class="rc-text" style="color:${EMAIL_BODY_TEXT};margin:0;line-height:1.7;">${esc(summary)}</p></div>`
-    : "";
   return shell({
     eyebrow: "Session notes",
     heading: opts.title,
-    intro: `Session notes for ${named} are in.`,
     videoId: opts.videoId,
     week: opts.week,
     chapters: opts.chapters,
     prefsUrl: opts.prefsUrl,
+    digest: digestHtml(opts),
     postalAddress: opts.postalAddress,
     origin: opts.origin,
-    extra,
   });
 }
