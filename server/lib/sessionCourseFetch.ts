@@ -1,33 +1,20 @@
 /**
- * Public description chapters for a YouTube video.
- * Owner captions are a separate connect flow. This path uses the watch page
- * only, and returns nothing when YouTube does not include the description.
+ * Public description chapters for a YouTube video, live or edited.
+ *
+ * A bot user agent gets a consent wall with no shortDescription, which is
+ * why the livestream Timestamps block was missed. This uses the same browser
+ * watch fetch as the recording poll, then the shared chapter parser
+ * (parenthesized stamps, a Timestamps heading, minutes past 59).
  */
-import { parseLooseChapters, type MapChapter } from "@shared/sessionCourseMap";
-
-function unescapeJsonString(raw: string): string {
-  try {
-    return JSON.parse(`"${raw}"`) as string;
-  } catch {
-    return raw.replace(/\\n/g, "\n").replace(/\\"/g, "\"");
-  }
-}
+import { fetchYouTubeWatchMeta } from "./youtubeWatchMeta";
+import type { MapChapter } from "@shared/sessionCourseMap";
 
 export async function fetchPublicChapters(videoId: string): Promise<MapChapter[]> {
   if (!/^[\w-]{11}$/.test(videoId)) return [];
   try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; ReGenCivicsBot/1.0)",
-        "Accept-Language": "en",
-      },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return [];
-    const html = await res.text();
-    const match = html.match(/"shortDescription":"((?:\\.|[^"\\])*)"/);
-    if (!match) return [];
-    return parseLooseChapters(unescapeJsonString(match[1]));
+    const meta = await fetchYouTubeWatchMeta(videoId);
+    if (meta.status !== "ok" || meta.chapters.length === 0) return [];
+    return meta.chapters.map(({ tSeconds, title }) => ({ tSeconds, title }));
   } catch {
     return [];
   }

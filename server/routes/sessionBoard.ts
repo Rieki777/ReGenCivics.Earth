@@ -70,7 +70,7 @@ import {
 } from "../lib/sessionBoard";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
-import { courseProgress, getCourseMap, markCourseWatched, presentCourse, saveCourseMap } from "../lib/sessionCourseStore";
+import { courseProgress, getCourseMap, markCourseWatched, presentCourse, remapUnmappedLiveCourses, saveCourseMap } from "../lib/sessionCourseStore";
 
 /** Per-visitor ceilings. Generous for a live room; there to make loops slow. */
 const WRITE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -768,6 +768,16 @@ export const sessionBoardRouter = router({
       const stages = boardStages(input.week).map((stage) => ({ name: stage.name, short: stage.short }));
       return { ...map, stages };
     }),
+
+  /** Admin: fill live sides that still have no published times, using owner captions when connected. */
+  mapCourseTimes: adminProcedure.mutation(async () => {
+    try {
+      return await remapUnmappedLiveCourses();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Could not map times.";
+      throw new TRPCError({ code: "PRECONDITION_FAILED", message });
+    }
+  }),
 
   saveCourse: adminProcedure
     .input(z.object({

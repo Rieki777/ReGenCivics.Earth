@@ -16,7 +16,7 @@ export type YoutubeChapter = {
   stamp?: string;
 };
 
-const HEADING = /^(?:#{1,6}\s+)?chapters:?\s*$/i;
+const HEADING = /^(?:#{1,6}\s+)?(?:chapters|timestamps):?\s*$/i;
 const STAMP = "(\\d{1,3}:\\d{2}(?::\\d{2})?)";
 const MD_LINE = new RegExp(`^(?:[-*]\\s+)?\\[${STAMP}\\]\\([^)]*\\)\\s+(.+)$`);
 const PAREN_LINE = new RegExp(`^(?:[-*]\\s+)?\\(${STAMP}\\)\\s+(.+)$`);
@@ -64,7 +64,8 @@ function cleanTitle(raw: string): string {
 
 /**
  * Pull chapter lines out of a video description.
- * A lone "Chapters" heading is skipped. Lines that are not timestamps stay out.
+ * A lone "Chapters" or "Timestamps" heading is skipped. Lines that are not timestamps stay out.
+ * Parenthesized stamps and minutes past 59 are the shapes a livestream description uses.
  */
 export function parseDescriptionChapters(description: string): YoutubeChapter[] {
   const out: YoutubeChapter[] = [];

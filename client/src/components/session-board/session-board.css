@@ -434,13 +434,23 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-course-toggle { display: inline-flex; border: 1px solid var(--sb-line-strong); border-radius: 999px; overflow: hidden; }
 .sb-course-toggle button { min-height: 36px; padding: 6px 14px; background: transparent; border: 0; color: var(--sb-muted); font-weight: 800; cursor: pointer; }
 .sb-course-toggle button[aria-pressed="true"] { background: var(--sb-spring); color: var(--sb-on-spring); }
+.sb-course-toggle button:disabled { opacity: 0.45; cursor: not-allowed; }
 .sb-course-toggle button:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: -2px; }
 .sb-course-side, .sb-course-range { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--sb-muted); font-size: 14px; }
+.sb-course-coming { font-size: 13px; font-weight: 700; color: var(--sb-muted); }
 .sb-course-resume { margin-left: auto; }
-.sb-course-play { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--sb-line-strong); background: var(--sb-panel); text-align: left; cursor: pointer; font-weight: 800; }
-.sb-course-play:hover { border-color: var(--sb-spring); }
-.sb-course-play:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 2px; }
-.sb-course-play-mark { width: 0; height: 0; border-style: solid; border-width: 7px 0 7px 12px; border-color: transparent transparent transparent var(--sb-spring); flex: none; }
+.sb-course-card { position: relative; display: block; width: min(100%, calc(42vh * 16 / 9)); aspect-ratio: 16 / 9; padding: 0; border: 0; border-radius: 12px; overflow: hidden; cursor: pointer; background: #04140c; color: #f4fff6; text-align: left; }
+.sb-course-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sb-course-card-glow { position: absolute; right: -8%; bottom: -18%; width: 52%; height: 70%; background: radial-gradient(circle, rgba(125, 216, 125, 0.42), transparent 68%); pointer-events: none; }
+.sb-course-leaf { position: absolute; top: 14px; right: 14px; width: 28px; height: 28px; color: #d7f5c4; filter: drop-shadow(0 0 8px rgba(125, 216, 125, 0.75)); pointer-events: none; }
+.sb-course-leaf-mark { display: block; width: 100%; height: 100%; }
+.sb-course-card-play { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: rgba(8, 28, 16, 0.72); border: 2px solid rgba(184, 230, 140, 0.9); box-shadow: 0 0 0 12px rgba(125, 216, 125, 0.2), 0 12px 28px rgba(0, 0, 0, 0.35); pointer-events: none; }
+.sb-course-play-mark { width: 0; height: 0; border-style: solid; border-width: 12px 0 12px 20px; margin-left: 4px; border-color: transparent transparent transparent #d7f5c4; }
+.sb-course-card-caption { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; padding: 36px 14px 12px; background: linear-gradient(transparent, rgba(4, 20, 12, 0.9)); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65); }
+.sb-course-card-name { font-weight: 800; font-size: 20px; }
+.sb-course-card-time { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 15px; color: #d7f5c4; }
+.sb-course-card:hover .sb-course-card-play { background: rgba(8, 28, 16, 0.84); }
+.sb-course-card:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 2px; }
 .sb-course-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; max-height: 42vh; border-radius: 12px; overflow: hidden; background: #04140c; }
 .sb-course-frame > div, .sb-course-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 .sb-course-miss { color: var(--sb-muted); font-weight: 700; }
@@ -455,6 +465,10 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 @media (max-width: 760px) {
   .sb-sprout-mark { top: 1px; right: 1px; }
   .sb-course-resume { margin-left: 0; }
+  .sb-course-card-play { width: 64px; height: 64px; box-shadow: 0 0 0 8px rgba(125, 216, 125, 0.2), 0 8px 20px rgba(0, 0, 0, 0.35); }
+  .sb-course-card-play .sb-course-play-mark { border-width: 10px 0 10px 16px; }
+  .sb-course-leaf { width: 22px; height: 22px; top: 10px; right: 10px; }
+  .sb-course-card-name { font-size: 16px; }
 }
 
 /* ---------- type in with us ---------- */

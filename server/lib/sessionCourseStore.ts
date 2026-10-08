@@ -3,10 +3,11 @@
  * The public board works from the week 2 seed when the tables are not applied yet.
  * Auto-map runs after a recording is ingested. It never replaces a time an admin saved.
  */
-import { and, eq } from "drizzle-orm";
+import { and, eq, like, or } from "drizzle-orm";
 import { getDb } from "../db";
 import { events, recordings, sessionCourseMaps, sessionCourseProgress, sessionCourseSpans } from "../../drizzle/schema";
 import {
+  LAST_BOARD_WEEK,
   SESSION_BOARD_SEASON,
   boardStages,
   hasSessionBoard,
@@ -24,8 +25,9 @@ import {
 } from "@shared/sessionCourse";
 import { extractYoutubeVideoId } from "@shared/youtubeVideoId";
 import { mapStagesToSide, mergeMappedSide, type MapChapter, type MapSegment } from "@shared/sessionCourseMap";
-import { fetchYouTubeTranscriptSegments } from "./videoSummary";
 import { fetchPublicChapters } from "./sessionCourseFetch";
+import { loadYouTubeTranscript } from "./youtubeCaptions";
+import { isMissingSchema } from "./schemaTolerance";
 import { logger } from "../_core/logger";
 
 const log = logger("session-course");
@@ -383,13 +385,16 @@ export async function mapRecordingOntoCourse(recordingId: number): Promise<{ upd
   } catch {
     chapters = [];
   }
+  if (chapters.length === 0) chapters = await readDescriptionChapters(db, recordingId);
   if (chapters.length === 0) chapters = chaptersFromJson(rec.chaptersJson);
 
   let segments = segmentsFromJson(rec.transcriptJson);
   if (segments.length === 0) {
     try {
-      const fetched = await fetchYouTubeTranscriptSegments(videoId);
-      if (fetched?.length) segments = fetched.map((row) => ({ start: row.start, text: row.text }));
+      const loaded = await loadYouTubeTranscript(videoId);
+      if (loaded.ok && loaded.segments.length) {
+        segments = loaded.segments.map((row) => ({ start: row.start, text: row.text }));
+      }
     } catch {
       segments = [];
     }
@@ -427,4 +432,59 @@ export async function mapRecordingOntoCourse(recordingId: number): Promise<{ upd
   }
   log.info(`Course map week ${week} ${side} from recording ${recordingId}`);
   return { updated: true };
+}
+
+async function readDescriptionChapters(db: Db, recordingId: number): Promise<MapChapter[]> {
+  try {
+    const [row] = await db
+      .select({ descriptionChaptersJson: recordings.descriptionChaptersJson })
+      .from(recordings)
+      .where(eq(recordings.id, recordingId))
+      .limit(1);
+    return chaptersFromJson(row?.descriptionChaptersJson);
+  } catch (err) {
+    if (isMissingSchema(err)) return [];
+    throw err;
+  }
+}
+
+/**
+ * Re-map recordings whose live side has a video and no published times.
+ * Used after the channel owner connects, and from the admin "Map times now" button.
+ * Missing course tables return without throwing so the OAuth redirect can finish.
+ */
+export async function remapUnmappedLiveCourses(): Promise<{ updated: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { updated: 0, reason: "no_db" };
+  let updated = 0;
+  try {
+    for (let week = 2; week <= LAST_BOARD_WEEK; week++) {
+      if (!hasSessionBoard(week)) continue;
+      const map = await getCourseMap(week);
+      const videoId = map?.liveVideoId ?? "";
+      if (!map || !/^[\w-]{11}$/.test(videoId)) continue;
+      if (map.spans.some((span) => publishedSpan(span, "live"))) continue;
+      const rows = await db
+        .select({
+          id: recordings.id,
+          title: recordings.title,
+          youtubeVideoId: recordings.youtubeVideoId,
+          youtubeUrl: recordings.youtubeUrl,
+          editedYoutubeUrl: recordings.editedYoutubeUrl,
+          recordingKind: recordings.recordingKind,
+        })
+        .from(recordings)
+        .where(or(eq(recordings.youtubeVideoId, videoId), like(recordings.youtubeUrl, `%${videoId}%`)))
+        .limit(5);
+      const live = rows.find((row) => courseSideFromRecording(row) === "live");
+      if (!live) continue;
+      const result = await mapRecordingOntoCourse(live.id);
+      if (result.reason === "migration") return { updated, reason: "migration" };
+      if (result.updated) updated += 1;
+    }
+  } catch (err) {
+    if (isMissingTable(err) || isMissingSchema(err)) return { updated, reason: "migration" };
+    throw err;
+  }
+  return { updated };
 }
