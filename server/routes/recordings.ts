@@ -165,7 +165,10 @@ export const recordingsRouter = router({
 
       const { deliverSubscriberMail } = await import("../lib/recording-finalize");
       const sent = await deliverSubscriberMail(rec, { resend: true });
-      if (sent.kind !== "skip" && sent.dropped === 0) {
+      if (sent.held === "needs_review") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This recording needs a real title before it can be emailed." });
+      }
+      if (!sent.held && sent.kind !== "skip" && sent.dropped === 0) {
         await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, input.id));
       }
       return { sent: sent.accepted, dropped: sent.dropped, kind: sent.kind };
@@ -188,7 +191,10 @@ export const recordingsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { sendEditedRecordingEmail } = await import("../lib/editedCutEmailSend");
-      const sent = await sendEditedRecordingEmail(input.id);
+      const sent = await sendEditedRecordingEmail(input.id, { automatic: false });
+      if (sent.held === "needs_review") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This recording needs a real title before it can be emailed." });
+      }
       return { sent: sent.accepted, dropped: sent.dropped, chapters: sent.chapters };
     }),
 

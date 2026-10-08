@@ -5,6 +5,7 @@
  * wrap for these layouts or the header would appear twice.
  */
 
+import { EMAIL_BANNER_BG, EMAIL_BODY_TEXT, EMAIL_HEADER_TEXT, EMAIL_MUTED_TEXT, emailColorSchemeHead } from "./emailChrome";
 import { LETTER_LOGO_URL, NEWSLETTER_POSTAL_ADDRESS, type LetterLayout } from "./letterLayout";
 import { markdownToEmailHtml, wrapEmailHtml } from "./emailMarkdown";
 
@@ -49,9 +50,9 @@ export function newsletterLegalFooterHtml(
   const href = prefsUrl.trim();
   if (!href) return "";
   const postal = postalAddress.trim() || NEWSLETTER_POSTAL_ADDRESS;
-  return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
+  return `<p class="rc-legal" style="color:${EMAIL_MUTED_TEXT};font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
     You are receiving this because you subscribed to ReGen Civics community mail.
-    <a href="${escapeAttr(href)}" style="color:#8a8a8a;">Manage email preferences</a><br/>
+    <a href="${escapeAttr(href)}" style="color:${EMAIL_MUTED_TEXT};">Manage email preferences</a><br/>
     ${escapeAttr(postal)}
   </p>`;
 }
@@ -68,9 +69,9 @@ export function listLegalFooterHtml(footer: ListFooter, postalAddress = NEWSLETT
   const href = footer.url.trim();
   if (!href) return "";
   const postal = postalAddress.trim() || NEWSLETTER_POSTAL_ADDRESS;
-  return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
+  return `<p class="rc-legal" style="color:${EMAIL_MUTED_TEXT};font-size:11px;margin:16px 0 0 0;line-height:1.6;font-family:Georgia,'Times New Roman',serif;">
     ${escapeText(footer.reason)}
-    <a href="${escapeAttr(href)}" style="color:#8a8a8a;">${escapeText(footer.linkLabel || "Stop these emails")}</a><br/>
+    <a href="${escapeAttr(href)}" style="color:${EMAIL_MUTED_TEXT};">${escapeText(footer.linkLabel || "Stop these emails")}</a><br/>
     ${escapeAttr(postal)}
   </p>`;
 }
@@ -89,10 +90,10 @@ export function letterLegalFooter(extras?: LetterDocumentExtras): string {
 function letterHeader(): string {
   return `
     <tr>
-      <td bgcolor="#1a472a" style="background-color:#1a472a;padding:28px 20px;text-align:center;">
+      <td class="rc-banner" bgcolor="${EMAIL_BANNER_BG}" style="background-color:${EMAIL_BANNER_BG};padding:28px 20px;text-align:center;">
         <img src="${LETTER_LOGO_URL}" width="72" height="72" alt="ReGen Civics" style="display:block;margin:0 auto 10px auto;background:#ffffff;border-radius:12px;padding:4px;" />
-        <p style="color:#7dd87d;margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;">ReGen Civics</p>
-        <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:12px;font-family:Georgia,'Times New Roman',serif;">An Infinite Game for the ReGenerative Renaissance</p>
+        <p class="rc-banner-title" style="color:${EMAIL_HEADER_TEXT};margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;">ReGen Civics</p>
+        <p class="rc-banner-eyebrow" style="color:${EMAIL_HEADER_TEXT};margin:6px 0 0 0;font-size:12px;font-family:Georgia,'Times New Roman',serif;">An Infinite Game for the ReGenerative Renaissance</p>
       </td>
     </tr>`;
 }
@@ -101,9 +102,9 @@ function letterFooter(compact: boolean, legalFooter = ""): string {
   if (compact) {
     return `
     <tr>
-      <td style="background:#f0f7f0;padding:18px 20px;border-top:3px solid #7dd87d;text-align:center;">
-        <p style="color:#4a7c59;font-size:12px;margin:0;font-family:Georgia,'Times New Roman',serif;">
-          <a href="https://regencivics.earth" style="color:#4a7c59;">regencivics.earth</a>
+      <td class="rc-card" style="background:#f4f7f4;padding:18px 20px;border-top:3px solid ${EMAIL_BANNER_BG};text-align:center;">
+        <p class="rc-text" style="color:${EMAIL_BODY_TEXT};font-size:12px;margin:0;font-family:Georgia,'Times New Roman',serif;">
+          <a href="https://regencivics.earth" style="color:${EMAIL_BODY_TEXT};">regencivics.earth</a>
         </p>
         ${legalFooter}
       </td>
@@ -111,15 +112,15 @@ function letterFooter(compact: boolean, legalFooter = ""): string {
   }
   return `
     <tr>
-      <td style="background:#f0f7f0;padding:22px 20px;border-top:3px solid #7dd87d;">
-        <p style="color:#1a472a;font-size:13px;margin:0 0 10px 0;text-align:center;font-family:Georgia,'Times New Roman',serif;">
+      <td class="rc-card" style="background:#f4f7f4;padding:22px 20px;border-top:3px solid ${EMAIL_BANNER_BG};">
+        <p class="rc-text" style="color:${EMAIL_BODY_TEXT};font-size:13px;margin:0 0 10px 0;text-align:center;font-family:Georgia,'Times New Roman',serif;">
           Questions or want to talk? We don't respond to emails directly. Use the Connect form and we'll route it.
         </p>
         <p style="text-align:center;margin:0 0 12px 0;">
-          <a href="https://regencivics.earth/connect?path=something_else" style="display:inline-block;background:#1a472a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:bold;font-family:Georgia,'Times New Roman',serif;">Open the Connect form</a>
+          <a class="rc-button" href="https://regencivics.earth/connect?path=something_else" style="display:inline-block;background:${EMAIL_BANNER_BG};color:${EMAIL_HEADER_TEXT};text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:bold;font-family:Georgia,'Times New Roman',serif;">Open the Connect form</a>
         </p>
-        <p style="color:#4a7c59;font-size:12px;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;">
-          <a href="https://regencivics.earth" style="color:#4a7c59;">regencivics.earth</a>
+        <p class="rc-text" style="color:${EMAIL_BODY_TEXT};font-size:12px;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;">
+          <a href="https://regencivics.earth" style="color:${EMAIL_BODY_TEXT};">regencivics.earth</a>
         </p>
         ${legalFooter}
       </td>
@@ -136,7 +137,7 @@ export function brandedLetterDocument(
   const signed = /regen civics team/i.test(inner);
   const signature = signed
     ? ""
-    : `<div style="margin-top:25px;padding-top:20px;border-top:1px solid #e0e0e0;"><p style="color:#4a7c59;font-weight:bold;font-family:Georgia,'Times New Roman',serif;margin:0;">The ReGen Civics Team</p></div>`;
+    : `<div style="margin-top:25px;padding-top:20px;border-top:1px solid #e0e0e0;"><p class="rc-text" style="color:${EMAIL_BODY_TEXT};font-weight:bold;font-family:Georgia,'Times New Roman',serif;margin:0;">The ReGen Civics Team</p></div>`;
   const legal = letterLegalFooter(extras);
 
   return `<!DOCTYPE html>
@@ -144,6 +145,7 @@ export function brandedLetterDocument(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  ${emailColorSchemeHead()}
   <title>ReGen Civics</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f5f5f5;">

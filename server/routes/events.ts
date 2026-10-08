@@ -197,15 +197,15 @@ async function promoteFromWaitlist(eventId: number) {
   const joinLabel = reminderJoinLabel();
 
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-    <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-      <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-      <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Good news</p>
+    <div style="background-color: #1a472a; padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+      <h1 style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
+      <p style="color:#ffffff;margin:6px 0 0 0;font-size:13px;">Good news</p>
     </div>
     <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
       <h2 style="color:#1a472a;margin:0 0 10px 0;">A spot opened up</h2>
       <p style="color:#444;line-height:1.7;">A spot opened up for <strong>${event.title}</strong> on ${dateStr}. You're now confirmed. We'll send you a reminder before the event.</p>
-      <a href="${joinUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:16px 0 0 0;border:2px solid #7dd87d;">${joinLabel}</a>
-      <p style="color:#888;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a></p>
+      <a href="${joinUrl}" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:16px 0 0 0;border:2px solid #ffffff;">${joinLabel}</a>
+      <p style="color:#3d4a40;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#1a1a1a;">View all events</a></p>
     </div>
   </div>`;
 
@@ -406,29 +406,29 @@ export const eventsRouter = router({
 
       const confirmHtml = signupType === "waitlist"
         ? `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-              <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
+            <div style="background-color: #1a472a; padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+              <h1 style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
               <h2 style="color:#1a472a;margin:0 0 10px 0;">You're on the waitlist</h2>
               <p style="color:#444;line-height:1.7;">${event.title} is currently full. We'll email you if a spot opens up before ${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}.</p>
-              <p style="color:#888;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events →</a></p>
+              <p style="color:#3d4a40;font-size:13px;margin:20px 0 0 0;"><a href="${APP_BASE_URL}/schedule" style="color:#1a1a1a;">View all events →</a></p>
             </div>
           </div>`
         : `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-              <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-              <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">You're on the list</p>
+            <div style="background-color: #1a472a; padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+              <h1 style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
+              <p style="color:#ffffff;margin:6px 0 0 0;font-size:13px;">You're on the list</p>
             </div>
             <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
               <h2 style="color:#1a472a;margin:0 0 6px 0;">${event.title}</h2>
               <p style="color:#444;font-size:15px;margin:0 0 20px 0;">${dateStr} at ${timeStr}${localTimeCtaHtml(event.startTime, { title: event.title })}</p>
               <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">We'll send you a reminder the day before. See you there.</p>
               <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
-              <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
+              <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #ffffff;">View Schedule</a>
             </div>
             <div style="background:#f0f7f0;padding:16px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-              <p style="color:#888;font-size:12px;margin:0;">You signed up for a reminder. <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${await unsubscribeUrlFor(input.eventId, input.email)}" style="color:#999;">Unsubscribe</a></p>
+              <p style="color:#3d4a40;font-size:12px;margin:0;">You signed up for a reminder. <a href="${APP_BASE_URL}/schedule" style="color:#1a1a1a;">View all events</a> · <a href="${await unsubscribeUrlFor(input.eventId, input.email)}" style="color:#3d4a40;">Unsubscribe</a></p>
             </div>
           </div>`;
 
@@ -1135,27 +1135,27 @@ export const eventsRouter = router({
       const episodeRows = seasonEvents.map(ev => {
         const rec = ev.recordingId ? recMap[ev.recordingId] : null;
         const watchLink = rec?.youtubeUrl
-          ? `<a href="${rec.youtubeUrl}" style="color:#7dd87d;font-weight:bold;">Watch →</a>`
-          : rec ? `<a href="${APP_BASE_URL}/community/post/${rec.forumPostId}" style="color:#7dd87d;">Discussion →</a>` : "";
+          ? `<a href="${rec.youtubeUrl}" style="color:#1a1a1a;font-weight:bold;">Watch →</a>`
+          : rec ? `<a href="${APP_BASE_URL}/community/post/${rec.forumPostId}" style="color:#1a1a1a;">Discussion →</a>` : "";
         const epLabel = ev.episodeNumber ? `Ep ${ev.episodeNumber}: ` : "";
         return `<tr><td style="padding:8px 0;color:#1a472a;font-weight:500;">${epLabel}${ev.title}</td><td style="padding:8px 0;text-align:right;">${watchLink}</td></tr>`;
       }).join("");
 
       const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-        <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:40px 20px;text-align:center;border-radius:8px 8px 0 0;">
-          <h1 style="color:#7dd87d;margin:0;font-size:26px;">ReGen Civics</h1>
-          <p style="color:#a8e6a8;margin:8px 0 0 0;font-size:16px;">${input.season}: Season Wrap</p>
+        <div style="background-color: #1a472a; padding:40px 20px;text-align:center;border-radius:8px 8px 0 0;">
+          <h1 style="color:#ffffff;margin:0;font-size:26px;">ReGen Civics</h1>
+          <p style="color:#ffffff;margin:8px 0 0 0;font-size:16px;">${input.season}: Season Wrap</p>
         </div>
         <div style="padding:32px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
           <p style="color:#444;font-size:16px;line-height:1.7;margin:0 0 28px 0;">Here's what we built together this season. Every session, every conversation, every project that showed up.</p>
           <table style="width:100%;border-collapse:collapse;border-top:2px solid #e0e0e0;">${episodeRows}</table>
           <div style="margin:32px 0 0 0;text-align:center;">
-            <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">See What's Next</a>
+            <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#ffffff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #ffffff;">See What's Next</a>
           </div>
         </div>
         <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-          <p style="color:#888;font-size:12px;margin:0;">You're receiving this because you subscribed to ReGen Civics updates.<br/>
-          <a href="${APP_BASE_URL}/settings" style="color:#7dd87d;">Update email preferences</a></p>
+          <p style="color:#3d4a40;font-size:12px;margin:0;">You're receiving this because you subscribed to ReGen Civics updates.<br/>
+          <a href="${APP_BASE_URL}/settings" style="color:#1a1a1a;">Update email preferences</a></p>
         </div>
       </div>`;
 
@@ -1478,21 +1478,21 @@ export const eventsRouter = router({
         const unsubscribeUrl = await unsubscribeUrlFor(event.id, signup.email);
         const checkinUrl = checkinUrlForToken(APP_BASE_URL, await signCheckinToken(event.id, signup.email));
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">How was it?</p>
+          <div style="background-color: #1a472a; padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
+            <p style="color:#ffffff;margin:6px 0 0 0;font-size:13px;">How was it?</p>
           </div>
           <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
             <h2 style="color:#1a472a;margin:0 0 16px 0;font-size:20px;">${event.title}</h2>
             <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">Did you make it? Let us know so we can send you your $ReGen tokens.</p>
             <div style="margin:0 0 24px 0;">
-              <a href="${checkinUrl}" style="display:inline-block;background:#7dd87d;color:#1a472a;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Yes, I was there</a>
+              <a href="${checkinUrl}" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;">Yes, I was there</a>
             </div>
             <p style="color:#444;line-height:1.7;margin:0 0 16px 0;">One word for how it felt?</p>
-            <a href="${forumUrl}" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">Share your thoughts</a>
+            <a href="${forumUrl}" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #ffffff;">Share your thoughts</a>
           </div>
           <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:12px;margin:0;">You signed up for this event. <a href="${unsubscribeUrl}" style="color:#999;">Unsubscribe</a></p>
+            <p style="color:#3d4a40;font-size:12px;margin:0;">You signed up for this event. <a href="${unsubscribeUrl}" style="color:#3d4a40;">Unsubscribe</a></p>
           </div>
         </div>`;
 
@@ -1557,9 +1557,9 @@ export const eventsRouter = router({
       for (const signup of signups) {
         const unsubscribeUrl = await unsubscribeUrlFor(event.id, signup.email);
         const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-          <div style="background-color: #1a472a; background:linear-gradient(135deg,#1a472a 0%,#2d5a3d 100%);padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
-            <h1 style="color:#7dd87d;margin:0;font-size:22px;">ReGen Civics</h1>
-            <p style="color:#a8e6a8;margin:6px 0 0 0;font-size:13px;">Guest Speaker Announcement</p>
+          <div style="background-color: #1a472a; padding:30px 20px;text-align:center;border-radius:8px 8px 0 0;">
+            <h1 style="color:#ffffff;margin:0;font-size:22px;">ReGen Civics</h1>
+            <p style="color:#ffffff;margin:6px 0 0 0;font-size:13px;">Guest Speaker Announcement</p>
           </div>
           <div style="padding:30px 24px;background:#fff;border:1px solid #e0e0e0;border-top:none;">
             <h2 style="color:#1a472a;margin:0 0 6px 0;font-size:20px;">${event.guestSpeakerName}${topicLine}</h2>
@@ -1570,11 +1570,11 @@ export const eventsRouter = router({
             </div>` : ""}
             <p style="color:#444;line-height:1.7;margin:0 0 24px 0;">We have a guest joining us for ${event.title}. Come with your questions and ideas.</p>
             <a href="${joinUrl}" style="display:inline-block;background:${joinColor};color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 8px 0;">${joinLabel}</a>
-            <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#7dd87d;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #7dd87d;">View Schedule</a>
+            <a href="${APP_BASE_URL}/schedule" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;border:2px solid #ffffff;">View Schedule</a>
           </div>
           <div style="background:#f0f7f0;padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
-            <p style="color:#888;font-size:12px;margin:0;">You signed up for reminders for this event.<br/>
-            <a href="${APP_BASE_URL}/schedule" style="color:#7dd87d;">View all events</a> · <a href="${unsubscribeUrl}" style="color:#999;">Unsubscribe from this event</a></p>
+            <p style="color:#3d4a40;font-size:12px;margin:0;">You signed up for reminders for this event.<br/>
+            <a href="${APP_BASE_URL}/schedule" style="color:#1a1a1a;">View all events</a> · <a href="${unsubscribeUrl}" style="color:#3d4a40;">Unsubscribe from this event</a></p>
           </div>
         </div>`;
 

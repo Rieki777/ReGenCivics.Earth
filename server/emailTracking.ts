@@ -355,6 +355,29 @@ export async function inquiryHasAcceptedEmail(inquiryType: string, inquiryId: nu
   return rows.length > 0;
 }
 
+const RECORDING_BATCH_TEMPLATES = ["recording_summary", "recording_edited", "recording_notes"] as const;
+
+/**
+ * Distinct recording letters accepted since `since`.
+ * One inquiry id is one batch, however many recipients it reached.
+ * Throws when the database is down so the caller can fail closed.
+ */
+export async function countRecordingMailBatchesSince(since: Date): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("database unavailable");
+  const rows = await db
+    .select({ inquiryId: emailLogs.inquiryId })
+    .from(emailLogs)
+    .where(and(
+      eq(emailLogs.inquiryType, "recording"),
+      inArray(emailLogs.template, [...RECORDING_BATCH_TEMPLATES]),
+      gte(emailLogs.sentAt, since),
+      inArray(emailLogs.status, ["sent", "delivered", "queued", "bounced"]),
+    ))
+    .groupBy(emailLogs.inquiryId);
+  return rows.filter((row) => row.inquiryId != null).length;
+}
+
 /** Addresses already accepted for one logical send (event fan-out, recording, and so on). */
 export async function emailsAcceptedForInquiry(
   template: string,

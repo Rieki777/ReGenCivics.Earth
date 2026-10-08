@@ -4,6 +4,7 @@
  * after upload is the list people receive.
  */
 import { eq } from "drizzle-orm";
+import { guardRecordingSubscriberMail } from "./recordingMailGate";
 import { getDb } from "../db";
 import { events, recordingCutEvents, recordings } from "../../drizzle/schema";
 import { sendEmail } from "../_core/email";
@@ -38,6 +39,8 @@ type RecordingMailRow = {
   overview: string | null;
   descriptionChaptersJson: unknown;
   chaptersJson: unknown;
+  sessionDate?: Date | string | null;
+  createdAt?: Date | string | null;
 };
 
 function decodeStoredLabel(raw: string | null): { week: number | null; title: string } | null {
@@ -143,6 +146,7 @@ async function pacedToRecordings(opts: {
         template: opts.template,
         inquiryType: "recording",
         inquiryId: opts.recordingId,
+        skipBrandedWrap: true,
       });
     },
   });
@@ -150,12 +154,17 @@ async function pacedToRecordings(opts: {
 
 export async function sendEditedRecordingEmail(
   recordingId: number,
-  opts?: { cutTitle?: string; fetchDescription?: (videoId: string) => Promise<string | null> },
-): Promise<{ accepted: number; dropped: number; chapters: number }> {
+  opts?: {
+    cutTitle?: string;
+    fetchDescription?: (videoId: string) => Promise<string | null>;
+    automatic?: boolean;
+    alreadySent?: boolean;
+  },
+): Promise<{ accepted: number; dropped: number; chapters: number; held: "skip_old" | "needs_review" | "claimed" | null }> {
   const database = await getDb();
-  if (!database) return { accepted: 0, dropped: 1, chapters: 0 };
+  if (!database) return { accepted: 0, dropped: 1, chapters: 0, held: null };
   const [rec] = await database.select().from(recordings).where(eq(recordings.id, recordingId)).limit(1);
-  if (!rec) return { accepted: 0, dropped: 1, chapters: 0 };
+  if (!rec) return { accepted: 0, dropped: 1, chapters: 0, held: null };
   const videoId = watchVideoId(rec, true);
   if (priorLetterAlreadySent(videoId, rec.youtubeVideoId, rec.youtubeUrl, rec.editedYoutubeVideoId, rec.editedYoutubeUrl)) {
     try {
@@ -164,21 +173,53 @@ export async function sendEditedRecordingEmail(
       if (!isMissingSchema(err)) log.error("editedEmailSent flag failed", err);
     }
     log.info(`recording ${recordingId} already received the Week 2 edited letter; not sending again`);
-    return { accepted: 0, dropped: 0, chapters: 0 };
+    return { accepted: 0, dropped: 0, chapters: 0, held: null };
   }
-  if (!videoId || !rec.editedYoutubeUrl) return { accepted: 0, dropped: 1, chapters: 0 };
+  if (!videoId || !rec.editedYoutubeUrl) return { accepted: 0, dropped: 1, chapters: 0, held: null };
 
+  let chapterCount = 0;
+  const guarded = await guardRecordingSubscriberMail({
+    id: recordingId,
+    title: rec.title,
+    sessionDate: rec.sessionDate ?? null,
+    createdAt: rec.createdAt ?? null,
+    automatic: opts?.automatic !== false,
+    claim: "editedEmailSent",
+    alreadySent: opts?.automatic === false ? Boolean(rec.editedEmailSent) : Boolean(opts?.alreadySent),
+    send: () => deliverEditedLetter(rec, videoId, opts, (count) => {
+      chapterCount = count;
+    }),
+  });
+  if (guarded.sent || guarded.held === "skip_old" || guarded.held === "claimed") {
+    await audit(
+      recordingId,
+      guarded.sent && guarded.dropped === 0 ? "email_sent" : "email_held",
+      videoId,
+      `${guarded.held ?? "sent"} accepted ${guarded.accepted} dropped ${guarded.dropped} chapters ${chapterCount}`,
+    );
+  }
+  log.info(`Edited recording email for ${recordingId}: accepted ${guarded.accepted}, dropped ${guarded.dropped}, held ${guarded.held ?? "no"}`);
+  return { accepted: guarded.accepted, dropped: guarded.dropped, chapters: chapterCount, held: guarded.held };
+}
+
+async function deliverEditedLetter(
+  rec: RecordingMailRow,
+  videoId: string,
+  opts: { cutTitle?: string; fetchDescription?: (videoId: string) => Promise<string | null> } | undefined,
+  rememberCount: (count: number) => void,
+): Promise<{ accepted: number; dropped: number }> {
   const fresh = await chaptersForSend({
     videoId,
     stored: rec.descriptionChaptersJson,
     fetchDescription: opts?.fetchDescription,
   });
-  await rememberChapters(recordingId, fresh);
+  await rememberChapters(rec.id, fresh);
   const chapters = fresh.chapters.length ? fresh.chapters : coerceChapters(rec.chaptersJson);
+  rememberCount(chapters.length);
   const label = await labelFor(rec, opts?.cutTitle);
   const subject = editedRecordingSubject(label.week, label.title);
-  const result = await pacedToRecordings({
-    recordingId,
+  return pacedToRecordings({
+    recordingId: rec.id,
     template: "recording_edited",
     subject,
     htmlFor: (prefsUrl) => buildEditedRecordingEmailHtml({
@@ -189,25 +230,36 @@ export async function sendEditedRecordingEmail(
       prefsUrl,
     }),
   });
-  if (result.dropped === 0) {
-    await database.update(recordings).set({ editedEmailSent: 1 }).where(eq(recordings.id, recordingId));
-  }
-  await audit(
-    recordingId,
-    result.dropped === 0 ? "email_sent" : "email_incomplete",
-    videoId,
-    `accepted ${result.accepted} dropped ${result.dropped} chapters ${chapters.length}`,
-  );
-  log.info(`Edited recording email for ${recordingId}: accepted ${result.accepted}, dropped ${result.dropped}`);
-  return { accepted: result.accepted, dropped: result.dropped, chapters: chapters.length };
 }
 
 export async function sendSessionNotesEmail(
   rec: RecordingMailRow,
+  opts?: {
+    fetchDescription?: (videoId: string) => Promise<string | null>;
+    chapters?: YoutubeChapter[];
+    automatic?: boolean;
+    alreadySent?: boolean;
+  },
+): Promise<{ accepted: number; dropped: number; held: "skip_old" | "needs_review" | "claimed" | null }> {
+  const videoId = watchVideoId(rec, true);
+  if (!videoId) return { accepted: 0, dropped: 1, held: null };
+  return guardRecordingSubscriberMail({
+    id: rec.id,
+    title: rec.title,
+    sessionDate: rec.sessionDate ?? null,
+    createdAt: rec.createdAt ?? null,
+    automatic: opts?.automatic !== false,
+    claim: "emailSent",
+    alreadySent: Boolean(opts?.alreadySent),
+    send: () => deliverSessionNotes(rec, videoId, opts),
+  });
+}
+
+async function deliverSessionNotes(
+  rec: RecordingMailRow,
+  videoId: string,
   opts?: { fetchDescription?: (videoId: string) => Promise<string | null>; chapters?: YoutubeChapter[] },
 ): Promise<{ accepted: number; dropped: number }> {
-  const videoId = watchVideoId(rec, true);
-  if (!videoId) return { accepted: 0, dropped: 1 };
   const fresh = opts?.chapters
     ? { chapters: opts.chapters, fromDescription: false }
     : await chaptersForSend({
@@ -219,7 +271,7 @@ export async function sendSessionNotesEmail(
   const chapters = fresh.chapters.length ? fresh.chapters : coerceChapters(rec.chaptersJson);
   const summary = (rec.aiSummary || rec.overview || "").trim();
   const label = await labelFor(rec);
-  const result = await pacedToRecordings({
+  return pacedToRecordings({
     recordingId: rec.id,
     template: "recording_notes",
     subject: sessionNotesSubject(label.title),
@@ -232,5 +284,4 @@ export async function sendSessionNotesEmail(
       prefsUrl,
     }),
   });
-  return { accepted: result.accepted, dropped: result.dropped };
 }
