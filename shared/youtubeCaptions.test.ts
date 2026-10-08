@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   assembleTranscriptResult,
+  captionDownloadFormats,
   parseCaptionFile,
   pickCaptionTrack,
   redactOauthSecrets,
+  summarizeCaptionList,
   TRANSCRIPT_SOURCE_OWNER,
   TRANSCRIPT_SOURCE_TIMEDTEXT,
 } from "./youtubeCaptions";
@@ -36,11 +38,46 @@ describe("pickCaptionTrack", () => {
   });
 });
 
+describe("summarizeCaptionList", () => {
+  it("names the count and the track kinds, and keeps asr", () => {
+    expect(summarizeCaptionList([
+      { id: "a", trackKind: "ASR" },
+      { id: "b", trackKind: "standard" },
+    ])).toBe("owner caption list had 2 tracks (kinds: asr, standard)");
+  });
+
+  it("says when rows came back without ids", () => {
+    expect(summarizeCaptionList([{ id: "", trackKind: "asr" }])).toBe(
+      "owner caption list had 1 track (kinds: asr) but no track ids",
+    );
+  });
+
+  it("does not reuse the old empty-list sentence", () => {
+    expect(summarizeCaptionList([])).toBe("owner caption list had 0 tracks (kinds: none)");
+    expect(summarizeCaptionList([])).not.toContain("had no tracks");
+  });
+});
+
+describe("captionDownloadFormats", () => {
+  it("tries srt and then vtt for an asr track", () => {
+    expect(captionDownloadFormats("asr")).toEqual(["srt", "vtt"]);
+  });
+});
+
 describe("parseCaptionFile", () => {
   it("reads SRT cues into start seconds and text", () => {
     const segments = parseCaptionFile(SRT);
     expect(segments[0]).toEqual({ start: 1, text: "Welcome to week two" });
     expect(segments[1]?.start).toBe(64);
+  });
+
+  it("reads WebVTT and json3", () => {
+    const vtt = parseCaptionFile("WEBVTT\n\n00:00:02.000 --> 00:00:04.000\nHello from the livestream\n");
+    expect(vtt[0]).toEqual({ start: 2, text: "Hello from the livestream" });
+    const json3 = parseCaptionFile(JSON.stringify({
+      events: [{ tStartMs: 1500, segs: [{ utf8: "auto " }, { utf8: "caption" }] }],
+    }));
+    expect(json3).toEqual([{ start: 1, text: "auto caption" }]);
   });
 
   it("reads timedtext XML", () => {

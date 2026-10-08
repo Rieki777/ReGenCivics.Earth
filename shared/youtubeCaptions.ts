@@ -18,7 +18,10 @@ export type CaptionSegment = { start: number; text: string };
 
 const MIN_TRANSCRIPT_CHARS = 40;
 
-/** English manual track, then English auto-captions, then any other track. */
+/**
+ * English manual track, then English auto-captions (trackKind asr), then any other track.
+ * Auto-captions are kept. A bare number is not a reason to drop a track.
+ */
 export function pickCaptionTrack(tracks: CaptionTrackChoice[]): CaptionTrackChoice | null {
   const usable = tracks.filter((track) => track.id.trim().length > 0);
   if (usable.length === 0) return null;
@@ -28,6 +31,27 @@ export function pickCaptionTrack(tracks: CaptionTrackChoice[]): CaptionTrackChoi
     return english + manual;
   };
   return [...usable].sort((a, b) => rank(a) - rank(b))[0] ?? null;
+}
+
+/**
+ * What captions.list returned, with no token and no track id.
+ * "had no tracks" is the old failure string. New misses say "had 0 tracks"
+ * so a retry can tell them apart.
+ */
+export function summarizeCaptionList(tracks: Array<{ id?: string; trackKind?: string }>): string {
+  const kinds = [...new Set(tracks.map((track) => (track.trackKind || "unknown").trim().toLowerCase() || "unknown"))];
+  const kindLabel = kinds.length > 0 ? kinds.join(", ") : "none";
+  const withId = tracks.filter((track) => (track.id ?? "").trim().length > 0).length;
+  const noun = tracks.length === 1 ? "track" : "tracks";
+  if (tracks.length > 0 && withId === 0) {
+    return `owner caption list had ${tracks.length} ${noun} (kinds: ${kindLabel}) but no track ids`;
+  }
+  return `owner caption list had ${tracks.length} ${noun} (kinds: ${kindLabel})`;
+}
+
+/** ASR downloads are often refused in one format. Try SubRip, then WebVTT. */
+export function captionDownloadFormats(_trackKind: string): Array<"srt" | "vtt"> {
+  return ["srt", "vtt"];
 }
 
 export function segmentsToText(segments: CaptionSegment[]): string {
@@ -100,10 +124,40 @@ function parseTimedTextXml(raw: string): CaptionSegment[] {
   return segments;
 }
 
-/** SRT, WebVTT, or YouTube timedtext XML. */
+function parseJson3(raw: string): CaptionSegment[] {
+  try {
+    const cap = JSON.parse(raw) as { events?: Array<{ tStartMs?: number; segs?: Array<{ utf8?: string }> }> };
+    const segments: CaptionSegment[] = [];
+    for (const event of cap.events ?? []) {
+      const text = decodeCaptionText((event.segs ?? []).map((seg) => seg.utf8 ?? "").join(""));
+      if (!text) continue;
+      segments.push({ start: Math.max(0, Math.floor((event.tStartMs ?? 0) / 1000)), text });
+    }
+    return segments;
+  } catch {
+    return [];
+  }
+}
+
+/** Player srv3: <p t="startMs">text</p>. */
+function parseSrv3(raw: string): CaptionSegment[] {
+  const segments: CaptionSegment[] = [];
+  const re = /<p[^>]*\bt="(\d+)"[^>]*>([\s\S]*?)<\/p>/g;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(raw)) !== null) {
+    const text = decodeCaptionText(match[2] ?? "");
+    if (!text) continue;
+    segments.push({ start: Math.max(0, Math.floor(Number.parseInt(match[1] ?? "0", 10) / 1000)), text });
+  }
+  return segments;
+}
+
+/** SRT, WebVTT, json3, srv3, or YouTube timedtext XML. */
 export function parseCaptionFile(raw: string): CaptionSegment[] {
   const body = raw.replace(/^\uFEFF/, "").trim();
   if (!body) return [];
+  if (body.startsWith("{")) return parseJson3(body);
+  if (/<p\b[^>]*\bt="\d+"/.test(body)) return parseSrv3(body);
   if (body.startsWith("<")) return parseTimedTextXml(body);
   const withoutHeader = body.replace(/^WEBVTT[^\n]*\n+/i, "").replace(/^NOTE[^\n]*\n+/gim, "");
   return parseSrt(withoutHeader);
