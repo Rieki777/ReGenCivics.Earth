@@ -37,6 +37,20 @@ describe("parseYouTubeWatchHtml", () => {
     expect(meta.chapters.map((c) => c.tSeconds)).toEqual([0, 3840]);
   });
 
+  it("treats liveBroadcastContent none as ended even when lengthSeconds is 0", () => {
+    const html = `
+      "videoDetails":{"videoId":"23cRivDtorQ","title":"S2E2 LIVE - Incubator Overview","lengthSeconds":"0"}
+      "liveBroadcastContent":"none"
+      "isLiveNow":false
+    `;
+    const meta = parseYouTubeWatchHtml(html);
+    expect(meta.status).toBe("ok");
+    if (meta.status !== "ok") return;
+    expect(meta.liveBroadcastContent).toBe("none");
+    expect(meta.ended).toBe(true);
+    expect(meta.durationSeconds).toBeNull();
+  });
+
   it("treats an upcoming premiere as not ended", () => {
     const html = `"liveBroadcastContent":"upcoming" "isUpcoming":true "videoDetails":{"videoId":"aaaaaaaaaaa","title":"Soon"}`;
     const meta = parseYouTubeWatchHtml(html);

@@ -44,7 +44,7 @@ import { handleEditedCutPoll, loadEditedCutCache } from "../lib/editedCutIngest"
 import { linkRecordingToMatchingEvent } from "../lib/recordingEventLink";
 import { fetchYouTubeWatchMeta } from "../lib/youtubeWatchMeta";
 import { createSingleFlight } from "../lib/singleFlight";
-import { MAX_PROCESS_ATTEMPTS, captionRetryDespiteWatch, compareRetryQueue, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
+import { FALSE_NOT_ENDED_ERROR, MAX_PROCESS_ATTEMPTS, captionRetryDespiteWatch, compareRetryQueue, effectiveRetryAttempts, nextProcessRetry, recordingNeedsAutoRetry } from "../../shared/recordingRetry";
 import type { YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
 import { isMissingSchema } from "../lib/schemaTolerance";
 import {
@@ -840,6 +840,7 @@ async function sweepRecordingRetries(
       aiSummary: recordings.aiSummary,
       processAttempts: recordings.processAttempts,
       nextRetryAt: recordings.nextRetryAt,
+      lastError: recordings.lastError,
     })
     .from(recordings)
     .where(and(
@@ -848,12 +849,19 @@ async function sweepRecordingRetries(
       or(isNull(recordings.overview), eq(recordings.overview, "")),
       or(isNull(recordings.aiSummary), eq(recordings.aiSummary, "")),
       lt(recordings.processAttempts, MAX_PROCESS_ATTEMPTS),
-      or(isNull(recordings.nextRetryAt), lte(recordings.nextRetryAt, now)),
+      or(
+        isNull(recordings.nextRetryAt),
+        lte(recordings.nextRetryAt, now),
+        eq(recordings.lastError, FALSE_NOT_ENDED_ERROR),
+      ),
     ));
 
   const queued = due
     .filter((row) => recordingNeedsAutoRetry(row, now) && !!row.youtubeVideoId)
-    .sort(compareRetryQueue)
+    .sort((a, b) => compareRetryQueue(
+      { id: a.id, processAttempts: effectiveRetryAttempts(a) },
+      { id: b.id, processAttempts: effectiveRetryAttempts(b) },
+    ))
     .slice(0, MAX_RETRIES_PER_RUN);
 
   for (const row of queued) {

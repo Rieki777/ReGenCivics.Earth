@@ -1,6 +1,7 @@
 /**
  * Read live / ended state from a YouTube watch page.
- * A stream is ready to save when liveBroadcastContent is none and a duration exists.
+ * A stream has ended when liveBroadcastContent is none.
+ * A finished livestream often leaves lengthSeconds at 0, so duration is not required.
  * sessionDate uses the scheduled or actual start, never the publish time.
  */
 import { parseDescriptionChapters, type YoutubeChapter } from "./youtubeChapters";
@@ -109,12 +110,12 @@ export function parseYouTubeWatchHtml(html: string): YoutubeWatchMeta {
   else if (liveRaw === "upcoming" || isUpcoming) liveBroadcastContent = "upcoming";
   else liveBroadcastContent = "none";
 
+  // "none" is the finished state. lengthSeconds stays "0" on many ended livestreams.
   const ended =
     liveBroadcastContent === "none" &&
-    durationSeconds != null &&
-    durationSeconds > 0 &&
     !isLiveNow &&
-    !isUpcoming;
+    !isUpcoming &&
+    (liveRaw === "none" || (durationSeconds != null && durationSeconds > 0));
 
   const startTimestamp = parseStart(html.match(/"startTimestamp":"([^"]+)"/)?.[1] ?? null);
 
