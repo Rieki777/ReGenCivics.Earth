@@ -34,7 +34,7 @@ function formatWhen(value: Date | string | null): string {
 }
 
 export default function Recordings() {
-  const { data = [], isLoading } = trpc.recordings.library.useQuery();
+  const { data = [], isLoading, isError, refetch } = trpc.recordings.library.useQuery();
   const [filter, setFilter] = useState<SeriesFilter>("all");
   const shown = data.filter((row) => filter === "all" || row.series === filter);
 
@@ -86,7 +86,16 @@ export default function Recordings() {
 
             {isLoading && <p className="text-center text-white/60">Loading recordings…</p>}
 
-            {!isLoading && shown.length === 0 && (
+            {isError && (
+              <div className="text-center text-white/70 py-12">
+                <p>The library didn't load.</p>
+                <button type="button" className="mt-3 min-h-11 px-4 text-[#7dd87d] font-semibold underline" onClick={() => void refetch()}>
+                  Try again
+                </button>
+              </div>
+            )}
+
+            {!isLoading && !isError && shown.length === 0 && (
               <p className="text-center text-white/70 py-12">
                 {data.length === 0
                   ? "Recordings land here after a session ends."

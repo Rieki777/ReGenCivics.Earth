@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseYouTubeWatchHtml } from "./youtubeWatchMeta";
+import { oembedTitle, ownerSnippetMeta, parseYouTubeWatchHtml, replacementVideoTitle } from "./youtubeWatchMeta";
 
 describe("parseYouTubeWatchHtml", () => {
   it("does not treat a live stream as ended", () => {
@@ -101,5 +101,32 @@ describe("parseYouTubeWatchHtml", () => {
 
   it("returns unknown when the watch page has no player", () => {
     expect(parseYouTubeWatchHtml("<html>Sign in to confirm you're not a bot</html>").status).toBe("unknown");
+  });
+});
+
+describe("replacementVideoTitle", () => {
+  it("replaces a numeric title with the oEmbed name and leaves a real title alone", () => {
+    expect(oembedTitle({ title: "S2E2 EDIT - Journey to ReGenerative Civilization - Incubator Overview" }))
+      .toBe("S2E2 EDIT - Journey to ReGenerative Civilization - Incubator Overview");
+    expect(oembedTitle({ title: "3" })).toBeNull();
+    expect(oembedTitle(null)).toBeNull();
+    expect(replacementVideoTitle("3", "S2E2 LIVE - Incubator Overview")).toBe("S2E2 LIVE - Incubator Overview");
+    expect(replacementVideoTitle("Week 2 live", "S2E2 LIVE - Incubator Overview")).toBeNull();
+    expect(replacementVideoTitle("", "3")).toBeNull();
+  });
+});
+
+describe("ownerSnippetMeta", () => {
+  it("reads description chapters from an owner snippet, including minutes past 59", () => {
+    const meta = ownerSnippetMeta({
+      items: [{
+        snippet: {
+          title: "S2E2 EDIT - Journey to ReGenerative Civilization - Incubator Overview",
+          description: "Timestamps\n(0:00) Welcome\n(62:25) Shared opportunities\n(98:42) Closing",
+        },
+      }],
+    });
+    expect(meta.title).toContain("S2E2 EDIT");
+    expect(meta.chapters.map((chapter) => chapter.tSeconds)).toEqual([0, 62 * 60 + 25, 98 * 60 + 42]);
   });
 });

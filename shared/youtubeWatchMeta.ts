@@ -82,10 +82,49 @@ function decodeTitle(raw: string): string {
 }
 
 /** A bare number is a player field, not the video name. The retry must not store it. */
-function usableTitle(raw: string | null | undefined): string | null {
+export function usableVideoTitle(raw: string | null | undefined): string | null {
   const title = raw ? decodeTitle(raw) : "";
   if (!title || /^\d+$/.test(title)) return null;
   return title;
+}
+
+function usableTitle(raw: string | null | undefined): string | null {
+  return usableVideoTitle(raw);
+}
+
+/**
+ * A stored "3" is the like-button title, not the video. Replace it only
+ * when the candidate is a real name. A good stored title stays put.
+ */
+export function replacementVideoTitle(
+  stored: string | null | undefined,
+  candidate: string | null | undefined,
+): string | null {
+  if (usableVideoTitle(stored)) return null;
+  const next = usableVideoTitle(candidate);
+  return next ? next.slice(0, 255) : null;
+}
+
+/** Title field from a YouTube oEmbed JSON body. */
+export function oembedTitle(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const title = (payload as { title?: unknown }).title;
+  return usableVideoTitle(typeof title === "string" ? title : null);
+}
+
+/** Title and description chapters from videos.list snippet. */
+export function ownerSnippetMeta(payload: unknown): { title: string | null; chapters: YoutubeChapter[] } {
+  const empty = { title: null, chapters: [] as YoutubeChapter[] };
+  if (!payload || typeof payload !== "object") return empty;
+  const snippet = (payload as {
+    items?: Array<{ snippet?: { title?: unknown; description?: unknown } }>;
+  }).items?.[0]?.snippet;
+  if (!snippet) return empty;
+  const description = typeof snippet.description === "string" ? snippet.description : "";
+  return {
+    title: usableVideoTitle(typeof snippet.title === "string" ? snippet.title : null),
+    chapters: description ? parseDescriptionChapters(description) : [],
+  };
 }
 
 function videoTitle(html: string): string | null {

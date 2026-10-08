@@ -20,6 +20,8 @@ import {
   boardStages,
   hasSessionBoard,
   sessionBoardHref,
+  followingAfterStageChoice,
+  keepsFollowingRoom,
   sessionClosedAt,
   sessionElapsedMs,
   sessionMinutes,
@@ -94,20 +96,24 @@ function Board({ week }: { week: number }) {
   const live = board?.state.stage ?? 0;
   const [view, setView] = useState(0);
   const [following, setFollowing] = useState(true);
-  useEffect(() => {
-    if (following || facilitator) setView(live);
-  }, [live, following, facilitator]);
 
   const go = useCallback((i: number) => {
     const to = Math.max(0, Math.min(stages.length - 1, i));
     setView(to);
+    const plan = board?.state.plan ?? stages.map((s) => s.min);
+    const planned = sessionMinutes(plan, stages) * 60_000;
+    const ended = board ? sessionClosedAt(board.state, planned, Date.now()) != null : false;
     if (facilitator && open) {
       actions.act({ type: "go", stage: to });
-      setFollowing(true);
-    } else {
-      setFollowing(to === live);
     }
-  }, [stages.length, facilitator, open, actions, live]);
+    setFollowing(followingAfterStageChoice({
+      boardLoaded: !!board,
+      sessionEnded: ended,
+      facilitator: facilitator && open,
+      chosen: to,
+      liveStage: live,
+    }));
+  }, [stages, facilitator, open, actions, live, board]);
 
   // One clock for the page, in server time.
   const [now, setNow] = useState(() => serverNow());
@@ -164,6 +170,15 @@ function Board({ week }: { week: number }) {
   const planFor = (i: number) => state?.plan[i] ?? stages[i].min;
   const plannedMs = total * 60_000;
   const closedAt = state ? sessionClosedAt(state, plannedMs, now) : null;
+  useEffect(() => {
+    if (!keepsFollowingRoom({
+      boardLoaded: !!board,
+      sessionEnded: closedAt != null,
+      facilitator,
+      following,
+    })) return;
+    setView(live);
+  }, [board, closedAt, facilitator, following, live]);
   const sessionElapsed = state ? sessionElapsedMs(state, plannedMs, now) : null;
   const schedule = useSeasonSchedule();
   const nextSession = useMemo(() => {

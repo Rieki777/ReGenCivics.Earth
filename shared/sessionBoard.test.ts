@@ -21,6 +21,8 @@ import {
   parseReadyList,
   sessionBoardHref,
   sessionBoardShareUrl,
+  followingAfterStageChoice,
+  keepsFollowingRoom,
   sessionClosedAt,
   sessionElapsedMs,
   sessionMinutes,
@@ -262,6 +264,54 @@ describe("cleaning what people type", () => {
   it("keeps only known readiness keys, once each", () => {
     expect(parseReadyList("legal,legal,bogus, land", ["legal", "land"])).toEqual(["legal", "land"]);
     expect(parseReadyList(null, ["legal"])).toEqual([]);
+  });
+});
+
+describe("following the room", () => {
+  it("stays on the stage someone picked once the session has ended", () => {
+    expect(keepsFollowingRoom({
+      boardLoaded: true,
+      sessionEnded: true,
+      facilitator: false,
+      following: true,
+    })).toBe(false);
+    expect(followingAfterStageChoice({
+      boardLoaded: false,
+      sessionEnded: false,
+      facilitator: false,
+      chosen: 0,
+      liveStage: 0,
+    })).toBe(false);
+  });
+
+  it("follows a live room, and a facilitator, until the clock ends", () => {
+    expect(keepsFollowingRoom({
+      boardLoaded: true,
+      sessionEnded: false,
+      facilitator: false,
+      following: true,
+    })).toBe(true);
+    expect(followingAfterStageChoice({
+      boardLoaded: true,
+      sessionEnded: false,
+      facilitator: false,
+      chosen: 10,
+      liveStage: 10,
+    })).toBe(true);
+    expect(followingAfterStageChoice({
+      boardLoaded: true,
+      sessionEnded: false,
+      facilitator: true,
+      chosen: 2,
+      liveStage: 10,
+    })).toBe(true);
+    expect(followingAfterStageChoice({
+      boardLoaded: true,
+      sessionEnded: true,
+      facilitator: true,
+      chosen: 2,
+      liveStage: 10,
+    })).toBe(false);
   });
 });
 

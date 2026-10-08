@@ -6,7 +6,8 @@ import {
   parseDescriptionChapters,
   type YoutubeChapter,
 } from "../../shared/youtubeChapters";
-import { parseYouTubeWatchHtml, type YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
+import { oembedTitle, ownerSnippetMeta, parseYouTubeWatchHtml, type YoutubeWatchMeta } from "../../shared/youtubeWatchMeta";
+import { getYoutubeOwnerAccessToken } from "./youtubeOwnerAuth";
 
 const WATCH_HEADERS = {
   "User-Agent":
@@ -31,6 +32,56 @@ export async function fetchYouTubeWatchMeta(
     return parseYouTubeWatchHtml(html);
   } catch {
     return { status: "unknown" };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Owner snippet when the watch page is a bot wall. No token in the result. */
+export async function fetchYouTubeOwnerSnippet(
+  videoId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ title: string | null; chapters: YoutubeChapter[] } | null> {
+  if (!/^[\w-]{11}$/.test(videoId)) return null;
+  const token = await getYoutubeOwnerAccessToken();
+  if (!token.ok) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetchImpl(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${encodeURIComponent(videoId)}`,
+      {
+        signal: ctrl.signal,
+        headers: { Authorization: `Bearer ${token.token}`, Accept: "application/json" },
+      },
+    );
+    if (!res.ok) return null;
+    return ownerSnippetMeta(await res.json());
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Public video title. Works when the watch page is a bot wall. */
+export async function fetchYouTubeOembedTitle(
+  videoId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | null> {
+  if (!/^[\w-]{11}$/.test(videoId)) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const page = `https://www.youtube.com/watch?v=${videoId}`;
+    const res = await fetchImpl(
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(page)}&format=json`,
+      { signal: ctrl.signal, headers: { Accept: "application/json" } },
+    );
+    if (!res.ok) return null;
+    return oembedTitle(await res.json());
+  } catch {
+    return null;
   } finally {
     clearTimeout(timer);
   }
