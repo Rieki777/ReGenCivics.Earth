@@ -8,10 +8,12 @@ import { trpc } from "@/lib/trpc";
 import {
   courseModes,
   courseStorageKey,
+  defaultCourseMode,
   formatClipClock,
   publishedSpan,
   readCourseProgress,
   seedCourse,
+  sideHasTimes,
   videoIdFor,
   type CourseLocalProgress,
   type CourseMap,
@@ -112,13 +114,49 @@ export function useWeekCourse(week: number, stageCount: number) {
   return { map, progress, setMode, markWatched };
 }
 
-export function CourseSprout() {
+function LeafMark({ className }: { className: string }) {
   return (
-    <svg className="sb-sprout-mark" viewBox="0 0 16 16" aria-hidden="true">
+    <svg className={className} viewBox="0 0 16 16" aria-hidden="true">
       <path d="M8 15 V7" stroke="currentColor" strokeWidth="1.4" fill="none" />
       <path d="M8 9 C8 5 4 4.2 2.8 3.2 C6 4 8 6.2 8 9Z" fill="currentColor" />
       <path d="M8 8 C8 4.2 12 3.2 13.2 2.2 C10 3.2 8 5.4 8 8Z" fill="currentColor" />
     </svg>
+  );
+}
+
+export function CourseSprout() {
+  return <LeafMark className="sb-sprout-mark" />;
+}
+
+function hqThumb(videoId: string): string {
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+function CourseThumb({ videoId }: { videoId: string }) {
+  const [src, setSrc] = useState(() => hqThumb(videoId));
+  useEffect(() => {
+    const hq = hqThumb(videoId);
+    setSrc(hq);
+    if (typeof window === "undefined" || window.innerWidth < 900) return;
+    let cancelled = false;
+    const probe = new Image();
+    probe.decoding = "async";
+    probe.onload = () => {
+      if (!cancelled && probe.naturalWidth >= 640) setSrc(`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`);
+    };
+    probe.src = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+    return () => { cancelled = true; };
+  }, [videoId]);
+  return (
+    <img
+      src={src}
+      alt=""
+      width={1280}
+      height={720}
+      loading="lazy"
+      decoding="async"
+      onError={() => setSrc(hqThumb(videoId))}
+    />
   );
 }
 
@@ -148,7 +186,7 @@ export function CoursePlayer({
   onGo: (index: number) => void;
 }) {
   const modes = map ? courseModes(map) : [];
-  const mode: CourseMode = modes.includes(progress.mode) ? progress.mode : (modes[0] ?? "edited");
+  const mode: CourseMode = map ? defaultCourseMode(map, progress.mode) : "edited";
   const span = map?.spans.find((row) => row.stageIndex === stageIndex);
   const clip = publishedSpan(span, mode);
   const videoId = map ? videoIdFor(map, mode) : null;
@@ -210,27 +248,37 @@ export function CoursePlayer({
     ? (clip.end == null ? formatClipClock(clip.start) : `${formatClipClock(clip.start)}-${formatClipClock(clip.end)}`)
     : "";
   const modeLabel = mode === "live" ? "Live" : "Edited";
+  const coming = map ? modes.filter((item) => !sideHasTimes(map, item)) : [];
 
   return (
     <div className="sb-course" data-testid="course-player">
       <div className="sb-course-bar">
         {modes.length > 1 ? (
           <div className="sb-course-toggle" role="group" aria-label="Recording">
-            {modes.map((item) => (
-              <button
-                key={item}
-                type="button"
-                aria-pressed={item === mode}
-                data-testid={`course-mode-${item}`}
-                onClick={() => setMode(item)}
-              >
-                {item === "live" ? "Live" : "Edited"}
-              </button>
-            ))}
+            {modes.map((item) => {
+              const ready = map ? sideHasTimes(map, item) : false;
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  aria-pressed={item === mode}
+                  disabled={!ready}
+                  data-testid={`course-mode-${item}`}
+                  onClick={() => { if (ready) setMode(item); }}
+                >
+                  {item === "live" ? "Live" : "Edited"}
+                </button>
+              );
+            })}
           </div>
         ) : (
           <span className="sb-course-side">{modeLabel}</span>
         )}
+        {coming.map((item) => (
+          <span key={item} className="sb-course-coming" data-testid={`course-coming-${item}`}>
+            {item === "live" ? "Live times coming" : "Edited times coming"}
+          </span>
+        ))}
         {range ? <span className="sb-course-range">{range}</span> : null}
         {showResume ? (
           <button type="button" className="sb-btn sb-small sb-course-resume" data-testid="course-continue" onClick={() => onGo(resume)}>
@@ -246,26 +294,26 @@ export function CoursePlayer({
       ) : null}
 
       {clip && videoId && !armed ? (
-        <button type="button" className="sb-course-play" data-testid="course-play" onClick={() => setArmed(true)}>
-          <span className="sb-course-play-mark" aria-hidden="true" />
-          <span>{stage.name}</span>
-          <span className="sb-course-range">{range}</span>
+        <button type="button" className="sb-course-card" data-testid="course-play" onClick={() => setArmed(true)}>
+          <CourseThumb videoId={videoId} />
+          <span className="sb-course-card-glow" aria-hidden="true" />
+          <span className="sb-course-leaf" aria-hidden="true">
+            <LeafMark className="sb-course-leaf-mark" />
+          </span>
+          <span className="sb-course-card-play" aria-hidden="true">
+            <span className="sb-course-play-mark" />
+          </span>
+          <span className="sb-course-card-caption">
+            <span className="sb-course-card-name">{stage.name}</span>
+            <span className="sb-course-card-time">{range}</span>
+          </span>
         </button>
       ) : null}
-
-      {!clip ? <p className="sb-course-miss">{modeLabel} · times not marked</p> : null}
 
       {ended && stageIndex < stages.length - 1 ? (
         <button type="button" className="sb-btn sb-primary sb-course-next" data-testid="course-next" onClick={() => onGo(stageIndex + 1)}>
           Next · {stages[stageIndex + 1].short}
         </button>
-      ) : null}
-
-      {span?.evidence ? (
-        <details className="sb-course-note">
-          <summary>Clip</summary>
-          <p>{span.evidence}</p>
-        </details>
       ) : null}
     </div>
   );

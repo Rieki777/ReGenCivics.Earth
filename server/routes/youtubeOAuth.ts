@@ -10,6 +10,7 @@ import { ENV } from "../_core/env";
 import { sdk } from "../_core/sdk";
 import { redactOauthSecrets } from "../../shared/youtubeCaptions";
 import { saveYoutubeChannelConnection } from "../lib/youtubeOwnerAuth";
+import { remapUnmappedLiveCourses } from "../lib/sessionCourseStore";
 
 const YOUTUBE_SCOPE = "https://www.googleapis.com/auth/youtube.force-ssl";
 const STATE_TTL_MS = 15 * 60 * 1000;
@@ -124,6 +125,10 @@ export function registerYoutubeOAuthRoutes(app: Express) {
         refreshToken: tokens.refreshToken,
         channelId: channel.id,
         channelTitle: channel.title,
+      });
+      void remapUnmappedLiveCourses().catch((err) => {
+        const message = err instanceof Error ? err.message : "course remap failed";
+        console.error("[YouTube OAuth] course remap failed:", redactOauthSecrets(message).slice(0, 300));
       });
       res.redirect(302, back());
     } catch (err) {

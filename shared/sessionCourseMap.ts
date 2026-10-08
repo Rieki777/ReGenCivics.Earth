@@ -5,6 +5,7 @@
  */
 import type { BoardStage } from "./sessionBoard";
 import type { CourseSpan } from "./sessionCourse";
+import { parseDescriptionChapters } from "./youtubeChapters";
 
 export type MapChapter = { tSeconds: number; title: string };
 export type MapSegment = { start: number; text: string };
@@ -242,23 +243,7 @@ export function mergeMappedSide(
   });
 }
 
-/** "64:00 Title", "1:08:50 Title", and "(0:59) Title". Minutes may pass 59. */
+/** Same rules as the description parser: Timestamps heading, (MM:SS), minutes past 59. */
 export function parseLooseChapters(description: string): MapChapter[] {
-  const out: MapChapter[] = [];
-  const re = /^\s*(?:[-*]\s*)?(?:\((\d{1,3}):(\d{2})(?::(\d{2}))?\)|(\d{1,3}):(\d{2})(?::(\d{2}))?)\s*[-–—:]?\s+(.+?)\s*$/;
-  for (const line of description.split(/\r?\n/)) {
-    const match = line.match(re);
-    if (!match) continue;
-    const a = match[1] ?? match[4];
-    const b = match[2] ?? match[5];
-    const c = match[3] ?? match[6];
-    const title = match[7].replace(/\s+/g, " ").trim();
-    if (!title) continue;
-    const seconds = c != null
-      ? Number(a) * 3600 + Number(b) * 60 + Number(c)
-      : Number(a) * 60 + Number(b);
-    if (!Number.isFinite(seconds)) continue;
-    out.push({ tSeconds: seconds, title });
-  }
-  return out;
+  return parseDescriptionChapters(description).map(({ tSeconds, title }) => ({ tSeconds, title }));
 }

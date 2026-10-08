@@ -66,6 +66,21 @@ describe("parseDescriptionChapters", () => {
     expect(chapterWatchUrl("JS8YoJE1PUI", chapters[20].tSeconds)).toBe("https://youtu.be/JS8YoJE1PUI?t=3840");
   });
 
+  it("reads a Timestamps heading and minutes past 59 in parentheses", () => {
+    const chapters = parseDescriptionChapters([
+      "Timestamps",
+      "(0:00) Welcome",
+      "(62:25) Shared opportunities",
+      "(98:42) Closing",
+    ].join("\n"));
+    expect(chapters.map((c) => [c.tSeconds, c.title])).toEqual([
+      [0, "Welcome"],
+      [62 * 60 + 25, "Shared opportunities"],
+      [98 * 60 + 42, "Closing"],
+    ]);
+    expect(chapters.some((c) => c.title === "Timestamps")).toBe(false);
+  });
+
   it("accepts (00:00) Title, 00:00 Title, and a markdown stamp", () => {
     const chapters = parseDescriptionChapters([
       "Chapters",

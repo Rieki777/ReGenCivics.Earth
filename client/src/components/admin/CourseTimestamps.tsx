@@ -48,6 +48,13 @@ export function CourseTimestamps() {
     },
     onError: (err) => toast.error(err.message || "Could not save"),
   });
+  const mapTimes = trpc.sessionBoard.mapCourseTimes.useMutation({
+    onSuccess: (data) => {
+      toast.success(data.updated > 0 ? "Mapped the open live times" : "Live times already mapped");
+      void query.refetch();
+    },
+    onError: (err) => toast.error(err.message || "Could not map times"),
+  });
   const [liveId, setLiveId] = useState("");
   const [editedId, setEditedId] = useState("");
   const [rows, setRows] = useState<SpanDraft[]>([]);
@@ -169,9 +176,19 @@ export function CourseTimestamps() {
         </table>
       </div>
 
+      <div className="mt-4 flex flex-wrap gap-2">
       <button
         type="button"
-        className="mt-4 min-h-11 rounded-md bg-[#1a472a] px-4 font-semibold text-white disabled:opacity-60"
+        className="min-h-11 rounded-md border border-[#1a472a] px-4 font-semibold text-[#1a472a] disabled:opacity-60"
+        data-testid="course-map-times"
+        disabled={mapTimes.isPending}
+        onClick={() => mapTimes.mutate()}
+      >
+        {mapTimes.isPending ? "Mapping" : "Map times now"}
+      </button>
+      <button
+        type="button"
+        className="min-h-11 rounded-md bg-[#1a472a] px-4 font-semibold text-white disabled:opacity-60"
         data-testid="course-save"
         disabled={save.isPending || rows.length === 0}
         onClick={() => save.mutate({
@@ -190,6 +207,7 @@ export function CourseTimestamps() {
       >
         {save.isPending ? "Saving" : "Save course times"}
       </button>
+      </div>
     </section>
   );
 }

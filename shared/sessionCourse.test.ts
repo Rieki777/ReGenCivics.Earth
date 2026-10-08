@@ -4,6 +4,7 @@ import {
   courseModes,
   courseSideFromRecording,
   courseWeekFromRecording,
+  defaultCourseMode,
   emptySpan,
   publishedSpan,
   readCourseProgress,
@@ -41,10 +42,33 @@ describe("week 2 course seed", () => {
   it("publishes the edited welcome clip and hides the unmapped drop-in", () => {
     const welcome = WEEK2_COURSE_SEED.spans[0];
     const breath = WEEK2_COURSE_SEED.spans[1];
+    const close = WEEK2_COURSE_SEED.spans[9];
+    const tools = WEEK2_COURSE_SEED.spans[10];
     expect(publishedSpan(welcome, "edited")).toEqual({ start: 0, end: 59 });
     expect(publishedSpan(breath, "edited")).toBeNull();
-    expect(publishedSpan(welcome, "live")).toBeNull();
+    expect(publishedSpan(welcome, "live")).toEqual({ start: 0, end: 149 });
+    expect(publishedSpan(breath, "live")).toEqual({ start: 149, end: 474 });
+    expect(close.liveStart).toBe(5922);
+    expect(close.liveEnd).toBeNull();
+    expect(tools.liveStart).toBe(5271);
+    expect(tools.liveEnd).toBe(5922);
+    expect(WEEK2_COURSE_SEED.spans.map((span) => span.liveConfidence)).toEqual(Array(11).fill("high"));
     expect(courseModes(WEEK2_COURSE_SEED)).toEqual(["live", "edited"]);
+  });
+
+  it("opens on the side that has times", () => {
+    const liveOnly = {
+      ...WEEK2_COURSE_SEED,
+      editedVideoId: WEEK2_COURSE_SEED.editedVideoId,
+      spans: WEEK2_COURSE_SEED.spans.map((span) => ({ ...span, editedStart: null, editedEnd: null, editedConfidence: null })),
+    };
+    expect(defaultCourseMode(liveOnly, "edited")).toBe("live");
+    const editedOnly = {
+      ...WEEK2_COURSE_SEED,
+      spans: WEEK2_COURSE_SEED.spans.map((span) => ({ ...span, liveStart: null, liveEnd: null, liveConfidence: null })),
+    };
+    expect(defaultCourseMode(editedOnly, "live")).toBe("edited");
+    expect(defaultCourseMode(WEEK2_COURSE_SEED, "live")).toBe("live");
   });
 
   it("remembers a mode and the stages already watched", () => {
@@ -90,7 +114,12 @@ describe("mapStagesToSide", () => {
   });
 
   it("fills an empty live side on a reviewed row when the match is high", () => {
-    const prev = WEEK2_COURSE_SEED.spans.map((span) => ({ ...span }));
+    const prev = WEEK2_COURSE_SEED.spans.map((span) => ({
+      ...span,
+      liveStart: null,
+      liveEnd: null,
+      liveConfidence: null,
+    }));
     const fresh = prev.map((span) =>
       span.stageIndex === 0
         ? { ...emptySpan(0), liveStart: 40, liveEnd: 90, liveConfidence: "high" as const, confidence: "high" as const }
@@ -103,7 +132,12 @@ describe("mapStagesToSide", () => {
   });
 
   it("leaves a reviewed row alone when the new live match is low", () => {
-    const prev = WEEK2_COURSE_SEED.spans.map((span) => ({ ...span }));
+    const prev = WEEK2_COURSE_SEED.spans.map((span) => ({
+      ...span,
+      liveStart: null,
+      liveEnd: null,
+      liveConfidence: null,
+    }));
     const fresh = prev.map((span) =>
       span.stageIndex === 0
         ? { ...emptySpan(0), liveStart: 40, liveEnd: 90, liveConfidence: "low" as const, confidence: "low" as const }
@@ -121,6 +155,18 @@ describe("chapters and week", () => {
       ["0:00 Welcome", "64:00 Community tools", "1:08:50 Where the community will gather", "(0:59) Crowd pooling"].join("\n"),
     );
     expect(chapters.map((c) => c.tSeconds)).toEqual([0, 3840, 4130, 59]);
+  });
+
+  it("reads a Timestamps block with parenthesized minutes past 59", () => {
+    const chapters = parseLooseChapters([
+      "Timestamps",
+      "(0:00) Welcome",
+      "(2:29) Drop in",
+      "(62:25) Shared opportunities",
+      "(98:42) Closing",
+    ].join("\n"));
+    expect(chapters.map((c) => c.tSeconds)).toEqual([0, 149, 3745, 5922]);
+    expect(chapters.map((c) => c.title)).toEqual(["Welcome", "Drop in", "Shared opportunities", "Closing"]);
   });
 
   it("reads the week from an episode number or an S2E title", () => {

@@ -85,6 +85,24 @@ export function courseModes(map: CourseMap): CourseMode[] {
   return modes;
 }
 
+/** True when at least one stage has a published clip on this side. */
+export function sideHasTimes(map: CourseMap, mode: CourseMode): boolean {
+  return map.spans.some((span) => publishedSpan(span, mode) != null);
+}
+
+/**
+ * Prefer the side the player last chose when that side has times.
+ * An empty side stays unselected so the board opens on a clip.
+ */
+export function defaultCourseMode(map: CourseMap, preferred: CourseMode): CourseMode {
+  const modes = courseModes(map);
+  if (modes.length === 0) return preferred;
+  if (modes.includes(preferred) && sideHasTimes(map, preferred)) return preferred;
+  const ready = modes.find((mode) => sideHasTimes(map, mode));
+  if (ready) return ready;
+  return modes.includes(preferred) ? preferred : modes[0];
+}
+
 export function readCourseProgress(raw: string | null, stageCount: number): CourseLocalProgress {
   const fallback: CourseLocalProgress = { mode: "edited", stage: 0, watched: [] };
   if (!raw) return fallback;
@@ -151,9 +169,11 @@ export function formatClipClock(seconds: number): string {
 
 /**
  * Week 2 edited times follow the description chapters checked on 2026-10-07
- * (shared/youtubeChapters.test.ts). Live times are empty: YouTube blocked
- * caption download from the mapping network, so nothing was invented.
- * Drop-in has no chapter.
+ * (shared/youtubeChapters.test.ts). Live times are the livestream description
+ * chapters on 23cRivDtorQ. Confidence high. Source: livestream description chapters.
+ * Drop-in has a live chapter and no edited chapter.
+ * Closing is the last live chapter, so that side stays open.
+ * Community tools sits before closing in the livestream.
  */
 export const WEEK2_COURSE_SEED: CourseMap = {
   season: SESSION_BOARD_SEASON,
@@ -161,29 +181,35 @@ export const WEEK2_COURSE_SEED: CourseMap = {
   liveVideoId: "23cRivDtorQ",
   editedVideoId: "JS8YoJE1PUI",
   spans: [
-    reviewed(0, 0, 59, "Welcome: the open incubator model"),
-    { ...emptySpan(1, "No chapter names a breath or a drop-in.") },
-    reviewed(2, 59, 448, "Crowd pooling, shared equity, and collective fundraising"),
-    reviewed(3, 448, 1447, "Introducing Village OS"),
-    reviewed(4, 1447, 1559, "Coaching opportunities for regenerative communities"),
-    reviewed(5, 1559, 2485, "Project roundtable: surfacing community needs"),
-    reviewed(6, 2485, 2672, "Shared opportunities and priorities for the season"),
-    reviewed(7, 2672, 3161, "Defining what success looks like"),
-    reviewed(8, 3161, 3840, "Choosing the sessions that best support each project"),
-    reviewed(9, 4300, null, "Closing"),
-    reviewed(10, 3840, 4300, "Community tools, project profiles, and getting involved"),
+    reviewed(0, 0, 59, "Welcome: the open incubator model", { start: 0, end: 149 }),
+    reviewed(1, null, null, "Livestream description chapters: Drop in. No edited chapter names a breath or a drop-in.", { start: 149, end: 474 }),
+    reviewed(2, 59, 448, "Crowd pooling, shared equity, and collective fundraising", { start: 474, end: 1070 }),
+    reviewed(3, 448, 1447, "Introducing Village OS", { start: 1070, end: 2126 }),
+    reviewed(4, 1447, 1559, "Coaching opportunities for regenerative communities", { start: 2126, end: 2258 }),
+    reviewed(5, 1559, 2485, "Project roundtable: surfacing community needs", { start: 2258, end: 3847 }),
+    reviewed(6, 2485, 2672, "Shared opportunities and priorities for the season", { start: 3847, end: 4104 }),
+    reviewed(7, 2672, 3161, "Defining what success looks like", { start: 4104, end: 4770 }),
+    reviewed(8, 3161, 3840, "Choosing the sessions that best support each project", { start: 4770, end: 5271 }),
+    reviewed(9, 4300, null, "Closing", { start: 5922, end: null }),
+    reviewed(10, 3840, 4300, "Community tools, project profiles, and getting involved", { start: 5271, end: 5922 }),
   ],
 };
 
-function reviewed(stageIndex: number, editedStart: number, editedEnd: number | null, evidence: string): CourseSpan {
+function reviewed(
+  stageIndex: number,
+  editedStart: number | null,
+  editedEnd: number | null,
+  evidence: string,
+  live: { start: number; end: number | null },
+): CourseSpan {
   return {
     stageIndex,
-    liveStart: null,
-    liveEnd: null,
+    liveStart: live.start,
+    liveEnd: live.end,
     editedStart,
     editedEnd,
-    liveConfidence: null,
-    editedConfidence: "high",
+    liveConfidence: "high",
+    editedConfidence: editedStart == null ? null : "high",
     confidence: "high",
     evidence,
     adminEdited: true,
