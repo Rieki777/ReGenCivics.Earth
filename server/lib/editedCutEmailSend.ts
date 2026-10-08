@@ -7,7 +7,8 @@ import { eq } from "drizzle-orm";
 import { guardRecordingSubscriberMail } from "./recordingMailGate";
 import { getDb } from "../db";
 import { events, recordingCutEvents, recordings } from "../../drizzle/schema";
-import { sendEmail } from "../_core/email";
+import { APP_BASE_URL, sendEmail } from "../_core/email";
+import { loadRecapDigest } from "./recapForEmail";
 import { emailsAcceptedForInquiry } from "../emailTracking";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
 import { sendPacedEmails, type PaceResult } from "./pacedEmail";
@@ -218,6 +219,14 @@ async function deliverEditedLetter(
   rememberCount(chapters.length);
   const label = await labelFor(rec, opts?.cutTitle);
   const subject = editedRecordingSubject(label.week, label.title);
+  const weekBoardHref = label.week ? `${APP_BASE_URL}/season2/week/${label.week}` : null;
+  const digest = await loadRecapDigest({
+    recordingId: rec.id,
+    summary: rec.aiSummary || rec.overview,
+    videoId,
+    weekBoardHref,
+    origin: APP_BASE_URL,
+  });
   return pacedToRecordings({
     recordingId: rec.id,
     template: "recording_edited",
@@ -227,7 +236,12 @@ async function deliverEditedLetter(
       title: label.title,
       videoId,
       chapters,
+      summary: rec.aiSummary || rec.overview,
+      gist: digest.gist,
+      insights: digest.insights,
+      steps: digest.steps,
       prefsUrl,
+      origin: APP_BASE_URL,
     }),
   });
 }
@@ -271,6 +285,14 @@ async function deliverSessionNotes(
   const chapters = fresh.chapters.length ? fresh.chapters : coerceChapters(rec.chaptersJson);
   const summary = (rec.aiSummary || rec.overview || "").trim();
   const label = await labelFor(rec);
+  const weekBoardHref = label.week ? `${APP_BASE_URL}/season2/week/${label.week}` : null;
+  const digest = await loadRecapDigest({
+    recordingId: rec.id,
+    summary,
+    videoId,
+    weekBoardHref,
+    origin: APP_BASE_URL,
+  });
   return pacedToRecordings({
     recordingId: rec.id,
     template: "recording_notes",
@@ -280,8 +302,12 @@ async function deliverSessionNotes(
       title: label.title,
       videoId,
       summary,
+      gist: digest.gist,
+      insights: digest.insights,
+      steps: digest.steps,
       chapters,
       prefsUrl,
+      origin: APP_BASE_URL,
     }),
   });
 }

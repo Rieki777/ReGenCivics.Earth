@@ -71,6 +71,7 @@ import {
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
 import { courseProgress, getCourseMap, markCourseWatched, presentCourse, remapUnmappedLiveCourses, saveCourseMap } from "../lib/sessionCourseStore";
+import { loadWeekRecap } from "../lib/weekRecap";
 
 /** Per-visitor ceilings. Generous for a live room; there to make loops slow. */
 const WRITE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -198,6 +199,14 @@ export const sessionBoardRouter = router({
    * Public and tiny, polled every few seconds by every open page: has anything
    * on this week's board changed?
    */
+  /** Full recap for stage 0 after the session. Read only. */
+  recap: publicProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ input }) => {
+      assertWeek(input.week);
+      return loadWeekRecap(input.week);
+    }),
+
   version: publicProcedure
     .input(z.object({ week: weekInput }))
     .query(async ({ input }) => {

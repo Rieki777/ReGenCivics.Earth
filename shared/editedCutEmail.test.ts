@@ -24,7 +24,7 @@ describe("edited recording email", () => {
     expect(editedRecordingSubject(2, "Incubator Overview")).toBe(
       "Week 2 recording: Incubator Overview (edited)",
     );
-    expect(html).toContain("Watch the recording");
+    expect(html).toContain("Open the Week 2 board");
     expect(html).toContain("https://youtu.be/JS8YoJE1PUI");
     expect(html).toContain("https://youtu.be/JS8YoJE1PUI?t=3840");
     expect(html).toContain("64:00");
