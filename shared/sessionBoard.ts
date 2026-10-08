@@ -301,6 +301,38 @@ export function sessionClosedAt(state: BoardState, plannedMs: number, now: numbe
   return now >= end ? end : null;
 }
 
+/**
+ * Follow the room only while that session is still running.
+ * Before the board loads, and after the clock has ended, the screen stays
+ * on the stage someone picked. A finished week opens on the first stage.
+ */
+export function keepsFollowingRoom(opts: {
+  boardLoaded: boolean;
+  sessionEnded: boolean;
+  facilitator: boolean;
+  following: boolean;
+}): boolean {
+  if (!opts.boardLoaded || opts.sessionEnded) return false;
+  return opts.following || opts.facilitator;
+}
+
+/**
+ * A stage tap keeps following only when the session is live and that stage
+ * is the one the room is on. The room reads as stage 0 until the board
+ * arrives, so an early tap must not count as following.
+ */
+export function followingAfterStageChoice(opts: {
+  boardLoaded: boolean;
+  sessionEnded: boolean;
+  facilitator: boolean;
+  chosen: number;
+  liveStage: number;
+}): boolean {
+  if (!opts.boardLoaded || opts.sessionEnded) return false;
+  if (opts.facilitator) return true;
+  return opts.chosen === opts.liveStage;
+}
+
 /** Elapsed session time, frozen once the session is over and never past the plan. */
 export function sessionElapsedMs(state: BoardState, plannedMs: number, now: number): number | null {
   if (!state.sessionStartedAt) return null;

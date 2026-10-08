@@ -134,9 +134,12 @@ function hqThumb(videoId: string): string {
 
 function CourseThumb({ videoId }: { videoId: string }) {
   const [src, setSrc] = useState(() => hqThumb(videoId));
+  const [shownFor, setShownFor] = useState(videoId);
+  if (shownFor !== videoId) {
+    setShownFor(videoId);
+    setSrc(hqThumb(videoId));
+  }
   useEffect(() => {
-    const hq = hqThumb(videoId);
-    setSrc(hq);
     if (typeof window === "undefined" || window.innerWidth < 900) return;
     let cancelled = false;
     const probe = new Image();
