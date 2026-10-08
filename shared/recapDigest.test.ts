@@ -100,15 +100,17 @@ describe("recap digest", () => {
       }),
       prefsUrl: "https://regencivics.earth/email-preferences?token=abc",
     });
-    expect(edited.indexOf("The gist")).toBeLessThan(edited.indexOf("Watch the recording"));
-    expect(edited.indexOf("Key insights")).toBeLessThan(edited.indexOf("Watch the recording"));
-    expect(edited.indexOf("Your next steps")).toBeLessThan(edited.indexOf("Watch the recording"));
-    expect(edited.indexOf("Watch the recording")).toBeLessThan(edited.indexOf("Jump to a moment"));
-    expect(edited.indexOf("Jump to a moment")).toBeLessThan(edited.indexOf("Week 2 board"));
+    expect(edited.indexOf("The gist")).toBeLessThan(edited.indexOf("Open the Week 2 board"));
+    expect(edited.indexOf("Your next steps")).toBeLessThan(edited.indexOf("Open the Week 2 board"));
+    expect(edited.indexOf("Open the Week 2 board")).toBeLessThan(edited.indexOf("Jump to a moment"));
+    expect(edited).toContain("https://regencivics.earth/season2/week/2");
     expect(edited).toContain("https://youtu.be/JS8YoJE1PUI?t=59");
-    expect(edited).toContain("https://youtu.be/JS8YoJE1PUI?t=217");
+    expect(edited).not.toContain("Key insights");
+    expect(edited).not.toContain("https://youtu.be/JS8YoJE1PUI?t=217");
     expect(edited).not.toContain("The edited recording of");
     expect(edited).not.toContain("What we covered");
+    const gistItems = edited.match(/The gist<\/p><ul[\s\S]*?<\/ul>/)?.[0] ?? "";
+    expect(gistItems.match(/<li/g)?.length).toBe(3);
 
     const ready = buildRecordingReadyEmailHtml({
       title: "Incubator Overview",
@@ -120,9 +122,9 @@ describe("recap digest", () => {
       prefsUrl: "https://regencivics.earth/email-preferences?token=abc",
       chaptersHtml: "<p>Jump to a moment</p>",
     });
-    expect(ready.indexOf("The gist")).toBeLessThan(ready.indexOf("Watch Recording"));
-    expect(ready.indexOf("Watch Recording")).toBeLessThan(ready.indexOf("Jump to a moment"));
-    expect(ready.indexOf("Jump to a moment")).toBeLessThan(ready.indexOf("Week 2 board"));
+    expect(ready.indexOf("The gist")).toBeLessThan(ready.indexOf("Open the Week 2 board"));
+    expect(ready.indexOf("Open the Week 2 board")).toBeLessThan(ready.indexOf("Jump to a moment"));
+    expect(ready).not.toContain("Key insights");
     expect(ready).not.toContain("The recording from our latest");
     expect(ready).not.toContain("What we covered");
 

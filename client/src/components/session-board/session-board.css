@@ -381,6 +381,14 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-cues-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .sb-cues ul { margin: 0; padding-left: 1.1em; display: grid; gap: 8px; }
 
+/* Stage 0 after the session. Text first, the forest palette under it. */
+.sb-recap { display: grid; gap: 18px; max-width: 68ch; }
+.sb-recap section { display: grid; gap: 8px; }
+.sb-recap-list { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.sb-recap-note { color: var(--sb-muted); }
+.sb-recap-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.sb-recap-actions .sb-btn { min-height: 48px; padding-inline: 18px; }
+
 /* ---------- narrow ---------- */
 @media (max-width: 1200px) {
   .sb-rolecard-row { grid-template-columns: minmax(0, 1fr); max-width: none; }
@@ -414,6 +422,8 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
   .sb-foot { flex-wrap: wrap; }
   .sb-foot-mid { order: -1; flex-basis: 100%; }
   .sb-foot-tools { margin-left: auto; }
+  .sb-recap-actions { flex-direction: column; }
+  .sb-recap-actions .sb-btn { width: 100%; }
   .sb-small, .sb-mini, .sb-x, .sb-ag-main { min-height: 44px; }
   .sb-mini, .sb-x { width: 44px; height: 44px; }
   .sb-wk { grid-template-columns: minmax(0, 1fr) auto; }

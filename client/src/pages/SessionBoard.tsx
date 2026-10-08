@@ -46,6 +46,8 @@ import {
 } from "@/components/session-board/stages";
 import "@/components/session-board/session-board.css";
 import { CoursePlayer, CourseSprout, useWeekCourse } from "@/components/session-board/CoursePlayer";
+import { SessionRecap } from "@/components/session-board/SessionRecap";
+import { showSessionRecap } from "@shared/weekRecap";
 
 function boardDate(ms: number): string {
   return new Date(ms).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
@@ -199,6 +201,10 @@ function Board({ week }: { week: number }) {
         ? `${planMin} min`
         : `${fmtClock(stageElapsed)} of ${planMin} min`;
   const endedDate = closedAt ? boardDate(state?.sessionStartedAt ?? closedAt) : null;
+  const sessionEnded = closedAt != null || !open;
+  const showRecap = showSessionRecap(view, sessionEnded && !!board);
+  const stageName = (index: number) => (showSessionRecap(index, sessionEnded && !!board) ? "Recap" : stages[index].name);
+  const stageShort = (index: number) => (showSessionRecap(index, sessionEnded && !!board) ? "Recap" : stages[index].short);
 
   const stageProps: StageProps | null = board
     ? { board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go }
@@ -213,14 +219,14 @@ function Board({ week }: { week: number }) {
           <span className="sb-mark-sub">Season 2 · Week {week}</span>
         </Link>
         <div className="sb-rail-wrap">
-          <p className="sb-rail-current">{stage.name}</p>
+          <p className="sb-rail-current">{stageName(view)}</p>
           <ol className="sb-rail" aria-label="Session stages" ref={railRef}>
             {stages.map((s, i) => (
               <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : "", watched.has(i) ? "sb-sprout" : ""].filter(Boolean).join(" ")}>
-                <button type="button" className="sb-rail-btn" title={s.name} aria-label={watched.has(i) ? `${s.name}, watched` : s.name} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
+                <button type="button" className="sb-rail-btn" title={stageName(i)} aria-label={watched.has(i) ? `${stageName(i)}, watched` : stageName(i)} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
                   {watched.has(i) ? <CourseSprout /> : null}
                   <span className="sb-dot" />
-                  <span className="sb-lbl">{s.short}</span>
+                  <span className="sb-lbl">{stageShort(i)}</span>
                 </button>
               </li>
             ))}
@@ -244,26 +250,29 @@ function Board({ week }: { week: number }) {
       </header>
 
       <section className="sb-main" ref={mainRef} id="board" aria-label="Week board">
-        <section className={`sb-stage${WIDE.includes(stage.kind) ? " sb-wide" : ""}`} aria-label={stage.name}>
+        <section className={`sb-stage${WIDE.includes(stage.kind) ? " sb-wide" : ""}`} aria-label={stageName(view)}>
           {!open ? <p className="sb-banner">This board is closed and kept as the record of {title}. Browse every stage with the arrows.</p> : null}
           {open && endedDate ? (
             <p className="sb-banner">
               This session ended {endedDate}.{nextSession ? ` Next session: Week ${nextSession.week}, ${boardDate(nextSession.start.getTime())}.` : ""}
             </p>
           ) : null}
-          <CoursePlayer
-            week={week}
-            stageIndex={view}
-            stages={stages}
-            map={course.map}
-            progress={course.progress}
-            setMode={course.setMode}
-            markWatched={course.markWatched}
-            onGo={go}
-          />
+          {showRecap ? null : (
+            <CoursePlayer
+              week={week}
+              stageIndex={view}
+              stages={stages}
+              map={course.map}
+              progress={course.progress}
+              setMode={course.setMode}
+              markWatched={course.markWatched}
+              onGo={go}
+            />
+          )}
           {loading || !stageProps ? (
             <p className="sb-empty">{error ? "The board didn't load. Check your connection and refresh the page." : "Opening the board..."}</p>
-          ) : stage.kind === "welcome" ? <Welcome {...stageProps} />
+          ) : showRecap ? <SessionRecap week={week} />
+            : stage.kind === "welcome" ? <Welcome {...stageProps} />
             : stage.kind === "breath" ? <Breath {...stageProps} />
             : stage.kind === "open" ? <OpenSeason {...stageProps} />
             : stage.kind === "villageos" ? <VillageOS {...stageProps} />
@@ -278,14 +287,14 @@ function Board({ week }: { week: number }) {
       </section>
 
       <footer className="sb-foot">
-        <button type="button" className="sb-btn" disabled={view === 0} onClick={() => go(view - 1)}>← {view > 0 ? stages[view - 1].short : "Back"}</button>
+        <button type="button" className="sb-btn" disabled={view === 0} onClick={() => go(view - 1)}>← {view > 0 ? stageShort(view - 1) : "Back"}</button>
         <div className="sb-foot-mid">
-          <span className="sb-foot-stage">{view + 1}. {stage.name}</span>
+          <span className="sb-foot-stage">{view + 1}. {stageName(view)}</span>
           <span className={`sb-foot-time${stageOver && !closedAt ? " sb-over" : ""}`}>
             {stageLabel}
           </span>
         </div>
-        <button type="button" className="sb-btn sb-primary" disabled={view === stages.length - 1} onClick={() => go(view + 1)}>{view < stages.length - 1 ? stages[view + 1].short : "Done"} →</button>
+        <button type="button" className="sb-btn sb-primary" disabled={view === stages.length - 1} onClick={() => go(view + 1)}>{view < stages.length - 1 ? stageShort(view + 1) : "Done"} →</button>
         <div className="sb-foot-tools">
           {!facilitator && view !== live && open ? (
             <button type="button" className="sb-btn sb-ghost" onClick={() => { setFollowing(true); setView(live); }}>Back to live</button>

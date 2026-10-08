@@ -49,15 +49,12 @@ export function chaptersEmailSection(chapters: YoutubeChapter[], videoId: string
   return `<p class="rc-heading" style="color:${EMAIL_BODY_TEXT};font-weight:700;font-size:16px;margin:28px 0 10px;">Jump to a moment</p><ul style="list-style:none;padding:0;margin:0;">${items}</ul>`;
 }
 
-function watchButton(videoId: string): string {
-  const href = esc(`https://youtu.be/${videoId}`);
-  return `<a class="rc-button" href="${href}" style="display:block;background-color:${EMAIL_BANNER_BG};color:${EMAIL_HEADER_TEXT};text-align:center;padding:18px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:18px;line-height:1.3;">Watch the recording</a>`;
+function blockButton(href: string, label: string): string {
+  return `<a class="rc-button" href="${esc(href)}" style="display:block;background-color:${EMAIL_BANNER_BG};color:${EMAIL_HEADER_TEXT};text-align:center;padding:18px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:18px;line-height:1.3;">${esc(label)}</a>`;
 }
 
-function relatedLinks(week: number | null, origin: string): string {
-  const schedule = esc(`${origin}/season-schedule`);
-  const board = week ? `<p style="margin:0 0 8px 0;"><a href="${esc(`${origin}/season2/week/${week}`)}" style="color:${EMAIL_BODY_TEXT};font-weight:700;">Week ${week} board</a></p>` : "";
-  return `<div style="margin:22px 0 0 0;">${board}<p style="margin:0;"><a href="${schedule}" style="color:${EMAIL_BODY_TEXT};font-weight:700;">Vote on call times</a></p></div>`;
+function voteLink(origin: string): string {
+  return `<p style="margin:18px 0 0;"><a href="${esc(`${origin}/season-schedule`)}" style="color:${EMAIL_BODY_TEXT};font-weight:700;">Vote on call times</a></p>`;
 }
 
 function shell(opts: {
@@ -73,15 +70,18 @@ function shell(opts: {
 }): string {
   const origin = opts.origin ?? SITE_ORIGIN;
   const chapters = chaptersEmailSection(opts.chapters, opts.videoId);
+  const opener = opts.week
+    ? blockButton(`${origin}/season2/week/${opts.week}`, `Open the Week ${opts.week} board`)
+    : blockButton(`https://youtu.be/${opts.videoId}`, "Watch the recording");
   const body = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
       ${emailBannerHtml(opts.eyebrow)}
       <div class="rc-card" style="padding:28px 24px;background-color:${EMAIL_CARD_BG};border:1px solid #e0e0e0;border-top:none;">
         <h2 class="rc-heading" style="color:${EMAIL_BODY_TEXT};margin:0 0 18px 0;font-size:22px;line-height:1.3;">${esc(opts.heading)}</h2>
         ${opts.digest ?? ""}
-        ${watchButton(opts.videoId)}
+        ${opener}
         ${chapters}
-        ${relatedLinks(opts.week, origin)}
+        ${voteLink(origin)}
       </div>
       <div class="rc-card" style="background-color:${EMAIL_SUMMARY_BG};padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
         ${newsletterLegalFooterHtml(opts.prefsUrl, opts.postalAddress ?? NEWSLETTER_POSTAL_ADDRESS)}
@@ -97,12 +97,9 @@ function digestHtml(opts: {
   insights?: RecapItem[];
   steps?: RecapItem[];
 }): string {
-  const gist = opts.gist?.length ? opts.gist : gistBullets(opts.summary);
-  return recapSectionsHtml({
-    gist,
-    insights: opts.insights,
-    steps: opts.steps,
-  });
+  const gist = (opts.gist?.length ? opts.gist : gistBullets(opts.summary)).slice(0, 3);
+  const steps = (opts.steps ?? []).slice(0, 3);
+  return recapSectionsHtml({ gist, steps });
 }
 
 export function buildEditedRecordingEmailHtml(opts: {

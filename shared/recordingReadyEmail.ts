@@ -5,6 +5,7 @@
 import { newsletterLegalFooterHtml } from "./letterHtml";
 import { NEWSLETTER_POSTAL_ADDRESS } from "./letterLayout";
 import {
+  EMAIL_BANNER_BG,
   EMAIL_BODY_TEXT,
   EMAIL_CARD_BG,
   EMAIL_HEADER_TEXT,
@@ -12,7 +13,6 @@ import {
   EMAIL_SUMMARY_BG,
   emailBannerHtml,
   emailDocumentHtml,
-  emailPrimaryButton,
 } from "./emailChrome";
 import { gistBullets, recapSectionsHtml, type RecapItem } from "./recapDigest";
 
@@ -41,17 +41,21 @@ export function buildRecordingReadyEmailHtml(opts: {
   postalAddress?: string;
 }): string {
   const watchHref = opts.youtubeUrl || opts.riversideUrl || "";
-  const watchBtn = watchHref
-    ? `<a href="${esc(watchHref)}" style="display:inline-block;background-color:#FF0000;color:${EMAIL_HEADER_TEXT};padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;margin:0 8px 12px 0;">Watch Recording</a>`
-    : "";
-  const forumBtn = opts.forumUrl ? emailPrimaryButton(opts.forumUrl, "Join the Discussion") : "";
-  const courseBtn = opts.courseUrl ? emailPrimaryButton(opts.courseUrl, opts.courseLabel || "Week board") : "";
+  const boardLabel = opts.courseLabel
+    ? (opts.courseLabel.startsWith("Open ") ? opts.courseLabel : `Open the ${opts.courseLabel}`)
+    : "Open the week board";
+  const opener = opts.courseUrl
+    ? `<a class="rc-button" href="${esc(opts.courseUrl)}" style="display:block;background-color:${EMAIL_BANNER_BG};color:${EMAIL_HEADER_TEXT};text-align:center;padding:18px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:18px;line-height:1.3;">${esc(boardLabel)}</a>`
+    : watchHref
+      ? `<a class="rc-button" href="${esc(watchHref)}" style="display:block;background-color:${EMAIL_BANNER_BG};color:${EMAIL_HEADER_TEXT};text-align:center;padding:18px 24px;border-radius:12px;text-decoration:none;font-weight:700;font-size:18px;line-height:1.3;">Watch the recording</a>`
+      : "";
   const digest = recapSectionsHtml({
-    gist: opts.gist?.length ? opts.gist : gistBullets(opts.aiSummary),
-    insights: opts.insights,
-    steps: opts.steps,
+    gist: (opts.gist?.length ? opts.gist : gistBullets(opts.aiSummary)).slice(0, 3),
+    steps: (opts.steps ?? []).slice(0, 3),
   });
-  const otherButtons = `${forumBtn}${courseBtn}`;
+  const forumLine = opts.forumUrl
+    ? `<p style="margin:18px 0 0;"><a href="${esc(opts.forumUrl)}" style="color:${EMAIL_BODY_TEXT};font-weight:700;">Join the discussion</a></p>`
+    : "";
 
   const body = `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
@@ -60,11 +64,9 @@ export function buildRecordingReadyEmailHtml(opts: {
         <h2 class="rc-heading" style="color:${EMAIL_BODY_TEXT};margin:0 0 6px 0;font-size:20px;">${esc(opts.title)}</h2>
         <p class="rc-muted" style="color:${EMAIL_MUTED_TEXT};font-size:13px;margin:0 0 20px 0;">${esc(opts.sessionDate)}</p>
         ${digest}
-        <div style="margin:4px 0 16px;">
-          ${watchBtn}
-        </div>
+        ${opener}
         ${opts.chaptersHtml ?? ""}
-        ${otherButtons ? `<div style="margin:20px 0 0;">${otherButtons}</div>` : ""}
+        ${forumLine}
       </div>
       <div class="rc-card" style="background-color:${EMAIL_SUMMARY_BG};padding:20px 24px;text-align:center;border-radius:0 0 8px 8px;border:1px solid #e0e0e0;border-top:none;">
         ${newsletterLegalFooterHtml(opts.prefsUrl, opts.postalAddress ?? NEWSLETTER_POSTAL_ADDRESS)}
