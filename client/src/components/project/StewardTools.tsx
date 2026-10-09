@@ -22,6 +22,11 @@
  * money-share note (guidance only). Ready to crowdpool ticks are stored on
  * the campaign while it is a draft, in review, or sent back, so the review
  * team sees them (build spec 2026-09-25, section 12).
+ *
+ * Sent back for changes (bundle 1, item 9): the status card reads the review
+ * team's note through campaigns.getReviewNote (stewards and admins only) and
+ * offers Send for review. A campaign reads sent back when its status is the
+ * legacy 'rejected', or it is a draft the review team sent back (sentBackAt).
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -46,7 +51,7 @@ import { CancelCampaignDialog } from "./CancelCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
-import { CLOSE, MONEY_STEP } from "@shared/crowdpoolCopy";
+import { CLOSE, MONEY_STEP, SEND_BACK } from "@shared/crowdpoolCopy";
 import { progressLines } from "@shared/campaignProgress";
 import { takeCreatedCampaign } from "@/lib/createdNotice";
 
@@ -140,11 +145,27 @@ export function StewardTools({
 
   const submitForReview = trpc.campaigns.submitForReview.useMutation({
     onSuccess: () => {
-      toast.success("Sent for review. The ReGen Civics team will take a look.");
+      toast.success(SEND_BACK.sentForReview);
       onChanged();
     },
     onError: (err) => toast.error(err.message || "Couldn't send it for review. Try again."),
   });
+
+  // Before it goes live: the review team's note from a send-back. The note
+  // is a steward-only read.
+  const beforeLive = READINESS_STATUSES.includes(status);
+  const { data: reviewNote } = trpc.campaigns.getReviewNote.useQuery({ campaignId }, { retry: false, enabled: beforeLive });
+  const sentBack = status === "rejected" || (status === "draft" && !!reviewNote?.sentBackAt);
+  const sendButton = (
+    <Button
+      onClick={() => submitForReview.mutate({ id: campaignId })}
+      disabled={submitForReview.isPending}
+      className="min-h-11 bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+    >
+      {submitForReview.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+      {SEND_BACK.sendForReview}
+    </Button>
+  );
 
   // Stored on the campaign (campaigns.setReadinessTick) so the review team sees them.
   const readiness = READINESS_STATUSES.includes(status) ? (
@@ -172,6 +193,7 @@ export function StewardTools({
           onJump={jump}
           onSendForReview={() => scrollToId("campaign-status")}
           offerNotes={notes}
+          sentBack={sentBack}
         />
         <CampaignStewardStats
           campaignId={campaignId}
@@ -257,29 +279,41 @@ export function StewardTools({
           <Flag className="w-5 h-5 text-[#4a7c59]" />
           Campaign status
         </h2>
-        {status === "draft" && (
+        {sentBack && (
+          <div className="mt-2 mb-6" data-testid="sent-back">
+            <p className="text-sm font-semibold text-[#1a472a] mb-2">{SEND_BACK.sentBack}</p>
+            {reviewNote?.note ? (
+              <>
+                <p className="text-sm text-[#1a472a]/80 mb-1">{SEND_BACK.askedFor}</p>
+                <blockquote className="mb-3 whitespace-pre-line break-words rounded-xl border-l-4 border-[#4a7c59] bg-[#f0f7f0] p-3 text-sm text-[#1a472a]">
+                  {decodeBasicEntities(reviewNote.note)}
+                </blockquote>
+              </>
+            ) : (
+              <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.noteInNotifications}</p>
+            )}
+            <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.makeChanges}</p>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {sendButton}
+            </div>
+            {readiness}
+          </div>
+        )}
+        {status === "draft" && !sentBack && (
           <div className="mt-2 mb-6">
-            <p className="text-sm text-[#1a472a]/80 mb-3">
-              This campaign is a draft. Only stewards can see it. When it's ready, send it to the ReGen Civics team for review.
-            </p>
+            <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.draft}</p>
             <div className="mb-4">{readiness}</div>
-            <Button
-              onClick={() => submitForReview.mutate({ id: campaignId })}
-              disabled={submitForReview.isPending}
-              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white"
-            >
-              {submitForReview.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-              Send for review
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {sendButton}
+            </div>
           </div>
         )}
         {status === "pending_review" && (
-          <p className="text-sm text-[#1a472a]/80 mt-2 mb-6">In review. The ReGen Civics team will look at it and let you know.</p>
+          <div className="mt-2 mb-6">
+            <p className="text-sm text-[#1a472a]/80 mb-3">In review. The ReGen Civics team will look at it and let you know.</p>
+            {readiness}
+          </div>
         )}
-        {status === "rejected" && (
-          <p className="text-sm text-[#1a472a]/80 mt-2 mb-6">The review team sent this campaign back. Check your notifications for their notes.</p>
-        )}
-        {(status === "pending_review" || status === "rejected") && <div className="mb-6">{readiness}</div>}
         {status === "active" && (
           <p className="text-sm text-[#1a472a]/80 mt-2 mb-6">Live and open for offers.</p>
         )}

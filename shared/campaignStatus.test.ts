@@ -21,6 +21,12 @@ describe("steward transitions", () => {
     expect(canTransition("rejected", "cancelled", "steward")).toBe(false);
     expect(cancellableFrom("steward").sort()).toEqual(["active", "draft", "pending_review"]);
   });
+  it("can send a campaign sent back under the old Reject for review again, and nothing else", () => {
+    expect(canTransition("rejected", "pending_review", "steward")).toBe(true);
+    expect(canTransition("rejected", "active", "steward")).toBe(false);
+    expect(canTransition("rejected", "draft", "steward")).toBe(false);
+    expect(canTransition("rejected", "cancelled", "steward")).toBe(false);
+  });
 });
 
 describe("admin transitions", () => {
@@ -29,6 +35,10 @@ describe("admin transitions", () => {
     expect(canTransition("pending_review", "rejected", "admin")).toBe(true);
     expect(canTransition("active", "completed", "admin")).toBe(true);
     expect(canTransition("rejected", "cancelled", "admin")).toBe(true);
+  });
+  it("sends a campaign in review back to draft for changes", () => {
+    expect(canTransition("pending_review", "draft", "admin")).toBe(true);
+    expect(canTransition("rejected", "draft", "admin")).toBe(true);
   });
   it("cannot publish a draft that skipped review", () => {
     expect(canTransition("draft", "active", "admin")).toBe(false);

@@ -72,6 +72,12 @@ describe("buildStewardQueue", () => {
     expect(buildStewardQueue({ contributions: [], items: [], campaignStatus: "pending_review" }).sendForReview).toBe(false);
   });
 
+  it("asks a campaign sent back under the old Reject to be sent for review again", () => {
+    const q = buildStewardQueue({ contributions: [], items: [], campaignStatus: "rejected" });
+    expect(q.sendForReview).toBe(true);
+    expect(q.total).toBe(1);
+  });
+
   it("flags pending offers on an hours role that reads filled", () => {
     const q = buildStewardQueue({
       contributions: [c(1, "pending", 1), c(2, "pending", 2), c(3, "pending", null)],

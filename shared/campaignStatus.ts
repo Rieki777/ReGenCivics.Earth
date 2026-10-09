@@ -3,7 +3,8 @@
  *
  * Security: until 2026-09-24 campaigns.updateStatus let a campaign's owner
  * set ANY status, so a creator could publish past review or mark their own
- * campaign complete. Stewards now only send a draft for review and cancel;
+ * campaign complete. Stewards now only send a draft (or a campaign sent
+ * back) for review and cancel;
  * publishing, completing and rejecting are admin moves. The server enforces
  * this through canTransition(); shared/campaignStatus.test.ts pins it.
  *
@@ -16,6 +17,11 @@
  * through campaigns.updateStatus, so no transition into or out of `closed`
  * is offered to anyone. The same job can move a live campaign to `completed`
  * at its close date when both halves have landed.
+ *
+ * Admins send a campaign back for changes by moving it from in review to
+ * draft (the 'Send back for changes' button). `rejected` stays in the enum for
+ * campaigns sent back before 2026-10-01; their stewards can send them for
+ * review again.
  */
 
 export const CAMPAIGN_STATUSES = [
@@ -47,7 +53,7 @@ export const STEWARD_TRANSITIONS: Record<CampaignStatus, CampaignStatus[]> = {
   draft: ["pending_review", "cancelled"],
   pending_review: ["cancelled"],
   active: ["cancelled"],
-  rejected: [],
+  rejected: ["pending_review"],
   funded: [],
   completed: [],
   cancelled: [],

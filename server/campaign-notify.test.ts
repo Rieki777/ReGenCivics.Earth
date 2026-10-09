@@ -317,7 +317,7 @@ describe("review outcomes", () => {
     expect(row).toMatchObject({
       type: "campaign_declined",
       title: "Review notes on Plant 400 trees",
-      body: "The review team sent this campaign back. Reach out to the team through the Connect page at regencivics.earth/connect for next steps.",
+      body: "The review team sent this campaign back for changes. Open your project page to edit it and send it for review again.",
       dedupeKey: `cp:status:7:rejected:${reviewedAt.getTime()}:u1`,
     });
     expect(buildCampaignDeclined({ campaign, stewardIds: [1], reviewedAt, reviewNotes: "Add photos" })[0].body).toBe("Add photos");

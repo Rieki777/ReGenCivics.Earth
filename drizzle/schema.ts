@@ -1278,6 +1278,10 @@ export const campaigns = mysqlTable("campaigns", {
   adminNotes: text("adminNotes"), // Admin review notes
   reviewedBy: int("reviewedBy"), // Admin who reviewed
   reviewedAt: timestamp("reviewedAt"),
+  // (0295) "Send back for changes": the reviewer's note the stewards read
+  // (campaigns.getReviewNote) and when it was last sent back. Never public.
+  stewardReviewNote: text("stewardReviewNote"),
+  sentBackAt: timestamp("sentBackAt"),
   generatedImageUrl: varchar("generatedImageUrl", { length: 512 }), // AI-generated card image
 
   // Crowdpooling flags (0205). isDemo labels seeded example campaigns: they

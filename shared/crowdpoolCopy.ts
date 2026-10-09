@@ -771,3 +771,28 @@ export const OUTBOUND_DIGEST = {
   exclude: "Leave out people who already offered on a live campaign",
   footer: "You asked for news about crowdpooling on regencivics.earth.",
 } as const;
+
+// ═══ Bundle 1 (build spec 2026-10-01, section 9) ═══════════════════════════
+// A way back for a campaign the review team sends back: the admin's "Send
+// back for changes" and the steward's status card.
+
+/** Send back for changes: the admin review and the steward's status card. */
+export const SEND_BACK = {
+  // The steward's #campaign-status card (StewardTools).
+  sentBack: "The review team sent this campaign back for changes.",
+  askedFor: "What they asked for:",
+  noteInNotifications: "Their note is in your notifications.",
+  makeChanges: "Make the changes, then send it for review again.",
+  draft: "This campaign is a draft. Only stewards can see it. When it's ready, send it to the ReGen Civics team for review.",
+  sendForReview: "Send for review",
+  sentForReview: "Sent for review. The ReGen Civics team will take a look.",
+  /** The "Waiting on you" row once the review team sent it back (WaitingOnYou). */
+  waitingRow: "The review team sent this back. Make the changes and send it for review again.",
+  // The admin review (AdminCampaignApproval).
+  adminButton: "Send back for changes",
+  adminDone: "Sent back to the stewards for changes.",
+  adminLabel: "Sent back",
+  adminFilter: (n: number) => `Sent back (${n})`,
+  adminNotesHelper:
+    "Sent to the project's stewards with an approval or a send-back. On a send-back they also see it on their project page.",
+} as const;

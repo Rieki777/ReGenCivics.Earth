@@ -434,7 +434,7 @@ export function buildCampaignDeclined(args: {
   const { campaign } = args;
   const notes = plain(args.reviewNotes);
   const body = notes
-    || "The review team sent this campaign back. Reach out to the team through the Connect page at regencivics.earth/connect for next steps.";
+    || "The review team sent this campaign back for changes. Open your project page to edit it and send it for review again.";
   return recipientsOf(args.stewardIds, [args.actorId]).map((uid) => ({
     userId: uid,
     type: "campaign_declined" as const,

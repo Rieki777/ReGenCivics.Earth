@@ -1,7 +1,8 @@
 /**
  * What is waiting on this project's stewards, in one short list: offers to
  * answer, places to mark delivered, thanks to send, a draft to send for
- * review, and offers sitting on a role that is already filled. Each row
+ * review (or one the review team sent back for changes, to send again), and
+ * offers sitting on a role that is already filled. Each row
  * jumps to the right tab of the offers panel. The counting lives in
  * shared/stewardQueue.ts.
  *
@@ -13,7 +14,7 @@
  */
 import { ArrowRight, CheckCircle2, Clock, Gift, MessageSquare, PackageCheck, Send, AlertTriangle } from "lucide-react";
 import type { OfferTab, StewardQueue } from "@shared/stewardQueue";
-import { OFFER_NOTES } from "@shared/crowdpoolCopy";
+import { OFFER_NOTES, SEND_BACK } from "@shared/crowdpoolCopy";
 
 export type OfferNotesSummary = { count: number; tab: OfferTab } | null;
 
@@ -68,6 +69,7 @@ export function WaitingOnYou({
   onJump,
   onSendForReview,
   offerNotes = null,
+  sentBack = false,
 }: {
   queue: StewardQueue | null;
   loading: boolean;
@@ -75,6 +77,8 @@ export function WaitingOnYou({
   onSendForReview: () => void;
   /** Offers in play with a note from their offer link (offerNotesSummary). */
   offerNotes?: OfferNotesSummary;
+  /** The review team sent this campaign back for changes (a draft with sentBackAt, or legacy rejected). */
+  sentBack?: boolean;
 }) {
   return (
     <section id="review" className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl scroll-mt-24">
@@ -92,7 +96,11 @@ export function WaitingOnYou({
       ) : (
         <ul className="space-y-2">
           {queue.sendForReview && (
-            <Row icon={Send} text="This campaign is a draft. Send it for review when it's ready." onClick={onSendForReview} />
+            <Row
+              icon={Send}
+              text={sentBack ? SEND_BACK.waitingRow : "This campaign is a draft. Send it for review when it's ready."}
+              onClick={onSendForReview}
+            />
           )}
           {queue.toAnswer.length > 0 && (
             <Row icon={Clock} text={`${plural(queue.toAnswer.length, "offer", "offers")} to answer`} onClick={() => onJump("waiting")} />

@@ -13,6 +13,11 @@
  * Needs listed at 0 (ruling 2026-09-27: a need can't be listed at 0) are
  * flagged above the needs, so the reviewer can ask the project to value them.
  * New campaigns can't send one; older ones may still hold one.
+ *
+ * "Send back for changes" (bundle 1, item 9) moves a campaign in review, or
+ * one sent back under the old Reject, to draft with the review notes, which
+ * its stewards read on their project page. Such a draft (sentBackAt set; an
+ * admin gets whole rows) reads "Sent back", as status 'rejected' does.
  */
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
@@ -26,7 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   CheckCircle2, XCircle, Eye, Clock, MapPin, DollarSign, 
   Users, Calendar, Leaf, ChevronDown, ChevronUp, ExternalLink,
-  FileText, Loader2, AlertTriangle, Sparkles, ArrowRight, CalendarX
+  FileText, Loader2, AlertTriangle, Sparkles, ArrowRight, CalendarX, Undo2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CrowdpoolReadiness } from './CrowdpoolReadiness';
@@ -34,9 +39,19 @@ import { TwoLineBar } from './crowdpool/TwoLineBar';
 import { formatCloseDate, moneyShareNote } from '@shared/campaignProgress';
 import { kindForItem, needTitle, roleTimeLine, thingWindowLine } from '@shared/crowdpoolNeedAction';
 import { CASH_SHARE } from '@shared/crowdpoolModel';
-import { CLOSE, ROUTE_LABELS, ROUTE_REVIEW, STEWARD_MONEY, ZERO_VALUE } from '@shared/crowdpoolCopy';
+import { CLOSE, ROUTE_LABELS, ROUTE_REVIEW, SEND_BACK, STEWARD_MONEY, ZERO_VALUE } from '@shared/crowdpoolCopy';
 import { isMoneyKind } from '@shared/crowdpoolNeedAction';
 import { isListableValue } from '@shared/needRules';
+
+/**
+ * Whether the review team sent this campaign back: status 'rejected' (before
+ * 2026-10-01), or a draft they sent back for changes (sentBackAt, which only
+ * admins' whole rows carry).
+ */
+export function isSentBack(c: { status: string }): boolean {
+  if (c.status === 'rejected') return true;
+  return c.status === 'draft' && 'sentBackAt' in c && !!(c as { sentBackAt?: unknown }).sentBackAt;
+}
 
 /** How many in-kind needs are listed at 0. Money kinds aren't needs, so they don't count. */
 export function zeroValueNeedCount(items: Array<{ kind?: string | null; estimatedValue: unknown }> | null | undefined): number {
@@ -226,7 +241,7 @@ type CampaignStatus = 'pending_review' | 'active' | 'rejected' | 'draft' | 'comp
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending_review: { label: 'Pending Review', color: 'bg-amber-100 text-amber-800 border-amber-200', icon: <Clock className="w-3 h-3" /> },
   active: { label: 'Active', color: 'bg-green-100 text-green-800 border-green-200', icon: <CheckCircle2 className="w-3 h-3" /> },
-  rejected: { label: 'Rejected', color: 'bg-red-100 text-red-800 border-red-200', icon: <XCircle className="w-3 h-3" /> },
+  rejected: { label: SEND_BACK.adminLabel, color: 'bg-orange-100 text-orange-900 border-orange-200', icon: <Undo2 className="w-3 h-3" /> },
   draft: { label: 'Draft', color: 'bg-gray-100 text-gray-800 border-gray-200', icon: <FileText className="w-3 h-3" /> },
   funded: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
   completed: { label: 'Complete', color: 'bg-purple-100 text-purple-800 border-purple-200', icon: <Sparkles className="w-3 h-3" /> },
@@ -236,8 +251,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
   closed: { label: CLOSE.stateTag, color: 'bg-stone-100 text-stone-800 border-stone-300', icon: <CalendarX className="w-3 h-3" /> },
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const config = statusConfig[status] || statusConfig.draft;
+function StatusBadge({ status, sentBack = false }: { status: string; sentBack?: boolean }) {
+  // A draft the review team sent back reads the same as a legacy 'rejected'.
+  const config = sentBack ? statusConfig.rejected : statusConfig[status] || statusConfig.draft;
   return (
     <Badge variant="outline" className={`${config.color} flex items-center gap-1 text-xs`}>
       {config.icon}
@@ -258,9 +274,9 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
   const updateStatusMutation = trpc.campaigns.updateStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: (_result, vars) => {
       onStatusChange();
-      toast.success('Campaign status updated');
+      toast.success(vars.status === 'draft' ? SEND_BACK.adminDone : 'Campaign status updated');
     },
     onError: (err) => toast.error(err.message),
   });
@@ -271,13 +287,14 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
     if (newStatus === 'cancelled' && !window.confirm(`Cancel ${title}? Every offer that is waiting or accepted closes, and everyone involved is told. This can't be undone.`)) return;
     setActionLoading(newStatus);
     try {
-      // Review notes travel with an approval or a decline: they are saved on
-      // the campaign and shown to its stewards in their notice.
+      // Review notes travel with an approval or a send-back: they are saved
+      // on the campaign and shown to its stewards in their notice, and on a
+      // send-back on their project page too.
       const notes = reviewNotes.trim();
       await updateStatusMutation.mutateAsync({
         id: campaignId,
         status: newStatus,
-        ...((newStatus === 'active' || newStatus === 'rejected') && notes ? { reviewNotes: notes } : {}),
+        ...((newStatus === 'active' || newStatus === 'draft') && notes ? { reviewNotes: notes } : {}),
       });
     } catch {
       // onError already showed the server's message.
@@ -324,7 +341,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
             </div>
           )}
         </div>
-        <StatusBadge status={campaign.status} />
+        <StatusBadge status={campaign.status} sentBack={isSentBack(campaign)} />
       </div>
 
       {/* The two-line bar: the same reading the project page shows */}
@@ -488,7 +505,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
       <div className="border-t border-[#1a472a]/10 pt-4">
         <h4 className="text-sm font-bold text-[#1a472a] mb-1">Review notes</h4>
         <p className="text-xs text-[#1a472a]/80 mb-2">
-          Sent to the project's stewards with an approval or a decline.
+          {SEND_BACK.adminNotesHelper}
         </p>
         <Textarea
           value={reviewNotes}
@@ -513,13 +530,13 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
               Approve & Publish
             </Button>
             <Button
-              onClick={() => handleStatusChange('rejected')}
+              onClick={() => handleStatusChange('draft')}
               disabled={actionLoading !== null}
               variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50"
+              className="border-orange-300 text-orange-800 hover:bg-orange-50"
             >
-              {actionLoading === 'rejected' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
-              Reject
+              {actionLoading === 'draft' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Undo2 className="w-4 h-4 mr-2" />}
+              {SEND_BACK.adminButton}
             </Button>
           </>
         )}
@@ -545,14 +562,25 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           </>
         )}
         {campaign.status === 'rejected' && (
-          <Button
-            onClick={() => handleStatusChange('active')}
-            disabled={actionLoading !== null}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Approve & Publish
-          </Button>
+          <>
+            <Button
+              onClick={() => handleStatusChange('active')}
+              disabled={actionLoading !== null}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Approve & Publish
+            </Button>
+            <Button
+              onClick={() => handleStatusChange('draft')}
+              disabled={actionLoading !== null}
+              variant="outline"
+              className="border-orange-300 text-orange-800 hover:bg-orange-50"
+            >
+              {actionLoading === 'draft' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Undo2 className="w-4 h-4 mr-2" />}
+              {SEND_BACK.adminButton}
+            </Button>
+          </>
         )}
         <Button variant="outline" onClick={onClose} className="border-[#1a472a]/20 text-[#1a472a]">
           Close
@@ -573,12 +601,14 @@ export function AdminCampaignApproval() {
   
   const campaigns = allCampaigns?.filter(c => {
     if (statusFilter === 'all') return true;
+    if (statusFilter === 'sent_back') return isSentBack(c);
     return c.status === statusFilter;
   }) || [];
 
   const pendingCount = allCampaigns?.filter(c => c.status === 'pending_review').length || 0;
   const activeCount = allCampaigns?.filter(c => c.status === 'active').length || 0;
-  const rejectedCount = allCampaigns?.filter(c => c.status === 'rejected').length || 0;
+  // Sent back: legacy 'rejected' rows and drafts the review team sent back.
+  const sentBackCount = allCampaigns?.filter(c => isSentBack(c)).length || 0;
 
   const handleStatusChange = () => {
     utils.campaigns.list.invalidate();
@@ -628,13 +658,13 @@ export function AdminCampaignApproval() {
               Active ({activeCount})
             </Button>
             <Button
-              variant={statusFilter === 'rejected' ? 'default' : 'outline'}
+              variant={statusFilter === 'sent_back' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setStatusFilter('rejected')}
-              className={statusFilter === 'rejected' ? 'bg-red-600 text-white' : 'border-red-200 text-red-700'}
+              onClick={() => setStatusFilter('sent_back')}
+              className={statusFilter === 'sent_back' ? 'bg-orange-700 text-white' : 'border-orange-200 text-orange-800'}
             >
-              <XCircle className="w-3 h-3 mr-1" />
-              Rejected ({rejectedCount})
+              <Undo2 className="w-3 h-3 mr-1" />
+              {SEND_BACK.adminFilter(sentBackCount)}
             </Button>
           </div>
 
@@ -660,7 +690,7 @@ export function AdminCampaignApproval() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h4 className="font-bold text-[#1a472a] text-sm truncate">{campaign.title}</h4>
-                      <StatusBadge status={campaign.status} />
+                      <StatusBadge status={campaign.status} sentBack={isSentBack(campaign)} />
                     </div>
                     <p className="text-xs text-[#1a472a]/80 mb-1">{campaign.projectName}</p>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-[#1a472a]/80">

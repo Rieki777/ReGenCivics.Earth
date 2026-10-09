@@ -173,7 +173,9 @@ const STATUS_WORDS: Record<string, string> = {
  *
  * Withheld: `adminNotes`, `reviewedBy` and `reviewedAt`, the review trail.
  * `adminNotes` is where reviewers write what they actually think of a
- * project, and it rode out on every campaign card in the gallery.
+ * project, and it rode out on every campaign card in the gallery. Also
+ * withheld (0295): `stewardReviewNote` and `sentBackAt`, the send-back note
+ * and its date, which only the stewards read (campaigns.getReviewNote).
  *
  * `userId` stays: the client compares it to decide whether to show the
  * creator their own manage controls.
@@ -2426,10 +2428,23 @@ export const campaignsRouter = router({
         patch.publishedAt = now;
       }
       if (to === 'completed' && !campaign.completedAt) patch.completedAt = now;
-      if (role === 'admin' && (to === 'active' || to === 'rejected')) {
+      // Send back for changes (2026-10-01, P2): an admin moves a campaign in
+      // review, or one sent back under the old Reject, to draft so its
+      // stewards can edit it (campaigns.updateDraft) and send it again. The
+      // note goes to adminNotes as before, and to stewardReviewNote, which
+      // only the stewards and admins read (campaigns.getReviewNote). The
+      // 'rejected' move stays for any admin tab opened before the change and
+      // keeps the note for the stewards the same way.
+      const sendBack = role === 'admin' && to === 'draft' && (from === 'pending_review' || from === 'rejected');
+      if (role === 'admin' && (to === 'active' || to === 'rejected' || sendBack)) {
         patch.reviewedBy = ctx.user.id;
         patch.reviewedAt = now;
         if (input.reviewNotes !== undefined) patch.adminNotes = sanitizeInput(input.reviewNotes);
+      }
+      if (role === 'admin' && (to === 'rejected' || sendBack)) {
+        const note = input.reviewNotes !== undefined ? sanitizeInput(input.reviewNotes).trim() : '';
+        patch.stewardReviewNote = note || null;
+        patch.sentBackAt = now;
       }
 
       // Conditional on the status we read, so two admins clicking at once
@@ -2476,7 +2491,7 @@ export const campaignsRouter = router({
             console.warn('[Campaign] opening notice failed (non-fatal):', err);
           }
         }
-      } else if (to === 'rejected') {
+      } else if (to === 'rejected' || sendBack) {
         await notifyCampaignDeclined({ campaign, reviewNotes, reviewedAt: now, actorId: ctx.user.id });
       } else if (fundedStatuses.includes(to) && !fundedStatuses.includes(from)) {
         await notifyCampaignCompleted({ campaign, actorId: ctx.user.id });
@@ -2537,7 +2552,9 @@ export const campaignsRouter = router({
     }),
 
   // A steward sends their draft to the review queue. This is how a
-  // play-launched draft (plays.ts) reaches an admin.
+  // play-launched draft (plays.ts) reaches an admin, and how a campaign the
+  // review team sent back (a draft with sentBackAt, or a legacy 'rejected'
+  // one) goes back to them.
   submitForReview: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
@@ -2546,13 +2563,15 @@ export const campaignsRouter = router({
       await assertCampaignSteward(ctx.user, campaign, "Only this project's stewards can send it for review.");
       if (campaign.status === 'pending_review') return { success: true };
       if (!canTransition(campaign.status, 'pending_review', 'steward')) {
-        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a draft can be sent for review.' });
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'Only a draft or a campaign sent back can be sent for review.' });
       }
       const db2 = await getDb();
       if (!db2) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      // Conditional on the status we read (draft or rejected), so a review
+      // decision made a moment earlier is never overwritten.
       const result: any = await db2.update(campaignsTable)
         .set({ status: 'pending_review', updatedAt: new Date() })
-        .where(and(eq(campaignsTable.id, input.id), eq(campaignsTable.status, 'draft')));
+        .where(and(eq(campaignsTable.id, input.id), eq(campaignsTable.status, campaign.status)));
       const affected = Number(result?.[0]?.affectedRows ?? result?.affectedRows ?? 0);
       if (affected === 0) {
         throw new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
@@ -2567,6 +2586,17 @@ export const campaignsRouter = router({
         console.warn('[Campaign] review notice to the site owner failed (non-fatal):', err);
       }
       return { success: true };
+    }),
+
+  // The review team's note from their last send-back, for the steward's
+  // status card. Stewards and admins only (adminNotes stays admin-only, and
+  // neither column is in PUBLIC_CAMPAIGN_FIELDS). Null note when they sent
+  // it back without one, or when it was never sent back.
+  getReviewNote: protectedProcedure
+    .input(z.object({ campaignId: z.number().int().positive() }))
+    .query(async ({ ctx, input }) => {
+      const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can see its review notes.");
+      return { note: campaign.stewardReviewNote ?? null, sentBackAt: campaign.sentBackAt ?? null };
     }),
 
   // ---- Ready to crowdpool ticks (build spec 2026-09-25, section 12) ----

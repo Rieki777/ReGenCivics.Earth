@@ -161,12 +161,12 @@ function syntheticCampaign(overrides: Partial<Campaign> = {}): Campaign {
 
 describe("campaigns projection", () => {
   it("withholds the review trail", () => {
-    expectWithheld(PUBLIC_CAMPAIGN_FIELDS, campaigns, ["adminNotes", "reviewedBy", "reviewedAt"]);
+    expectWithheld(PUBLIC_CAMPAIGN_FIELDS, campaigns, ["adminNotes", "reviewedBy", "reviewedAt", "stewardReviewNote", "sentBackAt"]);
   });
 
   it("leaves the review trail ABSENT for an anonymous caller, not null", () => {
     const pub = toPublicCampaign(syntheticCampaign(), ANON) as Record<string, unknown>;
-    for (const key of ["adminNotes", "reviewedBy", "reviewedAt"]) {
+    for (const key of ["adminNotes", "reviewedBy", "reviewedAt", "stewardReviewNote", "sentBackAt"]) {
       expect(key in pub).toBe(false);
     }
   });

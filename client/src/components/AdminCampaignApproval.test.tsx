@@ -6,6 +6,7 @@ import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
 const mutateAsync = vi.fn().mockResolvedValue({ success: true });
 const reviewMutate = vi.fn();
 let campaignStatus = "pending_review";
+let sentBackAt: string | null = null;
 let financialTarget = 0;
 let loanRoutesOpen = false;
 let routes: Array<Record<string, unknown>> = [];
@@ -26,6 +27,7 @@ const campaign = () => {
     projectName: "Hill Farm",
     location: "Vermont",
     status: campaignStatus,
+    sentBackAt,
     currency: "USD",
     totalValue: 1000,
     pledgedTotal: 0,
@@ -77,7 +79,7 @@ vi.mock("@/lib/trpc", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-import { AdminCampaignApproval, zeroValueNeedCount } from "./AdminCampaignApproval";
+import { AdminCampaignApproval, isSentBack, zeroValueNeedCount } from "./AdminCampaignApproval";
 
 async function openReview() {
   render(<AdminCampaignApproval />);
@@ -90,6 +92,7 @@ describe("AdminCampaignApproval", () => {
     mutateAsync.mockClear();
     reviewMutate.mockClear();
     campaignStatus = "pending_review";
+    sentBackAt = null;
     financialTarget = 0;
     loanRoutesOpen = false;
     routes = [];
@@ -105,11 +108,43 @@ describe("AdminCampaignApproval", () => {
     }));
   });
 
-  it("sends review notes with a decline", async () => {
+  it("sends a campaign in review back for changes, with the review notes", async () => {
     await openReview();
+    expect(screen.queryByRole("button", { name: /Reject/ })).toBeNull();
+    expect(screen.getByText("Sent to the project's stewards with an approval or a send-back. On a send-back they also see it on their project page.")).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText(/What the stewards should know/), { target: { value: "Needs a budget." } });
-    fireEvent.click(screen.getByRole("button", { name: /Reject/ }));
-    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ id: 44, status: "rejected", reviewNotes: "Needs a budget." }));
+    fireEvent.click(screen.getByRole("button", { name: /Send back for changes/ }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ id: 44, status: "draft", reviewNotes: "Needs a budget." }));
+  });
+
+  it("a campaign sent back under the old Reject reads Sent back and can be approved or sent back", async () => {
+    campaignStatus = "rejected";
+    await openReview();
+    expect(screen.getAllByText("Sent back").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByRole("button", { name: /Approve & Publish/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Send back for changes/ }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ id: 44, status: "draft" }));
+  });
+
+  it("a draft the review team sent back reads Sent back, counts in the Sent back filter, and has no review buttons", async () => {
+    campaignStatus = "draft";
+    sentBackAt = "2026-10-02T09:00:00.000Z";
+    render(<AdminCampaignApproval />);
+    expect(screen.getByRole("button", { name: /Sent back \(1\)/ })).toBeInTheDocument();
+    expect(screen.queryByText("Draft")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Review/ }));
+    await screen.findByText("Review notes");
+    for (const name of [/Approve & Publish/, /Send back for changes/]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
+  });
+
+  it("isSentBack reads rejected, and a draft only with sentBackAt", () => {
+    expect(isSentBack({ status: "rejected" })).toBe(true);
+    expect(isSentBack({ status: "draft", sentBackAt: "2026-10-02T09:00:00.000Z" } as { status: string })).toBe(true);
+    expect(isSentBack({ status: "draft", sentBackAt: null } as { status: string })).toBe(false);
+    expect(isSentBack({ status: "draft" })).toBe(false);
+    expect(isSentBack({ status: "pending_review", sentBackAt: "2026-10-02T09:00:00.000Z" } as { status: string })).toBe(false);
   });
 
   it("marks an active campaign complete after a confirm, and never offers funded", async () => {
@@ -132,7 +167,7 @@ describe("AdminCampaignApproval", () => {
     // One badge on the list row, one in the review dialog.
     expect(labels.length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText("Draft")).toBeNull();
-    for (const name of [/Approve & Publish/, /Reject/, /Mark complete/, /Cancel Campaign/]) {
+    for (const name of [/Approve & Publish/, /Send back for changes/, /Mark complete/, /Cancel Campaign/]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
   });

@@ -51,7 +51,7 @@ export type StewardQueue = {
   toDeliver: number[];
   /** Delivered, waiting for a thank-you. */
   toThank: number[];
-  /** The campaign is a draft: send it for review. */
+  /** The campaign is a draft or was sent back: send it for review. */
   sendForReview: boolean;
   /** Pending offers on roles that now read filled. */
   pendingOnFilledRoles: number[];
@@ -85,7 +85,9 @@ export function buildStewardQueue(args: {
       toThank.push(c.id);
     }
   }
-  const sendForReview = args.campaignStatus === "draft";
+  // A draft, sent back or not, and a campaign sent back before 2026-10-01
+  // (status rejected) both go to review from the steward's status card.
+  const sendForReview = args.campaignStatus === "draft" || args.campaignStatus === "rejected";
   return {
     toAnswer,
     toDeliver,
