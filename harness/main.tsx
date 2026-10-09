@@ -34,6 +34,13 @@ story?.setup?.();
 const bare = params.get("bare") === "1";
 
 function Shell() {
+  if (bare) {
+    return (
+      <div data-harness-story={active} className="min-h-screen">
+        <Boundary>{story?.render() ?? null}</Boundary>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-[#f0ebe3] p-6">
       <nav className="mb-5 flex flex-wrap gap-2">

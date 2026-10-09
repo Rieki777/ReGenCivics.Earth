@@ -84,6 +84,11 @@ function isSessionBoardRoute(path: string) {
   return path.startsWith("/season2/week/");
 }
 
+/** Design mockup. Full screen, no site chrome, not linked from nav. */
+function isPreviewRoute(path: string) {
+  return path === "/preview/game" || path.startsWith("/preview/game/");
+}
+
 function AdminLocked({ children }: { children: ReactNode }) {
   return <AdminAuthGate>{children}</AdminAuthGate>;
 }
@@ -244,6 +249,7 @@ const CustomGamesApply = lazy(() => import("./pages/CustomGamesApply"));
 const Network = lazy(() => import("./pages/Network"));
 const BuildersPool = lazy(() => import("./pages/BuildersPool"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
+const GameExperiencePreview = lazy(() => import("./pages/preview/GameExperiencePreview"));
 const Messages = lazy(() => import("./pages/Messages"));
 const MemberDirectory = lazy(() => import("./pages/MemberDirectory"));
 const CommunityGuidelines = lazy(() => import("./pages/CommunityGuidelines"));
@@ -466,6 +472,8 @@ function Router() {
       <Route path={"/builders-pool"}><EB><BuildersPool /></EB></Route>
       <Route path={"/federation"}><Redirect to="/network" /></Route>
       <Route path={"/marketplace"}><EB><Marketplace /></EB></Route>
+      {/* Design mockup only. noindex, absent from nav and sitemap. */}
+      <Route path={"/preview/game"}><EB><GameExperiencePreview /></EB></Route>
       {/* Final fallback route (also serves /404; the earlier explicit /404 route handles direct hits) */}
       <Route><EB><NotFound /></EB></Route>
     </Switch>
@@ -541,7 +549,7 @@ function MainApp() {
   const [location] = useLocation();
   const adminMode = isAdminRoute(location);
   // Admin pages and live session boards both drop the site chrome.
-  const bareMode = adminMode || isSessionBoardRoute(location);
+  const bareMode = adminMode || isSessionBoardRoute(location) || isPreviewRoute(location);
   // Track page visits for progress map milestones
   usePageVisitTracker();
   // Capture referral params on first load (sessionStorage stash + server
@@ -619,7 +627,7 @@ function MainApp() {
             />
           )}
           {!bareMode && <SiteFooter />}
-          {!adminMode && <Suspense fallback={null}><CookieConsent /></Suspense>}
+          {!adminMode && !isPreviewRoute(location) && <Suspense fallback={null}><CookieConsent /></Suspense>}
           <AnalyticsLoader />
           {!bareMode && <ScrollToTop />}
           {!bareMode && <Suspense fallback={null}><ReGenGuide /></Suspense>}
