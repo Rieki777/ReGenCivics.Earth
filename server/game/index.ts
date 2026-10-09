@@ -166,7 +166,7 @@ const CROWDPOOL_SCORE_VARIABLE = "scoring.weights.crowdpool_contribution";
 /**
  * A crowdpool delivery's score event, at most once per contribution. The row
  * goes in only when no crowdpool score row exists for that contribution
- * (INSERT ... SELECT ... WHERE NOT EXISTS), and migration 0288's unique key on
+ * (INSERT ... SELECT ... WHERE NOT EXISTS), and migration 0294's unique key on
  * crowdpoolScoreRef makes it a database guarantee under a race. Same points
  * as recordScoreEvent. Returns true when this call recorded it; the activity
  * feed line is written only then.

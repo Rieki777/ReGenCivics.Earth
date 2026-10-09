@@ -5,11 +5,11 @@
  * a player profile. linkAnonymousContributions, which runs on every sign-in,
  * used to score again for every delivered row with no playerContributionId,
  * so an account holder who had no profile at delivery was counted twice.
- * Both now go through recordCrowdpoolScoreOnce, and migration 0288 puts a
+ * Both now go through recordCrowdpoolScoreOnce, and migration 0294 puts a
  * unique key behind it.
  *
  * Runs against the SCRATCH database only (a local host, or one listed in
- * TEST_DB_HOSTS), with 0288 applied. Skips everywhere else. Fixture users sit
+ * TEST_DB_HOSTS), with 0294 applied. Skips everywhere else. Fixture users sit
  * in 986500 to 986599, emails end in @b1-lane.invalid, and afterAll removes
  * every row this file wrote, score rows included.
  */
@@ -103,7 +103,7 @@ beforeAll(async () => {
       AND index_name = 'contribution_score_events_crowdpool_once'
   `);
   if (Number(key[0]?.n ?? 0) === 0) {
-    throw new Error("Apply drizzle/0288_score_events_once.sql to the scratch database first.");
+    throw new Error("Apply drizzle/0294_score_events_once.sql to the scratch database first.");
   }
   await ensureCrowdpoolScoreVariable(database);
   // A clean slate for this file's users, in case an earlier run died.
@@ -198,7 +198,7 @@ describe("a delivery by someone with no player profile yet", () => {
   });
 });
 
-describe("the database key behind it (0288)", () => {
+describe("the database key behind it (0294)", () => {
   it.skipIf(skipUnlessScratch)("refuses a raw second crowdpool score row for the same contribution", async () => {
     expect(contributionId).toBeGreaterThan(0);
     let code: string | undefined;
