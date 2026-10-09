@@ -11,10 +11,7 @@ import { emailGrantsAdmin, isAdminRole, shouldWriteAdminOnUpsert } from "@shared
 // too. Imported (not re-exported) because it stays internal to server/db/.
 import { asMutationResult } from "./db/_shared";
 import { sanitizeInput } from "./_core/security";
-import { TRPCError } from "@trpc/server";
-import { isListableValue } from "@shared/needRules";
-import { ZERO_VALUE } from "@shared/crowdpoolCopy";
-import { decodeBasicEntities } from "@shared/htmlText";
+import { assertNeedRules, needInsertValues, type NeedInput } from "./lib/need-rules";
 import { projectRefFor } from "@shared/projectKey";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -749,35 +746,8 @@ export async function createCampaign(userId: number, data: {
   projectImageUrl?: string;
   daoLink?: string;
   durationDays?: number;
-  items: Array<{
-    category: 'land' | 'equipment' | 'role' | 'resource';
-    kind?: 'item' | 'role' | 'shift' | 'loan' | 'knowledge' | 'crypto' | 'financial_link';
-    capitalType?: 'intellectual' | 'social' | 'material' | 'financial' | 'living' | 'cultural' | 'spiritual' | 'experiential' | 'health';
-    quantityWanted?: number;
-    hectares?: number;
-    region?: string;
-    features?: string[];
-    videoUrl?: string;
-    landDescription?: string;
-    equipmentName?: string;
-    equipmentQuantity?: number;
-    equipmentCategory?: string;
-    roleTitle?: string;
-    hoursPerWeek?: number;
-    durationMonths?: number;
-    roleDescription?: string;
-    resourceName?: string;
-    resourceQuantity?: number;
-    resourceUnit?: string;
-    resourceDescription?: string;
-    estimatedValue: number;
-    // (0257) When the need is wanted, 'YYYY-MM-DD', and how a thing may come.
-    neededFrom?: string;
-    neededUntil?: string;
-    acceptsGift?: boolean;
-    acceptsLoan?: boolean;
-    workMode?: 'on_site' | 'remote' | 'either';
-  }>;
+  // One need each (server/lib/need-rules.ts NeedInput).
+  items: NeedInput[];
   /**
    * Money routes the project holds (Ma Earth, Steward), already checked by
    * validateRouteUrl (server/lib/partner-links.ts). Inserted as 'pending'
@@ -788,62 +758,10 @@ export async function createCampaign(userId: number, data: {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Need rules (build spec 2026-09-25, section 6.1), checked before any
-  // insert so a bad need never leaves a half-written campaign:
-  //   - money is never a need: the money ask is financialTarget, and money
-  //     routes are added in the Money step;
-  //   - a need window cannot end before it starts;
-  //   - a thing takes a gift, a loan, or both, never neither;
-  //   - kind 'loan' from any caller (the design companion can suggest it)
-  //     is stored as kind 'item' that takes loans only. New needs never get
-  //     kind 'loan' (hub contract 4);
-  //   - a need is never listed at 0 (ruling 2026-09-27, shared/needRules.ts):
-  //     with every need above 0, "confirmed value reaches the in-kind ask"
-  //     and "every need filled" agree. The message names the need.
-  for (const item of data.items) {
-    const kind = item.kind ?? (item.category === 'role' ? 'role' : 'item');
-    if (kind === 'crypto' || kind === 'financial_link') {
-      throw new TRPCError({
-        code: 'BAD_REQUEST',
-        message: "Money isn't added as a need. Set the money this project asks for, and add the routes it holds, in the Money step.",
-      });
-    }
-    if (!isListableValue(item.estimatedValue)) {
-      const named = decodeBasicEntities(
-        String(item.roleTitle || item.equipmentName || item.resourceName || item.landDescription || 'A need'),
-      ).trim().slice(0, 80) || 'A need';
-      throw new TRPCError({ code: 'BAD_REQUEST', message: ZERO_VALUE.server(named) });
-    }
-    if (item.neededFrom && item.neededUntil && item.neededUntil < item.neededFrom) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: "A need can't end before it starts." });
-    }
-    const modes = needModesForCreate(item);
-    if (modes.thing && !modes.gift && !modes.loan) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: "Choose whether you'd take each thing as a gift, on loan, or both." });
-    }
-  }
-
-
-  // A role need is measured in hours a week (capacityUnit 'hours_per_week',
-  // migration 0249): the hours ARE its capacity, so quantityWanted mirrors
-  // hoursPerWeek and any client quantity is ignored. Checked before any
-  // insert so a bad role never leaves a half-written campaign.
-  //
-  // Only the Roles step's needs (category 'role', kind 'role') are hours
-  // needs. The Other Needs step also sends kind 'role' for the Organizing,
-  // Arts, Ceremony and Wellness categories, but with category 'resource' and
-  // no hours field; those stay count needs with their resource quantity.
-  const resolvedKind = (item: (typeof data.items)[number]) =>
-    item.kind ?? (item.category === 'role' ? 'role' : 'item');
-  const isHoursItem = (item: (typeof data.items)[number]) =>
-    item.category === 'role' && resolvedKind(item) === 'role';
-  for (const item of data.items) {
-    if (!isHoursItem(item)) continue;
-    const hours = Number(item.hoursPerWeek);
-    if (!Number.isInteger(hours) || hours < 1) {
-      throw new TRPCError({ code: 'BAD_REQUEST', message: 'Each role needs the hours a week it asks for.' });
-    }
-  }
+  // Need rules (server/lib/need-rules.ts), checked before any insert so a
+  // bad need never leaves a half-written campaign. A role in the Roles step
+  // is measured in hours a week (0249): quantityWanted mirrors hoursPerWeek.
+  assertNeedRules(data.items);
 
   // Calculate category totals
   const landValue = data.items
@@ -907,46 +825,9 @@ export async function createCampaign(userId: number, data: {
   
   const campaignId = campaignResult[0].insertId;
   
-  // Create campaign items
+  // Create campaign items (server/lib/need-rules.ts needInsertValues).
   for (const item of data.items) {
-    const modes = needModesForCreate(item);
-    // A lendable thing is kind 'item' with acceptsLoan 1; 'loan' is legacy.
-    const kind = modes.thing ? 'item' : resolvedKind(item);
-    const isRole = isHoursItem(item);
-    await db.insert(campaignItems).values({
-      campaignId,
-      category: item.category,
-      // Needs registry taxonomy: wizard sends kind + capitalType; legacy callers get sane defaults.
-      kind,
-      neededFrom: item.neededFrom ?? null,
-      neededUntil: item.neededUntil ?? null,
-      // Roles, shifts and knowledge ignore the modes: they keep the defaults.
-      acceptsGift: modes.thing ? (modes.gift ? 1 : 0) : 1,
-      acceptsLoan: modes.thing ? (modes.loan ? 1 : 0) : 0,
-      workMode: item.workMode ?? null,
-      capitalType: item.capitalType ?? (item.category === 'land' ? 'living' : item.category === 'role' ? 'experiential' : 'material'),
-      capacityUnit: isRole ? 'hours_per_week' : 'count',
-      quantityWanted: isRole
-        ? Number(item.hoursPerWeek)
-        : item.quantityWanted ?? item.equipmentQuantity ?? item.resourceQuantity ?? 1,
-      hectares: item.hectares,
-      region: item.region,
-      features: item.features ? JSON.stringify(item.features) : null,
-      videoUrl: item.videoUrl,
-      landDescription: item.landDescription,
-      equipmentName: item.equipmentName,
-      equipmentQuantity: item.equipmentQuantity,
-      equipmentCategory: item.equipmentCategory,
-      roleTitle: item.roleTitle,
-      hoursPerWeek: item.hoursPerWeek,
-      durationMonths: item.durationMonths,
-      roleDescription: item.roleDescription,
-      resourceName: item.resourceName,
-      resourceQuantity: item.resourceQuantity,
-      resourceUnit: item.resourceUnit,
-      resourceDescription: item.resourceDescription,
-      estimatedValue: item.estimatedValue,
-    });
+    await db.insert(campaignItems).values(needInsertValues(campaignId, item));
   }
 
   // Money routes, pending until a ReGen Civics admin verifies each one.
@@ -966,22 +847,7 @@ export async function createCampaign(userId: number, data: {
   return campaignId;
 }
 
-/**
- * How a new need may come, for db.createCampaign. `thing` is true for kind
- * 'item' and the legacy 'loan' (land is stored as item). A legacy 'loan'
- * takes loans only whatever the caller sent; otherwise a gift is on unless
- * the caller turned it off, and a loan is off unless turned on.
- */
-function needModesForCreate(item: { kind?: string; category: string; acceptsGift?: boolean; acceptsLoan?: boolean }): {
-  thing: boolean;
-  gift: boolean;
-  loan: boolean;
-} {
-  const kind = item.kind ?? (item.category === 'role' ? 'role' : 'item');
-  if (kind === 'loan') return { thing: true, gift: false, loan: true };
-  if (kind !== 'item') return { thing: false, gift: true, loan: false };
-  return { thing: true, gift: item.acceptsGift ?? true, loan: item.acceptsLoan ?? false };
-}
+// needModesForCreate moved to server/lib/need-rules.ts (bundle 1, item 9).
 
 
 // ============ Campaign Images Functions ============

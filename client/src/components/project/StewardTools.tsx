@@ -25,8 +25,10 @@
  *
  * Sent back for changes (bundle 1, item 9): the status card reads the review
  * team's note through campaigns.getReviewNote (stewards and admins only) and
- * offers Send for review. A campaign reads sent back when its status is the
- * legacy 'rejected', or it is a draft the review team sent back (sentBackAt).
+ * offers Edit campaign (EditCampaignDialog, campaigns.updateDraft) and Send
+ * for review. A campaign reads sent back when its status is the legacy
+ * 'rejected', or it is a draft the review team sent back (sentBackAt). Edit
+ * shows while it is a draft, in review or sent back, never on an example.
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -35,7 +37,7 @@ import type { AppRouter } from "../../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Camera, Flag, Loader2, Send, Users } from "lucide-react";
+import { Camera, Flag, Loader2, Pencil, Send, Users } from "lucide-react";
 import { CampaignImageUpload } from "@/components/CampaignImageUpload";
 import { canTransition } from "@shared/campaignStatus";
 import { decodeBasicEntities } from "@shared/htmlText";
@@ -48,6 +50,7 @@ import { NeedsGlance } from "./NeedsGlance";
 import { CampaignUpdatesComposer } from "./CampaignUpdatesComposer";
 import { CampaignStewardStats } from "./CampaignStewardStats";
 import { CancelCampaignDialog } from "./CancelCampaignDialog";
+import { EditCampaignDialog } from "./EditCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
@@ -151,11 +154,24 @@ export function StewardTools({
     onError: (err) => toast.error(err.message || "Couldn't send it for review. Try again."),
   });
 
-  // Before it goes live: the review team's note from a send-back. The note
-  // is a steward-only read.
+  // Before it goes live: the review team's note from a send-back, and the
+  // Edit campaign sheet. The note is a steward-only read.
   const beforeLive = READINESS_STATUSES.includes(status);
   const { data: reviewNote } = trpc.campaigns.getReviewNote.useQuery({ campaignId }, { retry: false, enabled: beforeLive });
   const sentBack = status === "rejected" || (status === "draft" && !!reviewNote?.sentBackAt);
+  const canEdit = beforeLive && !front.isDemo;
+  const [editing, setEditing] = useState(false);
+  const editButton = canEdit ? (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={() => setEditing(true)}
+      className="min-h-11 border-[#4a7c59] text-[#1a472a]"
+    >
+      <Pencil className="w-4 h-4 mr-2" aria-hidden="true" />
+      {SEND_BACK.editButton}
+    </Button>
+  ) : null;
   const sendButton = (
     <Button
       onClick={() => submitForReview.mutate({ id: campaignId })}
@@ -294,6 +310,7 @@ export function StewardTools({
             )}
             <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.makeChanges}</p>
             <div className="flex flex-wrap gap-2 mb-4">
+              {editButton}
               {sendButton}
             </div>
             {readiness}
@@ -304,13 +321,15 @@ export function StewardTools({
             <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.draft}</p>
             <div className="mb-4">{readiness}</div>
             <div className="flex flex-wrap gap-2">
+              {editButton}
               {sendButton}
             </div>
           </div>
         )}
         {status === "pending_review" && (
           <div className="mt-2 mb-6">
-            <p className="text-sm text-[#1a472a]/80 mb-3">In review. The ReGen Civics team will look at it and let you know.</p>
+            <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.inReview}</p>
+            {editButton && <div className="mb-4">{editButton}</div>}
             {readiness}
           </div>
         )}
@@ -335,6 +354,15 @@ export function StewardTools({
               onCancelled={onCancelled}
             />
           </div>
+        )}
+        {canEdit && (
+          <EditCampaignDialog
+            open={editing}
+            onClose={() => setEditing(false)}
+            campaign={front}
+            currencySymbol={currencySymbolFor(front.currency)}
+            onSaved={onChanged}
+          />
         )}
       </section>
     </div>

@@ -9,6 +9,8 @@ import {
   campaigns as campaignsTable,
   campaignItems as campaignItemsTable,
   campaignContributions as campaignContributionsTable,
+  campaignNeedMarkers as campaignNeedMarkersTable,
+  campaignArrivalNotes as campaignArrivalNotesTable,
   userFollows,
   applications as applicationsTable,
   CrowdPoolingProject,
@@ -69,6 +71,7 @@ import {
 } from "../../shared/crowdpoolNeedAction";
 import { needWindowPassed, shiftHasStarted } from "../../shared/needWindow";
 import { decodeBasicEntities } from "../../shared/htmlText";
+import { asStoredNeed, assertNeedRules, needInsertValues, needUpdateValues } from "../lib/need-rules";
 import { isCurrentReadinessKey, isReadinessKey } from "../../shared/crowdpoolReadiness";
 import {
   OPEN_NEEDS_CACHE_KEY,
@@ -323,6 +326,55 @@ function isCalendarDay(s: string): boolean {
 
 /** A date input: 'YYYY-MM-DD', a real day. Dates stay strings end to end. */
 const zDay = z.string().regex(DAY_RE).refine(isCalendarDay, { message: 'Use a real date.' });
+
+/**
+ * One need as campaigns.create takes it, and campaigns.updateDraft with an
+ * optional id. server/lib/need-rules.ts checks the rules (assertNeedRules)
+ * and builds the row (needInsertValues); NeedInput there is its type.
+ */
+const CAMPAIGN_ITEM_INPUT = z.object({
+  category: z.enum(['land', 'equipment', 'role', 'resource']),
+  // Needs registry taxonomy (shared/crowdpoolingTaxonomy.ts). Enum literals
+  // mirror drizzle campaign_items.kind / capitalType exactly.
+  kind: z.enum(['item', 'role', 'shift', 'loan', 'knowledge', 'crypto', 'financial_link']).optional(),
+  capitalType: z.enum(['intellectual', 'social', 'material', 'financial', 'living', 'cultural', 'spiritual', 'experiential', 'health']).optional(),
+  quantityWanted: z.number().int().min(1).optional(),
+  // Land fields
+  hectares: z.number().optional(),
+  region: z.string().optional(),
+  features: z.array(z.string()).optional(),
+  videoUrl: z.string().optional(),
+  landDescription: z.string().optional(),
+  // Equipment fields
+  equipmentName: z.string().optional(),
+  equipmentQuantity: z.number().optional(),
+  equipmentCategory: z.string().optional(),
+  // Role fields
+  roleTitle: z.string().optional(),
+  // A role's hours a week, in whole hours. For a role this IS the
+  // capacity (quantityWanted); assertNeedRules requires it.
+  hoursPerWeek: z.number().int().min(1).max(MAX_ROLE_HOURS).optional(),
+  durationMonths: z.number().optional(),
+  roleDescription: z.string().optional(),
+  // Resource fields
+  resourceName: z.string().optional(),
+  resourceQuantity: z.number().optional(),
+  resourceUnit: z.string().optional(),
+  resourceDescription: z.string().optional(),
+  // Common
+  estimatedValue: z.number().min(0),
+  // When the need is wanted, and how a thing may come (section 6.1).
+  // assertNeedRules checks the rules; kind 'loan' is stored as an item that
+  // takes loans only, and money kinds are refused.
+  neededFrom: zDay.optional(),
+  neededUntil: zDay.optional(),
+  acceptsGift: z.boolean().optional(),
+  acceptsLoan: z.boolean().optional(),
+  workMode: z.enum(['on_site', 'remote', 'either']).optional(),
+});
+
+/** The statuses a steward may edit a campaign in (campaigns.updateDraft): before it goes live. */
+const EDITABLE_STATUSES = ['draft', 'pending_review', 'rejected'] as const;
 
 /** The same day n years on, as a string bound for comparison. */
 function plusYears(day: string, n: number): string {
@@ -1343,46 +1395,7 @@ export const campaignsRouter = router({
       // Nine months at most (ruling 2026-09-04, enforced from 2026-09-27):
       // the close date is binding, so a longer campaign would break it.
       durationDays: z.number().int().min(1).max(MAX_WINDOW_DAYS, DURATION.tooLong).default(90),
-      items: z.array(z.object({
-        category: z.enum(['land', 'equipment', 'role', 'resource']),
-        // Needs registry taxonomy (shared/crowdpoolingTaxonomy.ts). Enum literals
-        // mirror drizzle campaign_items.kind / capitalType exactly.
-        kind: z.enum(['item', 'role', 'shift', 'loan', 'knowledge', 'crypto', 'financial_link']).optional(),
-        capitalType: z.enum(['intellectual', 'social', 'material', 'financial', 'living', 'cultural', 'spiritual', 'experiential', 'health']).optional(),
-        quantityWanted: z.number().int().min(1).optional(),
-        // Land fields
-        hectares: z.number().optional(),
-        region: z.string().optional(),
-        features: z.array(z.string()).optional(),
-        videoUrl: z.string().optional(),
-        landDescription: z.string().optional(),
-        // Equipment fields
-        equipmentName: z.string().optional(),
-        equipmentQuantity: z.number().optional(),
-        equipmentCategory: z.string().optional(),
-        // Role fields
-        roleTitle: z.string().optional(),
-        // A role's hours a week, in whole hours. For a role this IS the
-        // capacity (quantityWanted); db.createCampaign requires it.
-        hoursPerWeek: z.number().int().min(1).max(MAX_ROLE_HOURS).optional(),
-        durationMonths: z.number().optional(),
-        roleDescription: z.string().optional(),
-        // Resource fields
-        resourceName: z.string().optional(),
-        resourceQuantity: z.number().optional(),
-        resourceUnit: z.string().optional(),
-        resourceDescription: z.string().optional(),
-        // Common
-        estimatedValue: z.number().min(0),
-        // When the need is wanted, and how a thing may come (section 6.1).
-        // db.createCampaign checks the rules; kind 'loan' is stored as an
-        // item that takes loans only, and money kinds are refused.
-        neededFrom: zDay.optional(),
-        neededUntil: zDay.optional(),
-        acceptsGift: z.boolean().optional(),
-        acceptsLoan: z.boolean().optional(),
-        workMode: z.enum(['on_site', 'remote', 'either']).optional(),
-      })),
+      items: z.array(CAMPAIGN_ITEM_INPUT),
       // Money routes the project holds (section 7.2). Each is checked against
       // the partner's hosts and stored pending: an admin verifies it before
       // it shows anywhere.
@@ -2597,6 +2610,113 @@ export const campaignsRouter = router({
     .query(async ({ ctx, input }) => {
       const campaign = await stewardCampaign(ctx.user, input.campaignId, "Only this project's stewards can see its review notes.");
       return { note: campaign.stewardReviewNote ?? null, sentBackAt: campaign.sentBackAt ?? null };
+    }),
+
+  // A steward edits a campaign before it goes live: while it is a draft
+  // (sent back or not), in review, or sent back under the old Reject. Title,
+  // description, the money ask, the days it runs once approved, and its
+  // needs. One transaction: the need rows are locked first, the campaign
+  // update is conditional on the status read, and the value totals are
+  // recomputed from the needs. No notice goes out.
+  updateDraft: protectedProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      title: z.string().min(1).max(255),
+      description: z.string().min(1),
+      financialTarget: z.number().min(0).max(10_000_000),
+      // Nine months at most, as at create (ruling 2026-09-04).
+      durationDays: z.number().int().min(1).max(MAX_WINDOW_DAYS, DURATION.tooLong),
+      items: z.array(CAMPAIGN_ITEM_INPUT.extend({ id: z.number().int().positive().optional() })).max(60),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const campaign = await db.getCampaignById(input.id);
+      const notSteward = "Only this project's stewards can edit it.";
+      if (!campaign) throw new TRPCError({ code: 'FORBIDDEN', message: notSteward });
+      await assertCampaignSteward(ctx.user, campaign, notSteward);
+      if (campaign.isDemo) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "Example campaigns can't be edited." });
+      }
+      if (!(EDITABLE_STATUSES as readonly string[]).includes(campaign.status)) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: "This campaign is live, so it can't be edited this way." });
+      }
+      const ids = input.items.map((i) => i.id).filter((id): id is number => id != null);
+      if (new Set(ids).size < ids.length) {
+        throw new TRPCError({ code: 'BAD_REQUEST', message: 'A need is listed twice. Refresh and try again.' });
+      }
+
+      const database = await requireDb();
+      await database.transaction(async (tx) => {
+        // Lock this campaign's needs before anything else changes.
+        const existing = await tx.select().from(campaignItemsTable)
+          .where(eq(campaignItemsTable.campaignId, campaign.id))
+          .for('update');
+        const byId = new Map(existing.map((row) => [row.id, row]));
+        for (const id of ids) {
+          if (!byId.has(id)) throw new TRPCError({ code: 'BAD_REQUEST', message: "A need isn't part of this campaign. Refresh and try again." });
+        }
+        // The same rules create applies, on each need as it will be stored:
+        // a need that exists keeps its category and kind.
+        assertNeedRules(input.items.map((item) => (item.id != null ? asStoredNeed(byId.get(item.id)!, item) : item)));
+
+        const updated = affectedRows(await tx.update(campaignsTable)
+          .set({
+            title: sanitizeInput(input.title),
+            description: input.description,
+            financialTarget: input.financialTarget,
+            durationDays: input.durationDays,
+            updatedAt: new Date(),
+          })
+          .where(and(
+            eq(campaignsTable.id, campaign.id),
+            eq(campaignsTable.status, campaign.status),
+            eq(campaignsTable.isDemo, 0),
+          )));
+        if (updated === 0) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
+        }
+
+        // Needs left off the list are removed, with their "Needed to start"
+        // mark and their own arrival note. None can have offers before the
+        // campaign goes live; this is a guard. Money kinds are not needs and
+        // the form never shows them, so they stay as they are.
+        const keep = new Set(ids);
+        const removed = existing.filter((row) => !keep.has(row.id) && !isMoneyKind(String(row.kind)));
+        if (removed.length > 0) {
+          const removedIds = removed.map((row) => row.id);
+          const offered = await tx.select({ itemId: campaignContributionsTable.campaignItemId })
+            .from(campaignContributionsTable)
+            .where(inArray(campaignContributionsTable.campaignItemId, removedIds))
+            .limit(1);
+          if (offered.length > 0) {
+            const row = byId.get(Number(offered[0].itemId));
+            const title = decodeBasicEntities(row ? needTitle(row) : 'This need');
+            throw new TRPCError({ code: 'BAD_REQUEST', message: `${title} has offers on it, so it can't be removed.` });
+          }
+          await tx.delete(campaignNeedMarkersTable).where(inArray(campaignNeedMarkersTable.campaignItemId, removedIds));
+          await tx.delete(campaignArrivalNotesTable).where(and(
+            eq(campaignArrivalNotesTable.campaignId, campaign.id),
+            inArray(campaignArrivalNotesTable.campaignItemId, removedIds),
+          ));
+          await tx.delete(campaignItemsTable).where(and(
+            eq(campaignItemsTable.campaignId, campaign.id),
+            inArray(campaignItemsTable.id, removedIds),
+          ));
+        }
+
+        for (const item of input.items) {
+          const { id, ...need } = item;
+          if (id != null) {
+            await tx.update(campaignItemsTable)
+              .set(needUpdateValues(byId.get(id)!, need))
+              .where(and(eq(campaignItemsTable.id, id), eq(campaignItemsTable.campaignId, campaign.id)));
+          } else {
+            await tx.insert(campaignItemsTable).values(needInsertValues(campaign.id, need));
+          }
+        }
+
+        await db.recomputeCampaignValueTotals(campaign.id, tx);
+      });
+      return { success: true };
     }),
 
   // ---- Ready to crowdpool ticks (build spec 2026-09-25, section 12) ----

@@ -774,7 +774,7 @@ export const OUTBOUND_DIGEST = {
 
 // ═══ Bundle 1 (build spec 2026-10-01, section 9) ═══════════════════════════
 // A way back for a campaign the review team sends back: the admin's "Send
-// back for changes" and the steward's status card.
+// back for changes", the steward's status card, and the Edit campaign sheet.
 
 /** Send back for changes: the admin review and the steward's status card. */
 export const SEND_BACK = {
@@ -784,6 +784,8 @@ export const SEND_BACK = {
   noteInNotifications: "Their note is in your notifications.",
   makeChanges: "Make the changes, then send it for review again.",
   draft: "This campaign is a draft. Only stewards can see it. When it's ready, send it to the ReGen Civics team for review.",
+  inReview: "In review. The ReGen Civics team will look at it and let you know. You can still edit it while it's in review.",
+  editButton: "Edit campaign",
   sendForReview: "Send for review",
   sentForReview: "Sent for review. The ReGen Civics team will take a look.",
   /** The "Waiting on you" row once the review team sent it back (WaitingOnYou). */
@@ -795,4 +797,58 @@ export const SEND_BACK = {
   adminFilter: (n: number) => `Sent back (${n})`,
   adminNotesHelper:
     "Sent to the project's stewards with an approval or a send-back. On a send-back they also see it on their project page.",
+} as const;
+
+/** The steward's Edit campaign sheet (client/src/components/project/EditCampaignDialog.tsx). */
+export const EDIT_CAMPAIGN = {
+  title: "Edit campaign",
+  intro: "Change what the review team asked for, then save. Nothing goes live until the review team approves it.",
+  titleLabel: "Campaign title",
+  descriptionLabel: "What this campaign is for",
+  moneyLabel: (symbol: string) => `Money this campaign asks for (${symbol})`,
+  moneyHelper: "Put 0 if it asks for no money.",
+  daysLabel: "Days it runs once approved",
+  daysHelper: "Up to 273 days, about nine months.",
+  needsHeading: "Needs",
+  noNeeds: "No needs yet. Add the things and roles this campaign asks for.",
+  needName: "Name",
+  needValue: (symbol: string) => `What it's worth (${symbol})`,
+  howMany: "How many",
+  hoursAWeek: "Hours a week",
+  wantedFrom: "Wanted from (optional)",
+  wantedUntil: "Wanted until (optional)",
+  asGift: "As a gift",
+  onLoan: "On loan",
+  capitalLabel: "Capital it feeds",
+  capitalOption: (label: string) => `${label} capital`,
+  remove: "Remove",
+  removeConfirm: (name: string) => `Remove ${name}?`,
+  removeYes: "Yes, remove it",
+  removeNo: "Keep it",
+  addNeed: "Add a need",
+  addThing: "A thing to give or lend",
+  addRole: "A role",
+  /** The small label over each need block, by the shape of the need. */
+  kinds: {
+    thing: "A thing to give or lend",
+    loan: "A thing to borrow",
+    role: "A role",
+    shift: "A shift",
+    knowledge: "Knowledge or skills",
+    other: "A need",
+  },
+  cancel: "Not now",
+  save: "Save changes",
+  saving: "Saving...",
+  saved: "Saved.",
+  failed: "That didn't save. Try again.",
+  errors: {
+    title: "Give the campaign a title.",
+    description: "Say what this campaign is for.",
+    money: "Enter an amount from 0 to 10,000,000. Put 0 if it asks for no money.",
+    days: "Enter the days it runs, from 1 to 273.",
+    name: "Give this need a name.",
+    howMany: "Enter a whole number, 1 or more.",
+    hours: (max: number) => `Enter whole hours a week, from 1 to ${max}.`,
+  },
 } as const;
