@@ -15,6 +15,13 @@
  * If env vars are missing, the function logs a warning and skips that channel silently.
  */
 
+import { courseWeekFromRecording } from "@shared/sessionCourse";
+import {
+  newEventChannelMessage,
+  operatorPulseChannelMessage,
+  recordingReadyChannelMessage,
+  shipConflictChannelMessage,
+} from "@shared/channelAlert";
 import { logger } from "./logger";
 import { getAppBaseUrl } from "./email";
 
@@ -137,6 +144,7 @@ export async function notifyNewEvent(event: {
   riversideRoomUrl?: string | null;
   zoomUrl?: string | null;
   season?: string | null;
+  episodeNumber?: number | null;
 }): Promise<void> {
   const dateStr = event.startTime.toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", year: "numeric",
@@ -145,15 +153,23 @@ export async function notifyNewEvent(event: {
     hour: "numeric", minute: "2-digit",
   });
   const tz = event.timezone ?? "UTC";
-  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${getAppBaseUrl()}/schedule`;
+  const baseUrl = getAppBaseUrl();
+  const joinUrl = event.riversideRoomUrl ?? event.zoomUrl ?? `${baseUrl}/schedule`;
   const seasonTag = event.season ? ` (${event.season})` : "";
+  const week = courseWeekFromRecording({
+    title: event.title,
+    season: event.season,
+    episodeNumber: event.episodeNumber ?? null,
+  });
 
-  const message =
-    `*New event added${seasonTag}*\n\n` +
-    `*${event.title}*\n` +
-    `${dateStr} at ${timeStr} ${tz}\n\n` +
-    `Join: ${joinUrl}\n` +
-    `Full schedule: ${getAppBaseUrl()}/schedule`;
+  const message = newEventChannelMessage({
+    title: event.title,
+    seasonTag,
+    when: `${dateStr} at ${timeStr} ${tz}`,
+    joinUrl,
+    baseUrl,
+    week,
+  });
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }
@@ -167,20 +183,24 @@ export async function notifyRecordingReady(recording: {
   youtubeUrl?: string | null;
   riversideUrl?: string | null;
   forumPostId?: number | null;
+  sourceUrl: string;
+  sourceLabel: string;
 }): Promise<void> {
-  const watchUrl = recording.youtubeUrl ?? recording.riversideUrl ?? `${getAppBaseUrl()}/schedule`;
+  const baseUrl = getAppBaseUrl();
+  const watchUrl = recording.youtubeUrl ?? recording.riversideUrl ?? `${baseUrl}/season2`;
+  const sourceUrl = recording.sourceUrl.trim() || `${baseUrl}/season2`;
+  const sourceLabel = recording.sourceLabel.trim() || "Season 2";
   const forumUrl = recording.forumPostId
-    ? `${getAppBaseUrl()}/community/post/${recording.forumPostId}`
+    ? `${baseUrl}/community/post/${recording.forumPostId}`
     : null;
 
-  let message =
-    `*Recording ready*\n\n` +
-    `*${recording.title}*\n\n` +
-    `Watch: ${watchUrl}`;
-
-  if (forumUrl) {
-    message += `\nDiscussion: ${forumUrl}`;
-  }
+  const message = recordingReadyChannelMessage({
+    title: recording.title,
+    watchUrl,
+    sourceUrl,
+    sourceLabel,
+    forumUrl,
+  });
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }
@@ -196,16 +216,7 @@ export async function notifyRecordingReady(recording: {
 export async function notifyShipCalendarConflict(conflicts: string[]): Promise<void> {
   if (conflicts.length === 0) return;
 
-  const lines = conflicts.slice(0, 10).map((c) => `- ${c}`).join("\n");
-  const more = conflicts.length > 10 ? `\n...and ${conflicts.length - 10} more` : "";
-
-  const message =
-    `*Ship calendar conflict*\n\n` +
-    `An Outdoorsy booking overlaps a week that is already held on regencivics.earth. ` +
-    `The dates are blocked either way, so nothing is oversold. Two guests may both ` +
-    `think the week is theirs.\n\n` +
-    `${lines}${more}\n\n` +
-    `Ship admin: ${getAppBaseUrl()}/admin/ship`;
+  const message = shipConflictChannelMessage(conflicts, getAppBaseUrl());
 
   await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
 }
@@ -215,6 +226,7 @@ export async function notifyShipCalendarConflict(conflicts: string[]): Promise<v
  * Same channels as recording-ready. Fail-soft when env vars missing.
  */
 export async function notifyOperatorPulse(message: string): Promise<void> {
-  await Promise.all([sendTelegram(message), sendWhatsApp(message)]);
+  const text = operatorPulseChannelMessage(message, getAppBaseUrl());
+  await Promise.all([sendTelegram(text), sendWhatsApp(text)]);
 }
 

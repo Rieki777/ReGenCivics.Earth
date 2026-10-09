@@ -55,6 +55,7 @@ import { sendEmail, APP_BASE_URL } from "../_core/email";
 import { sendSeasonRollupEmails } from "../lib/seasonRollup";
 import { localTimeCtaHtml } from "@shared/localTimeCta";
 import { notifyNewEvent } from "../_core/notify";
+import { getOrCreateCoreUserId } from "../lib/core-user";
 import { audienceForTopic, buildPrefsToken, verifyPrefsToken } from "../lib/emailPrefs";
 import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
@@ -753,15 +754,21 @@ export const eventsRouter = router({
 
       const newEventId = (result as any).insertId;
 
-      // #6. Create a pre-event forum discussion thread
-      const forumPostId = await db.createForumPost({
-        categoryId: 1, // General; swap for your community events category ID
-        authorId: 1,
-        title: input.title,
-        content: `**${input.title}**\n\n${input.description ?? "Join us for this upcoming session."}\n\nDrop your questions or ideas for this session below. We'll incorporate as many as we can.\n\n*${new Date(input.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · [View full schedule](${APP_BASE_URL}/schedule)*`,
-        tags: ["event", "upcoming"],
-        postType: "discussion",
-      }).catch(() => null);
+      // #6. Create a pre-event forum discussion thread as ReGen Civics Core.
+      const coreAuthorId = await getOrCreateCoreUserId();
+      const forumPostId = coreAuthorId
+        ? await db.createForumPost({
+          categoryId: 1, // General; swap for your community events category ID
+          authorId: coreAuthorId,
+          title: input.title,
+          content: `**${input.title}**\n\n${input.description ?? "Join us for this upcoming session."}\n\nDrop your questions or ideas for this session below. We'll incorporate as many as we can.\n\n*${new Date(input.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })} · [View full schedule](${APP_BASE_URL}/schedule)*`,
+          tags: ["event", "upcoming"],
+          postType: "discussion",
+        }).catch(() => null)
+        : null;
+      if (!coreAuthorId) {
+        console.warn("[events.create] ReGen Civics Core user unavailable; skipping forum thread");
+      }
 
       if (forumPostId) {
         await database.update(events).set({ forumThreadId: forumPostId }).where(eq(events.id, newEventId));
@@ -784,6 +791,7 @@ export const eventsRouter = router({
         riversideRoomUrl: input.riversideRoomUrl ?? null,
         zoomUrl: input.zoomUrl ?? null,
         season: input.season ?? null,
+        episodeNumber: input.episodeNumber ?? null,
       }).catch(err => console.error("[events.create] notify error:", err));
 
       return { success: true, id: newEventId };

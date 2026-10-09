@@ -16,14 +16,25 @@ import * as db from "../db";
 import { recordings, events, forumCategories } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail, APP_BASE_URL } from "../_core/email";
-import { emailsAcceptedForInquiry } from "../emailTracking";
+import { countRecordingMailBatchesSince, emailsAcceptedForInquiry } from "../emailTracking";
 import { notifyRecordingReady } from "../_core/notify";
+import { getOrCreateCoreUserId } from "./core-user";
 import { logger } from "../_core/logger";
 import { audienceForTopic, managePreferencesUrl } from "./emailPrefs";
 import { ENV } from "../_core/env";
 import { buildRecordingReadyEmailHtml } from "../../shared/recordingReadyEmail";
 import { loadRecapDigest } from "./recapForEmail";
 import { guardRecordingSubscriberMail } from "./recordingMailGate";
+import { recordingMailBatchesThisRun } from "./recordingMailBudget";
+import {
+  RECORDING_MAIL_BATCHES_PER_DAY,
+  recordingMailEffect,
+  type RecordingMailEffect,
+} from "../../shared/recordingMailGuard";
+import {
+  recordingChannelAlertAllowed,
+  type RecordingLetterOutcome,
+} from "../../shared/recordingChannelAlert";
 import { linkBlocksPublish, linkRecordingToMatchingEvent, preferredRecordingYoutubeUrl } from "./recordingEventLink";
 import { maybeAutoDraftPostSessionLetter } from "./postSessionLetter";
 import { courseWeekFromRecording } from "@shared/sessionCourse";
@@ -155,19 +166,22 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
         .limit(1);
 
       let forumPostId: number | null = null;
+      const coreAuthorId = await getOrCreateCoreUserId();
 
-      if (owner?.forumThreadId) {
+      if (!coreAuthorId) {
+        log.error(`recording ${recordingId} forum post skipped: ReGen Civics Core user unavailable`);
+      } else if (owner?.forumThreadId) {
         const sessionDateStr = formatSessionDate(recording.sessionDate);
         const summarySection = recording.aiSummary ? `\n\n**What we covered**\n\n${recording.aiSummary}` : "";
         const replyContent = `The recording from ${sessionDateStr} is ready.\n\n${watchLinkMd(recording)}${summarySection}${chapterMd ? `\n\n${chapterMd}` : ""}\n\nDrop any follow-up thoughts below.`;
 
         const replyId = await db
-          .createForumReply({ postId: owner.forumThreadId, authorId: 1, content: replyContent })
+          .createForumReply({ postId: owner.forumThreadId, authorId: coreAuthorId, content: replyContent })
           .catch(() => null);
         forumPostId = owner.forumThreadId;
         if (replyId) log.info(`Replied to forum thread ${owner.forumThreadId} for recording ${recordingId}`);
       } else if (!owner) {
-        forumPostId = await createRecordingForumPost(recording, chapterMd);
+        forumPostId = await createRecordingForumPost(recording, chapterMd, coreAuthorId);
       }
 
       if (forumPostId) {
@@ -184,6 +198,10 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
   // The edited-cut letter already said the recording is up. This step then
   // either waits, or sends one different "Session notes" letter when a summary exists.
   // Week 2's edited cut already went out before editedEmailSent existed.
+  // Channel eligibility is decided before the letter notes a batch, and it
+  // does not claim emailSent. Chat fires only when that same guard says send
+  // and this call actually cleared the letter.
+  const channelEffect = recording.emailSent ? null : await recordingChannelEffect(recording);
   if (
     priorLetterAlreadySent(
       recording.youtubeVideoId,
@@ -196,11 +214,13 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
     recording.emailSent = 1;
     log.info(`recording ${recordingId} already has the Week 2 edited letter; skipping another send`);
   }
+  let letterOutcome: RecordingLetterOutcome | null = null;
   if (!recording.emailSent && (recording.youtubeUrl || recording.riversideUrl || recording.editedYoutubeUrl)) {
     try {
       const outcome = await deliverSubscriberMail(recording, {
         chapters: descriptionOrAiChapters(recording),
       });
+      letterOutcome = { held: outcome.held, kind: outcome.kind };
       if (!outcome.held && outcome.kind !== "skip" && outcome.dropped === 0) {
         await database.update(recordings).set({ emailSent: 1 }).where(eq(recordings.id, recordingId));
         log.info(`Email sent for recording ${recordingId} (${outcome.kind})`);
@@ -215,12 +235,26 @@ export async function finalizeRecording(recordingId: number): Promise<void> {
   }
 
   // ── 3. Channel announcements (Telegram + WhatsApp), fire-and-forget ──
-  notifyRecordingReady({
-    title: recording.title,
-    youtubeUrl: recording.youtubeUrl,
-    riversideUrl: recording.riversideUrl,
-    forumPostId: recording.forumPostId,
-  }).catch((err) => log.error("notify error:", err));
+  if (channelEffect && recordingChannelAlertAllowed(channelEffect, letterOutcome)) {
+    const course = await courseUrlForRecording(recording);
+    notifyRecordingReady({
+      title: recording.title,
+      youtubeUrl: recording.youtubeUrl,
+      riversideUrl: recording.riversideUrl,
+      forumPostId: recording.forumPostId,
+      sourceUrl: course?.href ?? `${APP_BASE_URL}/season2`,
+      sourceLabel: course?.label ?? "Season 2",
+    }).catch((err) => log.error("notify error:", err));
+  } else if (channelEffect) {
+    const reason = channelEffect.type === "skip_old"
+      ? channelEffect.log
+      : channelEffect.type === "needs_review"
+        ? channelEffect.lastError
+        : letterOutcome?.held
+          ? letterOutcome.held
+          : "letter not sent this call";
+    log.info(`recording ${recordingId} channel alert skipped: ${reason}`);
+  }
 
   // ── 4. Outbound draft (never auto-send) when overview/summary exists ──
   await maybeAutoDraftPostSessionLetter(recordingId);
@@ -240,8 +274,30 @@ async function chapterMarkdown(recording: RecordingRow): Promise<string> {
   return chaptersJumpMarkdown(chapters, videoId);
 }
 
-async function createRecordingForumPost(recording: RecordingRow, chapterMd = ""): Promise<number | null> {
-  const SYSTEM_AUTHOR_ID = 1;
+async function recordingChannelEffect(recording: RecordingRow): Promise<RecordingMailEffect> {
+  let batchesLast24h = 0;
+  try {
+    batchesLast24h = await countRecordingMailBatchesSince(new Date(Date.now() - 24 * 60 * 60 * 1000));
+  } catch (err) {
+    log.error("recording channel cap lookup failed", err);
+    batchesLast24h = RECORDING_MAIL_BATCHES_PER_DAY;
+  }
+  return recordingMailEffect({
+    title: recording.title,
+    sessionDate: recording.sessionDate,
+    createdAt: recording.createdAt,
+    now: new Date(),
+    batchesThisRun: recordingMailBatchesThisRun(),
+    batchesLast24h,
+    automatic: true,
+  });
+}
+
+async function createRecordingForumPost(
+  recording: RecordingRow,
+  chapterMd = "",
+  authorId: number,
+): Promise<number | null> {
   const database = await getDb();
   if (!database) return null;
 
@@ -265,7 +321,7 @@ async function createRecordingForumPost(recording: RecordingRow, chapterMd = "")
 
   const postId = await db.createForumPost({
     categoryId,
-    authorId: SYSTEM_AUTHOR_ID,
+    authorId,
     title: recording.title,
     content,
     tags: ["recording", "session"],
