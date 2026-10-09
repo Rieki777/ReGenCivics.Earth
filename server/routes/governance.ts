@@ -76,7 +76,7 @@ export const governanceRouter = router({
       const minUniqueVoices = await readGovernanceVariable("governance.promotion.min_unique_voices", DEFAULT_MIN_UNIQUE_VOICES);
 
       // Load the thread
-      const postRows = await db.select().from(forumPosts).where(eq(forumPosts.id, input.threadId)).limit(1);
+      const postRows = await db.select().from(forumPosts).where(and(eq(forumPosts.id, input.threadId), eq(forumPosts.isHidden, false))).limit(1);
       if (postRows.length === 0) throw new TRPCError({ code: "NOT_FOUND", message: "Thread not found" });
       const post = postRows[0];
 
@@ -88,7 +88,7 @@ export const governanceRouter = router({
       const replies = await db
         .select({ authorId: forumReplies.authorId })
         .from(forumReplies)
-        .where(eq(forumReplies.postId, input.threadId));
+        .where(and(eq(forumReplies.postId, input.threadId), eq(forumReplies.isHidden, false)));
       const voices = new Set<number>();
       voices.add(post.authorId);
       for (const r of replies) voices.add(r.authorId);

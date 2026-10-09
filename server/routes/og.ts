@@ -8,7 +8,7 @@ import satori from "satori";
 import { Resvg } from "@resvg/resvg-js";
 import * as db from "../db";
 import { getDb } from "../db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { forumPosts, recordings, gratitudeLog, forumCategories } from "../../drizzle/schema";
 import { landProjectTeamAttribution } from "../lib/team-user";
 import { isPublicCampaign } from "../lib/project-steward";
@@ -393,7 +393,9 @@ export function registerOgRoutes(app: Express) {
       switch (type) {
         case "forum": {
           if (!database) break;
-          const [post] = await database.select().from(forumPosts).where(eq(forumPosts.id, Number(id))).limit(1);
+          const [post] = await database.select().from(forumPosts)
+            .where(and(eq(forumPosts.id, Number(id)), eq(forumPosts.isHidden, false)))
+            .limit(1);
           if (!post) break;
           const [authors, [category]] = await Promise.all([
             db.getUsersByIds([post.authorId]),

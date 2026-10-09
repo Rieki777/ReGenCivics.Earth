@@ -94,8 +94,9 @@ export const forumFeedRouter = router({
                  UNIX_TIMESTAMP(COALESCE(p.lastReplyAt, p.createdAt)) AS activityTs
           FROM forumPosts p
           LEFT JOIN forum_post_reads r ON r.userId = ${userId} AND r.postId = p.id
-          WHERE (p.authorId = ${userId}
-                 OR EXISTS (SELECT 1 FROM forumReplies fr WHERE fr.postId = p.id AND fr.authorId = ${userId}))
+          WHERE p.isHidden = 0
+            AND (p.authorId = ${userId}
+                 OR EXISTS (SELECT 1 FROM forumReplies fr WHERE fr.postId = p.id AND fr.authorId = ${userId} AND fr.isHidden = 0))
             ${cur ? sql`AND (UNIX_TIMESTAMP(COALESCE(p.lastReplyAt, p.createdAt)) < ${cur.s} OR (UNIX_TIMESTAMP(COALESCE(p.lastReplyAt, p.createdAt)) = ${cur.s} AND p.id < ${cur.i}))` : sql``}
           ORDER BY activityTs DESC, p.id DESC
           LIMIT ${limit + 1}`);
@@ -116,7 +117,8 @@ export const forumFeedRouter = router({
         const [rows]: any = await db2.execute(sql`
           SELECT p.*, UNIX_TIMESTAMP(COALESCE(p.lastReplyAt, p.createdAt)) AS activityTs
           FROM forumPosts p
-          WHERE (
+          WHERE p.isHidden = 0
+            AND (
               EXISTS (SELECT 1 FROM user_follows f WHERE f.userId = ${userId} AND (
                 (f.targetType = 'user' AND f.targetId = CAST(p.authorId AS CHAR))
                 OR (f.targetType = 'category' AND f.targetId = CAST(p.categoryId AS CHAR))
@@ -200,7 +202,8 @@ export const forumFeedRouter = router({
             GREATEST(p.replyCount - COALESCE(r.lastSeenReplyCount, 0), 0) AS unreadReplies
           FROM (
             SELECT * FROM forumPosts
-            WHERE COALESCE(lastReplyAt, createdAt) > FROM_UNIXTIME(${asOfSec}) - INTERVAL ${FEED_CANDIDATE_DAYS} DAY
+            WHERE isHidden = 0
+              AND COALESCE(lastReplyAt, createdAt) > FROM_UNIXTIME(${asOfSec}) - INTERVAL ${FEED_CANDIDATE_DAYS} DAY
             ORDER BY COALESCE(lastReplyAt, createdAt) DESC
             LIMIT ${FEED_CANDIDATE_CAP}
           ) p

@@ -177,27 +177,29 @@ export const forumRouter = router({
         if (cat?.sortMode === "numerical") orderClause = numericalOrder;
       }
 
+      const visible = eq(forumPosts.isHidden, false);
       let rows: (typeof forumPosts.$inferSelect)[];
       if (categoryId !== undefined) {
         if (cursor !== undefined) {
           rows = await db2.select().from(forumPosts)
-            .where(sql`${forumPosts.categoryId} = ${categoryId} AND ${forumPosts.id} < ${cursor}`)
+            .where(and(eq(forumPosts.categoryId, categoryId), sql`${forumPosts.id} < ${cursor}`, visible))
             .orderBy(orderClause)
             .limit(fetchLimit);
         } else {
           rows = await db2.select().from(forumPosts)
-            .where(eq(forumPosts.categoryId, categoryId))
+            .where(and(eq(forumPosts.categoryId, categoryId), visible))
             .orderBy(orderClause)
             .limit(fetchLimit);
         }
       } else {
         if (cursor !== undefined) {
           rows = await db2.select().from(forumPosts)
-            .where(sql`${forumPosts.id} < ${cursor}`)
+            .where(and(sql`${forumPosts.id} < ${cursor}`, visible))
             .orderBy(orderClause)
             .limit(fetchLimit);
         } else {
           rows = await db2.select().from(forumPosts)
+            .where(visible)
             .orderBy(orderClause)
             .limit(fetchLimit);
         }
@@ -240,7 +242,10 @@ export const forumRouter = router({
       const db2 = await getDb();
       if (!db2) return [];
       const rows = await db2.select().from(forumPosts)
-        .where(sql`MATCH(${forumPosts.title}, ${forumPosts.content}) AGAINST(${input.q} IN BOOLEAN MODE)`)
+        .where(and(
+          eq(forumPosts.isHidden, false),
+          sql`MATCH(${forumPosts.title}, ${forumPosts.content}) AGAINST(${input.q} IN BOOLEAN MODE)`,
+        ))
         .limit(20);
       const authorsMap = await db.getUsersByIds(rows.map(p => p.authorId));
       const cats = await getCachedCategories();
@@ -260,8 +265,8 @@ export const forumRouter = router({
   // Get a single post with full details
   postById: publicProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      const post = await db.getForumPost(input.id);
+    .query(async ({ ctx, input }) => {
+      const post = await db.getForumPost(input.id, { includeHidden: isAdminRole(ctx.user?.role) });
       if (!post) throw new TRPCError({ code: 'NOT_FOUND', message: 'Post not found' });
       const [author, authorProfile, category] = await Promise.all([
         db.getUserById(post.authorId),
@@ -288,8 +293,8 @@ export const forumRouter = router({
   // List replies for a post
   replies: publicProcedure
     .input(z.object({ postId: z.number() }))
-    .query(async ({ input }) => {
-      const replies = await db.listForumReplies(input.postId);
+    .query(async ({ ctx, input }) => {
+      const replies = await db.listForumReplies(input.postId, { includeHidden: isAdminRole(ctx.user?.role) });
       // Batch-fetch authors + their player profiles each as a single query
       // (was N+1 across getPlayerProfileByUserId before).
       const authorIds = replies.map(r => r.authorId);
@@ -377,7 +382,7 @@ export const forumRouter = router({
       createdAt: forumPosts.createdAt,
     })
       .from(forumPosts)
-      .where(eq(forumPosts.categoryId, cat[0].id))
+      .where(and(eq(forumPosts.categoryId, cat[0].id), eq(forumPosts.isHidden, false)))
       .orderBy(sql`${forumPosts.createdAt} DESC`)
       .limit(10);
   }),
@@ -398,7 +403,7 @@ export const forumRouter = router({
       createdAt: forumPosts.createdAt,
     })
       .from(forumPosts)
-      .where(eq(forumPosts.categoryId, cat[0].id))
+      .where(and(eq(forumPosts.categoryId, cat[0].id), eq(forumPosts.isHidden, false)))
       .orderBy(sql`${forumPosts.createdAt} DESC`)
       .limit(20);
   }),
@@ -419,7 +424,7 @@ export const forumRouter = router({
       createdAt: forumPosts.createdAt,
     })
       .from(forumPosts)
-      .where(eq(forumPosts.categoryId, cat[0].id))
+      .where(and(eq(forumPosts.categoryId, cat[0].id), eq(forumPosts.isHidden, false)))
       .orderBy(sql`${forumPosts.createdAt} DESC`)
       .limit(20);
   }),
@@ -432,11 +437,11 @@ export const forumRouter = router({
     const [postsResult] = await drizzle
       .select({ count: count() })
       .from(forumPosts)
-      .where(sql`${forumPosts.createdAt} >= ${sevenDaysAgo}`);
+      .where(and(sql`${forumPosts.createdAt} >= ${sevenDaysAgo}`, eq(forumPosts.isHidden, false)));
     const [repliesResult] = await drizzle
       .select({ count: count() })
       .from(forumReplies)
-      .where(sql`${forumReplies.createdAt} >= ${sevenDaysAgo}`);
+      .where(and(sql`${forumReplies.createdAt} >= ${sevenDaysAgo}`, eq(forumReplies.isHidden, false)));
     return {
       posts7d: Number(postsResult?.count ?? 0),
       replies7d: Number(repliesResult?.count ?? 0),
@@ -665,7 +670,7 @@ export const forumRouter = router({
       generatedImageUrl: z.string().max(512).nullable().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const post = await db.getForumPost(input.id);
+      const post = await db.getForumPost(input.id, { includeHidden: true });
       if (!post) throw new TRPCError({ code: 'NOT_FOUND' });
       const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
       if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
@@ -693,7 +698,7 @@ export const forumRouter = router({
     .use(rateLimited({ windowMs: 60_000, max: 5 }))
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
-      const post = await db.getForumPost(input.id);
+      const post = await db.getForumPost(input.id, { includeHidden: true });
       if (!post) throw new TRPCError({ code: 'NOT_FOUND' });
       const isAdminOrSuper = ctx.user.role === 'admin' || ctx.user.role === 'superadmin';
       if (post.authorId !== ctx.user.id && !isAdminOrSuper) {
@@ -831,7 +836,7 @@ export const forumRouter = router({
       const db2 = await getDb();
       if (!db2) return [];
       const posts = await db2.select().from(forumPosts)
-        .where(eq(forumPosts.bioregionId, input.bioregionId))
+        .where(and(eq(forumPosts.bioregionId, input.bioregionId), eq(forumPosts.isHidden, false)))
         .orderBy(forumPosts.createdAt)
         .limit(input.limit);
       const authorsMap = await db.getUsersByIds(posts.map(p => p.authorId));
@@ -980,7 +985,7 @@ export const forumRouter = router({
     .mutation(async ({ ctx, input }) => {
       const dbd = await getDb();
       if (!dbd) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-      const post = await db.getForumPost(input.threadId);
+      const post = await db.getForumPost(input.threadId, { includeHidden: true });
       if (!post) throw new TRPCError({ code: "NOT_FOUND", message: "Thread not found" });
       if ((post as any).governanceStage !== "sensing") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Only a thread in Sensing can return to dialogue." });
@@ -1020,6 +1025,8 @@ export const forumRouter = router({
     .query(async ({ input }) => {
       const dbd = await getDb();
       if (!dbd) return { perspectives: [], topReplies: [], openQuestions: [], timeline: null };
+      const thread = await db.getForumPostSnapshot(input.threadId);
+      if (!thread) return { perspectives: [], topReplies: [], openQuestions: [], timeline: null };
 
       // Perspective tallies
       const [perspRows] = await dbd.execute(
@@ -1037,7 +1044,7 @@ export const forumRouter = router({
                    COALESCE(SUM(pr.reactionWeight), 0) AS weightedReactions
             FROM forumReplies fr
             LEFT JOIN postReactions pr ON pr.targetId = fr.id AND pr.targetType = 'reply'
-            WHERE fr.postId = ${input.threadId}
+            WHERE fr.postId = ${input.threadId} AND fr.isHidden = 0
             GROUP BY fr.id, fr.content, fr.authorId
             ORDER BY weightedReactions DESC
             LIMIT 5`
@@ -1047,6 +1054,7 @@ export const forumRouter = router({
       const [openQuestionRows] = await dbd.execute(
         sql`SELECT id, content, authorId FROM forumReplies
             WHERE postId = ${input.threadId}
+              AND isHidden = 0
               AND (isOpenQuestion = 1 OR content LIKE '%?')
             ORDER BY createdAt ASC
             LIMIT 10`
@@ -1059,8 +1067,8 @@ export const forumRouter = router({
               COUNT(r.id) AS replyCount,
               COUNT(DISTINCT r.authorId) AS participantCount
             FROM forumPosts p
-            LEFT JOIN forumReplies r ON r.postId = p.id
-            WHERE p.id = ${input.threadId}
+            LEFT JOIN forumReplies r ON r.postId = p.id AND r.isHidden = 0
+            WHERE p.id = ${input.threadId} AND p.isHidden = 0
             GROUP BY p.id, p.createdAt`
       );
 
@@ -1188,6 +1196,32 @@ export const moderationRouter = router({
       }
       await db.updateReportStatus(input.id, input.status, ctx.user.id);
       return { success: true };
+    }),
+
+  // Hidden posts and replies. Admins can read them here and put them back.
+  hidden: adminProcedure.query(async () => {
+    const [posts, replies] = await Promise.all([
+      db.listHiddenForumPosts(),
+      db.listHiddenForumReplies(),
+    ]);
+    return {
+      posts,
+      replies: replies.map((reply) => ({
+        ...reply,
+        excerpt: reply.content.replace(/\s+/g, " ").trim().slice(0, 160),
+      })),
+    };
+  }),
+
+  setHidden: adminProcedure
+    .input(z.object({
+      target: z.enum(["post", "reply"]),
+      id: z.number().int().positive(),
+      hidden: z.boolean(),
+    }))
+    .mutation(async ({ input }) => {
+      await db.setForumHidden(input.target, input.id, input.hidden);
+      return { ok: true };
     }),
 
   // List moderators (admin only)

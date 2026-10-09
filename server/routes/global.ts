@@ -30,7 +30,10 @@ export const globalSearchRouter = router({
       const [forumResults, campaignResults] = await Promise.all([
         dbConn.select({ id: forumPosts.id, title: forumPosts.title })
           .from(forumPosts)
-          .where(or(like(forumPosts.title, term), like(forumPosts.content, term)))
+          .where(and(
+            eq(forumPosts.isHidden, false),
+            or(like(forumPosts.title, term), like(forumPosts.content, term)),
+          ))
           .limit(5),
         dbConn.select({ id: campaignsTable.id, title: campaignsTable.title })
           .from(campaignsTable)
