@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ContributionModal, lendDateError, type ContributionNeed } from './ContributionModal';
-import { FOLLOW, LINK, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
+import { ContributionModal, lendDateErrors, serverDateField, type ContributionNeed } from './ContributionModal';
+import { FOLLOW, GIVE_LEND, LINK, OFFER_FORM, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
+import { dayBefore, localToday } from '@shared/crowdpoolNeedAction';
 
 const mockMutate = vi.fn();
 const mockMutateAsync = vi.fn();
@@ -11,14 +12,16 @@ const mockFollowProject = vi.fn();
 const mockUnfollowProject = vi.fn();
 const mockSubscribeByEmail = vi.fn();
 let submitOnSuccess: ((result?: unknown) => void) | null = null;
+let submitOnError: ((error: { message: string; data?: { code?: string } }) => void) | null = null;
 
 vi.mock('@/lib/trpc', () => ({
   trpc: {
     useUtils: () => ({ auth: { me: { invalidate: vi.fn() } }, projects: { getPublic: { invalidate: vi.fn() } } }),
     campaigns: {
       submitContribution: {
-        useMutation: (opts?: { onSuccess?: (result?: unknown) => void }) => {
+        useMutation: (opts?: { onSuccess?: (result?: unknown) => void; onError?: (error: { message: string }) => void }) => {
           submitOnSuccess = opts?.onSuccess ?? null;
+          submitOnError = opts?.onError ?? null;
           return { mutate: mockMutate, mutateAsync: mockMutateAsync, isPending: false };
         },
       },
@@ -242,14 +245,173 @@ describe('ContributionModal', () => {
     });
   });
 
-  describe('lendDateError', () => {
-    it('mirrors the server checks', () => {
-      const today = '2026-09-25';
-      expect(lendDateError({ until: '', from: '', today })).toBe('Add the date it needs to come back.');
-      expect(lendDateError({ until: '2026-09-01', from: '', today })).toBe("The loan can't end before it starts.");
-      expect(lendDateError({ until: '2026-10-01', from: '2026-11-01', today })).toBe("The loan can't end before it starts.");
-      expect(lendDateError({ until: '2026-10-01', from: '', neededFrom: '2026-12-01', today })).toBe('The loan ends before the project needs it. Pick a later date.');
-      expect(lendDateError({ until: '2026-12-31', from: '2026-10-01', neededFrom: '2026-10-01', today })).toBeNull();
+  // Build spec 2026-10-01, section 7.2: each date's problem on its own field.
+  describe('lendDateErrors', () => {
+    const today = '2026-09-25';
+    it('a past from', () => {
+      expect(lendDateErrors({ until: '2026-12-01', from: '2026-09-24', today })).toEqual({ from: GIVE_LEND.pastDate });
+    });
+    it('a past until', () => {
+      expect(lendDateErrors({ until: '2026-09-24', from: '', today })).toEqual({ until: GIVE_LEND.pastDate });
+      expect(lendDateErrors({ until: '2026-09-01', from: '2026-08-01', today })).toEqual({ from: GIVE_LEND.pastDate, until: GIVE_LEND.pastDate });
+    });
+    it('a missing until', () => {
+      expect(lendDateErrors({ until: '', from: '', today })).toEqual({ until: GIVE_LEND.missingUntil });
+    });
+    it('an until before from', () => {
+      expect(lendDateErrors({ until: '2026-10-01', from: '2026-11-01', today })).toEqual({ until: GIVE_LEND.untilBeforeFrom });
+    });
+    it('an until before the need starts', () => {
+      expect(lendDateErrors({ until: '2026-10-01', from: '', neededFrom: '2026-12-01', today })).toEqual({ until: GIVE_LEND.untilBeforeNeed });
+    });
+    it('fine, today included', () => {
+      expect(lendDateErrors({ until: '2026-12-31', from: '2026-10-01', neededFrom: '2026-10-01', today })).toEqual({});
+      expect(lendDateErrors({ until: today, from: today, today })).toEqual({});
+    });
+  });
+
+  describe('serverDateField', () => {
+    const today = '2026-09-25';
+    it('puts a date refusal on its field, and anything else on none', () => {
+      expect(serverDateField(GIVE_LEND.pastDate, { from: '', until: '2026-09-01', today })).toBe('until');
+      expect(serverDateField(GIVE_LEND.pastDate, { from: '2026-09-01', until: '2026-12-01', today })).toBe('from');
+      expect(serverDateField(GIVE_LEND.missingUntil, { from: '', until: '', today })).toBe('until');
+      expect(serverDateField(GIVE_LEND.untilBeforeFrom, { from: '2026-11-01', until: '2026-10-01', today })).toBe('until');
+      expect(serverDateField(GIVE_LEND.untilBeforeNeed, { from: '', until: '2026-10-01', today })).toBe('until');
+      expect(serverDateField('This need is already filled.', { from: '', until: '', today })).toBeNull();
+    });
+  });
+
+  describe('offer dates never start in the past', () => {
+    const pastNeed: ContributionNeed = {
+      id: 9, kind: 'item', title: 'Wheelbarrow', quantityWanted: 1, quantityClaimed: 0, quantityDelivered: 0,
+      estimatedValue: 100, acceptsGift: 0, acceptsLoan: 1, neededFrom: '2020-03-01', neededUntil: '2020-06-30',
+    };
+
+    it('a need whose dates have passed prefills from today and leaves until empty', () => {
+      render(<ContributionModal {...defaultProps} need={pastNeed} />);
+      const today = localToday();
+      const from = screen.getByLabelText('Available from') as HTMLInputElement;
+      const until = screen.getByLabelText('Until *') as HTMLInputElement;
+      expect(from.value).toBe(today);
+      expect(until.value).toBe('');
+      expect(from.min).toBe(today);
+      expect(until.min).toBe(today);
+    });
+
+    it('a need with no start leaves from empty, and keeps an end still ahead', () => {
+      render(<ContributionModal {...defaultProps} need={{ ...pastNeed, neededFrom: null, neededUntil: '2099-06-30' }} />);
+      expect((screen.getByLabelText('Available from') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Until *') as HTMLInputElement).value).toBe('2099-06-30');
+    });
+
+    it('a past until is refused on the field, which takes the focus', async () => {
+      render(<ContributionModal {...defaultProps} need={pastNeed} />);
+      fillContact();
+      const until = screen.getByLabelText('Until *') as HTMLInputElement;
+      fireEvent.change(until, { target: { value: dayBefore(localToday()) } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(screen.getByText(GIVE_LEND.pastDate)).toBeDefined();
+      expect(until).toHaveAttribute('aria-invalid', 'true');
+      expect(until).toHaveAttribute('aria-describedby', 'lend-until-error');
+      await waitFor(() => expect(until).toHaveFocus());
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('a past from shows its own message under the from field', async () => {
+      render(<ContributionModal {...defaultProps} need={{ ...pastNeed, neededUntil: '2099-06-30' }} />);
+      fillContact();
+      const from = screen.getByLabelText('Available from') as HTMLInputElement;
+      fireEvent.change(from, { target: { value: '2020-01-01' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      const error = document.getElementById('lend-from-error');
+      expect(error?.textContent).toBe(GIVE_LEND.pastDate);
+      expect(from).toHaveAttribute('aria-describedby', 'lend-from-error');
+      await waitFor(() => expect(from).toHaveFocus());
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it("the server's past-date refusal lands on the field too, with every value kept", async () => {
+      render(<ContributionModal {...defaultProps} need={{ ...pastNeed, neededUntil: '2099-06-30' }} />);
+      fillContact();
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(mockMutate).toHaveBeenCalledTimes(1);
+      act(() => submitOnError?.({ message: GIVE_LEND.pastDate, data: { code: 'BAD_REQUEST' } }));
+      const until = screen.getByLabelText('Until *') as HTMLInputElement;
+      expect(document.getElementById('lend-until-error')?.textContent).toBe(GIVE_LEND.pastDate);
+      await waitFor(() => expect(until).toHaveFocus());
+      expect(toastMock.error).toHaveBeenCalledWith(GIVE_LEND.pastDate);
+      expect(screen.queryByTestId('offer-submit-error')).toBeNull();
+      expect((screen.getByLabelText('Name *') as HTMLInputElement).value).toBe('Ada');
+    });
+  });
+
+  describe('field errors', () => {
+    it('an empty Send says "Add your name." under the name and focuses it', async () => {
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      const name = screen.getByLabelText('Name *');
+      expect(screen.getByText(OFFER_FORM.nameMissing)).toBeDefined();
+      expect(screen.getByText(OFFER_FORM.emailMissing)).toBeDefined();
+      expect(name).toHaveAttribute('aria-invalid', 'true');
+      expect(name).toHaveAttribute('aria-describedby', 'offer-name-error');
+      expect(document.getElementById('offer-name-error')).toHaveAttribute('role', 'alert');
+      await waitFor(() => expect(name).toHaveFocus());
+      expect(mockMutate).not.toHaveBeenCalled();
+      expect(toastMock.error).not.toHaveBeenCalled();
+      // Typing in the field takes its message away.
+      fireEvent.change(name, { target: { value: 'Ada' } });
+      expect(screen.queryByText(OFFER_FORM.nameMissing)).toBeNull();
+    });
+
+    it('an email that is not complete gets its own message, and focus when the name is fine', async () => {
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Ada' } });
+      fireEvent.change(screen.getByLabelText('Email *'), { target: { value: 'ada@example' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(screen.getByText(OFFER_FORM.emailInvalid)).toBeDefined();
+      await waitFor(() => expect(screen.getByLabelText('Email *')).toHaveFocus());
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('a missing title, bad hours, bad months and a bad value each show on their field', async () => {
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} />);
+      await user.click(screen.getByRole('button', { name: /Time or a skill/ }));
+      fillContact();
+      fireEvent.change(screen.getByLabelText('Hours/Week'), { target: { value: '0' } });
+      fireEvent.change(screen.getByLabelText('Duration (months)'), { target: { value: '500' } });
+      fireEvent.change(screen.getByLabelText('Roughly what is it worth? (optional)'), { target: { value: '-5' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(screen.getByText(OFFER_FORM.titleMissing)).toBeDefined();
+      expect(screen.getByText(OFFER_FORM.hours(168))).toBeDefined();
+      expect(screen.getByText(OFFER_FORM.months)).toBeDefined();
+      expect(screen.getByText(OFFER_FORM.value)).toBeDefined();
+      // The title comes first on the sheet, so it takes the focus.
+      await waitFor(() => expect(screen.getByLabelText('Title *')).toHaveFocus());
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('a refusal that belongs to no field keeps the form and shows above Send', () => {
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      fillContact();
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(mockMutate).toHaveBeenCalledTimes(1);
+      const message = 'Lots of offers from this connection just now. Your form is kept. Try again in 12 minutes.';
+      act(() => submitOnError?.({ message, data: { code: 'TOO_MANY_REQUESTS' } }));
+      const block = screen.getByTestId('offer-submit-error');
+      expect(block).toHaveAttribute('role', 'alert');
+      expect(block.textContent).toBe(message);
+      const send = screen.getByRole('button', { name: 'Send my offer' });
+      expect(block.compareDocumentPosition(send) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(toastMock.error).toHaveBeenCalledWith(message);
+      // Nothing typed is lost.
+      expect((screen.getByLabelText('Name *') as HTMLInputElement).value).toBe('Ada');
+      expect((screen.getByLabelText('Email *') as HTMLInputElement).value).toBe('ada@example.com');
+      expect(screen.queryByTestId('receipt')).toBeNull();
+      // Sending again clears it until the server answers.
+      fireEvent.click(send);
+      expect(screen.queryByTestId('offer-submit-error')).toBeNull();
     });
   });
 

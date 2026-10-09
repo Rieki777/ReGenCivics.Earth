@@ -62,8 +62,20 @@ export const GIVE_LEND = {
   missingUntil: "Add the date it needs to come back.",
   untilBeforeNeed: "The loan ends before the project needs it. Pick a later date.",
   untilBeforeFrom: "The loan can't end before it starts.",
+  pastDate: "That date has passed. Pick a date from today on.",
   freeformValueLabel: "Roughly what is it worth? (optional)",
   freeformValueHelper: "The stewards use this to see the whole ask. Leave it blank if you're not sure.",
+} as const;
+
+/** The offer sheet's field messages, each shown under its own field (build spec 2026-10-01, section 7.2). */
+export const OFFER_FORM = {
+  nameMissing: "Add your name.",
+  emailMissing: "Add your email so the stewards can answer you.",
+  emailInvalid: "That email doesn't look complete. Check it and try again.",
+  titleMissing: "Add a short title for what you're offering.",
+  hours: (max: number) => `Hours a week need to be a whole number from 1 to ${max}.`,
+  months: "Months need to be a whole number from 1 to 120.",
+  value: "Enter a number for what it is worth, or leave it blank.",
 } as const;
 
 // ── The project page (section 8) ────────────────────────────────────────────

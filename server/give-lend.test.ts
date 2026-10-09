@@ -6,8 +6,9 @@
  *   - refuses a money offer while crowdpool.rails.accept_money is off;
  *   - takes only the modes a thing need accepts, and makes the contributor
  *     choose when it takes both;
- *   - a lend needs an until date, after today, after its own start, after
- *     the need's start, within five years;
+ *   - a lend needs an until date, after its own start, after the need's
+ *     start, within five years; neither date may be past, counted from the
+ *     day before today in UTC (a day of grace for people west of UTC);
  *   - stores the need's per-slot value times the slots, never the client's;
  *   - a lend's claim window counts from when the thing is available.
  * campaigns.markLoanReturned is a steward's stamp on a taken-on loan: no
@@ -56,7 +57,8 @@ vi.mock("./game", async (orig) => {
 });
 
 import { checkGiveOrLend, MONEY_RAIL_REFUSAL } from "./routes/campaigns";
-import { todayUtc } from "../shared/crowdpoolNeedAction";
+import { dayBefore, todayUtc } from "../shared/crowdpoolNeedAction";
+import { GIVE_LEND } from "../shared/crowdpoolCopy";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 const STEWARD = 986921;
@@ -99,7 +101,7 @@ describe("checkGiveOrLend (pure)", () => {
   it("checks a lend's dates in order", () => {
     const lend = { ...base, need: both, offerMode: "lend" as const };
     expect(() => checkGiveOrLend(lend)).toThrow("Add the date it needs to come back.");
-    expect(() => checkGiveOrLend({ ...lend, lendUntil: "2029-12-31" })).toThrow("The loan can't end before it starts.");
+    expect(() => checkGiveOrLend({ ...lend, lendUntil: "2029-12-30" })).toThrow("That date has passed. Pick a date from today on.");
     expect(() => checkGiveOrLend({ ...lend, availableFrom: "2030-03-10", lendUntil: "2030-03-01" }))
       .toThrow("The loan can't end before it starts.");
     expect(() => checkGiveOrLend({ ...lend, lendUntil: "2030-01-20" }))
@@ -107,6 +109,39 @@ describe("checkGiveOrLend (pure)", () => {
     expect(() => checkGiveOrLend({ ...lend, lendUntil: "2035-01-02" })).toThrow(/up to five years/);
     expect(checkGiveOrLend({ ...lend, availableFrom: "2030-02-01", lendUntil: "2035-01-01", lendTerms: "  Keep it dry  " }))
       .toEqual({ offerMode: "lend", availableFrom: "2030-02-01", lendUntil: "2035-01-01", lendTerms: "Keep it dry" });
+  });
+
+  // Build spec 2026-10-01, section 7.1: past dates get their own message, and
+  // the server takes dates from the day before today in UTC, because it is
+  // still that day somewhere west of UTC.
+  describe("past dates, with a day of grace", () => {
+    const today = "2030-01-01";
+    // A freeform thing, so no need's start date gets in the way.
+    const lend = { contributionType: "equipment", need: null, offerMode: "lend" as const, today };
+
+    it("takes an until date of yesterday in UTC (the one-day grace)", () => {
+      expect(checkGiveOrLend({ ...lend, lendUntil: "2029-12-31" })).toMatchObject({ offerMode: "lend", lendUntil: "2029-12-31" });
+      expect(checkGiveOrLend({ ...lend, availableFrom: "2029-12-31", lendUntil: "2030-01-05" }))
+        .toMatchObject({ availableFrom: "2029-12-31", lendUntil: "2030-01-05" });
+    });
+
+    it("refuses an until date two days ago with the past-date message", () => {
+      expect(() => checkGiveOrLend({ ...lend, lendUntil: "2029-12-30" })).toThrow(GIVE_LEND.pastDate);
+    });
+
+    it("refuses a from date two days ago with the past-date message", () => {
+      expect(() => checkGiveOrLend({ ...lend, availableFrom: "2029-12-30", lendUntil: "2030-02-01" })).toThrow(GIVE_LEND.pastDate);
+    });
+
+    it("an until before its from is still untilBeforeFrom", () => {
+      expect(() => checkGiveOrLend({ ...lend, availableFrom: "2030-01-10", lendUntil: "2030-01-05" })).toThrow(GIVE_LEND.untilBeforeFrom);
+    });
+
+    it("dayBefore crosses months, years and leap days", () => {
+      expect(dayBefore("2030-01-01")).toBe("2029-12-31");
+      expect(dayBefore("2028-03-01")).toBe("2028-02-29");
+      expect(dayBefore("2030-10-09")).toBe("2030-10-08");
+    });
   });
 
   it("drops every loan field on roles, shifts and knowledge, and on freeform non-things", () => {
@@ -241,8 +276,10 @@ describe("submitContribution: give or lend", () => {
       .rejects.toMatchObject({ message: "The loan ends before the project needs it. Pick a later date." });
     await expect(lend({ availableFrom: addDays(TODAY, 50), lendUntil: addDays(TODAY, 40) }))
       .rejects.toMatchObject({ message: "The loan can't end before it starts." });
-    await expect(lend({ lendUntil: addDays(TODAY, -1) }))
-      .rejects.toMatchObject({ message: "The loan can't end before it starts." });
+    await expect(lend({ lendUntil: addDays(TODAY, -2) }))
+      .rejects.toMatchObject({ message: "That date has passed. Pick a date from today on." });
+    await expect(lend({ availableFrom: addDays(TODAY, -2), lendUntil: addDays(TODAY, 45) }))
+      .rejects.toMatchObject({ message: "That date has passed. Pick a date from today on." });
     await expect(lend({ lendUntil: addDays(TODAY, 6 * 366) })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(lend({ lendUntil: "2030-02-30" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
 

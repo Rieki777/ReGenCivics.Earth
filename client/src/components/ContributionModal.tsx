@@ -11,12 +11,13 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import type { CapitalType, NeedKind } from "@shared/crowdpoolingTaxonomy";
 import { MAX_OFFER_HOURS, isHoursNeed, roleFillState, scaleRoleValue } from "@shared/roleCapacity";
-import { isThingKind, modesFor, needVerb, sheetCopy, toDay, todayUtc, type NeedVerb } from "@shared/crowdpoolNeedAction";
+import { dayBefore, isThingKind, localToday, modesFor, needVerb, sheetCopy, toDay, todayUtc, type NeedVerb } from "@shared/crowdpoolNeedAction";
 import {
   FOLLOW,
   GIVE_LEND,
   LINK,
   LOAN_RISK_LINE,
+  OFFER_FORM,
   OFFER_TYPES,
   RECEIPT,
   TOKEN_HELD_LINE,
@@ -25,7 +26,7 @@ import {
 } from "@shared/crowdpoolCopy";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
-import { FollowControl } from "@/components/crowdpool/FollowControl";
+import { FollowControl, isEmailLike } from "@/components/crowdpool/FollowControl";
 import { useReturnFocus } from "@/hooks/useReturnFocus";
 import { getReferralData } from "@/components/SharePrompt";
 import {
@@ -181,18 +182,73 @@ export function offerValue(need: ContributionNeed, hours: number): number {
   return scaleRoleValue(need.estimatedValue || 0, needed, Math.min(hours, needed));
 }
 
+/** The sheet's fields that can carry a message of their own. */
+export type OfferField = 'name' | 'email' | 'mode' | 'from' | 'until' | 'title' | 'hours' | 'months' | 'value';
+export type OfferFieldErrors = Partial<Record<OfferField, string>>;
+
+/** The fields in the order they sit on the sheet: the first with a message is scrolled to and focused. */
+export const FIELD_ORDER: readonly OfferField[] = ['name', 'email', 'mode', 'from', 'until', 'title', 'hours', 'months', 'value'];
+
+/**
+ * The element each field focuses. Hours is either input: the hours-a-week
+ * offer on an hours need, or Hours/Week on a role or shift.
+ */
+const FIELD_ELEMENT_IDS: Record<OfferField, readonly string[]> = {
+  name: ['name'],
+  email: ['email'],
+  mode: ['offer-mode-give'],
+  from: ['lendFrom'],
+  until: ['lendUntil'],
+  title: ['title'],
+  hours: ['offerHours', 'hours'],
+  months: ['duration'],
+  value: ['value'],
+};
+
 /**
  * The lend fields checked the way the server checks them (campaigns.ts
- * checkGiveOrLend), so a person sees the problem on the field. Null when fine.
+ * checkGiveOrLend), so a person sees each problem on the field it belongs
+ * to. `today` is the person's own day (localToday). That is never earlier
+ * than the server's earliest day (the day before today in UTC), so a date
+ * the sheet lets through is never refused as past. Empty when fine.
  */
-export function lendDateError(a: { until: string; from: string; neededFrom?: string | null; today?: string }): string | null {
+export function lendDateErrors(a: { until: string; from: string; neededFrom?: string | null; today?: string }): { from?: string; until?: string } {
+  const today = a.today ?? localToday();
   const until = a.until.trim();
-  if (!until) return GIVE_LEND.missingUntil;
   const from = a.from.trim();
-  if (until < (a.today ?? todayUtc()) || (from && until < from)) return GIVE_LEND.untilBeforeFrom;
   const neededFrom = toDay(a.neededFrom ?? null);
-  if (neededFrom && until < neededFrom) return GIVE_LEND.untilBeforeNeed;
-  return null;
+  const errors: { from?: string; until?: string } = {};
+  if (from && from < today) errors.from = GIVE_LEND.pastDate;
+  if (!until) errors.until = GIVE_LEND.missingUntil;
+  else if (until < today) errors.until = GIVE_LEND.pastDate;
+  else if (from && until < from) errors.until = GIVE_LEND.untilBeforeFrom;
+  else if (neededFrom && until < neededFrom) errors.until = GIVE_LEND.untilBeforeNeed;
+  return errors;
+}
+
+/** The server's date refusals that belong on the until field (or, for a past start, on from). */
+const UNTIL_REFUSALS: readonly string[] = [GIVE_LEND.missingUntil, GIVE_LEND.untilBeforeFrom, GIVE_LEND.untilBeforeNeed];
+
+/**
+ * Which date field a server refusal belongs to, or null when it belongs to
+ * no field (the offer limit, a filled need, a started shift). The server
+ * checks until before from, both against the day before today in UTC, so a
+ * past-date refusal is on from only when until passed that check.
+ */
+export function serverDateField(message: string, a: { from: string; until: string; today?: string }): 'from' | 'until' | null {
+  if (message === GIVE_LEND.pastDate) {
+    const earliest = dayBefore(a.today ?? todayUtc());
+    const from = a.from.trim();
+    const until = a.until.trim();
+    return until && until >= earliest && from && from < earliest ? 'from' : 'until';
+  }
+  return UNTIL_REFUSALS.includes(message) ? 'until' : null;
+}
+
+/** A field's message, under it. */
+function FieldError({ id, message }: { id: string; message?: string }) {
+  if (!message) return null;
+  return <p id={id} role="alert" className="text-sm font-medium text-red-700">{message}</p>;
 }
 
 function toIcsDate(d: string | Date): string {
@@ -271,7 +327,36 @@ export function ContributionModal({
   const [lendFrom, setLendFrom] = useState('');
   const [lendUntil, setLendUntil] = useState('');
   const [lendTerms, setLendTerms] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<{ mode?: string; until?: string }>({});
+  // Every check Send makes shows on its own field (build spec 2026-10-01, section 7.2).
+  const [fieldErrors, setFieldErrors] = useState<OfferFieldErrors>({});
+  // A server refusal that belongs to no field (the offer limit, a filled
+  // need, a started shift), shown right above Send: on a phone the toast and
+  // the top of the sheet are out of view.
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  // The person's own day, for the date fields' min and the prefill.
+  const today = localToday();
+
+  const clearError = (field: OfferField) =>
+    setFieldErrors((f) => (f[field] ? { ...f, [field]: undefined } : f));
+
+  /** Scroll to the first field with a message and put the cursor in it. */
+  const focusFirstError = (errors: OfferFieldErrors) => {
+    const field = FIELD_ORDER.find((k) => errors[k]);
+    if (!field) return;
+    requestAnimationFrame(() => {
+      const root = detailsRef.current;
+      if (!root) return;
+      // Looked up inside the sheet: the page behind it may use the same ids.
+      const el = FIELD_ELEMENT_IDS[field]
+        .map((id) => root.querySelector<HTMLElement>(`[id="${id}"]`))
+        .find((node): node is HTMLElement => !!node);
+      if (!el) return;
+      const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView?.({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+      el.focus({ preventScroll: true });
+    });
+  };
 
   // Type-specific fields
   const [landHectares, setLandHectares] = useState('');
@@ -319,12 +404,18 @@ export function ContributionModal({
       if (mapped === 'equipment') {
         setEquipmentName(need.title);
       }
-      // Loan dates start from when the project needs the thing.
+      // Loan dates start from when the project needs the thing, and never
+      // before today: a need whose start has passed starts today, and an
+      // end that has passed is left for the person to choose.
+      const day = localToday();
+      const neededFrom = toDay(need.neededFrom ?? null);
+      const neededUntil = toDay(need.neededUntil ?? null);
       setOfferMode(null);
-      setLendFrom(toDay(need.neededFrom ?? null) ?? '');
-      setLendUntil(toDay(need.neededUntil ?? null) ?? '');
+      setLendFrom(neededFrom ? (neededFrom > day ? neededFrom : day) : '');
+      setLendUntil(neededUntil && neededUntil >= day ? neededUntil : '');
       setLendTerms('');
       setFieldErrors({});
+      setSubmitError(null);
     }
   }, [isOpen, need]);
 
@@ -362,8 +453,19 @@ export function ContributionModal({
       setStep('success');
       onSuccess?.({ practice: isPractice });
     },
+    // Every value the person typed stays on any refusal. A date refusal goes
+    // on its field; anything else shows above Send. The toast stays too.
     onError: (error) => {
-      toast.error(error.message || "Couldn't send that. Try again.");
+      const message = error.message || "Couldn't send that. Try again.";
+      toast.error(message);
+      const field = lending ? serverDateField(message, { from: lendFrom, until: lendUntil }) : null;
+      if (field) {
+        const errors: OfferFieldErrors = { [field]: message };
+        setFieldErrors((f) => ({ ...f, ...errors }));
+        focusFirstError(errors);
+      } else {
+        setSubmitError(message);
+      }
     }
   });
 
@@ -385,6 +487,7 @@ export function ContributionModal({
     setLendUntil('');
     setLendTerms('');
     setFieldErrors({});
+    setSubmitError(null);
     setLandHectares('');
     setLandRegion('');
     setEquipmentName('');
@@ -453,47 +556,40 @@ export function ContributionModal({
 
   const handleSubmit = () => {
     if (!contributionType) return;
+    setSubmitError(null);
 
-    // Validate required fields
-    if (!contributorName.trim() || !contributorEmail.trim() || !title.trim()) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
-
-    // Give or lend, on the field (spec 6.2).
-    const errors: { mode?: string; until?: string } = {};
+    // Every check, each on its own field (build spec 2026-10-01, section
+    // 7.2). The first field with a message is scrolled to and focused.
+    const errors: OfferFieldErrors = {};
+    const email = contributorEmail.trim();
+    if (!contributorName.trim()) errors.name = OFFER_FORM.nameMissing;
+    if (!email) errors.email = OFFER_FORM.emailMissing;
+    else if (!isEmailLike(email)) errors.email = OFFER_FORM.emailInvalid;
+    // Give or lend (spec 6.2), and a lend's dates against the person's own day.
     if (bothModes && !offerMode) errors.mode = GIVE_LEND.chooseError;
     if (lending) {
-      const e = lendDateError({ until: lendUntil, from: lendFrom, neededFrom: need?.neededFrom });
-      if (e) errors.until = e;
+      Object.assign(errors, lendDateErrors({ until: lendUntil, from: lendFrom, neededFrom: need?.neededFrom, today: localToday() }));
     }
-    setFieldErrors(errors);
-    if (errors.mode || errors.until) return;
+    if (!title.trim()) errors.title = OFFER_FORM.titleMissing;
 
     let offerHours: number | undefined;
     if (hoursNeed || (contributionType === 'role' && hoursPerWeek.trim() !== '')) {
       const h = parseOfferHours(hoursPerWeek);
-      if (h === null) {
-        toast.error(`Hours a week need to be a whole number from 1 to ${MAX_OFFER_HOURS}.`);
-        return;
-      }
-      offerHours = h;
+      if (h === null) errors.hours = OFFER_FORM.hours(MAX_OFFER_HOURS);
+      else offerHours = h;
     }
 
     let months: number | undefined;
     if (durationMonths.trim() !== '') {
       const m = Number(durationMonths.trim());
-      if (!Number.isInteger(m) || m < 1 || m > 120) {
-        toast.error('Months need to be a whole number from 1 to 120.');
-        return;
-      }
-      months = m;
+      if (!Number.isInteger(m) || m < 1 || m > 120) errors.months = OFFER_FORM.months;
+      else months = m;
     }
 
     // On an offer against a need the server sets the value from the need;
     // this number only rides along. A freeform offer keeps the person's own
     // rough value, which may be left blank (0).
-    let value: number;
+    let value = 0;
     if (need) {
       value = hoursNeed && offerHours !== undefined
         ? Math.round(offerValue(need, offerHours))
@@ -501,11 +597,14 @@ export function ContributionModal({
     } else {
       const raw = estimatedValue.trim();
       const n = raw === '' ? 0 : Number(raw);
-      if (!Number.isFinite(n) || n < 0) {
-        toast.error('Enter a number for what it is worth, or leave it blank.');
-        return;
-      }
-      value = Math.round(n);
+      if (!Number.isFinite(n) || n < 0) errors.value = OFFER_FORM.value;
+      else value = Math.round(n);
+    }
+
+    setFieldErrors(errors);
+    if (FIELD_ORDER.some((k) => errors[k])) {
+      focusFirstError(errors);
+      return;
     }
 
     // useReferralCapture records ?ref= on landing and then takes it out of
@@ -664,7 +763,7 @@ export function ContributionModal({
 
         {/* Step 2: Enter Details */}
         {step === 'details' && contributionType && (
-          <div className="space-y-4 py-4">
+          <div ref={detailsRef} className="space-y-4 py-4">
             {!isAuthenticated && (
               <p className="text-sm text-[#1a472a]/85">
                 <button
@@ -704,9 +803,12 @@ export function ContributionModal({
                     id="name"
                     autoComplete="name"
                     value={contributorName}
-                    onChange={(e) => setContributorName(e.target.value)}
+                    onChange={(e) => { setContributorName(e.target.value); clearError('name'); }}
+                    aria-invalid={fieldErrors.name ? true : undefined}
+                    aria-describedby={fieldErrors.name ? 'offer-name-error' : undefined}
                     placeholder="Your full name"
                   />
+                  <FieldError id="offer-name-error" message={fieldErrors.name} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
@@ -716,11 +818,14 @@ export function ContributionModal({
                     inputMode="email"
                     autoComplete="email"
                     value={contributorEmail}
-                    onChange={(e) => setContributorEmail(e.target.value)}
+                    onChange={(e) => { setContributorEmail(e.target.value); clearError('email'); }}
+                    aria-invalid={fieldErrors.email ? true : undefined}
+                    aria-describedby={[fieldErrors.email ? 'offer-email-error' : '', !isAuthenticated ? 'offer-email-help' : ''].filter(Boolean).join(' ') || undefined}
                     placeholder="your@email.com"
                   />
+                  <FieldError id="offer-email-error" message={fieldErrors.email} />
                   {!isAuthenticated && (
-                    <p className="text-xs text-[#1a472a]/85">
+                    <p id="offer-email-help" className="text-xs text-[#1a472a]/85">
                       Use the email you'd sign in with. If you make an account with it later, this offer links to your account.
                     </p>
                   )}
@@ -783,10 +888,11 @@ export function ContributionModal({
                       >
                         <input
                           type="radio"
+                          id={`offer-mode-${m}`}
                           name="offer-mode"
                           value={m}
                           checked={offerMode === m}
-                          onChange={() => { setOfferMode(m); setFieldErrors((f) => ({ ...f, mode: undefined })); }}
+                          onChange={() => { setOfferMode(m); clearError('mode'); }}
                           className="h-4 w-4 accent-[#4a7c59]"
                         />
                         <span className="text-sm font-medium">{m === 'give' ? GIVE_LEND.give : GIVE_LEND.lend}</span>
@@ -809,10 +915,18 @@ export function ContributionModal({
                       <Input
                         id="lendFrom"
                         type="date"
+                        min={today}
                         value={lendFrom}
-                        onChange={(e) => setLendFrom(e.target.value)}
+                        onChange={(e) => {
+                          setLendFrom(e.target.value);
+                          // A new start can settle "can't end before it starts" too.
+                          setFieldErrors((f) => ({ ...f, from: undefined, until: f.until === GIVE_LEND.untilBeforeFrom ? undefined : f.until }));
+                        }}
+                        aria-invalid={fieldErrors.from ? true : undefined}
+                        aria-describedby={fieldErrors.from ? 'lend-from-error' : undefined}
                         className="text-base md:text-sm"
                       />
+                      <FieldError id="lend-from-error" message={fieldErrors.from} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lendUntil">{GIVE_LEND.until} *</Label>
@@ -820,17 +934,16 @@ export function ContributionModal({
                         id="lendUntil"
                         type="date"
                         required
+                        min={lendFrom || today}
                         value={lendUntil}
-                        onChange={(e) => { setLendUntil(e.target.value); setFieldErrors((f) => ({ ...f, until: undefined })); }}
+                        onChange={(e) => { setLendUntil(e.target.value); clearError('until'); }}
                         aria-invalid={fieldErrors.until ? true : undefined}
                         aria-describedby={fieldErrors.until ? 'lend-until-error' : undefined}
                         className="text-base md:text-sm"
                       />
+                      <FieldError id="lend-until-error" message={fieldErrors.until} />
                     </div>
                   </div>
-                  {fieldErrors.until && (
-                    <p id="lend-until-error" role="alert" className="text-sm font-medium text-red-700">{fieldErrors.until}</p>
-                  )}
                   <p className="text-xs text-[#1a472a]/85">{LOAN_RISK_LINE}</p>
                   <div className="space-y-2">
                     <Label htmlFor="lendTerms">{GIVE_LEND.terms}</Label>
@@ -850,7 +963,9 @@ export function ContributionModal({
                 <Input
                   id="title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => { setTitle(e.target.value); clearError('title'); }}
+                  aria-invalid={fieldErrors.title ? true : undefined}
+                  aria-describedby={fieldErrors.title ? 'offer-title-error' : undefined}
                   placeholder={
                     contributionType === 'land' ? 'e.g., 5 hectares in Costa Rica' :
                     contributionType === 'equipment' ? 'e.g., Solar Panel System' :
@@ -859,6 +974,7 @@ export function ContributionModal({
                     'e.g., Permaculture Design Session'
                   }
                 />
+                <FieldError id="offer-title-error" message={fieldErrors.title} />
               </div>
 
               {/* Quantity when the need has multiple slots */}
@@ -954,8 +1070,11 @@ export function ContributionModal({
                     max={MAX_OFFER_HOURS}
                     step={1}
                     value={hoursPerWeek}
-                    onChange={(e) => handleOfferHoursChange(e.target.value)}
+                    onChange={(e) => { handleOfferHoursChange(e.target.value); clearError('hours'); }}
+                    aria-invalid={fieldErrors.hours ? true : undefined}
+                    aria-describedby={fieldErrors.hours ? 'offer-hours-error' : undefined}
                   />
+                  <FieldError id="offer-hours-error" message={fieldErrors.hours} />
                   <p className="text-xs text-[#1a472a]/85">
                     {fill.open} of {fill.needed} hours a week are still open. You can offer more or less.
                   </p>
@@ -984,9 +1103,12 @@ export function ContributionModal({
                         max={MAX_OFFER_HOURS}
                         step={1}
                         value={hoursPerWeek}
-                        onChange={(e) => setHoursPerWeek(e.target.value)}
+                        onChange={(e) => { setHoursPerWeek(e.target.value); clearError('hours'); }}
+                        aria-invalid={fieldErrors.hours ? true : undefined}
+                        aria-describedby={fieldErrors.hours ? 'offer-hours-error' : undefined}
                         placeholder="e.g., 20"
                       />
+                      <FieldError id="offer-hours-error" message={fieldErrors.hours} />
                     </div>
                   )}
                   <div className="space-y-2">
@@ -999,9 +1121,12 @@ export function ContributionModal({
                       max={120}
                       step={1}
                       value={durationMonths}
-                      onChange={(e) => setDurationMonths(e.target.value)}
+                      onChange={(e) => { setDurationMonths(e.target.value); clearError('months'); }}
+                      aria-invalid={fieldErrors.months ? true : undefined}
+                      aria-describedby={fieldErrors.months ? 'offer-months-error' : undefined}
                       placeholder="e.g., 6"
                     />
+                    <FieldError id="offer-months-error" message={fieldErrors.months} />
                   </div>
                 </div>
               )}
@@ -1080,10 +1205,12 @@ export function ContributionModal({
                     inputMode="decimal"
                     min={0}
                     value={estimatedValue}
-                    onChange={(e) => setEstimatedValue(e.target.value)}
+                    onChange={(e) => { setEstimatedValue(e.target.value); clearError('value'); }}
                     placeholder={`e.g., 500 (${currency})`}
-                    aria-describedby="value-help"
+                    aria-invalid={fieldErrors.value ? true : undefined}
+                    aria-describedby={fieldErrors.value ? 'offer-value-error value-help' : 'value-help'}
                   />
+                  <FieldError id="offer-value-error" message={fieldErrors.value} />
                   <p id="value-help" className="text-xs text-[#1a472a]/85">{GIVE_LEND.freeformValueHelper}</p>
                 </div>
               )}
@@ -1102,6 +1229,18 @@ export function ContributionModal({
 
             {/* The token line, once, above the send button (R33). Copy only: this build issues no tokens. */}
             <p className="text-xs text-[#1a472a]/85 pt-2">{tokenLine}</p>
+
+            {/* A refusal that belongs to no field, right above Send, where the
+                person is looking. The form keeps everything they typed. */}
+            {submitError && (
+              <p
+                role="alert"
+                data-testid="offer-submit-error"
+                className="rounded-xl border border-red-700/40 bg-red-50 p-3 text-sm font-medium text-red-800 break-words"
+              >
+                {submitError}
+              </p>
+            )}
 
             {/* Actions */}
             <div className="flex gap-3 pt-2">

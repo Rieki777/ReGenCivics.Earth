@@ -57,6 +57,7 @@ import { CASH_SHARE } from "../../shared/crowdpoolModel";
 import { DURATION, FOLLOW, GIVE_LEND, NEED_FILLED, NEED_MARKER, SHIFT_STARTED } from "../../shared/crowdpoolCopy";
 import { MAX_WINDOW_DAYS } from "../../shared/campaignClose";
 import {
+  dayBefore,
   isMoneyKind,
   isThingKind,
   kindForItem,
@@ -354,8 +355,10 @@ export type GiveOrLend = {
  *   - A thing need (kind item, or legacy loan) takes only the modes it
  *     accepts (modesFor). When it takes both, the contributor must choose;
  *     when it takes one, that one applies.
- *   - A lend needs an until date, on or after today and after its own start,
- *     on or after the need's own start date, and within five years.
+ *   - A lend needs an until date, not before its own start, on or after the
+ *     need's own start date, and within five years. Neither date may be in
+ *     the past, counted from the day before today in UTC (a day of grace
+ *     for people west of UTC).
  *   - A gift drops the dates and terms. Roles, shifts and knowledge drop the
  *     mode and every loan field.
  *   - A freeform offer (no need) may carry a mode when it is a thing, with
@@ -395,7 +398,13 @@ export function checkGiveOrLend(args: {
   const until = args.lendUntil ?? null;
   if (!until) throw refuse(GIVE_LEND.missingUntil);
   const from = args.availableFrom ?? null;
-  if (until < args.today || (from && until < from)) throw refuse(GIVE_LEND.untilBeforeFrom);
+  // A day of grace: `today` is the UTC day, and it is still the day before
+  // somewhere west of UTC, so a person there is never told today has passed
+  // (build spec 2026-10-01, section 7.1). Past dates get their own message.
+  const earliest = dayBefore(args.today);
+  if (until < earliest) throw refuse(GIVE_LEND.pastDate);
+  if (from && from < earliest) throw refuse(GIVE_LEND.pastDate);
+  if (from && until < from) throw refuse(GIVE_LEND.untilBeforeFrom);
   const neededFrom = args.need ? toDay(args.need.neededFrom ?? null) : null;
   if (neededFrom && until < neededFrom) throw refuse(GIVE_LEND.untilBeforeNeed);
   if (until > plusYears(args.today, MAX_LOAN_YEARS)) {

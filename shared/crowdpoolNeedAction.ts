@@ -63,6 +63,28 @@ export function todayUtc(now: Date = new Date()): string {
 }
 
 /**
+ * The person's own calendar day, 'YYYY-MM-DD', from the device clock. The
+ * offer sheet's "today": nobody is offered a date that has already passed
+ * where they are (build spec 2026-10-01, section 7.2).
+ */
+export function localToday(now: Date = new Date()): string {
+  const y = String(now.getFullYear()).padStart(4, "0");
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * The day before a 'YYYY-MM-DD' day. The server takes offer dates from the
+ * day before today in UTC, because it is still that day somewhere west of
+ * UTC, so a person there is never told today has passed.
+ */
+export function dayBefore(day: string): string {
+  const t = Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
+  return new Date(t - 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
  * A date column value as 'YYYY-MM-DD', or null. Accepts the string drizzle
  * returns, a longer timestamp string, or a Date (read in UTC).
  */
