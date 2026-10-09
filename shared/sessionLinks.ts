@@ -19,6 +19,16 @@ export const RIVERSIDE_ROOM_URL =
   "https://riverside.com/studio/rieki-cordon-riekis-studio/wvhy-zyit";
 
 /**
+ * Art at the top of /join. Swap these paths to ship a different hero.
+ * Wide is the desktop frame. Phone is a tighter crop on the same image.
+ */
+export const JOIN_HERO = {
+  wide: "/images/join/join-hero-tree.webp",
+  phone: "/images/join/join-hero-tree-phone.webp",
+  alt: "A great tree in a moonlit forest, a glowing doorway in the trunk",
+} as const;
+
+/**
  * True for the guest invite and for older stored copies of this same studio
  * (the path without the room code, or a `?t=` token). A different room returns false.
  */
