@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-09 (crowdpool bundle 1, part one): private, counted once, truthful examples, and tests that stay local
+
+- **Privacy**: a player's money total leaves the public player profile, the unused public leaderboard is gone, and a person's Living Tree scores answer only to them and admins. The accept dialog says whether the person's name goes on the public timeline or stays "A contributor".
+- **Tests refuse any database that is not local** (`server/test-db-guard.ts`): vitest setup, teardown and `cleanupTestData` stop unless `DATABASE_URL`'s host is 127.0.0.1, localhost, ::1 or listed in `TEST_DB_HOSTS`. On 2026-10-06 a test run reached production six times and left 179 fixture campaigns, 168 of them live on /campaigns; they were moved to draft on 2026-10-09 (backed up first) and await Rye's word on deletion.
+- **Score points count once per delivery** (migration 0294: duplicates removed, then a stored column with a unique key). Production had no duplicates, so no one's score moves.
+- **Examples tell the truth** (migration 0269, example data only): their offer counts and totals are recomputed from the rows that exist, the ten example updates carry no names or progress claims, and an example rolls forward whenever a shift starts or a need window passes. Started shifts refuse sign-ups on every campaign, passed windows read "Window passed" and leave the Needs tab, and the nightly claim sweep leaves examples alone.
+- **Wording**: money goes through each project's own outside routes; help is recorded in a project's token, never "earned"; the profile's "earn tokens" lines and "Currency" label are rewritten, and `scripts/check-banned-terms.mjs` blocks the old phrases.
+- Source: the bundle 1 brief (session scratchpad, `build_spec_bundle1.md`). Carryover: the offer-form dates, the Needs-tab form, the household offer limit, "send back for changes", and Rye's 2026-10-05 request that each audience sees its own surfaces (the Ready to crowdpool list moves to the creator side).
+
 ## 2026-10-05 (seasons): A Game we build together, on the Week 2 board
 
 - **A new Week 2 stage right after Village OS** (ADR-68 update): Village OS is a Game we all play. The code is open source (MIT), and its address shows on the stage once `VILLAGE_OS_SHOW_REPO` is on (until then the stage points to /village-os). Anyone can build a module, the builders' pool shares $ReGen by how much villages use each one, and ReGen Civics needs village coaches, which is Rye's own work and income today. Eight minutes, from Village OS and the circle, so the session still fills two hours.
