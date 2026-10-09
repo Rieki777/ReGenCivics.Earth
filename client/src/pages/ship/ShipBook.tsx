@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { toast } from "sonner";
 import { MapPin, Compass, LayoutGrid, List as ListIcon, Moon, Heart, Sailboat, ChevronDown, type LucideIcon } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, PriceTag, useShipFlags, ANCHOR_VOYAGE, TRIAL_VOYAGE } from "./shipShared";
@@ -56,6 +57,11 @@ function fmtDay(ymd: string): string {
 }
 
 type WeekState = "open" | "requested" | "booked" | "turnover" | "migration";
+/** Phones show the calendar a few weeks at a time. Rendering all ~100 weeks at
+ *  once made a 14,000px list that pushed the form out of reach and could make
+ *  mobile Safari drop the tab. */
+const PHONE_WEEKS_STEP = 8;
+
 const STATE_META: Record<WeekState, { label: string; badge: string }> = {
   open: { label: "Open", badge: "bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d]" },
   requested: { label: "Requested by others", badge: "bg-[#d4a574]/20 text-[#8a5a2b] dark:text-[#e0b483]" },
@@ -85,6 +91,9 @@ export default function ShipBook() {
   const [startIdx, setStartIdx] = useState<number | null>(null);
   const [count, setCount] = useState(1);
   const [view, setView] = useState<"cards" | "list">("cards");
+  // Wider screens cap the list height and scroll inside it; phones reveal in steps.
+  const isWide = useMediaQuery("(min-width: 640px)");
+  const [phoneShown, setPhoneShown] = useState(PHONE_WEEKS_STEP);
   // The length tiles double as a booking-length + availability filter (default 1).
   const [bookLength, setBookLength] = useState(1);
   const [adults, setAdults] = useState(2);
@@ -137,6 +146,16 @@ export default function ShipBook() {
     }
     return out;
   }, [weeks, bookLength]);
+
+  // On phones, show the first few options plus anything already selected.
+  const optionTotal = bookLength === 1 ? weeks.length : windowStarts.length;
+  const selectedReach = startIdx === null
+    ? 0
+    : bookLength === 1
+      ? startIdx + count
+      : windowStarts.indexOf(startIdx) + 1;
+  const visibleCount = isWide ? optionTotal : Math.min(optionTotal, Math.max(phoneShown, selectedReach));
+  const hiddenCount = optionTotal - visibleCount;
 
   const voyagePkg = voyageId ? suggestedVoyageById(voyageId) : null;
   // The rough chart is deterministic: recomputed instantly from the package and
@@ -212,6 +231,7 @@ export default function ShipBook() {
   /** Click a length tile: set the filter and clear any selection that no longer fits. */
   function selectLength(len: number) {
     setBookLength(len);
+    setPhoneShown(PHONE_WEEKS_STEP);
     setVoyageId(null);
     setCustomizeOpen(false);
     setFmCharted(false);
@@ -440,7 +460,7 @@ export default function ShipBook() {
                   aria-label="Voyage weeks"
                   className={view === "cards" ? "grid sm:grid-cols-2 gap-3 sm:max-h-[28rem] sm:overflow-y-auto sm:pr-1" : "space-y-2 sm:max-h-[28rem] sm:overflow-y-auto sm:pr-1"}
                 >
-                  {bookLength === 1 ? weeks.map((wk, i) => {
+                  {bookLength === 1 ? weeks.slice(0, visibleCount).map((wk, i) => {
                     const meta = STATE_META[wk.state as WeekState];
                     const sel = isSelected(i);
                     const returnDay = (wk as { returnDate?: string }).returnDate ?? wk.endDate;
@@ -458,18 +478,18 @@ export default function ShipBook() {
                           aria-label={`Board ${fmtDay(wk.startDate)} 5pm, return ${fmtDay(returnDay)} 11am, ${wk.bioregion}, ${meta.label}, $${wk.price.total.toLocaleString()} the voyage`}
                           className={[
                             "w-full text-left rounded-2xl border p-4 transition-all",
-                            view === "list" ? "flex items-center justify-between gap-4" : "",
+                            view === "list" ? "flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-4 gap-y-2" : "",
                             wk.selectable ? "hover:border-[#2f5d3a] cursor-pointer" : "opacity-55 cursor-not-allowed",
                             sel ? "border-[#ffd700] ring-2 ring-[#ffd700] bg-[#ffd700]/10" : "bg-card",
                           ].join(" ")}
                         >
                           <div className={view === "list" ? "" : "mb-2"}>
-                            <div className="flex items-center gap-2 font-semibold">
-                              <Compass className="w-4 h-4 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
-                              Board {fmtDay(wk.startDate)} <span aria-hidden="true">→</span> return {fmtDay(returnDay)}
+                            <div className="flex items-start gap-2 font-semibold">
+                              <Compass className="w-4 h-4 mt-1 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
+                              <span className="min-w-0">Board {fmtDay(wk.startDate)} <span aria-hidden="true">→</span> return {fmtDay(returnDay)}</span>
                             </div>
-                            <div className="flex items-center gap-1.5 text-sm text-foreground/70 mt-1">
-                              <MapPin className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> {wk.bioregion}
+                            <div className="flex items-start gap-1.5 text-sm text-foreground/70 mt-1">
+                              <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" /> <span className="min-w-0">{wk.bioregion}</span>
                             </div>
                           </div>
                           <div className={view === "list" ? "text-right shrink-0" : "flex items-center justify-between"}>
@@ -498,7 +518,7 @@ export default function ShipBook() {
                     <li className="sm:col-span-2">
                       <p className="text-sm text-muted-foreground py-8 text-center">No {bookLength}-week windows are open back to back right now. Try a shorter stay above.</p>
                     </li>
-                  ) : windowStarts.map((wi) => {
+                  ) : windowStarts.slice(0, visibleCount).map((wi) => {
                     const run = weeks.slice(wi, wi + bookLength);
                     const first = run[0];
                     const last = run[run.length - 1];
@@ -520,12 +540,12 @@ export default function ShipBook() {
                             sel ? "border-[#ffd700] ring-2 ring-[#ffd700] bg-[#ffd700]/10" : "bg-card hover:border-[#2f5d3a]",
                           ].join(" ")}
                         >
-                          <div className="flex items-center gap-2 font-semibold">
-                            <Compass className="w-4 h-4 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
-                            Board {fmtDay(first.startDate)} <span aria-hidden="true">→</span> return {fmtDay(returnDay)}
+                          <div className="flex items-start gap-2 font-semibold">
+                            <Compass className="w-4 h-4 mt-1 text-[#2f5d3a] dark:text-[#7dd87d] shrink-0" aria-hidden="true" />
+                            <span className="min-w-0">Board {fmtDay(first.startDate)} <span aria-hidden="true">→</span> return {fmtDay(returnDay)}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-sm text-foreground/70 mt-1">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" aria-hidden="true" /> {winBioregions.join(" and ")}
+                          <div className="flex items-start gap-1.5 text-sm text-foreground/70 mt-1">
+                            <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" /> <span className="min-w-0">{winBioregions.join(" and ")}</span>
                           </div>
                           <div className="mt-2 text-sm">
                             <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-[#4a7c59]/15 text-[#2f5d3a] dark:text-[#7dd87d] mr-2">{bookLength} weeks</span>
@@ -539,6 +559,15 @@ export default function ShipBook() {
                     );
                   })}
                 </ul>
+              )}
+              {hiddenCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setPhoneShown(visibleCount + PHONE_WEEKS_STEP)}
+                  className="mt-3 w-full rounded-full border border-[#2f5d3a]/40 bg-[#2f5d3a]/5 px-4 py-2.5 text-sm font-semibold text-[#2f5d3a] dark:text-[#7dd87d] hover:bg-[#2f5d3a]/10 transition-colors"
+                >
+                  Show {Math.min(PHONE_WEEKS_STEP, hiddenCount)} more {bookLength === 1 ? "weeks" : "windows"} · {hiddenCount} further on the calendar
+                </button>
               )}
             </div>
 
