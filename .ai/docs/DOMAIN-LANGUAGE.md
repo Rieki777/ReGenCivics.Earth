@@ -20,6 +20,8 @@ Last reviewed: 2026-09-28 (ReGen Civics Labs named as the company; 2026-09-27: t
 
 **ReGen Civics Labs**. The company: a Delaware C-corporation (filing in progress; Delaware requires a designator, so the filing name is ReGen Civics Labs, Inc.) that builds the tools real estate and land projects use to coordinate, and runs ReGen Civics. It is the applicant in the venture lane (accelerators, investors, SBIR) and the first user of the funding engine. Use "ReGen Civics Labs" for the company and "ReGen Civics" for the platform, game and movement. The Cooperative is a separate entity in design; the company never describes it as part of a raise.
 
+**ReGen Civics Core**. The forum identity for automated recording posts, recording replies, and the discussion thread an event creates. Display name "ReGen Civics Core" (`core@regencivics.earth`). A person who writes a post keeps their own name. An AI Elder reply stays with that Elder.
+
 ---
 
 ## The four tokens
