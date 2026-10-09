@@ -16,10 +16,10 @@ import { AdminChrome } from "@/components/admin/AdminChrome";
 import { isAdminRole } from "@shared/adminRole";
 import {
   Shield, Flag, Ban, ArrowLeft, Plus,
-  Trash2, Check, AlertTriangle
+  Trash2, Check, AlertTriangle, EyeOff
 } from "lucide-react";
 
-type Tab = 'reports' | 'moderators' | 'bans';
+type Tab = 'reports' | 'moderators' | 'bans' | 'hidden';
 
 function AdminModerationPanel() {
   const { user, isAuthenticated: userAuthenticated } = useAuth();
@@ -36,6 +36,7 @@ function AdminModerationPanel() {
   const reportsQuery = trpc.moderation.reports.useQuery({ status: reportFilter }, { enabled: isAuthorized });
   const moderatorsQuery = trpc.moderation.moderators.useQuery(undefined, { enabled: isAuthorized });
   const bannedUsersQuery = trpc.moderation.bannedUsers.useQuery(undefined, { enabled: isAuthorized });
+  const hiddenQuery = trpc.moderation.hidden.useQuery(undefined, { enabled: isAuthorized });
 
   const updateReportMutation = trpc.moderation.updateReport.useMutation({
     onSuccess: () => reportsQuery.refetch(),
@@ -52,11 +53,16 @@ function AdminModerationPanel() {
   const unbanMutation = trpc.moderation.unbanUser.useMutation({
     onSuccess: () => bannedUsersQuery.refetch(),
   });
+  const unhideMutation = trpc.moderation.setHidden.useMutation({
+    onSuccess: () => hiddenQuery.refetch(),
+  });
+  const hiddenCount = (hiddenQuery.data?.posts.length ?? 0) + (hiddenQuery.data?.replies.length ?? 0);
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
     { key: 'reports', label: 'Reports', icon: <Flag className="w-4 h-4" />, count: reportsQuery.data?.length },
     { key: 'moderators', label: 'Moderators', icon: <Shield className="w-4 h-4" />, count: moderatorsQuery.data?.length },
     { key: 'bans', label: 'Banned Users', icon: <Ban className="w-4 h-4" />, count: bannedUsersQuery.data?.length },
+    { key: 'hidden', label: 'Hidden', icon: <EyeOff className="w-4 h-4" />, count: hiddenCount },
   ];
 
   return (
@@ -75,7 +81,7 @@ function AdminModerationPanel() {
             <h1 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-display)' }}>
               Forum Moderation
             </h1>
-            <p className="text-white/70 text-sm">Manage reports, moderators, and user bans</p>
+            <p className="text-white/70 text-sm">Manage reports, moderators, bans, and hidden threads</p>
           </div>
         </div>
 
@@ -353,6 +359,64 @@ function AdminModerationPanel() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'hidden' && (
+          <div className="space-y-6">
+            <p className="text-white/70 text-sm">
+              Hidden threads and replies stay in the database. Unhide puts them back on the public forum.
+            </p>
+            <div>
+              <h2 className="text-white font-semibold mb-3">Posts</h2>
+              <div className="space-y-3">
+                {(hiddenQuery.data?.posts.length ?? 0) === 0 ? (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+                    <p className="text-white/65 text-sm">No hidden posts</p>
+                  </div>
+                ) : hiddenQuery.data?.posts.map((post) => (
+                  <div key={post.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-white font-medium text-sm">{post.title}</p>
+                      <p className="text-white/65 text-xs">Post {post.id}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => unhideMutation.mutate({ target: "post", id: post.id, hidden: false })}
+                      className="border-[#7dd87d]/30 text-[#7dd87d] hover:bg-[#7dd87d]/10 h-8"
+                    >
+                      Unhide
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h2 className="text-white font-semibold mb-3">Replies</h2>
+              <div className="space-y-3">
+                {(hiddenQuery.data?.replies.length ?? 0) === 0 ? (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+                    <p className="text-white/65 text-sm">No hidden replies</p>
+                  </div>
+                ) : hiddenQuery.data?.replies.map((reply) => (
+                  <div key={reply.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-white font-medium text-sm">{reply.excerpt || "Reply"}</p>
+                      <p className="text-white/65 text-xs">Reply {reply.id} on post {reply.postId}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => unhideMutation.mutate({ target: "reply", id: reply.id, hidden: false })}
+                      className="border-[#7dd87d]/30 text-[#7dd87d] hover:bg-[#7dd87d]/10 h-8"
+                    >
+                      Unhide
+                    </Button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

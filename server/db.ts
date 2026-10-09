@@ -2970,17 +2970,21 @@ export async function getForumCategoryBySlug(slug: string) {
 export async function listForumPosts(categoryId?: number, limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
+  const visible = eq(forumPosts.isHidden, false);
   const query = categoryId
-    ? db.select().from(forumPosts).where(eq(forumPosts.categoryId, categoryId))
-    : db.select().from(forumPosts);
+    ? db.select().from(forumPosts).where(and(eq(forumPosts.categoryId, categoryId), visible))
+    : db.select().from(forumPosts).where(visible);
   const rows = await query.orderBy(desc(forumPosts.isPinned), desc(forumPosts.lastReplyAt), desc(forumPosts.createdAt)).limit(limit).offset(offset);
   return rows;
 }
 
-export async function getForumPost(id: number) {
+export async function getForumPost(id: number, opts?: { includeHidden?: boolean }) {
   const db = await getDb();
   if (!db) return null;
-  const [row] = await db.select().from(forumPosts).where(eq(forumPosts.id, id)).limit(1);
+  const where = opts?.includeHidden
+    ? eq(forumPosts.id, id)
+    : and(eq(forumPosts.id, id), eq(forumPosts.isHidden, false));
+  const [row] = await db.select().from(forumPosts).where(where).limit(1);
   if (row) {
     // Increment view count
     await db.update(forumPosts).set({ viewCount: row.viewCount + 1 }).where(eq(forumPosts.id, id));
@@ -2989,11 +2993,13 @@ export async function getForumPost(id: number) {
 }
 
 // Read-only fetch for the crawler content injector: no view-count increment,
-// so bot traffic never inflates community stats.
+// so bot traffic never inflates community stats. Hidden threads are not public.
 export async function getForumPostSnapshot(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const [row] = await db.select().from(forumPosts).where(eq(forumPosts.id, id)).limit(1);
+  const [row] = await db.select().from(forumPosts)
+    .where(and(eq(forumPosts.id, id), eq(forumPosts.isHidden, false)))
+    .limit(1);
   return row || null;
 }
 
@@ -3029,7 +3035,7 @@ export async function listForumPostsByTag(tag: string, limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.select().from(forumPosts)
-    .where(like(forumPosts.tags, `%${tag}%`))
+    .where(and(like(forumPosts.tags, `%${tag}%`), eq(forumPosts.isHidden, false)))
     .orderBy(desc(forumPosts.createdAt))
     .limit(limit)
     .offset(offset);
@@ -3049,7 +3055,10 @@ export async function listForumPostsByChainId(chainId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(forumPosts)
-    .where(or(eq(forumPosts.id, chainId), eq(forumPosts.chainId, chainId)))
+    .where(and(
+      or(eq(forumPosts.id, chainId), eq(forumPosts.chainId, chainId)),
+      eq(forumPosts.isHidden, false),
+    ))
     .orderBy(forumPosts.createdAt);
 }
 
@@ -3057,7 +3066,7 @@ export async function listForumChainPosts(limit = 50, offset = 0) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(forumPosts)
-    .where(isNotNull(forumPosts.threadStage))
+    .where(and(isNotNull(forumPosts.threadStage), eq(forumPosts.isHidden, false)))
     .orderBy(desc(forumPosts.createdAt))
     .limit(limit)
     .offset(offset);
@@ -3067,16 +3076,19 @@ export async function listForumPostsByType(postType: string, limit = 50, offset 
   const db = await getDb();
   if (!db) return [];
   return db.select().from(forumPosts)
-    .where(eq(forumPosts.postType, postType))
+    .where(and(eq(forumPosts.postType, postType), eq(forumPosts.isHidden, false)))
     .orderBy(desc(forumPosts.createdAt))
     .limit(limit)
     .offset(offset);
 }
 
-export async function listForumReplies(postId: number) {
+export async function listForumReplies(postId: number, opts?: { includeHidden?: boolean }) {
   const db = await getDb();
   if (!db) return [];
-  const rows = await db.select().from(forumReplies).where(eq(forumReplies.postId, postId)).orderBy(forumReplies.createdAt);
+  const where = opts?.includeHidden
+    ? eq(forumReplies.postId, postId)
+    : and(eq(forumReplies.postId, postId), eq(forumReplies.isHidden, false));
+  const rows = await db.select().from(forumReplies).where(where).orderBy(forumReplies.createdAt);
   return rows;
 }
 
@@ -3090,7 +3102,7 @@ export async function createForumReply(data: { postId: number; authorId: number;
     parentReplyId: data.parentReplyId || null,
   });
   // Update post reply count and last reply info
-  const post = await getForumPost(data.postId);
+  const post = await getForumPost(data.postId, { includeHidden: true });
   if (post) {
     await db.update(forumPosts).set({
       replyCount: post.replyCount + 1,
@@ -3154,6 +3166,7 @@ export async function getForumCategoryPostCounts() {
   const rows = await db
     .select({ categoryId: forumPosts.categoryId, count: sql<number>`count(*)` })
     .from(forumPosts)
+    .where(eq(forumPosts.isHidden, false))
     .groupBy(forumPosts.categoryId);
 
   const counts: Record<number, number> = {};
@@ -3193,7 +3206,7 @@ export async function deleteForumReply(id: number) {
     await db.delete(forumLikes).where(eq(forumLikes.replyId, id));
     await db.delete(forumReplies).where(eq(forumReplies.id, id));
     // Decrement post reply count
-    const post = await getForumPost(reply.postId);
+    const post = await getForumPost(reply.postId, { includeHidden: true });
     if (post && post.replyCount > 0) {
       await db.update(forumPosts).set({ replyCount: post.replyCount - 1 }).where(eq(forumPosts.id, reply.postId));
     }
@@ -3208,6 +3221,45 @@ export async function incrementReplyTriedThis(replyId: number): Promise<number> 
     .where(eq(forumReplies.id, replyId));
   const [updated] = await db.select({ triedThis: forumReplies.triedThis }).from(forumReplies).where(eq(forumReplies.id, replyId)).limit(1);
   return updated?.triedThis ?? 0;
+}
+
+export async function listHiddenForumPosts() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: forumPosts.id,
+    title: forumPosts.title,
+    authorId: forumPosts.authorId,
+    createdAt: forumPosts.createdAt,
+  }).from(forumPosts)
+    .where(eq(forumPosts.isHidden, true))
+    .orderBy(desc(forumPosts.id))
+    .limit(200);
+}
+
+export async function listHiddenForumReplies() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: forumReplies.id,
+    postId: forumReplies.postId,
+    content: forumReplies.content,
+    authorId: forumReplies.authorId,
+    createdAt: forumReplies.createdAt,
+  }).from(forumReplies)
+    .where(eq(forumReplies.isHidden, true))
+    .orderBy(desc(forumReplies.id))
+    .limit(200);
+}
+
+export async function setForumHidden(target: "post" | "reply", id: number, hidden: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  if (target === "post") {
+    await db.update(forumPosts).set({ isHidden: hidden }).where(eq(forumPosts.id, id));
+    return;
+  }
+  await db.update(forumReplies).set({ isHidden: hidden }).where(eq(forumReplies.id, id));
 }
 
 // ==========================================
@@ -3601,8 +3653,8 @@ export async function getUserForumStats(userId: number) {
   const forumProfile = await getForumProfile(userId);
 
   // Count likes received on user's posts and replies
-  const userPosts = await db.select().from(forumPosts).where(eq(forumPosts.authorId, userId));
-  const userReplies = await db.select().from(forumReplies).where(eq(forumReplies.authorId, userId));
+  const userPosts = await db.select().from(forumPosts).where(and(eq(forumPosts.authorId, userId), eq(forumPosts.isHidden, false)));
+  const userReplies = await db.select().from(forumReplies).where(and(eq(forumReplies.authorId, userId), eq(forumReplies.isHidden, false)));
 
   let likesReceived = 0;
   for (const post of userPosts) {
@@ -3626,14 +3678,14 @@ export async function getUserForumStats(userId: number) {
 export async function getUserRecentPosts(userId: number, limit = 10) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(forumPosts).where(eq(forumPosts.authorId, userId)).orderBy(desc(forumPosts.createdAt)).limit(limit);
+  return db.select().from(forumPosts).where(and(eq(forumPosts.authorId, userId), eq(forumPosts.isHidden, false))).orderBy(desc(forumPosts.createdAt)).limit(limit);
 }
 
 // Get user's recent replies
 export async function getUserRecentReplies(userId: number, limit = 10) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(forumReplies).where(eq(forumReplies.authorId, userId)).orderBy(desc(forumReplies.createdAt)).limit(limit);
+  return db.select().from(forumReplies).where(and(eq(forumReplies.authorId, userId), eq(forumReplies.isHidden, false))).orderBy(desc(forumReplies.createdAt)).limit(limit);
 }
 
 // â”€â”€â”€ Email Magic Link Token Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -3999,6 +4051,7 @@ export async function getRecentForumPostsForDigest(): Promise<{ id: number; titl
         // every demo body with this prefix); they are fictional teaching content
         // and must not reach subscriber digests as real community activity
         not(like(forumPosts.content, '[EXAMPLE%')),
+        eq(forumPosts.isHidden, false),
       )
     )
     .orderBy(desc(forumPosts.replyCount))

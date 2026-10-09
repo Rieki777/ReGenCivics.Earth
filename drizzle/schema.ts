@@ -2053,6 +2053,8 @@ export const forumPosts = mysqlTable("forumPosts", {
   // Optional Root-of-Capital a seeking-support post declares (0168). Feeds
   // the capitals-matching boost once the composer picker ships (Phase 3.3).
   capital: mysqlEnum("capital", ["intellectual", "social", "material", "financial", "living", "cultural", "spiritual", "experiential", "health"]),
+  /** Soft-hide. Public lists, threads, search, and the sitemap skip these. Admins can still open and unhide them. */
+  isHidden: boolean("isHidden").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
@@ -2077,6 +2079,8 @@ export const forumReplies = mysqlTable("forumReplies", {
   parentReplyId: int("parentReplyId"), // for nested replies
   triedThis: tinyint("triedThis").default(0).notNull(), // "I tried this" follow-up flag
   isOpenQuestion: tinyint("isOpenQuestion").default(0).notNull(), // moderator/author flag for sensing summary
+  /** Soft-hide. A hidden reply stays out of public threads and sensing summaries. */
+  isHidden: boolean("isHidden").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (t) => ({
