@@ -5,7 +5,8 @@
  * connection, so the eighth person at a market stall or in a household was
  * refused. checkOfferLimit counts a signed-in person on their account (20),
  * and a signed-out one on the connection (40 together) and on the connection
- * plus a hash of their email (7 each).
+ * plus a hash of their email's inbox (7 each). The person's own key is
+ * checked first, so their refused retries never use up the connection's 40.
  *
  * No Redis (the in-memory path) and no database: the limit runs before
  * submitContribution reads anything.
@@ -13,7 +14,8 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "./_core/context";
-import { OFFER_LIMITS, __resetKeyedLimitsForTests, checkOfferLimit } from "./rate-limit";
+import { OFFER_LIMITS, __resetKeyedLimitsForTests, checkOfferLimit, offerInboxForLimit } from "./rate-limit";
+import { canonicalInboxForLimit } from "./_core/oauth";
 import { OFFER_LIMIT } from "../shared/crowdpoolCopy";
 
 function ctx(ip: string, userId?: number): TrpcContext {
@@ -70,6 +72,43 @@ describe("checkOfferLimit", () => {
     expect(refused?.message).toBe(OFFER_LIMIT.connection(15));
     // Another connection is counted on its own.
     expect(await attempt(ctx("203.0.113.13"), "newcomer@b1-lane.invalid")).toBeNull();
+  });
+
+  it("one person's refused retries never use up the connection's room for everyone else", async () => {
+    const c = ctx("203.0.113.17");
+    for (let i = 0; i < 7; i++) expect(await attempt(c, "sam@b1-lane.invalid")).toBeNull();
+    // Sam keeps tapping Send: every retry waits, and none of them counts.
+    for (let i = 0; i < 33; i++) expect((await attempt(c, "sam@b1-lane.invalid"))?.code).toBe("TOO_MANY_REQUESTS");
+    // The 33 other offers the connection has room for all pass.
+    for (let i = 0; i < 33; i++) expect(await attempt(c, `neighbour${i}@b1-lane.invalid`)).toBeNull();
+    // And then the connection's 40 are used: the next new person waits.
+    expect((await attempt(c, "late.neighbour@b1-lane.invalid"))?.message).toBe(OFFER_LIMIT.connection(15));
+  });
+
+  it("a +tag or Gmail dots make no new person", async () => {
+    const c = ctx("203.0.113.18");
+    for (let i = 0; i < 7; i++) expect(await attempt(c, "sam@b1-lane.invalid")).toBeNull();
+    expect((await attempt(c, "sam+1@b1-lane.invalid"))?.code).toBe("TOO_MANY_REQUESTS");
+    expect((await attempt(c, "Sam+offers@B1-lane.invalid"))?.code).toBe("TOO_MANY_REQUESTS");
+    for (let i = 0; i < 7; i++) expect(await attempt(c, "ada.lovelace@gmail.com")).toBeNull();
+    expect((await attempt(c, "adalovelace+x@googlemail.com"))?.code).toBe("TOO_MANY_REQUESTS");
+    // A different person on the same connection still has room.
+    expect(await attempt(c, "samuel@b1-lane.invalid")).toBeNull();
+  });
+
+  it("folds an address the way the sign-in link limit does", () => {
+    for (const email of [
+      " Name+News@Example.Test ",
+      "n.a.me+x@gmail.com",
+      "n.ame@googlemail.com",
+      "n.ame@example.test",
+      "+only@example.test",
+      "no-at-sign",
+      "trailing@",
+    ]) {
+      expect(offerInboxForLimit(email)).toBe(canonicalInboxForLimit(email));
+    }
+    expect(offerInboxForLimit("N.A.M.E+1@googlemail.com")).toBe("name@gmail.com");
   });
 
   it("a signed-in account passes 20 and waits at 21 with the account copy, whatever its connection", async () => {

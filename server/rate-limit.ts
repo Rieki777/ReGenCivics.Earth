@@ -232,10 +232,41 @@ function minutesUntil(retryAfterMs: number): number {
 }
 
 /**
+ * The inbox an address lands in, for counting offers only: trimmed and
+ * lowercased, a "+tag" dropped, and the dots in a Gmail address dropped
+ * (googlemail.com is the same inbox). Without it, name+1@, name+2@ and
+ * n.ame@gmail.com each got a fresh 7 on one connection.
+ *
+ * The same rule as canonicalInboxForLimit in server/_core/oauth.ts, which
+ * counts sign-in links (OWASP-TOP10.md A07, review 2026-09-28). oauth.ts
+ * imports this module, so importing it back here would make a cycle through
+ * the database layer; server/offer-limit.test.ts checks the two agree.
+ */
+export function offerInboxForLimit(email: string): string {
+  const lower = email.trim().toLowerCase();
+  const at = lower.lastIndexOf("@");
+  if (at <= 0 || at === lower.length - 1) return lower;
+  let local = lower.slice(0, at);
+  let domain = lower.slice(at + 1);
+  const plus = local.indexOf("+");
+  if (plus > 0) local = local.slice(0, plus);
+  if (domain === "googlemail.com") domain = "gmail.com";
+  if (domain === "gmail.com") local = local.replace(/\./g, "") || local;
+  return `${local}@${domain}`;
+}
+
+/**
  * Throws TOO_MANY_REQUESTS with OFFER_LIMIT copy. Keys hold an account id,
- * an IP and a SHA-256 of the lowercased email, never the email itself.
- * checkKeyedLimit counts only what it lets through and fails open on a
- * Redis error, as the email-link limit does.
+ * an IP and a SHA-256 of the email's inbox (offerInboxForLimit), never the
+ * email itself. checkKeyedLimit counts only what it lets through and fails
+ * open on a Redis error, as the email-link limit does.
+ *
+ * Signed out, the person's own key is checked before the connection's. An
+ * offer the person's 7 refuses stops there, so it never uses up the 40 that
+ * everyone on the connection shares: one person tapping Send again and
+ * again, or one script, cannot lock a household out. The other way round,
+ * an offer refused because the connection is full has already counted on
+ * that person's own key, which only that person on that connection pays.
  */
 export async function checkOfferLimit(ctx: TrpcContext, email: string): Promise<void> {
   const { windowMs } = OFFER_LIMITS;
@@ -250,11 +281,11 @@ export async function checkOfferLimit(ctx: TrpcContext, email: string): Promise<
   }
 
   const ip = getClientIp(ctx.req);
-  const connection = await checkKeyedLimit(`offer:ip:${ip}`, OFFER_LIMITS.perConnection, windowMs);
-  if (!connection.allowed) throw refuse(connection.retryAfterMs, OFFER_LIMIT.connection);
-  const emailHash = createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
+  const emailHash = createHash("sha256").update(offerInboxForLimit(email)).digest("hex").slice(0, 32);
   const person = await checkKeyedLimit(`offer:ipmail:${ip}:${emailHash}`, OFFER_LIMITS.perConnectionAndEmail, windowMs);
   if (!person.allowed) throw refuse(person.retryAfterMs, OFFER_LIMIT.connection);
+  const connection = await checkKeyedLimit(`offer:ip:${ip}`, OFFER_LIMITS.perConnection, windowMs);
+  if (!connection.allowed) throw refuse(connection.retryAfterMs, OFFER_LIMIT.connection);
 }
 
 /** Tests only: forget every in-process keyed limit. */

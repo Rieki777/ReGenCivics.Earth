@@ -76,6 +76,9 @@ export const OFFER_FORM = {
   hours: (max: number) => `Hours a week need to be a whole number from 1 to ${max}.`,
   months: "Months need to be a whole number from 1 to 120.",
   value: "Enter a number for what it is worth, or leave it blank.",
+  valueTooHigh: "Enter a number up to 10,000,000, or leave it blank.",
+  /** A server input refusal that names no field the sheet shows. */
+  checkForm: "Couldn't send that. Check the form and try again.",
 } as const;
 
 /**

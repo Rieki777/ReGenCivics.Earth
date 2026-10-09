@@ -26,7 +26,7 @@ import {
 } from "@shared/crowdpoolCopy";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { AuthDialog } from "@/components/AuthDialog";
-import { FollowControl, isEmailLike } from "@/components/crowdpool/FollowControl";
+import { FollowControl } from "@/components/crowdpool/FollowControl";
 import { useReturnFocus } from "@/hooks/useReturnFocus";
 import { getReferralData } from "@/components/SharePrompt";
 import {
@@ -224,6 +224,52 @@ export function lendDateErrors(a: { until: string; from: string; neededFrom?: st
   else if (from && until < from) errors.until = GIVE_LEND.untilBeforeFrom;
   else if (neededFrom && until < neededFrom) errors.until = GIVE_LEND.untilBeforeNeed;
   return errors;
+}
+
+/**
+ * The address check submitContribution makes: its contributorEmail is
+ * z.string().email(), and this is zod's own email pattern, copied so the
+ * sheet does not ship zod. A looser check let "sam@mail.c" past the field
+ * and the server's refusal came back as raw text above Send.
+ * ContributionModal.test.tsx pins it to z.regexes.email.
+ */
+export const OFFER_EMAIL_PATTERN = /^(?:[A-Za-z0-9_'+\-]+\.)*[A-Za-z0-9_'+\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
+
+/** True when the server will take this address. */
+export function isOfferEmail(value: string): boolean {
+  return OFFER_EMAIL_PATTERN.test(value.trim());
+}
+
+/** The most submitContribution takes for estimatedValue (z.number().max). */
+export const MAX_OFFER_VALUE = 10_000_000;
+
+/** submitContribution's input fields that the sheet shows, by the sheet's name. */
+const INPUT_FIELDS: Record<string, { field: OfferField; message: string }> = {
+  contributorEmail: { field: 'email', message: OFFER_FORM.emailInvalid },
+  hoursPerWeek: { field: 'hours', message: OFFER_FORM.hours(MAX_OFFER_HOURS) },
+  durationMonths: { field: 'months', message: OFFER_FORM.months },
+  estimatedValue: { field: 'value', message: OFFER_FORM.valueTooHigh },
+};
+
+/**
+ * A refusal from the server's input check in words a person can act on.
+ * tRPC sends that refusal's message as zod's issue list in JSON, which reads
+ * as code. The first issue goes on its field when the sheet has one, or
+ * becomes a plain line above Send. Null for every other refusal (the offer
+ * limit, a filled need, a date), which already reads as words.
+ */
+export function inputRefusal(message: string): { field: OfferField | null; message: string } | null {
+  if (!message.trimStart().startsWith('[')) return null;
+  let issues: unknown;
+  try {
+    issues = JSON.parse(message);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(issues) || issues.length === 0) return null;
+  const first = issues[0] as { path?: unknown } | null;
+  const key = first && Array.isArray(first.path) ? String(first.path[0] ?? '') : '';
+  return INPUT_FIELDS[key] ?? { field: null, message: OFFER_FORM.checkForm };
 }
 
 /** The server's date refusals that belong on the until field (or, for a past start, on from). */
@@ -456,6 +502,24 @@ export function ContributionModal({
     // Every value the person typed stays on any refusal. A date refusal goes
     // on its field; anything else shows above Send. The toast stays too.
     onError: (error) => {
+      // The server's input check answers in zod's issue list: never show
+      // that. Its message goes on the field it names when the sheet shows
+      // that field, and above Send otherwise.
+      const refusal = inputRefusal(error.message || '');
+      if (refusal) {
+        const field = refusal.field;
+        const shown = !!field && FIELD_ELEMENT_IDS[field].some((id) => !!detailsRef.current?.querySelector(`[id="${id}"]`));
+        if (field && shown) {
+          toast.error(refusal.message);
+          const errors: OfferFieldErrors = { [field]: refusal.message };
+          setFieldErrors((f) => ({ ...f, ...errors }));
+          focusFirstError(errors);
+        } else {
+          toast.error(OFFER_FORM.checkForm);
+          setSubmitError(OFFER_FORM.checkForm);
+        }
+        return;
+      }
       const message = error.message || "Couldn't send that. Try again.";
       toast.error(message);
       const field = lending ? serverDateField(message, { from: lendFrom, until: lendUntil }) : null;
@@ -564,7 +628,7 @@ export function ContributionModal({
     const email = contributorEmail.trim();
     if (!contributorName.trim()) errors.name = OFFER_FORM.nameMissing;
     if (!email) errors.email = OFFER_FORM.emailMissing;
-    else if (!isEmailLike(email)) errors.email = OFFER_FORM.emailInvalid;
+    else if (!isOfferEmail(email)) errors.email = OFFER_FORM.emailInvalid;
     // Give or lend (spec 6.2), and a lend's dates against the person's own day.
     if (bothModes && !offerMode) errors.mode = GIVE_LEND.chooseError;
     if (lending) {
@@ -591,13 +655,15 @@ export function ContributionModal({
     // rough value, which may be left blank (0).
     let value = 0;
     if (need) {
-      value = hoursNeed && offerHours !== undefined
+      // Ignored by the server, so kept inside what its input check takes.
+      value = Math.min(MAX_OFFER_VALUE, hoursNeed && offerHours !== undefined
         ? Math.round(offerValue(need, offerHours))
-        : Math.max(0, Math.round(Number(estimatedValue) || 0));
+        : Math.max(0, Math.round(Number(estimatedValue) || 0)));
     } else {
       const raw = estimatedValue.trim();
       const n = raw === '' ? 0 : Number(raw);
       if (!Number.isFinite(n) || n < 0) errors.value = OFFER_FORM.value;
+      else if (Math.round(n) > MAX_OFFER_VALUE) errors.value = OFFER_FORM.valueTooHigh;
       else value = Math.round(n);
     }
 
@@ -802,6 +868,7 @@ export function ContributionModal({
                   <Input
                     id="name"
                     autoComplete="name"
+                    maxLength={255}
                     value={contributorName}
                     onChange={(e) => { setContributorName(e.target.value); clearError('name'); }}
                     aria-invalid={fieldErrors.name ? true : undefined}
@@ -962,6 +1029,7 @@ export function ContributionModal({
                 <Label htmlFor="title">{contributionType === 'knowledge' ? 'Topic *' : 'Title *'}</Label>
                 <Input
                   id="title"
+                  maxLength={255}
                   value={title}
                   onChange={(e) => { setTitle(e.target.value); clearError('title'); }}
                   aria-invalid={fieldErrors.title ? true : undefined}

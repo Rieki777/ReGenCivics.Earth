@@ -1,9 +1,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ContributionModal, lendDateErrors, serverDateField, type ContributionNeed } from './ContributionModal';
+import { z } from 'zod';
+import {
+  ContributionModal,
+  MAX_OFFER_VALUE,
+  OFFER_EMAIL_PATTERN,
+  inputRefusal,
+  isOfferEmail,
+  lendDateErrors,
+  serverDateField,
+  type ContributionNeed,
+} from './ContributionModal';
 import { FOLLOW, GIVE_LEND, LINK, OFFER_FORM, OFFER_LIMIT, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
 import { dayBefore, localToday } from '@shared/crowdpoolNeedAction';
+
+/**
+ * What tRPC sends when submitContribution's input check refuses: zod's
+ * issue list as JSON text (the fields and rules as campaigns.ts has them).
+ */
+function zodRefusal(input: Record<string, unknown>): string {
+  const schema = z.object({
+    contributorName: z.string().min(1).max(255).optional(),
+    contributorEmail: z.string().email().optional(),
+    hoursPerWeek: z.number().int().min(1).max(168).optional(),
+    durationMonths: z.number().int().min(1).max(120).optional(),
+    estimatedValue: z.number().min(0).max(10_000_000).optional(),
+  });
+  const result = schema.safeParse(input);
+  if (result.success) throw new Error('expected a refusal');
+  return result.error.message;
+}
 
 const mockMutate = vi.fn();
 const mockMutateAsync = vi.fn();
@@ -412,6 +439,86 @@ describe('ContributionModal', () => {
       // Sending again clears it until the server answers.
       fireEvent.click(send);
       expect(screen.queryByTestId('offer-submit-error')).toBeNull();
+    });
+
+    it('an address the server would refuse gets the email message, and nothing is sent', async () => {
+      for (const address of ['sam@mail.c', 'sam..x@mail.com', 'jose@exämple.com']) {
+        const { unmount } = render(<ContributionModal {...defaultProps} need={seedTrays} />);
+        fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Sam' } });
+        fireEvent.change(screen.getByLabelText('Email *'), { target: { value: address } });
+        fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+        expect(screen.getByText(OFFER_FORM.emailInvalid)).toBeDefined();
+        await waitFor(() => expect(screen.getByLabelText('Email *')).toHaveFocus());
+        unmount();
+      }
+      expect(mockMutate).not.toHaveBeenCalled();
+    });
+
+    it('a freeform value over what the server takes shows on the value field', async () => {
+      const user = userEvent.setup();
+      render(<ContributionModal {...defaultProps} />);
+      await user.click(screen.getByRole('button', { name: /Materials or supplies/ }));
+      fillContact();
+      fireEvent.change(screen.getByLabelText('Title *'), { target: { value: 'Compost' } });
+      fireEvent.change(screen.getByLabelText('Roughly what is it worth? (optional)'), { target: { value: String(MAX_OFFER_VALUE + 1) } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(screen.getByText(OFFER_FORM.valueTooHigh)).toBeDefined();
+      expect(mockMutate).not.toHaveBeenCalled();
+      // Exactly the most goes through.
+      fireEvent.change(screen.getByLabelText('Roughly what is it worth? (optional)'), { target: { value: String(MAX_OFFER_VALUE) } });
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      expect(mockMutate.mock.calls[0][0]).toMatchObject({ estimatedValue: MAX_OFFER_VALUE });
+    });
+
+    it("the server's input check never shows as raw text: the email issue goes on the email field", async () => {
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      fillContact();
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      const zodText = zodRefusal({ contributorEmail: 'sam@mail.c' });
+      act(() => submitOnError?.({ message: zodText, data: { code: 'BAD_REQUEST' } }));
+      expect(document.getElementById('offer-email-error')?.textContent).toBe(OFFER_FORM.emailInvalid);
+      await waitFor(() => expect(screen.getByLabelText('Email *')).toHaveFocus());
+      expect(screen.queryByTestId('offer-submit-error')).toBeNull();
+      expect(document.body.textContent).not.toContain('invalid_format');
+      expect(toastMock.error).toHaveBeenCalledWith(OFFER_FORM.emailInvalid);
+      expect(toastMock.error).not.toHaveBeenCalledWith(zodText);
+      expect((screen.getByLabelText('Name *') as HTMLInputElement).value).toBe('Ada');
+    });
+
+    it('an input issue on a field the sheet does not show becomes a plain line above Send', () => {
+      render(<ContributionModal {...defaultProps} need={seedTrays} />);
+      fillContact();
+      fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
+      // An offer on a need has no value field.
+      const zodText = zodRefusal({ estimatedValue: MAX_OFFER_VALUE + 1 });
+      act(() => submitOnError?.({ message: zodText, data: { code: 'BAD_REQUEST' } }));
+      expect(screen.getByTestId('offer-submit-error').textContent).toBe(OFFER_FORM.checkForm);
+      expect(document.body.textContent).not.toContain('too_big');
+      expect(toastMock.error).toHaveBeenCalledWith(OFFER_FORM.checkForm);
+    });
+  });
+
+  describe('the email check and the input refusal', () => {
+    it("checks an address with zod's own email pattern, the one submitContribution uses", () => {
+      expect(OFFER_EMAIL_PATTERN.source).toBe(z.regexes.email.source);
+      const server = z.string().email();
+      for (const address of [
+        'ada@example.com', 'a.b+c@x.co', "o'neil@x.ie", 'sam@x-y.com', ' ada@example.com ',
+        'sam@mail.c', 'sam..x@mail.com', 'jose@exämple.com', '.sam@x.com', 'sam.@x.com', 'sam@-x.com', 'ada@example', 'ada example.com', '',
+      ]) {
+        expect(isOfferEmail(address)).toBe(server.safeParse(address.trim()).success);
+      }
+    });
+
+    it('reads a zod issue list and leaves every other refusal alone', () => {
+      expect(inputRefusal(zodRefusal({ contributorEmail: 'x@y.c' }))).toEqual({ field: 'email', message: OFFER_FORM.emailInvalid });
+      expect(inputRefusal(zodRefusal({ hoursPerWeek: 500 }))).toEqual({ field: 'hours', message: OFFER_FORM.hours(168) });
+      expect(inputRefusal(zodRefusal({ durationMonths: 500 }))).toEqual({ field: 'months', message: OFFER_FORM.months });
+      expect(inputRefusal(zodRefusal({ estimatedValue: MAX_OFFER_VALUE + 1 }))).toEqual({ field: 'value', message: OFFER_FORM.valueTooHigh });
+      expect(inputRefusal(zodRefusal({ contributorName: 'x'.repeat(300) }))).toEqual({ field: null, message: OFFER_FORM.checkForm });
+      expect(inputRefusal('[not json')).toBeNull();
+      expect(inputRefusal(OFFER_LIMIT.connection(3))).toBeNull();
+      expect(inputRefusal(GIVE_LEND.pastDate)).toBeNull();
     });
   });
 
