@@ -166,7 +166,12 @@ function scrollToGetNotified() {
   document.getElementById(GET_NOTIFIED_ID)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function GetNotified() {
+/**
+ * Hear when crowdpooling opens. "card" is the dark card at the page foot;
+ * "panel" is the light box inside the Needs tab's white card, where the dark
+ * card's heading and label would read dark green on dark green (C5).
+ */
+function GetNotified({ variant = "card" }: { variant?: "card" | "panel" }) {
   // A project page with no campaign links here as /campaigns#get-notified.
   // wouter navigation never scrolls to a hash, so do it once this mounts.
   useEffect(() => {
@@ -177,7 +182,7 @@ function GetNotified() {
 
   return (
     <div id="get-notified" className="scroll-mt-24">
-      <FollowControl mode="season" variant="card" />
+      <FollowControl mode="season" variant={variant} />
     </div>
   );
 }
@@ -488,7 +493,7 @@ export default function CrowdPoolingProjects() {
             <NeedsTab
               data={openNeeds}
               isLoading={needsLoading}
-              notifyForm={<GetNotified />}
+              notifyForm={<GetNotified variant="panel" />}
             />
           )}
 

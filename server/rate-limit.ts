@@ -4,10 +4,12 @@
  * Falls back to an in-memory Map when Redis is not connected.
  * Limits form submissions per IP address to prevent spam.
  */
+import { createHash } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "./_core/context";
 import { redisKeyedLimit, redisRateLimit, isCacheAvailable } from "./cache";
 import { clientIp } from "./_core/client-ip";
+import { OFFER_LIMIT } from "../shared/crowdpoolCopy";
 
 // Configuration
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
@@ -206,6 +208,53 @@ export async function checkKeyedLimit(
     ? await redisKeyedLimit(key, max, windowMs)
     : memoryRateLimit(key, max, windowMs, keyedStore);
   return { allowed, retryAfterMs: allowed ? 0 : Math.max(0, resetAt - Date.now()) };
+}
+
+/**
+ * Offer limits (C6): a household or a market stall shares one connection.
+ *
+ * Offers used to share the one-shot form limit, 7 per 15 minutes per
+ * connection, so the eighth person at a market stall was told to contact us
+ * directly. Now a signed-in person counts on their own account, and on a
+ * shared connection each email gets 7 inside a roomier 40 for the whole
+ * connection (build spec 2026-10-01, section 8.2).
+ */
+export const OFFER_LIMITS = {
+  windowMs: 15 * 60 * 1000,
+  perAccount: 20,              // signed in: counted per account
+  perConnection: 40,           // signed out: everyone on one connection together
+  perConnectionAndEmail: 7,    // signed out: one person on that connection
+} as const;
+
+/** Whole minutes until one more offer would pass, never less than 1. */
+function minutesUntil(retryAfterMs: number): number {
+  return Math.max(1, Math.ceil(retryAfterMs / 60_000));
+}
+
+/**
+ * Throws TOO_MANY_REQUESTS with OFFER_LIMIT copy. Keys hold an account id,
+ * an IP and a SHA-256 of the lowercased email, never the email itself.
+ * checkKeyedLimit counts only what it lets through and fails open on a
+ * Redis error, as the email-link limit does.
+ */
+export async function checkOfferLimit(ctx: TrpcContext, email: string): Promise<void> {
+  const { windowMs } = OFFER_LIMITS;
+  const refuse = (retryAfterMs: number, copy: (m: number) => string) =>
+    new TRPCError({ code: "TOO_MANY_REQUESTS", message: copy(minutesUntil(retryAfterMs)) });
+
+  const accountId = ctx.user?.id;
+  if (accountId != null) {
+    const account = await checkKeyedLimit(`offer:acct:${accountId}`, OFFER_LIMITS.perAccount, windowMs);
+    if (!account.allowed) throw refuse(account.retryAfterMs, OFFER_LIMIT.account);
+    return;
+  }
+
+  const ip = getClientIp(ctx.req);
+  const connection = await checkKeyedLimit(`offer:ip:${ip}`, OFFER_LIMITS.perConnection, windowMs);
+  if (!connection.allowed) throw refuse(connection.retryAfterMs, OFFER_LIMIT.connection);
+  const emailHash = createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
+  const person = await checkKeyedLimit(`offer:ipmail:${ip}:${emailHash}`, OFFER_LIMITS.perConnectionAndEmail, windowMs);
+  if (!person.allowed) throw refuse(person.retryAfterMs, OFFER_LIMIT.connection);
 }
 
 /** Tests only: forget every in-process keyed limit. */

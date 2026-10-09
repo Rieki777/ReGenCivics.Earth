@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ContributionModal, lendDateErrors, serverDateField, type ContributionNeed } from './ContributionModal';
-import { FOLLOW, GIVE_LEND, LINK, OFFER_FORM, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
+import { FOLLOW, GIVE_LEND, LINK, OFFER_FORM, OFFER_LIMIT, TOKEN_HELD_LINE, TOKEN_LINE, TOKEN_PRACTICE_LINE, LOAN_RISK_LINE } from '@shared/crowdpoolCopy';
 import { dayBefore, localToday } from '@shared/crowdpoolNeedAction';
 
 const mockMutate = vi.fn();
@@ -397,7 +397,7 @@ describe('ContributionModal', () => {
       fillContact();
       fireEvent.click(screen.getByRole('button', { name: 'Send my offer' }));
       expect(mockMutate).toHaveBeenCalledTimes(1);
-      const message = 'Lots of offers from this connection just now. Your form is kept. Try again in 12 minutes.';
+      const message = OFFER_LIMIT.connection(12);
       act(() => submitOnError?.({ message, data: { code: 'TOO_MANY_REQUESTS' } }));
       const block = screen.getByTestId('offer-submit-error');
       expect(block).toHaveAttribute('role', 'alert');

@@ -23,12 +23,13 @@
  */
 
 import { realOffer } from "./test-fixtures/crowdpool";
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterAll } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { appRouter } from './routers';
 import * as dbHelpers from './db';
 import type { TrpcContext } from './_core/context';
 import { adminCaller, cleanupFixtureApplications, createApprovedApplication } from './test-fixtures/crowdpool';
+import { __resetKeyedLimitsForTests } from './rate-limit';
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 
@@ -74,7 +75,12 @@ function ctxFor(userId: number, ip: string): TrpcContext {
   };
 }
 
-/** A fresh IP per submission: the rate limiter is 7 per 15 min per IP+action. */
+/**
+ * A fresh IP per submission, from when offers were limited per IP. Every
+ * offer here is the one signed-in STEWARD_ID, and offers now count per account
+ * (20 per 15 minutes, server/rate-limit.ts checkOfferLimit), so the keyed
+ * limits are reset before each test: this suite attacks the money, not the limit.
+ */
 let ipCounter = 0;
 const nextIp = () => `10.90.${Math.floor(ipCounter / 250) % 250}.${(ipCounter++ % 250) + 1}`;
 
@@ -147,6 +153,8 @@ async function itemRow(itemId: number) {
 async function campaignRow(campaignId: number) {
   return (await dbHelpers.getCampaignById(campaignId))!;
 }
+
+beforeEach(() => __resetKeyedLimitsForTests());
 
 beforeAll(async () => {
   if (skipIfNoDb) return;

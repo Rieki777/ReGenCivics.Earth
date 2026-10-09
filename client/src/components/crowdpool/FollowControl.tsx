@@ -17,8 +17,8 @@
  *
  * Season mode joins the season's crowdpool waitlist (campaigns.joinWaitlist;
  * the server picks the season): one button when signed in, an email field
- * when signed out. It sits on the gallery, the Needs tab and the practice
- * receipt.
+ * when signed out. It sits on the gallery (the dark card), the Needs tab (the
+ * light panel) and the practice receipt.
  *
  * Every control is 44px tall, every field has a visible label, errors sit
  * under the field with role="alert", and confirmations land in a polite live
@@ -51,7 +51,13 @@ export type FollowControlProps =
     }
   | {
       mode: "season";
-      variant: "card" | "receipt";
+      /**
+       * "card": the dark card at the gallery's foot. "panel": a light box for
+       * a white surface such as the Needs tab, where the white card's form
+       * styles would paint the dark card's heading dark green on dark green.
+       * "receipt": inside the practice receipt.
+       */
+      variant: "card" | "panel" | "receipt";
       heading?: string;
       defaultEmail?: string;
     };
@@ -343,10 +349,25 @@ function SeasonFallback({ variant, projectName, isExample, defaultEmail }: {
 // ── Season mode ──────────────────────────────────────────────────────────────
 
 function SeasonFollow({ variant, heading, defaultEmail }: {
-  variant: "card" | "receipt";
+  variant: "card" | "panel" | "receipt";
   heading?: string;
   defaultEmail?: string;
 }) {
+  if (variant === "panel") {
+    // Light on light, so it reads inside a white form card (build spec
+    // 2026-10-01, section 8.1). The body shows signed out, as on the card.
+    return (
+      <div className="rounded-2xl border border-[#4a7c59]/30 bg-[#f0f7f0] p-4 sm:p-6">
+        <div className="flex items-start gap-3 mb-2">
+          <Bell className="w-5 h-5 mt-1 flex-shrink-0 text-[#2d5a3d]" aria-hidden="true" />
+          <h3 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: "var(--font-display)" }}>
+            {heading ?? FOLLOW.seasonHeading}
+          </h3>
+        </div>
+        <SeasonForm tone="light" defaultEmail={defaultEmail} />
+      </div>
+    );
+  }
   if (variant === "card") {
     return (
       <div className="bg-gradient-to-br from-[#0d2818] to-[#1a472a] border border-[#7dd87d]/20 rounded-2xl p-6 sm:p-8 text-center">

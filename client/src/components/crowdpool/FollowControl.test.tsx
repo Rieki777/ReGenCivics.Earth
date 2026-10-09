@@ -277,6 +277,25 @@ describe("FollowControl", () => {
       expect(called("joinWaitlist")).not.toHaveBeenCalled();
     });
 
+    // Build spec 2026-10-01, section 8.1 (C5): inside the Needs tab's white
+    // card, the dark card's heading read dark green on dark green.
+    it("the panel is light: its heading and a labelled email field, and nothing drawn in white", async () => {
+      const user = userEvent.setup();
+      const { container } = render(<FollowControl mode="season" variant="panel" />);
+      const heading = screen.getByRole("heading", { name: FOLLOW.seasonHeading });
+      expect(heading.tagName).toBe("H3");
+      expect(heading.className).not.toContain("text-white");
+      expect(heading.className).toContain("text-[#1a472a]");
+      expect(container.firstElementChild?.className).toContain("bg-[#f0f7f0]");
+      expect(screen.getByText(FOLLOW.seasonBody)).toBeInTheDocument();
+      const label = screen.getByText(FOLLOW.emailLabel);
+      expect(label.className).not.toContain("text-white");
+      expect(container.querySelector('[class*="text-white"]:not(button)')).toBeNull();
+      await user.type(screen.getByLabelText(FOLLOW.emailLabel), "sam@example.com");
+      await user.click(screen.getByRole("button", { name: FOLLOW.seasonSubmit }));
+      expect(called("joinWaitlist")).toHaveBeenCalledWith({ email: "sam@example.com" });
+    });
+
     it("a failed save says so under the field", async () => {
       const user = userEvent.setup();
       const { container } = render(<FollowControl mode="season" variant="card" defaultEmail="sam@example.com" />);

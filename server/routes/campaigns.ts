@@ -13,7 +13,7 @@ import {
   applications as applicationsTable,
   CrowdPoolingProject,
 } from "../../drizzle/schema";
-import { checkRateLimit } from "../rate-limit";
+import { checkOfferLimit, checkRateLimit } from "../rate-limit";
 import { isAdminUser, pickPublic } from "../lib/public-projection";
 import type { TrpcContext } from "../_core/context";
 import type { Campaign, CampaignContribution } from "../../drizzle/schema";
@@ -1541,7 +1541,10 @@ export const campaignsRouter = router({
       lendTerms: z.string().max(300).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await checkRateLimit(ctx, "campaign_contribution");
+      // Offers count per account when signed in, and per connection and per
+      // email on a shared connection (build spec 2026-10-01, section 8.2).
+      // Before the campaign read, so practice runs count too.
+      await checkOfferLimit(ctx, input.contributorEmail);
       // Verify campaign exists and is active
       const campaign = await db.getCampaignById(input.campaignId);
       if (!campaign) {

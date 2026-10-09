@@ -78,6 +78,16 @@ export const OFFER_FORM = {
   value: "Enter a number for what it is worth, or leave it blank.",
 } as const;
 
+/**
+ * When the offer limit says wait (server/rate-limit.ts checkOfferLimit). A
+ * household or a market stall shares one connection, so the words name the
+ * connection or the account, never the person, and say the form is kept.
+ */
+export const OFFER_LIMIT = {
+  connection: (m: number) => `Lots of offers from this connection just now. Your form is kept. Try again in ${m} minute${m === 1 ? "" : "s"}.`,
+  account: (m: number) => `Lots of offers from your account just now. Your form is kept. Try again in ${m} minute${m === 1 ? "" : "s"}.`,
+} as const;
+
 // ── The project page (section 8) ────────────────────────────────────────────
 
 export const ASKS_NO_MONEY = "This project asks for no money";
