@@ -171,7 +171,7 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
   // something else server-renders a header into the body.
   it.each([
     ["/season2", "thirteen regenerative land projects"],
-    ["/crowd-pooling", "money, land, skills, time and knowledge"],
+    ["/crowd-pooling", "Crowd pooling on this page is a character sheet"],
     ["/game-mechanics", "visible and tunable"],
     ["/connect", "which path calls to you"],
     ["/play", "five minutes or five years"],
