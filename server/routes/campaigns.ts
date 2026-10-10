@@ -177,7 +177,7 @@ const STATUS_WORDS: Record<string, string> = {
  * Withheld: `adminNotes`, `reviewedBy` and `reviewedAt`, the review trail.
  * `adminNotes` is where reviewers write what they actually think of a
  * project, and it rode out on every campaign card in the gallery. Also
- * withheld (0295): `stewardReviewNote` and `sentBackAt`, the send-back note
+ * withheld (0296): `stewardReviewNote` and `sentBackAt`, the send-back note
  * and its date, which only the stewards read (campaigns.getReviewNote).
  *
  * `userId` stays: the client compares it to decide whether to show the

@@ -1278,7 +1278,7 @@ export const campaigns = mysqlTable("campaigns", {
   adminNotes: text("adminNotes"), // Admin review notes
   reviewedBy: int("reviewedBy"), // Admin who reviewed
   reviewedAt: timestamp("reviewedAt"),
-  // (0295) "Send back for changes": the reviewer's note the stewards read
+  // (0296) "Send back for changes": the reviewer's note the stewards read
   // (campaigns.getReviewNote) and when it was last sent back. Never public.
   stewardReviewNote: text("stewardReviewNote"),
   sentBackAt: timestamp("sentBackAt"),

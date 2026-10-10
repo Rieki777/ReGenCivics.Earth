@@ -1,6 +1,6 @@
 /**
  * A way back for a campaign the review team sends back (bundle 1, item 9,
- * migration 0295).
+ * migration 0296).
  *
  * The admin's "Send back for changes" moves a campaign in review to draft,
  * keeps the reviewer's note in campaigns.stewardReviewNote (and adminNotes,

@@ -7,7 +7,7 @@
 --
 -- Safe to apply before the deploy: old code writes and reads neither column.
 -- Deploys do not run migrations.
---   npx tsx scripts/run-migration.ts drizzle/0295_campaign_send_back.sql
+--   npx tsx scripts/run-migration.ts drizzle/0296_campaign_send_back.sql
 
 ALTER TABLE `campaigns`
   ADD COLUMN `stewardReviewNote` TEXT NULL DEFAULT NULL,
