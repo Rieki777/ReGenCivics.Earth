@@ -2,6 +2,12 @@
  * Land Projects Path - Biofi-style continuous background
  * Sections: Hero, What You Receive, Apply for Season (criteria + paths),
  * Featured Land Projects Showcase, Journey, Resources, CTA
+ *
+ * The land projects front page links the creator path (bundle 1, section
+ * 16.3): the apply buttons follow the intake window (APPLY_BUTTON_LABEL), and
+ * Crowdpooling Readiness and "Ready to Begin?" link what the review checks
+ * (READINESS_HREF, the creator front door at /create-campaign#ready), the
+ * example campaigns, the campaign wizard and Village OS.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -10,9 +16,13 @@ import {
   APPLICATIONS,
   APPLICATIONS_SHORT,
   APPLICATIONS_STATUS,
+  APPLY_BUTTON_LABEL,
   FOLLOW_ALONG_HREF,
   FOLLOW_ALONG_LABEL,
 } from "@shared/applicationWindow";
+import { READINESS_HREF } from "@shared/crowdpoolReadiness";
+import { MONEY_ROUTE_LINE } from "@shared/crowdpoolCopy";
+import { VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import { Button } from "@/components/ui/button";
 import { analytics } from "@/lib/analytics";
 import { ReadableScrim } from "@/components/ReadableScrim";
@@ -57,6 +67,9 @@ import { LazyImage } from "@/components/LazyImage";
 import { RelatedContent, relatedContentMap } from "@/components/RelatedContent";
 import { StickyThumbCta } from "@/components/StickyThumbCta";
 import { cdnImg } from "@/lib/utils";
+
+/** A text link on the dark glass panels, at a 44px tap height. */
+const landLink = "inline-flex min-h-11 items-center font-semibold text-[#7dd87d] underline underline-offset-4 hover:text-[#a8e6a8]";
 
 function CollapsibleSection({
   title,
@@ -279,7 +292,7 @@ export default function Land() {
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
                   <Sprout className="w-5 h-5 mr-2" />
-                  Apply for Next Season
+                  {APPLY_BUTTON_LABEL}
                 </Button>
               </Link>
               <Link href="/schedule">
@@ -356,11 +369,17 @@ export default function Land() {
               <CollapsibleSection title="Crowdpooling Readiness" icon={Wallet}>
                 <p>
                   We help you get ready to raise support through economic modeling, impact metrics,
-                  legal structure, and governance design. Graduating projects launch their crowdpooling
-                  campaigns together at the March equinox, where people bring time, things, skills,
-                  land and money. Money goes through outside partners each project holds, never through
-                  ReGen Civics.
+                  legal structure, and governance design. Accepted projects with the eight in place run
+                  their campaigns together at the March equinox by default, the Season 2 cohort and
+                  community projects alike. People bring time, things, skills, land and money.{" "}
+                  {MONEY_ROUTE_LINE}
                 </p>
+                <ul className="mt-3 flex flex-col">
+                  <li><Link href={READINESS_HREF} className={landLink}>See the eight things the review checks</Link></li>
+                  <li><Link href="/campaigns" className={landLink}>See example campaigns</Link></li>
+                  <li><Link href="/create-campaign" className={landLink}>Already accepted? Start your campaign</Link></li>
+                  <li><Link href={VILLAGE_OS_PATH} className={landLink}>Get your Village OS</Link></li>
+                </ul>
               </CollapsibleSection>
             </AnimatedSection>
 
@@ -1079,7 +1098,7 @@ export default function Land() {
                     className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold px-8 py-4 text-lg h-auto"
                     style={{ fontFamily: "var(--font-accent)" }}
                   >
-                    Apply for Next Season
+                    {APPLY_BUTTON_LABEL}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
@@ -1094,6 +1113,9 @@ export default function Land() {
                   </Button>
                 </Link>
               </div>
+              <Link href={READINESS_HREF} className={`${landLink} mt-4 justify-center`}>
+                See the eight things the review checks
+              </Link>
             </div>
           </AnimatedSection>
 

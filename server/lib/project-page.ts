@@ -7,9 +7,13 @@
  * crawler and a link preview see can never drift apart (build spec
  * 2026-09-25, section 8.8). Moved here unchanged from projects.getPublic.
  *
- * Privacy: from the application only id, projectName, location, country and
- * status are read, and only projectName, location and country leave the
- * server. The front campaign is built by buildCampaignView, the same
+ * Privacy: from the application only id, projectName, location, country,
+ * status, season, userId and stewardUserId are read, and only projectName,
+ * location and country leave the server for every viewer. The project's
+ * stewards also get stewardStart (the application's status and season, and
+ * whether they may start a campaign), so the page can name their next step
+ * before a campaign exists (bundle 1, section 16.3). userId and
+ * stewardUserId never leave. The front campaign is built by buildCampaignView, the same
  * function as campaigns.getById, so visitors see exactly the fields a
  * campaign already publishes (PUBLIC_CAMPAIGN_FIELDS). Crawlers and share
  * cards call this with no user, so they see public campaigns only.
@@ -21,6 +25,7 @@ import { applications, campaigns as campaignsTable, type Campaign } from "../../
 import type { TrpcContext } from "../_core/context";
 import { parseProjectKey, projectPathForApplication, projectPathForCampaign, projectPathForCampaignFocus, projectRefFor } from "../../shared/projectKey";
 import { canStewardApplication, canStewardCampaign, isPublicCampaign } from "./project-steward";
+import { isAdminUser } from "./public-projection";
 import { suggestAlternatives } from "./campaign-suggest";
 import { buildCampaignView, progressSummariesFor } from "../routes/campaigns";
 import { buildStewardQueue } from "../../shared/stewardQueue";
@@ -67,6 +72,35 @@ export function pickFrontCampaign(visible: Campaign[], isSteward: boolean, focus
     ?? null;
 }
 
+/**
+ * What a project's steward sees before a campaign exists: the application's
+ * status and season, and whether they may start a campaign. `canStart` is
+ * the rule campaigns.create enforces (server/routes/campaigns.ts): admins, or
+ * the applicant or stewardUserId once the application is approved or active.
+ * An approved org claim holder steers the campaign tools but cannot start one
+ * (section 15, question 14), so their panel says to ask the lead steward.
+ */
+export type StewardStart = {
+  applicationStatus: string;
+  applicationSeason: number | null;
+  canStart: boolean;
+};
+
+export function stewardStartFor(
+  user: SessionUser,
+  isSteward: boolean,
+  app: { status: string; season: number | null; userId: number; stewardUserId: number | null } | null,
+): StewardStart | null {
+  if (!isSteward || !app || !user) return null;
+  const accepted = app.status === "approved" || app.status === "active";
+  const ownsIt = user.id === app.userId || (app.stewardUserId != null && user.id === app.stewardUserId);
+  return {
+    applicationStatus: app.status,
+    applicationSeason: app.season ?? null,
+    canStart: isAdminUser(user) || (ownsIt && accepted),
+  };
+}
+
 /** The project page for `key`, as the viewer may see it. Throws NOT_FOUND when there is none. */
 export async function resolveProjectPage({ key, user, focusId }: { key: string; user: SessionUser; focusId?: number | null }) {
   const notFound = () => new TRPCError({ code: "NOT_FOUND", message: "We couldn't find that project." });
@@ -86,7 +120,16 @@ export async function resolveProjectPage({ key, user, focusId }: { key: string; 
     else soleCampaign = c;
   }
 
-  let app: { id: number; projectName: string; location: string | null; country: string | null; status: string } | null = null;
+  let app: {
+    id: number;
+    projectName: string;
+    location: string | null;
+    country: string | null;
+    status: string;
+    season: number | null;
+    userId: number;
+    stewardUserId: number | null;
+  } | null = null;
   let linked: Campaign[];
   if (applicationId != null) {
     const [row] = await database
@@ -96,6 +139,9 @@ export async function resolveProjectPage({ key, user, focusId }: { key: string; 
         location: applications.location,
         country: applications.country,
         status: applications.status,
+        season: applications.season,
+        userId: applications.userId,
+        stewardUserId: applications.stewardUserId,
       })
       .from(applications)
       .where(eq(applications.id, applicationId))
@@ -205,6 +251,8 @@ export async function resolveProjectPage({ key, user, focusId }: { key: string; 
     campaigns: campaignsOut,
     isSteward,
     stewardWaiting,
+    // Stewards only; null for everyone else. Outside the hub contract.
+    stewardStart: stewardStartFor(user, isSteward, app),
     suggestions,
     viewer: { followsProject },
   };

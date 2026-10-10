@@ -389,8 +389,12 @@ export const MONEY_STEP = {
   notANeed:
     "Money isn't added as a need. Set the money this project asks for, and add the routes it holds, in the Money step.",
   summaryInKind: "In-kind ask",
-  /** Shown once on the project page the wizard sends a new campaign's steward to. */
-  created: "Campaign created. The ReGen Civics team reviews it before it goes live.",
+  /**
+   * Shown once on the project page the wizard sends a new campaign's steward
+   * to. The wizard lands on #campaign-status, where the list sits (bundle 1,
+   * section 16.3).
+   */
+  created: "Campaign created. Tick the eight Ready to crowdpool items below so the review team sees them.",
 } as const;
 
 /** The money route quiz (EligibilityQuiz), in the wizard and the steward's Money routes card. */
@@ -975,4 +979,53 @@ export const CONTRIBUTOR_DOOR = {
 /** The public Ready to crowdpool list's own words, ticks kept in this browser (CrowdpoolReadiness). */
 export const READINESS_LOCAL = {
   allIn: "All eight in place. These ticks stay in this browser. Once your campaign exists, tick them on its page so the review team sees them.",
+} as const;
+
+/**
+ * A founder's next steps once their application is accepted (bundle 1,
+ * section 16.3): the status card on /apply/status, the steward's project
+ * page before a campaign exists, and the ended campaign's status card. Links
+ * are set where each line renders: the sessions go to /season-schedule,
+ * "What the review checks" to READINESS_HREF, the project page through
+ * projectPathForApplication, and the campaign wizard to
+ * /create-campaign?application=<id>, which opens on that project. Nothing
+ * here promises an emailed decision (section 15, question 11).
+ */
+export const CREATOR_PATH = {
+  // The approved and active status card (ApplyStatus).
+  sessions: "Join the sessions",
+  ready: "What the review checks",
+  projectPage: "Open your project page",
+  start: "Start your campaign",
+  /** Shown while the default opening day is still ahead (defaultCrowdpoolOpening). */
+  opensLine: (day: string) => `Crowdpooling opens together on ${day} by default.`,
+  // The steward's panel on the project page while no campaign exists (ProjectPage).
+  stewardLine: "You steward this project. Start a campaign to ask for the land, tools, roles and resources it needs.",
+  startFor: (name: string) => `Start your campaign for ${name}`,
+  readyFold: "What the review checks before a campaign goes live",
+  inReview: (name: string) =>
+    `${name} is in review. You can start a campaign once it's accepted. Meanwhile, get ready with the eight things the review checks.`,
+  changesRequested: "The review team asked for some changes to the application.",
+  /** To /apply/status. */
+  changesLink: "See your application",
+  /** The whole line, for prose. The panel renders leadStewardLead, then leadStewardLink to /connect, then leadStewardTail. */
+  leadSteward: (name: string) =>
+    `Campaigns for ${name} are started by its lead steward. Ask them, or write to us to be added.`,
+  leadStewardLead: (name: string) => `Campaigns for ${name} are started by its lead steward. Ask them, or`,
+  leadStewardLink: "write to us",
+  leadStewardTail: "to be added.",
+  /** On the ended campaign's status card, linking the wizard for this project. */
+  startNext: "You can start a new campaign for next season.",
+} as const;
+
+/**
+ * The steward's #campaign-status card before the campaign goes live: the
+ * lines the campaign page shows everyone who offers, verbatim from the
+ * constants that page reads, so the steward sees the promises they will
+ * carry out. No new claims (bundle 1, section 16.3).
+ */
+export const PAGE_PROMISES = {
+  heading: "What your campaign page tells contributors",
+  lead: "Your page shows these lines to everyone who offers. Your stewards carry them out.",
+  lines: (projectName: string): string[] => [TOKEN_LINE(projectName), STRIP.stewardsAnswer, STRIP.ifNotComplete],
 } as const;

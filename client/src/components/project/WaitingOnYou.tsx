@@ -11,10 +11,21 @@
  * private link. Their spine notice (contributor_reply) lands on #review, so
  * this list says how many offers still in play carry a note and jumps to
  * them; each note shows on its offer's card.
+ *
+ * Ready to crowdpool ticks (bundle 1, section 16.3): while the campaign is a
+ * draft, in review or sent back, a row says how many of the eight are ticked
+ * until all are, and jumps to the status card where the list sits.
  */
-import { ArrowRight, CheckCircle2, Clock, Gift, MessageSquare, PackageCheck, Send, AlertTriangle } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardCheck, Clock, Gift, MessageSquare, PackageCheck, Send, AlertTriangle } from "lucide-react";
 import type { OfferTab, StewardQueue } from "@shared/stewardQueue";
 import { OFFER_NOTES, SEND_BACK } from "@shared/crowdpoolCopy";
+import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
+
+const READY_TOTAL = CROWDPOOL_READINESS.length;
+
+/** The row while some Ready to crowdpool items are still unticked. */
+export const readyTickedRow = (n: number) =>
+  `${n} of ${READY_TOTAL} Ready to crowdpool items ticked. The review team sees your ticks.`;
 
 export type OfferNotesSummary = { count: number; tab: OfferTab } | null;
 
@@ -70,6 +81,8 @@ export function WaitingOnYou({
   onSendForReview,
   offerNotes = null,
   sentBack = false,
+  readyTicked = null,
+  onOpenReadiness,
 }: {
   queue: StewardQueue | null;
   loading: boolean;
@@ -79,7 +92,12 @@ export function WaitingOnYou({
   offerNotes?: OfferNotesSummary;
   /** The review team sent this campaign back for changes (a draft with sentBackAt, or legacy rejected). */
   sentBack?: boolean;
+  /** Ready to crowdpool items ticked on this campaign; null when the list is not open or not loaded. */
+  readyTicked?: number | null;
+  /** Scrolls to the status card, where the list sits. */
+  onOpenReadiness?: () => void;
 }) {
+  const showReady = typeof readyTicked === "number" && readyTicked < READY_TOTAL;
   return (
     <section id="review" className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl scroll-mt-24">
       <h2 className="text-xl font-bold text-[#1a472a] mb-3 flex items-center gap-2" style={{ fontFamily: "var(--font-display)" }}>
@@ -88,7 +106,7 @@ export function WaitingOnYou({
       </h2>
       {loading || !queue ? (
         <p className="text-sm text-[#1a472a]/75">Checking what needs you...</p>
-      ) : queue.total === 0 && !offerNotes ? (
+      ) : queue.total === 0 && !offerNotes && !showReady ? (
         <p className="text-sm text-[#1a472a]/80 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-[#4a7c59]" />
           Nothing is waiting on you right now.
@@ -100,6 +118,13 @@ export function WaitingOnYou({
               icon={Send}
               text={sentBack ? SEND_BACK.waitingRow : "This campaign is a draft. Send it for review when it's ready."}
               onClick={onSendForReview}
+            />
+          )}
+          {showReady && (
+            <Row
+              icon={ClipboardCheck}
+              text={readyTickedRow(readyTicked as number)}
+              onClick={() => (onOpenReadiness ? onOpenReadiness() : document.getElementById("campaign-status")?.scrollIntoView({ behavior: "smooth", block: "start" }))}
             />
           )}
           {queue.toAnswer.length > 0 && (

@@ -21,6 +21,27 @@ import {
 } from "../lib/applicationEmailRecipients";
 import { getOrCreateTeamUserId } from "../lib/team-user";
 
+/**
+ * Statuses the /apply form may no longer change (bundle 1, section 16.3;
+ * A4-M1, A4-M02). One application per account stays (section 15, question
+ * 12), so a founder who filled /apply again used to overwrite the accepted
+ * application behind their project page and send it back to submitted.
+ * Draft, submitted, under review, changes requested and rejected behave as
+ * before: a rejected applicant can still send theirs again.
+ */
+export const LOCKED_APPLICATION_STATUSES: ReadonlyArray<string> = ["approved", "active", "inactive"];
+
+/** The refusal /apply shows once an application is accepted. */
+export function lockedApplicationMessage(projectName: string): string {
+  return `${projectName} is already accepted, so this form can't change it. To bring another land project, write to us at regencivics.earth/connect.`;
+}
+
+function assertApplicationOpen(application: { status: string; projectName: string }): void {
+  if (LOCKED_APPLICATION_STATUSES.includes(application.status)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: lockedApplicationMessage(application.projectName) });
+  }
+}
+
 export const applicationsRouter = router({
   // Create a new draft application
   create: protectedProcedure
@@ -134,6 +155,7 @@ export const applicationsRouter = router({
       if (application.userId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
+      assertApplicationOpen(application);
       await db.updateApplication(input.id, input.data);
       const updatedApplication = await db.getApplicationById(input.id);
       if (!updatedApplication) {
@@ -178,6 +200,7 @@ export const applicationsRouter = router({
       if (application.userId !== ctx.user.id) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
+      assertApplicationOpen(application);
       await db.updateApplication(input.id, {
         status: "submitted",
         submittedAt: new Date(),

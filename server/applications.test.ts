@@ -1,6 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterAll, describe, it, expect, vi } from "vitest";
+import { eq } from "drizzle-orm";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import * as dbHelpers from "./db";
+import { applications } from "../drizzle/schema";
+import { lockedApplicationMessage } from "./routes/applications";
+import { cleanupFixtureApplications, createApprovedApplication, stewardCaller } from "./test-fixtures/crowdpool";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
 
@@ -21,6 +26,10 @@ vi.mock("./_core/email", () => ({
   },
   testEmailConnection: vi.fn().mockResolvedValue(true),
 }));
+
+// submit backfills map coordinates from the typed location through Nominatim;
+// tests never reach the network for it.
+vi.mock("./lib/geocode", () => ({ geocodeLocation: vi.fn().mockResolvedValue(null) }));
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
@@ -178,4 +187,62 @@ describe("Application System", () => {
       expect(submitted.submittedAt).toBeDefined();
     });
   });
+});
+
+// Bundle 1, section 16.3 (A4-M1, A4-M02): one application per account stays,
+// so filling /apply again used to overwrite the accepted application behind
+// a founder's project page and send it back to submitted.
+describe("An accepted application is locked to the /apply form", () => {
+  afterAll(async () => {
+    if (!skipIfNoDb) await cleanupFixtureApplications();
+  });
+
+  /** A fixture application in any status (the fixture's own type lists only some). */
+  async function applicationIn(userId: number, status: string): Promise<number> {
+    const id = await createApprovedApplication(userId, { name: `Test Fixture Land Locked ${status} ${userId}` });
+    const database = await dbHelpers.getDb();
+    await database!.update(applications).set({ status: status as never }).where(eq(applications.id, id));
+    return id;
+  }
+
+  for (const [i, status] of ["approved", "active", "inactive"].entries()) {
+    it.skipIf(skipIfNoDb)(`refuses update and submit on an ${status} application and changes nothing`, async () => {
+      const userId = 986801 + i;
+      const id = await applicationIn(userId, status);
+      const before = await dbHelpers.getApplicationById(id);
+      const name = before!.projectName;
+      const caller = stewardCaller(userId);
+      await expect(caller.applications.update({ id, data: { vision: "Overwritten vision", projectName: "Overwritten name" } }))
+        .rejects.toMatchObject({ code: "FORBIDDEN", message: lockedApplicationMessage(name) });
+      await expect(caller.applications.submit({ id }))
+        .rejects.toMatchObject({ code: "FORBIDDEN", message: lockedApplicationMessage(name) });
+      const after = await dbHelpers.getApplicationById(id);
+      expect(after).toMatchObject({
+        status,
+        projectName: name,
+        vision: before!.vision,
+        submittedAt: before!.submittedAt,
+        season: before!.season,
+        stewardUserId: before!.stewardUserId,
+      });
+    });
+  }
+
+  it("names the project and the way to bring another one", () => {
+    expect(lockedApplicationMessage("Hill Farm")).toBe(
+      "Hill Farm is already accepted, so this form can't change it. To bring another land project, write to us at regencivics.earth/connect.",
+    );
+  });
+
+  for (const [i, status] of ["draft", "changes_requested", "rejected"].entries()) {
+    it.skipIf(skipIfNoDb)(`lets update and submit go ahead on a ${status} application, as before`, async () => {
+      const userId = 986811 + i;
+      const id = await applicationIn(userId, status);
+      const caller = stewardCaller(userId);
+      const updated = await caller.applications.update({ id, data: { vision: "A new vision" } });
+      expect(updated.vision).toBe("A new vision");
+      const submitted = await caller.applications.submit({ id });
+      expect(submitted.status).toBe("submitted");
+    });
+  }
 });

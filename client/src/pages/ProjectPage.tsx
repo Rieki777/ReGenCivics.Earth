@@ -13,20 +13,31 @@
  * tools (StewardTools), and every one of those tools is enforced on the
  * server by server/lib/project-steward.ts. The old /campaign/:id/manage page
  * redirects here and keeps its #anchor.
+ *
+ * Before a campaign exists, the steward's panel names their next step from
+ * stewardStart (server/lib/project-page.ts): start the campaign with the
+ * wizard opened on this project, wait for the review, see the requested
+ * changes, or ask the lead steward. The Ready to crowdpool list sits folded
+ * under it (bundle 1, section 16.3). The steward bar's pill says
+ * "Checking..." until the offers load, never a 0 it does not know yet.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearch } from "wouter";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../../server/routers";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck } from "lucide-react";
+import { ChevronDown, ShieldCheck } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { SEO } from "@/components/SEO";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { canonicalRedirectTarget } from "@shared/projectKey";
 import { progressLines } from "@shared/campaignProgress";
-import { CLOSE, EXAMPLE_BANNER } from "@shared/crowdpoolCopy";
-import { buildStewardQueue } from "@shared/stewardQueue";
+import { CLOSE, CREATOR_PATH, EXAMPLE_BANNER } from "@shared/crowdpoolCopy";
+import { buildStewardQueue, stewardBarLabel } from "@shared/stewardQueue";
+import { isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectCampaignFront } from "@/components/project/ProjectCampaignFront";
 import { CancelledCampaignNotice } from "@/components/project/CancelledCampaignNotice";
@@ -130,6 +141,85 @@ function firstSentence(text: string): string {
   return (m ? m[1] : flat).trim();
 }
 
+type StewardStart = inferRouterOutputs<AppRouter>["projects"]["getPublic"]["stewardStart"];
+
+const panelLink = "inline-flex items-center min-h-11 text-sm font-semibold text-[#4a7c59] underline underline-offset-4 hover:text-[#1a472a]";
+
+/** The Ready to crowdpool list, folded, for a steward getting a project ready. */
+function ReadyFold() {
+  return (
+    <details className="group mt-4 rounded-2xl border border-[#7dd87d]/40 bg-white/70 px-4">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 py-2 text-sm font-bold text-[#1a472a] [&::-webkit-details-marker]:hidden">
+        {CREATOR_PATH.readyFold}
+        <ChevronDown className="ml-auto h-5 w-5 shrink-0 text-[#4a7c59] transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="pb-4 pt-1">
+        <CrowdpoolReadiness framed={false} storageKey="page" id="ready-project" />
+      </div>
+    </details>
+  );
+}
+
+/**
+ * The steward's panel while the project has no campaign, worded by where the
+ * application stands (bundle 1, section 16.3). Stewards only: the server
+ * sends stewardStart to no one else.
+ */
+function StewardStartPanel({ name, applicationId, start }: { name: string; applicationId: number | null; start: StewardStart }) {
+  const status = start?.applicationStatus;
+  if (start?.canStart && applicationId) {
+    const hosted = isAcceptedForHosting({ status: start.applicationStatus, season: start.applicationSeason });
+    return (
+      <>
+        <p className="text-sm text-[#1a472a]/80 mt-2">{CREATOR_PATH.stewardLine}</p>
+        <Button asChild className="mt-3 min-h-11 h-auto whitespace-normal text-left bg-[#4a7c59] hover:bg-[#1a472a] text-white">
+          <Link href={`/create-campaign?application=${applicationId}`}>{CREATOR_PATH.startFor(name)}</Link>
+        </Button>
+        <ReadyFold />
+        <div className="mt-4">
+          <Link href={VILLAGE_OS_PATH} className={panelLink}>{VILLAGE_OS_OFFER.board.title}</Link>
+          {hosted && <p className="text-sm text-[#1a472a]/80">{VILLAGE_OS_OFFER.board.hostedLine}</p>}
+        </div>
+      </>
+    );
+  }
+  if (status === "submitted" || status === "under_review") {
+    return (
+      <>
+        <p className="text-sm text-[#1a472a]/80 mt-2">{CREATOR_PATH.inReview(name)}</p>
+        <ReadyFold />
+      </>
+    );
+  }
+  if (status === "changes_requested") {
+    return (
+      <>
+        <p className="text-sm text-[#1a472a]/80 mt-2">{CREATOR_PATH.changesRequested}</p>
+        <Link href="/apply/status" className={panelLink}>{CREATOR_PATH.changesLink}</Link>
+      </>
+    );
+  }
+  if (status === "approved" || status === "active") {
+    // Approved, but this steward cannot start one (a claim holder or an
+    // added co-steward): campaigns.create would refuse them.
+    return (
+      <p className="text-sm text-[#1a472a]/80 mt-2">
+        {CREATOR_PATH.leadStewardLead(name)}{" "}
+        <Link href="/connect" className="font-semibold text-[#4a7c59] underline underline-offset-4 hover:text-[#1a472a]">
+          {CREATOR_PATH.leadStewardLink}
+        </Link>{" "}
+        {CREATOR_PATH.leadStewardTail}
+      </p>
+    );
+  }
+  return (
+    <>
+      <p className="text-sm text-[#1a472a]/80 mt-2">{CREATOR_PATH.stewardLine}</p>
+      <ReadyFold />
+    </>
+  );
+}
+
 function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#1a472a] to-[#2d5a3d] px-4">
@@ -190,8 +280,11 @@ export default function ProjectPage() {
     { campaignId: front?.id ?? 0 },
     { enabled: !!front && isSteward, retry: false },
   );
+  // Null while the offers are still loading: the pill says "Checking..."
+  // rather than a 0 it does not know yet.
   const waitingCount = useMemo(() => {
-    if (!front || !ownerContributions) return 0;
+    if (!front) return 0;
+    if (!ownerContributions) return null;
     return buildStewardQueue({ contributions: ownerContributions, items: front.items, campaignStatus: front.status }).total;
   }, [front, ownerContributions]);
 
@@ -236,6 +329,10 @@ export default function ProjectPage() {
   // Follow sends the canonical key: it names the project however the visitor arrived.
   const projectKey = data.canonicalPath.replace(/^\/project\//, "");
   const followsProject = !!data.viewer?.followsProject;
+  // After a campaign ends, its status card offers the next one, opened on this project.
+  const startNextHref = data.stewardStart?.canStart && data.project.applicationId
+    ? `/create-campaign?application=${data.project.applicationId}`
+    : null;
 
   return (
     <>
@@ -280,7 +377,7 @@ export default function ProjectPage() {
                   onClick={(e) => { e.preventDefault(); document.getElementById("review")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                   className="inline-flex items-center min-h-11 text-sm font-semibold rounded-full px-4 py-2 bg-[#7dd87d] text-[#1a472a] hover:bg-white"
                 >
-                  {waitingCount} waiting on you
+                  {stewardBarLabel(waitingCount)}
                 </a>
               )}
             </div>
@@ -336,14 +433,11 @@ export default function ProjectPage() {
             <section className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 shadow-xl">
               <p className="text-[#1a472a]/85">This project has no campaign running right now.</p>
               {isSteward ? (
-                <>
-                  <p className="text-sm text-[#1a472a]/80 mt-2">
-                    You steward this project. Start a campaign to ask for the land, tools, roles and resources it needs.
-                  </p>
-                  <Link href="/create-campaign">
-                    <Button className="mt-3 bg-[#4a7c59] hover:bg-[#1a472a] text-white">Start a campaign</Button>
-                  </Link>
-                </>
+                <StewardStartPanel
+                  name={name}
+                  applicationId={data.project.applicationId}
+                  start={data.stewardStart}
+                />
               ) : (
                 <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
                   <Link href="/campaigns#get-notified" className="inline-flex items-center min-h-11 text-sm font-semibold text-[#4a7c59] hover:underline">
@@ -385,6 +479,8 @@ export default function ProjectPage() {
           {isSteward && front && (
             <StewardTools
               front={front}
+              projectName={name}
+              startNextHref={startNextHref}
               onChanged={refreshAll}
               onCancelled={(msg) => { setCancelNotice(msg); refreshAll(); }}
             />

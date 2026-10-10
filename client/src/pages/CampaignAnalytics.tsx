@@ -2,11 +2,15 @@
  * Campaign Analytics: visits, devices, traffic sources and conversion for a
  * campaign's stewards. The numbers live in CampaignAnalyticsPanel; the
  * server (campaigns.getAnalytics) decides who may see them.
+ *
+ * Its cards are white with dark green text, like the panel's, and a
+ * signed-out steward gets a way to sign in and come back here (bundle 1,
+ * section 16.3).
  */
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
@@ -21,6 +25,7 @@ export default function CampaignAnalytics() {
   const { id } = useParams<{ id: string }>();
   const campaignId = parseInt(id || "0");
   const { user, loading: authLoading } = useAuth();
+  const [location] = useLocation();
 
   const { data: campaign, isLoading: campaignLoading } = trpc.campaigns.getById.useQuery(
     { id: campaignId },
@@ -31,16 +36,19 @@ export default function CampaignAnalytics() {
     return (
       <div className="min-h-screen bg-[#f8f5f0] flex items-center justify-center p-4">
         <BackButton />
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full bg-white text-[#1a472a] light-form-island">
           <CardHeader>
             <CardTitle className="text-[#1a472a]">Sign in first</CardTitle>
             <CardDescription>
               Sign in to see this campaign's numbers. Only its stewards can see them.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
+            <Button asChild className="w-full min-h-11 bg-[#4a7c59] hover:bg-[#1a472a] text-white">
+              <a href={`/sign-in?returnTo=${encodeURIComponent(location)}`}>Sign in</a>
+            </Button>
             <Link href="/campaigns">
-              <Button className="w-full bg-[#4a7c59] hover:bg-[#1a472a]">
+              <Button variant="outline" className="w-full min-h-11 border-[#4a7c59] text-[#1a472a]">
                 Back to campaigns
               </Button>
             </Link>
@@ -57,7 +65,7 @@ export default function CampaignAnalytics() {
   if (!campaign) {
     return (
       <div className="min-h-screen bg-[#f8f5f0] flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full bg-white text-[#1a472a] light-form-island">
           <CardHeader>
             <CardTitle className="text-[#1a472a]">We couldn't find that campaign.</CardTitle>
           </CardHeader>

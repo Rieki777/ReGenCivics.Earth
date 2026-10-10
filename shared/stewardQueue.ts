@@ -98,6 +98,15 @@ export function buildStewardQueue(args: {
   };
 }
 
+/**
+ * The steward bar's pill on the project page (bundle 1, section 16.3). Null
+ * while the offers are still loading, so the pill reads "Checking..." and
+ * never a 0 it does not know yet.
+ */
+export function stewardBarLabel(waiting: number | null): string {
+  return waiting == null ? "Checking..." : `${waiting} waiting on you`;
+}
+
 export type OfferGroup<C extends QueueContribution, I extends QueueItem> = {
   /** The need, or null for offers with no need attached ("Other offers"). */
   item: I | null;

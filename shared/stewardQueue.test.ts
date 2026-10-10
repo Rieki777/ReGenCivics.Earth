@@ -11,8 +11,21 @@ import {
   REOPEN_NOTICE_ON_RAISE,
   PUBLIC_NAME_LINE,
   ANONYMOUS_NAME_LINE,
+  stewardBarLabel,
   type QueueItem,
 } from "./stewardQueue";
+
+// Bundle 1, section 16.3 (A5-03): the steward bar's pill read "0 waiting on
+// you" for about 2.4 seconds on a phone before the real count arrived.
+describe("stewardBarLabel", () => {
+  it("says Checking... until the count is known, never 0", () => {
+    expect(stewardBarLabel(null)).toBe("Checking...");
+  });
+  it("says the count once it is known, 0 included", () => {
+    expect(stewardBarLabel(0)).toBe("0 waiting on you");
+    expect(stewardBarLabel(5)).toBe("5 waiting on you");
+  });
+});
 
 const role = (over: Partial<QueueItem> = {}): QueueItem => ({
   id: 1,

@@ -19,6 +19,7 @@ import {
   anonCaller,
   cleanupFixtureApplications,
   createApprovedApplication,
+  createApprovedLandClaim,
   stewardCaller,
 } from "./test-fixtures/crowdpool";
 
@@ -38,6 +39,7 @@ const skipIfNoDb = !process.env.DATABASE_URL;
 const OWNER = 986701;
 const CO_STEWARD = 986702;
 const STRANGER = 986703;
+const CLAIM_HOLDER = 986704;
 const createdCampaignIds: number[] = [];
 
 async function makeCampaign(applicationId: number | undefined, title: string, publish = true) {
@@ -89,7 +91,7 @@ describe("getById keeps its shape (hub contract)", () => {
     expect(view).toMatchObject({ closedAt: null, closeOutcome: null });
     const page = await anonCaller().projects.getPublic({ key: String(applicationId) });
     expect(Object.keys(page).sort()).toEqual(
-      ["campaigns", "canonicalPath", "front", "isSteward", "project", "stewardWaiting", "suggestions", "viewer"].sort(),
+      ["campaigns", "canonicalPath", "front", "isSteward", "project", "stewardStart", "stewardWaiting", "suggestions", "viewer"].sort(),
     );
     expect(page.viewer).toEqual({ followsProject: false });
   });
@@ -239,6 +241,60 @@ describe("who sees what", () => {
       expect(Object.keys(s).sort()).toEqual(["country", "id", "isDemo", "location", "path", "projectName", "title"]);
     }
     void live;
+  });
+});
+
+// Bundle 1, section 16.3: the steward's panel before a campaign exists names
+// their next step. stewardStart reaches stewards only, and canStart is the
+// rule campaigns.create enforces.
+describe("stewardStart", () => {
+  it.skipIf(skipIfNoDb)("is null for anonymous and non-steward callers", async () => {
+    const applicationId = await createApprovedApplication(OWNER, { stewardUserId: CO_STEWARD });
+    expect((await anonCaller().projects.getPublic({ key: String(applicationId) })).stewardStart).toBeNull();
+    expect((await stewardCaller(STRANGER).projects.getPublic({ key: String(applicationId) })).stewardStart).toBeNull();
+  });
+
+  it.skipIf(skipIfNoDb)("lets the applicant and stewardUserId of an approved application start, and says so", async () => {
+    const applicationId = await createApprovedApplication(OWNER, { stewardUserId: CO_STEWARD });
+    const own = await stewardCaller(OWNER).projects.getPublic({ key: String(applicationId) });
+    expect(own.stewardStart).toEqual({ applicationStatus: "approved", applicationSeason: 2, canStart: true });
+    const co = await stewardCaller(CO_STEWARD).projects.getPublic({ key: String(applicationId) });
+    expect(co.stewardStart?.canStart).toBe(true);
+    // The page and campaigns.create agree: the applicant really can start one.
+    const id = await makeCampaign(applicationId, "Steward start", false);
+    expect(id).toBeGreaterThan(0);
+  });
+
+  it.skipIf(skipIfNoDb)("does not let an approved claim holder start, though they steward the project", async () => {
+    const applicationId = await createApprovedApplication(OWNER);
+    await createApprovedLandClaim(CLAIM_HOLDER, applicationId);
+    const page = await stewardCaller(CLAIM_HOLDER).projects.getPublic({ key: String(applicationId) });
+    expect(page.isSteward).toBe(true);
+    expect(page.stewardStart).toMatchObject({ applicationStatus: "approved", canStart: false });
+    await expect(stewardCaller(CLAIM_HOLDER).campaigns.create({
+      title: "Test Project Claim holder start",
+      description: "Project page fixture",
+      projectName: "Test Project Claim holder start",
+      currency: "USD",
+      financialTarget: 1000,
+      applicationId,
+      items: [{ category: "resource", resourceName: "Seed", resourceDescription: "Seed", estimatedValue: 1000 }],
+    })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it.skipIf(skipIfNoDb)("does not let anyone but an admin start while the application is submitted", async () => {
+    const applicationId = await createApprovedApplication(OWNER, { status: "submitted" });
+    const own = await stewardCaller(OWNER).projects.getPublic({ key: String(applicationId) });
+    expect(own.stewardStart).toEqual({ applicationStatus: "submitted", applicationSeason: 2, canStart: false });
+    const admin = await adminCaller().projects.getPublic({ key: String(applicationId) });
+    expect(admin.stewardStart?.canStart).toBe(true);
+  });
+
+  it.skipIf(skipIfNoDb)("never carries the applicant's or steward's user ids", async () => {
+    const applicationId = await createApprovedApplication(OWNER, { stewardUserId: CO_STEWARD, name: "Test Fixture Land Steward Ids" });
+    const page = await stewardCaller(OWNER).projects.getPublic({ key: String(applicationId) });
+    expect(Object.keys(page.stewardStart!).sort()).toEqual(["applicationSeason", "applicationStatus", "canStart"]);
+    expect(JSON.stringify(page)).not.toContain(String(CO_STEWARD));
   });
 });
 

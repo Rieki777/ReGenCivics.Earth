@@ -34,10 +34,10 @@ export function AdminApplicationReviewForm({
       setComments("");
       setInternalNotes("");
       setDecision("pending");
-      toast({
-        title: "Review saved",
-        description: "The applicant will be notified.",
-      });
+      // No "The applicant will be notified.": status emails reach only the
+      // site owner today, who forwards each decision by hand (bundle 1,
+      // section 15, question 11).
+      toast({ title: "Review saved." });
       onSaved?.();
     },
     onError: (err) => {

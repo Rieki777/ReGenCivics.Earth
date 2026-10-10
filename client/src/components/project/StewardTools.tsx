@@ -29,9 +29,17 @@
  * for review. A campaign reads sent back when its status is the legacy
  * 'rejected', or it is a draft the review team sent back (sentBackAt). Edit
  * shows while it is a draft, in review or sent back, never on an example.
+ *
+ * Every next step for a founder (bundle 1, section 16.3): a new campaign lands
+ * on #campaign-status, where the Ready to crowdpool list sits; "Waiting on
+ * you" counts the ticks still to make (the same campaigns.getReadiness read
+ * the list uses, so one request); the status card shows, before the campaign
+ * goes live, the lines its page tells everyone who offers (PAGE_PROMISES);
+ * and once a campaign has ended, its card links the wizard for the next one.
  */
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Link } from "wouter";
 import type { inferRouterOutputs } from "@trpc/server";
 import type { AppRouter } from "../../../../server/routers";
 import { trpc } from "@/lib/trpc";
@@ -54,7 +62,8 @@ import { EditCampaignDialog } from "./EditCampaignDialog";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
-import { CLOSE, MONEY_STEP, SEND_BACK } from "@shared/crowdpoolCopy";
+import { CLOSE, CREATOR_PATH, MONEY_STEP, PAGE_PROMISES, SEND_BACK } from "@shared/crowdpoolCopy";
+import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
 import { progressLines } from "@shared/campaignProgress";
 import { takeCreatedCampaign } from "@/lib/createdNotice";
 
@@ -83,10 +92,16 @@ function scrollToId(id: string) {
 
 export function StewardTools({
   front,
+  projectName,
+  startNextHref = null,
   onChanged,
   onCancelled,
 }: {
   front: ProjectFront;
+  /** The project's name as the page shows it, for the lines the page tells contributors. */
+  projectName: string;
+  /** The wizard opened on this project, for a campaign that has ended. Null when this steward cannot start one. */
+  startNextHref?: string | null;
   /** Refresh the page's data after a change (needs, totals, updates, status). */
   onChanged: () => void;
   onCancelled: (message: string) => void;
@@ -119,6 +134,19 @@ export function StewardTools({
   useEffect(() => {
     if (takeCreatedCampaign(campaignId)) toast.success(MONEY_STEP.created);
   }, [campaignId]);
+
+  // The Ready to crowdpool ticks stored on the campaign: the same query key
+  // CrowdpoolReadiness reads, so the list and this count share one request.
+  const readinessOpen = READINESS_STATUSES.includes(status);
+  const { data: readinessTicks } = trpc.campaigns.getReadiness.useQuery(
+    { campaignId },
+    { enabled: readinessOpen, retry: false },
+  );
+  const readyTicked = useMemo(() => {
+    if (!readinessOpen || !readinessTicks) return null;
+    const keys = new Set(readinessTicks.map((t) => t.itemKey));
+    return CROWDPOOL_READINESS.filter((item) => keys.has(item.key)).length;
+  }, [readinessOpen, readinessTicks]);
 
   const queue = useMemo(
     () => contributions ? buildStewardQueue({ contributions, items: front.items, campaignStatus: status }) : null,
@@ -191,6 +219,18 @@ export function StewardTools({
     </>
   ) : null;
 
+  // What the campaign page tells everyone who offers, verbatim, while the
+  // steward can still change the campaign before it goes live.
+  const promises = beforeLive ? (
+    <div className="mt-6 rounded-xl border border-[#7dd87d]/40 bg-[#f0f7f0] p-4" data-testid="page-promises">
+      <h3 className="font-semibold text-[#1a472a] mb-1">{PAGE_PROMISES.heading}</h3>
+      <p className="text-sm text-[#1a472a]/80 mb-2">{PAGE_PROMISES.lead}</p>
+      <ul className="list-disc pl-5 space-y-1 text-sm text-[#1a472a]/85">
+        {PAGE_PROMISES.lines(projectName).map((line) => <li key={line}>{line}</li>)}
+      </ul>
+    </div>
+  ) : null;
+
   const canCancel = canTransition(status, "cancelled", "steward") || (isAdmin && canTransition(status, "cancelled", "admin"));
 
   return (
@@ -210,6 +250,8 @@ export function StewardTools({
           onSendForReview={() => scrollToId("campaign-status")}
           offerNotes={notes}
           sentBack={sentBack}
+          readyTicked={readyTicked}
+          onOpenReadiness={() => scrollToId("campaign-status")}
         />
         <CampaignStewardStats
           campaignId={campaignId}
@@ -316,6 +358,7 @@ export function StewardTools({
               {sendButton}
             </div>
             {readiness}
+            {promises}
           </div>
         )}
         {status === "draft" && !sentBack && (
@@ -326,6 +369,7 @@ export function StewardTools({
               {editButton}
               {sendButton}
             </div>
+            {promises}
           </div>
         )}
         {status === "pending_review" && (
@@ -333,6 +377,7 @@ export function StewardTools({
             <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.inReview}</p>
             {editButton && <div className="mb-4">{editButton}</div>}
             {readiness}
+            {promises}
           </div>
         )}
         {status === "active" && (
@@ -345,6 +390,13 @@ export function StewardTools({
               : status === "closed"
                 ? (progressLines(front.progress, formatCurrency).completion ?? CLOSE.completionNoDate)
                 : "This campaign is complete."}
+          </p>
+        )}
+        {closed && startNextHref && (
+          <p className="mt-2 mb-4">
+            <Link href={startNextHref} className="inline-flex items-center min-h-11 text-sm font-semibold text-[#4a7c59] underline underline-offset-4 hover:text-[#1a472a]">
+              {CREATOR_PATH.startNext}
+            </Link>
           </p>
         )}
         {canCancel && (

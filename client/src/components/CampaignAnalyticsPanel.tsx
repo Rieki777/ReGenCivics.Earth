@@ -2,6 +2,10 @@
  * A campaign's visits, devices, traffic sources and conversion, for its
  * stewards. campaigns.getAnalytics checks the steward on the server; anyone
  * else sees a plain access note here.
+ *
+ * Every card is white with dark green text (bg-white, light-form-island): the
+ * site's dark --card painted under the dark green figures and headings at
+ * 1.86:1 (bundle 1, section 16.3, A5-01).
  */
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +42,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
 
   if (error?.data?.code === 'FORBIDDEN' || error?.data?.code === 'UNAUTHORIZED') {
     return (
-      <Card className="max-w-md mx-auto">
+      <Card className="max-w-md mx-auto bg-white text-[#1a472a] light-form-island">
         <CardHeader>
           <CardTitle className="text-[#1a472a] flex items-center gap-2">
             <Lock className="w-5 h-5" />
@@ -62,7 +66,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
     <>
         {/* Key Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+          <Card className="bg-white text-[#1a472a] light-form-island">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#f0f7f0] flex items-center justify-center">
@@ -78,7 +82,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white text-[#1a472a] light-form-island">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#e3f2fd] flex items-center justify-center">
@@ -94,7 +98,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white text-[#1a472a] light-form-island">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#fff3e0] flex items-center justify-center">
@@ -110,7 +114,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white text-[#1a472a] light-form-island">
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-[#f3e5f5] flex items-center justify-center">
@@ -129,7 +133,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
         
         <div className="grid md:grid-cols-2 gap-6">
           {/* Views Over Time Chart */}
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 bg-white text-[#1a472a] light-form-island">
             <CardHeader>
               <CardTitle className="text-[#1a472a] flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
@@ -169,7 +173,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
           </Card>
           
           {/* Device Breakdown */}
-          <Card>
+          <Card className="bg-white text-[#1a472a] light-form-island">
             <CardHeader>
               <CardTitle className="text-[#1a472a] flex items-center gap-2">
                 <Monitor className="w-5 h-5" />
@@ -213,7 +217,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
           </Card>
           
           {/* Traffic Sources */}
-          <Card>
+          <Card className="bg-white text-[#1a472a] light-form-island">
             <CardHeader>
               <CardTitle className="text-[#1a472a] flex items-center gap-2">
                 <Globe className="w-5 h-5" />
@@ -257,7 +261,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
         </div>
         
         {/* Conversion Funnel */}
-        <Card className="mt-6">
+        <Card className="mt-6 bg-white text-[#1a472a] light-form-island">
           <CardHeader>
             <CardTitle className="text-[#1a472a] flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
