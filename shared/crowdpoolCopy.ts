@@ -781,6 +781,7 @@ export const SEND_BACK = {
   // The steward's #campaign-status card (StewardTools).
   sentBack: "The review team sent this campaign back for changes.",
   askedFor: "What they asked for:",
+  /** Only for a campaign sent back under the old Reject, whose note may live only in the old notice. */
   noteInNotifications: "Their note is in your notifications.",
   makeChanges: "Make the changes, then send it for review again.",
   draft: "This campaign is a draft. Only stewards can see it. When it's ready, send it to the ReGen Civics team for review.",
@@ -802,7 +803,9 @@ export const SEND_BACK = {
 /** The steward's Edit campaign sheet (client/src/components/project/EditCampaignDialog.tsx). */
 export const EDIT_CAMPAIGN = {
   title: "Edit campaign",
-  intro: "Change what the review team asked for, then save. Nothing goes live until the review team approves it.",
+  intro: "Change any of this, then save. Nothing goes live until the review team approves it.",
+  /** The intro once the review team sent it back for changes. */
+  introSentBack: "Change what the review team asked for, then save. Nothing goes live until the review team approves it.",
   titleLabel: "Campaign title",
   descriptionLabel: "What this campaign is for",
   moneyLabel: (symbol: string) => `Money this campaign asks for (${symbol})`,
@@ -812,6 +815,10 @@ export const EDIT_CAMPAIGN = {
   needsHeading: "Needs",
   noNeeds: "No needs yet. Add the things and roles this campaign asks for.",
   needName: "Name",
+  /** A land need has no name of its own: its words sit in this box. */
+  landAbout: "About this land",
+  /** How the remove confirm names a land need ("Remove this land?"). */
+  landName: "this land",
   needValue: (symbol: string) => `What it's worth (${symbol})`,
   howMany: "How many",
   hoursAWeek: "Hours a week",
@@ -828,8 +835,11 @@ export const EDIT_CAMPAIGN = {
   addNeed: "Add a need",
   addThing: "A thing to give or lend",
   addRole: "A role",
+  /** In place of the Add buttons once the sheet holds the most needs it saves. */
+  needsFull: (max: number) => `This sheet holds up to ${max} needs. Remove one to add another.`,
   /** The small label over each need block, by the shape of the need. */
   kinds: {
+    land: "Land",
     thing: "A thing to give or lend",
     loan: "A thing to borrow",
     role: "A role",
@@ -850,5 +860,7 @@ export const EDIT_CAMPAIGN = {
     name: "Give this need a name.",
     howMany: "Enter a whole number, 1 or more.",
     hours: (max: number) => `Enter whole hours a week, from 1 to ${max}.`,
+    tooManyNeeds: (max: number) => `This sheet saves up to ${max} needs. Remove some, then save.`,
+    tooLong: (max: number) => `Keep this to ${max.toLocaleString("en-US")} characters or fewer.`,
   },
 } as const;

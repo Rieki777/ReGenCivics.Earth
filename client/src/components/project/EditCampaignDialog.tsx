@@ -12,8 +12,17 @@
  * refusal shows right above the buttons, where a phone user is looking.
  *
  * A need that exists keeps its category and kind; its description and where
- * it happens ride along unchanged. Money kinds are not needs, so they never
- * show here and the server leaves them be.
+ * it happens ride along unchanged. A land need has no name of its own: the
+ * sheet shows its description in a box of its own and never saves the
+ * derived label (needTitle) into it. Money kinds are not needs, so they never
+ * show here and the server leaves them be. The sheet holds up to
+ * MAX_DRAFT_NEEDS needs, the most updateDraft takes.
+ *
+ * Save sends the campaign's updatedAt as the sheet saw it (seenUpdatedAt).
+ * When a co-steward saved in between, the server answers CONFLICT and the
+ * page data is refreshed, so nothing they added is lost. A refresh that
+ * lands while the sheet is open fills it again until the steward changes
+ * something; after that it never overwrites what they are typing.
  */
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -27,7 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle, Loader2, Plus, Trash2 } from "lucide-react";
 import { decodeBasicEntities } from "@shared/htmlText";
-import { isListableValue } from "@shared/needRules";
+import { CAMPAIGN_DESCRIPTION_MAX, MAX_DRAFT_NEEDS, NEED_TEXT_MAX, isListableValue } from "@shared/needRules";
 import { isMoneyKind, needTitle } from "@shared/crowdpoolNeedAction";
 import { MAX_ROLE_HOURS, isHoursNeed } from "@shared/roleCapacity";
 import { MAX_WINDOW_DAYS } from "@shared/campaignClose";
@@ -65,6 +74,8 @@ export type EditableNeed = {
 
 export type EditableCampaign = {
   id: number;
+  /** The version the sheet opens (campaigns.updateDraft seenUpdatedAt). */
+  updatedAt: Date | string;
   title: string;
   description: string | null;
   financialTarget: number | string | null;
@@ -84,7 +95,10 @@ type NeedDraft = {
   rolesStep: boolean;
   /** A thing that may come as a gift or on loan (kind item). */
   thing: boolean;
+  /** The name field for its category. A land need has none (about holds its words). */
   name: string;
+  /** A land need's description, as stored. Empty for every other need. */
+  about: string;
   /** The stored description, sent back unchanged. */
   description: string | null;
   value: string;
@@ -110,11 +124,11 @@ const money = (raw: string) => {
 };
 
 function nameOf(item: EditableNeed): string {
+  if (item.category === "land") return "";
   const stored =
     item.category === "role" ? item.roleTitle
       : item.category === "equipment" ? item.equipmentName
-        : item.category === "resource" ? item.resourceName
-          : item.landDescription;
+        : item.resourceName;
   return decodeBasicEntities(String(stored || needTitle(item as Parameters<typeof needTitle>[0]) || ""));
 }
 
@@ -134,6 +148,7 @@ function draftFrom(item: EditableNeed): NeedDraft {
     rolesStep: category === "role" && kind === "role",
     thing: kind === "item",
     name: nameOf(item),
+    about: category === "land" ? decodeBasicEntities(String(item.landDescription ?? "")) : "",
     description,
     value: String(Number(item.estimatedValue) || 0),
     quantity: quantity != null ? String(quantity) : "1",
@@ -160,6 +175,7 @@ function newNeed(shape: "thing" | "role"): NeedDraft {
     rolesStep: role,
     thing: !role,
     name: "",
+    about: "",
     description: null,
     value: "",
     quantity: role ? "" : "1",
@@ -175,12 +191,19 @@ function newNeed(shape: "thing" | "role"): NeedDraft {
 }
 
 function kindLabel(n: NeedDraft): string {
+  if (n.category === "land") return EDIT_CAMPAIGN.kinds.land;
   if (n.rolesStep || n.kind === "role") return EDIT_CAMPAIGN.kinds.role;
   if (n.thing) return EDIT_CAMPAIGN.kinds.thing;
   if (n.kind === "loan") return EDIT_CAMPAIGN.kinds.loan;
   if (n.kind === "shift") return EDIT_CAMPAIGN.kinds.shift;
   if (n.kind === "knowledge") return EDIT_CAMPAIGN.kinds.knowledge;
   return EDIT_CAMPAIGN.kinds.other;
+}
+
+/** How the remove confirm names a need. */
+function displayName(n: NeedDraft): string {
+  if (n.category === "land") return EDIT_CAMPAIGN.landName;
+  return n.name.trim() || kindLabel(n);
 }
 
 /** What updateDraft takes for one need. */
@@ -201,7 +224,11 @@ function toSent(n: NeedDraft): SentNeed {
   if (n.category === "role") out.roleTitle = name;
   else if (n.category === "equipment") out.equipmentName = name;
   else if (n.category === "resource") out.resourceName = name;
-  else out.landDescription = name;
+  else {
+    // Land: only words the land already had or the steward typed.
+    const about = n.about.trim();
+    if (about) out.landDescription = about;
+  }
   if (n.description != null) {
     if (n.category === "role") out.roleDescription = n.description;
     if (n.category === "resource") out.resourceDescription = n.description;
@@ -228,13 +255,16 @@ export function EditCampaignDialog({
   campaign,
   currencySymbol,
   onSaved,
+  sentBack = false,
 }: {
   open: boolean;
   onClose: () => void;
   campaign: EditableCampaign;
   currencySymbol: string;
-  /** Refresh the page's data after a save. */
+  /** Refresh the page's data after a save (and after a CONFLICT). */
   onSaved: () => void;
+  /** The review team sent it back: the intro speaks to their note. */
+  sentBack?: boolean;
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -244,11 +274,24 @@ export function EditCampaignDialog({
   const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  // The version the sheet was filled from, sent as seenUpdatedAt.
+  const seenRef = useRef<Date | null>(null);
+  // Whether the steward changed anything since the sheet was filled.
+  const touchedRef = useRef(false);
+  const touch = () => { touchedRef.current = true; };
+  const version = campaign.updatedAt ? new Date(campaign.updatedAt).getTime() : 0;
 
-  // Fill the sheet from the campaign each time it opens; a refresh behind an
-  // open sheet never overwrites what the steward is typing.
+  // Fill the sheet from the campaign each time it opens, and again when a
+  // refresh lands before the steward changed anything (a save a moment ago
+  // may still be on its way back). Once they change something, a refresh
+  // behind the open sheet never overwrites what they are typing.
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      touchedRef.current = false;
+      return;
+    }
+    if (touchedRef.current) return;
+    seenRef.current = campaign.updatedAt ? new Date(campaign.updatedAt) : null;
     setTitle(decodeBasicEntities(campaign.title ?? ""));
     setDescription(decodeBasicEntities(campaign.description ?? ""));
     setMoneyAsk(String(Number(campaign.financialTarget) || 0));
@@ -256,7 +299,7 @@ export function EditCampaignDialog({
     setNeeds(campaign.items.filter((i) => !isMoneyKind(String(i.kind))).map(draftFrom));
     setErrors({});
     setServerError(null);
-  }, [open, campaign.id]);
+  }, [open, campaign.id, version]);
 
   const save = trpc.campaigns.updateDraft.useMutation();
 
@@ -276,12 +319,18 @@ export function EditCampaignDialog({
     const out: Array<[string, string]> = [];
     if (!title.trim()) out.push(["edit-title", EDIT_CAMPAIGN.errors.title]);
     if (!description.trim()) out.push(["edit-description", EDIT_CAMPAIGN.errors.description]);
+    else if (description.trim().length > CAMPAIGN_DESCRIPTION_MAX) out.push(["edit-description", EDIT_CAMPAIGN.errors.tooLong(CAMPAIGN_DESCRIPTION_MAX)]);
     const m = money(moneyAsk);
     if (!Number.isFinite(m) || m > 10_000_000) out.push(["edit-money", EDIT_CAMPAIGN.errors.money]);
     const d = checkDays(days);
     if (d) out.push(["edit-days", d]);
+    if (needs.length > MAX_DRAFT_NEEDS) out.push(["edit-needs", EDIT_CAMPAIGN.errors.tooManyNeeds(MAX_DRAFT_NEEDS)]);
     for (const n of needs) {
-      if (!n.name.trim()) out.push([`${n.key}-name`, EDIT_CAMPAIGN.errors.name]);
+      if (n.category === "land") {
+        if (n.about.trim().length > NEED_TEXT_MAX.description) out.push([`${n.key}-about`, EDIT_CAMPAIGN.errors.tooLong(NEED_TEXT_MAX.description)]);
+      } else if (!n.name.trim()) {
+        out.push([`${n.key}-name`, EDIT_CAMPAIGN.errors.name]);
+      }
       if (!isListableValue(money(n.value))) out.push([`${n.key}-value`, ZERO_VALUE.field]);
       const q = whole(n.quantity);
       if (n.hoursNeed) {
@@ -317,6 +366,7 @@ export function EditCampaignDialog({
     save.mutate(
       {
         id: campaign.id,
+        seenUpdatedAt: seenRef.current ?? new Date(campaign.updatedAt),
         title: title.trim(),
         description: description.trim(),
         financialTarget: money(moneyAsk),
@@ -329,7 +379,14 @@ export function EditCampaignDialog({
           onSaved();
           onClose();
         },
-        onError: (err) => setServerError(err?.message || EDIT_CAMPAIGN.failed),
+        onError: (err) => {
+          // An input check the sheet missed comes back as a list of issues
+          // (JSON): show the plain line, never the list.
+          const message = err?.message?.trim() ?? "";
+          setServerError(message && !message.startsWith("[") && !message.startsWith("{") ? message : EDIT_CAMPAIGN.failed);
+          // Someone else saved first: fetch the campaign as it stands now.
+          if (err?.data?.code === "CONFLICT") onSaved();
+        },
       },
     );
   };
@@ -345,10 +402,15 @@ export function EditCampaignDialog({
       <DialogContent className="max-w-lg bg-white text-[#1a472a] light-form-island">
         <DialogHeader>
           <DialogTitle className="text-[#1a472a]">{EDIT_CAMPAIGN.title}</DialogTitle>
-          <DialogDescription>{EDIT_CAMPAIGN.intro}</DialogDescription>
+          <DialogDescription>{sentBack ? EDIT_CAMPAIGN.introSentBack : EDIT_CAMPAIGN.intro}</DialogDescription>
         </DialogHeader>
 
-        <div ref={rootRef} className="space-y-4">
+        <div
+          ref={rootRef}
+          className="space-y-4"
+          onChangeCapture={touch}
+          onClickCapture={(e) => { if ((e.target as HTMLElement).closest("button")) touch(); }}
+        >
           <div className="space-y-1.5">
             <Label htmlFor="edit-title">{EDIT_CAMPAIGN.titleLabel}</Label>
             <Input
@@ -367,6 +429,7 @@ export function EditCampaignDialog({
               {...fieldProps("edit-description")}
               value={description}
               rows={4}
+              maxLength={CAMPAIGN_DESCRIPTION_MAX}
               onChange={(e) => { setDescription(e.target.value); clear("edit-description"); }}
               className="border-[#1a472a]/25 bg-white text-base md:text-sm text-[#1a472a]"
             />
@@ -407,22 +470,45 @@ export function EditCampaignDialog({
           </div>
 
           <div className="border-t border-[#1a472a]/10 pt-4 space-y-3">
-            <h3 className="font-semibold text-[#1a472a]">{EDIT_CAMPAIGN.needsHeading}</h3>
+            <h3
+              id="edit-needs"
+              tabIndex={-1}
+              aria-describedby={errors["edit-needs"] ? "edit-needs-error" : undefined}
+              className="font-semibold text-[#1a472a]"
+            >
+              {EDIT_CAMPAIGN.needsHeading}
+            </h3>
+            <FieldError id="edit-needs-error" message={errors["edit-needs"]} />
             {needs.length === 0 && <p className="text-sm text-[#1a472a]/80">{EDIT_CAMPAIGN.noNeeds}</p>}
             {needs.map((n) => (
               <fieldset key={n.key} className="rounded-xl border border-[#1a472a]/15 bg-[#f8f5f0] p-3 space-y-3 min-w-0" data-testid={`edit-need-${n.key}`}>
                 <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-[#1a472a]/80">{kindLabel(n)}</legend>
-                <div className="space-y-1.5">
-                  <Label htmlFor={`${n.key}-name`}>{EDIT_CAMPAIGN.needName}</Label>
-                  <Input
-                    {...fieldProps(`${n.key}-name`)}
-                    value={n.name}
-                    maxLength={255}
-                    onChange={(e) => { setNeed(n.key, { name: e.target.value }); clear(`${n.key}-name`); }}
-                    className={inputClass}
-                  />
-                  <FieldError id={`${n.key}-name-error`} message={errors[`${n.key}-name`]} />
-                </div>
+                {n.category === "land" ? (
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`${n.key}-about`}>{EDIT_CAMPAIGN.landAbout}</Label>
+                    <Textarea
+                      {...fieldProps(`${n.key}-about`)}
+                      value={n.about}
+                      rows={3}
+                      maxLength={NEED_TEXT_MAX.description}
+                      onChange={(e) => { setNeed(n.key, { about: e.target.value }); clear(`${n.key}-about`); }}
+                      className="border-[#1a472a]/25 bg-white text-base md:text-sm text-[#1a472a]"
+                    />
+                    <FieldError id={`${n.key}-about-error`} message={errors[`${n.key}-about`]} />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`${n.key}-name`}>{EDIT_CAMPAIGN.needName}</Label>
+                    <Input
+                      {...fieldProps(`${n.key}-name`)}
+                      value={n.name}
+                      maxLength={NEED_TEXT_MAX.name}
+                      onChange={(e) => { setNeed(n.key, { name: e.target.value }); clear(`${n.key}-name`); }}
+                      className={inputClass}
+                    />
+                    <FieldError id={`${n.key}-name-error`} message={errors[`${n.key}-name`]} />
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5 min-w-0">
                     <Label htmlFor={`${n.key}-value`}>{EDIT_CAMPAIGN.needValue(currencySymbol)}</Label>
@@ -523,15 +609,15 @@ export function EditCampaignDialog({
                   </div>
                 )}
                 {n.confirmingRemove ? (
-                  <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-2" role="group" aria-label={EDIT_CAMPAIGN.removeConfirm(n.name.trim() || kindLabel(n))}>
-                    <span className="text-sm font-medium">{EDIT_CAMPAIGN.removeConfirm(n.name.trim() || kindLabel(n))}</span>
+                  <div className="flex flex-wrap items-center gap-2 rounded-lg bg-white p-2" role="group" aria-label={EDIT_CAMPAIGN.removeConfirm(displayName(n))}>
+                    <span className="text-sm font-medium">{EDIT_CAMPAIGN.removeConfirm(displayName(n))}</span>
                     <Button
                       type="button"
                       variant="outline"
                       className="min-h-11 border-red-300 text-red-700 hover:bg-red-50"
                       onClick={() => {
                         setNeeds((list) => list.filter((x) => x.key !== n.key));
-                        setErrors((e) => Object.fromEntries(Object.entries(e).filter(([k]) => !k.startsWith(`${n.key}-`))));
+                        setErrors((e) => Object.fromEntries(Object.entries(e).filter(([k]) => !k.startsWith(`${n.key}-`) && k !== "edit-needs")));
                       }}
                     >
                       {EDIT_CAMPAIGN.removeYes}
@@ -554,19 +640,23 @@ export function EditCampaignDialog({
               </fieldset>
             ))}
 
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-[#1a472a]">{EDIT_CAMPAIGN.addNeed}</p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" variant="outline" className="min-h-11 border-[#4a7c59] text-[#1a472a]" onClick={() => setNeeds((l) => [...l, newNeed("thing")])}>
-                  <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                  {EDIT_CAMPAIGN.addThing}
-                </Button>
-                <Button type="button" variant="outline" className="min-h-11 border-[#4a7c59] text-[#1a472a]" onClick={() => setNeeds((l) => [...l, newNeed("role")])}>
-                  <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
-                  {EDIT_CAMPAIGN.addRole}
-                </Button>
+            {needs.length >= MAX_DRAFT_NEEDS ? (
+              <p className="text-sm text-[#1a472a]/80" data-testid="edit-needs-full">{EDIT_CAMPAIGN.needsFull(MAX_DRAFT_NEEDS)}</p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[#1a472a]">{EDIT_CAMPAIGN.addNeed}</p>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" className="min-h-11 border-[#4a7c59] text-[#1a472a]" onClick={() => setNeeds((l) => [...l, newNeed("thing")])}>
+                    <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {EDIT_CAMPAIGN.addThing}
+                  </Button>
+                  <Button type="button" variant="outline" className="min-h-11 border-[#4a7c59] text-[#1a472a]" onClick={() => setNeeds((l) => [...l, newNeed("role")])}>
+                    <Plus className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {EDIT_CAMPAIGN.addRole}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {serverError && (

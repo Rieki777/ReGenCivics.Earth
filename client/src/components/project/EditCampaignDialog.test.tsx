@@ -2,13 +2,16 @@
  * The steward's Edit campaign sheet (bundle 1, item 9): prefill from the
  * project page's front, the days field that never snaps back, removing and
  * adding needs, field checks on their fields, and a server refusal inline.
+ * Save carries the version the sheet opened (seenUpdatedAt); a land need
+ * shows its words in a box of its own; the sheet stops adding at 60 needs.
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
-type MutateOpts = { onSuccess?: () => void; onError?: (e: { message: string }) => void };
+type MutateOpts = { onSuccess?: () => void; onError?: (e: { message: string; data?: { code: string } }) => void };
 const sent: Array<Record<string, any>> = [];
 let refuseWith: string | null = null;
+let refuseCode: string | undefined;
 const toastSuccess = vi.fn();
 
 vi.mock("@/lib/trpc", () => ({
@@ -19,7 +22,7 @@ vi.mock("@/lib/trpc", () => ({
           isPending: false,
           mutate: (vars: Record<string, any>, opts?: MutateOpts) => {
             sent.push(vars);
-            if (refuseWith) opts?.onError?.({ message: refuseWith });
+            if (refuseWith) opts?.onError?.({ message: refuseWith, data: refuseCode ? { code: refuseCode } : undefined });
             else opts?.onSuccess?.();
           },
         }),
@@ -29,11 +32,13 @@ vi.mock("@/lib/trpc", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { success: (...a: unknown[]) => toastSuccess(...a), error: vi.fn() } }));
 
-import { EditCampaignDialog, type EditableCampaign } from "./EditCampaignDialog";
+import { EditCampaignDialog, type EditableCampaign, type EditableNeed } from "./EditCampaignDialog";
 import { DURATION, EDIT_CAMPAIGN, ZERO_VALUE } from "@shared/crowdpoolCopy";
 
+const OPENED = new Date("2026-10-09T17:00:00.000Z");
 const front: EditableCampaign = {
   id: 44,
+  updatedAt: OPENED,
   title: "Hill Farm &amp; Orchard",
   description: "A season on the hill.",
   financialTarget: 500,
@@ -57,15 +62,20 @@ const front: EditableCampaign = {
 const onClose = vi.fn();
 const onSaved = vi.fn();
 
-function sheet() {
-  return render(<EditCampaignDialog open onClose={onClose} campaign={front} currencySymbol="$" onSaved={onSaved} />);
+function sheet(campaign: EditableCampaign = front, extra: { sentBack?: boolean } = {}) {
+  return render(<EditCampaignDialog open onClose={onClose} campaign={campaign} currencySymbol="$" onSaved={onSaved} {...extra} />);
 }
+const thingNeed = (id: number): EditableNeed => ({
+  id, category: "resource", kind: "item", capitalType: "material", capacityUnit: "count",
+  resourceName: `Crate ${id}`, estimatedValue: 10, quantityWanted: 1, acceptsGift: 1, acceptsLoan: 0,
+});
 const block = (key: string) => screen.getByTestId(`edit-need-${key}`);
 const save = () => fireEvent.click(screen.getByRole("button", { name: EDIT_CAMPAIGN.save }));
 
 beforeEach(() => {
   sent.length = 0;
   refuseWith = null;
+  refuseCode = undefined;
   toastSuccess.mockClear();
   onClose.mockClear();
   onSaved.mockClear();
@@ -118,6 +128,8 @@ describe("EditCampaignDialog", () => {
     save();
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]).toMatchObject({ id: 44, title: "Hill Farm & Orchard", financialTarget: 500, durationDays: 45 });
+    // The version the sheet opened, so a co-steward's save in between is caught.
+    expect(sent[0].seenUpdatedAt).toEqual(OPENED);
     expect(toastSuccess).toHaveBeenCalledWith(EDIT_CAMPAIGN.saved);
     expect(onSaved).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -193,8 +205,9 @@ describe("EditCampaignDialog", () => {
     expect(sent).toHaveLength(0);
   });
 
-  it("shows a server refusal inline above the buttons and stays open", async () => {
+  it("shows a server refusal inline above the buttons and stays open, and a CONFLICT fetches the campaign again", async () => {
     refuseWith = "Someone just changed this campaign. Refresh and try again.";
+    refuseCode = "CONFLICT";
     sheet();
     save();
     await waitFor(() => expect(sent).toHaveLength(1));
@@ -202,5 +215,90 @@ describe("EditCampaignDialog", () => {
     expect(alert.closest('[role="alert"]')).not.toBeNull();
     expect(onClose).not.toHaveBeenCalled();
     expect(toastSuccess).not.toHaveBeenCalled();
+    expect(onSaved).toHaveBeenCalledTimes(1);
   });
+
+  it("shows the plain line, never the list, when an input check comes back from the server", async () => {
+    refuseWith = '[\n  {\n    "code": "too_big",\n    "maximum": 60,\n    "path": ["items"]\n  }\n]';
+    refuseCode = "BAD_REQUEST";
+    sheet();
+    save();
+    expect(await screen.findByText(EDIT_CAMPAIGN.failed)).toBeInTheDocument();
+    expect(screen.queryByText(/too_big/)).toBeNull();
+    expect(onSaved).not.toHaveBeenCalled();
+  });
+
+  it("speaks to the review team's note only when it was sent back", () => {
+    const { unmount } = sheet();
+    expect(screen.getByText(EDIT_CAMPAIGN.intro)).toBeInTheDocument();
+    expect(screen.queryByText(EDIT_CAMPAIGN.introSentBack)).toBeNull();
+    unmount();
+    sheet(front, { sentBack: true });
+    expect(screen.getByText(EDIT_CAMPAIGN.introSentBack)).toBeInTheDocument();
+  });
+
+  it("fills again from a refresh that lands before the steward changes anything, and never after", () => {
+    const later = new Date("2026-10-09T17:00:05.000Z");
+    const { rerender } = sheet();
+    rerender(
+      <EditCampaignDialog open onClose={onClose} campaign={{ ...front, updatedAt: later, title: "Hill Farm, saved a moment ago" }} currencySymbol="$" onSaved={onSaved} />,
+    );
+    const title = screen.getByLabelText(EDIT_CAMPAIGN.titleLabel);
+    expect(title).toHaveValue("Hill Farm, saved a moment ago");
+
+    fireEvent.change(title, { target: { value: "Hill Farm, my words" } });
+    rerender(
+      <EditCampaignDialog open onClose={onClose} campaign={{ ...front, updatedAt: new Date("2026-10-09T17:01:00.000Z"), title: "Someone else's title" }} currencySymbol="$" onSaved={onSaved} />,
+    );
+    expect(screen.getByLabelText(EDIT_CAMPAIGN.titleLabel)).toHaveValue("Hill Farm, my words");
+    save();
+    // It still sends the version it was filled from.
+    expect(sent[0]).toMatchObject({ title: "Hill Farm, my words", seenUpdatedAt: later });
+  });
+
+  it("shows a land need's words in a box of their own, and never saves a made-up name into them", async () => {
+    const withLand: EditableCampaign = {
+      ...front,
+      items: [
+        {
+          id: 21, category: "land", kind: "item", capitalType: "living", capacityUnit: "count", estimatedValue: 9000, quantityWanted: 1,
+          hectares: 4, region: "Devon", landDescription: "South-facing pasture.\nA spring at the top.", acceptsGift: 0, acceptsLoan: 1,
+        },
+        {
+          id: 22, category: "land", kind: "item", capitalType: "living", capacityUnit: "count", estimatedValue: 500, quantityWanted: 1,
+          hectares: 2, region: "Cornwall", landDescription: null, acceptsGift: 0, acceptsLoan: 1,
+        },
+      ],
+    };
+    sheet(withLand);
+    const first = within(block("need-21"));
+    expect(first.queryByLabelText(EDIT_CAMPAIGN.needName)).toBeNull();
+    expect(first.getByText(EDIT_CAMPAIGN.kinds.land)).toBeInTheDocument();
+    const about = first.getByLabelText(EDIT_CAMPAIGN.landAbout);
+    expect(about.tagName).toBe("TEXTAREA");
+    expect(about).toHaveValue("South-facing pasture.\nA spring at the top.");
+    // The second has no words of its own: its box starts empty.
+    expect(within(block("need-22")).getByLabelText(EDIT_CAMPAIGN.landAbout)).toHaveValue("");
+    fireEvent.click(within(block("need-22")).getByRole("button", { name: EDIT_CAMPAIGN.remove }));
+    expect(within(block("need-22")).getByText("Remove this land?")).toBeInTheDocument();
+    fireEvent.click(within(block("need-22")).getByRole("button", { name: EDIT_CAMPAIGN.removeNo }));
+
+    save();
+    await waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0].items[0]).toMatchObject({ id: 21, category: "land", landDescription: "South-facing pasture.\nA spring at the top." });
+    expect(sent[0].items[1].id).toBe(22);
+    expect("landDescription" in sent[0].items[1]).toBe(false);
+  });
+
+  it("stops offering Add a need past 60 needs, and asks for fewer before saving", async () => {
+    // A campaign started with more needs than the sheet saves (create has no cap).
+    sheet({ ...front, items: Array.from({ length: 61 }, (_, i) => thingNeed(200 + i)) });
+    expect(screen.queryByRole("button", { name: EDIT_CAMPAIGN.addThing })).toBeNull();
+    expect(screen.queryByRole("button", { name: EDIT_CAMPAIGN.addRole })).toBeNull();
+    expect(screen.getByTestId("edit-needs-full")).toHaveTextContent(EDIT_CAMPAIGN.needsFull(60));
+    save();
+    expect(screen.getByText(EDIT_CAMPAIGN.errors.tooManyNeeds(60))).toBeInTheDocument();
+    await waitFor(() => expect(document.activeElement?.id).toBe("edit-needs"));
+    expect(sent).toHaveLength(0);
+  }, 30_000);
 });

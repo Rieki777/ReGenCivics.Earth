@@ -8,7 +8,8 @@
  * spine. Only stewards and admins read the note (campaigns.getReviewNote);
  * neither column ever leaves the hub publicly. Stewards edit the campaign
  * (campaigns.updateDraft) while it is a draft, in review or sent back, and
- * send it for review again, a legacy 'rejected' one included.
+ * send it for review again, a legacy 'rejected' one included. A save made
+ * from a sheet opened before someone else's save gets CONFLICT (seenUpdatedAt).
  *
  * Run against the SCRATCH database, never production. Fixture titles stay
  * clear of the words the global teardown sweeps.
@@ -45,6 +46,7 @@ vi.mock("./db", async (orig) => {
 });
 
 import * as dbHelpers from "./db";
+import { generateImage } from "./_core/imageGeneration";
 import {
   campaigns,
   campaignArrivalNotes,
@@ -125,8 +127,10 @@ function asSent(c: Awaited<ReturnType<typeof inReview>>) {
   };
 }
 
-const edit = (c: Awaited<ReturnType<typeof inReview>>, over: Record<string, unknown> = {}) => ({
+/** What the sheet sends, opened on the campaign as it stands now (seenUpdatedAt). */
+const edit = async (c: Awaited<ReturnType<typeof inReview>>, over: Record<string, unknown> = {}) => ({
   id: c.id,
+  seenUpdatedAt: (await row(c.id)).updatedAt,
   title: "Send-back spring",
   description: "A spring of planting and water work.",
   financialTarget: 500,
@@ -188,7 +192,7 @@ describe("Stewards edit before it goes live, and send it again", () => {
     await s.setArrivalNote({ campaignId: c.id, whereToGo: "The barn by the gate" });
 
     const sent = asSent(c);
-    expect(await s.updateDraft(edit(c, {
+    expect(await s.updateDraft(await edit(c, {
       title: "Send-back orchard and water",
       financialTarget: 750,
       durationDays: 45,
@@ -219,7 +223,7 @@ describe("Stewards edit before it goes live, and send it again", () => {
     // It can be edited in review too, then send it again from draft.
     expect(await s.submitForReview({ id: c.id })).toEqual({ success: true });
     expect((await row(c.id)).status).toBe("pending_review");
-    await stewardCaller(CO_STEWARD).campaigns.updateDraft(edit(c, {
+    await stewardCaller(CO_STEWARD).campaigns.updateDraft(await edit(c, {
       title: "Send-back orchard",
       items: (await dbHelpers.getCampaignItems(c.id)).map((i) => i.id === c.pump.id
         ? { ...sent.pump, estimatedValue: 2600 }
@@ -251,23 +255,23 @@ describe("Stewards edit before it goes live, and send it again", () => {
   it.skipIf(skipIfNoDb)("refuses on a live campaign, an example, a stranger, and a need at 0", async () => {
     const live = await inReview("Live");
     await adminCaller().campaigns.updateStatus({ id: live.id, status: "active" });
-    await expect(stewardCaller(STEWARD).campaigns.updateDraft(edit(live)))
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(live)))
       .rejects.toMatchObject({ code: "BAD_REQUEST", message: "This campaign is live, so it can't be edited this way." });
 
     const example = await inReview("Example");
     const database = await dbHelpers.getDb();
     await database!.update(campaigns).set({ isDemo: 1 }).where(eq(campaigns.id, example.id));
-    await expect(stewardCaller(STEWARD).campaigns.updateDraft(edit(example)))
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(example)))
       .rejects.toMatchObject({ code: "BAD_REQUEST", message: "Example campaigns can't be edited." });
 
     const c = await inReview("Guarded");
-    await expect(stewardCaller(STRANGER).campaigns.updateDraft(edit(c)))
+    await expect(stewardCaller(STRANGER).campaigns.updateDraft(await edit(c)))
       .rejects.toMatchObject({ code: "FORBIDDEN", message: "Only this project's stewards can edit it." });
     const sent = asSent(c);
-    await expect(stewardCaller(STEWARD).campaigns.updateDraft(edit(c, { items: [{ ...sent.pump, estimatedValue: 0 }, sent.lead] })))
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { items: [{ ...sent.pump, estimatedValue: 0 }, sent.lead] })))
       .rejects.toMatchObject({ code: "BAD_REQUEST", message: ZERO_VALUE.server("Well pump") });
     // A need from another campaign is refused, and nothing changed.
-    await expect(stewardCaller(STEWARD).campaigns.updateDraft(edit(c, { items: [{ ...sent.pump, id: live.pump.id }] })))
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { items: [{ ...sent.pump, id: live.pump.id }] })))
       .rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(await dbHelpers.getCampaignItems(c.id)).toHaveLength(3);
     expect((await row(c.id)).title).toBe("Send-back Guarded");
@@ -281,7 +285,7 @@ describe("Stewards edit before it goes live, and send it again", () => {
       contributionType: "equipment", title: "Spare barrow", estimatedValue: 150, status: "pending",
     });
     const sent = asSent(c);
-    await expect(stewardCaller(STEWARD).campaigns.updateDraft(edit(c, { items: [sent.pump, sent.lead] })))
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { items: [sent.pump, sent.lead] })))
       .rejects.toMatchObject({ code: "BAD_REQUEST", message: "Wheelbarrow has offers on it, so it can't be removed." });
     expect(await dbHelpers.getCampaignItems(c.id)).toHaveLength(3);
   });
@@ -291,7 +295,7 @@ describe("Stewards edit before it goes live, and send it again", () => {
     await adminCaller().campaigns.updateStatus({ id: c.id, status: "rejected", reviewNotes: NOTE });
     expect(await row(c.id)).toMatchObject({ status: "rejected", stewardReviewNote: NOTE });
     expect((await stewardCaller(STEWARD).campaigns.getReviewNote({ campaignId: c.id })).note).toBe(NOTE);
-    await stewardCaller(STEWARD).campaigns.updateDraft(edit(c, { title: "Send-back Legacy, valued" }));
+    await stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { title: "Send-back Legacy, valued" }));
     expect(await stewardCaller(STEWARD).campaigns.submitForReview({ id: c.id })).toEqual({ success: true });
     expect(await row(c.id)).toMatchObject({ status: "pending_review", title: "Send-back Legacy, valued" });
     // An admin can also send a legacy one back to draft.
@@ -300,13 +304,70 @@ describe("Stewards edit before it goes live, and send it again", () => {
     expect(await row(c.id)).toMatchObject({ status: "draft", stewardReviewNote: "One more photo." });
   });
 
+  it.skipIf(skipIfNoDb)("a sheet opened before a co-steward's save gets CONFLICT and removes nothing they added", async () => {
+    const c = await inReview("Two sheets");
+    const sent = asSent(c);
+    // Both stewards open the sheet on the same campaign.
+    const opened = (await row(c.id)).updatedAt;
+    await stewardCaller(CO_STEWARD).campaigns.updateDraft({
+      ...(await edit(c)),
+      seenUpdatedAt: opened,
+      title: "Send-back two sheets, with the hedge",
+      items: [...Object.values(sent), { category: "resource", kind: "item", resourceName: "Hedge whips", quantityWanted: 50, estimatedValue: 120, acceptsGift: true, acceptsLoan: false }],
+    });
+    expect((await row(c.id)).updatedAt.getTime()).toBeGreaterThan(opened.getTime());
+
+    // The other sheet still holds three needs and the old title.
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft({ ...(await edit(c)), seenUpdatedAt: opened, title: "Send-back two sheets" }))
+      .rejects.toMatchObject({ code: "CONFLICT", message: "Someone just changed this campaign. Refresh and try again." });
+    expect(await dbHelpers.getCampaignItems(c.id)).toHaveLength(4);
+    expect((await row(c.id)).title).toBe("Send-back two sheets, with the hedge");
+
+    // Saved again from a fresh sheet, it goes through.
+    const fresh = await dbHelpers.getCampaignItems(c.id);
+    await stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, {
+      title: "Send-back two sheets, hedge valued",
+      items: fresh.map((i) => i.resourceName === "Hedge whips"
+        ? { id: i.id, category: "resource" as const, kind: "item" as const, resourceName: "Hedge whips", quantityWanted: 50, estimatedValue: 150, acceptsGift: true, acceptsLoan: false }
+        : Object.values(sent).find((n) => n.id === i.id)!),
+    }));
+    expect(await row(c.id)).toMatchObject({ title: "Send-back two sheets, hedge valued", totalValue: 6300 });
+  });
+
+  it.skipIf(skipIfNoDb)("a generated image landing later keeps updatedAt, so an open sheet still saves", async () => {
+    const url = "https://assets.regencivics.earth/b1-lane-picture.png";
+    vi.mocked(generateImage).mockImplementationOnce(
+      () => new Promise((resolve) => setTimeout(() => resolve({ url } as Awaited<ReturnType<typeof generateImage>>), 1300)),
+    );
+    const c = await inReview("Picture");
+    const opened = (await row(c.id)).updatedAt;
+    await vi.waitFor(async () => expect((await row(c.id)).generatedImageUrl).toBe(url), { timeout: 8000, interval: 200 });
+    expect((await row(c.id)).updatedAt.getTime()).toBe(opened.getTime());
+    expect(await stewardCaller(STEWARD).campaigns.updateDraft({ ...(await edit(c)), seenUpdatedAt: opened })).toEqual({ success: true });
+  });
+
+  it.skipIf(skipIfNoDb)("text longer than its column is refused as input, and a title that grows when made safe still fits", async () => {
+    const c = await inReview("Lengths");
+    const sent = asSent(c);
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { items: [{ ...sent.pump, resourceName: "W".repeat(256) }, sent.barrow, sent.lead] })))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { items: [{ ...sent.pump, resourceUnit: "u".repeat(51) }, sent.barrow, sent.lead] })))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // Each & becomes &amp; when the title is made safe; it is cut to the column, never mid-entity.
+    await stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { title: `Send-back ${"&".repeat(240)}` }));
+    const title = (await row(c.id)).title;
+    expect(title.startsWith("Send-back &amp;")).toBe(true);
+    expect(title.length).toBeLessThanOrEqual(255);
+    expect(title.endsWith("&amp;")).toBe(true);
+  });
+
   it.skipIf(skipIfNoDb)("a read made before someone else changed the campaign gets CONFLICT, and writes nothing", async () => {
     const c = await inReview("Race");
     const before = await row(c.id);
     // The steward's read still says in review; the admin approved a moment later.
     stale.set(c.id, before);
     await adminCaller().campaigns.updateStatus({ id: c.id, status: "active" });
-    await expect(stewardCaller(STEWARD).campaigns.updateDraft(edit(c, { title: "Send-back Race, late" })))
+    await expect(stewardCaller(STEWARD).campaigns.updateDraft(await edit(c, { title: "Send-back Race, late" })))
       .rejects.toMatchObject({ code: "CONFLICT", message: "Someone just changed this campaign. Refresh and try again." });
     stale.clear();
     expect(await row(c.id)).toMatchObject({ status: "active", title: "Send-back Race" });

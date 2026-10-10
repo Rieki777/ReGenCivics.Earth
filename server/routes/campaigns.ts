@@ -72,6 +72,7 @@ import {
 import { needWindowPassed, shiftHasStarted } from "../../shared/needWindow";
 import { decodeBasicEntities } from "../../shared/htmlText";
 import { asStoredNeed, assertNeedRules, needInsertValues, needUpdateValues } from "../lib/need-rules";
+import { CAMPAIGN_DESCRIPTION_MAX, MAX_DRAFT_NEEDS, NEED_TEXT_MAX } from "../../shared/needRules";
 import { isCurrentReadinessKey, isReadinessKey } from "../../shared/crowdpoolReadiness";
 import {
   OPEN_NEEDS_CACHE_KEY,
@@ -339,28 +340,30 @@ const CAMPAIGN_ITEM_INPUT = z.object({
   kind: z.enum(['item', 'role', 'shift', 'loan', 'knowledge', 'crypto', 'financial_link']).optional(),
   capitalType: z.enum(['intellectual', 'social', 'material', 'financial', 'living', 'cultural', 'spiritual', 'experiential', 'health']).optional(),
   quantityWanted: z.number().int().min(1).optional(),
+  // Text caps match the columns (NEED_TEXT_MAX), so a long value is a field
+  // refusal here, never a database error.
   // Land fields
   hectares: z.number().optional(),
-  region: z.string().optional(),
-  features: z.array(z.string()).optional(),
-  videoUrl: z.string().optional(),
-  landDescription: z.string().optional(),
+  region: z.string().max(NEED_TEXT_MAX.name).optional(),
+  features: z.array(z.string().max(NEED_TEXT_MAX.name)).optional(),
+  videoUrl: z.string().max(NEED_TEXT_MAX.videoUrl).optional(),
+  landDescription: z.string().max(NEED_TEXT_MAX.description).optional(),
   // Equipment fields
-  equipmentName: z.string().optional(),
+  equipmentName: z.string().max(NEED_TEXT_MAX.name).optional(),
   equipmentQuantity: z.number().optional(),
-  equipmentCategory: z.string().optional(),
+  equipmentCategory: z.string().max(NEED_TEXT_MAX.category).optional(),
   // Role fields
-  roleTitle: z.string().optional(),
+  roleTitle: z.string().max(NEED_TEXT_MAX.name).optional(),
   // A role's hours a week, in whole hours. For a role this IS the
   // capacity (quantityWanted); assertNeedRules requires it.
   hoursPerWeek: z.number().int().min(1).max(MAX_ROLE_HOURS).optional(),
   durationMonths: z.number().optional(),
-  roleDescription: z.string().optional(),
+  roleDescription: z.string().max(NEED_TEXT_MAX.description).optional(),
   // Resource fields
-  resourceName: z.string().optional(),
+  resourceName: z.string().max(NEED_TEXT_MAX.name).optional(),
   resourceQuantity: z.number().optional(),
-  resourceUnit: z.string().optional(),
-  resourceDescription: z.string().optional(),
+  resourceUnit: z.string().max(NEED_TEXT_MAX.unit).optional(),
+  resourceDescription: z.string().max(NEED_TEXT_MAX.description).optional(),
   // Common
   estimatedValue: z.number().min(0),
   // When the need is wanted, and how a thing may come (section 6.1).
@@ -1429,13 +1432,18 @@ export const campaignsRouter = router({
       }
       const { moneyRoutes: _routes, ...campaignInput } = input;
       const campaignId = await db.createCampaign(ctx.user.id, { ...campaignInput, moneyRoutes });
-      // Fire-and-forget image generation, don't block mutation response
+      // Fire-and-forget image generation, don't block mutation response.
+      // The image keeps updatedAt as it was: campaigns.updateDraft reads
+      // updatedAt as the version the steward's Edit sheet opened, so an image
+      // landing behind an open sheet must not read as someone else's edit.
       generateImage({
         contentType: "campaign",
         contentId: campaignId,
         contextText: `${input.title}. ${(input.description ?? "").slice(0, 200)}`,
       }).then(({ url }) =>
-        getDb().then(d => d?.update(campaignsTable).set({ generatedImageUrl: url }).where(eq(campaignsTable.id, campaignId)))
+        getDb().then(d => d?.update(campaignsTable)
+          .set({ generatedImageUrl: url, updatedAt: sql`${campaignsTable.updatedAt}` })
+          .where(eq(campaignsTable.id, campaignId)))
       ).catch(err => console.error(`Image gen failed for campaign ${campaignId}:`, err));
       const created = await db.getCampaignById(campaignId);
       if (moneyRoutes.length > 0) {
@@ -2615,18 +2623,26 @@ export const campaignsRouter = router({
   // A steward edits a campaign before it goes live: while it is a draft
   // (sent back or not), in review, or sent back under the old Reject. Title,
   // description, the money ask, the days it runs once approved, and its
-  // needs. One transaction: the need rows are locked first, the campaign
-  // update is conditional on the status read, and the value totals are
-  // recomputed from the needs. No notice goes out.
+  // needs. One transaction: the campaign row is locked first (by its primary
+  // key, so no other campaign waits), the save goes ahead only while the
+  // campaign is as the sheet saw it (its status and updatedAt), and the value
+  // totals are recomputed from the needs without locking any other campaign's
+  // needs (review 2026-10-09). No notice goes out.
+  //
+  // seenUpdatedAt is the campaign's updatedAt when the steward opened the
+  // sheet. A co-steward's save in between moves it on, so a sheet opened
+  // before that save gets CONFLICT instead of deleting the needs the other
+  // save added and putting back the older title (review 2026-10-09).
   updateDraft: protectedProcedure
     .input(z.object({
       id: z.number().int().positive(),
+      seenUpdatedAt: z.date(),
       title: z.string().min(1).max(255),
-      description: z.string().min(1),
+      description: z.string().min(1).max(CAMPAIGN_DESCRIPTION_MAX),
       financialTarget: z.number().min(0).max(10_000_000),
       // Nine months at most, as at create (ruling 2026-09-04).
       durationDays: z.number().int().min(1).max(MAX_WINDOW_DAYS, DURATION.tooLong),
-      items: z.array(CAMPAIGN_ITEM_INPUT.extend({ id: z.number().int().positive().optional() })).max(60),
+      items: z.array(CAMPAIGN_ITEM_INPUT.extend({ id: z.number().int().positive().optional() })).max(MAX_DRAFT_NEEDS),
     }))
     .mutation(async ({ ctx, input }) => {
       const campaign = await db.getCampaignById(input.id);
@@ -2644,12 +2660,32 @@ export const campaignsRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'A need is listed twice. Refresh and try again.' });
       }
 
+      const changed = () => new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
       const database = await requireDb();
       await database.transaction(async (tx) => {
-        // Lock this campaign's needs before anything else changes.
-        const existing = await tx.select().from(campaignItemsTable)
-          .where(eq(campaignItemsTable.campaignId, campaign.id))
+        // Lock this campaign's row before anything else changes. It is found
+        // by its primary key, so only this row is locked: campaign_items has
+        // no index on campaignId, and locking its rows by campaign would
+        // lock every campaign's needs until this save commits. Another save
+        // of the same campaign waits here, then finds updatedAt moved on.
+        const [locked] = await tx.select({
+          status: campaignsTable.status,
+          isDemo: campaignsTable.isDemo,
+          updatedAt: campaignsTable.updatedAt,
+        })
+          .from(campaignsTable)
+          .where(eq(campaignsTable.id, campaign.id))
           .for('update');
+        if (
+          !locked
+          || locked.status !== campaign.status
+          || Number(locked.isDemo) !== 0
+          || new Date(locked.updatedAt).getTime() !== input.seenUpdatedAt.getTime()
+        ) {
+          throw changed();
+        }
+        const existing = await tx.select().from(campaignItemsTable)
+          .where(eq(campaignItemsTable.campaignId, campaign.id));
         const byId = new Map(existing.map((row) => [row.id, row]));
         for (const id of ids) {
           if (!byId.has(id)) throw new TRPCError({ code: 'BAD_REQUEST', message: "A need isn't part of this campaign. Refresh and try again." });
@@ -2657,23 +2693,6 @@ export const campaignsRouter = router({
         // The same rules create applies, on each need as it will be stored:
         // a need that exists keeps its category and kind.
         assertNeedRules(input.items.map((item) => (item.id != null ? asStoredNeed(byId.get(item.id)!, item) : item)));
-
-        const updated = affectedRows(await tx.update(campaignsTable)
-          .set({
-            title: sanitizeInput(input.title),
-            description: input.description,
-            financialTarget: input.financialTarget,
-            durationDays: input.durationDays,
-            updatedAt: new Date(),
-          })
-          .where(and(
-            eq(campaignsTable.id, campaign.id),
-            eq(campaignsTable.status, campaign.status),
-            eq(campaignsTable.isDemo, 0),
-          )));
-        if (updated === 0) {
-          throw new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
-        }
 
         // Needs left off the list are removed, with their "Needed to start"
         // mark and their own arrival note. None can have offers before the
@@ -2714,7 +2733,46 @@ export const campaignsRouter = router({
           }
         }
 
-        await db.recomputeCampaignValueTotals(campaign.id, tx);
+        // The value totals from the needs, grouped as
+        // db.recomputeCampaignValueTotals groups them (totalValue is every
+        // need, the four legacy columns go by category), read with no locks.
+        // That helper's UPDATE ... (SELECT ...) is a locking read of
+        // campaign_items, which has no index on campaignId, so it would lock
+        // every campaign's needs until this save commits.
+        const sums = await tx.select({
+          category: campaignItemsTable.category,
+          total: sql<string>`COALESCE(SUM(${campaignItemsTable.estimatedValue}), 0)`,
+        })
+          .from(campaignItemsTable)
+          .where(eq(campaignItemsTable.campaignId, campaign.id))
+          .groupBy(campaignItemsTable.category);
+        const valueOf = (category: string) => Number(sums.find((r) => r.category === category)?.total ?? 0);
+
+        // The campaign row last, in one statement with the totals.
+        // updatedAt is stored to the second, so each save moves it on by at
+        // least a second: a sheet opened just before this save never matches.
+        const nextUpdatedAt = new Date(Math.max(Date.now(), input.seenUpdatedAt.getTime() + 1000));
+        const updated = affectedRows(await tx.update(campaignsTable)
+          .set({
+            // Sanitizing can lengthen the title (& becomes &amp;): cut it to
+            // the column (255), never partway through an entity.
+            title: sanitizeInput(input.title).slice(0, 255).replace(/&[a-z0-9#]*$/i, ""),
+            description: input.description,
+            financialTarget: input.financialTarget,
+            durationDays: input.durationDays,
+            totalValue: round2(sums.reduce((n, r) => n + Number(r.total), 0)),
+            landValue: valueOf('land'),
+            equipmentValue: valueOf('equipment'),
+            rolesValue: valueOf('role'),
+            resourcesValue: valueOf('resource'),
+            updatedAt: nextUpdatedAt,
+          })
+          .where(and(
+            eq(campaignsTable.id, campaign.id),
+            eq(campaignsTable.status, campaign.status),
+            eq(campaignsTable.isDemo, 0),
+          )));
+        if (updated === 0) throw changed();
       });
       return { success: true };
     }),

@@ -29,6 +29,24 @@ export function isListableValue(v: unknown): boolean {
   return Number.isFinite(n) && Math.round(n * 100) > 0;
 }
 
+/**
+ * The most needs campaigns.updateDraft takes in one save. The steward's Edit
+ * campaign sheet stops offering "Add a need" at this many and says so.
+ */
+export const MAX_DRAFT_NEEDS = 60;
+
+/**
+ * Length caps on a need's text, matching the campaign_items columns (names
+ * and region varchar(255), videoUrl varchar(500), equipmentCategory
+ * varchar(100), resourceUnit varchar(50)). Descriptions are TEXT; the cap
+ * keeps them well inside it. campaigns.create and campaigns.updateDraft both
+ * check them (CAMPAIGN_ITEM_INPUT).
+ */
+export const NEED_TEXT_MAX = { name: 255, videoUrl: 500, category: 100, unit: 50, description: 10_000 } as const;
+
+/** The cap on a campaign's "what this campaign is for" text in campaigns.updateDraft (a TEXT column). */
+export const CAMPAIGN_DESCRIPTION_MAX = 20_000;
+
 /** The indexes of the needs whose value is not listable, in order. */
 export function zeroValueNeedIndexes(items: Array<{ estimatedValue: unknown }>): number[] {
   const out: number[] = [];

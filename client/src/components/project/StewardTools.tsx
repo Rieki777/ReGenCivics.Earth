@@ -305,9 +305,11 @@ export function StewardTools({
                   {decodeBasicEntities(reviewNote.note)}
                 </blockquote>
               </>
-            ) : (
+            ) : status === "rejected" ? (
+              // Sent back under the old Reject: the note may live only in the
+              // old notice. A draft sent back with no note has none anywhere.
               <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.noteInNotifications}</p>
-            )}
+            ) : null}
             <p className="text-sm text-[#1a472a]/80 mb-3">{SEND_BACK.makeChanges}</p>
             <div className="flex flex-wrap gap-2 mb-4">
               {editButton}
@@ -362,6 +364,7 @@ export function StewardTools({
             campaign={front}
             currencySymbol={currencySymbolFor(front.currency)}
             onSaved={onChanged}
+            sentBack={sentBack}
           />
         )}
       </section>
