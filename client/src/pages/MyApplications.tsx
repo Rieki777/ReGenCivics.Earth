@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -5,8 +6,31 @@ import { trpc } from "@/lib/trpc";
 import { CheckCircle2, Clock, FileText, Plus, XCircle, AlertCircle } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { Link, useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
 import { BackButton } from "@/components/BackButton";
+import { projectPathForApplication } from "@shared/projectKey";
+
+/**
+ * Build spec bundle 1, section 16.3. /campaigns' "For land projects" block
+ * sends founders who are already running a campaign here, so an accepted
+ * row opens its project page and the campaign wizard, and a status this map
+ * does not know (active and inactive were missing until 2026-10-09) falls
+ * back to the draft look instead of taking the whole page down.
+ */
+const ROW_LINKS = {
+  project: "Open your project page",
+  start: "Start your campaign",
+} as const;
+
+/** Shown in place of "New Application" once an application was accepted (section 15, question 12). */
+const ONE_PER_ACCOUNT = {
+  lead: "One application per account for now. To bring another land project, ",
+  link: "write to us",
+} as const;
+
+/** Statuses that mean the application was accepted at some point. */
+const ACCEPTED_STATUSES = ["approved", "active", "inactive"];
+/** Statuses whose project page and campaign wizard are open to the founder. */
+const CAN_START_STATUSES = ["approved", "active"];
 
 const STATUS_CONFIG = {
   draft: {
@@ -45,7 +69,23 @@ const STATUS_CONFIG = {
     color: "text-orange-600",
     bgColor: "bg-orange-100",
   },
+  active: {
+    icon: CheckCircle2,
+    label: "Accepted, taking part",
+    color: "text-green-600",
+    bgColor: "bg-green-100",
+  },
+  inactive: {
+    icon: Clock,
+    label: "Paused",
+    color: "text-gray-500",
+    bgColor: "bg-gray-100",
+  },
 };
+
+function statusConfigFor(status: string) {
+  return STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.draft;
+}
 
 export default function MyApplications() {
   const { user, loading: authLoading } = useAuth();
@@ -67,16 +107,15 @@ export default function MyApplications() {
           <p className="text-[#1a472a]/75 mb-6">
             You need to be logged in to view your applications.
           </p>
-          <Button
-            onClick={() => window.location.href = getLoginUrl()}
-            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
-          >
-            Login to Continue
+          <Button asChild className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] min-h-11">
+            <Link href="/sign-in?returnTo=%2Fmy-applications">Login to Continue</Link>
           </Button>
         </Card>
       </div>
     );
   }
+
+  const hasAccepted = (applications ?? []).some((app) => ACCEPTED_STATUSES.includes(app.status));
 
   return (
     <div className="min-h-screen bg-[#f0ebe3] py-12">
@@ -90,13 +129,24 @@ export default function MyApplications() {
             <p className="text-[#1a472a]/75">
               Track your project applications and their status
             </p>
+            {hasAccepted && (
+              <p className="text-[#1a472a]/80 mt-3">
+                {ONE_PER_ACCOUNT.lead}
+                <Link href="/connect" className="underline underline-offset-4 font-medium text-[#1a472a]">
+                  {ONE_PER_ACCOUNT.link}
+                </Link>
+                .
+              </p>
+            )}
           </div>
-          <Link href="/apply">
-            <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
-              <Plus className="w-4 h-4 mr-2" />
-              New Application
-            </Button>
-          </Link>
+          {!hasAccepted && (
+            <Link href="/apply">
+              <Button className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]">
+                <Plus className="w-4 h-4 mr-2" />
+                New Application
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Applications List */}
@@ -119,8 +169,10 @@ export default function MyApplications() {
         ) : (
           <div className="space-y-4">
             {applications.map((app) => {
-              const statusConfig = STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG];
+              const statusConfig = statusConfigFor(app.status);
               const StatusIcon = statusConfig.icon;
+              const canStart = CAN_START_STATUSES.includes(app.status);
+              const stop = (e: MouseEvent) => e.stopPropagation();
 
               return (
                 <Card
@@ -128,8 +180,8 @@ export default function MyApplications() {
                   className="p-6 bg-white hover:shadow-lg transition-shadow cursor-pointer"
                   onClick={() => navigate(`/apply/status`)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-xl font-bold text-[#1a472a]">
                           {app.projectName}
@@ -165,16 +217,32 @@ export default function MyApplications() {
                       )}
                     </div>
 
-                    <Button
-                      variant="outline"
-                      className="border-[#7dd87d] text-[#4a7c59] ml-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/apply/status`);
-                      }}
-                    >
-                      View Details
-                    </Button>
+                    <div className="flex flex-wrap gap-2 sm:flex-col sm:items-stretch sm:ml-4 shrink-0">
+                      {canStart && (
+                        <>
+                          <Button asChild className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] min-h-11">
+                            <Link href={projectPathForApplication(app.id, app.projectName)} onClick={stop}>
+                              {ROW_LINKS.project}
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" className="border-[#7dd87d] text-[#4a7c59] min-h-11">
+                            <Link href={`/create-campaign?application=${app.id}`} onClick={stop}>
+                              {ROW_LINKS.start}
+                            </Link>
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="outline"
+                        className="border-[#7dd87d] text-[#4a7c59] min-h-11"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/apply/status`);
+                        }}
+                      >
+                        View Details
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               );

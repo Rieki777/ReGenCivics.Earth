@@ -49,6 +49,37 @@ export function aboutRows(front: ProjectFront): Array<[string, string]> {
     .map(([label, v]) => [label, decodeBasicEntities(String(v))]);
 }
 
+/** Hypha spaces that belong to the Game or ReGen Civics, never to a project. */
+const SHARED_HYPHA_SPACES: Record<string, string> = {
+  "regen-games": "ReGen Games on Hypha",
+  "regen-civics": "ReGen Civics on Hypha",
+};
+
+/**
+ * The governance link's label. The link is free text the steward typed and
+ * nothing checks it, so the page names it the project's space on Hypha only
+ * when it is one: https, on hypha.earth or a subdomain, with a /dho/{slug}
+ * path, and the slug is not the Game's or ReGen Civics' own space (every
+ * example campaign links the ReGen Games space). Any other web address gets
+ * a neutral label; anything that is not a web address is left out.
+ */
+export function daoLinkFor(raw: string | null | undefined): { href: string; label: string } | null {
+  const text = (raw ?? "").trim();
+  if (!text) return null;
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const host = url.hostname.toLowerCase();
+  const onHypha = url.protocol === "https:" && (host === "hypha.earth" || host.endsWith(".hypha.earth"));
+  const slug = onHypha ? url.pathname.match(/\/dho\/([^/]+)/)?.[1]?.toLowerCase() : undefined;
+  if (!slug) return { href: url.href, label: "Governance link" };
+  return { href: url.href, label: SHARED_HYPHA_SPACES[slug] ?? "The project's space on Hypha" };
+}
+
 export function AboutThisLand({ front }: { front: ProjectFront }) {
   const [open, setOpen] = useState(hashIsAbout);
 
@@ -70,7 +101,7 @@ export function AboutThisLand({ front }: { front: ProjectFront }) {
   const links = [
     front.websiteUrl ? { href: front.websiteUrl, label: "Website" } : null,
     front.videoUrl ? { href: front.videoUrl, label: "Video" } : null,
-    front.daoLink ? { href: front.daoLink, label: "The project's space on Hypha" } : null,
+    daoLinkFor(front.daoLink),
   ].filter(Boolean) as Array<{ href: string; label: string }>;
   if (!description && rows.length === 0 && links.length === 0 && images.length === 0) return null;
 

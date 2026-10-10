@@ -1983,7 +1983,10 @@ function ContributionsTab({
                 </div>
               ))}
               {savedCalcs.length > 3 && (
-                <Link href="/profile?tab=submissions">
+                <Link
+                  href="/profile?tab=submissions"
+                  onClick={() => window.setTimeout(() => document.getElementById(PROFILE_TABS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)}
+                >
                   <p className="text-white/60 text-xs text-center hover:text-white/80 transition-colors">+ {savedCalcs.length - 3} more</p>
                 </Link>
               )}
@@ -2476,6 +2479,10 @@ function QuestJournal({ userId }: { userId: number }) {
 
 type ProfileTab = "overview" | "submissions" | "quests" | "crews" | "tasks" | "gratitude" | "contributions" | "settings";
 
+/** The tab row's id. A link that only changes ?tab= keeps the scroll
+ * position (ScrollToTop watches the path), so it scrolls here itself. */
+const PROFILE_TABS_ID = "profile-tabs";
+
 const PROFILE_TABS: { id: ProfileTab; label: string; icon: React.ElementType }[] = [
   { id: "overview",       label: "Overview",       icon: LayoutGrid },
   { id: "submissions",    label: "Submissions",    icon: FolderOpen },
@@ -2659,7 +2666,7 @@ export default function PlayerProfile() {
                   single scroll row hid labels below sm and overflowed on
                   desktop. */}
               <AnimatedSection animation="slide-up">
-                <div className="grid grid-cols-4 gap-1 bg-white/5 border border-white/10 rounded-2xl p-1.5 mb-6" role="tablist" aria-label="Profile sections">
+                <div id={PROFILE_TABS_ID} className="scroll-mt-24 grid grid-cols-4 gap-1 bg-white/5 border border-white/10 rounded-2xl p-1.5 mb-6" role="tablist" aria-label="Profile sections">
                   {PROFILE_TABS.map(tab => {
                     const Icon = tab.icon;
                     const active = activeTab === tab.id;
