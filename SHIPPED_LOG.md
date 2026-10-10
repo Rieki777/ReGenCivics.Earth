@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-10 (crowdpool bundle 1, part two): each audience sees its own pages, a way back for sent-back campaigns, kinder offer forms
+
+- **The Ready to crowdpool list moves to the founder front door** (Rye, 2026-10-05): `/create-campaign#ready` shows it in every state, signed out included, and a steward's project page shows it before a campaign exists. `READINESS_HREF` points there, and old `/crowd-pooling#ready` links (emails already sent) forward on the client. `server/audience-links.test.ts` stops any founder link pointing at a contributor page again.
+- **Contributor pages carry what a contributor looks for**: `/crowd-pooling` gains a short "how helping works" with links to open needs and campaigns; `/calculator` says it is for Game claims; `/campaigns` drops the founder buttons and the Upcoming tab and keeps one "For land projects" block at the foot; the campaign page loses the "9 forms of capital" chip. One `MONEY_ROUTE_LINE` carries the money sentence.
+- **Founders meet every next step**: the apply flow, `/apply/status`, My applications and the project page link sessions, readiness, the project page and "Start your campaign"; My applications no longer crashes for accepted projects; an accepted application can't be overwritten from `/apply`.
+- **Send back for changes** (migration 0296): the admin's Reject becomes "Send back for changes", the reviewer's note shows on the steward's card, and stewards edit title, story, needs, money ask and days before going live, then send it again.
+- **Offer forms**: no past dates, errors on the field with the first one focused, a one-day grace for people west of UTC, and a household offer limit (20 per account, 40 per connection, 7 per inbox, per 15 minutes) that counts only offers it lets through. The Needs-tab "hear when crowdpooling opens" form is readable.
+- Source: the bundle 1 brief, section 16 for the audience work (copy in the vault under `03 ReGen Upgrades/Crowdpool bundle 1 (2026-10)`). Carryover: brief section 13, and the open questions in section 15 (built at their defaults).
+
 ## 2026-10-09 (crowdpool bundle 1, part one): private, counted once, truthful examples, and tests that stay local
 
 - **Privacy**: a player's money total leaves the public player profile, the unused public leaderboard is gone, and a person's Living Tree scores answer only to them and admins. The accept dialog says whether the person's name goes on the public timeline or stays "A contributor".
