@@ -35,8 +35,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Lock, 
-  MapPin, 
+  MapPin,
   Tractor, 
   Users, 
   Plus, 
@@ -110,13 +109,14 @@ import {
 } from '@shared/crowdpoolCoach';
 // Navigation is rendered globally in App.tsx
 import { useAuth } from '@/_core/hooks/useAuth';
-import { getLoginUrl } from '@/const';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CAMPAIGN_TEMPLATES } from '@/data/campaignTemplates';
 import { MAX_ROLE_HOURS, fullTimeLabel } from "@shared/roleCapacity";
 import { CSVImportDialog } from '@/components/CSVImportDialog';
 import { estimateLandPrice, estimateEquipmentPrice, suggestHourlyRate, EQUIPMENT_BASE_PRICES, ROLE_SKILL_LEVELS } from '@/data/regionalCostData';
 import { BackButton } from "@/components/BackButton";
+import { useSearch } from 'wouter';
+import { CampaignStartDoor, type StartDoorState } from '@/components/crowdpool/CampaignStartDoor';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cdnImg } from "@/lib/utils";
@@ -625,7 +625,13 @@ export const formatFullCurrency = (amount: number, symbol: string) =>
 // Using imported estimateLandPrice from regionalCostData
 
 export default function CreateCampaign() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  // ?application=<id> (from a project page or a status page) opens the
+  // wizard on that project. #ready (READINESS_HREF) opens the front door's
+  // Ready to crowdpool fold. wouter's location carries no hash, so read it once.
+  const search = useSearch();
+  const wantedId = Number(new URLSearchParams(search).get('application')) || null;
+  const openReady = typeof window !== 'undefined' && window.location.hash === '#ready';
 
   // Applicant search for campaign creation
   const [applicantSearch, setApplicantSearch] = useState('');
@@ -634,9 +640,17 @@ export default function CreateCampaign() {
     { search: applicantSearch },
     { enabled: !!user }
   );
-  
+  // The same read with no search, so the front door's state never comes from
+  // a filtered list. While the search box is empty it shares the picker
+  // query's cache key, so it costs no extra request until the person types.
+  const { data: allApplicants, isLoading: allApplicantsLoading } = trpc.applicantsForCampaign.list.useQuery(
+    { search: '' },
+    { enabled: !!user }
+  );
+  const hasAnyApplicant = (allApplicants ?? []).length > 0;
+
   // Fetch user's own applications for quick access
-  const { data: userApplications } = trpc.applications.myApplications.useQuery(
+  const { data: userApplications, isLoading: userAppsLoading } = trpc.applications.myApplications.useQuery(
     undefined,
     { enabled: !!user }
   );
@@ -644,7 +658,7 @@ export default function CreateCampaign() {
   // or active (campaigns.create). Offer those; name the ones still in review.
   const campaignReadyApps = (userApplications ?? []).filter((app: any) => ['approved', 'active'].includes(app.status));
   const appsInReview = (userApplications ?? []).filter((app: any) => ['submitted', 'under_review'].includes(app.status));
-  
+
   // Campaign data
   const [campaignName, setCampaignName] = useState('');
   const [campaignDescription, setCampaignDescription] = useState('');
@@ -710,11 +724,13 @@ export default function CreateCampaign() {
   // tRPC mutation for creating campaign
   const createCampaignMutation = trpc.campaigns.create.useMutation({
     onSuccess: (data) => {
-      // The project page, focused on the new campaign, at the steward tools.
-      // It is a full page load, so the confirmation travels with it and
-      // StewardTools shows it there (a toast here would be lost).
+      // The project page, focused on the new campaign, at its status card,
+      // where the steward ticks the Ready to crowdpool items and sends it for
+      // review (bundle 1, section 16.1). It is a full page load, so the
+      // confirmation travels with it and StewardTools shows it there (a toast
+      // here would be lost).
       rememberCreatedCampaign(data.id);
-      window.location.href = `${data.path}#steward-tools`;
+      window.location.href = `${data.path}#campaign-status`;
     },
     onError: (error) => {
       toast.error(`Failed to create campaign: ${error.message}`);
@@ -1033,64 +1049,79 @@ export default function CreateCampaign() {
     toast.success(`Project "${app.projectName}" loaded! Review and customize your campaign details.`);
   }, []);
 
+  // ?application=<id>: open the wizard on that project once, as soon as the
+  // reads that hold it arrive. The ref keeps it from firing again.
+  const preselected = useRef(false);
+  useEffect(() => {
+    if (preselected.current || selectedApplication || !wantedId) return;
+    const app =
+      campaignReadyApps.find((a: any) => a.id === wantedId) ??
+      (allApplicants ?? []).find((a: any) => a.id === wantedId) ??
+      (applicants ?? []).find((a: any) => a.id === wantedId);
+    if (app) {
+      preselected.current = true;
+      handleSelectApplication(app);
+    }
+  }, [wantedId, selectedApplication, campaignReadyApps, allApplicants, applicants, handleSelectApplication]);
+
   // Every hook above runs on every render. The sign-in gate sits here, after
   // the last hook: returning before the hooks (as this page used to, twice)
   // made React throw "Rendered more hooks than during the previous render"
   // the moment auth resolved. The old shared-password gate is gone; the
   // server checks that the caller stewards an approved application.
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818] flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white/95 backdrop-blur rounded-2xl shadow-xl p-6 text-center">
-          <Lock className="w-10 h-10 text-[#1a472a] mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-[#1a472a] mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-            Sign In Required
-          </h2>
-          <p className="text-sm text-[#1a472a]/80 mb-4">You need to be signed in to create campaigns.</p>
-          <a
-            href={getLoginUrl()}
-            className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#4a7c59] hover:bg-[#1a472a] text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            Sign In
-          </a>
-        </div>
+  //
+  // Signed out, and before a project is picked, the page is the creator front
+  // door (CampaignStartDoor, bundle 1 section 16.1): the whole path, the
+  // person's next step, and the Ready to crowdpool list at #ready.
+  const doorShell = (door: React.ReactNode) => (
+    <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0]">
+      <BackButton />
+
+      {/* Hero Image */}
+      <div className="relative w-full h-[250px] md:h-[350px] overflow-hidden">
+        <img
+          src={cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
+          alt="Crowd Pooling - Create your campaign"
+          className="w-full h-full object-cover object-center"
+          width={1200}
+          height={350}
+          loading="lazy" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#f0f7f0] via-transparent to-transparent" />
       </div>
-    );
+
+      <div className="container py-8 -mt-12 relative z-10">
+        <div className="max-w-2xl mx-auto">{door}</div>
+      </div>
+    </div>
+  );
+
+  if (!user) {
+    return doorShell(<CampaignStartDoor state={authLoading ? 'loading' : 'signed-out'} openReady={openReady} />);
   }
 
   // Project selection screen (replaces password)
   if (!selectedApplication) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f0f7f0] to-[#f0f7f0]">
-        <BackButton />
-        
-        {/* Hero Image */}
-        <div className="relative w-full h-[250px] md:h-[350px] overflow-hidden">
-          <img
-            src={cdnImg("https://assets.regencivics.earth/LITCLobaccHmqZcc.jpg")}
-            alt="Crowd Pooling - Create your campaign"
-            className="w-full h-full object-cover object-center"
-            width={1200}
-            height={350}
-            loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#f0f7f0] via-transparent to-transparent" />
-        </div>
-
-        <div className="container py-8 -mt-12 relative z-10">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg border border-[#7dd87d]/30">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#7dd87d]/20 mb-4">
-                  <Sparkles className="w-8 h-8 text-[#4a7c59]" />
-                </div>
-                <h1 className="text-2xl md:text-3xl font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-                  Create Your Campaign
-                </h1>
-                <p className="text-[#1a472a]/75 mt-2 max-w-md mx-auto">
-                  Select your project from the list of season applicants. Your application data will be automatically loaded into the campaign.
-                </p>
-              </div>
-
+    // The door's state comes from the person's own applications and the
+    // unfiltered applicants read, never the search-filtered list, so a
+    // steward whose search matches nothing keeps the picker and its search box.
+    const doorState: StartDoorState =
+      userAppsLoading || allApplicantsLoading
+        ? 'loading'
+        : campaignReadyApps.length > 0 || hasAnyApplicant
+          ? 'accepted'
+          : appsInReview.length > 0
+            ? 'in-review'
+            : (userApplications ?? []).some((app: any) => app.status === 'changes_requested')
+              ? 'changes-requested'
+              : (userApplications ?? []).some((app: any) => app.status === 'draft')
+                ? 'draft'
+                : 'no-application';
+    return doorShell(
+      <CampaignStartDoor
+        state={doorState}
+        inReviewNames={appsInReview.map((app: any) => app.projectName)}
+        openReady={openReady}
+      >
               {/* Search */}
               <div className="mb-4">
                 <Input
@@ -1110,7 +1141,7 @@ export default function CreateCampaign() {
               )}
               {user && campaignReadyApps.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs font-semibold text-[#4a7c59] uppercase tracking-wider mb-2">Your Applications</p>
+                  <p className="text-xs font-semibold text-[#4a7c59] uppercase tracking-wider mb-2">Your projects</p>
                   <div className="space-y-2">
                     {campaignReadyApps
                       .map((app: any) => (
@@ -1134,8 +1165,8 @@ export default function CreateCampaign() {
                 </div>
               )}
 
-              {/* Divider */}
-              {user && campaignReadyApps.length > 0 && applicants && applicants.length > 0 && (
+              {/* Divider, only when the lower list holds a project beyond the person's own */}
+              {user && campaignReadyApps.length > 0 && (applicants ?? []).some((app: any) => !campaignReadyApps.some((ua: any) => ua.id === app.id)) && (
                 <div className="flex items-center gap-3 my-4">
                   <div className="flex-1 h-px bg-[#7dd87d]/30" />
                   <span className="text-xs text-[#1a472a]/80">or select from all applicants</span>
@@ -1176,35 +1207,15 @@ export default function CreateCampaign() {
                         </div>
                       </button>
                     ))
-                ) : (
+                ) : applicantSearch ? (
+                  // The door carries the no-application and in-review states,
+                  // so the only empty line left here is for a search.
                   <div className="text-center py-8">
-                    <p className="text-sm text-[#1a472a]/80">
-                      {applicantSearch ? 'No projects match your search.' : 'No applicants available yet.'}
-                    </p>
-                    <p className="text-xs text-[#1a472a]/80 mt-2">
-                      Projects must first apply for the current season at <a href="/apply" className="text-[#4a7c59] underline">/apply</a> before creating a campaign.
-                    </p>
+                    <p className="text-sm text-[#1a472a]/80">No projects match your search.</p>
                   </div>
-                )}
+                ) : null}
               </div>
-
-              {!user && (
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-[#1a472a]/80 mb-3">
-                    Please sign in to access the campaign creator.
-                  </p>
-                  <Button
-                    onClick={() => window.location.href = '/api/oauth/login'}
-                    className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl"
-                  >
-                    Sign In
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      </CampaignStartDoor>
     );
   }
 

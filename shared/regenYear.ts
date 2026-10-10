@@ -41,6 +41,8 @@
  * selected) and the long build that followed it.
  */
 
+import { READINESS_HREF } from "./crowdpoolReadiness";
+
 export type RegenSeasonKey = "winter" | "spring" | "summer" | "fall";
 
 /**
@@ -157,7 +159,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
       "Recap and passoff from Design to Resource. Projects get their crowdpools ready for the March equinox and invite people to follow the work.",
     play: [
       { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
-      { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: "/crowd-pooling#ready", label: "What ready means" },
+      { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: READINESS_HREF, label: "What ready means" },
       { who: "Funders and future members", what: "Tell us you're interested in the cooperative taking shape. No money and no commitment.", href: "/loi", label: "Tell us you're interested" },
     ],
     cta: { label: "How crowdpooling works", href: "/crowd-pooling" },

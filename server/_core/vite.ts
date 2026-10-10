@@ -312,6 +312,7 @@ export function serveStatic(app: Express) {
     "/seasons":     { title: "Seasons: The ReGen Civics Year", description: "The ReGen Civics year turns through four seasons: land projects design their games in winter, crowdpool in spring, build on the land in summer, and rest in fall.", image: `${BASE_URL}/og/seasons.jpg` },
     "/team":        { title: "Team: ReGen Civics", description: "The people behind ReGen Civics. Community builders, developers, land stewards, and movement catalysts.", image: `${BASE_URL}/og/team.jpg` },
     "/crowd-pooling": { title: "Map your Character Gifts: ReGen Civics", description: CROWDPOOLING, image: `${BASE_URL}/og/crowd-pooling.jpg` },
+    "/create-campaign": { title: "Bring your land project to crowdpooling: ReGen Civics", description: "What a land project shows before its crowdpooling campaign opens, and how to start one." },
     "/economy":     { title: "The Regenerative Economy: ReGen Civics", description: "A real economic system built through gameplay. Contribution scores, gratitude tokens, seasonal harvests.", image: `${BASE_URL}/og/economy.jpg` },
     "/proposals":   { title: "Community Proposals: ReGen Civics", description: "Shape the direction of ReGen Civics. Submit proposals, signal your support, help the community decide.", image: `${BASE_URL}/og/proposals.jpg` },
     "/game-mechanics": { title: "Game Mechanics: ReGen Civics", description: "See every variable that powers the game. Simulate changes. Export proposals.", image: `${BASE_URL}/og/game-mechanics.jpg` },
@@ -319,7 +320,7 @@ export function serveStatic(app: Express) {
     "/play":        { title: "Play the Game: ReGen Civics", description: "Complete quests, earn $ReGen tokens, and contribute to regenerative projects. The Infinite Game is open to everyone." },
     "/socials":     { title: "Socials: ReGen Civics", description: "Find us on WhatsApp, Discord, YouTube, and beyond. Connect with the regenerative community." },
     "/marketplace": { title: "Connection Hub: ReGen Civics", description: "Share what you can offer and find help with what you need. A space for regenerators to connect." },
-    "/calculator":  { title: "Contribution Calculator: ReGen Civics", description: "Calculate the value of your contributions to regenerative land projects." },
+    "/calculator":  { title: "Contribution Calculator: ReGen Civics", description: "Claim your regenerative work in the ReGen Game across the nine forms of capital." },
     "/newsletter":  { title: "Newsletter: ReGen Civics", description: "Stay updated on the ReGenerative Renaissance. Community news, season updates, and quest announcements." },
     // /crowd-pooling-projects answers a 301 to /campaigns before this handler
     // runs (shared/redirects.ts), so the meta lives on the real route.

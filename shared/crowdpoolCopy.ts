@@ -239,6 +239,8 @@ export const HOW_IT_WORKS = [
     body: "An offer counts toward the campaign once the stewards accept it. It is recorded in the project's token as you deliver it. The token tracks what you pooled and makes no claim about value.",
   },
   { title: "Both halves, by the close date", body: "A campaign is complete when both halves are confirmed by the close date." },
+  // What happens if it doesn't complete, the question contributors ask (bundle 1, section 16.2).
+  { title: "If it doesn't complete", body: STRIP.ifNotComplete },
 ];
 
 // ── The Needs tab (section 9) ───────────────────────────────────────────────
@@ -725,16 +727,18 @@ export const NEED_MARKER = {
 } as const;
 
 /**
- * The default opening day and "What we look for" on /campaigns (section 14).
- * Both are defaults: each project can choose its own day (ruling 2026-09-24).
- * The day comes from defaultCrowdpoolOpening in shared/crowdpoolCalendar.ts.
+ * The default opening day and what every project shows before it goes live,
+ * on /campaigns (section 14). Both are defaults (ruling 2026-09-24): a
+ * project may open on another day, and its own page shows its dates. Worded
+ * for contributors (bundle 1, section 16.2). The day comes from
+ * defaultCrowdpoolOpening in shared/crowdpoolCalendar.ts.
  */
 export const SEASON_DEFAULTS = {
   upcoming: (date: string, seasonNumber: number) =>
-    `Default opening day: ${date}. Season ${seasonNumber} crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project can choose its own day.`,
+    `Default opening day: ${date}. Season ${seasonNumber} crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project's page shows its own dates.`,
   open: (date: string, seasonNumber: number) =>
-    `Season ${seasonNumber} crowdpooling opened on ${date}, the default opening day on the Year wheel. Each project can choose its own day.`,
-  lookForLead: "What we look for, by default: ",
+    `Season ${seasonNumber} crowdpooling opened on ${date}, the default opening day on the Year wheel. Each project's page shows its own dates.`,
+  lookForLead: "What every project shows before its campaign goes live, by default: ",
   lookForLink: "the Ready to crowdpool list",
   /** The block's name for screen readers (lane 2 addition). */
   label: "Season defaults",
@@ -863,4 +867,67 @@ export const EDIT_CAMPAIGN = {
     tooManyNeeds: (max: number) => `This sheet saves up to ${max} needs. Remove some, then save.`,
     tooLong: (max: number) => `Keep this to ${max.toLocaleString("en-US")} characters or fewer.`,
   },
+} as const;
+
+// ═══ Bundle 1 (build spec 2026-10-01, section 16) ══════════════════════════
+// Each audience sees its own surfaces. The Ready to crowdpool list moves from
+// the contributor gift map to the creator front door at /create-campaign#ready.
+
+/**
+ * The creator front door (client/src/components/crowdpool/CampaignStartDoor.tsx),
+ * shown on /create-campaign in every state. Step 1 carries APPLY_BUTTON_LABEL
+ * from shared/applicationWindow.ts. Nothing here promises an emailed decision:
+ * decision emails reach only the site owner today (section 15, question 11).
+ */
+export const START_DOOR = {
+  heading: "Bring your land project to crowdpooling",
+  lede: "A campaign starts from an accepted application. This is the whole path.",
+  steps: [
+    { title: "Apply", body: "Apply for the season. It takes about 15 minutes." },
+    { title: "Get ready", body: "The eight things the review checks are below. Season 2 works through each one." },
+    { title: "List what your project needs", body: "Once you're accepted, start your campaign here. We fill in what your application already says." },
+    /** Its body is sendBody, built from the default opening day. */
+    { title: "Send it for review", body: "" },
+  ],
+  /** Step 4. Once the round has opened, the default day drops out. */
+  sendBody: (day: string, open = false) =>
+    open
+      ? "The ReGen Civics team checks the eight before your campaign opens. Ask the ReGen Civics team if your project needs a different day."
+      : `The ReGen Civics team checks the eight before your campaign opens. Crowdpooling opens together on ${day} by default. Ask the ReGen Civics team if your project needs a different day.`,
+  signedOut: "Already accepted? Sign in to start your campaign.",
+  signIn: "Sign in",
+  noApplication: "You have no accepted application yet. Apply first. It takes about 15 minutes.",
+  changesRequested: "The review team asked for some changes to your application.",
+  /** To /apply/status. Not the apply link: that would start them over. */
+  changesLink: "See your application",
+  /** The whole line is the link, to /apply, which reopens the person's draft. */
+  draft: "Finish your application.",
+  inReview: (names: string, count = 1) =>
+    count > 1
+      ? `${names} are in review. You can start a campaign once one is accepted. Meanwhile, get ready with the eight below.`
+      : `${names} is in review. You can start your campaign once it's accepted. Meanwhile, get ready with the eight below.`,
+  pick: "Pick the project this campaign is for. We fill in what your application already says.",
+  readyFold: "What the review checks",
+} as const;
+
+/**
+ * "How helping a land project works" on /crowd-pooling (GiftMapChrome.tsx
+ * HowHelpingWorks and ProjectLine). The steps are HOW_IT_WORKS and the
+ * paragraph is CROWDPOOLING_WORDING, both verbatim.
+ */
+export const CONTRIBUTOR_DOOR = {
+  heading: "How helping a land project works",
+  /** To /campaigns?tab=needs. */
+  needsButton: "See what's needed",
+  /** To /campaigns. */
+  browse: "Browse campaigns",
+  /** The whole line, for prose. ProjectLine renders it as the lead, then the link to READINESS_HREF. */
+  projectLine: "Bringing a land project? See what it shows before its campaign opens.",
+  projectLead: "Bringing a land project?",
+  projectLink: "See what it shows before its campaign opens.",
+} as const;
+
+/** The public Ready to crowdpool list's own words, ticks kept in this browser (CrowdpoolReadiness). */
+export const READINESS_LOCAL = {
+  allIn: "All eight in place. These ticks stay in this browser. Once your campaign exists, tick them on its page so the review team sees them.",
 } as const;

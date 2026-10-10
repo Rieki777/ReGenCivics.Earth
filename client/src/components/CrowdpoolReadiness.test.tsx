@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
+import { READINESS_LOCAL } from "@shared/crowdpoolCopy";
+import { sessionBoardHref } from "@shared/sessionBoard";
 
 const setTick = vi.fn();
 const invalidate = vi.fn();
@@ -105,5 +107,32 @@ describe("CrowdpoolReadiness", () => {
   it("shows no project line until the project's ticks are known", () => {
     render(<CrowdpoolReadiness framed={false} audience="review" storageKey="review-44" />);
     expect(screen.queryByText("Not ticked by the project.")).toBeNull();
+  });
+
+  it("all eight ticked in this browser: says where the ticks stay and where to tick them next", () => {
+    render(<CrowdpoolReadiness framed={false} storageKey="reader" />);
+    for (const item of CROWDPOOL_READINESS) fireEvent.click(screen.getByLabelText(new RegExp(item.title)));
+    expect(screen.getByText(READINESS_LOCAL.allIn)).toBeInTheDocument();
+    expect(READINESS_LOCAL.allIn).toBe(
+      "All eight in place. These ticks stay in this browser. Once your campaign exists, tick them on its page so the review team sees them.",
+    );
+  });
+
+  it("names the Governance Canvas blocks only to the review team", () => {
+    const { unmount } = render(<CrowdpoolReadiness framed={false} storageKey="reader" />);
+    expect(screen.queryByText(/Governance Canvas/)).toBeNull();
+    unmount();
+    render(<CrowdpoolReadiness framed={false} audience="review" storageKey="review-44" />);
+    expect(screen.getAllByText(/Governance Canvas/).length).toBe(CROWDPOOL_READINESS.length);
+  });
+
+  it("links each Season 2 week to its session board", () => {
+    render(<CrowdpoolReadiness framed={false} storageKey="reader" />);
+    const week10 = screen.getAllByRole("link", { name: "Week 10" });
+    expect(week10.length).toBeGreaterThan(0);
+    for (const link of week10) expect(link).toHaveAttribute("href", sessionBoardHref(10));
+    // The legal item works in weeks 10 and 11.
+    const legal = screen.getByLabelText(new RegExp(first.title)).closest("li")!;
+    expect(legal).toHaveTextContent("Season 2: Week 10 and Week 11");
   });
 });

@@ -24,6 +24,7 @@ import { serveStatic } from "./_core/vite";
 import { COOP } from "../shared/fund";
 import { escapeHtml } from "./_core/crawler-content";
 import { SEASON_ONE } from "../shared/regenYear";
+import { CROWDPOOL_READINESS } from "../shared/crowdpoolReadiness";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
 import { findRetired, findG5, findTraction } from "../scripts/check-fund-claims.mjs";
 
@@ -172,6 +173,7 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
   it.each([
     ["/season2", "thirteen regenerative land projects"],
     ["/crowd-pooling", "Crowd pooling on this page is a character sheet"],
+    ["/create-campaign", "Bring your land project to crowdpooling"],
     ["/game-mechanics", "visible and tunable"],
     ["/connect", "which path calls to you"],
     ["/play", "five minutes or five years"],
@@ -187,6 +189,20 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     expect(html.toLowerCase()).toContain(phrase.toLowerCase());
     expect(html).toContain('id="__crawler_content__"');
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
+  });
+
+  it("sends land projects to the creator front door, which lists the eight by title only (bundle 1, section 16)", async () => {
+    // The gift map is a contributor's page: no calculator link, and the
+    // readiness list lives on /create-campaign.
+    const giftMap = crawlerBlock(await (await fetch(`${base}/crowd-pooling`)).text());
+    expect(giftMap).not.toContain('href="/calculator"');
+    expect(giftMap).toContain('href="/create-campaign#ready"');
+    const door = crawlerBlock(await (await fetch(`${base}/create-campaign`)).text());
+    for (const item of CROWDPOOL_READINESS) expect(door, item.key).toContain(escapeHtml(item.title));
+    // Titles only: item 3's wording is Rye's open question and stays off crawler prose.
+    expect(door).not.toContain("or other returns");
+    for (const item of CROWDPOOL_READINESS) expect(door, item.key).not.toContain(escapeHtml(item.need));
+    expectNoFundClaims("/create-campaign", door);
   });
 
   it("keeps /loi's disclaimers intact, because an agent will relay them", async () => {

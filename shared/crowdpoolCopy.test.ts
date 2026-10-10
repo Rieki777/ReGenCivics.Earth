@@ -148,10 +148,10 @@ describe("shared/crowdpoolCopy", () => {
     expect(copy.FOLLOW.emailDone("Harmony Valley")).toBe("You're on the list for news from Harmony Valley.");
     expect(copy.NEED_MARKER.statsLine(2, 3)).toBe("Needed to start: 2 of 3 met.");
     expect(copy.SEASON_DEFAULTS.upcoming("20 March 2027", 2)).toBe(
-      "Default opening day: 20 March 2027. Season 2 crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project can choose its own day.",
+      "Default opening day: 20 March 2027. Season 2 crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project's page shows its own dates.",
     );
     expect(copy.SEASON_DEFAULTS.open("21 December 2026", 2)).toBe(
-      "Season 2 crowdpooling opened on 21 December 2026, the default opening day on the Year wheel. Each project can choose its own day.",
+      "Season 2 crowdpooling opened on 21 December 2026, the default opening day on the Year wheel. Each project's page shows its own dates.",
     );
     expect(copy.OUTBOUND_DIGEST.choice(2, 41)).toBe("Season 2: email followers and the waitlist (41)");
   });
@@ -164,6 +164,28 @@ describe("shared/crowdpoolCopy", () => {
     expect(writingRuleBreaks("It makes no claim about value.")).toEqual([]);
     expect(writingRuleBreaks("Routing buys a seat")).toContain("fund words");
     expect(writingRuleBreaks("It's not money, but time")).toContain("contrast framing");
+  });
+});
+
+describe("bundle 1 audience copy (build spec 2026-10-01, section 16)", () => {
+  it("adds what happens if a campaign doesn't complete as the fourth step", () => {
+    expect(copy.HOW_IT_WORKS).toHaveLength(4);
+    expect(copy.HOW_IT_WORKS[3]).toEqual({ title: "If it doesn't complete", body: STRIP.ifNotComplete });
+  });
+
+  it("the front door's day line drops out once the round has opened", () => {
+    expect(copy.START_DOOR.sendBody("20 March 2027")).toBe(
+      "The ReGen Civics team checks the eight before your campaign opens. Crowdpooling opens together on 20 March 2027 by default. Ask the ReGen Civics team if your project needs a different day.",
+    );
+    expect(copy.START_DOOR.sendBody("20 March 2027", true)).not.toContain("20 March 2027");
+    expect(copy.START_DOOR.inReview("Hill Farm")).toBe(
+      "Hill Farm is in review. You can start your campaign once it's accepted. Meanwhile, get ready with the eight below.",
+    );
+    expect(copy.START_DOOR.inReview("Hill Farm and Oak Hollow", 2)).toMatch(/^Hill Farm and Oak Hollow are in review\./);
+  });
+
+  it("the project line on the gift map is its lead and its link", () => {
+    expect(copy.CONTRIBUTOR_DOOR.projectLine).toBe(`${copy.CONTRIBUTOR_DOOR.projectLead} ${copy.CONTRIBUTOR_DOOR.projectLink}`);
   });
 });
 

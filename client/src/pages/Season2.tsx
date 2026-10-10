@@ -562,7 +562,7 @@ const SELECTION: {
   {
     title: "Everyone who's ready goes live together",
     body: "At the March equinox, every project that graduates with everything it needs launches its crowdpooling campaign in one shared event. We need at least nine projects to graduate for that launch to happen, and we want all thirteen. Community projects that followed the season and are ready join the same round, with room for far more than thirteen, and the more the better. From there the world decides which projects to pool into.",
-    cta: { href: "/crowd-pooling", label: "See how crowdpooling works" },
+    cta: { href: READINESS_HREF, label: "What a project needs to crowdpool" },
   },
 ];
 
@@ -1360,12 +1360,12 @@ export default function Season2() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/crowd-pooling">
+            <Link href={READINESS_HREF}>
               <Button
                 size="lg"
                 className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-semibold rounded-xl px-8"
               >
-                See how crowdpooling works
+                What a project needs to crowdpool
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>

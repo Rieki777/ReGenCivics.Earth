@@ -1,9 +1,14 @@
 /**
  * CrowdpoolReadiness: the eight things a land project shows before its
  * campaign is approved for the crowdpooling round. The words live in
- * shared/crowdpoolReadiness.ts. Three places show them: /crowd-pooling#ready
- * for everyone, beside "Send for review" for a campaign's stewards, and in the
- * review dialog the team approves from.
+ * shared/crowdpoolReadiness.ts. Three places show them: /create-campaign#ready
+ * (the creator front door, and the steward's project page before a campaign
+ * exists) for anyone getting a project ready, beside "Send for review" for a
+ * campaign's stewards, and in the review dialog the team approves from.
+ *
+ * Each item's Season 2 weeks link to that week's session board where one
+ * exists. The Governance Canvas blocks show only to the review team, since no
+ * page opens a Governance Canvas yet (bundle 1, section 16.3).
  *
  * Where the ticks live (build spec 2026-09-25, section 12):
  *   - With `campaignId` (a campaign's stewards): stored on the campaign
@@ -16,7 +21,8 @@
  *     the project ticked it. The reviewer's own ticks stay local, as before.
  * Nothing adds up to a score.
  */
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { Link } from "wouter";
 import { toast } from "sonner";
 import { ClipboardCheck } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -27,9 +33,9 @@ import {
   GAME_NEEDS_LEAD,
   READINESS_INTRO,
   READINESS_TITLE,
-  weeksLabel,
 } from "@shared/crowdpoolReadiness";
-import { READINESS_STORED } from "@shared/crowdpoolCopy";
+import { READINESS_LOCAL, READINESS_STORED } from "@shared/crowdpoolCopy";
+import { hasSessionBoard, sessionBoardHref } from "@shared/sessionBoard";
 import { formatCloseDate } from "@shared/campaignProgress";
 
 export type ProjectTick = { itemKey: string; tickedAt: Date | string | null };
@@ -59,6 +65,30 @@ function readTicks(key?: string): string[] {
   } catch {
     return [];
   }
+}
+
+/**
+ * "Week 10 and Week 11": each week a link to its session board where one
+ * exists, plain text otherwise, joined with commas and a final "and".
+ */
+function WeekLinks({ weeks }: { weeks: number[] }) {
+  const sorted = [...weeks].sort((a, b) => a - b);
+  return (
+    <>
+      {sorted.map((week, i) => (
+        <Fragment key={week}>
+          {i > 0 && (i === sorted.length - 1 ? " and " : ", ")}
+          {hasSessionBoard(week) ? (
+            <Link href={sessionBoardHref(week)} className="font-semibold underline underline-offset-2 hover:text-[#4a7c59]">
+              Week {week}
+            </Link>
+          ) : (
+            <>Week {week}</>
+          )}
+        </Fragment>
+      ))}
+    </>
+  );
 }
 
 function tickDate(v: Date | string | null): string | null {
@@ -147,7 +177,7 @@ export function CrowdpoolReadiness({
           ? `All eight in place. ${READINESS_STORED.hint}`
           : `Tick each one as your project shows it. ${READINESS_STORED.hint}`
         : allIn
-          ? "All eight in place. Your campaign is ready to send for review."
+          ? READINESS_LOCAL.allIn
           : "Tick each one as your project shows it. Your ticks stay in this browser.";
   const inputScope = campaignId != null ? `c${campaignId}` : storageKey ?? "list";
 
@@ -222,7 +252,8 @@ export function CrowdpoolReadiness({
                   <span className="font-semibold">Show:</span> {item.show}
                 </p>
                 <p className="mt-2 text-xs text-[#1a472a]/80">
-                  Season 2: {weeksLabel(item.weeks)} · Governance Canvas: {item.canvas.join(", ")}
+                  Season 2: <WeekLinks weeks={item.weeks} />
+                  {audience === "review" && <> · Governance Canvas: {item.canvas.join(", ")}</>}
                 </p>
               </div>
             </li>

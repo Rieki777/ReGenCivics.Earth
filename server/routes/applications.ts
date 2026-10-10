@@ -248,6 +248,7 @@ export const applicationsRouter = router({
                 <li><strong>Review:</strong> We review applications as they come in and email you our decision.</li>
                 <li><strong>What acceptance means:</strong> ${ACCEPTANCE_LINE}</li>
                 <li><strong>Season ${intake.openSeason} is live now:</strong> find the weekly time, the sessions and the recordings on the <a href="${toAbsoluteUrl("/season-schedule")}">Season Schedule</a>.</li>
+                <li><strong>Getting ready:</strong> <a href="${toAbsoluteUrl(READINESS_HREF)}">the eight things the review checks</a> before a campaign opens.</li>
               </ol>` : intake.reviewing ? `<ol>
                 <li><strong>Review (1–2 weeks):</strong> Our team reviews your application for fit with the ReGenerative Renaissance mission.</li>
                 <li><strong>Invitation to Connect:</strong> If your project is a strong fit, we will reach out to schedule a call.</li>

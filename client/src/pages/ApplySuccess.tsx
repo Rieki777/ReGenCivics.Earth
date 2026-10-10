@@ -45,7 +45,12 @@ export default function ApplySuccess() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#7dd87d] mt-1">✓</span>
-                    <span>{ACCEPTANCE_LINE}</span>
+                    <span>
+                      {ACCEPTANCE_LINE}{" "}
+                      <Link href={READINESS_HREF} className="font-semibold text-[#1a472a] underline underline-offset-2">
+                        What ready means
+                      </Link>
+                    </span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-[#7dd87d] mt-1">✓</span>

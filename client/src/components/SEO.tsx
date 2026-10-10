@@ -361,13 +361,6 @@ export const pageSEO = {
     image: '/og/governance.jpg',
     url: '/governance'
   },
-  calculator: {
-    title: 'Contribution Calculator | ReGen Civics',
-    description: 'Count what you bring to regenerative land projects across all nine forms of capital, from money to time, skills, tools and relationships.',
-    keywords: 'contribution calculator, nine forms of capital, contribution tracking, crowdpooling',
-    image: `${BASE_URL}/og-default.jpg`,
-    url: '/calculator'
-  },
   showcase: {
     title: 'Community Showcase | ReGen Civics',
     description: 'Artifacts, completions, and creations from the ReGen Civics community. See what players are building, growing, and healing.',
@@ -396,9 +389,11 @@ export const pageSEO = {
     image: `${BASE_URL}/og-default.jpg`,
     url: '/marketplace'
   },
+  // The creator front door (bundle 1, section 16.1): signed out it shows the
+  // path and the Ready to crowdpool list, so search reads it as that.
   createCampaign: {
-    title: 'Create a Campaign | ReGen Civics Crowd Pooling',
-    description: `Launch a crowdpooling campaign for your regenerative land project. ${CROWDPOOLING}`,
+    title: 'Bring your land project to crowdpooling | ReGen Civics',
+    description: `What a land project shows before its crowdpooling campaign opens, and how to start one. ${CROWDPOOLING}`,
     keywords: 'create campaign, crowd pooling, regenerative fundraising, land project campaign',
     image: `${BASE_URL}/og-default.jpg`,
     url: '/create-campaign'

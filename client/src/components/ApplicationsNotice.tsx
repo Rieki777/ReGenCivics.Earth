@@ -4,11 +4,14 @@
  * shared/applicationWindow.ts. While a Season is live it says anyone can follow
  * along, that ready projects can crowdpool with the cohort, and to apply for the
  * next season; later in the year it says applications are held; during review
- * (the Rest Season) it says they are open and until when.
+ * (the Rest Season) it says they are open and until when. While a Season takes
+ * rolling applications it says what being accepted means and links "What ready
+ * means" to the Ready to crowdpool list (bundle 1, section 16.3).
  */
 import { Link } from "wouter";
 import { ArrowRight, CalendarClock } from "lucide-react";
 import {
+  ACCEPTANCE_LINE,
   APPLICATIONS,
   APPLICATIONS_HEADLINE,
   APPLY_ANYTIME_LINE,
@@ -53,22 +56,24 @@ export function ApplicationsNotice({ tone = "dark", showLink = true, className =
             <p className={body}>{CROWDPOOL_ROUND_LINE}</p>
             <p className={`${body} mt-2`}>{NEXT_SEASON_LINE}</p>
           </>
+        ) : APPLICATIONS.rolling ? (
+          <p className={body}>{ACCEPTANCE_LINE}</p>
         ) : (
           !APPLICATIONS.reviewing && <p className={body}>{APPLY_ANYTIME_LINE}</p>
         )}
-        {(APPLICATIONS.followAlong || showLink) && (
+        {(APPLICATIONS.followAlong || APPLICATIONS.rolling || showLink) && (
           <div className="mt-2 flex flex-wrap gap-x-6">
             {APPLICATIONS.followAlong && (
-              <>
-                <Link href={FOLLOW_ALONG_HREF} className={link}>
-                  {FOLLOW_ALONG_LABEL}
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-                <Link href={READINESS_HREF} className={link}>
-                  What ready means
-                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </>
+              <Link href={FOLLOW_ALONG_HREF} className={link}>
+                {FOLLOW_ALONG_LABEL}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            )}
+            {(APPLICATIONS.followAlong || APPLICATIONS.rolling) && (
+              <Link href={READINESS_HREF} className={link}>
+                What ready means
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
             )}
             {showLink && (
               <Link href="/apply" className={link}>

@@ -1,5 +1,8 @@
+import { Link } from "wouter";
 import { POOL_CAPITALS, POOL_EVERYDAY } from "@shared/characterSheet";
 import { CAPITAL_LABELS } from "@shared/crowdpoolingTaxonomy";
+import { CONTRIBUTOR_DOOR, CROWDPOOLING_WORDING, HOW_IT_WORKS } from "@shared/crowdpoolCopy";
+import { GAME_NEEDS, GAME_NEEDS_LABEL, READINESS_HREF } from "@shared/crowdpoolReadiness";
 
 const STEPS = ["Choose", "Gifts now", "Future roles", "Your sheet", "Share"];
 
@@ -128,5 +131,50 @@ export function LockedMatch() {
       </div>
       <p className="sheet-quiet">Opens at 111+ active campaigns.</p>
     </section>
+  );
+}
+
+/**
+ * What a contributor looks for first (build spec 2026-10-01, section 16.2):
+ * what happens to an offer, that money never moves through the site, what
+ * happens if a campaign doesn't complete, and a short path to open needs.
+ * The steps are HOW_IT_WORKS and the paragraph CROWDPOOLING_WORDING, verbatim.
+ * The needs projects are meeting are one line of text, no chips, so nothing
+ * looks tappable; before the move they showed only inside the Ready list.
+ */
+export function HowHelpingWorks() {
+  return (
+    <section className="sheet-section sheet-panel" aria-labelledby="helping-works">
+      <h2 id="helping-works" className="sheet-display sheet-h2">{CONTRIBUTOR_DOOR.heading}</h2>
+      <ol className="list-decimal pl-5 space-y-2">
+        {HOW_IT_WORKS.map((step) => (
+          <li key={step.title}>
+            <strong>{step.title}.</strong> <span className="sheet-muted">{step.body}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="sheet-muted mt-3">{CROWDPOOLING_WORDING}</p>
+      <p className="sheet-muted mt-2">{GAME_NEEDS_LABEL}: {GAME_NEEDS.join(", ")}.</p>
+      <div className="sheet-actions">
+        <Link href="/campaigns?tab=needs" className="sheet-action sheet-action-gold inline-flex items-center">
+          {CONTRIBUTOR_DOOR.needsButton}
+        </Link>
+        <Link href="/campaigns" className="sheet-link inline-flex min-h-11 items-center">
+          {CONTRIBUTOR_DOOR.browse}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+/** One quiet line for a land project that wandered in: the list lives on the creator front door. */
+export function ProjectLine() {
+  return (
+    <p className="sheet-quiet sheet-section">
+      {CONTRIBUTOR_DOOR.projectLead}{" "}
+      <Link href={READINESS_HREF} className="sheet-link">
+        {CONTRIBUTOR_DOOR.projectLink}
+      </Link>
+    </p>
   );
 }

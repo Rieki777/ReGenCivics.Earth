@@ -1,8 +1,9 @@
 /**
  * Ready to crowdpool: what a land project shows before its campaign is
  * approved for the crowdpooling round. One definition, read by the public
- * checklist on /crowd-pooling, the steward's "Send for review" step, and the
- * review dialog the team approves from.
+ * checklist on /create-campaign (the creator front door), the steward's
+ * project page before a campaign exists, the steward's "Send for review"
+ * step, and the review dialog the team approves from.
  *
  * Rye, 2026-09-24: "a concise and complete checklist projects need to check
  * in order to be approved for crowdpooling", drawn from what Season 2 offers
@@ -43,8 +44,11 @@ export type ReadinessItem = {
 
 export const READINESS_TITLE = "Ready to crowdpool";
 
-/** Where the public checklist lives. */
-export const READINESS_HREF = "/crowd-pooling#ready";
+/**
+ * Where the public checklist lives: the creator front door. Old links to the
+ * gift map with this hash forward here (client/src/pages/CrowdPooling.tsx).
+ */
+export const READINESS_HREF = "/create-campaign#ready";
 
 export const READINESS_INTRO =
   "Every project joining the crowdpooling round shows these eight before its campaign is approved, from the Season 2 cohort and from the wider community alike. Season 2 works through each one, and the Governance Canvas holds the governance pieces. The review checks that each is in place and clear, and nobody scores how good it is.";

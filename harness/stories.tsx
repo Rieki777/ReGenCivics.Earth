@@ -445,11 +445,11 @@ export const STORIES: Record<string, Story> = {
   },
 
   /**
-   * The crowdpool readiness checklist as /crowd-pooling#ready shows it, on the
+   * The crowdpool readiness checklist as /create-campaign#ready shows it, on the
    * page's parchment. Ticks persist per storageKey in this browser only.
    */
   "crowdpool-readiness": {
-    title: "/crowd-pooling#ready: Ready to crowdpool",
+    title: "/create-campaign#ready: Ready to crowdpool",
     render: () => (
       <div className="-m-6 bg-[#f8f5f0] p-6">
         <div className="max-w-3xl mx-auto">

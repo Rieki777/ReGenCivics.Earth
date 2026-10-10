@@ -406,7 +406,7 @@ export default function Schedule() {
               </p>
               <p className="text-white/70 mb-4 max-w-2xl mx-auto">
                 You can follow the season even if your project isn't selected. Add the whole season to your calendar and tune in each week. Sometimes there are opportunities for the audience to ask questions and participate.
-                {APPLICATIONS.followAlong && (
+                {(APPLICATIONS.followAlong || APPLICATIONS.rolling) && (
                   <>
                     {` ${CROWDPOOL_ROUND_LINE} `}
                     <Link href={READINESS_HREF} className="text-[#7dd87d] font-semibold underline underline-offset-2 hover:text-[#9de89d]">

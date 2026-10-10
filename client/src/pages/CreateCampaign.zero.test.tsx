@@ -9,6 +9,8 @@ const mutate = vi.fn();
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    // The front door renders the Ready to crowdpool list (bundle 1, section 16.4).
+    useUtils: () => ({ campaigns: { getReadiness: { invalidate: vi.fn() } } }),
     applicantsForCampaign: { list: { useQuery: () => ({ data: [], isLoading: false }) } },
     applications: {
       myApplications: {
@@ -19,6 +21,8 @@ vi.mock("@/lib/trpc", () => ({
     },
     campaigns: {
       create: { useMutation: () => ({ mutate, isPending: false }) },
+      getReadiness: { useQuery: () => ({ data: [], isLoading: false }) },
+      setReadinessTick: { useMutation: () => ({ mutate: vi.fn() }) },
       crowdpoolSettings: {
         useQuery: () => ({
           data: { moneyShare: { softMinPct: 10, softMaxPct: 30, defaultPct: 20 }, moneyMovesHere: false, loanRoutesOpen: false },
@@ -27,7 +31,7 @@ vi.mock("@/lib/trpc", () => ({
     },
   },
 }));
-vi.mock("@/_core/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: 1, role: "user" } }) }));
+vi.mock("@/_core/hooks/useAuth", () => ({ useAuth: () => ({ user: { id: 1, role: "user" }, loading: false }) }));
 vi.mock("@/const", () => ({ getLoginUrl: () => "/login" }));
 vi.mock("@/components/SEO", () => ({ default: () => null, pageSEO: { createCampaign: {} } }));
 // The coach, reduced to one suggestion that arrives with no value.

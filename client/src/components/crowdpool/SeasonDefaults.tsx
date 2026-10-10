@@ -4,9 +4,12 @@
  *
  * Two things, each labelled as a default: the shared opening day from the
  * Year wheel (the March equinox, when the Build Season opens;
- * shared/crowdpoolCalendar.ts, ADR-70) and "What we look for", which links to the
- * Ready to crowdpool list. Each project can choose its own day (ruling
- * 2026-09-24). Sits under the explanatory callout and above the tabs, so it
+ * shared/crowdpoolCalendar.ts, ADR-70) and what every project shows before
+ * its campaign goes live, which links to the Ready to crowdpool list on the
+ * creator front door (ruling 14 keeps it published as a default). A project
+ * may open on another day (ruling 2026-09-24), so the line says each
+ * project's page shows its own dates; worded for contributors (bundle 1,
+ * section 16.2). Sits under the explanatory callout and above the tabs, so it
  * heads both the gallery and the Needs tab.
  */
 import { Link } from "wouter";

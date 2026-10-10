@@ -475,6 +475,8 @@ async function startServer() {
       // /crowd-pooling-projects answers a 301 here (shared/redirects.ts), and a
       // sitemap must not list urls that redirect.
       { loc: '/campaigns',               changefreq: 'weekly',  priority: '0.7' },
+      // The creator front door and the public Ready to crowdpool list.
+      { loc: '/create-campaign',         changefreq: 'monthly', priority: '0.5' },
       { loc: '/compare-projects',        changefreq: 'weekly',  priority: '0.5' },
       { loc: '/calculator',              changefreq: 'monthly', priority: '0.5' },
       { loc: '/showcase',                changefreq: 'weekly',  priority: '0.6' },

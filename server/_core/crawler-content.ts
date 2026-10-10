@@ -27,6 +27,8 @@ import { jsonLdAuthor, landProjectTeamAttribution, TEAM_USER_NAME } from "../lib
 import { COOP, COOP_LINEAGE_HEADING } from "../../shared/fund";
 import { NEEDS_SECTION, SITE_TAGLINE } from "../../shared/siteCopy";
 import { CROWDPOOLING_WORDING } from "../lib/content-canon";
+import { HOW_IT_WORKS, START_DOOR } from "../../shared/crowdpoolCopy";
+import { CROWDPOOL_READINESS, READINESS_INTRO, READINESS_TITLE } from "../../shared/crowdpoolReadiness";
 import { REGEN_SEASONS, REGEN_SEASON_ORDER, SEASON_ONE } from "../../shared/regenYear";
 import { ACCEPTANCE_LINE, APPLICATIONS, APPLICATIONS_HEADLINE, APPLICATIONS_STATUS } from "../../shared/applicationWindow";
 import { SEASON2_CURRICULUM } from "../../shared/season2Curriculum";
@@ -416,18 +418,38 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         <h2>What it costs</h2>
         <p>No fee to apply and no fee to take part. What a project brings is its team's time and a token swap that makes the alliance and the project co-invested in each other. Every model, template, legal structure and framework built during the season is open-sourced, because charging admission to the on-ramp would work against growing the ReGenerative Renaissance.</p>
         <p>Thirteen weeks of accelerator covering governance, legal structure, economics and financing, designed alongside twelve other projects. A network that carries some of what usually falls on one or two founders. A shared crowdpooling launch, so a project raises alongside the network rather than alone.</p>
-        <p>See <a href="/apply">how to apply for the next season</a>, <a href="/schedule">the upcoming sessions</a>, or <a href="/crowd-pooling">how crowd pooling works</a>.</p>
+        <p>See <a href="/apply">how to apply for the next season</a>, <a href="/schedule">the upcoming sessions</a>, or <a href="/create-campaign#ready">what a project needs to crowdpool</a>.</p>
       </article>
     `,
   },
 
+  // A contributor's page (bundle 1, section 16.2): how helping works, from
+  // the same constants the page reads, and one line for a land project.
   "/crowd-pooling": {
     html: `
       <article>
         <h1>Map your Character Gifts</h1>
-        <p>Crowd pooling on this page is a character sheet. Choose a specific land project, or map your gifts in general and share that sheet with many projects. Living, Material, Financial, Experiential, Social, and Cultural pool into one land project. Those are land, equipment, money, skills and roles, social, and cultural.</p>
-        <p>Add the gifts you can bring now, add future roles, then download a PDF or save the gift map to your profile. Project matching stays closed until 111 land-project campaigns are active.</p>
-        <p>Related: <a href="/campaigns">land project campaigns</a>, the <a href="/calculator">contribution calculator</a> across the nine forms of capital, and <a href="/season2">the Season Two cohort launch</a>.</p>
+        <p>${escapeHtml(CROWDPOOLING)}</p>
+        <h2>How helping a land project works</h2>
+        <p>${HOW_IT_WORKS.map((s) => escapeHtml(s.body)).join(" ")}</p>
+        <p>Crowd pooling on this page is a character sheet. Name the gifts you could bring now and the roles you could take on later, then download a PDF or save the gift map to your profile. Every open need across every campaign is on <a href="/campaigns?tab=needs">the Needs tab</a>.</p>
+        <p>Bringing a land project? <a href="/create-campaign#ready">See what it shows before its campaign opens</a>.</p>
+      </article>
+    `,
+  },
+
+  // The creator front door (bundle 1, section 16.1), built from shared
+  // constants so it cannot drift. Titles only: an item's need and show text
+  // stay off crawler prose (item 3's wording is Rye's open question).
+  "/create-campaign": {
+    html: `
+      <article>
+        <h1>Bring your land project to crowdpooling</h1>
+        <p>${escapeHtml(START_DOOR.lede)} Apply for the season, get ready with the eight things the review checks, list what your project needs, and send it for review.</p>
+        <h2>${escapeHtml(READINESS_TITLE)}</h2>
+        <p>${escapeHtml(READINESS_INTRO)}</p>
+        <ol>${CROWDPOOL_READINESS.map((i) => `<li>${escapeHtml(i.title)}</li>`).join("")}</ol>
+        <p>Each item's full wording is on <a href="/create-campaign#ready">the page</a>. See <a href="/apply">how to apply</a> and <a href="/campaigns">the campaigns</a>.</p>
       </article>
     `,
   },
@@ -605,7 +627,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         <p><strong>It is experimental, and the figures are not guaranteed rewards.</strong> The values are estimates to help someone think through their contributions holistically. It is impossible to fully quantify the intangible, and the argument for the tool is that if everyone uses the same one the results are more equitable. The calculator itself is evolved by proposals through the game.</p>
         <h2>What it counts</h2>
         <p>Financial capital covers direct contribution, funds raised or facilitated, revenue generated and costs saved, each with its own crediting standard. The other eight forms of capital are stepped through in turn, and a running total is carried across all nine.</p>
-        <p>Once a value is calculated, a proposal is submitted on Hypha. See <a href="/crowd-pooling">crowd pooling</a> for where the numbers are used, and <a href="/game-mechanics">game mechanics</a> for how contribution is valued in the wider game.</p>
+        <p>Once a value is calculated, a proposal is submitted on Hypha. See <a href="/game-mechanics">game mechanics</a> for how contribution is valued in the wider game. Help given through a land project's crowdpooling campaign goes through that campaign's page and is recorded in the project's own token.</p>
       </article>
     `,
   },
@@ -1301,7 +1323,7 @@ export async function getCampaignsListContent(): Promise<CrawlerContent | null> 
         <h1>Land project campaigns open for contributions</h1>
         <p>${lead} Crowd pooling means a campaign accepts land, money, equipment, skills, time and knowledge, not money alone, so there is a way in that does not depend on what you can spend. Each campaign below links to its own page with the full detail.</p>
         ${sections || ""}
-        <p>How the mechanism works: <a href="${SITE}/crowd-pooling">crowd pooling</a>. To value a non-financial contribution: <a href="${SITE}/calculator">the contribution calculator</a>. Next dated call: <a href="${SITE}/schedule">the schedule</a>.</p>
+        <p>How an offer works, and a map of what you could bring: <a href="${SITE}/crowd-pooling">crowd pooling</a>. Every open need: <a href="${SITE}/campaigns?tab=needs">the Needs tab</a>. Next dated call: <a href="${SITE}/schedule">the schedule</a>.</p>
       </article>
     `;
 

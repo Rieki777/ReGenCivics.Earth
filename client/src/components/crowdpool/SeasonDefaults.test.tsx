@@ -8,12 +8,12 @@ describe("SeasonDefaults on /campaigns", () => {
     render(<SeasonDefaults now={new Date("2026-09-27T12:00:00Z")} />);
     const block = screen.getByRole("region", { name: "Season defaults" });
     expect(block).toHaveTextContent(
-      "Default opening day: 20 March 2027. Season 2 crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project can choose its own day.",
+      "Default opening day: 20 March 2027. Season 2 crowdpooling opens together at the March equinox, when the Build Season opens on the Year wheel. Each project's page shows its own dates.",
     );
-    expect(block).toHaveTextContent("What we look for, by default: the Ready to crowdpool list.");
+    expect(block).toHaveTextContent("What every project shows before its campaign goes live, by default: the Ready to crowdpool list.");
     const link = screen.getByRole("link", { name: "the Ready to crowdpool list" });
     expect(link).toHaveAttribute("href", READINESS_HREF);
-    expect(READINESS_HREF).toBe("/crowd-pooling#ready");
+    expect(READINESS_HREF).toBe("/create-campaign#ready");
   });
 
   it("through the Resource Season the launch is still ahead", () => {
@@ -21,12 +21,15 @@ describe("SeasonDefaults on /campaigns", () => {
     expect(screen.getByRole("region", { name: "Season defaults" })).toHaveTextContent(
       "Default opening day: 20 March 2027. Season 2 crowdpooling opens together at the March equinox",
     );
+    expect(screen.getByRole("region", { name: "Season defaults" })).toHaveTextContent(
+      "Each project's page shows its own dates.",
+    );
   });
 
   it("once the Build Season has opened, it says the day the round opened", () => {
     render(<SeasonDefaults now={new Date("2027-05-01T12:00:00Z")} />);
     expect(screen.getByRole("region", { name: "Season defaults" })).toHaveTextContent(
-      "Season 2 crowdpooling opened on 20 March 2027, the default opening day on the Year wheel. Each project can choose its own day.",
+      "Season 2 crowdpooling opened on 20 March 2027, the default opening day on the Year wheel. Each project's page shows its own dates.",
     );
   });
 
