@@ -12,6 +12,9 @@
  *
  * Example needs sit in their own row below the real ones, labelled. Rows carry
  * counts and a status, never anyone's name (the server pins the row shape).
+ *
+ * The quiet links, "Map what you could bring", open the gift map at
+ * /crowd-pooling, named for what it is (bundle 1, section 16.2).
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "wouter";

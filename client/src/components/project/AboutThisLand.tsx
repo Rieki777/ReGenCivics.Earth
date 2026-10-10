@@ -70,7 +70,7 @@ export function AboutThisLand({ front }: { front: ProjectFront }) {
   const links = [
     front.websiteUrl ? { href: front.websiteUrl, label: "Website" } : null,
     front.videoUrl ? { href: front.videoUrl, label: "Video" } : null,
-    front.daoLink ? { href: front.daoLink, label: "DAO and governance" } : null,
+    front.daoLink ? { href: front.daoLink, label: "The project's space on Hypha" } : null,
   ].filter(Boolean) as Array<{ href: string; label: string }>;
   if (!description && rows.length === 0 && links.length === 0 && images.length === 0) return null;
 

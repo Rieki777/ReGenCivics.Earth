@@ -446,7 +446,7 @@ export default function Seasons() {
                 )}
                 {status.phase === "after" && (
                   <Link
-                    href="/crowd-pooling"
+                    href="/campaigns"
                     className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-2.5 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
                     style={{ background: SEASON_LOOK.spring.color, color: SEASON_LOOK.spring.ink }}
                   >

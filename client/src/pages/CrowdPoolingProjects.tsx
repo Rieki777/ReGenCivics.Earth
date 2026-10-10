@@ -12,11 +12,17 @@
  * strip.
  *
  * Tabs: Active, Needs (every open need across live campaigns, from
- * campaigns.listOpenNeeds; ?tab=needs opens it), Upcoming, Complete.
+ * campaigns.listOpenNeeds; ?tab=needs opens it), Complete. An old
+ * ?tab=upcoming opens Active.
  *
  * Above the tabs, SeasonDefaults gives the season's default opening day and
- * "What we look for", both labelled as defaults (build spec 2026-09-27,
- * section 14).
+ * "What every project shows", both labelled as defaults (build spec
+ * 2026-09-27, section 14). Under the tabs, one line says what happens to an
+ * offer and where money goes (GALLERY.howLine).
+ *
+ * The page speaks to contributors (bundle 1, section 16.2). Founder material
+ * sits in one block at the foot, #for-land-projects (FOR_LAND_PROJECTS), which
+ * the hero's small "Land projects: how to join" link reaches.
  *
  * Spec: build spec 2026-09-25, sections 9.2 and 17 (lane 5); earlier,
  * CROWDPOOLING_PLATFORM_SPEC.md Part D.
@@ -24,9 +30,9 @@
 
 import { Link, useLocation, useSearch } from "wouter";
 import {
-  Target, Sparkles, FileText,
+  Sparkles, FileText, Search,
   ChevronDown, ChevronUp, Play,
-  Filter, SortAsc, Lock, AlertTriangle,
+  Filter, SortAsc, AlertTriangle,
   Bell, BookOpen, Leaf,
   Map as MapIcon, LayoutGrid
 } from "lucide-react";
@@ -41,6 +47,7 @@ import {
 } from "@/components/crowdpool/GalleryCard";
 import { NeedsTab } from "@/components/crowdpool/NeedsTab";
 import { SeasonDefaults } from "@/components/crowdpool/SeasonDefaults";
+import { ApplicationsNotice } from "@/components/ApplicationsNotice";
 import { FollowControl } from "@/components/crowdpool/FollowControl";
 import { GET_NOTIFIED_ID, goToGetNotified } from "@/lib/getNotified";
 import { Button } from "@/components/ui/button";
@@ -51,19 +58,27 @@ import { useEffect, useState, useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { useCountUp } from "@/hooks/useCountUp";
-import { FOLLOW, GALLERY, HOW_IT_WORKS } from "@shared/crowdpoolCopy";
+import { FOLLOW, FOR_LAND_PROJECTS, GALLERY, HOW_IT_WORKS } from "@shared/crowdpoolCopy";
+import { READINESS_HREF } from "@shared/crowdpoolReadiness";
+import { APPLICATIONS } from "@shared/applicationWindow";
+import { defaultCrowdpoolOpening } from "@shared/crowdpoolCalendar";
+import { formatCloseDate } from "@shared/campaignProgress";
 
 export type { GalleryCampaign } from "@/components/crowdpool/GalleryCard";
 
 // ────────────────────────────────────────────────────────────────────────────────
-// Tabs: Active, Needs, Upcoming, Complete. ?tab= carries all but Active.
+// Tabs: Active, Needs, Complete. ?tab= carries all but Active; an old
+// ?tab=upcoming (the tab is gone, bundle 1) opens Active.
 // ────────────────────────────────────────────────────────────────────────────────
-type GalleryTab = "active" | "needs" | "upcoming" | "complete";
+type GalleryTab = "active" | "needs" | "complete";
 
 function tabFromSearch(search: string): GalleryTab {
   const t = new URLSearchParams(search).get("tab");
-  return t === "needs" || t === "upcoming" || t === "complete" ? t : "active";
+  return t === "needs" || t === "complete" ? t : "active";
 }
+
+/** The tab row's id: the hero's "See every open need" scrolls here. */
+const TABS_ID = "campaign-tabs";
 
 /** Write the tab into the address without adding a history entry. */
 function writeTab(tab: GalleryTab) {
@@ -75,7 +90,7 @@ function writeTab(tab: GalleryTab) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
-// How It Works + YouTube Facade (150-16). The three steps come from
+// How It Works + YouTube Facade (150-16). The four steps come from
 // shared/crowdpoolCopy.ts HOW_IT_WORKS.
 // ────────────────────────────────────────────────────────────────────────────────
 function HowCrowdPoolingWorks() {
@@ -103,7 +118,7 @@ function HowCrowdPoolingWorks() {
 
       {expanded && (
         <div className="px-5 pb-5 space-y-5">
-          <ol className="grid md:grid-cols-3 gap-4">
+          <ol className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {HOW_IT_WORKS.map(({ title, body }, i) => (
               <li key={title} className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 border border-[#7dd87d]/30 flex items-center justify-center flex-shrink-0">
@@ -227,7 +242,7 @@ function ImpactStrip({ projects }: { projects: GalleryCampaign[] }) {
   );
 }
 
-function CardGrid({ campaigns, trailing }: { campaigns: GalleryCampaign[]; trailing?: React.ReactNode }) {
+function CardGrid({ campaigns }: { campaigns: GalleryCampaign[] }) {
   return (
     <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {campaigns.map((c) => (
@@ -235,8 +250,53 @@ function CardGrid({ campaigns, trailing }: { campaigns: GalleryCampaign[]; trail
           <GalleryCard campaign={c} />
         </li>
       ))}
-      {trailing}
     </ul>
+  );
+}
+
+/** A text link at tap size, for the dark land projects block. */
+const FOOT_LINK =
+  "inline-flex min-h-11 items-center font-semibold text-[#7dd87d] underline-offset-4 hover:underline hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 rounded";
+
+// ────────────────────────────────────────────────────────────────────────────────
+// For land projects (bundle 1, section 16.2): the one block on this page for
+// a land project that wandered in. ApplicationsNotice carries its own apply
+// link and, while applications roll or follow along, its own "What ready
+// means", so "What the review checks" shows only when it doesn't.
+// ────────────────────────────────────────────────────────────────────────────────
+function ForLandProjects() {
+  const noticeLinksReady = APPLICATIONS.followAlong || APPLICATIONS.rolling;
+  return (
+    <section
+      id="for-land-projects"
+      aria-labelledby="for-land-projects-heading"
+      className="scroll-mt-24 mt-8 bg-gradient-to-br from-[#0d2818]/80 to-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/20 rounded-2xl p-5 sm:p-8 text-white text-center"
+    >
+      <h2 id="for-land-projects-heading" className="text-2xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
+        {FOR_LAND_PROJECTS.heading}
+      </h2>
+      <p className="text-white/75 max-w-lg mx-auto mb-6">{FOR_LAND_PROJECTS.body}</p>
+      <ApplicationsNotice tone="dark" className="max-w-xl mx-auto" />
+      <div className="mt-4 flex flex-col sm:flex-row flex-wrap items-center justify-center gap-x-6">
+        {!noticeLinksReady && (
+          <Link href={READINESS_HREF} className={FOOT_LINK}>
+            {FOR_LAND_PROJECTS.ready}
+          </Link>
+        )}
+        <Link href="/create-campaign" className={FOOT_LINK}>
+          {FOR_LAND_PROJECTS.start}
+        </Link>
+        <Link href="/schedule" className={FOOT_LINK}>
+          {FOR_LAND_PROJECTS.session}
+        </Link>
+      </div>
+      <p className="mt-1 text-sm text-white/80">
+        {FOR_LAND_PROJECTS.runningLead}{" "}
+        <Link href="/my-applications" className={FOOT_LINK}>
+          {FOR_LAND_PROJECTS.runningLink}
+        </Link>
+      </p>
+    </section>
   );
 }
 
@@ -325,9 +385,12 @@ export default function CrowdPoolingProjects() {
   const tabs: Array<{ key: GalleryTab; label: string }> = [
     { key: "active", label: GALLERY.tabs.active(activeCount) },
     { key: "needs", label: GALLERY.tabs.needs(needsCount) },
-    { key: "upcoming", label: GALLERY.tabs.upcoming },
     { key: "complete", label: GALLERY.tabs.complete(completeCount) },
   ];
+
+  // When real campaigns open: the default opening day, as SeasonDefaults reads it.
+  const opening = defaultCrowdpoolOpening();
+  const opensLine = GALLERY.opensLine(formatCloseDate(opening.date), opening.seasonNumber, opening.state);
 
   const showGallery = activeTab === "active" || activeTab === "complete";
   // While no real campaign is open, the Needs tab carries the waitlist form
@@ -403,19 +466,26 @@ export default function CrowdPoolingProjects() {
                     {pageCopy.crowdPoolingProjects.hero.CTAs.createProposal}
                   </Button>
                 </Link>
-                <Link href="/compare-projects">
+                {/* The tabInUrl effect switches to Needs; the scroll brings the tab row into view on a phone. */}
+                <Link
+                  href="/campaigns?tab=needs"
+                  onClick={() => window.setTimeout(() => document.getElementById(TABS_ID)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50)}
+                >
                   <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto">
-                    <Target className="w-4 h-4 mr-2" />
-                    {pageCopy.crowdPoolingProjects.hero.CTAs.compareProjects}
-                  </Button>
-                </Link>
-                <Link href="/create-campaign">
-                  <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {pageCopy.crowdPoolingProjects.hero.CTAs.listProject}
+                    <Search className="w-4 h-4 mr-2" aria-hidden="true" />
+                    {pageCopy.crowdPoolingProjects.hero.CTAs.seeNeeds}
                   </Button>
                 </Link>
               </div>
+              <p className="mt-3 flex flex-wrap items-center justify-center gap-x-6 text-sm text-white/85">
+                <Link href="/compare-projects" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-white">
+                  {pageCopy.crowdPoolingProjects.hero.CTAs.compareProjects}
+                </Link>
+                {/* A plain anchor: wouter's Link is unreliable with a bare hash href. */}
+                <a href="#for-land-projects" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-white">
+                  {FOR_LAND_PROJECTS.heroLink}
+                </a>
+              </p>
             </div>
           </div>
         </div>
@@ -428,7 +498,7 @@ export default function CrowdPoolingProjects() {
                 <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" aria-hidden="true" />
                 <p className="text-white/90 text-sm sm:text-base">
                   <span className="font-semibold text-amber-300">Early preview.</span>{" "}
-                  Our first season of crowd pooling goes live late 2026 / early 2027.
+                  {opensLine}{" "}
                   Campaigns marked Example show how it will work.
                 </p>
               </div>
@@ -469,8 +539,8 @@ export default function CrowdPoolingProjects() {
           {/* How It Works collapsible (150-16) */}
           <HowCrowdPoolingWorks />
 
-          {/* Active / Needs / Upcoming / Complete tabs */}
-          <div className="flex flex-wrap items-center gap-2 mb-6">
+          {/* Active / Needs / Complete tabs */}
+          <div id={TABS_ID} className="scroll-mt-24 flex flex-wrap items-center gap-2 mb-3">
             {tabs.map(({ key, label }) => (
               <button
                 key={key}
@@ -487,6 +557,8 @@ export default function CrowdPoolingProjects() {
               </button>
             ))}
           </div>
+          {/* What happens to an offer, and where money goes: always shown (bundle 1, section 16.2). */}
+          <p className="text-sm text-white/80 mb-4">{GALLERY.howLine}</p>
 
           {/* The Needs tab */}
           {activeTab === "needs" && (
@@ -572,35 +644,6 @@ export default function CrowdPoolingProjects() {
             </div>
           )}
 
-          {/* Upcoming tab content */}
-          {activeTab === "upcoming" && (
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              {[1, 2].map(i => (
-                <div key={i} className="relative bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-                  <div className="absolute inset-0 bg-[#0d2818]/80 z-10 flex flex-col items-center justify-center p-6 text-center">
-                    <Lock className="w-8 h-8 text-white/70 mb-3" aria-hidden="true" />
-                    <p className="text-white/80 font-medium mb-1">Coming this season</p>
-                    <p className="text-white/75 text-sm mb-4">
-                      More campaigns join as the season progresses.
-                      Want to see your project here? Apply.
-                    </p>
-                    <Link href="/seasons">
-                      <Button className="bg-[#7dd87d]/20 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/30 text-sm">
-                        Apply Now
-                      </Button>
-                    </Link>
-                  </div>
-                  <div className="h-52 bg-gradient-to-br from-[#1a472a]/30 to-[#0d2818] animate-pulse-subtle" />
-                  <div className="p-5 blur-sm pointer-events-none select-none">
-                    <div className="h-4 bg-white/10 rounded w-3/4 mb-2" />
-                    <div className="h-3 bg-white/5 rounded w-1/2 mb-4" />
-                    <div className="h-2 bg-white/5 rounded w-full" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* Campaign cards */}
           {showGallery && (
             <>
@@ -620,7 +663,7 @@ export default function CrowdPoolingProjects() {
                 <div className="text-center py-16 text-white/75">
                   <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" aria-hidden="true" />
                   <p className="text-white/85 font-medium mb-1">{GALLERY.noCampaigns}</p>
-                  <p>{GALLERY.firstSeason}</p>
+                  <p>{opensLine}</p>
                 </div>
               )}
 
@@ -644,31 +687,7 @@ export default function CrowdPoolingProjects() {
 
               {!isLoading && (
                 <div className={viewMode === "map" ? "hidden" : ""}>
-                  <CardGrid
-                    campaigns={realShown}
-                    trailing={activeTab === "active" ? (
-                      // Coming Soon placeholder card (150-12)
-                      <li className="relative bg-white/5 border border-[#7dd87d]/20 rounded-2xl overflow-hidden min-h-[320px]">
-                        <div className="h-52 bg-gradient-to-br from-[#1a472a]/20 to-[#0d2818]">
-                          <div className="absolute inset-0 animate-pulse border-2 border-[#7dd87d]/20 rounded-2xl pointer-events-none" />
-                        </div>
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                          <div className="w-10 h-10 rounded-full bg-[#7dd87d]/10 border border-[#7dd87d]/30 flex items-center justify-center mb-3 animate-pulse">
-                            <Sparkles className="w-5 h-5 text-[#7dd87d]" aria-hidden="true" />
-                          </div>
-                          <p className="text-white/85 font-semibold mb-1" style={{ fontFamily: 'var(--font-display)' }}>More Coming This Season</p>
-                          <p className="text-white/75 text-sm mb-4">
-                            More campaigns join as the season progresses. Want to see your project here? Apply.
-                          </p>
-                          <Link href="/seasons">
-                            <Button className="bg-[#7dd87d]/15 border border-[#7dd87d]/40 text-[#7dd87d] hover:bg-[#7dd87d]/25 text-sm">
-                              Apply for a Season
-                            </Button>
-                          </Link>
-                        </div>
-                      </li>
-                    ) : null}
-                  />
+                  <CardGrid campaigns={realShown} />
 
                   {/* Example campaigns in their own labelled section */}
                   {exampleShown.length > 0 && (
@@ -697,27 +716,8 @@ export default function CrowdPoolingProjects() {
             </div>
           )}
 
-          {/* CTA Section */}
-          <div className="mt-8 bg-gradient-to-br from-[#0d2818]/80 to-[#1a472a]/80 backdrop-blur-sm border border-[#7dd87d]/20 rounded-2xl p-8 text-white text-center">
-            <h2 className="text-2xl font-bold mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-              {pageCopy.crowdPoolingProjects.CTA.heading}
-            </h2>
-            <p className="text-white/75 max-w-lg mx-auto mb-6">
-              {pageCopy.crowdPoolingProjects.CTA.body}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/create-campaign">
-                <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] w-full sm:w-auto font-semibold">
-                  Start a Campaign
-                </Button>
-              </Link>
-              <Link href="/schedule">
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto">
-                  {pageCopy.crowdPoolingProjects.CTA.joinSessionLabel}
-                </Button>
-              </Link>
-            </div>
-          </div>
+          {/* For land projects: the one block for founders on this page */}
+          <ForLandProjects />
         </main>
       </div>
     </div>

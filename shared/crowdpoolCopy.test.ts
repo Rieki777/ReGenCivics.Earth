@@ -187,6 +187,35 @@ describe("bundle 1 audience copy (build spec 2026-10-01, section 16)", () => {
   it("the project line on the gift map is its lead and its link", () => {
     expect(copy.CONTRIBUTOR_DOOR.projectLine).toBe(`${copy.CONTRIBUTOR_DOOR.projectLead} ${copy.CONTRIBUTOR_DOOR.projectLink}`);
   });
+
+  it("types the money sentence once: the binding wording and the gallery's how line are built from it", () => {
+    expect(copy.MONEY_ROUTE_LINE).toBe("Money goes through outside partners each project holds, never through ReGen Civics.");
+    expect(copy.CROWDPOOLING_WORDING).toContain(copy.MONEY_ROUTE_LINE);
+    // The binding wording is byte-identical to the text agreed with the funding lane.
+    expect(copy.CROWDPOOLING_WORDING).toBe(
+      "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. Money goes through outside partners each project holds, never through ReGen Civics. The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.",
+    );
+    expect(copy.GALLERY.howLine.endsWith(copy.MONEY_ROUTE_LINE)).toBe(true);
+    expect(copy.GALLERY.howLine).toBe(
+      "Pick a need and the project's stewards answer you. An offer counts once they accept it. Money goes through outside partners each project holds, never through ReGen Civics.",
+    );
+  });
+
+  it("the gallery's opening line follows the default opening day", () => {
+    expect(copy.GALLERY.opensLine("20 March 2027", 2, "upcoming")).toBe("Real campaigns open from 20 March 2027.");
+    expect(copy.GALLERY.opensLine("20 March 2027", 2, "open")).toBe("Season 2 crowdpooling opened on 20 March 2027.");
+    expect("upcoming" in copy.GALLERY.tabs).toBe(false);
+  });
+
+  it("the land projects block on /campaigns renders its running line as a lead and a link", () => {
+    expect(copy.FOR_LAND_PROJECTS.running).toBe(`${copy.FOR_LAND_PROJECTS.runningLead} ${copy.FOR_LAND_PROJECTS.runningLink}`);
+  });
+
+  it("the Needs tab's quiet links name the gift map for what it is", () => {
+    expect(copy.NEEDS_TAB.emptyFiltered).toBe("Nothing open matches that right now. Clear a filter to see more.");
+    expect(copy.NEEDS_TAB.openTool).toBe("Map what you could bring");
+    expect(copy.NEEDS_TAB.addUp).toBe("Map what you could bring");
+  });
 });
 
 describe("bundle 1 need-window copy (build spec 2026-10-01, section 5.3)", () => {

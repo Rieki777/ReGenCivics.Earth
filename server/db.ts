@@ -2381,9 +2381,9 @@ function legacyNotificationLink(type: string, campaignId?: number | null): strin
     case 'new_contribution':
       return '/profile?tab=contributions';
     case 'campaign_milestone':
-      // Router paths are /campaign/:id (singular) and /crowd-pooling
-      // (hyphenated); the old plural/unhyphenated forms 404ed.
-      return campaignId ? `/campaign/${campaignId}` : '/crowd-pooling';
+      // Router paths are /campaign/:id (singular); the old plural form 404ed.
+      // Without a campaign it opens the campaigns list (bundle 1, section 16.2).
+      return campaignId ? `/campaign/${campaignId}` : '/campaigns';
     case 'quest_complete':
       return '/quest';
     case 'claim_complete':

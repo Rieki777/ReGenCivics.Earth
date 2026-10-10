@@ -258,6 +258,17 @@ describe("the guarded files", () => {
     );
   });
 
+  it("guards the gift map, its gift tool and the creator front door (bundle 1, section 16.2)", () => {
+    expect(GUARDED_FILES).toEqual(
+      expect.arrayContaining([
+        "client/src/pages/CrowdPooling.tsx",
+        "client/src/components/character/GiftMapChrome.tsx",
+        "client/src/components/CrowdPoolingTool.tsx",
+        "client/src/components/crowdpool/CampaignStartDoor.tsx",
+      ]),
+    );
+  });
+
   it("reports a listed path that is missing, so a rename cannot drop a surface quietly", () => {
     const empty = mkdtempSync(path.join(tmpdir(), "banned-terms-"));
     try {

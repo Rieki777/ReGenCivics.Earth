@@ -24,8 +24,7 @@
  * on screen on a phone.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "wouter";
-import { ArrowRight, ChevronDown, Lock, Sparkles } from "lucide-react";
+import { ChevronDown, Lock, Sparkles } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { ContributionModal, type ContributionNeed } from "@/components/ContributionModal";
@@ -222,8 +221,7 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
                     {PAGE.somethingElse}
                   </h3>
                   <p className="text-sm text-[#1a472a]/80">
-                    Hours, tools, land, a skill, a spare room, a network. Add up everything you could
-                    bring in the Crowd Pooling Tool, then place it where you want it to go.
+                    Hours, tools, land, a skill, a spare room, a network. Tell the stewards what you'd bring.
                   </p>
                   <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                     <Button
@@ -232,13 +230,6 @@ export function ProjectCampaignFront({ front, onContributed, needsAnchor, projec
                     >
                       {PAGE.offerSomethingElse}
                     </Button>
-                    <Link
-                      href="/crowd-pooling"
-                      className="inline-flex items-center gap-1 min-h-11 text-sm font-semibold text-[#1a472a] underline underline-offset-2 hover:text-[#4a7c59]"
-                    >
-                      Total up what you can bring
-                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                    </Link>
                   </div>
                 </div>
               </div>

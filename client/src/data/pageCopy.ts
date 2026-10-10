@@ -15,115 +15,28 @@ export const pageCopy = {
       body: "Once you've calculated your contribution value, submit a proposal on Hypha.",
       submitLabel: "Submit Proposal on Hypha",
       learnMoreLabel: "Learn More About the Game",
-      signInBody: "Sign in to save your calculations and track your contributions",
-      signInButton: "Sign In to Track Progress",
     },
+    /** Under the heading: what the calculator is for, and where campaign help goes (bundle 1, section 16.2). */
+    gameLine: "This calculator is for claiming your regenerative work in the Game. Help you bring to a land project's campaign goes through that campaign's page, and the project records it in its own token.",
   },
-  crowdPooling: {
-    heading: "Land projects need more than money... Create a proposal showing all the value you bring!",
-    subtext: "Crowd Pooling lets you contribute directly to land projects at a scale that works for you. Set your budget, pick your projects, and see exactly how your contribution compounds with others.",
-    browseCampaigns: "Looking to browse active campaigns?",
-    browseCampaignsLink: "View Land Project Campaigns →",
-    benefits: {
-      heading: "Why Crowd Pooling?",
-      items: [
-        {
-          title: "Reduce Financial Burden",
-          body: "Dramatically reduce the perceived financial funding needed by recognizing all forms of capital, not just money.",
-        },
-        {
-          title: "Access Hidden Assets",
-          body: "Access assets that could never have been bought, like land that's not for sale but wants to be part of your vision.",
-        },
-        {
-          title: "Equal Contributions",
-          body: "Create a process from the start for everyone to bring an equal contribution over time, regardless of their financial situation.",
-        },
-        {
-          title: "Regenerative Foundations",
-          body: "Build the diverse foundations for a regenerative economic system from the very onset of your project.",
-        },
-      ],
-    },
-    howTo: [
-      "Enter the project name you're applying to and target total value amount",
-      "Add your immediate contributions (land, money, equipment, etc.)",
-      "Add your future value commitments (roles you will fill)",
-      "Download your PDF contribution summary",
-      "Share your summary with land projects and aggregate all contributions",
-    ],
-    submit: {
-      heading: "Ready to Submit Your Contribution?",
-      body: "Take your project contributions straight to the project's during their Crowd Pooling Game.",
-      submitLabel: "Submit Proposal to Projects",
-      viewProjectsLabel: "View Projects Crowd Pooling",
-      footer: "Click \"View Projects Actively Crowd Pooling\" to see the list of projects currently accepting contributions",
-    },
-    philosophy: {
-      heading: "The Philosophy of Crowd Pooling",
-      body: "Watch this introduction video to understand the deeper philosophy behind the Crowd Pooling process and how it transforms the way communities fund and launch regenerative projects.",
-    },
-    toolIntro: {
-      title: "Community Capital Pooling",
-      subheading: "Crowd pooling lets you contribute directly to projects with money, land, skills, time, and knowledge.",
-    },
-    howToUse: {
-      heading: "How to use this tool:",
-      steps: [
-        "Enter the project and target value",
-        "Add contributions (land, money, equipment, skills, roles)",
-        "Download your summary and share it with projects",
-      ],
-    },
-    related: [
-      {
-        heading: "Contribution Calculator",
-        body: "Calculate a contribution value across the 9 forms of capital",
-      },
-      {
-        heading: "Learn About Games & Quests",
-        body: "Discover the Infinite Game, where quests earn $ReGen. Help you bring to a land project is recorded in that project's own token.",
-      },
-    ],
-    signIn: {
-      heading: "Track Your Contributions",
-      body: "Sign in to save your contributions and track your impact across projects",
-      button: "Sign In to Get Started",
-    },
-  },
+  // The contributor gallery at /campaigns. The block for land projects at its
+  // foot reads FOR_LAND_PROJECTS in shared/crowdpoolCopy.ts (bundle 1, section 16.2).
   crowdPoolingProjects: {
     hero: {
-      label: "The Grand Game",
+      label: "Crowd pooling",
       heading: "Participate in ReGen Land Projects",
       subtext: "Join the renaissance and pool all the things we actually need, together, so we can start building our villages without waiting on money's permission",
       CTAs: {
-        createProposal: "Total up what you can bring",
+        /** To /crowd-pooling, the gift map. */
+        createProposal: "Map what you could bring",
+        /** To /campaigns?tab=needs. */
+        seeNeeds: "See every open need",
         compareProjects: "Compare projects",
-        listProject: "Enter your project",
       },
     },
     callout: {
-      text: "Most people bring far more than they think. Hours, tools, a skill, a spare room, a network, and money too. Add it all up before you choose where it goes.",
-      link: "Open the Crowd Pooling Tool →",
-    },
-    howItWorks: {
-      heading: "How It Works",
-      steps: [
-        { title: "Browse Projects", body: "Click on any project to see full details and open roles" },
-        { title: "Create Your Proposal", body: "Use the Crowd Pooling Tool to calculate your contribution" },
-        { title: "Submit to Project(s)", body: "Submit your proposal for project review and acceptance" },
-      ],
-    },
-    tableCopy: {
-      funding: "Funding Progress",
-      accepted: "accepted",
-      contributors: "Contributors",
-    },
-    CTA: {
-      heading: "Want Your Project Listed Here?",
-      body: "If you are a land project looking to crowd pool contributions from your community, create a campaign and show people what you actually need.",
-      applyLabel: "Apply for the next season",
-      joinSessionLabel: "Join Open Session",
+      text: "Most people bring far more than they think: hours, tools, a skill, a spare room, a network. Pick a need below and the project's stewards answer you.",
+      link: "Map what you could bring",
     },
   },
   game: {

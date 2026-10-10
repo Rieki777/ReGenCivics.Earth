@@ -3,7 +3,7 @@
  * Restructured menu:
  * - "4 Paths" dropdown: Cooperative (/fund), Land (Projects), Ally (Alliance), Play (Players)
  * - "Play the Game" dropdown: Game Overview, Start Questing, Crowd Pool Campaigns
- *   + Calculators: Crowd Pool Calculator, Contribution Calculator
+ *   + Map your gifts (/crowd-pooling) and Claim your contributions (/calculator)
  *   + Player Profile
  * - "Seasons + Schedule" dropdown: Seasons, Schedule
  * - Map, Team, Participate CTA
@@ -299,14 +299,14 @@ export default function Navigation() {
                   onClick={() => window.location.href = '/crowd-pooling'}
                 >
                   <Calculator className="w-5 h-5 mr-3 text-green-400" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Crowd Pool Calculator</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Map your gifts</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   className="text-white hover:bg-[#7dd87d]/20 focus:bg-[#7dd87d]/20 cursor-pointer"
                   onClick={() => window.location.href = '/calculator'}
                 >
                   <Calculator className="w-5 h-5 mr-3 text-amber-400" />
-                  <span style={{ fontFamily: 'var(--font-accent)' }}>Contribution Calculator</span>
+                  <span style={{ fontFamily: 'var(--font-accent)' }}>Claim your contributions</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-[#7dd87d]/20" />
                 <DropdownMenuItem
@@ -969,7 +969,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Calculator className="w-[22px] h-[22px]" />
-                      Crowd Pool Calculator
+                      Map your gifts
                     </Link>
                     <Link 
                       href="/calculator"
@@ -982,7 +982,7 @@ export default function Navigation() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Calculator className="w-[22px] h-[22px]" />
-                      Contribution Calculator
+                      Claim your contributions
                     </Link>
                     <div className="mx-10 my-1 border-t border-[#7dd87d]/20" />
                     <Link

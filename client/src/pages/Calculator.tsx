@@ -1,44 +1,21 @@
 /**
  * Contribution Calculator Page
- * A standalone page for the 9 Forms of Capital contribution calculator
+ * A standalone page for the 9 Forms of Capital contribution calculator, for
+ * claiming regenerative work in the Game. Help brought to a land project's
+ * campaign goes through that campaign's page (bundle 1, section 16.2). There
+ * is no sign-in box: nothing on this page is saved to an account.
  */
 
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { ArrowLeft, AlertTriangle, Calculator as CalcIcon, Sparkles, Users } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { ArrowLeft, AlertTriangle, Calculator as CalcIcon, Sparkles } from "lucide-react";
 import { ContributionCalculator } from "@/components/ContributionCalculator";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SEO } from "@/components/SEO";
 import { CalculatorWeightsSheet } from "@/components/CalculatorWeightsSheet";
-import { BackButton } from "@/components/BackButton";
 import { PageWrapper } from "@/components/PageWrapper";
 import { pageCopy } from "@/data/pageCopy";
 import { cdnImg } from "@/lib/utils";
-
-// Sign In CTA Component
-function SignInCTA() {
-  const { isAuthenticated, loading } = useAuth();
-  
-  if (loading || isAuthenticated) return null;
-  
-  return (
-    <div className="mt-8 pt-6 border-t border-white/20">
-      <BackButton />
-      <p className="text-white/70 mb-4">{pageCopy.calculator.footer.signInBody}</p>
-      <Button
-        size="lg"
-        className="rounded-xl bg-white hover:bg-white/90 text-[#1a472a]"
-        style={{ fontFamily: 'var(--font-accent)' }}
-        onClick={() => window.location.href = getLoginUrl()}
-      >
-        <Users className="mr-2 w-5 h-5" />
-        {pageCopy.calculator.footer.signInButton}
-      </Button>
-    </div>
-  );
-}
 
 export default function Calculator() {
   return (
@@ -74,6 +51,8 @@ export default function Calculator() {
               <p className="text-white/70">
                 {pageCopy.calculator.subtext}
               </p>
+              {/* What this calculator is for, and where campaign help goes (bundle 1, section 16.2). */}
+              <p className="text-white/80 mt-2 text-sm">{pageCopy.calculator.gameLine}</p>
             </div>
           </div>
         </div>
@@ -146,9 +125,6 @@ export default function Calculator() {
               </Button>
             </Link>
           </div>
-          
-          {/* Sign In CTA */}
-          <SignInCTA />
         </div>
       </section>
     </div>

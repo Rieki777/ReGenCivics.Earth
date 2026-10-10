@@ -68,7 +68,8 @@ export function legacyLink(type: string): string | null {
     case "contributor_reply":
       return "/campaigns";
     case "campaign_milestone":
-      return "/crowd-pooling";
+      // A campaign notice opens the campaigns list (bundle 1, section 16.2).
+      return "/campaigns";
     case "quest_complete":
       return "/quest";
     case "gratitude":

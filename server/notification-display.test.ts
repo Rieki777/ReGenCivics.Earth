@@ -66,6 +66,8 @@ describe("notification display (bell + /notifications)", () => {
   it("keeps the old normalizations", () => {
     expect(resolveNotificationLink({ type: "gratitude", link: "/profile" })).toBe("/profile?tab=gratitude");
     expect(resolveNotificationLink({ type: "campaign_milestone", link: "/campaigns/7" })).toBe("/campaign/7");
+    // A milestone with no stored link opens the campaigns, never the gift map (bundle 1, section 16.2).
+    expect(resolveNotificationLink({ type: "campaign_milestone", link: null })).toBe("/campaigns");
     expect(resolveNotificationLink({ type: "system", link: "/x#bounty-3" })).toBe("/bounties/3");
     expect(resolveNotificationLink({ type: "mention", link: null })).toBeNull();
   });

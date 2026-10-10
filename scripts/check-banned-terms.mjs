@@ -83,6 +83,12 @@ export const GUARDED_FILES = [
   "client/src/components/crowdpool/WithdrawOfferDialog.tsx",
   // The one Follow control (build spec 2026-09-27, lane 5).
   "client/src/components/crowdpool/FollowControl.tsx",
+  // The gift map and the creator front door (bundle 1, section 16.2). The
+  // gift tool was probed with findBannedTerms first and is clean.
+  "client/src/pages/CrowdPooling.tsx",
+  "client/src/components/character/GiftMapChrome.tsx",
+  "client/src/components/CrowdPoolingTool.tsx",
+  "client/src/components/crowdpool/CampaignStartDoor.tsx",
   "client/src/components/ContributionModal.tsx",
   "shared/crowdpoolCopy.ts",
   "shared/campaignProgress.ts",

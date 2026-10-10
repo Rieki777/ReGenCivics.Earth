@@ -95,7 +95,6 @@ export function NeedsRegistry({
     return rb - ra;
   };
 
-  const coveredCount = CAPITAL_TYPES.filter((capital) => needs.some((item) => capitalForItem(item) === capital)).length;
   const groups = CAPITAL_TYPES
     .map((capital) => ({
       capital,
@@ -111,14 +110,12 @@ export function NeedsRegistry({
     <div className="bg-white/95 backdrop-blur rounded-3xl light-form-island p-4 sm:p-6 md:p-8 mb-6 shadow-xl">
       {needs.length > 0 && (
         <>
+          {/* No "of 9 forms of capital" chip here: coverage is a design measure, kept in the wizard (bundle 1, section 16.2). */}
           <div className="flex flex-wrap items-end justify-between gap-2 mb-1">
             <h2 className="text-xl font-bold text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
               <Target className="w-5 h-5 text-[#4a7c59]" />
               {PAGE.needsHeading}
             </h2>
-            <span className="text-xs font-semibold text-[#1a472a] bg-[#4a7c59]/10 rounded-full px-3 py-1">
-              {coveredCount} of 9 forms of capital
-            </span>
           </div>
           <p className="text-sm text-[#1a472a]/80 mb-2">{PAGE.needsIntro}</p>
           {tokenLine && <p className="text-xs text-[#1a472a]/75 mb-5">{tokenLine}</p>}

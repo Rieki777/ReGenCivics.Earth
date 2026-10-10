@@ -19,16 +19,23 @@
 // ── What crowdpooling is, in one sentence ──────────────────────────────────
 
 /**
+ * Where money goes, in one sentence. CROWDPOOLING_WORDING and the gallery's
+ * how line (GALLERY.howLine) are built from it, so it is typed once (bundle 1,
+ * section 16.2).
+ */
+export const MONEY_ROUTE_LINE = "Money goes through outside partners each project holds, never through ReGen Civics.";
+
+/**
  * The binding description of crowdpooling (agreed with the funding lane,
  * 2026-09-27). Every surface that describes crowdpooling uses it verbatim:
  * server/lib/content-canon.ts re-exports it for the crawler prose, the chat
  * guides and the site guide, so it cannot drift into calling crowdpooling an
- * investment.
+ * investment. Its middle sentence is MONEY_ROUTE_LINE; the text is unchanged.
  */
 export const CROWDPOOLING_WORDING =
   "Crowdpooling coordinates and accounts for what people bring to land projects: time, things, skills, land and money. " +
-  "Money goes through outside partners each project holds, never through ReGen Civics. " +
-  "The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
+  MONEY_ROUTE_LINE +
+  " The campaigns shown today are examples; real campaigns open when Season 2 starts crowdpooling.";
 
 // ── Tokens (R33). Copy only: this build issues no tokens. ────────────────────
 
@@ -265,13 +272,14 @@ export const NEEDS_TAB = {
   noRoutes: "No project has a money route yet.",
   examplesHeading: "Example needs",
   examplesCaption: "From example campaigns. Nothing sent on them reaches a real project.",
-  emptyFiltered:
-    "Nothing open matches that right now. Clear a filter, or add up what you can bring in the Crowd Pooling Tool.",
+  emptyFiltered: "Nothing open matches that right now. Clear a filter to see more.",
   clearFilters: "Clear filters",
-  openTool: "Open the Crowd Pooling Tool",
+  /** To /crowd-pooling, the gift map (bundle 1, section 16.2). */
+  openTool: "Map what you could bring",
   onlyExamples: "These are example campaigns. Real needs open when Season 2 starts crowdpooling.",
   nothingAtAll: "No campaigns are open yet. Real needs open when Season 2 starts crowdpooling.",
-  addUp: "Add up what you can bring",
+  /** To /crowd-pooling, the gift map. */
+  addUp: "Map what you could bring",
   // Added by lane 5 where the spec was silent.
   /** Live real campaigns exist, and none of their needs is open: each is filled or its window has passed (bundle 1). */
   allFilled: "Nothing on the live campaigns is open right now.",
@@ -290,9 +298,16 @@ export const GALLERY = {
   tabs: {
     active: (n: number) => `Active (${n})`,
     needs: (n: number) => `Needs (${n})`,
-    upcoming: "Upcoming: Season Applications Open",
     complete: (n: number) => `Complete (${n})`,
   },
+  /**
+   * When real campaigns open, from defaultCrowdpoolOpening (shared/crowdpoolCalendar.ts):
+   * the early preview banner and the empty gallery (bundle 1, section 16.2).
+   */
+  opensLine: (day: string, seasonNumber: number, state: "upcoming" | "open") =>
+    state === "open" ? `Season ${seasonNumber} crowdpooling opened on ${day}.` : `Real campaigns open from ${day}.`,
+  /** Under the tab row, always shown: what happens to an offer and where money goes. */
+  howLine: `Pick a need and the project's stewards answer you. An offer counts once they accept it. ${MONEY_ROUTE_LINE}`,
   stillOpen: "Still open",
   seeProject: "See the project",
   contributors: (n: number) => (Number(n) === 1 ? "1 contributor" : `${n} contributors`),
@@ -315,12 +330,34 @@ export const GALLERY = {
   impactHeading: "Combined impact across live campaigns",
   impact: { campaigns: "live campaigns", needsMet: "needs met", places: "places" },
   noCampaigns: "No campaigns yet.",
-  firstSeason: "The first season opens late 2026 / early 2027.",
   noMatch: "No campaigns match your filters.",
   noneComplete: "No campaign is complete yet.",
   clearFilters: "Clear filters",
   howItWorks: "How crowd pooling works",
   watchVideo: "Watch: What is crowd pooling?",
+} as const;
+
+/**
+ * The one block for land projects on /campaigns (#for-land-projects), at the
+ * page foot (bundle 1, section 16.2). Everything else on the gallery speaks
+ * to contributors. `running` points at /my-applications, where approved and
+ * active rows open their project page, with or without a player profile.
+ */
+export const FOR_LAND_PROJECTS = {
+  heading: "For land projects",
+  body: "Land projects accepted into Season 2 run their campaigns here. Apply first, then show people what your project actually needs.",
+  /** To READINESS_HREF, shown only when ApplicationsNotice carries no "What ready means" of its own. */
+  ready: "What the review checks",
+  /** To /create-campaign. */
+  start: "Start your campaign",
+  /** To /schedule. */
+  session: "Join an open session",
+  /** The whole line, for prose. The page renders runningLead, then runningLink to /my-applications. */
+  running: "Already running a campaign? Open your project page from My applications.",
+  runningLead: "Already running a campaign?",
+  runningLink: "Open your project page from My applications.",
+  /** The hero's small link down to this block. */
+  heroLink: "Land projects: how to join",
 } as const;
 
 // ── Creator, steward and admin surfaces (section 14.1, lane 4) ──────────────

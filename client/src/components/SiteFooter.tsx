@@ -70,7 +70,7 @@ export default function SiteFooter() {
           <Link href="/bounties" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Bounties
           </Link>
-          <Link href="/crowd-pooling" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
+          <Link href="/campaigns" className="text-[#7dd87d] hover:text-white text-sm font-medium transition-colors py-1.5 px-3">
             Crowd Pooling
           </Link>
           <HoverPreview href="/fund">
@@ -215,7 +215,7 @@ export default function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/crowd-pooling" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
+                <Link href="/campaigns" className="text-white/60 hover:text-white transition-colors text-xs py-2.5 inline-block min-h-[44px] flex items-center">
                   Crowd Pooling
                 </Link>
               </li>

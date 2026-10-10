@@ -51,8 +51,9 @@ export function usePageTools(): PageTool[] {
       // Badges event only works on /quest where QuestBadges is mounted
       break;
     case '/crowd-pooling':
+      // A contributor on the gift map: the short path to open needs (bundle 1, section 16.2).
       tools.push(
-        { icon: 'Calculator', label: 'Calculator', href: '/calculator', action: () => window.location.href = '/calculator' },
+        { icon: 'Handshake', label: 'Open needs', href: '/campaigns?tab=needs', action: () => window.location.href = '/campaigns?tab=needs' },
       );
       break;
     case '/profile':

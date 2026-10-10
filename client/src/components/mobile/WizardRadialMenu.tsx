@@ -79,7 +79,9 @@ export function WizardRadialMenu() {
   const onProfile = currentPath === "/profile" || currentPath.startsWith("/profile/");
   // Land-steward and investor routes get a Tools shortcut in the command
   // center, since the tools library is most useful to those two journeys.
-  const onLandOrInvestor = ["/land", "/fund", "/apply", "/loi", "/tools", "/crowd-pooling", "/campaigns", "/crowd-pooling-projects", "/bionomics", "/tokenomics"]
+  // The contributor pages (/crowd-pooling, /campaigns) are left out; the
+  // creator front door is in (bundle 1, section 16.2).
+  const onLandOrInvestor = ["/land", "/fund", "/apply", "/loi", "/tools", "/create-campaign", "/bionomics", "/tokenomics"]
     .some((p) => currentPath === p || currentPath.startsWith(p + "/"));
 
   const handleTriggerClick = useCallback(() => {

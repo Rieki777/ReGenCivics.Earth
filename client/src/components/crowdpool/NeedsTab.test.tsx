@@ -162,10 +162,9 @@ describe("NeedsTab", () => {
   it("empty state: filters that match nothing", () => {
     render(<NeedsTab data={result({ needs: [tractor], examples: [exampleChipper], realCampaignCount: 1 })} />);
     fireEvent.click(screen.getByRole("button", { name: "Know-how" }));
-    expect(
-      screen.getByText("Nothing open matches that right now. Clear a filter, or add up what you can bring in the Crowd Pooling Tool."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open the Crowd Pooling Tool" })).toHaveAttribute("href", "/crowd-pooling");
+    expect(screen.getByText("Nothing open matches that right now. Clear a filter to see more.")).toBeInTheDocument();
+    // The quiet link names the gift map for what it is (bundle 1, section 16.2).
+    expect(screen.getByRole("link", { name: "Map what you could bring" })).toHaveAttribute("href", "/crowd-pooling");
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(titles()).toEqual(["Tractor", "Example needs", "Wood chipper (loan)"]);
     expect(screen.getByRole("button", { name: "Know-how" })).toHaveAttribute("aria-pressed", "false");
@@ -175,7 +174,7 @@ describe("NeedsTab", () => {
     render(<NeedsTab data={result({ examples: [exampleChipper] })} notifyForm={<form aria-label="Get notified" />} />);
     expect(screen.getByText("These are example campaigns. Real needs open when Season 2 starts crowdpooling.")).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "Get notified" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Add up what you can bring" })).toHaveAttribute("href", "/crowd-pooling");
+    expect(screen.getByRole("link", { name: "Map what you could bring" })).toHaveAttribute("href", "/crowd-pooling");
     expect(screen.getByRole("heading", { name: "Example needs" })).toBeInTheDocument();
   });
 

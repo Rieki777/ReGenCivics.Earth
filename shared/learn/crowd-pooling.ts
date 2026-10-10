@@ -26,7 +26,7 @@ export const crowdPooling: LearnArticle = {
         "Requests without a count, a deadline, and a state quietly die. That is the failure mode of every volunteer board and mutual aid thread. So on a campaign, every need says exactly what, how many, and by when.",
       ],
       bullets: [
-        "Items: 40 cedar posts, 12 of 40 claimed",
+        "Items: 40 cedar posts, 12 of 40 offered",
         "Roles: tool librarian for August, 0 of 1 filled",
         "Shifts: Saturday work party, 9am to 1pm, 8 of 12 spots",
         "Tool loans: wood chipper for June, condition checked at handoff and at return",
@@ -34,12 +34,12 @@ export const crowdPooling: LearnArticle = {
         "Money: a link to the project's partner funding page",
       ],
       table: {
-        caption: "The claim lifecycle. Every contribution moves through these four states",
+        caption: "From offer to thank-you. Every contribution moves through these four states",
         columns: ["Stage", "What it means", "What it triggers"],
         rows: [
           [
-            "Pledged",
-            "Someone claims a need. No account required, just a name and an email",
+            "Offered",
+            "Someone offers on a need. No account required, just a name and an email",
             "The slot shows as promised, drawn as a light overlay on the progress bar",
           ],
           [
@@ -58,8 +58,8 @@ export const crowdPooling: LearnArticle = {
             "Always required. It is the single strongest driver of people coming back",
           ],
         ],
-        source: "ReGen Civics crowd pooling platform, needs registry and claim lifecycle",
-        sourceUrl: "/crowd-pooling",
+        source: "ReGen Civics crowd pooling platform, needs registry and offers",
+        sourceUrl: "/campaigns",
       },
     },
     {
@@ -75,7 +75,7 @@ export const crowdPooling: LearnArticle = {
         "Their Living Tree grows. Every delivered contribution is recorded under its form of capital on the player profile.",
         "Contribution score, which moves a player through the citizenship tiers in the game.",
         "Gratitude from anyone in the community, which carries real weight in the game economy.",
-        "Project tokens, where a project chooses to formalize a significant contribution through its own Hypha organization on Base.",
+        "Their help is recorded in the project's token as they deliver it. The token tracks what they pooled and makes no claim about value.",
         "Their name on the slot and the thank-you photo of their lumber in the wall.",
       ],
       paragraphs: [
