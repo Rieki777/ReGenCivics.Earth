@@ -49,7 +49,7 @@ import { Camera, Flag, Loader2, Pencil, Send, Users } from "lucide-react";
 import { CampaignImageUpload } from "@/components/CampaignImageUpload";
 import { canTransition } from "@shared/campaignStatus";
 import { decodeBasicEntities } from "@shared/htmlText";
-import { buildStewardQueue, type OfferTab } from "@shared/stewardQueue";
+import { buildStewardQueue, readyTickedCount, READINESS_STATUSES, type OfferTab } from "@shared/stewardQueue";
 import { makeCurrencyFormatter } from "@/lib/needDisplay";
 import { WaitingOnYou, offerNotesSummary } from "./WaitingOnYou";
 import { ContributionReviewPanel } from "./ContributionReviewPanel";
@@ -63,12 +63,8 @@ import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { MoneyRoutesCard } from "./MoneyRoutesCard";
 import { CASH_SHARE } from "@shared/crowdpoolModel";
 import { CLOSE, CREATOR_PATH, MONEY_STEP, PAGE_PROMISES, SEND_BACK } from "@shared/crowdpoolCopy";
-import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
 import { progressLines } from "@shared/campaignProgress";
 import { takeCreatedCampaign } from "@/lib/createdNotice";
-
-/** Statuses whose stewards keep ticking the Ready to crowdpool list. Wizard campaigns start in review. */
-const READINESS_STATUSES = ["draft", "pending_review", "rejected"];
 
 /** The currency's symbol for the money route quiz ("$", "EUR"), from Intl. */
 function currencySymbolFor(currency: string | null | undefined): string {
@@ -142,11 +138,8 @@ export function StewardTools({
     { campaignId },
     { enabled: readinessOpen, retry: false },
   );
-  const readyTicked = useMemo(() => {
-    if (!readinessOpen || !readinessTicks) return null;
-    const keys = new Set(readinessTicks.map((t) => t.itemKey));
-    return CROWDPOOL_READINESS.filter((item) => keys.has(item.key)).length;
-  }, [readinessOpen, readinessTicks]);
+  // Wizard campaigns start in review, so the list is open from the start.
+  const readyTicked = useMemo(() => readyTickedCount(status, readinessTicks), [status, readinessTicks]);
 
   const queue = useMemo(
     () => contributions ? buildStewardQueue({ contributions, items: front.items, campaignStatus: status }) : null,

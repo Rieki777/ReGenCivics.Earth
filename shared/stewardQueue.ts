@@ -7,6 +7,7 @@
  * needs measured in hours a week, shared/roleCapacity.ts) read in hours.
  */
 import { isHoursNeed, roleFillState, type CapacityItem } from "./roleCapacity";
+import { CROWDPOOL_READINESS } from "./crowdpoolReadiness";
 
 export type QueueContribution = {
   id: number;
@@ -98,12 +99,43 @@ export function buildStewardQueue(args: {
   };
 }
 
+/** Statuses whose stewards keep ticking the Ready to crowdpool list: draft, in review, sent back. */
+export const READINESS_STATUSES: ReadonlyArray<string> = ["draft", "pending_review", "rejected"];
+
+/**
+ * How many Ready to crowdpool items are ticked on a campaign
+ * (campaigns.getReadiness), or null when its list is not open or the ticks
+ * have not loaded. Keys outside CROWDPOOL_READINESS do not count.
+ */
+export function readyTickedCount(
+  campaignStatus: string,
+  ticks: ReadonlyArray<{ itemKey: string }> | null | undefined,
+): number | null {
+  if (!READINESS_STATUSES.includes(campaignStatus) || !ticks) return null;
+  const keys = new Set(ticks.map((t) => t.itemKey));
+  return CROWDPOOL_READINESS.filter((item) => keys.has(item.key)).length;
+}
+
+/**
+ * What the steward bar's pill counts: the queue, plus the Ready to crowdpool
+ * row "Waiting on you" shows while items are still unticked, so the pill and
+ * the card it jumps to agree.
+ */
+export function stewardWaitingTotal(queue: Pick<StewardQueue, "total">, readyTicked: number | null): number {
+  return queue.total + (readyTicked != null && readyTicked < CROWDPOOL_READINESS.length ? 1 : 0);
+}
+
+/** The pill when the offers could not be read: it still opens the steward tools. */
+export const STEWARD_BAR_FALLBACK = "Steward tools";
+
 /**
  * The steward bar's pill on the project page (bundle 1, section 16.3). Null
  * while the offers are still loading, so the pill reads "Checking..." and
- * never a 0 it does not know yet.
+ * never a 0 it does not know yet. When the read failed, the pill names the
+ * tools instead of checking forever.
  */
-export function stewardBarLabel(waiting: number | null): string {
+export function stewardBarLabel(waiting: number | null, opts: { failed?: boolean } = {}): string {
+  if (opts.failed) return STEWARD_BAR_FALLBACK;
   return waiting == null ? "Checking..." : `${waiting} waiting on you`;
 }
 

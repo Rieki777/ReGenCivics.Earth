@@ -33,6 +33,25 @@ const STATUS_STEPS = [
   { key: "active", label: "Taking part", description: "In this season's sessions and crowdpooling round" },
 ];
 
+/**
+ * Where an application sits on the timeline: the steps before `done` read
+ * complete, and `current` (when there is one) is marked. A rejected
+ * application was read but not accepted, so no step is current and Accepted
+ * never wears the current ring. A paused one was accepted, so the steps up
+ * to Accepted read complete and Taking part waits.
+ */
+export function timelinePosition(status: string): { done: number; current: string | null } {
+  const idx = STATUS_STEPS.findIndex((s) => s.key === status);
+  if (idx >= 0) return { done: idx, current: status };
+  const at = (key: string) => STATUS_STEPS.findIndex((s) => s.key === key);
+  switch (status) {
+    case "changes_requested": return { done: at("under_review"), current: "under_review" };
+    case "rejected": return { done: at("approved"), current: null };
+    case "inactive": return { done: at("active"), current: null };
+    default: return { done: 0, current: null };
+  }
+}
+
 /** Statuses whose card links the founder's next steps. */
 const ACCEPTED_STATUSES = ["approved", "active"];
 
@@ -167,12 +186,17 @@ export default function ApplyStatus({ now }: { now?: Date } = {}) {
               <h3 className="font-semibold text-[#1a472a] mb-6">Review Progress</h3>
               <div className="space-y-4">
                 {STATUS_STEPS.map((step, i) => {
-                  const currentIdx = STATUS_STEPS.findIndex(s => s.key === application.status);
-                  const isComplete = i < currentIdx;
-                  const isCurrent = step.key === application.status || (application.status === 'rejected' && step.key === 'approved') || (application.status === 'changes_requested' && step.key === 'under_review');
-                  const isPending = i > currentIdx;
+                  const position = timelinePosition(application.status);
+                  const isComplete = i < position.done;
+                  const isCurrent = step.key === position.current;
+                  const isPending = !isComplete && !isCurrent;
                   return (
-                    <div key={step.key} className="flex items-start gap-4">
+                    <div
+                      key={step.key}
+                      className="flex items-start gap-4"
+                      data-step-state={isComplete ? "complete" : isCurrent ? "current" : "pending"}
+                      aria-current={isCurrent ? "step" : undefined}
+                    >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isComplete ? 'bg-[#7dd87d] text-[#1a472a]' : isCurrent ? 'bg-[#1a472a] text-white ring-4 ring-[#7dd87d]/30' : 'bg-[#1a472a]/10 text-[#1a472a]/75'}`}>
                         {isComplete ? <CheckCircle2 className="w-5 h-5" /> : isCurrent ? <Clock className="w-4 h-4" /> : <span className="text-xs font-bold">{i + 1}</span>}
                       </div>

@@ -114,6 +114,50 @@ describe("/apply/status", () => {
     expect(screen.queryByRole("link", { name: /Start your campaign/ })).toBeNull();
   });
 
+  /** Each timeline step's label and state, in order. */
+  function steps(container: HTMLElement): string[] {
+    return Array.from(container.querySelectorAll("[data-step-state]")).map(
+      (el) => `${el.querySelector("p")?.textContent}:${el.getAttribute("data-step-state")}`,
+    );
+  }
+
+  it("never marks Accepted as the current step of a rejected application", () => {
+    h.apps = [app({ status: "rejected" })];
+    const { container } = render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(steps(container)).toEqual([
+      "Draft:complete",
+      "Submitted:complete",
+      "Under Review:complete",
+      "Accepted:pending",
+      "Taking part:pending",
+    ]);
+    expect(container.querySelector('[aria-current="step"]')).toBeNull();
+  });
+
+  it("reads a paused application's steps as complete up to Accepted", () => {
+    h.apps = [app({ status: "inactive" })];
+    const { container } = render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(steps(container)).toEqual([
+      "Draft:complete",
+      "Submitted:complete",
+      "Under Review:complete",
+      "Accepted:complete",
+      "Taking part:pending",
+    ]);
+  });
+
+  it("marks Under Review current when changes are requested, with the steps before it complete", () => {
+    h.apps = [app({ status: "changes_requested" })];
+    const { container } = render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(steps(container)).toEqual([
+      "Draft:complete",
+      "Submitted:complete",
+      "Under Review:current",
+      "Accepted:pending",
+      "Taking part:pending",
+    ]);
+  });
+
   it("drops the default day once crowdpooling has opened", () => {
     h.apps = [app({ status: "approved" })];
     render(<ApplyStatus now={new Date(Date.UTC(2027, 3, 1))} />);

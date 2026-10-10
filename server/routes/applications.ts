@@ -4,8 +4,8 @@ import { z } from "zod";
 import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
-import { eq, sql } from "drizzle-orm";
-import { applicationEvents, orgClaims } from "../../drizzle/schema";
+import { and, eq, notInArray, sql } from "drizzle-orm";
+import { applicationEvents, applications, orgClaims, type InsertApplication } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
@@ -29,7 +29,8 @@ import { getOrCreateTeamUserId } from "../lib/team-user";
  * Draft, submitted, under review, changes requested and rejected behave as
  * before: a rejected applicant can still send theirs again.
  */
-export const LOCKED_APPLICATION_STATUSES: ReadonlyArray<string> = ["approved", "active", "inactive"];
+const LOCKED = ["approved", "active", "inactive"] as const;
+export const LOCKED_APPLICATION_STATUSES: ReadonlyArray<string> = LOCKED;
 
 /** The refusal /apply shows once an application is accepted. */
 export function lockedApplicationMessage(projectName: string): string {
@@ -40,6 +41,26 @@ function assertApplicationOpen(application: { status: string; projectName: strin
   if (LOCKED_APPLICATION_STATUSES.includes(application.status)) {
     throw new TRPCError({ code: "FORBIDDEN", message: lockedApplicationMessage(application.projectName) });
   }
+}
+
+/**
+ * Write to an application only while the /apply form may still change it.
+ * The status condition sits in the UPDATE itself, so an admin who accepts
+ * the application between the read and this write wins: nothing is
+ * overwritten, and the founder gets the same refusal as before. The pool
+ * counts matched rows (mysql2's FOUND_ROWS default), so no match means the
+ * status moved or the row is gone; the row is read again to say which.
+ */
+export async function updateOpenApplication(id: number, data: Partial<InsertApplication>): Promise<void> {
+  const database = await getDb();
+  if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+  const result = await database.update(applications).set(data)
+    .where(and(eq(applications.id, id), notInArray(applications.status, [...LOCKED])));
+  const header = (Array.isArray(result) ? result[0] : result) as { affectedRows?: number } | undefined;
+  if ((header?.affectedRows ?? 0) > 0) return;
+  const now = await db.getApplicationById(id);
+  if (!now) throw new TRPCError({ code: "NOT_FOUND", message: "Application not found" });
+  assertApplicationOpen(now);
 }
 
 export const applicationsRouter = router({
@@ -156,7 +177,7 @@ export const applicationsRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
       assertApplicationOpen(application);
-      await db.updateApplication(input.id, input.data);
+      await updateOpenApplication(input.id, input.data);
       const updatedApplication = await db.getApplicationById(input.id);
       if (!updatedApplication) {
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to retrieve updated application" });
@@ -201,7 +222,7 @@ export const applicationsRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Not your application" });
       }
       assertApplicationOpen(application);
-      await db.updateApplication(input.id, {
+      await updateOpenApplication(input.id, {
         status: "submitted",
         submittedAt: new Date(),
         stewardUserId: ctx.user.id,

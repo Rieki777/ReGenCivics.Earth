@@ -17,9 +17,11 @@
  * Before a campaign exists, the steward's panel names their next step from
  * stewardStart (server/lib/project-page.ts): start the campaign with the
  * wizard opened on this project, wait for the review, see the requested
- * changes, or ask the lead steward. The Ready to crowdpool list sits folded
- * under it (bundle 1, section 16.3). The steward bar's pill says
- * "Checking..." until the offers load, never a 0 it does not know yet.
+ * changes, or ask the lead steward. A draft, sent-back or paused
+ * application gets the line the creator front door gives it. The Ready to
+ * crowdpool list sits folded under it (bundle 1, section 16.3). The steward
+ * bar's pill says "Checking..." until the offers load, never a 0 it does not
+ * know yet, and counts the same rows as the "Waiting on you" card it opens.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearch } from "wouter";
@@ -34,8 +36,15 @@ import { SEO } from "@/components/SEO";
 import { decodeBasicEntities } from "@shared/htmlText";
 import { canonicalRedirectTarget } from "@shared/projectKey";
 import { progressLines } from "@shared/campaignProgress";
-import { CLOSE, CREATOR_PATH, EXAMPLE_BANNER } from "@shared/crowdpoolCopy";
-import { buildStewardQueue, stewardBarLabel } from "@shared/stewardQueue";
+import { CLOSE, CREATOR_PATH, EXAMPLE_BANNER, START_DOOR } from "@shared/crowdpoolCopy";
+import { APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
+import {
+  buildStewardQueue,
+  readyTickedCount,
+  READINESS_STATUSES,
+  stewardBarLabel,
+  stewardWaitingTotal,
+} from "@shared/stewardQueue";
 import { isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
@@ -51,6 +60,9 @@ import { keepAnchorInPlace } from "@/lib/keepAnchorInPlace";
 import { StewardTools, type ProjectFront } from "@/components/project/StewardTools";
 
 const CANCEL_UPDATE_TITLE = "This campaign has been cancelled";
+
+/** A campaign that is live, or a draft, in review or sent back: the next one waits for it. */
+const OPEN_CAMPAIGN_STATUSES = ["active", ...READINESS_STATUSES];
 
 /** A campaign's status in plain words, for the steward's campaign switcher. */
 function campaignStatusWords(status: string): string {
@@ -199,6 +211,41 @@ function StewardStartPanel({ name, applicationId, start }: { name: string; appli
       </>
     );
   }
+  if (status === "draft") {
+    // The creator front door's draft line: /apply reopens the draft.
+    return (
+      <>
+        <p className="mt-2"><Link href="/apply" className={panelLink}>{START_DOOR.draft}</Link></p>
+        <ReadyFold />
+      </>
+    );
+  }
+  if (status === "rejected") {
+    // A rejected applicant can send theirs again (section 15, question 12).
+    return (
+      <>
+        <p className="text-sm text-[#1a472a]/80 mt-2">{START_DOOR.noApplication}</p>
+        <Link href="/apply" className={panelLink}>{APPLY_BUTTON_LABEL}</Link>
+        <ReadyFold />
+      </>
+    );
+  }
+  if (status === "inactive") {
+    // Paused: the /apply/status line. Never the apply link, which would
+    // reopen the paused application and overwrite it.
+    return (
+      <>
+        <p className="text-sm text-[#1a472a]/80 mt-2">
+          {START_DOOR.paused(name)}{" "}
+          <Link href="/connect" className="font-semibold text-[#4a7c59] underline underline-offset-4 hover:text-[#1a472a]">
+            {START_DOOR.pausedLink}
+          </Link>{" "}
+          {START_DOOR.pausedTail}
+        </p>
+        <ReadyFold />
+      </>
+    );
+  }
   if (status === "approved" || status === "active") {
     // Approved, but this steward cannot start one (a claim holder or an
     // added co-steward): campaigns.create would refuse them.
@@ -275,18 +322,30 @@ export default function ProjectPage() {
     { enabled: !!front },
   );
 
-  // The steward bar's count shares its query with the tools below.
-  const { data: ownerContributions } = trpc.campaigns.getContributionsForOwner.useQuery(
+  // The steward bar's count shares its queries with the tools below.
+  const { data: ownerContributions, isError: ownerContributionsFailed } = trpc.campaigns.getContributionsForOwner.useQuery(
     { campaignId: front?.id ?? 0 },
     { enabled: !!front && isSteward, retry: false },
   );
-  // Null while the offers are still loading: the pill says "Checking..."
-  // rather than a 0 it does not know yet.
+  // The Ready to crowdpool ticks: the same query key StewardTools and the
+  // list read, so no extra request. "Waiting on you" lists a row for them.
+  const readinessOpen = !!front && isSteward && READINESS_STATUSES.includes(front.status);
+  const { data: readinessTicks, isLoading: readinessLoading } = trpc.campaigns.getReadiness.useQuery(
+    { campaignId: front?.id ?? 0 },
+    { enabled: readinessOpen, retry: false },
+  );
+  // Null while the offers or ticks are still loading: the pill says
+  // "Checking..." rather than a count it does not know yet.
   const waitingCount = useMemo(() => {
     if (!front) return 0;
     if (!ownerContributions) return null;
-    return buildStewardQueue({ contributions: ownerContributions, items: front.items, campaignStatus: front.status }).total;
-  }, [front, ownerContributions]);
+    if (readinessOpen && readinessLoading) return null;
+    const queue = buildStewardQueue({ contributions: ownerContributions, items: front.items, campaignStatus: front.status });
+    return stewardWaitingTotal(queue, readyTickedCount(front.status, readinessTicks));
+  }, [front, ownerContributions, readinessOpen, readinessLoading, readinessTicks]);
+  // The offers could not be read (a network error, or a steward of another
+  // linked campaign): the pill opens the tools instead of checking forever.
+  const waitingFailed = ownerContributionsFailed && !ownerContributions;
 
   const utils = trpc.useUtils();
   const refreshAll = useCallback(() => {
@@ -329,8 +388,11 @@ export default function ProjectPage() {
   // Follow sends the canonical key: it names the project however the visitor arrived.
   const projectKey = data.canonicalPath.replace(/^\/project\//, "");
   const followsProject = !!data.viewer?.followsProject;
-  // After a campaign ends, its status card offers the next one, opened on this project.
-  const startNextHref = data.stewardStart?.canStart && data.project.applicationId
+  // After a campaign ends, its status card offers the next one, opened on
+  // this project. Never while another of its campaigns is live or on its way
+  // to review: an old campaign opened from the switcher is not the latest.
+  const hasOpenCampaign = data.campaigns.some((c) => OPEN_CAMPAIGN_STATUSES.includes(c.status));
+  const startNextHref = data.stewardStart?.canStart && data.project.applicationId && !hasOpenCampaign
     ? `/create-campaign?application=${data.project.applicationId}`
     : null;
 
@@ -377,7 +439,7 @@ export default function ProjectPage() {
                   onClick={(e) => { e.preventDefault(); document.getElementById("review")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                   className="inline-flex items-center min-h-11 text-sm font-semibold rounded-full px-4 py-2 bg-[#7dd87d] text-[#1a472a] hover:bg-white"
                 >
-                  {stewardBarLabel(waitingCount)}
+                  {stewardBarLabel(waitingCount, { failed: waitingFailed })}
                 </a>
               )}
             </div>

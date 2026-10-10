@@ -165,7 +165,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
                   ))}
                 </div>
               ) : (
-                <div className="h-48 flex items-center justify-center text-[#4a7c59]/60">
+                <div className="h-48 flex items-center justify-center text-center text-[#1a472a]/75">
                   No view data yet. Views will appear here as visitors view your campaign.
                 </div>
               )}
@@ -279,7 +279,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
                     <p className="text-2xl md:text-3xl font-bold text-[#1a472a]">
                       {analytics?.totalViews || 0}
                     </p>
-                    <p className="text-xs text-[#4a7c59]">Views</p>
+                    <p className="text-xs text-[#1a472a]/80">Views</p>
                   </div>
                 </div>
               </div>
@@ -292,7 +292,7 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
                     <p className="text-xl md:text-2xl font-bold text-[#1a472a]">
                       {analytics?.uniqueVisitors || 0}
                     </p>
-                    <p className="text-xs text-[#f57c00]">Unique</p>
+                    <p className="text-xs text-[#9a3412]">Unique</p>
                   </div>
                 </div>
               </div>
@@ -302,17 +302,17 @@ export function CampaignAnalyticsPanel({ campaignId }: { campaignId: number }) {
               <div className="text-center">
                 <div className="w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#7dd87d] flex items-center justify-center mx-auto mb-2">
                   <div>
-                    <p className="text-lg md:text-xl font-bold text-white">
+                    <p className="text-lg md:text-xl font-bold text-[#1a472a]">
                       {analytics?.conversion?.contributions || 0}
                     </p>
-                    <p className="text-xs text-white/80">Contrib.</p>
+                    <p className="text-xs text-[#1a472a]">Contrib.</p>
                   </div>
                 </div>
               </div>
             </div>
             
             <div className="text-center mt-4 p-4 bg-[#f0f7f0] rounded-lg">
-              <p className="text-sm text-[#4a7c59]">
+              <p className="text-sm text-[#1a472a]/80">
                 <strong>{analytics?.conversion?.conversionRate || 0}%</strong> of visitors become contributors
               </p>
             </div>

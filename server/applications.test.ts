@@ -4,7 +4,7 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import * as dbHelpers from "./db";
 import { applications } from "../drizzle/schema";
-import { lockedApplicationMessage } from "./routes/applications";
+import { lockedApplicationMessage, updateOpenApplication } from "./routes/applications";
 import { cleanupFixtureApplications, createApprovedApplication, stewardCaller } from "./test-fixtures/crowdpool";
 
 const skipIfNoDb = !process.env.DATABASE_URL;
@@ -192,6 +192,8 @@ describe("Application System", () => {
 // Bundle 1, section 16.3 (A4-M1, A4-M02): one application per account stays,
 // so filling /apply again used to overwrite the accepted application behind
 // a founder's project page and send it back to submitted.
+// Fixture accounts 986961 to 986963 and 986971 to 986975 belong to this suite
+// alone: CI runs the DB suites in parallel on one database.
 describe("An accepted application is locked to the /apply form", () => {
   afterAll(async () => {
     if (!skipIfNoDb) await cleanupFixtureApplications();
@@ -207,7 +209,7 @@ describe("An accepted application is locked to the /apply form", () => {
 
   for (const [i, status] of ["approved", "active", "inactive"].entries()) {
     it.skipIf(skipIfNoDb)(`refuses update and submit on an ${status} application and changes nothing`, async () => {
-      const userId = 986801 + i;
+      const userId = 986961 + i;
       const id = await applicationIn(userId, status);
       const before = await dbHelpers.getApplicationById(id);
       const name = before!.projectName;
@@ -228,6 +230,24 @@ describe("An accepted application is locked to the /apply form", () => {
     });
   }
 
+  // The status condition is in the UPDATE itself, so an application an admin
+  // accepts between the read and the write is never overwritten.
+  it.skipIf(skipIfNoDb)("the write itself refuses an accepted application, without the read before it", async () => {
+    const id = await applicationIn(986974, "approved");
+    const before = await dbHelpers.getApplicationById(id);
+    await expect(updateOpenApplication(id, { status: "submitted", vision: "Overwritten vision" }))
+      .rejects.toMatchObject({ code: "FORBIDDEN", message: lockedApplicationMessage(before!.projectName) });
+    const after = await dbHelpers.getApplicationById(id);
+    expect(after).toMatchObject({ status: "approved", vision: before!.vision });
+  });
+
+  it.skipIf(skipIfNoDb)("the write lets an open application save the same answers twice", async () => {
+    const id = await applicationIn(986975, "draft");
+    await updateOpenApplication(id, { vision: "Same answer" });
+    await expect(updateOpenApplication(id, { vision: "Same answer" })).resolves.toBeUndefined();
+    expect((await dbHelpers.getApplicationById(id))!.vision).toBe("Same answer");
+  });
+
   it("names the project and the way to bring another one", () => {
     expect(lockedApplicationMessage("Hill Farm")).toBe(
       "Hill Farm is already accepted, so this form can't change it. To bring another land project, write to us at regencivics.earth/connect.",
@@ -236,7 +256,7 @@ describe("An accepted application is locked to the /apply form", () => {
 
   for (const [i, status] of ["draft", "changes_requested", "rejected"].entries()) {
     it.skipIf(skipIfNoDb)(`lets update and submit go ahead on a ${status} application, as before`, async () => {
-      const userId = 986811 + i;
+      const userId = 986971 + i;
       const id = await applicationIn(userId, status);
       const caller = stewardCaller(userId);
       const updated = await caller.applications.update({ id, data: { vision: "A new vision" } });

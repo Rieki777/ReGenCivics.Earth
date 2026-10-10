@@ -12,8 +12,13 @@ import {
   PUBLIC_NAME_LINE,
   ANONYMOUS_NAME_LINE,
   stewardBarLabel,
+  readyTickedCount,
+  stewardWaitingTotal,
+  READINESS_STATUSES,
+  STEWARD_BAR_FALLBACK,
   type QueueItem,
 } from "./stewardQueue";
+import { CROWDPOOL_READINESS } from "./crowdpoolReadiness";
 
 // Bundle 1, section 16.3 (A5-03): the steward bar's pill read "0 waiting on
 // you" for about 2.4 seconds on a phone before the real count arrived.
@@ -24,6 +29,32 @@ describe("stewardBarLabel", () => {
   it("says the count once it is known, 0 included", () => {
     expect(stewardBarLabel(0)).toBe("0 waiting on you");
     expect(stewardBarLabel(5)).toBe("5 waiting on you");
+  });
+  it("names the steward tools when the offers could not be read, instead of checking forever", () => {
+    expect(stewardBarLabel(null, { failed: true })).toBe(STEWARD_BAR_FALLBACK);
+    expect(STEWARD_BAR_FALLBACK).toBe("Steward tools");
+  });
+});
+
+// The pill and the "Waiting on you" card it jumps to count the same rows: a
+// campaign in review with unticked items used to read "0 waiting on you"
+// above a card listing the ticks row.
+describe("the pill counts the Ready to crowdpool row", () => {
+  const keys = (n: number) => CROWDPOOL_READINESS.slice(0, n).map((item) => ({ itemKey: item.key }));
+
+  it("counts ticks only while the list is open, and only known keys", () => {
+    expect(READINESS_STATUSES).toEqual(["draft", "pending_review", "rejected"]);
+    expect(readyTickedCount("pending_review", keys(3))).toBe(3);
+    expect(readyTickedCount("draft", [...keys(2), { itemKey: "not-an-item" }])).toBe(2);
+    expect(readyTickedCount("active", keys(3))).toBeNull();
+    expect(readyTickedCount("pending_review", undefined)).toBeNull();
+  });
+
+  it("adds one while items are unticked, none once all are or when unknown", () => {
+    expect(stewardWaitingTotal({ total: 0 }, 3)).toBe(1);
+    expect(stewardWaitingTotal({ total: 2 }, 0)).toBe(3);
+    expect(stewardWaitingTotal({ total: 0 }, CROWDPOOL_READINESS.length)).toBe(0);
+    expect(stewardWaitingTotal({ total: 4 }, null)).toBe(4);
   });
 });
 

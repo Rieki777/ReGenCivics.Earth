@@ -39,7 +39,8 @@ const skipIfNoDb = !process.env.DATABASE_URL;
 const OWNER = 986701;
 const CO_STEWARD = 986702;
 const STRANGER = 986703;
-const CLAIM_HOLDER = 986704;
+// Its own id: offer-status.test.ts uses 986704, and CI runs the DB suites in parallel.
+const CLAIM_HOLDER = 986981;
 const createdCampaignIds: number[] = [];
 
 async function makeCampaign(applicationId: number | undefined, title: string, publish = true) {
