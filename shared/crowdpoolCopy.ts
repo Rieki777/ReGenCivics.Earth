@@ -906,6 +906,14 @@ export const START_DOOR = {
     count > 1
       ? `${names} are in review. You can start a campaign once one is accepted. Meanwhile, get ready with the eight below.`
       : `${names} is in review. You can start your campaign once it's accepted. Meanwhile, get ready with the eight below.`,
+  /**
+   * A paused (inactive) application: the /apply/status line for that status
+   * (section 16.3), with "Write to us" linking /connect. Never the apply link:
+   * /apply reopens the paused application and would overwrite it.
+   */
+  paused: (names: string, count = 1) => `${names} ${count > 1 ? "are" : "is"} paused.`,
+  pausedLink: "Write to us",
+  pausedTail: "when you're ready to pick it up again.",
   pick: "Pick the project this campaign is for. We fill in what your application already says.",
   readyFold: "What the review checks",
 } as const;

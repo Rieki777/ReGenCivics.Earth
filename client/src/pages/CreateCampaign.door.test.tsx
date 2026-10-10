@@ -120,17 +120,38 @@ describe("/create-campaign, the creator front door", () => {
     expect(screen.getByText(NO_APPLICATION)).toBeInTheDocument();
   });
 
+  // Each half loads only the read it is about, and the other read finds
+  // nothing, so each half fails if its half of the loading guard goes.
   it("never says there is no accepted application while the person's applications are loading", () => {
     h.myAppsLoading = true;
-    h.listRows = () => [HILL_FARM];
-    const { unmount } = render(<CreateCampaign />);
+    h.listRows = () => [];
+    const { container } = render(<CreateCampaign />);
+    expect(screen.getByRole("heading", { level: 1, name: "Bring your land project to crowdpooling" })).toBeInTheDocument();
     expect(screen.queryByText(NO_APPLICATION)).toBeNull();
-    unmount();
-    h.myAppsLoading = false;
-    h.myApps = [HILL_FARM];
+    // Loading shows no state block: step 1's link is the only way to /apply.
+    expect(container.querySelectorAll('a[href="/apply"]')).toHaveLength(1);
+  });
+
+  it("never says there is no accepted application while the unfiltered applicants read is loading", () => {
+    // A founder who stewards a project without having applied: only the
+    // applicants read can show it.
+    h.myApps = [];
     h.listLoading = true;
-    render(<CreateCampaign />);
+    const { container } = render(<CreateCampaign />);
+    expect(screen.getByRole("heading", { level: 1, name: "Bring your land project to crowdpooling" })).toBeInTheDocument();
     expect(screen.queryByText(NO_APPLICATION)).toBeNull();
+    expect(container.querySelectorAll('a[href="/apply"]')).toHaveLength(1);
+  });
+
+  it("a paused application: names it, points to /connect, and never links to /apply", () => {
+    h.myApps = [{ id: 3, projectName: "Oak Hollow", status: "inactive" }];
+    const { container } = render(<CreateCampaign />);
+    expect(screen.getByText(/Oak Hollow is paused\./)).toHaveTextContent(
+      "Oak Hollow is paused. Write to us when you're ready to pick it up again.",
+    );
+    expect(screen.getByRole("link", { name: "Write to us" })).toHaveAttribute("href", "/connect");
+    expect(screen.queryByText(NO_APPLICATION)).toBeNull();
+    expect(container.querySelector('a[href="/apply"]')).toBeNull();
   });
 
   it("accepted: the picker under the pick line, labelled Your projects, with the list folded", () => {
@@ -140,6 +161,8 @@ describe("/create-campaign, the creator front door", () => {
     expect(screen.getByText("Your projects")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Hill Farm/ })).toBeInTheDocument();
     expect(screen.queryByText("Create Your Campaign")).toBeNull();
+    // No apply link above the picker: /apply would reopen the accepted application.
+    expect(container.querySelector('a[href="/apply"]')).toBeNull();
     const ready = container.querySelectorAll("#ready");
     expect(ready).toHaveLength(1);
     expect(ready[0].tagName).toBe("DETAILS");

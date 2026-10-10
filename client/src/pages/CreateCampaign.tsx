@@ -658,6 +658,10 @@ export default function CreateCampaign() {
   // or active (campaigns.create). Offer those; name the ones still in review.
   const campaignReadyApps = (userApplications ?? []).filter((app: any) => ['approved', 'active'].includes(app.status));
   const appsInReview = (userApplications ?? []).filter((app: any) => ['submitted', 'under_review'].includes(app.status));
+  // Paused (inactive) applications were accepted once. The door names them
+  // and points to /connect, never to /apply, which would reopen and
+  // overwrite the paused application.
+  const appsPaused = (userApplications ?? []).filter((app: any) => app.status === 'inactive');
 
   // Campaign data
   const [campaignName, setCampaignName] = useState('');
@@ -1111,15 +1115,18 @@ export default function CreateCampaign() {
           ? 'accepted'
           : appsInReview.length > 0
             ? 'in-review'
-            : (userApplications ?? []).some((app: any) => app.status === 'changes_requested')
-              ? 'changes-requested'
-              : (userApplications ?? []).some((app: any) => app.status === 'draft')
-                ? 'draft'
-                : 'no-application';
+            : appsPaused.length > 0
+              ? 'paused'
+              : (userApplications ?? []).some((app: any) => app.status === 'changes_requested')
+                ? 'changes-requested'
+                : (userApplications ?? []).some((app: any) => app.status === 'draft')
+                  ? 'draft'
+                  : 'no-application';
     return doorShell(
       <CampaignStartDoor
         state={doorState}
         inReviewNames={appsInReview.map((app: any) => app.projectName)}
+        pausedNames={appsPaused.map((app: any) => app.projectName)}
         openReady={openReady}
       >
               {/* Search */}

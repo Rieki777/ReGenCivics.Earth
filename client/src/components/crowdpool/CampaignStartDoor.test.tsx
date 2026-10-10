@@ -22,7 +22,9 @@ import { APPLY_BUTTON_LABEL } from "@shared/applicationWindow";
 import { READINESS_TITLE } from "@shared/crowdpoolReadiness";
 
 const BEFORE_OPENING = new Date("2026-10-09T12:00:00Z");
-const ALL_STATES: StartDoorState[] = ["loading", "signed-out", "no-application", "changes-requested", "draft", "in-review", "accepted"];
+const ALL_STATES: StartDoorState[] = ["loading", "signed-out", "no-application", "changes-requested", "draft", "in-review", "paused", "accepted"];
+/** States where step 1 offers the apply link: never to a person whose application is accepted or paused. */
+const APPLY_STEP_STATES: StartDoorState[] = ALL_STATES.filter((s) => s !== "accepted" && s !== "paused");
 
 function door(state: StartDoorState, extra: Partial<Parameters<typeof CampaignStartDoor>[0]> = {}) {
   return render(<CampaignStartDoor state={state} openReady={false} now={BEFORE_OPENING} {...extra} />);
@@ -39,9 +41,28 @@ describe("CampaignStartDoor", () => {
       const steps = within(screen.getByRole("list", { name: "How a campaign starts" })).getAllByRole("listitem");
       expect(steps).toHaveLength(4);
       expect(steps[3]).toHaveTextContent("Crowdpooling opens together on 20 March 2027 by default.");
-      expect(within(steps[0]).getByRole("link", { name: APPLY_BUTTON_LABEL })).toHaveAttribute("href", "/apply");
+      if (APPLY_STEP_STATES.includes(state)) {
+        expect(within(steps[0]).getByRole("link", { name: APPLY_BUTTON_LABEL })).toHaveAttribute("href", "/apply");
+      }
       unmount();
     }
+  });
+
+  it("never offers the apply link to a person whose application is accepted or paused", () => {
+    for (const state of ["accepted", "paused"] as StartDoorState[]) {
+      const { container, unmount } = door(state, { pausedNames: ["Hill Farm"] });
+      expect(screen.queryByRole("link", { name: APPLY_BUTTON_LABEL }), state).toBeNull();
+      expect(container.querySelector('a[href="/apply"]'), state).toBeNull();
+      unmount();
+    }
+  });
+
+  it("paused: names the project and points to /connect, never to /apply", () => {
+    door("paused", { pausedNames: ["Hill Farm"] });
+    const line = screen.getByText(/Hill Farm is paused\./);
+    expect(line).toHaveTextContent("Hill Farm is paused. Write to us when you're ready to pick it up again.");
+    expect(within(line).getByRole("link", { name: "Write to us" })).toHaveAttribute("href", "/connect");
+    expect(screen.queryByText(START_DOOR.noApplication)).toBeNull();
   });
 
   it("step 4 drops the default day once the round has opened", () => {
@@ -113,6 +134,42 @@ describe("CampaignStartDoor", () => {
     expect(opened.container.querySelector("#ready")).toHaveAttribute("open");
   });
 
+  it("opened at #ready: brings the fold into view once the accepted state renders, and only once", () => {
+    const scroll = vi.fn();
+    const proto = HTMLElement.prototype as unknown as { scrollIntoView?: unknown };
+    const had = Object.prototype.hasOwnProperty.call(proto, "scrollIntoView");
+    const before = proto.scrollIntoView;
+    proto.scrollIntoView = scroll;
+    try {
+      // Loading first, as the page renders while the reads resolve.
+      const { container, rerender } = door("loading", { openReady: true });
+      expect(scroll).not.toHaveBeenCalled();
+      rerender(<CampaignStartDoor state="accepted" openReady now={BEFORE_OPENING} />);
+      expect(scroll).toHaveBeenCalledTimes(1);
+      expect(scroll.mock.contexts[0]).toBe(container.querySelector("#ready"));
+      rerender(<CampaignStartDoor state="accepted" openReady now={BEFORE_OPENING}><span>picker</span></CampaignStartDoor>);
+      expect(scroll).toHaveBeenCalledTimes(1);
+    } finally {
+      if (had) proto.scrollIntoView = before;
+      else delete proto.scrollIntoView;
+    }
+  });
+
+  it("not opened at #ready: the accepted state never scrolls", () => {
+    const scroll = vi.fn();
+    const proto = HTMLElement.prototype as unknown as { scrollIntoView?: unknown };
+    const had = Object.prototype.hasOwnProperty.call(proto, "scrollIntoView");
+    const before = proto.scrollIntoView;
+    proto.scrollIntoView = scroll;
+    try {
+      door("accepted");
+      expect(scroll).not.toHaveBeenCalled();
+    } finally {
+      if (had) proto.scrollIntoView = before;
+      else delete proto.scrollIntoView;
+    }
+  });
+
   it("accepted: a #ready link followed while the page is open opens the fold", async () => {
     const { container } = door("accepted");
     const fold = container.querySelector("#ready") as HTMLDetailsElement;
@@ -129,7 +186,7 @@ describe("CampaignStartDoor", () => {
 
   it("uses our words: no em-dash in any state", () => {
     for (const state of ALL_STATES) {
-      const { container, unmount } = door(state, { inReviewNames: ["Hill Farm"] });
+      const { container, unmount } = door(state, { inReviewNames: ["Hill Farm"], pausedNames: ["Hill Farm"] });
       expect(container.textContent ?? "", state).not.toContain(String.fromCharCode(0x2014));
       unmount();
     }

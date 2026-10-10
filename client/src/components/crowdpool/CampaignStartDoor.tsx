@@ -30,6 +30,7 @@ export type StartDoorState =
   | "changes-requested"
   | "draft"
   | "in-review"
+  | "paused"
   | "accepted";
 
 /** Where Sign in brings the person back to. */
@@ -52,6 +53,8 @@ type Props = {
   state: StartDoorState;
   /** Project names of the person's applications in review, for the in-review line. */
   inReviewNames?: string[];
+  /** Project names of the person's paused (inactive) applications, for the paused line. */
+  pausedNames?: string[];
   /** True when the page was opened at #ready: the accepted state's fold starts open. */
   openReady: boolean;
   /** The project picker, shown in the accepted state. */
@@ -60,10 +63,14 @@ type Props = {
   now?: Date;
 };
 
-export function CampaignStartDoor({ state, inReviewNames = [], openReady, children, now }: Props) {
+export function CampaignStartDoor({ state, inReviewNames = [], pausedNames = [], openReady, children, now }: Props) {
   const opening = defaultCrowdpoolOpening(now ?? new Date());
   const sendBody = START_DOOR.sendBody(formatCloseDate(opening.date), opening.state === "open");
   const accepted = state === "accepted";
+  // Step 1's apply link stays away from a person whose application is
+  // accepted or paused: /apply reopens that application, and saving the form
+  // there would overwrite it.
+  const showApplyStep = state !== "accepted" && state !== "paused";
   // A #ready link followed while this page is already open changes only the
   // hash, so nothing re-renders: open the fold then too.
   const fold = useRef<HTMLDetailsElement>(null);
@@ -74,6 +81,15 @@ export function CampaignStartDoor({ state, inReviewNames = [], openReady, childr
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+  // Opened at #ready, ScrollToTop scrolls once to the open list the loading
+  // state shows. When the accepted state then puts the picker above and moves
+  // #ready to the fold, nothing scrolls again: bring the fold into view once.
+  const scrolledToFold = useRef(false);
+  useEffect(() => {
+    if (!accepted || !openReady || scrolledToFold.current) return;
+    scrolledToFold.current = true;
+    fold.current?.scrollIntoView?.({ block: "start" });
+  }, [accepted, openReady]);
 
   return (
     <>
@@ -101,7 +117,7 @@ export function CampaignStartDoor({ state, inReviewNames = [], openReady, childr
               <div className="min-w-0">
                 <h2 className="font-bold text-[#1a472a]">{step.title}</h2>
                 <p className="text-sm text-[#1a472a]/85 mt-0.5 safe-prose">{i === 3 ? sendBody : step.body}</p>
-                {i === 0 && (
+                {i === 0 && showApplyStep && (
                   <Link href="/apply" className={`${textLink} text-sm`}>
                     {APPLY_BUTTON_LABEL}
                   </Link>
@@ -154,6 +170,16 @@ export function CampaignStartDoor({ state, inReviewNames = [], openReady, childr
         {state === "in-review" && (
           <div className="rounded-xl bg-[#f0f7f0] border border-[#7dd87d]/40 p-4 text-sm text-[#1a472a]">
             {START_DOOR.inReview(joinNames(inReviewNames), inReviewNames.length)}
+          </div>
+        )}
+
+        {state === "paused" && (
+          <div className="rounded-xl bg-[#f0f7f0] border border-[#7dd87d]/40 p-4 text-sm text-[#1a472a]">
+            {START_DOOR.paused(joinNames(pausedNames), pausedNames.length)}{" "}
+            <Link href="/connect" className={textLink}>
+              {START_DOOR.pausedLink}
+            </Link>{" "}
+            {START_DOOR.pausedTail}
           </div>
         )}
 

@@ -149,7 +149,8 @@ export function HowHelpingWorks() {
       <ol className="list-decimal pl-5 space-y-2">
         {HOW_IT_WORKS.map((step) => (
           <li key={step.title}>
-            <strong>{step.title}.</strong> <span className="sheet-muted">{step.body}</span>
+            <strong className="block">{step.title}</strong>
+            <span className="sheet-muted">{step.body}</span>
           </li>
         ))}
       </ol>
