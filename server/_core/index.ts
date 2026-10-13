@@ -24,7 +24,6 @@ import { runNotificationDigestJob } from "../jobs/notificationDigestJob";
 import { runForumAffinityJob } from "../jobs/forumAffinityJob";
 import { runElderForumJob } from "../jobs/elderForumJob";
 import { runGlossaryJob } from "../jobs/glossaryJob";
-import { runDraftCleanupJob } from "../jobs/draftCleanupJob";
 import { runShipCrewListJob } from "../jobs/shipCrewList";
 import { runQuestCrewAssemblyJob } from "../jobs/questCrewAssembly";
 import { AUTO_REMINDER_SWEEP_MINUTES } from "@shared/eventAutoReminders";

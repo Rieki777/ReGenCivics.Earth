@@ -7,10 +7,9 @@
  * `import { ... } from "./db"` keeps working, and typecheck proves the move.
  * Anything transactional follows server/db/tokens.ts instead.
  */
-import { and, desc, eq, getTableColumns, lt, ne } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, ne } from "drizzle-orm";
 import { applications, InsertApplication, users } from "../../drizzle/schema";
 import { getDb } from "../db";
-import { asMutationResult } from "./_shared";
 
 const applicationWithContact = {
   ...getTableColumns(applications),
@@ -75,16 +74,6 @@ export async function getDraftApplications() {
   return db.select().from(applications)
     .where(eq(applications.status, "draft"))
     .orderBy(desc(applications.updatedAt));
-}
-
-export async function deleteStaleApplicationDrafts(olderThanDays = 30): Promise<number> {
-  const db = await getDb();
-  if (!db) return 0;
-
-  const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
-  const result = await db.delete(applications)
-    .where(and(eq(applications.status, "draft"), lt(applications.updatedAt, cutoff)));
-  return asMutationResult(result).affectedRows ?? 0;
 }
 
 export async function getApplicationsByStatus(status: string) {

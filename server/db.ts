@@ -301,7 +301,6 @@ export {
   getApplicationsByUserId,
   getAllApplications,
   getDraftApplications,
-  deleteStaleApplicationDrafts,
   getApplicationsByStatus,
 } from "./db/applications";
 
