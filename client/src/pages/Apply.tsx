@@ -23,6 +23,7 @@ import { APPLICATIONS_STATUS } from "@shared/applicationWindow";
 import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { PageWrapper } from "@/components/PageWrapper";
 import { analytics } from "@/lib/analytics";
+import { projectPathForApplication } from "@shared/projectKey";
 
 type UploadedFile = {
   name: string;
@@ -68,11 +69,78 @@ type FormData = {
 
 const LS_KEY = 'regen_apply_draft';
 
-function loadDraft(): Partial<FormData> | null {
+type LocalDraft = { data: Partial<FormData>; savedAt: number | null };
+
+function loadDraft(): LocalDraft | null {
   try {
     const raw = localStorage.getItem(LS_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const { _savedAt, ...data } = JSON.parse(raw);
+    return { data, savedAt: typeof _savedAt === "number" ? _savedAt : null };
   } catch { return null; }
+}
+
+/** Statuses the server refuses to change from /apply (LOCKED_APPLICATION_STATUSES). */
+const LOCKED_STATUSES = ["approved", "active", "inactive"];
+/** Already sent, still editable: saving keeps it in the review queue as it is. */
+const SENT_STATUSES = ["submitted", "under_review"];
+
+/** Placeholders applications.create writes before the applicant has answered. */
+const CREATE_PLACEHOLDERS: Partial<Record<keyof FormData, string>> = {
+  projectName: "Untitled Project",
+  location: "TBD",
+};
+
+function parseJsonList<T>(raw: unknown, keep: (v: unknown) => v is T): T[] {
+  if (typeof raw !== "string" || !raw) return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.filter(keep) : [];
+  } catch { return []; }
+}
+
+const isString = (v: unknown): v is string => typeof v === "string";
+const isUploadedFile = (v: unknown): v is UploadedFile =>
+  !!v && typeof v === "object" && typeof (v as UploadedFile).url === "string";
+
+/** A saved application row from the server, as the form's state. */
+export function formDataFromApplication(app: Record<string, any>): FormData {
+  const out: FormData = { ...INITIAL_FORM_DATA };
+  for (const key of Object.keys(INITIAL_FORM_DATA) as Array<keyof FormData>) {
+    if (key === "documents" || key === "mixedUse" || key === "dietaryPatterns") continue;
+    const v = app[key];
+    if (v === null || v === undefined) continue;
+    if (CREATE_PLACEHOLDERS[key] === v) continue;
+    (out as any)[key] = v;
+  }
+  out.mixedUse = parseJsonList(app.mixedUse, isString);
+  out.dietaryPatterns = parseJsonList(app.dietaryPatterns, isString);
+  out.documents = parseJsonList(app.documentsUrl, isUploadedFile);
+  return out;
+}
+
+const isBlank = (v: unknown) =>
+  v === null || v === undefined || v === "" || v === 0 || (Array.isArray(v) && v.length === 0);
+
+/**
+ * The server draft is the record; the browser copy only fills in what it
+ * lacks, or wins outright when it was written after the server's last save
+ * (typing in the review form that never reached Save). A browser copy for a
+ * different project (another account on a shared computer) is ignored.
+ */
+export function mergeDrafts(server: FormData, local: LocalDraft | null, serverUpdatedAt: number): FormData {
+  if (!local) return server;
+  const localName = local.data.projectName;
+  if (!isBlank(localName) && !isBlank(server.projectName) && localName !== server.projectName) return server;
+  const localNewer = local.savedAt !== null && local.savedAt > serverUpdatedAt;
+  const out: FormData = { ...server };
+  for (const key of Object.keys(INITIAL_FORM_DATA) as Array<keyof FormData>) {
+    if (key === "documents") continue;
+    const lv = local.data[key];
+    if (isBlank(lv)) continue;
+    if (localNewer || isBlank(server[key])) (out as any)[key] = lv;
+  }
+  return out;
 }
 
 const INITIAL_FORM_DATA: FormData = {
@@ -159,7 +227,7 @@ export default function Apply() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(() => {
     const draft = loadDraft();
-    return draft ? { ...INITIAL_FORM_DATA, ...draft } : INITIAL_FORM_DATA;
+    return draft ? { ...INITIAL_FORM_DATA, ...draft.data } : INITIAL_FORM_DATA;
   });
   const [draftRestored, setDraftRestored] = useState(() => loadDraft() !== null);
   const [applicationId, setApplicationId] = useState<number | null>(null);
@@ -177,6 +245,35 @@ export default function Apply() {
   /** Status of a pre-existing application (the server returns it instead of
    *  creating a duplicate). Pauses autosave for anything already submitted. */
   const [existingAppStatus, setExistingAppStatus] = useState<string | null>(null);
+  const [existingAppName, setExistingAppName] = useState<string>("");
+  const [saveNote, setSaveNote] = useState<string | null>(null);
+  const isLocked = !!existingAppStatus && LOCKED_STATUSES.includes(existingAppStatus);
+  const isSentEdit = !!existingAppStatus && SENT_STATUSES.includes(existingAppStatus);
+
+  // The saved application on the server is the record, so a draft started on
+  // another device (or before the browser copy was cleared) opens where the
+  // applicant left it. One application per account; ?id= comes from the
+  // profile's Submissions tab and opens the review form directly.
+  const myApps = trpc.applications.myApplications.useQuery(undefined, { enabled: !!user });
+  const myAppsSettled = !user || myApps.isSuccess || myApps.isError;
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current || !myApps.data) return;
+    hydratedRef.current = true;
+    const requestedId = Number(new URLSearchParams(window.location.search).get("id"));
+    const app = myApps.data.find((a: any) => a.id === requestedId) ?? myApps.data[0];
+    if (!app) return;
+    setApplicationId(app.id);
+    setExistingAppStatus(app.status);
+    setExistingAppName(app.projectName);
+    if (LOCKED_STATUSES.includes(app.status)) return;
+    setFormData(mergeDrafts(formDataFromApplication(app), loadDraft(), new Date(app.updatedAt).getTime()));
+    setDraftRestored(true);
+    if (requestedId === app.id) {
+      setReviewAll(true);
+      setMode("form");
+    }
+  }, [myApps.data]);
 
   // If the companion is not aboard (no LLM configured), fall back to the form.
   const companionFlags = trpc.companion.flags.useQuery(undefined, { staleTime: 60_000 });
@@ -206,7 +303,7 @@ export default function Apply() {
     lsTimerRef.current = setTimeout(() => {
       try {
         const { documents: _docs, ...rest } = formData;
-        localStorage.setItem(LS_KEY, JSON.stringify(rest));
+        localStorage.setItem(LS_KEY, JSON.stringify({ ...rest, _savedAt: Date.now() }));
       } catch { /* storage quota exceeded - ignore */ }
     }, 800);
     return () => { if (lsTimerRef.current) clearTimeout(lsTimerRef.current); };
@@ -231,7 +328,8 @@ export default function Apply() {
   };
 
   const saveDraft = async () => {
-    if (!applicationId) {
+    let id = applicationId;
+    if (!id) {
       // Create new application. The server returns the user's existing
       // application if they already have one, so check its status: the talk
       // autosave must never silently rewrite a submitted application.
@@ -241,37 +339,44 @@ export default function Apply() {
         location: formData.location || "TBD",
       });
       analytics.applyStarted();
-      setApplicationId(result.id);
+      id = result.id;
+      setApplicationId(id);
       const status = (result as any).status as string | undefined;
-      if (status && status !== "draft") setExistingAppStatus(status);
-      return result.id;
-    } else {
-      // Update existing application - filter out empty strings
-      const updateData: any = {};
-      Object.entries(formData).forEach(([key, value]) => {
-        if (key === "documents") {
-          // Store documents as JSON string
-          updateData.documentsUrl = JSON.stringify(value);
-        } else if (key === "mixedUse") {
-          // Store mixedUse as JSON string
-          updateData.mixedUse = JSON.stringify(value);
-        } else if (key === "dietaryPatterns") {
-          updateData.dietaryPatterns = JSON.stringify(value);
-        } else if (value !== "" && value !== null && value !== undefined) {
-          updateData[key] = value;
-        }
-      });
-      // Keep the Gardener conversation with the draft so reviewers can read
-      // how the applicant talked about their project, not just the fields.
-      if (transcript.length > 0) {
-        updateData.companionTranscript = JSON.stringify(transcript).slice(0, 400_000);
+      if (status && status !== "draft") {
+        setExistingAppStatus(status);
+        setExistingAppName((result as any).projectName ?? "");
+        return id;
       }
-      await updateMutation.mutateAsync({
-        id: applicationId,
-        data: updateData,
-      });
-      return applicationId;
+      // A new draft carries only the three create fields; fall through so
+      // everything else typed so far is saved now, not on the next save.
     }
+    // Update the application - filter out empty strings
+    const updateData: any = {};
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key === "documents") {
+        // Store documents as JSON string
+        updateData.documentsUrl = JSON.stringify(value);
+      } else if (key === "mixedUse") {
+        // Store mixedUse as JSON string
+        updateData.mixedUse = JSON.stringify(value);
+      } else if (key === "dietaryPatterns") {
+        updateData.dietaryPatterns = JSON.stringify(value);
+      } else if (value !== "" && value !== null && value !== undefined) {
+        updateData[key] = value;
+      }
+    });
+    // Keep the Gardener conversation with the draft so reviewers can read
+    // how the applicant talked about their project, not just the fields.
+    if (transcript.length > 0) {
+      updateData.companionTranscript = JSON.stringify(transcript).slice(0, 400_000);
+    }
+    await updateMutation.mutateAsync({
+      id,
+      data: updateData,
+    });
+    // Refresh the profile's Submissions list and /apply/status.
+    void utils.applications.invalidate();
+    return id;
   };
 
   // ── The Gardener (chat-first application) ──────────────────────────────────
@@ -342,6 +447,9 @@ export default function Apply() {
   const talkSaveBusy = useRef(false);
   useEffect(() => {
     if (mode !== "talk") return;
+    // Wait for the saved application to load, so a draft from another device
+    // is merged in before anything here can write over it.
+    if (!myAppsSettled) return;
     // Never autosave over an application that is already in review or beyond.
     if (existingAppStatus && !["draft", "changes_requested"].includes(existingAppStatus)) return;
     const hasContent = Object.keys(companionCollected).length > 0 || transcript.length > 1;
@@ -355,10 +463,10 @@ export default function Apply() {
     }, 3000);
     return () => { if (talkSaveTimer.current) clearTimeout(talkSaveTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companionCollected, transcript, mode]);
+  }, [companionCollected, transcript, mode, myAppsSettled]);
 
   const handleNext = async () => {
-    await saveDraft();
+    if (!isLocked) await saveDraft();
     if (currentStep < totalSteps) {
       analytics.applyStepAdvanced(currentStep + 1);
       setCurrentStep(currentStep + 1);
@@ -384,6 +492,33 @@ export default function Apply() {
     } catch (err: any) {
       const msg = err?.message || "Submission failed. Please try again.";
       setSubmitError(msg);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  /** The Save button: says it saved, and where to find the draft again. */
+  const handleSaveDraft = async () => {
+    setSubmitError(null);
+    setSaveNote(null);
+    try {
+      await saveDraft();
+      setSaveNote(isSentEdit
+        ? "Changes saved."
+        : "Draft saved. Find it any time in your profile, under Submissions.");
+    } catch (err: any) {
+      setSubmitError(err?.message || "Saving failed. Please try again.");
+    }
+  };
+
+  /** An application already sent: save the edits and go back to the profile. */
+  const handleSaveChanges = async () => {
+    setSubmitError(null);
+    try {
+      await saveDraft();
+      try { localStorage.removeItem(LS_KEY); } catch { /* ignore */ }
+      navigate("/profile?tab=submissions");
+    } catch (err: any) {
+      setSubmitError(err?.message || "Saving failed. Please try again.");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -591,8 +726,21 @@ export default function Apply() {
             to read on the parchment Card background. */}
         {mode === "form" && (
         <Card className="p-8 bg-white apply-form-dark">
+          {isLocked && (
+            <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-50 px-4 py-3 text-sm text-[#7a5a00]">
+              {existingAppName || "Your project"} is already accepted, so this form can't change it.{" "}
+              {applicationId && (
+                <Link href={projectPathForApplication(applicationId, existingAppName)} className="underline">Open your project page</Link>
+              )}
+            </div>
+          )}
+          {isSentEdit && (
+            <div className="mb-4 rounded-lg border border-[#4a7c59]/30 bg-[#f0f7f0] px-4 py-3 text-sm text-[#1a472a]">
+              You're editing the application you already sent. Press Save changes when you're done and it stays in the review queue.
+            </div>
+          )}
           {/* Draft restored banner */}
-          {draftRestored && (
+          {draftRestored && !isSentEdit && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#4a7c59]/30 bg-[#f0f7f0] px-4 py-3 text-sm text-[#1a472a]">
               <span>Draft restored from your last session.</span>
               <button
@@ -1328,6 +1476,10 @@ export default function Apply() {
             </div>
           )}
 
+          {saveNote && !submitError && (
+            <p className="mt-6 text-sm text-[#4a7c59]" role="status">{saveNote}</p>
+          )}
+
           {/* Navigation Buttons - Mobile Optimized */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-8 pt-6 border-t">
             {!reviewAll && (
@@ -1343,15 +1495,17 @@ export default function Apply() {
             )}
 
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 order-1 sm:order-2">
+              {!isSentEdit && (
               <Button
                 variant="outline"
-                onClick={saveDraft}
-                disabled={isLoading}
+                onClick={handleSaveDraft}
+                disabled={isLoading || isLocked}
                 className="border-[#7dd87d] text-[#4a7c59] w-full sm:w-auto"
               >
                 <Save className="w-4 h-4 mr-2" />
                 Save Draft
               </Button>
+              )}
 
               {!reviewAll && currentStep < totalSteps ? (
                 <Button
@@ -1370,15 +1524,15 @@ export default function Apply() {
                 </Button>
               ) : (
                 <Button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
+                  onClick={isSentEdit ? handleSaveChanges : handleSubmit}
+                  disabled={isLoading || isLocked}
                   className="bg-gradient-to-r from-[#ffd700] to-[#7dd87d] hover:from-[#ffed4e] hover:to-[#9de89d] text-[#1a472a] w-full sm:w-auto"
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <>
-                      Submit Application
+                      {isSentEdit ? "Save changes" : "Submit Application"}
                       <CheckCircle2 className="w-4 h-4 ml-2" />
                     </>
                   )}

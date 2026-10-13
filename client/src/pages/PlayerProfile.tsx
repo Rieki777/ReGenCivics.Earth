@@ -2075,6 +2075,32 @@ function applicationStatusColor(status: string): "green" | "amber" | "red" | "bl
   return map[status] ?? "gray";
 }
 
+/**
+ * What the applicant can do next with a land project application. The /apply
+ * form can change it until it is accepted (LOCKED_APPLICATION_STATUSES in
+ * server/routes/applications.ts); after that the project page is home.
+ */
+function applicationActions(app: { id: number; status: string; projectName: string }): {
+  primaryAction: { label: string; href: string };
+  secondaryAction?: { label: string; href: string };
+} {
+  const edit = `/apply?id=${app.id}`;
+  switch (app.status) {
+    case "draft":
+      return { primaryAction: { label: "Continue editing", href: edit } };
+    case "changes_requested":
+      return { primaryAction: { label: "Review & resubmit", href: edit }, secondaryAction: { label: "Status", href: "/apply/status" } };
+    case "rejected":
+      return { primaryAction: { label: "Edit & send again", href: edit }, secondaryAction: { label: "Status", href: "/apply/status" } };
+    case "approved":
+    case "active":
+    case "inactive":
+      return { primaryAction: { label: "Project page", href: projectPathForApplication(app.id, app.projectName) }, secondaryAction: { label: "Status", href: "/apply/status" } };
+    default:
+      return { primaryAction: { label: "Edit", href: edit }, secondaryAction: { label: "Status", href: "/apply/status" } };
+  }
+}
+
 function campaignStatusColor(status: string): "green" | "amber" | "red" | "blue" | "gray" {
   const map: Record<string, "green" | "amber" | "red" | "blue" | "gray"> = {
     draft: "gray", pending_review: "blue", active: "green",
@@ -2313,7 +2339,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
 function SubmissionsTab() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
-  const { data: applications = [] } = trpc.applications.myApplications.useQuery(undefined, { enabled: isAdmin });
+  const { data: applications = [] } = trpc.applications.myApplications.useQuery();
   const { data: campaigns = [] } = trpc.campaigns.myCampaigns.useQuery(undefined, { staleTime: 5 * 60_000 });
   const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
   const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, { enabled: isAdmin });
@@ -2321,30 +2347,24 @@ function SubmissionsTab() {
 
   return (
     <div className="space-y-8 py-2">
-      {isAdmin && (
-        <SubmissionsSection
-          title="Land Project Applications"
-          icon={MapPin}
-          items={applications}
-          renderItem={(app: any) => (
-            <SubmissionCard
-              key={app.id}
-              title={app.projectName}
-              subtitle={app.location}
-              status={app.status}
-              statusColor={applicationStatusColor(app.status)}
-              updatedAt={app.updatedAt}
-              primaryAction={
-                app.status === "draft" || app.status === "changes_requested"
-                  ? { label: app.status === "draft" ? "Continue Editing" : "Review & Resubmit", href: `/apply?id=${app.id}` }
-                  : { label: "View Application", href: `/my-applications` }
-              }
-            />
-          )}
-          emptyMessage="No applications yet."
-          emptyAction={{ label: "Apply Now", href: "/apply" }}
-        />
-      )}
+      <SubmissionsSection
+        title="Land Project Applications"
+        icon={MapPin}
+        items={applications}
+        renderItem={(app: any) => (
+          <SubmissionCard
+            key={app.id}
+            title={app.projectName}
+            subtitle={app.location === "TBD" ? undefined : app.location}
+            status={app.status}
+            statusColor={applicationStatusColor(app.status)}
+            updatedAt={app.updatedAt}
+            {...applicationActions(app)}
+          />
+        )}
+        emptyMessage="No applications yet."
+        emptyAction={{ label: "Apply Now", href: "/apply" }}
+      />
       <SubmissionsSection
         title="Incubator Season Campaigns"
         icon={Layers}
