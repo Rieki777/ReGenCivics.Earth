@@ -438,11 +438,11 @@ describe("week 3: What your project is for (Rye, 2026-10-13)", () => {
     ]);
     expect(stages.map((s) => s.kind)).toEqual([
       "welcome", "checkin", "breath", "prompt", "prompt", "prompt", "needs", "needs", "prompt", "needs", "prompt",
-      "prompt", "prompt", "needs", "prompt", "prompt", "close", "getvillageos",
+      "needs", "prompt", "needs", "prompt", "prompt", "close", "getvillageos",
     ]);
     expect(stages.map((s) => s.min)).toEqual([3, 5, 5, 4, 4, 9, 12, 11, 10, 12, 7, 8, 5, 8, 9, 4, 3, 1]);
     expect(sessionMinutes(defaultBoardState(3).plan, stages)).toBe(120);
-    expect(stages.filter((s) => s.kind === "needs").map((s) => s.step)).toEqual(["pick", "depth", "meet", "room"]);
+    expect(stages.filter((s) => s.kind === "needs").map((s) => s.step)).toEqual(["pick", "depth", "meet", "circles", "room"]);
   });
 
   it("week 2's stages, order and minutes do not change", () => {

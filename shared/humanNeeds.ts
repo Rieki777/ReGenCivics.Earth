@@ -169,6 +169,18 @@ export const CIRCLES = [
   { key: "organize", label: "Organize & Co-Create" },
 ] as const;
 
+/** A circle a project names itself, as an answer to "which circles meet this human need?". */
+export const OWN_CIRCLE = { key: "own", label: "One of our own circles" } as const;
+
+/** The overall shape of a project's Game (slides 30 to 33: cells, membranes, cells that overlap). */
+export const GAME_SHAPES = [
+  { key: "one-cell", label: "One cell: a single village or land, its circles inside" },
+  { key: "cells", label: "Cells that overlap: households or hamlets sharing circles" },
+  { key: "hub", label: "A hub and satellites: a home land with projects around it" },
+  { key: "network", label: "A network: our project linked with others in our bioregion" },
+  { key: "unsure", label: "Still finding our shape" },
+] as const;
+
 /** How well the organisation that takes most of your time meets your human needs (anonymous). */
 export const MATE_SCALE = [
   { key: "hardly", label: "Hardly" },
@@ -325,6 +337,8 @@ export type ProjectView = {
   /** Many-pick answers, as people per option. */
   allies: Record<string, number>;
   circles: Record<string, number>;
+  /** Circles the project named itself, newest first. */
+  circlesOwn: string[];
   box: Record<string, number>;
   week4: Record<string, number>;
   /** Short-text answers. */
@@ -459,6 +473,7 @@ export function projectView(items: readonly AnswerRow[], projectId: number | nul
     economies: single(of("economies")),
     allies: tally(of("allies")),
     circles: tally(of("circles")),
+    circlesOwn: [...new Set([...of("circles-own")].sort(byRecency).map((r) => r.text.trim()).filter(Boolean))],
     box: tally(of("box")),
     week4: tally(of("week4")),
     purpose: text(of("purpose")),
@@ -519,7 +534,8 @@ export function projectCardLines(view: ProjectView): string[] {
   lines.push(whole ? `Means to meet ${whole.phrase} of its people's human needs.` : `How much of its people's human needs it means to meet: ${NOT_YET}.`);
   const circles = CIRCLES.filter((c) => (view.circles[c.key] ?? 0) > 0)
     .sort((a, b) => (view.circles[b.key] ?? 0) - (view.circles[a.key] ?? 0))
-    .map((c) => c.label);
+    .map((c): string => c.label)
+    .concat(view.circlesOwn ?? []);
   const players = optionLabel(PLAYER_COUNTS, view.players.value);
   const playersNow = optionLabel(PLAYER_COUNTS, view.playersNow.value);
   lines.push(

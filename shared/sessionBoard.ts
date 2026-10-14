@@ -31,6 +31,8 @@ import {
   BOX_STEPS,
   BREADTH_STOPS,
   CIRCLES,
+  GAME_SHAPES,
+  OWN_CIRCLE,
   DECIDE_OPTIONS,
   ECONOMIES,
   FEEL_WORDS,
@@ -199,7 +201,7 @@ export type BoardStage = {
   /** The questions this stage asks, in order. */
   prompts?: readonly (BoardPrompt | PromptRef)[];
   /** needs stages only: which part of the human needs walk. */
-  step?: "pick" | "depth" | "meet" | "room";
+  step?: "pick" | "depth" | "meet" | "circles" | "room";
   /** A quote panel. */
   quote?: string;
   /** Plain lines shown with the stage (a bridge line, a footer). */
@@ -617,6 +619,12 @@ const DEPTH_PROMPTS: BoardPrompt[] = HUMAN_NEEDS.flatMap((n): BoardPrompt[] => [
 ]);
 
 /** The per-need question on "Who meets each need". */
+/** The per-need question on "Circles and players": which circles meet this human need. */
+const CIRCLE_PROMPTS: BoardPrompt[] = HUMAN_NEEDS.map((n): BoardPrompt => ({
+  key: `c-${n.id}`, need: n.id, title: `Which circles meet ${n.label}?`, mode: "pick", scope: "project",
+  options: [...opts(CIRCLES), { key: OWN_CIRCLE.key, label: OWN_CIRCLE.label }], max: CIRCLES.length + 1,
+}));
+
 const MEET_PROMPTS: BoardPrompt[] = HUMAN_NEEDS.map((n): BoardPrompt => ({
   key: `m-${n.id}`, need: n.id, title: NEEDS_COPY.whoMeets, mode: "pick", scope: "project",
   options: MEET_WAYS.map((w) => ({ key: w.key, label: w.label, small: w.small, ...("tip" in w ? { tip: w.tip } : {}) })),
@@ -872,18 +880,27 @@ const WEEK_3: BoardStage[] = [
     ],
   },
   {
-    kind: "prompt", name: "Circles and players", short: "Circles", min: 8, line: "Your first circles, and the players to start",
-    lede: "An economy is people coming together to meet each other's human needs. A whole economy takes enough roles, and enough players to fill them.",
+    kind: "needs", step: "circles", name: "Circles and players", short: "Circles", min: 8, line: "The circles that meet your human needs, and the players to start",
+    lede: "An economy is people coming together to meet each other's human needs. Take the human needs you named and find the circles that meet each one. A whole economy takes enough roles, and enough players to fill them.",
     slides: [{ n: 26 }, { n: 28 }, { n: 29 }, { n: 32 }],
     prompts: [
-      { key: "circles", title: "Which circles would your project start with? Tap up to four.", mode: "pick", scope: "project", options: opts(CIRCLES), max: 4 },
+      ...CIRCLE_PROMPTS,
+      {
+        key: "circles-own",
+        title: "Name your own circles",
+        hint: "Each circle and what it holds, in a few words. Up to five.",
+        placeholder: "Kitchen: feeding everyone",
+        mode: "note", scope: "project", max: 5,
+      },
+      { key: "circles", title: "Which circles would your project start with? Tap every one that fits.", mode: "pick", scope: "project", options: opts(CIRCLES), max: CIRCLES.length },
       { key: "players", title: "We need at least ___ players to start our Game.", mode: "pick", scope: "project", options: opts(PLAYER_COUNTS), max: 1 },
       { key: "players-now", title: "How many are playing now?", mode: "pick", scope: "project", options: opts(PLAYER_COUNTS), max: 1 },
+      { key: "shape", title: "What's the overall shape of your Game?", mode: "pick", scope: "project", options: opts(GAME_SHAPES), max: 1 },
       {
-        key: "calls",
-        title: "Which circle calls you, and why?",
-        hint: "Your Regenerative Ikigai: what you love creating, what you're good at, what the Renaissance calls for, what earns tokens.",
-        link: { label: "Your own R-Ikigai: the Co-Creator's Guide", href: "/co-creators-guide" },
+        key: "shape-line",
+        title: "Sketch your Game's structure in one line",
+        hint: "Who's at the centre, which circles, and how they connect.",
+        placeholder: "Twelve families, five circles, linked with two farms in our watershed",
         mode: "note", scope: "project", max: 1,
       },
     ],
@@ -891,6 +908,7 @@ const WEEK_3: BoardStage[] = [
       "Slide 26: when each economy works, and \"an economy is people coming together to help meet each other's needs.\"",
       "Slide 28: \"We need at least ___ players to start the Infinite Game.\" Slide 29: your own R-Ikigai; say \"what earns tokens\".",
       "Slide 32: cells that overlap can share and remix.",
+      "On the board each project sees its own human needs and picks the circles that meet each one, then names its own circles and the shape of its Game.",
     ],
   },
   {

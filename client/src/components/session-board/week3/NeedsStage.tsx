@@ -83,6 +83,26 @@ export function NeedsStage(props: StageProps) {
         <AcrossRoom summary={summary} view={view} name={pid != null ? cardName(board, pid, "") : ""} />
       </>
     );
+  } else if (stage.step === "circles") {
+    // The project's own human needs, seeds first, each asking which circles meet it (Rye, 2026-10-14).
+    const seeds = seedsFor(board, props, view);
+    const picked = [...seeds, ...view.needs.map((n) => n.id).filter((id) => !seeds.includes(id))];
+    body = (
+      <>
+        {picked.length ? (
+          <ul className="sb-seed-cards">
+            {picked.map((id) => (
+              <li key={id}>
+                <SeedCard id={id} step="circles" props={props} byKey={byKey} view={view} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <NoSeeds props={props} />
+        )}
+        <div className="sb-prompts">{["circles-own", "circles", "players", "players-now", "shape", "shape-line"].map(block)}</div>
+      </>
+    );
   } else if (stage.step === "depth" || stage.step === "meet") {
     const seeds = seedsFor(board, props, view);
     const extra = stage.step === "depth" ? ["whole", "pulse-a"] : ["want", "pulse-b"];
@@ -252,7 +272,7 @@ function NoSeeds({ props }: { props: StageProps }) {
 
 function SeedCard({ id, step, props, byKey, view }: {
   id: HumanNeedId;
-  step: "depth" | "meet";
+  step: "depth" | "meet" | "circles";
   props: StageProps;
   byKey: Map<string, ShownPrompt>;
   view: ProjectView;
@@ -284,6 +304,8 @@ function SeedCard({ id, step, props, byKey, view }: {
           })}
           {row(`b-${id}`, () => <Differ answer={per?.breadth} label={(v) => `${v}%`} />)}
         </>
+      ) : step === "circles" ? (
+        row(`c-${id}`)
       ) : (
         row(`m-${id}`, () => <Differ answer={per?.meet} label={wayLabel} />)
       )}
