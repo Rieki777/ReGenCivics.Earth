@@ -128,6 +128,12 @@ export const STAGE_RENDERERS: Record<StageKind, string> = {
  */
 export type SlideRef = { n: number; also?: boolean; deeper?: boolean };
 
+/** A video from a stage's slides: a direct link (YouTube or the deck slide it plays on). */
+export type StageVideo = { label: string; href: string };
+
+/** A picture on a stage, served by the site. */
+export type StagePicture = { src: string; alt: string; caption: string };
+
 /** One choice on a pick prompt. `key` is what's stored; `small` is small print; `tip` opens on a tap. */
 export type PromptOption = { key: string; label: string; small?: string; tip?: string };
 
@@ -186,6 +192,10 @@ export type BoardStage = {
   lede?: string;
   /** Slides on screen, by the week's deck numbers. */
   slides?: readonly SlideRef[];
+  /** Videos from this stage's slides, as direct links, so nobody waits on the deck to load one. */
+  videos?: readonly StageVideo[];
+  /** Pictures shown on the stage itself (served from client/public). */
+  pictures?: readonly StagePicture[];
   /** The questions this stage asks, in order. */
   prompts?: readonly (BoardPrompt | PromptRef)[];
   /** needs stages only: which part of the human needs walk. */
@@ -461,8 +471,14 @@ export function slideHref(week: number, n: number): string | null {
 }
 
 /** A stage's slides with their links: the ones on screen, then "if there's time", then "go deeper". */
-export function stageSlides(week: number, stage: BoardStage): { n: number; href: string | null; also: boolean; deeper: boolean }[] {
-  return (stage.slides ?? []).map((s) => ({ n: s.n, href: slideHref(week, s.n), also: !!s.also, deeper: !!s.deeper }));
+/** The picture of one slide, served by the site, or null when the week has none. */
+export function slideImage(week: number, n: number): string | null {
+  if (week !== 3 || !(n in WEEK3_DECK.pages)) return null;
+  return `/season2/week3/slides/${String(n).padStart(2, "0")}.jpg`;
+}
+
+export function stageSlides(week: number, stage: BoardStage): { n: number; href: string | null; img: string | null; also: boolean; deeper: boolean }[] {
+  return (stage.slides ?? []).map((s) => ({ n: s.n, href: slideHref(week, s.n), img: slideImage(week, s.n), also: !!s.also, deeper: !!s.deeper }));
 }
 
 /** Fill "{name}" style holes in a copy line. */
@@ -516,6 +532,9 @@ export const PROMPT_COPY = {
   slide: "slide {n}",
   also: "If there's time:",
   deeper: "Go deeper:",
+  videos: "Videos:",
+  slideAlt: "Slide {n}",
+  openSlide: "Open slide {n} in the deck",
   askFoot: "Questions any time: type yours here and I'll pick them up.",
   askPlaceholder: "Type a question and press Enter",
   fromRoom: "From the room",
@@ -607,6 +626,18 @@ const MEET_PROMPTS: BoardPrompt[] = HUMAN_NEEDS.map((n): BoardPrompt => ({
  * from Nate Hagens. The link is the plain post address; Rye's share link
  * carried personal tracking parameters (rcm, utm), which never go on the board.
  */
+/**
+ * Where all of this is going (Rye, 2026-10-14): one aim of the season's economic
+ * and social design is that each project can network with others and that
+ * supporters and funders can understand it and back it, along a path we build
+ * together. Words only; the cooperative stays as shared/fund.ts describes it.
+ */
+export const WHERE_GOING = {
+  bridge: "Where this is all going: a bridge from the world we have to the one our projects are growing. Every week of this season builds a piece of it.",
+  pieces: "The pieces we're putting in place together: the ReGen Game framework, your organisation, legal structures, the cooperative in design, crowdpooling and the accelerator.",
+  together: "One aim of all this design: your project's economy becomes clear enough to network with other projects, and for supporters and funders to understand it and back it. We're building that path together, one piece each week.",
+} as const;
+
 export const WHY_NOW = {
   title: "Why this matters now",
   lede: "Before we dive in, a minute and a half from Nate Hagens: what happens when a civilization built for growth, with no account of resilience, brings in a technology like AI?",
@@ -631,6 +662,7 @@ const WEEK_3: BoardStage[] = [
   {
     kind: "welcome", name: "Welcome", short: "Welcome", min: 3, line: "Part 1 of 2: the big picture first",
     slides: [{ n: 1 }],
+    pictures: [{ src: "/season2/week3/bridging-worlds.jpg", alt: "Bridging Worlds: a stone bridge across a chasm, from a smoky city and suburbs to a green village of food forests and waterfalls", caption: WHERE_GOING.bridge }],
     cues: [
       "Greet people by name. \"Open the board on your own screen and tap your project while we gather.\" Point to the QR.",
       "Say it plainly: this is Part 1 of 2. Today is the big picture, the human needs each project is here to meet. Next week we design your Game in Village OS from today's answers.",
@@ -693,6 +725,7 @@ const WEEK_3: BoardStage[] = [
     kind: "prompt", name: "What it's all for", short: "All for", min: 9, line: "How we measure a project, and your first line",
     lede: "Gabor Maté measures a society by how well it meets human needs and helps people grow. We can measure our projects the same way.",
     slides: [{ n: 4 }, { n: 5 }],
+    videos: [{ label: "Gabor Maté: The Myth of Normal and the Power of Connection", href: "https://www.youtube.com/watch?v=X0cODqqYyi8" }],
     prompts: [
       {
         key: "mate",
@@ -766,6 +799,12 @@ const WEEK_3: BoardStage[] = [
     kind: "prompt", name: "Living ways", short: "Living ways", min: 10, line: "Your chestnut, and the beings that could help",
     lede: "Every human need can be met by machines or by living allies. Living allies repair themselves, grow and adapt. Most projects use some of each.",
     slides: [{ n: 9 }, { n: 11 }, { n: 14 }, { n: 15 }, { n: 16 }, { n: 10, also: true }, { n: 12, also: true }],
+    videos: [
+      { label: "Geese weeding an orchard, and the other ally clips (they play on slide 15)", href: slideHref(3, 15) ?? "" },
+      { label: "Crows trained to pick up trash", href: "https://www.youtube.com/watch?v=zk644QrklNE" },
+      { label: "Dolphins help fishermen catch fish", href: "https://www.youtube.com/watch?v=lRwWfYLKFw0" },
+      { label: "Janine Benyus: design inspired by nature", href: "https://www.youtube.com/watch?v=GD0qPaHEvYM" },
+    ],
     prompts: [
       {
         key: "living",
@@ -786,6 +825,10 @@ const WEEK_3: BoardStage[] = [
     kind: "needs", step: "meet", name: "Who meets each need", short: "Who meets", min: 12, line: "Who meets each seed on your land",
     lede: "A human need can be met by each household on its own ground, by circles of people in roles, by a market, or by one holder for everyone. Play is a fifth way. Each project mixes its own.",
     slides: [{ n: 17 }, { n: 18 }, { n: 19 }, { n: 21 }, { n: 26 }, { n: 22, also: true }, { n: 20, deeper: true }],
+    videos: [
+      { label: "A couple turns their land into a permaculture food forest", href: "https://www.youtube.com/watch?v=6GJFL0MD9fc" },
+      { label: "The same food forest at 28 years old", href: "https://www.youtube.com/watch?v=mdi_9o92XcU" },
+    ],
     prompts: [
       ...MEET_PROMPTS,
       {
@@ -880,6 +923,10 @@ const WEEK_3: BoardStage[] = [
     kind: "prompt", name: "Your questions, and next week", short: "Questions", min: 9, line: "Questions answered, and one move before Week 4",
     lede: "Let's take your questions. Then each project names one move before Week 4, when we build all of this in Village OS.",
     slides: [{ n: 35 }],
+    pictures: [
+      { src: "/season2/week3/clarity-resources.jpg", alt: "Clarity and Resources: a tree of light with branches for the ReGen Game framework, legal, organisation, the fund, the crowdpooling platform and the accelerator", caption: WHERE_GOING.pieces },
+      { src: "/season2/week3/bridging-worlds.jpg", alt: "Bridging Worlds: a stone bridge across a chasm, from a smoky city to a green village", caption: WHERE_GOING.together },
+    ],
     notes: ["Legal structures come in Weeks 10 and 11. Pooling what everyone brings comes in Week 13."],
     prompts: [
       { ref: "ask" },
@@ -896,6 +943,7 @@ const WEEK_3: BoardStage[] = [
       "Share the wall. Answer the top questions and tap \"Answered\" on each.",
       "Slide 35: today was step 2 of the box, patterns of co-creation. Next week is step 4: membranes, circles, roles and quests, in Village OS.",
       "Legal is Weeks 10 and 11. Crowd pooling is Week 13, in one line.",
+      "Close on the big picture: the Clarity + Resources picture, then Bridging Worlds. One aim of all this design is that each project can network with others and that supporters and funders can understand it and back it. We build that path together, one piece each week. The cooperative is in design: not yet a legal entity, and it accepts no money.",
       "Each project names one move. Read the \"set up next week\" picks: that's Week 4's agenda.",
     ],
   },

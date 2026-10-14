@@ -20,15 +20,68 @@ export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 
  * page id is still a placeholder (the clean deck's new slides 1 and 2, until
  * their ids land in WEEK3_DECK) shows its number with no link.
  */
+/**
+ * The stage's slides as pictures on the page (Rye, 2026-10-14: built right
+ * in, so nobody waits on the deck), each opening that slide in the deck; then
+ * the slides' videos as direct links; then any pictures the stage carries.
+ * Pictures load lazily, so a phone fetches only the stage it is on.
+ */
+function SlideMedia({ week, stage }: { week: number; stage: BoardStage }) {
+  const shown = stageSlides(week, stage).filter((s) => !s.deeper && s.img);
+  const videos = (stage.videos ?? []).filter((v) => v.href);
+  const pictures = stage.pictures ?? [];
+  if (!shown.length && !videos.length && !pictures.length) return null;
+  return (
+    <div className="sb-media">
+      {shown.length ? (
+        <ul className="sb-slide-strip" aria-label={PROMPT_COPY.onScreen.replace(":", "")}>
+          {shown.map((s) => {
+            const alt = fillCopy(PROMPT_COPY.slideAlt, { n: s.n });
+            const img = <img src={s.img!} alt={alt} loading="lazy" decoding="async" width={960} height={540} />;
+            return (
+              <li key={s.n} className={s.also ? "sb-slide-thumb sb-slide-also" : "sb-slide-thumb"}>
+                {s.href ? (
+                  <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={fillCopy(PROMPT_COPY.openSlide, { n: s.n })}>{img}</a>
+                ) : img}
+                <span className="sb-slide-num" aria-hidden="true">{s.n}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {videos.length ? (
+        <div className="sb-videos">
+          <span className="sb-slides-label">{PROMPT_COPY.videos}</span>
+          <ul>
+            {videos.map((v) => (
+              <li key={v.href + v.label}>
+                <a className="sb-link sb-video-link" href={v.href} target="_blank" rel="noopener noreferrer">{v.label}{NEW_TAB}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {pictures.map((p) => (
+        <figure key={p.src + p.caption} className="sb-picture">
+          <img src={p.src} alt={p.alt} loading="lazy" decoding="async" width={960} height={540} />
+          <figcaption>{p.caption}</figcaption>
+        </figure>
+      ))}
+    </div>
+  );
+}
+
 export function SlideLine({ week, stage }: { week: number; stage: BoardStage }) {
   const slides = stageSlides(week, stage);
-  if (!slides.length) return null;
+  if (!slides.length) return <SlideMedia week={week} stage={stage} />;
   const groups = [
     { key: "on", label: PROMPT_COPY.onScreen, list: slides.filter((s) => !s.also && !s.deeper) },
     { key: "also", label: PROMPT_COPY.also, list: slides.filter((s) => s.also && !s.deeper) },
     { key: "deeper", label: PROMPT_COPY.deeper, list: slides.filter((s) => s.deeper) },
   ].filter((g) => g.list.length > 0);
   return (
+    <>
+    <SlideMedia week={week} stage={stage} />
     <p className="sb-slides">
       {groups.map((g) => (
         <span key={g.key} className="sb-slides-group">
@@ -49,6 +102,7 @@ export function SlideLine({ week, stage }: { week: number; stage: BoardStage }) 
         </span>
       ))}
     </p>
+    </>
   );
 }
 

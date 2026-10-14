@@ -129,13 +129,17 @@ describe("slide links", () => {
   });
 
   it("links the new slides of the clean copy too", () => {
-    render(<SlideLine week={3} stage={boardStages(3)[0]} />);
-    expect(screen.getByRole("link")).toHaveAttribute("href", `https://docs.google.com/presentation/d/${WEEK3_DECK.fileId}/edit#slide=id.${WEEK3_DECK.pages[1]}`);
+    const { container } = render(<SlideLine week={3} stage={boardStages(3)[0]} />);
+    const href = `https://docs.google.com/presentation/d/${WEEK3_DECK.fileId}/edit#slide=id.${WEEK3_DECK.pages[1]}`;
+    expect(container.querySelector(".sb-slide-link")).toHaveAttribute("href", href);
+    // The slide is on the page as a picture too, opening the same slide.
+    expect(screen.getByRole("link", { name: "Open slide 1 in the deck" })).toHaveAttribute("href", href);
+    expect(screen.getByAltText("Slide 1")).toHaveAttribute("src", "/season2/week3/slides/01.jpg");
   });
 
   it("opens each real slide of the deck in a new tab", () => {
-    render(<SlideLine week={3} stage={boardStages(3)[7]} />);
-    const links = screen.getAllByRole("link");
+    const { container } = render(<SlideLine week={3} stage={boardStages(3)[7]} />);
+    const links = Array.from(container.querySelectorAll<HTMLAnchorElement>("a.sb-slide-link"));
     expect(links.map((l) => l.textContent?.replace(" (opens in a new tab)", ""))).toEqual(["slide 7", "slide 8", "slide 13"]);
     for (const l of links) {
       expect(l).toHaveAttribute("target", "_blank");

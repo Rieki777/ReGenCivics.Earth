@@ -515,6 +515,29 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-slides-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0 4px; }
 .sb-slides-label { margin-right: 4px; }
 .sb-slides-dot { color: var(--sb-line-strong); }
+
+/* Week 3: the stage's slides as pictures on the page, its videos as links, and
+   its pictures (Rye, 2026-10-14). A phone scrolls the slides sideways inside the
+   strip, never the page; a wide screen lays them out in a row that wraps. */
+.sb-media { display: grid; gap: 14px; margin-block: 6px 4px; min-width: 0; }
+.sb-slide-strip { list-style: none; margin: 0; padding: 2px 2px 8px; display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 300px); gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.sb-slide-thumb { position: relative; scroll-snap-align: start; min-width: 0; }
+.sb-slide-thumb a { display: block; border-radius: 10px; }
+.sb-slide-thumb img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid var(--sb-line-strong); background: var(--sb-panel); }
+.sb-slide-thumb a:focus-visible { outline: 3px solid var(--sb-spring); outline-offset: 3px; }
+.sb-slide-thumb a:hover img { border-color: var(--sb-spring); }
+.sb-slide-also img { opacity: 0.72; }
+.sb-slide-num { position: absolute; top: 8px; left: 8px; min-width: 28px; padding: 2px 8px; border-radius: 999px; background: rgba(13, 40, 24, 0.88); color: var(--sb-ink); font-size: 13px; font-weight: 800; text-align: center; pointer-events: none; }
+@media (min-width: 900px) {
+  .sb-slide-strip { grid-auto-flow: row; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); grid-auto-columns: auto; overflow-x: visible; scroll-snap-type: none; }
+}
+.sb-videos { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; font-size: 15px; font-weight: 700; color: var(--sb-muted); }
+.sb-videos ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.sb-videos li { min-width: 0; }
+.sb-video-link { display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
+.sb-picture { margin: 0; display: grid; gap: 8px; max-width: 760px; }
+.sb-picture img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--sb-line-strong); }
+.sb-picture figcaption { color: var(--sb-ink-2); font-size: 16px; line-height: 1.5; }
 .sb-slide-link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
 .sb-slide-plain { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; color: var(--sb-ink-2); }
 .sb-slide-link:focus-visible, .sb-prompt-link:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 2px; border-radius: 4px; }
