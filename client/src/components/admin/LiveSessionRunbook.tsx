@@ -185,7 +185,7 @@ export function LiveSessionRunbook({
                       }))
                     }
                     placeholder="Name or handle"
-                    className="mt-0.5 h-8 bg-white/10 border-white/20 text-white placeholder:text-white/40 text-sm"
+                    className="mt-0.5 h-8 bg-white/10 border-white/45 text-white placeholder:text-white/70 text-sm"
                     data-testid={`admin-live-runbook-owner-${roleId}`}
                   />
                 </div>
@@ -202,7 +202,7 @@ export function LiveSessionRunbook({
                       }))
                     }
                     placeholder="roleHolders slug"
-                    className="mt-0.5 h-8 bg-white/10 border-white/20 text-white placeholder:text-white/40 text-sm font-mono"
+                    className="mt-0.5 h-8 bg-white/10 border-white/45 text-white placeholder:text-white/70 text-sm font-mono"
                     data-testid={`admin-live-runbook-slug-${roleId}`}
                   />
                 </div>
@@ -221,7 +221,7 @@ export function LiveSessionRunbook({
                   }
                   rows={2}
                   placeholder="What the next person needs to know"
-                  className="mt-0.5 bg-white/10 border-white/20 text-white placeholder:text-white/40 text-sm resize-none"
+                  className="mt-0.5 bg-white/10 border-white/45 text-white placeholder:text-white/70 text-sm resize-none"
                   data-testid={`admin-live-runbook-notes-${roleId}`}
                 />
               </div>

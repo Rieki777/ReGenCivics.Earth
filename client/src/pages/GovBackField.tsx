@@ -88,9 +88,9 @@ export default function GovBackField() {
             </Button>
           ) : (
             <div className="bg-white/5 border border-[#7dd87d]/30 rounded-2xl p-5 space-y-3">
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" maxLength={300} className="bg-white/10 border-white/15 text-white" />
-              <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="What's the idea?" rows={4} className="bg-white/10 border-white/15 text-white resize-none" />
-              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why park it for now? (optional)" maxLength={500} className="bg-white/10 border-white/15 text-white" />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" maxLength={300} className="bg-white/10 border-white/45 text-white" />
+              <Textarea value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="What's the idea?" rows={4} className="bg-white/10 border-white/45 text-white resize-none" />
+              <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why park it for now? (optional)" maxLength={500} className="bg-white/10 border-white/45 text-white" />
               <div className="flex gap-2">
                 <Button onClick={handleSubmit} disabled={!title || !summary || parkMutation.isPending} className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold">
                   {parkMutation.isPending ? "Parking..." : "Park it"}

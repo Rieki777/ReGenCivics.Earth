@@ -239,7 +239,7 @@ export default function BionomicsEdit() {
                       value={current}
                       onChange={(e) => setDraft((d) => ({ ...d, [section.id]: e.target.value }))}
                       rows={Math.max(3, Math.ceil(current.length / 90))}
-                      className="w-full bg-[#0a1a10] border border-white/15 rounded-lg px-3 py-2 text-white text-sm leading-relaxed focus:outline-none focus:border-[#7dd87d]/50 resize-y"
+                      className="w-full bg-[#0a1a10] border border-white/45 rounded-lg px-3 py-2 text-white text-sm leading-relaxed focus:outline-none focus:border-[#7dd87d]/50 resize-y"
                     />
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-[10px] text-white/60">

@@ -253,7 +253,7 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
       {showSteer && (
         <div className="flex gap-2">
           <Textarea value={steerText} onChange={(e) => setSteerText(e.target.value)} placeholder="e.g. focus on the fundraising angle"
-            className="min-h-[40px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/25" rows={1} />
+            className="min-h-[40px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/60" rows={1} />
           <Button size="sm" className="h-9 rounded-lg bg-[#1a472a]" disabled={!steerText.trim() || steer.isPending}
             onClick={async () => { await steer.mutateAsync({ ideaId: idea.id, text: steerText.trim() }); setShowSteer(false); setSteerText(""); onChanged(); }}>
             Save
@@ -273,7 +273,7 @@ function IdeaCard({ idea, onChanged }: { idea: IdeaRow; onChanged: () => void })
             ))}
           </div>
           <input value={angle} onChange={(e) => setAngle(e.target.value)} placeholder="Angle (optional): the fatherhood thread, the numbers, ..."
-            className="w-full text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={200} />
+            className="w-full text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/60 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={200} />
           <div className="flex items-center gap-2">
             <Button size="sm" className="h-9 rounded-lg bg-[#1a472a] text-[#f0ebe3] hover:bg-[#2d5a3d] hover:text-white" disabled={develop.isPending || channels.length === 0} onClick={runDevelop}>
               {develop.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Sparkles className="w-4 h-4 mr-1" />}
@@ -346,7 +346,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
       {item.angle && <p className="text-xs text-[#2d5a3d]">Angle: {item.angle}</p>}
 
       <Textarea value={body} onChange={(e) => { setBody(e.target.value); setDirty(true); }}
-        className="min-h-[140px] text-sm leading-relaxed text-[#1a472a] rounded-xl border-[#1a472a]/25 focus-visible:ring-[#4a7c59] font-normal whitespace-pre-wrap" />
+        className="min-h-[140px] text-sm leading-relaxed text-[#1a472a] rounded-xl border-[#1a472a]/60 focus-visible:ring-[#4a7c59] font-normal whitespace-pre-wrap" />
 
       <div className="flex flex-wrap items-center gap-1.5">
         {!kindOpen ? (
@@ -381,7 +381,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
       {showNudge && (
         <div className="flex gap-2 items-center">
           <input value={nudge} onChange={(e) => setNudge(e.target.value)} placeholder="Nudge: shorter, more personal, lead with the question..."
-            className="flex-1 text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/25 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={300} />
+            className="flex-1 text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border border-[#1a472a]/60 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#4a7c59]" maxLength={300} />
           <Button size="sm" className="h-9 rounded-lg bg-[#1a472a]" disabled={regenerate.isPending}
             onClick={async () => { await regenerate.mutateAsync({ itemId: item.id, ...(nudge.trim() ? { nudge: nudge.trim() } : {}) }); setShowNudge(false); setNudge(""); onChanged(); }}>
             {regenerate.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Go"}
@@ -393,7 +393,7 @@ function DraftCard({ item, ideaTitleById, onChanged }: { item: DraftRow & { idea
         <div className="space-y-2 border-t border-[#1a472a]/10 pt-2">
           <Textarea value={postedText} onChange={(e) => setPostedText(e.target.value)}
             placeholder="Optional: paste the final text as it was posted (the cleanest voice signal of all)"
-            className="min-h-[60px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/25" />
+            className="min-h-[60px] text-sm text-[#1a472a] placeholder:text-[#4a7c59] rounded-lg border-[#1a472a]/60" />
           <Button size="sm" className="h-8 rounded-lg bg-[#4a7c59] hover:bg-[#1a472a]" disabled={markPosted.isPending}
             onClick={async () => { await markPosted.mutateAsync({ itemId: item.id, ...(postedText.trim() ? { postedText: postedText.trim() } : {}) }); setPostedOpen(false); onChanged(); }}>
             Confirm posted

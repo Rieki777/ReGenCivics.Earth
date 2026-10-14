@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { LIGHT_CARD_FIELD } from "@/lib/fieldStyles";
 import { Link, useSearch } from 'wouter';
 import { projectPathForApplication, projectPathForCampaignFocus } from '@shared/projectKey';
 import { TaoSpinner } from '@/components/TaoSpinner';
@@ -243,32 +244,32 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
         <div className="space-y-5">
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-2 block">Your Name *</label>
-            <Input value={displayName} onChange={e => { setDisplayName(e.target.value); persist('displayName', e.target.value); }} placeholder="Your player name" className="border-[#1a472a]/20" />
+            <Input value={displayName} onChange={e => { setDisplayName(e.target.value); persist('displayName', e.target.value); }} placeholder="Your player name" className={`${LIGHT_CARD_FIELD}`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your role in this renaissance?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">e.g. Land steward, gardener, builder, artist…</p>
-            <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, gardener, builder, artist…" className="border-[#1a472a]/20 min-h-[70px]" />
+            <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, gardener, builder, artist…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your soul's mission?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">The deeper calling that brought you here…</p>
-            <Textarea value={soul} onChange={e => { setSoul(e.target.value); persist('soul', e.target.value); }} placeholder="The deeper calling that brought you here…" className="border-[#1a472a]/20 min-h-[70px]" />
+            <Textarea value={soul} onChange={e => { setSoul(e.target.value); persist('soul', e.target.value); }} placeholder="The deeper calling that brought you here…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you looking to get from this ecosystem?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">What would make this worth your time and energy?</p>
-            <Textarea value={desires} onChange={e => { setDesires(e.target.value); persist('desires', e.target.value); }} placeholder="What would make this worth your time and energy?" className="border-[#1a472a]/20 min-h-[70px]" />
+            <Textarea value={desires} onChange={e => { setDesires(e.target.value); persist('desires', e.target.value); }} placeholder="What would make this worth your time and energy?" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">Skills, resources, wisdom, connections…</p>
-            <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className="border-[#1a472a]/20 min-h-[70px]" />
+            <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
             <p className="text-xs text-[#1a472a]/80 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
-            <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals..." className="border-[#1a472a]/20 min-h-[60px]" />
+            <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals..." className={`${LIGHT_CARD_FIELD} min-h-[60px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
@@ -324,7 +325,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                   </PopoverContent>
                 </Popover>
               </div>
-              <Input value={baseAccountName} onChange={e => { setBaseAccountName(e.target.value); persist('baseAccountName', e.target.value); }} placeholder="e.g., 0xaAaF…354e" className="border-[#1a472a]/20 font-mono" />
+              <Input value={baseAccountName} onChange={e => { setBaseAccountName(e.target.value); persist('baseAccountName', e.target.value); }} placeholder="e.g., 0xaAaF…354e" className={`${LIGHT_CARD_FIELD} font-mono`} />
             </div>
             <a href="https://app.hypha.earth/en/network" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#7dd87d] hover:underline">
               Create a Hypha account <ExternalLink className="w-3 h-3" />
@@ -809,7 +810,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           onChange={(e) => setDreaming(e.target.value)}
           placeholder="A food forest in the highlands, a new form of school, a way of living that heals..."
           rows={2}
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+          className="w-full bg-white/5 border border-white/45 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
         />
       </div>
 
@@ -820,7 +821,7 @@ function CollaborationSettingsPanel({ profile, onUpdate }: { profile: any; onUpd
           onChange={(e) => setWorkingOn(e.target.value)}
           placeholder="Building a seed library, writing a grant, planting trees..."
           maxLength={200}
-          className="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 focus:outline-none focus:border-[#7dd87d]/40"
+          className="w-full bg-white/5 border border-white/45 rounded-xl px-3 py-2 text-sm text-white placeholder-white/70 focus:outline-none focus:border-[#7dd87d]/40"
         />
         <p className="text-white/70 text-[10px]">Shows on your profile card. 200 chars max.</p>
       </div>
@@ -943,7 +944,7 @@ function GiftsNeedsPanel() {
             <select
               value={giftType}
               onChange={e => setGiftType(e.target.value as GiftNeedType)}
-              className="w-full bg-white/5 border border-white/10 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+              className="w-full bg-white/5 border border-white/45 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
             >
               {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>)}
             </select>
@@ -953,7 +954,7 @@ function GiftsNeedsPanel() {
               placeholder="Describe what you can offer..."
               rows={2}
               maxLength={500}
-              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
+              className="w-full bg-white/5 border border-white/45 text-white text-sm rounded-xl px-3 py-2 placeholder-white/70 resize-none focus:outline-none focus:border-[#7dd87d]/40"
             />
             <div className="flex gap-2">
               <button
@@ -998,7 +999,7 @@ function GiftsNeedsPanel() {
             <select
               value={needType}
               onChange={e => setNeedType(e.target.value as GiftNeedType)}
-              className="w-full bg-white/5 border border-white/10 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
+              className="w-full bg-white/5 border border-white/45 text-white/80 text-xs rounded-lg px-2 py-1.5 focus:outline-none"
             >
               {GIFT_NEED_TYPES.map(t => <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>)}
             </select>
@@ -1008,7 +1009,7 @@ function GiftsNeedsPanel() {
               placeholder="Describe what you are looking for..."
               rows={2}
               maxLength={500}
-              className="w-full bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 placeholder-white/70 resize-none focus:outline-none focus:border-[#d4a574]/40"
+              className="w-full bg-white/5 border border-white/45 text-white text-sm rounded-xl px-3 py-2 placeholder-white/70 resize-none focus:outline-none focus:border-[#d4a574]/40"
             />
             <div className="flex gap-2">
               <button
@@ -1161,7 +1162,7 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
           <select
             value={claimOrgId}
             onChange={e => setClaimOrgId(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white rounded-lg px-3 py-2 text-sm"
+            className="w-full bg-white/10 border border-white/45 text-white rounded-lg px-3 py-2 text-sm"
           >
             <option value="" className="bg-[#1a472a] text-white">Select {claimType === "land_project" ? "a land project" : "an alliance org"}…</option>
             {orgOptions.map(o => <option key={o.id} value={o.id} className="bg-[#1a472a] text-white">{o.name}</option>)}
@@ -1175,44 +1176,44 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 value={landForm.yourRole}
                 onChange={e => setLandForm(f => ({ ...f, yourRole: e.target.value }))}
                 placeholder="Your role (e.g. co-founder, steward, project lead)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.landStatus}
                 onChange={e => setLandForm(f => ({ ...f, landStatus: e.target.value }))}
                 placeholder="Land status (e.g. owned, leased, in negotiation)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.communityStage}
                 onChange={e => setLandForm(f => ({ ...f, communityStage: e.target.value }))}
                 placeholder="Community stage (e.g. forming, established, 3 years running)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.annualBudget}
                 onChange={e => setLandForm(f => ({ ...f, annualBudget: e.target.value }))}
                 placeholder="Rough annual budget range (optional)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.governanceModel}
                 onChange={e => setLandForm(f => ({ ...f, governanceModel: e.target.value }))}
                 placeholder="Governance model (e.g. sociocracy, consensus, steward)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={landForm.website}
                 onChange={e => setLandForm(f => ({ ...f, website: e.target.value }))}
                 placeholder="Project website (optional)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <textarea
                 value={landForm.whyClaimNow}
                 onChange={e => setLandForm(f => ({ ...f, whyClaimNow: e.target.value }))}
                 placeholder="Why are you claiming this listing now? What would you like to do with it?"
                 rows={3}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
               />
             </div>
           )}
@@ -1225,27 +1226,27 @@ function OrgClaimSection({ userId }: { userId: number; questsCompleted?: string 
                 value={orgForm.yourRole}
                 onChange={e => setOrgForm(f => ({ ...f, yourRole: e.target.value }))}
                 placeholder="Your role (e.g. co-founder, community manager, ambassador)"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <input
                 value={orgForm.website}
                 onChange={e => setOrgForm(f => ({ ...f, website: e.target.value }))}
                 placeholder="Organisation website"
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm"
               />
               <textarea
                 value={orgForm.orgDescription}
                 onChange={e => setOrgForm(f => ({ ...f, orgDescription: e.target.value }))}
                 placeholder="Brief description of what this org does and your connection to it"
                 rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
               />
               <textarea
                 value={orgForm.collaborationInterest}
                 onChange={e => setOrgForm(f => ({ ...f, collaborationInterest: e.target.value }))}
                 placeholder="What kind of collaboration are you hoping to find here?"
                 rows={2}
-                className="w-full bg-white/10 border border-white/20 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
+                className="w-full bg-white/10 border border-white/45 text-white placeholder-white/70 rounded-lg px-3 py-2 text-sm resize-none"
               />
             </div>
           )}
@@ -1461,14 +1462,14 @@ function RssFeedManager() {
             placeholder="Feed URL (RSS, Atom, or Substack)"
             value={feedUrl}
             onChange={(e) => setFeedUrl(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
+            className="w-full bg-white/10 border border-white/45 text-white placeholder:text-white/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
           />
           <input
             type="text"
             placeholder="Label (e.g. Blog, Newsletter)"
             value={feedLabel}
             onChange={(e) => setFeedLabel(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
+            className="w-full bg-white/10 border border-white/45 text-white placeholder:text-white/60 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]"
           />
           <div className="flex gap-2">
             <button
@@ -1638,7 +1639,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
             value={websiteUrl}
             onChange={e => setWebsiteUrl(e.target.value)}
             placeholder="https://yourproject.earth"
-            className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d]"
+            className="w-full bg-white/10 border border-white/45 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d]"
           />
         </div>
         <div>
@@ -1647,7 +1648,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
             value={videoUrl}
             onChange={e => setVideoUrl(e.target.value)}
             placeholder="https://youtube.com/..."
-            className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d]"
+            className="w-full bg-white/10 border border-white/45 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d]"
           />
         </div>
         <div>
@@ -1658,7 +1659,7 @@ function StewardListingEditor({ applicationId, onSave, saving }: {
             maxLength={2000}
             rows={3}
             placeholder="Share an update about your project..."
-            className="w-full bg-white/10 border border-white/20 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d] resize-none"
+            className="w-full bg-white/10 border border-white/45 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-[#7dd87d] resize-none"
           />
         </div>
       </div>
@@ -2303,7 +2304,7 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
             placeholder="Search by project or organisation name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/60"
+            className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/60"
           />
           {searchResults && searchResults.length > 0 && !selectedOrg && (
             <div className="bg-[#0d2b1a] border border-white/10 rounded-lg divide-y divide-white/10 max-h-48 overflow-y-auto">
@@ -2474,7 +2475,7 @@ function NoteField({ completionId, initialNote }: { completionId: number; initia
       onBlur={handleBlur}
       rows={2}
       placeholder="Add a private note about this experience..."
-      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/10 rounded p-2 resize-none placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
+      className="w-full mt-2 text-sm text-white/80 bg-white/5 border border-white/45 rounded p-2 resize-none placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
     />
   );
 }

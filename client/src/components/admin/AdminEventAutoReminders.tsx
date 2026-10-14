@@ -215,7 +215,7 @@ export function AdminEventAutoReminders({
                 value={mode}
                 onValueChange={(v) => setMode(v as AutoReminderAudienceMode)}
               >
-                <SelectTrigger className="bg-white/10 border-white/25 text-white mt-0 h-8 text-xs">
+                <SelectTrigger className="bg-white/10 border-white/45 text-white mt-0 h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

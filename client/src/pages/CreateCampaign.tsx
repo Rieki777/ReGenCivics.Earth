@@ -287,7 +287,7 @@ function RowValueField({
         onChange={(e) => onChange(parseNeedValue(e.target.value))}
         aria-invalid={invalid}
         aria-describedby={invalid ? `${id}-error` : undefined}
-        className="w-40 min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
+        className="w-40 min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-base md:text-sm"
       />
       {invalid && <ZeroValueMessage id={`${id}-error`} />}
     </div>
@@ -1135,7 +1135,7 @@ export default function CreateCampaign() {
                   value={applicantSearch}
                   onChange={(e) => setApplicantSearch(e.target.value)}
                   placeholder="Search by project name, contact, or location..."
-                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                 />
               </div>
 
@@ -1451,7 +1451,7 @@ export default function CreateCampaign() {
                 value={campaignName}
                 onChange={(e) => setCampaignName(e.target.value)}
                 placeholder="e.g., Terra Nova Regenerative Farm"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -1504,7 +1504,7 @@ export default function CreateCampaign() {
                 value={campaignDescription}
                 onChange={(e) => setCampaignDescription(e.target.value)}
                 placeholder="Describe your project vision and goals..."
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[100px]"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[100px]"
               />
             </div>
             <div className="md:col-span-2">
@@ -1515,7 +1515,7 @@ export default function CreateCampaign() {
                 value={daoLink}
                 onChange={(e) => setDaoLink(e.target.value)}
                 placeholder="https://app.hypha.earth/en/dho/your-project/agreements/create/propose-contribution"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
               <p className="text-xs text-[#1a472a]/80 mt-1">
                 This is where contributors will submit their proposals. Required for listing your project.
@@ -1537,13 +1537,13 @@ export default function CreateCampaign() {
                         value={projectLocation}
                         onChange={(e) => setProjectLocation(e.target.value)}
                         placeholder="e.g., Costa Rica, Guanacaste Province"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-[#1a472a] mb-1">Land Status</label>
                       <Select value={landStatus} onValueChange={setLandStatus}>
-                        <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30">
+                        <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60">
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1561,7 +1561,7 @@ export default function CreateCampaign() {
                         value={projectSizeHectares || ''}
                         onChange={(e) => setProjectSizeHectares(parseFloat(e.target.value) || null)}
                         placeholder="e.g., 150"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                       />
                     </div>
                     <div>
@@ -1571,7 +1571,7 @@ export default function CreateCampaign() {
                         value={teamSize || ''}
                         onChange={(e) => setTeamSize(parseInt(e.target.value) || null)}
                         placeholder="e.g., 12"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                       />
                     </div>
                   </div>
@@ -1581,7 +1581,7 @@ export default function CreateCampaign() {
                       value={projectVision}
                       onChange={(e) => setProjectVision(e.target.value)}
                       placeholder="Describe your project's long-term vision..."
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1590,7 +1590,7 @@ export default function CreateCampaign() {
                       value={teamDescription}
                       onChange={(e) => setTeamDescription(e.target.value)}
                       placeholder="Describe your team's background and expertise..."
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1599,7 +1599,7 @@ export default function CreateCampaign() {
                       value={regenerativePractices}
                       onChange={(e) => setRegenerativePractices(e.target.value)}
                       placeholder="What regenerative practices will you implement?"
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1608,7 +1608,7 @@ export default function CreateCampaign() {
                       value={governanceApproach}
                       onChange={(e) => setGovernanceApproach(e.target.value)}
                       placeholder="How will decisions be made in your community?"
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                     />
                   </div>
                   <div>
@@ -1617,7 +1617,7 @@ export default function CreateCampaign() {
                       value={communityEngagement}
                       onChange={(e) => setCommunityEngagement(e.target.value)}
                       placeholder="How do you engage with the broader community?"
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 min-h-[80px]"
+                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                     />
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
@@ -1627,7 +1627,7 @@ export default function CreateCampaign() {
                         value={websiteUrl}
                         onChange={(e) => setWebsiteUrl(e.target.value)}
                         placeholder="https://yourproject.com"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                       />
                     </div>
                     <div>
@@ -1636,7 +1636,7 @@ export default function CreateCampaign() {
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
                         placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                       />
                       <p className="text-xs text-[#1a472a]/75 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
                     </div>
@@ -2016,7 +2016,7 @@ function LandSection({
                   value={formData.hectares || ''}
                   onChange={(e) => setFormData({ ...formData, hectares: parseFloat(e.target.value) || 0 })}
                   placeholder="e.g., 50"
-                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 w-32"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 w-32"
                 />
                 <span className="text-sm text-[#1a472a]/80">
                   = {((formData.hectares || 0) * 2.471).toFixed(1)} acres
@@ -2082,7 +2082,7 @@ function LandSection({
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe your ideal land in detail..."
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             
@@ -2097,7 +2097,7 @@ function LandSection({
                   value={formData.videoUrl || ''}
                   onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                   placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                 />
               </div>
               <p className="text-xs text-[#1a472a]/75 mt-1 ml-6">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
@@ -2162,7 +2162,7 @@ function LandSection({
                   placeholder={`Leave empty to use ${formatCurrency(estimatedValue, currencySymbol)}`}
                   aria-invalid={valueError}
                   aria-describedby={valueError ? 'land-custom-value-error' : undefined}
-                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                 />
                 {valueError && <ZeroValueMessage id="land-custom-value-error" />}
               </div>
@@ -2365,7 +2365,7 @@ function EquipmentSection({
                       onChange={(e) => updateValue(item.id, parseNeedValue(e.target.value))}
                       aria-invalid={!isListableValue(equipmentValueOf(item))}
                       aria-describedby={!isListableValue(equipmentValueOf(item)) ? `${needValueId(item.id)}-error` : undefined}
-                      className="w-20 h-8 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-right"
+                      className="w-20 h-8 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-right"
                     />
                   </div>
                 </div>
@@ -2446,7 +2446,7 @@ function EquipmentSection({
                 value={formData.category || ''}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 placeholder="e.g., Agriculture"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -2455,7 +2455,7 @@ function EquipmentSection({
                 value={formData.name || ''}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Custom Tractor"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -2468,7 +2468,7 @@ function EquipmentSection({
                 placeholder="Enter value"
                 aria-invalid={valueError}
                 aria-describedby={valueError ? 'equipment-new-value-error' : undefined}
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
               {valueError && <ZeroValueMessage id="equipment-new-value-error" />}
               <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
@@ -2480,7 +2480,7 @@ function EquipmentSection({
                 value={formData.quantity || 1}
                 onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                 min={1}
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div className="md:col-span-2">
@@ -2682,7 +2682,7 @@ function RolesSection({
                       aria-label="Hours a week this role needs"
                       value={role.hoursPerWeek}
                       onChange={(e) => updateRole(role.id, 'hoursPerWeek', wholeRoleHours(e.target.value))}
-                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center"
+                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-center"
                     />
                     <span className="text-[#1a472a]/80" title={fullTimeLabel(role.hoursPerWeek)}>h/wk</span>
                   </div>
@@ -2692,7 +2692,7 @@ function RolesSection({
                       type="number"
                       value={role.weeksNeeded}
                       onChange={(e) => updateRole(role.id, 'weeksNeeded', parseFloat(e.target.value) || 0)}
-                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center"
+                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-center"
                     />
                     <span className="text-[#1a472a]/80">wks</span>
                   </div>
@@ -2703,7 +2703,7 @@ function RolesSection({
                       type="number"
                       value={role.hourlyRate}
                       onChange={(e) => updateRole(role.id, 'hourlyRate', parseFloat(e.target.value) || 0)}
-                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center"
+                      className="w-16 h-7 text-sm bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-center"
                     />
                     <span className="text-[#1a472a]/80">/h</span>
                   </div>
@@ -2799,7 +2799,7 @@ function RolesSection({
                 value={formData.title || ''}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Sustainability Coordinator"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -2808,7 +2808,7 @@ function RolesSection({
                 value={formData.category || ''}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 placeholder="e.g., Operations"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -2826,7 +2826,7 @@ function RolesSection({
                   const raw = e.target.value;
                   setFormData({ ...formData, hoursPerWeek: raw === '' ? 0 : wholeRoleHours(raw) });
                 }}
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
               <p className="text-xs text-[#1a472a]/80 mt-1">
                 40 hours a week is about one full-time person. 120 is about three. Several people can share a role.
@@ -2838,7 +2838,7 @@ function RolesSection({
                 type="number"
                 value={formData.weeksNeeded || ''}
                 onChange={(e) => setFormData({ ...formData, weeksNeeded: parseInt(e.target.value) || 0 })}
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -2847,7 +2847,7 @@ function RolesSection({
                 type="number"
                 value={formData.hourlyRate || ''}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0 })}
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -2903,7 +2903,7 @@ function RolesSection({
                   placeholder={`Leave empty to use ${formatCurrency(calculatedValue, currencySymbol)}`}
                   aria-invalid={valueError}
                   aria-describedby={valueError ? 'role-new-custom-value-error' : undefined}
-                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                 />
                 {valueError && <ZeroValueMessage id="role-new-custom-value-error" />}
                 <p className="text-xs text-[#1a472a]/80 mt-1">You can edit this value if you have better figures</p>
@@ -2916,7 +2916,7 @@ function RolesSection({
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Describe the role responsibilities..."
-              className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+              className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
             />
           </div>
           <div className="mt-4">
@@ -3186,7 +3186,7 @@ function OtherNeedsSection({
                 value={formData.title || ''}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="e.g., Building Permits"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -3195,7 +3195,7 @@ function OtherNeedsSection({
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Describe what this covers..."
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
             </div>
             <div>
@@ -3208,7 +3208,7 @@ function OtherNeedsSection({
                 placeholder="0"
                 aria-invalid={valueError}
                 aria-describedby={valueError ? 'need-new-value-error' : undefined}
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30"
+                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
               />
               {valueError && <ZeroValueMessage id="need-new-value-error" />}
             </div>
@@ -3316,7 +3316,7 @@ export function ThingTermsFields({
           type="date"
           value={terms.neededFrom ?? ''}
           onChange={(e) => onChange({ neededFrom: e.target.value || undefined })}
-          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
+          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-base md:text-sm"
         />
       </div>
       <div>
@@ -3329,7 +3329,7 @@ export function ThingTermsFields({
           onChange={(e) => onChange({ neededUntil: e.target.value || undefined })}
           aria-invalid={endsEarly}
           aria-describedby={endsEarly ? `${idBase}-until-error` : undefined}
-          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
+          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-base md:text-sm"
         />
       </div>
       {endsEarly && (
@@ -3399,7 +3399,7 @@ function RoleTermsFields({
           value={role.startsOn ?? ''}
           onChange={(e) => onChange({ startsOn: e.target.value || undefined })}
           aria-describedby={`${idBase}-start-help`}
-          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm sm:max-w-xs"
+          className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-base md:text-sm sm:max-w-xs"
         />
         <p id={`${idBase}-start-help`} className="text-xs text-[#1a472a]/80 mt-1">{NEED_FORM.startsOnHelper}</p>
       </div>
@@ -3589,7 +3589,7 @@ export function FinancialTargetSection({
                   value={financialTarget || ''}
                   onChange={(e) => setFinancialTarget(Math.max(0, parseFloat(e.target.value) || 0))}
                   aria-describedby="money-share-note"
-                  className="w-full bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-xl font-bold pl-12 h-14"
+                  className="w-full bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-xl font-bold pl-12 h-14"
                 />
               </div>
               <p
@@ -3669,7 +3669,7 @@ export function FinancialTargetSection({
                 placeholder={placeholder}
                 aria-invalid={!!routeErrors[partner]}
                 aria-describedby={`routes-helper${routeErrors[partner] ? ` route-${partner}-error` : ''}`}
-                className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-base md:text-sm"
+                className="min-h-11 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-base md:text-sm"
               />
               {routeErrors[partner] && (
                 <p id={`route-${partner}-error`} role="alert" className="mt-1 text-sm text-red-700">{routeErrors[partner]}</p>
@@ -3698,7 +3698,7 @@ export function FinancialTargetSection({
               aria-label={DURATION_FIELD.daysLabel}
               aria-describedby={durationCapped ? 'duration-capped' : undefined}
               onChange={(e) => setDays(parseInt(e.target.value) || 90)}
-              className="w-24 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-center text-lg font-bold"
+              className="w-24 bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 text-center text-lg font-bold"
             />
             <span className="text-[#1a472a]/75">days</span>
           </div>

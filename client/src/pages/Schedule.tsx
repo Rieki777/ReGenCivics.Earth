@@ -677,7 +677,7 @@ export default function Schedule() {
                               value={reminderEmail}
                               onChange={(e) => setReminderEmail(e.target.value)}
                               onKeyDown={(e) => e.key === 'Enter' && submitReminder(event)}
-                              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-[#7dd87d]/60"
+                              className="flex-1 bg-white/10 border border-white/45 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-[#7dd87d]/60"
                               autoComplete="email"
                               inputMode="email"
                               enterKeyHint="go"
@@ -701,7 +701,7 @@ export default function Schedule() {
                             placeholder="+1 555 000 0000 (optional, get a text reminder too)"
                             value={reminderPhone}
                             onChange={(e) => setReminderPhone(e.target.value)}
-                            className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2 text-white placeholder-white/70 text-xs focus:outline-none focus:border-[#7dd87d]/40"
+                            className="w-full bg-white/10 border border-white/45 rounded-xl px-3 py-2 text-white placeholder-white/70 text-xs focus:outline-none focus:border-[#7dd87d]/40"
                             autoComplete="tel"
                             inputMode="tel"
                             enterKeyHint="go"
@@ -729,7 +729,7 @@ export default function Schedule() {
                             value={agendaText}
                             onChange={(e) => setAgendaText(e.target.value)}
                             rows={2}
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-purple-400/60 resize-none"
+                            className="w-full bg-white/10 border border-white/45 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-purple-400/60 resize-none"
                           />
                           <div className="flex items-center gap-2">
                             <input
@@ -737,7 +737,7 @@ export default function Schedule() {
                               placeholder="your@email.com"
                               value={agendaEmail}
                               onChange={(e) => setAgendaEmail(e.target.value)}
-                              className="flex-1 bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-purple-400/60"
+                              className="flex-1 bg-white/10 border border-white/45 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-purple-400/60"
                               autoComplete="email"
                               inputMode="email"
                               enterKeyHint="go"

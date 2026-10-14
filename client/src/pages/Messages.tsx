@@ -186,7 +186,7 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
               setSelectedUserName("");
             }}
             onKeyDown={handleKeyDown}
-            className="border-[#1a472a]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
+            className="border-[#1a472a]/60 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
           />
 
           {showDropdown && (
@@ -368,7 +368,7 @@ function InboxPanel({ selectedId, currentUserId, onSelect, onCompose }: InboxPan
             value={rawQuery}
             onChange={(e) => setRawQuery(e.target.value)}
             placeholder="Search messages"
-            className="pl-9 pr-9 bg-[#f0ebe3] border-[#1a472a]/10 text-[#1a472a] placeholder:text-[#1a472a]/80"
+            className="pl-9 pr-9 bg-[#f0ebe3] border-[#1a472a]/60 text-[#1a472a] placeholder:text-[#1a472a]/80"
           />
           {rawQuery && (
             <button
@@ -776,7 +776,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
             onKeyDown={handleKeyDown}
             placeholder="Write a message… (Shift+Enter for new line)"
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-[#1a472a]/20 bg-white px-3 py-2 text-base md:text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
+            className="flex-1 resize-none rounded-xl border border-[#1a472a]/60 bg-white px-3 py-2 text-base md:text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
             style={{ minHeight: "44px", maxHeight: "120px" }}
           />
           <Button

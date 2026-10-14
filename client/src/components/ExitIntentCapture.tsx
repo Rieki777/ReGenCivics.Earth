@@ -344,7 +344,7 @@ export function ExitIntentCapture() {
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
+                      className="pl-10 bg-white/10 border-white/45 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50"
                       required
                     />
                   </div>

@@ -266,7 +266,7 @@ export function AdminOutboundWrite({
                   if (next) { setChoice(next); setPreview(null); }
                 }}
               >
-                <SelectTrigger className="bg-white min-w-[12rem] max-w-full border-[#1a472a]/20" aria-label="Audience">
+                <SelectTrigger className="bg-white min-w-[12rem] max-w-full border-[#1a472a]/60" aria-label="Audience">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -293,7 +293,7 @@ export function AdminOutboundWrite({
             <div className="space-y-1">
               <Label className="text-[#1a472a] text-xs">Saved letter</Label>
               <Select value={templateKey} onValueChange={loadTemplate}>
-                <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/20">
+                <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -429,7 +429,7 @@ export function AdminOutboundWrite({
                     type="datetime-local"
                     value={scheduleLocal}
                     onChange={(e) => setScheduleLocal(e.target.value)}
-                    className="bg-white min-w-[12rem] border-[#1a472a]/20"
+                    className="bg-white min-w-[12rem] border-[#1a472a]/60"
                   />
                 </div>
                 <Button

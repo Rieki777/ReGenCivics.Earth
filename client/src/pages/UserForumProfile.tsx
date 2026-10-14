@@ -163,7 +163,7 @@ export default function UserForumProfile() {
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50 resize-none"
+                  className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50 resize-none"
                   rows={3}
                   maxLength={500}
                 />
@@ -175,7 +175,7 @@ export default function UserForumProfile() {
                     type="text"
                     value={location}
                     onChange={(e) => setLocationVal(e.target.value)}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                    className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
                   />
                 </div>
                 <div>
@@ -184,7 +184,7 @@ export default function UserForumProfile() {
                     type="text"
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                    className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
                   />
                 </div>
               </div>

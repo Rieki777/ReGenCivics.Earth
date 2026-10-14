@@ -102,7 +102,7 @@ export function PledgeSimulator({
           id="try-need"
           value={needIdx}
           onChange={(e) => setNeedIdx(Number(e.target.value))}
-          className="w-full rounded-xl border border-[#1a472a]/15 bg-white px-3 py-3 text-base md:text-sm text-[#1a472a] pointer-coarse:min-h-11"
+          className="w-full rounded-xl border border-[#1a472a]/60 bg-white px-3 py-3 text-base md:text-sm text-[#1a472a] pointer-coarse:min-h-11"
         >
           {needs.map((it, i) => (
             <option key={it.id ?? i} value={i}>

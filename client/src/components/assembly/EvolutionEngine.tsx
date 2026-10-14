@@ -208,7 +208,7 @@ export function EvolutionEngineSection({ isAuthenticated }: { isAuthenticated: b
                       value={pauseReason[e.id] ?? ""}
                       onChange={(ev) => setPauseReason((r) => ({ ...r, [e.id]: ev.target.value }))}
                       placeholder="Why pause this ship?"
-                      className="flex-1 bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60"
+                      className="flex-1 bg-white/5 border border-white/45 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60"
                       maxLength={300}
                     />
                     <button
@@ -299,7 +299,7 @@ export function HyphaLinkRow({ proposal, currentUserId, isAdmin }: {
           value={link}
           onChange={(e) => setLink(e.target.value)}
           placeholder="https://app.hypha.earth/..."
-          className="flex-1 min-w-0 bg-white/5 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60"
+          className="flex-1 min-w-0 bg-white/5 border border-white/45 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder:text-white/60"
           maxLength={500}
         />
         <button

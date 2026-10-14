@@ -334,12 +334,12 @@ export default function Showcase() {
                 placeholder="Search projects and organizations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-[#1a472a]/20 focus:border-[#7dd87d]"
+                className="pl-10 border-[#1a472a]/60 focus:border-[#7dd87d]"
               />
             </div>
             <div className="flex gap-3">
               <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-40 border-[#1a472a]/20">
+                <SelectTrigger className="w-40 border-[#1a472a]/60">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
@@ -351,7 +351,7 @@ export default function Showcase() {
                 </SelectContent>
               </Select>
               <Select value={focusFilter} onValueChange={setFocusFilter}>
-                <SelectTrigger className="w-40 border-[#1a472a]/20">
+                <SelectTrigger className="w-40 border-[#1a472a]/60">
                   <Leaf className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Focus Area" />
                 </SelectTrigger>

@@ -243,14 +243,14 @@ export default function HymnBook() {
                   placeholder="Song title"
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/45 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 <input
                   maxLength={200}
                   placeholder="Artist or contributor (optional)"
                   value={form.artist}
                   onChange={(e) => setForm({ ...form, artist: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/45 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 <input
                   required
@@ -259,7 +259,7 @@ export default function HymnBook() {
                   placeholder="Public audio link (https://...)"
                   value={form.audioUrl}
                   onChange={(e) => setForm({ ...form, audioUrl: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/45 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 <textarea
                   maxLength={1000}
@@ -267,7 +267,7 @@ export default function HymnBook() {
                   placeholder="A few words about the song (optional)"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
+                  className="w-full bg-black/30 border border-white/45 rounded-lg px-3 py-2 text-base text-white placeholder-white/60 focus:border-[#7dd87d] focus:outline-none"
                 />
                 {submit.error && (
                   <p className="text-red-300 text-sm">{submit.error.message}</p>

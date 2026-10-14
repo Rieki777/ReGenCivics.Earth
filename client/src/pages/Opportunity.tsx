@@ -425,7 +425,7 @@ function CoopUpdates() {
               autoComplete="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="flex-1 min-h-[44px] bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-base sm:text-sm focus:outline-none focus:border-[#7dd87d]/50"
+              className="flex-1 min-h-[44px] bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-base sm:text-sm focus:outline-none focus:border-[#7dd87d]/50"
             />
             <input
               type="email"
@@ -435,7 +435,7 @@ function CoopUpdates() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="flex-1 min-h-[44px] bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-base sm:text-sm focus:outline-none focus:border-[#7dd87d]/50"
+              className="flex-1 min-h-[44px] bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white placeholder:text-white/60 text-base sm:text-sm focus:outline-none focus:border-[#7dd87d]/50"
             />
             <button
               type="submit"

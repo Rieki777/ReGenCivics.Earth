@@ -192,7 +192,7 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search by name or handle..."
                   maxLength={MAX_QUERY}
-                  className="pl-9 bg-white/5 border-white/15 text-white placeholder:text-white/70 focus-visible:ring-[#7dd87d]/40"
+                  className="pl-9 bg-white/5 border-white/45 text-white placeholder:text-white/70 focus-visible:ring-[#7dd87d]/40"
                 />
               </div>
             </label>
@@ -296,7 +296,7 @@ export function SendGratitudeModal({ open, onOpenChange }: Props) {
                 placeholder="What are you grateful for?"
                 rows={4}
                 maxLength={MAX_MESSAGE}
-                className="w-full bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none focus:border-[#7dd87d]/50 resize-none"
+                className="w-full bg-white/5 border border-white/45 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none focus:border-[#7dd87d]/50 resize-none"
               />
               <div className="flex items-center justify-between mt-1">
                 <span className="text-[10px] text-white/70">

@@ -119,7 +119,7 @@ export default function GovCreate() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="e.g. Skagit Watershed"
-              className="bg-white/10 border-white/15 text-white placeholder:text-white/70"
+              className="bg-white/10 border-white/45 text-white placeholder:text-white/70"
               maxLength={200}
             />
           </div>
@@ -131,7 +131,7 @@ export default function GovCreate() {
               value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
               placeholder="skagit-watershed"
-              className="bg-white/10 border-white/15 text-white placeholder:text-white/70 font-mono"
+              className="bg-white/10 border-white/45 text-white placeholder:text-white/70 font-mono"
               maxLength={80}
             />
             <p className="text-white/70 text-[11px] mt-1">
@@ -147,7 +147,7 @@ export default function GovCreate() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Who is this governance space for and what kinds of decisions live here?"
               rows={4}
-              className="bg-white/10 border-white/15 text-white placeholder:text-white/70 resize-none"
+              className="bg-white/10 border-white/45 text-white placeholder:text-white/70 resize-none"
               maxLength={2000}
             />
           </div>
@@ -159,7 +159,7 @@ export default function GovCreate() {
               value={hyphaDhoSlug}
               onChange={(e) => setHyphaDhoSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
               placeholder="leave blank to use the platform default"
-              className="bg-white/10 border-white/15 text-white placeholder:text-white/70 font-mono"
+              className="bg-white/10 border-white/45 text-white placeholder:text-white/70 font-mono"
               maxLength={80}
             />
             <p className="text-white/70 text-[11px] mt-1">

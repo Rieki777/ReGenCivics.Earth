@@ -76,7 +76,7 @@ export function MoveToDecideButton({ proposal }: { proposal: any }) {
           onChange={(e) => setOverrideNote(e.target.value)}
           maxLength={500}
           placeholder="Why the proposal moves forward despite the objection (recorded publicly)"
-          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
+          className="w-full bg-white/10 border border-white/45 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
         />
         <div className="flex gap-3">
           <button
@@ -136,7 +136,7 @@ export function MinorLaneRow({ proposal }: { proposal: any }) {
             onChange={(e) => setReason(e.target.value)}
             maxLength={500}
             placeholder="Why this deserves the full pipeline"
-            className="bg-white/10 border border-white/15 rounded-lg px-2 py-1 text-white text-[11px] placeholder:text-white/60 w-64 max-w-full"
+            className="bg-white/10 border border-white/45 rounded-lg px-2 py-1 text-white text-[11px] placeholder:text-white/60 w-64 max-w-full"
           />
           <button
             type="button"
@@ -222,7 +222,7 @@ export function LastCallSection({ isAuthenticated }: { isAuthenticated: boolean 
                     onChange={(e) => setReason(e.target.value)}
                     maxLength={500}
                     placeholder="The harm to the aim, in one or two sentences"
-                    className="flex-1 min-w-[220px] bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
+                    className="flex-1 min-w-[220px] bg-white/10 border border-white/45 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
                   />
                   <button
                     type="button"

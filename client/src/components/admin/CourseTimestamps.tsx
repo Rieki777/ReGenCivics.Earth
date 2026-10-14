@@ -97,7 +97,7 @@ export function CourseTimestamps() {
         <label className="text-sm font-semibold text-[#1a472a]">
           Week
           <select
-            className="ml-2 min-h-11 rounded-md border border-[#1a472a]/30 bg-white px-2"
+            className="ml-2 min-h-11 rounded-md border border-[#1a472a]/60 bg-white px-2"
             value={week}
             data-testid="course-week"
             onChange={(e) => setWeek(Number(e.target.value))}
@@ -115,11 +115,11 @@ export function CourseTimestamps() {
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="text-sm font-semibold text-[#1a472a]">
           Live video
-          <input className="mt-1 w-full min-h-11 rounded-md border border-[#1a472a]/30 px-2 font-normal" value={liveId} onChange={(e) => setLiveId(e.target.value)} data-testid="course-live-id" />
+          <input className="mt-1 w-full min-h-11 rounded-md border border-[#1a472a]/60 px-2 font-normal" value={liveId} onChange={(e) => setLiveId(e.target.value)} data-testid="course-live-id" />
         </label>
         <label className="text-sm font-semibold text-[#1a472a]">
           Edited video
-          <input className="mt-1 w-full min-h-11 rounded-md border border-[#1a472a]/30 px-2 font-normal" value={editedId} onChange={(e) => setEditedId(e.target.value)} data-testid="course-edited-id" />
+          <input className="mt-1 w-full min-h-11 rounded-md border border-[#1a472a]/60 px-2 font-normal" value={editedId} onChange={(e) => setEditedId(e.target.value)} data-testid="course-edited-id" />
         </label>
       </div>
 
@@ -155,7 +155,7 @@ export function CourseTimestamps() {
                   {(["liveStart", "liveEnd", "editedStart", "editedEnd"] as const).map((key) => (
                     <td key={key} className="py-2 pr-2">
                       <input
-                        className="w-20 min-h-11 rounded-md border border-[#1a472a]/30 px-2"
+                        className="w-20 min-h-11 rounded-md border border-[#1a472a]/60 px-2"
                         inputMode="numeric"
                         aria-label={`${row.name} ${key}`}
                         value={row[key]}

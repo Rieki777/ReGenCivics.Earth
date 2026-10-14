@@ -136,7 +136,7 @@ export function AdminInvestorsTab({
               placeholder="Search by name, email, range, or org..."
               value={investorSearch}
               onChange={(e) => setInvestorSearch(e.target.value)}
-              className="w-full min-h-11 pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+              className="w-full min-h-11 pl-9 pr-4 py-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
           </div>
           <Select value={investorStatusFilter} onValueChange={setInvestorStatusFilter}>

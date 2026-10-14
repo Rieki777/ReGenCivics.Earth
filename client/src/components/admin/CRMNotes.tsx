@@ -44,7 +44,7 @@ export function CRMNotes({ contactType, contactId, initialNote, onSaved }: Props
         onChange={(e) => setNote(e.target.value)}
         rows={3}
         placeholder="Add a private note for the team..."
-        className="w-full text-sm border border-[#1a472a]/20 rounded-lg p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
+        className="w-full text-sm border border-[#1a472a]/60 rounded-lg p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75"
       />
       <div className="flex justify-end">
         <Button

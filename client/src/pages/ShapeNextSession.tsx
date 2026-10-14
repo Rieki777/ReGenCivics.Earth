@@ -193,7 +193,7 @@ export default function ShapeNextSession() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 placeholder="How you'd like to be known"
-                className="bg-[#0d2a0d] border-[#7dd87d]/25 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 h-11"
+                className="bg-[#0d2a0d] border-[#7dd87d]/60 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 h-11"
               />
             </div>
             <div className="space-y-2">
@@ -206,7 +206,7 @@ export default function ShapeNextSession() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="If you want a reply"
-                className="bg-[#0d2a0d] border-[#7dd87d]/25 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 h-11"
+                className="bg-[#0d2a0d] border-[#7dd87d]/60 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 h-11"
               />
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function ShapeNextSession() {
               onChange={e => setTopic(e.target.value)}
               placeholder="A question, a theme, something you want to understand better, a practitioner you'd love to hear from..."
               rows={4}
-              className="bg-[#0d2a0d] border-[#7dd87d]/25 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 resize-none"
+              className="bg-[#0d2a0d] border-[#7dd87d]/60 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 resize-none"
             />
             <p className="text-[#4a7c59] text-xs">
               Be as specific or as open as you like. We read everything.

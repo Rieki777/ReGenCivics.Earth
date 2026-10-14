@@ -410,7 +410,7 @@ export default function InteropSessions() {
                   maxLength={80}
                   onChange={(e) => { setName(e.target.value); writeStored(NAME_STORAGE, e.target.value); }}
                   placeholder="Name or project"
-                  className="w-full sm:max-w-sm bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
+                  className="w-full sm:max-w-sm bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                 />
               </label>
 
@@ -524,7 +524,7 @@ export default function InteropSessions() {
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Your name"
                             aria-label="Your name, shown beside your tool"
-                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                            className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                           />
                           <input
                             type="text"
@@ -533,7 +533,7 @@ export default function InteropSessions() {
                             onChange={(e) => setAgent(e.target.value)}
                             placeholder="Your agent (optional)"
                             aria-label="The agent you build with, optional"
-                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                            className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                           />
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3">
@@ -544,7 +544,7 @@ export default function InteropSessions() {
                             onChange={(e) => setRepoUrl(e.target.value)}
                             placeholder="Repo or hub page, e.g. github.com/you/your-tool"
                             aria-label="A link to your tool that the Circle can open"
-                            className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                            className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                           />
                           <button
                             type="submit"
@@ -698,7 +698,7 @@ export default function InteropSessions() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Email"
                       aria-label="Email for Circle reminders and recaps"
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                      className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                     />
                     <button
                       type="submit"
@@ -718,7 +718,7 @@ export default function InteropSessions() {
                       onChange={(e) => setRepoUrl(e.target.value)}
                       placeholder="Your repo (optional)"
                       aria-label="The repository your tool lives in, optional"
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                      className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                     />
                     <input
                       type="text"
@@ -727,7 +727,7 @@ export default function InteropSessions() {
                       onChange={(e) => setAgent(e.target.value)}
                       placeholder="Your agent (optional)"
                       aria-label="The agent you build with, optional"
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                      className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                     />
                   </div>
                 </form>

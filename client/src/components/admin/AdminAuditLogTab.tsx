@@ -52,7 +52,7 @@ export function AdminAuditLogTab() {
             <select
               value={actionFilter}
               onChange={e => setActionFilter(e.target.value)}
-              className="bg-white border border-[#1a472a]/20 rounded-lg px-3 py-1.5 text-[#1a472a] text-sm"
+              className="bg-white border border-[#1a472a]/60 rounded-lg px-3 py-1.5 text-[#1a472a] text-sm"
             >
               <option value="all">All actions</option>
               {uniqueActions.map(a => (
@@ -62,7 +62,7 @@ export function AdminAuditLogTab() {
             <select
               value={dateRangeDays}
               onChange={e => setDateRangeDays(Number(e.target.value))}
-              className="bg-white border border-[#1a472a]/20 rounded-lg px-3 py-1.5 text-[#1a472a] text-sm"
+              className="bg-white border border-[#1a472a]/60 rounded-lg px-3 py-1.5 text-[#1a472a] text-sm"
             >
               {DATE_RANGE_OPTIONS.map(o => (
                 <option key={o.days} value={o.days}>{o.label}</option>

@@ -873,7 +873,7 @@ function CountryFilter({
       <select
         value={selected}
         onChange={(e) => onSelect(e.target.value)}
-        className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white appearance-none cursor-pointer focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+        className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-1.5 text-xs text-white appearance-none cursor-pointer focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
         style={{ backgroundImage: "none" }}
       >
         <option value="" className="bg-[#1a472a] text-white">All Countries</option>
@@ -1452,7 +1452,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               placeholder="Search name, country, role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
+              className="w-full bg-white/10 border border-white/45 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
             />
           </div>
           <div className="flex items-center gap-2 flex-wrap mb-4">
@@ -1612,7 +1612,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                     placeholder="Search name, country, role..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/10 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+                    className="w-full bg-white/10 border border-white/45 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
                   />
                 </div>
                 {/* Filters toggle */}
@@ -1641,7 +1641,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                       <select
                         value={meetingFreqFilter}
                         onChange={(e) => setMeetingFreqFilter(e.target.value)}
-                        className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                        className="text-xs bg-white/10 text-white border border-white/45 rounded-full px-2 py-1 cursor-pointer w-full"
                       >
                         <option value="" className="bg-[#1a472a] text-white">All Community Engagement</option>
                         <option value="everyday" className="bg-[#1a472a] text-white">Everyday</option>
@@ -1658,7 +1658,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                       <select
                         value={dietaryFilter}
                         onChange={(e) => setDietaryFilter(e.target.value)}
-                        className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                        className="text-xs bg-white/10 text-white border border-white/45 rounded-full px-2 py-1 cursor-pointer w-full"
                       >
                         <option value="" className="bg-[#1a472a] text-white">All Diets</option>
                         <option value="vegan" className="bg-[#1a472a] text-white">Vegan</option>
@@ -1807,7 +1807,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
               placeholder="Search name, country, role..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white/10 border border-white/10 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
+              className="w-full bg-white/10 border border-white/45 rounded-lg pl-9 pr-4 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50 focus:ring-1 focus:ring-[#7dd87d]/30"
             />
           </div>
           {/* Filters toggle, mobile */}
@@ -1834,7 +1834,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 <select
                   value={meetingFreqFilter}
                   onChange={(e) => setMeetingFreqFilter(e.target.value)}
-                  className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                  className="text-xs bg-white/10 text-white border border-white/45 rounded-full px-2 py-1 cursor-pointer w-full"
                 >
                   <option value="" className="bg-[#1a472a] text-white">All Community Engagement</option>
                   <option value="everyday" className="bg-[#1a472a] text-white">Everyday</option>
@@ -1851,7 +1851,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
                 <select
                   value={dietaryFilter}
                   onChange={(e) => setDietaryFilter(e.target.value)}
-                  className="text-xs bg-white/10 text-white border border-white/20 rounded-full px-2 py-1 cursor-pointer w-full"
+                  className="text-xs bg-white/10 text-white border border-white/45 rounded-full px-2 py-1 cursor-pointer w-full"
                 >
                   <option value="" className="bg-[#1a472a] text-white">All Diets</option>
                   <option value="vegan" className="bg-[#1a472a] text-white">Vegan</option>

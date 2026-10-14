@@ -347,7 +347,7 @@ export function ConvertInquiryButton({ inquiry }: { inquiry: { id: number; fullN
             <input
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
-              className="mt-1 block min-h-11 w-full rounded-md border border-[#1a472a]/25 bg-white px-3 text-[#1a472a]"
+              className="mt-1 block min-h-11 w-full rounded-md border border-[#1a472a]/60 bg-white px-3 text-[#1a472a]"
             />
           </label>
           <label className="flex min-h-11 items-center gap-3 text-sm text-[#1a472a]">

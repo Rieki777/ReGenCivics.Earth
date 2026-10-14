@@ -286,7 +286,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                 onChange={(e) => set("ask", e.target.value)}
                 rows={2}
                 data-testid="brain-field-ask"
-                className="w-full rounded-lg border border-[#1a472a]/25 bg-white p-3 text-sm text-[#1a472a]"
+                className="w-full rounded-lg border border-[#1a472a]/60 bg-white p-3 text-sm text-[#1a472a]"
               />
             </Field>
 
@@ -306,7 +306,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                 onChange={(e) => set("doneWhen", e.target.value)}
                 rows={2}
                 data-testid="brain-field-donewhen"
-                className="w-full rounded-lg border border-[#1a472a]/25 bg-white p-3 text-sm text-[#1a472a]"
+                className="w-full rounded-lg border border-[#1a472a]/60 bg-white p-3 text-sm text-[#1a472a]"
               />
             </Field>
 
@@ -499,7 +499,7 @@ export function BrainItemSheet({ id, onClose, onChanged }: BrainItemSheetProps) 
                     placeholder="The second item, in your words"
                     aria-label="Second item"
                     data-testid="brain-split-body"
-                    className="w-full rounded-lg border border-[#1a472a]/25 bg-white p-3 text-sm text-[#1a472a]"
+                    className="w-full rounded-lg border border-[#1a472a]/60 bg-white p-3 text-sm text-[#1a472a]"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <button

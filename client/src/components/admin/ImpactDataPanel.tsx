@@ -94,7 +94,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
                   type="number"
                   value={draft[f.key as string] ?? ""}
                   onChange={(e) => setDraft((d) => ({ ...d, [f.key as string]: e.target.value }))}
-                  className="w-full rounded-md border border-[#1a472a]/20 bg-white text-[#1a472a] px-2 py-1.5 text-sm focus:outline-none focus:border-[#7dd87d]/60"
+                  className="w-full rounded-md border border-[#1a472a]/60 bg-white text-[#1a472a] px-2 py-1.5 text-sm focus:outline-none focus:border-[#7dd87d]/60"
                 />
               </div>
             ))}
@@ -104,7 +104,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
             <select
               value={governance}
               onChange={(e) => setGovernance(e.target.value)}
-              className="w-full rounded-md border border-[#1a472a]/20 bg-white text-[#1a472a] px-2 py-1.5 text-sm focus:outline-none focus:border-[#7dd87d]/60"
+              className="w-full rounded-md border border-[#1a472a]/60 bg-white text-[#1a472a] px-2 py-1.5 text-sm focus:outline-none focus:border-[#7dd87d]/60"
             >
               <option value="">Not assessed</option>
               {GOVERNANCE_MATURITY_STAGES.map((s) => (
@@ -120,7 +120,7 @@ export function ImpactDataPanel({ applicationId }: { applicationId: number }) {
               value={context}
               onChange={(e) => setContext(e.target.value.slice(0, 4000))}
               rows={3}
-              className="w-full rounded-md border border-[#1a472a]/20 bg-white text-[#1a472a] px-2 py-1.5 text-sm focus:outline-none focus:border-[#7dd87d]/60"
+              className="w-full rounded-md border border-[#1a472a]/60 bg-white text-[#1a472a] px-2 py-1.5 text-sm focus:outline-none focus:border-[#7dd87d]/60"
             />
           </div>
           <div className="flex items-center justify-between">

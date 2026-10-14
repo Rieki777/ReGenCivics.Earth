@@ -152,10 +152,10 @@ export function AdminCitizenshipTiers() {
               value={overrideUserId}
               onChange={(e) => setOverrideUserId(e.target.value)}
               placeholder="User ID"
-              className="w-32 bg-white/5 border-white/10 text-white"
+              className="w-32 bg-white/5 border-white/45 text-white"
             />
             <Select value={overrideTier} onValueChange={setOverrideTier}>
-              <SelectTrigger className="w-40 bg-white/5 border-white/10 text-white">
+              <SelectTrigger className="w-40 bg-white/5 border-white/45 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

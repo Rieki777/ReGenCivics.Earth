@@ -173,7 +173,7 @@ export function GratitudeButton({ recipientHandle, sourceType, sourceId, compact
                   rows={3}
                   maxLength={500}
                   autoFocus
-                  className="w-full bg-white/10 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none focus:border-[#7dd87d]/50 resize-none"
+                  className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/70 outline-none focus:border-[#7dd87d]/50 resize-none"
                 />
                 <div className="flex items-center justify-between mt-2">
                   <span className="text-[10px] text-white/65">{message.length}/500</span>

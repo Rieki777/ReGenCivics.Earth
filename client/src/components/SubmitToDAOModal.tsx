@@ -207,7 +207,7 @@ export function SubmitToDAOModal({
                   className={`w-full pl-9 pr-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#4a7c59]/40 transition-colors ${
                     showError
                       ? "border-red-400 bg-red-50"
-                      : "border-gray-200 bg-white"
+                      : "border-gray-500 bg-white"
                   }`}
                   autoFocus
                 />

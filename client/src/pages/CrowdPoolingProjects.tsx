@@ -608,7 +608,7 @@ export default function CrowdPoolingProjects() {
                   id="gallery-sort"
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value as GallerySort)}
-                  className="bg-[#0d2818] border border-white/20 text-white/90 text-sm rounded-lg px-2 min-h-11 pointer-coarse:min-h-11 focus:outline-none focus:border-[#7dd87d]/50"
+                  className="bg-[#0d2818] border border-white/45 text-white/90 text-sm rounded-lg px-2 min-h-11 pointer-coarse:min-h-11 focus:outline-none focus:border-[#7dd87d]/50"
                 >
                   {GALLERY_SORTS.map(({ key, label }) => (
                     <option key={key} value={key}>{label}</option>

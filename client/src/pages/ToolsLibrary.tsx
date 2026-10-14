@@ -127,7 +127,7 @@ export default function ToolsLibrary() {
                   value={matcherInput}
                   onChange={(e) => setMatcherInput(e.target.value)}
                   placeholder="e.g., I need to coordinate water management across three neighboring properties..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
+                  className="bg-white/5 border-white/45 text-white placeholder:text-white/70 min-h-[80px]"
                 />
                 <Button
                   onClick={handleMatch}

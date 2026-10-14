@@ -195,7 +195,7 @@ export function RoleSubmissionsView() {
               placeholder="Search by email or name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/20"
+              className="pl-10 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/60"
             />
           </div>
         </div>

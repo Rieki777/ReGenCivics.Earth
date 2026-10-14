@@ -292,7 +292,7 @@ export function BrainList({
           placeholder="Search titles, asks, bodies"
           aria-label="Search items"
           data-testid="brain-search"
-          className="min-h-11 w-full rounded-xl border border-[#1a472a]/25 bg-white pl-9 pr-9 text-sm text-[#1a472a] placeholder:text-[#4a7c59]"
+          className="min-h-11 w-full rounded-xl border border-[#1a472a]/60 bg-white pl-9 pr-9 text-sm text-[#1a472a] placeholder:text-[#4a7c59]"
         />
         {typed ? (
           <button

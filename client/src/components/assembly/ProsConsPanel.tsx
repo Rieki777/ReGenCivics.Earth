@@ -162,7 +162,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
                           value={replyUrl}
                           onChange={(e) => setReplyUrl(e.target.value)}
                           placeholder="/community/post/123 (the reply that resolves it)"
-                          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
+                          className="w-full bg-white/10 border border-white/45 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
                         />
                         <input
                           type="text"
@@ -170,7 +170,7 @@ export function ProsConsPanel({ proposalId, synthesis, isOwner, isAuthenticated,
                           onChange={(e) => setNote(e.target.value)}
                           maxLength={300}
                           placeholder="How it was addressed (optional)"
-                          className="w-full bg-white/10 border border-white/15 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
+                          className="w-full bg-white/10 border border-white/45 rounded-lg px-2.5 py-1.5 text-white text-xs placeholder:text-white/60"
                         />
                         <div className="flex gap-3">
                           <button

@@ -176,7 +176,7 @@ export function ArrivalNoteCard({
               id="arrival-for"
               value={String(target)}
               onChange={(e) => setTarget(Number(e.target.value) || 0)}
-              className="w-full min-h-11 rounded-md border border-[#1a472a]/25 bg-white px-3 text-base md:text-sm text-[#1a472a]"
+              className="w-full min-h-11 rounded-md border border-[#1a472a]/60 bg-white px-3 text-base md:text-sm text-[#1a472a]"
               aria-describedby={target ? "arrival-for-help" : undefined}
             >
               <option value="0">{ARRIVAL.everyone}</option>

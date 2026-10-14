@@ -456,7 +456,7 @@ export function GratitudeTab({ userId }: { userId?: number }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search messages"
-            className="pl-8 h-10 bg-white/5 border-[#7dd87d]/20 text-sm text-white placeholder:text-[#f0ebe3]/40 rounded-xl"
+            className="pl-8 h-10 bg-white/5 border-[#7dd87d]/60 text-sm text-white placeholder:text-[#f0ebe3]/40 rounded-xl"
           />
         </div>
       </div>
@@ -669,7 +669,7 @@ function ShareCard({ userId }: { userId: number }) {
         onChange={(e) => setCaption(e.target.value)}
         rows={2}
         maxLength={280}
-        className="w-full text-sm text-white bg-white/5 border border-[#7dd87d]/20 rounded-xl p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50"
+        className="w-full text-sm text-white bg-white/5 border border-[#7dd87d]/60 rounded-xl p-2.5 resize-none focus:outline-none focus:border-[#7dd87d]/50"
       />
       <div className="flex items-center justify-between mt-1 mb-3">
         <button

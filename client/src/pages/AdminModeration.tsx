@@ -243,7 +243,7 @@ function AdminModerationPanel() {
                   value={newModUserId}
                   onChange={(e) => setNewModUserId(e.target.value)}
                   placeholder="User ID"
-                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                  className="flex-1 bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
                 />
                 <Button
                   onClick={() => newModUserId && addModMutation.mutate({ userId: parseInt(newModUserId) })}
@@ -298,14 +298,14 @@ function AdminModerationPanel() {
                     value={banUserId}
                     onChange={(e) => setBanUserId(e.target.value)}
                     placeholder="User ID"
-                    className="w-32 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                    className="w-32 bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
                   />
                   <input
                     type="number"
                     value={banDays}
                     onChange={(e) => setBanDays(e.target.value)}
                     placeholder="Days (empty = permanent)"
-                    className="w-48 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                    className="w-48 bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
                   />
                 </div>
                 <input
@@ -313,7 +313,7 @@ function AdminModerationPanel() {
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
                   placeholder="Reason for ban"
-                  className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
+                  className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#7dd87d]/50"
                 />
                 <Button
                   onClick={() => banUserId && banMutation.mutate({

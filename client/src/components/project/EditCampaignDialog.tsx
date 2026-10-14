@@ -431,7 +431,7 @@ export function EditCampaignDialog({
               rows={4}
               maxLength={CAMPAIGN_DESCRIPTION_MAX}
               onChange={(e) => { setDescription(e.target.value); clear("edit-description"); }}
-              className="border-[#1a472a]/25 bg-white text-base md:text-sm text-[#1a472a]"
+              className="border-[#1a472a]/60 bg-white text-base md:text-sm text-[#1a472a]"
             />
             <FieldError id="edit-description-error" message={errors["edit-description"]} />
           </div>
@@ -492,7 +492,7 @@ export function EditCampaignDialog({
                       rows={3}
                       maxLength={NEED_TEXT_MAX.description}
                       onChange={(e) => { setNeed(n.key, { about: e.target.value }); clear(`${n.key}-about`); }}
-                      className="border-[#1a472a]/25 bg-white text-base md:text-sm text-[#1a472a]"
+                      className="border-[#1a472a]/60 bg-white text-base md:text-sm text-[#1a472a]"
                     />
                     <FieldError id={`${n.key}-about-error`} message={errors[`${n.key}-about`]} />
                   </div>
@@ -600,7 +600,7 @@ export function EditCampaignDialog({
                       id={`${n.key}-capital`}
                       value={n.capitalType ?? ""}
                       onChange={(e) => setNeed(n.key, { capitalType: e.target.value as CapitalType })}
-                      className="w-full min-h-11 rounded-md border border-[#1a472a]/25 bg-white px-3 text-base md:text-sm text-[#1a472a]"
+                      className="w-full min-h-11 rounded-md border border-[#1a472a]/60 bg-white px-3 text-base md:text-sm text-[#1a472a]"
                     >
                       {CAPITAL_TYPES.map((c) => (
                         <option key={c} value={c}>{EDIT_CAMPAIGN.capitalOption(CAPITAL_LABELS[c].label)}</option>

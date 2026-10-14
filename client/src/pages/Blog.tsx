@@ -133,7 +133,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="e.g., How to submit a proposal to the DAO"
-          className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+          className="bg-white/10 border-white/45 text-white placeholder:text-white/60"
           required
         />
       </div>
@@ -141,7 +141,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
       <div>
         <label className="text-white/80 text-sm mb-1 block">Category</label>
         <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
-          <SelectTrigger className="bg-white/10 border-white/20 text-white">
+          <SelectTrigger className="bg-white/10 border-white/45 text-white">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -160,7 +160,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="What specific questions should the video answer?"
-          className="bg-white/10 border-white/20 text-white placeholder:text-white/60 min-h-[80px]"
+          className="bg-white/10 border-white/45 text-white placeholder:text-white/60 min-h-[80px]"
         />
       </div>
       
@@ -172,7 +172,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+            className="bg-white/10 border-white/45 text-white placeholder:text-white/60"
           />
         </div>
         <div>
@@ -181,7 +181,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+            className="bg-white/10 border-white/45 text-white placeholder:text-white/60"
           />
         </div>
       </div>
@@ -506,7 +506,7 @@ export default function Blog() {
               value={voteEmail}
               onChange={(e) => setVoteEmail(e.target.value)}
               placeholder="your@email.com"
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/60"
+              className="bg-white/10 border-white/45 text-white placeholder:text-white/60"
             />
             <Button 
               onClick={handleVoteSubmit}

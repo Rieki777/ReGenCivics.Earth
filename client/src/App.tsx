@@ -607,6 +607,12 @@ function MainApp() {
             className={
               adminMode && location === "/admin"
                 ? "h-[100dvh] overflow-hidden p-0"
+                : adminMode
+                // Standalone admin pages (/admin/ship, /admin/builders-pool, ...)
+                // sit on <body>, whose first-paint CSS in index.html is forest
+                // green; the light theme then drew dark green text on it. Give
+                // them the light surface themselves (found by pnpm ui:audit:live).
+                ? "p-0 min-h-[100dvh] bg-background text-foreground"
                 : bareMode
                 ? "p-0"
                 : "pb-[calc(5rem_+_env(safe-area-inset-bottom,0px))]"

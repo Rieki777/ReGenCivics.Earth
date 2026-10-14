@@ -259,7 +259,7 @@ export function AdminOutboundTemplates() {
                 value={draft.label}
                 onChange={(e) => setDraft((d) => ({ ...d, label: e.target.value }))}
                 placeholder="Season 2 welcome"
-                className="bg-white border-[#1a472a]/20"
+                className="bg-white border-[#1a472a]/60"
                 data-testid="templates-editor-label"
               />
             </div>
@@ -272,7 +272,7 @@ export function AdminOutboundTemplates() {
                 value={draft.customSubject}
                 onChange={(e) => setDraft((d) => ({ ...d, customSubject: e.target.value }))}
                 placeholder="A note from ReGen Civics"
-                className="bg-white border-[#1a472a]/20"
+                className="bg-white border-[#1a472a]/60"
                 data-testid="templates-editor-subject"
               />
             </div>
@@ -284,7 +284,7 @@ export function AdminOutboundTemplates() {
                 value={draft.layout}
                 onValueChange={(v) => setDraft((d) => ({ ...d, layout: v as LetterLayout }))}
               >
-                <SelectTrigger id="tpl-layout" className="bg-white border-[#1a472a]/20">
+                <SelectTrigger id="tpl-layout" className="bg-white border-[#1a472a]/60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -303,7 +303,7 @@ export function AdminOutboundTemplates() {
                 value={draft.customBody}
                 onChange={(e) => setDraft((d) => ({ ...d, customBody: e.target.value }))}
                 placeholder={"Friends,\n\nHere's what's blooming this season…"}
-                className="bg-white border-[#1a472a]/20 min-h-[180px] font-mono text-sm"
+                className="bg-white border-[#1a472a]/60 min-h-[180px] font-mono text-sm"
                 data-testid="templates-editor-body"
               />
             </div>

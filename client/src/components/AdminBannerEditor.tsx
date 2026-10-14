@@ -141,7 +141,7 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
                 id={`active-${bannerKey}`}
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300"
+                className="w-4 h-4 rounded border-gray-500"
               />
               <label htmlFor={`active-${bannerKey}`} className="text-sm font-medium">
                 Active

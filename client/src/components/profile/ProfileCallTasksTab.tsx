@@ -124,7 +124,7 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
                 value={prNumber}
                 onChange={(e) => setPrNumber(e.target.value)}
                 placeholder="PR # (e.g. 42)"
-                className="w-32 h-8 text-xs text-white bg-white/5 border-white/20"
+                className="w-32 h-8 text-xs text-white bg-white/5 border-white/45"
                 type="number"
               />
               <Button
@@ -164,14 +164,14 @@ function RoleCard({ role, onChanged }: { role: Role; onChanged: () => void }) {
             value={workUrl}
             onChange={(e) => setWorkUrl(e.target.value)}
             placeholder="Link to your work (doc, image, repo, video)"
-            className="h-8 text-xs text-white bg-white/5 border-white/20"
+            className="h-8 text-xs text-white bg-white/5 border-white/45"
           />
           <textarea
             value={workNote}
             onChange={(e) => setWorkNote(e.target.value)}
             placeholder="A short note on what you did"
             rows={2}
-            className="w-full rounded-md text-xs text-white bg-white/5 border border-white/20 px-2 py-1.5 placeholder:text-white/60"
+            className="w-full rounded-md text-xs text-white bg-white/5 border border-white/45 px-2 py-1.5 placeholder:text-white/60"
           />
           <Button
             type="button"

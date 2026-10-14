@@ -187,7 +187,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
       {/* Upload Controls */}
       <div className="flex flex-col sm:flex-row gap-2">
         <Select value={uploadCategory} onValueChange={(v) => setUploadCategory(v as CategoryValue)}>
-          <SelectTrigger className="w-full sm:w-[180px] bg-white border-[#1a472a]/20 text-[#1a472a]">
+          <SelectTrigger className="w-full sm:w-[180px] bg-white border-[#1a472a]/60 text-[#1a472a]">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -205,7 +205,7 @@ export function CampaignImageUpload({ campaignId, maxImages = 12 }: CampaignImag
           placeholder="Caption (optional)"
           value={uploadCaption}
           onChange={(e) => setUploadCaption(e.target.value)}
-          className="flex-1 bg-white border-[#1a472a]/20 text-[#1a472a] placeholder:text-[#1a472a]/80"
+          className="flex-1 bg-white border-[#1a472a]/60 text-[#1a472a] placeholder:text-[#1a472a]/80"
           maxLength={500}
         />
       </div>

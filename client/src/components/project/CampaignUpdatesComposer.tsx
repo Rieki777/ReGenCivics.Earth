@@ -61,7 +61,7 @@ export function CampaignUpdatesComposer({ campaignId, onPosted }: { campaignId: 
             maxLength={255}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="The greenhouse frame is up"
-            className="bg-white border-[#7dd87d]/30"
+            className="bg-white border-[#7dd87d]/60"
           />
         </div>
         <div className="space-y-2">
@@ -72,7 +72,7 @@ export function CampaignUpdatesComposer({ campaignId, onPosted }: { campaignId: 
             onChange={(e) => setBody(e.target.value)}
             placeholder="Tell your contributors what their offers made possible."
             rows={4}
-            className="bg-white border-[#7dd87d]/30"
+            className="bg-white border-[#7dd87d]/60"
           />
         </div>
         <div className="space-y-2">
@@ -82,7 +82,7 @@ export function CampaignUpdatesComposer({ campaignId, onPosted }: { campaignId: 
             value={images}
             onChange={(e) => setImages(e.target.value)}
             placeholder="https://... , https://..."
-            className="bg-white border-[#7dd87d]/30"
+            className="bg-white border-[#7dd87d]/60"
           />
         </div>
         <Button

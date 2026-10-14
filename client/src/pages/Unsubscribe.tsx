@@ -172,7 +172,7 @@ export default function Unsubscribe() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="bg-white/5 border-white/20 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50 focus:ring-[#7dd87d]/20 rounded-xl h-12"
+                  className="bg-white/5 border-white/45 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50 focus:ring-[#7dd87d]/20 rounded-xl h-12"
                   disabled={state === "loading"}
                   autoComplete="email"
                 />

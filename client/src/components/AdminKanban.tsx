@@ -71,7 +71,7 @@ function KanbanCard({
         onChange={(e) => onMove(e.target.value, id)}
         onClick={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
-        className="mt-2 w-full min-h-11 text-xs border border-[#1a472a]/20 rounded-md bg-white text-[#1a472a] px-2"
+        className="mt-2 w-full min-h-11 text-xs border border-[#1a472a]/60 rounded-md bg-white text-[#1a472a] px-2"
       >
         {columns.map((col) => (
           <option key={col.id} value={col.id}>

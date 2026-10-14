@@ -245,7 +245,7 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
                 value={startInput}
                 onChange={(e) => setStartInput(e.target.value)}
                 disabled={busy}
-                className="bg-white/5 border border-white/20 rounded-lg px-2 py-1 text-white text-base md:text-sm min-h-11"
+                className="bg-white/5 border border-white/45 rounded-lg px-2 py-1 text-white text-base md:text-sm min-h-11"
               />
               <Button size="sm" variant="outline" className="min-h-11" onClick={saveStart} disabled={busy || !startInput}>
                 Save
@@ -277,7 +277,7 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
                 onValueChange={(v) => pin.mutate({ season, slot: v === "vote" ? null : (v as SeasonSlotKey) })}
                 disabled={busy}
               >
-                <SelectTrigger className="w-64 bg-white/5 border-white/20 text-white min-h-11">
+                <SelectTrigger className="w-64 bg-white/5 border-white/45 text-white min-h-11">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -346,7 +346,7 @@ export function AdminSeasonSchedule({ season = ACTIVE_SEASON }: { season?: strin
                           disabled={busy}
                           onChange={(e) => setHour(key, Number(e.target.value))}
                           aria-label={`Pacific hour for ${seasonSlot(key, 12).days}`}
-                          className="bg-white/5 border border-white/20 rounded-lg px-2 py-1 text-white text-base md:text-xs min-h-11"
+                          className="bg-white/5 border border-white/45 rounded-lg px-2 py-1 text-white text-base md:text-xs min-h-11"
                         >
                           {Array.from({ length: 24 }, (_, h) => (
                             <option key={h} value={h} className="bg-[#0a1f14]">

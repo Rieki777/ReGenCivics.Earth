@@ -107,7 +107,7 @@ export function AdminInteropCircle() {
                 onValueChange={(v) => pin.mutate({ slot: v === "vote" ? null : (v as InteropSlotKey) })}
                 disabled={busy}
               >
-                <SelectTrigger className="w-60 bg-white/5 border-white/20 text-white">
+                <SelectTrigger className="w-60 bg-white/5 border-white/45 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -153,7 +153,7 @@ export function AdminInteropCircle() {
                           disabled={busy}
                           onChange={(e) => setHour(key, Number(e.target.value))}
                           aria-label={`Pacific hour for ${key}`}
-                          className="bg-white/5 border border-white/20 rounded-lg px-2 py-1 text-white text-xs min-h-[44px]"
+                          className="bg-white/5 border border-white/45 rounded-lg px-2 py-1 text-white text-xs min-h-[44px]"
                         >
                           {Array.from({ length: 24 }, (_, h) => (
                             <option key={h} value={h} className="bg-[#0a1f14]">

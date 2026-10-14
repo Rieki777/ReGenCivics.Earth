@@ -389,7 +389,7 @@ export default function BlogPost() {
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full h-[60vh] bg-black/40 text-white/90 border border-white/20 rounded-xl p-4 text-sm font-mono resize-y focus:outline-none focus:border-[#7dd87d]/50"
+                className="w-full h-[60vh] bg-black/40 text-white/90 border border-white/45 rounded-xl p-4 text-sm font-mono resize-y focus:outline-none focus:border-[#7dd87d]/50"
                 placeholder="Post content (markdown)..."
               />
               <div className="flex gap-2 mt-3 justify-end">

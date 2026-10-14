@@ -466,7 +466,7 @@ export default function SeasonSchedule() {
                       onChange={(e) => setLink(e.target.value)}
                       onBlur={() => saveNames()}
                       placeholder="yourproject.org"
-                      className="w-full min-h-11 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
+                      className="w-full min-h-11 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                     />
                   </label>
                   <label className="block">
@@ -478,7 +478,7 @@ export default function SeasonSchedule() {
                       onChange={(e) => setName(e.target.value)}
                       onBlur={() => saveNames()}
                       placeholder="Name"
-                      className="w-full min-h-11 bg-white/10 border border-white/20 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
+                      className="w-full min-h-11 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                     />
                   </label>
                   <p className="text-white/45 text-xs sm:self-end">
@@ -747,7 +747,7 @@ export default function SeasonSchedule() {
                     onChange={(e) => setTopic(e.target.value)}
                     rows={3}
                     placeholder="A question, a sticking point, something another project is doing that you want to hear more about"
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
+                    className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-3 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                   />
                 </label>
                 <label className="block">
@@ -758,7 +758,7 @@ export default function SeasonSchedule() {
                     onChange={(e) => setFacilitation(e.target.value)}
                     rows={3}
                     placeholder="What is working, what to change, what you need more of"
-                    className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
+                    className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-3 text-base md:text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
                   />
                 </label>
                 {(name.trim() || project.trim()) && (

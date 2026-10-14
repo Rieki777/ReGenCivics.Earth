@@ -302,7 +302,7 @@ export default function EventDetail() {
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/60"
+                      className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/60"
                     />
                     <button
                       type="submit"

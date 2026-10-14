@@ -91,7 +91,7 @@ function ProposalCard({ bounty, onChanged }: { bounty: Bounty; onChanged: () => 
             <select
               value={tier}
               onChange={(e) => setTier(e.target.value)}
-              className="rounded border border-[#1a472a]/20 text-[#1a472a] text-xs px-2 py-1"
+              className="rounded border border-[#1a472a]/60 text-[#1a472a] text-xs px-2 py-1"
             >
               {["trivial", "small", "medium", "large"].map((t) => (
                 <option key={t} value={t}>{TIER_LABELS[t]}</option>

@@ -137,20 +137,20 @@ export default function CommunityGuidelines() {
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Agreement title (e.g. 'Give credit when sharing others' work')"
-                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+                className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
                 maxLength={300}
               />
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Describe what this agreement means in practice. Why does it matter? How should it be applied?"
-                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
+                className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
                 maxLength={5000}
               />
               <select
                 value={category}
                 onChange={e => setCategory(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
+                className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
               >
                 <option value="" className="bg-[#1a472a]">Category (optional)</option>
                 {AGREEMENT_CATEGORIES.map(c => (

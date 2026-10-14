@@ -94,7 +94,7 @@ export default function Marketplace() {
           <select
             value={category}
             onChange={e => setCategory(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="bg-white/5 border border-white/45 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {CATEGORIES.map(c => (
               <option key={c.value} value={c.value} className="bg-[#1a472a]">
@@ -105,7 +105,7 @@ export default function Marketplace() {
           <select
             value={collabStatus}
             onChange={e => setCollabStatus(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="bg-white/5 border border-white/45 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {COLLAB_FILTERS.map(f => (
               <option key={f.value} value={f.value} className="bg-[#1a472a]">

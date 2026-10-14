@@ -191,7 +191,7 @@ export function MoneyRoutesCard({
               id={`route-partner-${campaignId}`}
               value={partner}
               onChange={(e) => { setPartner(e.target.value as RoutePartner); setUrlError(null); }}
-              className="w-full min-h-11 rounded-md border border-[#1a472a]/20 bg-white px-3 text-base md:text-sm text-[#1a472a]"
+              className="w-full min-h-11 rounded-md border border-[#1a472a]/60 bg-white px-3 text-base md:text-sm text-[#1a472a]"
             >
               <option value="maearth">{MONEY_ROUTES_CARD.partnerOptions.maearth}</option>
               <option value="gosteward">{MONEY_ROUTES_CARD.partnerOptions.gosteward}</option>

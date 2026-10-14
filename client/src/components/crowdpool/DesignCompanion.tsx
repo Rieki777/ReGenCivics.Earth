@@ -321,7 +321,7 @@ export function DesignCompanion({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask the coach about your campaign..."
-              className="flex-1 bg-white border-[#7dd87d]/30"
+              className="flex-1 bg-white border-[#7dd87d]/60"
               disabled={pending}
             />
             <Button

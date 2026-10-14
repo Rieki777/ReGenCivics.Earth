@@ -359,7 +359,7 @@ function LiveVariablesDashboard() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Filter variables..."
-            className="pl-9 bg-white/5 border-white/10 text-white text-sm placeholder:text-white/70"
+            className="pl-9 bg-white/5 border-white/45 text-white text-sm placeholder:text-white/70"
           />
         </div>
         {canEdit && (
@@ -454,7 +454,7 @@ function LiveVariablesDashboard() {
                               <Input
                                 value={editValue}
                                 onChange={(e) => setEditValue(e.target.value)}
-                                className="bg-white/5 border-white/10 text-white text-sm"
+                                className="bg-white/5 border-white/45 text-white text-sm"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === "Escape") cancelEdit();
@@ -469,7 +469,7 @@ function LiveVariablesDashboard() {
                                 value={editReason}
                                 onChange={(e) => setEditReason(e.target.value)}
                                 placeholder="Why is this changing?"
-                                className="bg-white/5 border-white/10 text-white text-sm"
+                                className="bg-white/5 border-white/45 text-white text-sm"
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") saveEdit(v.id);
                                   if (e.key === "Escape") cancelEdit();
@@ -1380,7 +1380,7 @@ function MiniSectionSimulator({
           onChange={(e) => setRationale(e.target.value)}
           placeholder="Why do you want to change these values?"
           rows={2}
-          className="w-full text-xs bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/60 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
+          className="w-full text-xs bg-white/5 border border-white/45 rounded-lg px-3 py-2 text-white/90 placeholder:text-white/60 focus:outline-none focus:border-[#7dd87d]/50 resize-none"
         />
       </div>
 
@@ -1595,7 +1595,7 @@ function BountyValuationSection() {
             <select
               value={scopeTier}
               onChange={(e) => setScopeTier(e.target.value as typeof scopeTier)}
-              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
+              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/45 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
             >
               {SCOPE_TIER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -1605,7 +1605,7 @@ function BountyValuationSection() {
             <select
               value={impactLevel}
               onChange={(e) => setImpactLevel(e.target.value as typeof impactLevel)}
-              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
+              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/45 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
             >
               {IMPACT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -1615,7 +1615,7 @@ function BountyValuationSection() {
             <select
               value={circle}
               onChange={(e) => setCircle(e.target.value)}
-              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
+              className="mt-1 w-full rounded-md bg-[#0f2417] border border-white/45 text-white text-sm px-2 py-1.5 focus:outline-none focus:border-[#7dd87d]/50"
             >
               {circleOptions.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>

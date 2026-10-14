@@ -95,7 +95,7 @@ export default function SiteFooter() {
             <p className="text-white/70 text-sm mb-3">
               Propose features, report bugs, vote on what ships next.
             </p>
-            <Link href="/features">
+            <Link href="/features" className="inline-block">
               <span className="inline-flex items-center gap-2 bg-[#7dd87d] text-[#0d2818] hover:bg-[#9de89d] font-semibold px-6 py-3 rounded-xl shadow-md min-h-[44px] transition-colors cursor-pointer">
                 <Lightbulb className="w-4 h-4" />
                 Suggest or Report
@@ -289,14 +289,14 @@ export default function SiteFooter() {
               <li>
                 <button
                   onClick={resetCookieConsent}
-                  className="text-white/60 hover:text-white transition-colors text-xs inline-flex items-center gap-1.5 cursor-pointer"
+                  className="text-white/75 hover:text-white transition-colors text-xs inline-flex min-h-6 pointer-coarse:min-h-11 items-center gap-1.5 cursor-pointer"
                 >
                   <Cookie className="w-3 h-3" />
                   Manage Cookies
                 </button>
               </li>
               <li>
-                <Link href="/unsubscribe" className="text-white/60 hover:text-white transition-colors text-xs inline-flex items-center gap-1.5">
+                <Link href="/unsubscribe" className="text-white/75 hover:text-white transition-colors text-xs inline-flex min-h-6 pointer-coarse:min-h-11 items-center gap-1.5">
                   <Mail className="w-3 h-3" />
                   Email Preferences
                 </Link>

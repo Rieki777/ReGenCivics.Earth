@@ -61,7 +61,7 @@ export function ComposeBox({ onComposed }: { onComposed: (publicationId: number)
       <p className="text-sm font-semibold text-[#1a472a] flex items-center gap-1.5"><PenLine className="w-4 h-4 text-[#2d5a3d]" /> Compose</p>
       <Textarea ref={textareaRef} value={text} onChange={(e) => { setText(e.target.value); setPreview(null); }}
         placeholder="Drop an idea. First line becomes the working title. It fans out into an article, social posts, and an optional email, grounded in your own notes."
-        className="min-h-[100px] text-sm bg-white text-[#1a472a] placeholder:text-[#4a7c59] rounded-xl border border-[#1a472a]/25 focus-visible:ring-[#4a7c59]" />
+        className="min-h-[100px] text-sm bg-white text-[#1a472a] placeholder:text-[#4a7c59] rounded-xl border border-[#1a472a]/60 focus-visible:ring-[#4a7c59]" />
       <div className="flex items-center gap-2 flex-wrap">
         <DictationButton value={text} onChange={(next) => { setText(next); setPreview(null); }} targetRef={textareaRef} label="Dictate idea" />
         <Button size="sm" variant="outline" className="h-9 rounded-lg border-[#1a472a]/30 text-[#1a472a]"

@@ -299,7 +299,7 @@ export function NotificationPreferences() {
                           onChange={(e) =>
                             handleEmailChange(type.emailKey, e.target.value)
                           }
-                          className="text-sm h-9 border-[#1a472a]/20 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30"
+                          className="text-sm h-9 border-[#1a472a]/60 focus:border-[#7dd87d] focus:ring-[#7dd87d]/30"
                           disabled={!enabled}
                         />
                         {isDirty && (

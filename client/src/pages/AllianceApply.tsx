@@ -8,6 +8,7 @@
  * Circle's call time and how to join the calls.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { LIGHT_CARD_FIELD } from "@/lib/fieldStyles";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -66,7 +67,7 @@ const EMPTY: Form = {
   tools: [],
 };
 
-const field = "mt-2 min-h-11 bg-white dark:bg-white text-[#1a472a] border-[#1a472a]/60 placeholder:text-[#1a472a]/70 focus-visible:border-[#1a472a] focus-visible:ring-[#7dd87d]/50";
+const field = `mt-2 min-h-11 ${LIGHT_CARD_FIELD}`;
 const help = "text-sm text-[#1a472a]/75 mt-1";
 const sectionTitle = "text-lg font-semibold text-[#1a472a]";
 

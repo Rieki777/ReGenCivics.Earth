@@ -1154,7 +1154,7 @@ export function CalculatorWeightsSheet() {
                       placeholder="Brief description (optional)"
                       value={newIdeaDescription}
                       onChange={(e) => setNewIdeaDescription(e.target.value)}
-                      className="w-full h-20 px-3 py-2 text-sm border border-[#1a472a]/20 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
+                      className="w-full h-20 px-3 py-2 text-sm border border-[#1a472a]/60 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
                     />
                     <Input
                       type="text"

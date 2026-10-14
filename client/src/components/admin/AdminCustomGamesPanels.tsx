@@ -32,7 +32,7 @@ export function AdminCustomGameWaitlist() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-[#1a472a] border border-white/30 rounded-lg px-3 py-1.5 text-white text-sm"
+          className="bg-[#1a472a] border border-white/45 rounded-lg px-3 py-1.5 text-white text-sm"
         >
           <option value="all" className="bg-[#1a472a] text-white">All</option>
           <option value="waitlist" className="bg-[#1a472a] text-white">Waitlist</option>
@@ -97,7 +97,7 @@ export function AdminCustomGameWaitlist() {
                     <select
                       value={inq.status}
                       onChange={(e) => updateMut.mutate({ id: inq.id, status: e.target.value })}
-                      className="bg-[#1a472a] border border-white/30 rounded px-2 py-1 text-white text-xs"
+                      className="bg-[#1a472a] border border-white/45 rounded px-2 py-1 text-white text-xs"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <option value="waitlist">Waitlist</option>
@@ -177,7 +177,7 @@ export function AdminCustomGameApplications() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-[#1a472a] border border-white/30 rounded-lg px-3 py-1.5 text-white text-sm"
+            className="bg-[#1a472a] border border-white/45 rounded-lg px-3 py-1.5 text-white text-sm"
           >
             <option value="all" className="bg-[#1a472a] text-white">All</option>
             {STATUS_OPTIONS.map((o) => (
@@ -187,7 +187,7 @@ export function AdminCustomGameApplications() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as "score" | "newest")}
-            className="bg-[#1a472a] border border-white/30 rounded-lg px-3 py-1.5 text-white text-sm"
+            className="bg-[#1a472a] border border-white/45 rounded-lg px-3 py-1.5 text-white text-sm"
           >
             <option value="score" className="bg-[#1a472a] text-white">By score</option>
             <option value="newest" className="bg-[#1a472a] text-white">Newest first</option>
@@ -262,7 +262,7 @@ export function AdminCustomGameApplications() {
                     <select
                       value={app.status}
                       onChange={(e) => updateMut.mutate({ id: app.id, status: e.target.value as any })}
-                      className="bg-[#1a472a] border border-white/30 rounded px-2 py-1 text-white text-xs"
+                      className="bg-[#1a472a] border border-white/45 rounded px-2 py-1 text-white text-xs"
                     >
                       {STATUS_OPTIONS.map((o) => (
                         <option key={o.value} value={o.value}>{o.label}</option>

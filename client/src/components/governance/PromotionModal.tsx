@@ -330,7 +330,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 placeholder="What specifically is being decided? Phrase as a single yes/no, consent, or pick-one."
                 rows={3}
                 maxLength={500}
-                className="bg-white/10 border-white/15 text-white placeholder:text-white/70 resize-none"
+                className="bg-white/10 border-white/45 text-white placeholder:text-white/70 resize-none"
               />
               <p className="text-white/70 text-[11px] mt-1">{decisionQuestion.length}/500 · minimum 10 characters</p>
             </div>
@@ -391,7 +391,7 @@ export function PromotionModal({ threadId, open, onClose, onSubmitted }: Props) 
                 value={sunsetDays}
                 onChange={(e) => setSunsetDays(parseInt(e.target.value) || 0)}
                 placeholder="0 = no sunset"
-                className="bg-white/10 border-white/15 text-white"
+                className="bg-white/10 border-white/45 text-white"
               />
               <p className="text-white/70 text-[11px] mt-1">
                 <Clock className="w-3 h-3 inline mr-1" />

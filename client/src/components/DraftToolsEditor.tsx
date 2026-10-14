@@ -5,6 +5,7 @@
  * approving the partner lists them on /tools.
  */
 import { Button } from "@/components/ui/button";
+import { LIGHT_CARD_FIELD } from "@/lib/fieldStyles";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +13,7 @@ import { Plus, Trash2, Wrench } from "lucide-react";
 import { TickBox } from "@/components/TickBox";
 import { MAX_DRAFT_TOOLS, TOOL_KINDS, toolProblems, type DraftTool } from "@shared/toolLibrary";
 
-const field = "mt-1 min-h-11 bg-white dark:bg-white text-[#1a472a] border-[#1a472a]/60 placeholder:text-[#1a472a]/70 focus-visible:border-[#1a472a] focus-visible:ring-[#7dd87d]/50";
+const field = `mt-1 min-h-11 ${LIGHT_CARD_FIELD}`;
 
 export const EMPTY_TOOL: DraftTool = { name: "", url: "", description: "", kind: "software", isOpenSource: false };
 

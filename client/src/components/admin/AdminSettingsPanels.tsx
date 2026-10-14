@@ -110,7 +110,7 @@ export function BufferSettingsPanel() {
               value={newToken}
               onChange={e => setNewToken(e.target.value)}
               placeholder="Paste new Buffer access token…"
-              className="max-w-xs bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30 focus:border-[#1a472a] font-mono text-sm"
+              className="max-w-xs bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/60 focus:border-[#1a472a] font-mono text-sm"
             />
             <Button
               onClick={saveToken}
@@ -172,7 +172,7 @@ export function BufferSettingsPanel() {
             value={farcasterHandle}
             onChange={e => saveFarcasterHandle(e.target.value)}
             placeholder="@handle.eth"
-            className="max-w-xs border-[#1a472a]/20 focus:border-[#1a472a]"
+            className="max-w-xs border-[#1a472a]/60 focus:border-[#1a472a]"
           />
           <p className="text-xs text-[#1a472a]/80">
             Farcaster posting opens Warpcast in a new tab. No API key needed.
@@ -802,7 +802,7 @@ export function OrgClaimsAdminPanel() {
                     value={assignForm.userId}
                     onChange={e => setAssignForm(f => ({ ...f, userId: e.target.value }))}
                     placeholder="User ID #"
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/60 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
                   />
                 </div>
                 <div>
@@ -810,7 +810,7 @@ export function OrgClaimsAdminPanel() {
                   <select
                     value={assignForm.orgType}
                     onChange={e => setAssignForm(f => ({ ...f, orgType: e.target.value as any }))}
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/60 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
                   >
                     <option value="land_project">Land Project</option>
                     <option value="alliance_org">Alliance Org</option>
@@ -822,7 +822,7 @@ export function OrgClaimsAdminPanel() {
                     value={assignForm.orgId}
                     onChange={e => setAssignForm(f => ({ ...f, orgId: e.target.value }))}
                     placeholder="e.g. ubuntu or 42"
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/60 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
                   />
                 </div>
                 <div>
@@ -831,7 +831,7 @@ export function OrgClaimsAdminPanel() {
                     value={assignForm.orgName}
                     onChange={e => setAssignForm(f => ({ ...f, orgName: e.target.value }))}
                     placeholder="Ubuntu Village"
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/30 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
+                    className="w-full text-sm px-3 py-2 rounded-lg border border-[#7dd87d]/60 bg-white focus:outline-none focus:ring-1 focus:ring-[#7dd87d]"
                   />
                 </div>
               </div>

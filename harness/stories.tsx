@@ -264,6 +264,41 @@ const LIBRARY_TOOL = {
 };
 
 export const STORIES: Record<string, Story> = {
+  /**
+   * Meant to fail: one deliberately broken example per check, beside a good
+   * one, so a change to harness/audit-checks.mjs can be proven to still bite
+   * (CLAUDE.md, UI readability gate, step 3). `pnpm ui:audit` skips it unless
+   * named.
+   */
+  "audit-selftest": {
+    title: "Audit self-test: each check's bad example, beside a good one",
+    render: () => (
+      <div className="space-y-4 bg-white p-6 text-[#1a472a]">
+        {/* The site's global focus ring (index.css) covers plain outline-none,
+            so the bad examples override it the way a real regression would. */}
+        <style>{`
+          .audit-no-focus:focus-visible { outline: none !important; box-shadow: none !important; }
+          .audit-faint-focus:focus-visible { outline: none !important; box-shadow: 0 0 0 2px #e9f5e9 !important; }
+        `}</style>
+        <button type="button" className="audit-no-focus min-h-11 rounded border border-[#1a472a] px-4">Bad: no focus style</button>
+        <button type="button" className="audit-faint-focus min-h-11 rounded border border-[#1a472a] px-4">Bad: faint focus ring</button>
+        <button type="button" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good: clear focus ring</button>
+        <p>
+          Read <a href="#a" className="text-[#2d5a3d] no-underline">the colour-only link</a> in this sentence, and{" "}
+          <a href="#b" className="underline">the underlined link</a> too.
+        </p>
+        <div className="flex gap-2">
+          <button type="button" aria-pressed="true" className="min-h-11 rounded border border-[#1a472a] bg-[#1a472a] px-3 text-white focus-visible:ring-2 focus-visible:ring-[#1a472a]">Bad on</button>
+          <button type="button" aria-pressed="false" className="min-h-11 rounded border border-[#1a472a] bg-white px-3 text-[#1a472a] focus-visible:ring-2 focus-visible:ring-[#1a472a]">Bad off</button>
+        </div>
+        <div className="flex gap-2">
+          <button type="button" aria-pressed="true" className="min-h-11 rounded border-2 border-[#1a472a] px-3 font-semibold focus-visible:ring-2 focus-visible:ring-[#1a472a]">✓ Good on</button>
+          <button type="button" aria-pressed="false" className="min-h-11 rounded border border-[#1a472a] px-3 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good off</button>
+        </div>
+      </div>
+    ),
+  },
+
   "alliance-apply-form": {
     title: "Become an Alliance Partner: the application form, mid-draft",
     setup: () => {

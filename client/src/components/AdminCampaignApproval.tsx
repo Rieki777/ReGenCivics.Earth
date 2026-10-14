@@ -142,7 +142,7 @@ function RouteReviewRow({
               id={`route-currency-${route.id}`}
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="w-full min-h-11 rounded-md border border-[#1a472a]/20 bg-white px-3 text-base md:text-sm text-[#1a472a]"
+              className="w-full min-h-11 rounded-md border border-[#1a472a]/60 bg-white px-3 text-base md:text-sm text-[#1a472a]"
             >
               {currencies.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -157,7 +157,7 @@ function RouteReviewRow({
               onChange={(e) => setNote(e.target.value)}
               maxLength={1000}
               rows={2}
-              className="border-[#1a472a]/20 text-base md:text-sm"
+              className="border-[#1a472a]/60 text-base md:text-sm"
             />
           </div>
           {loanBlocked && <p className="text-xs font-medium text-[#1a472a]">{ROUTE_REVIEW.loanRailOff}</p>}
@@ -511,7 +511,7 @@ function CampaignDetailModal({ campaignId, onClose, onStatusChange }: {
           value={reviewNotes}
           onChange={(e) => setReviewNotes(e.target.value)}
           placeholder="What the stewards should know, or what to change before this goes live"
-          className="mb-3 border-[#1a472a]/20"
+          className="mb-3 border-[#1a472a]/60"
           rows={3}
           maxLength={2000}
         />

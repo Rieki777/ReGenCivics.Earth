@@ -275,7 +275,7 @@ function SentPanel() {
                               type="datetime-local"
                               value={rescheduleLocal}
                               onChange={(e) => setRescheduleLocal(e.target.value)}
-                              className="bg-white min-w-[12rem] border-[#1a472a]/20"
+                              className="bg-white min-w-[12rem] border-[#1a472a]/60"
                             />
                           </div>
                           <Button
@@ -379,7 +379,7 @@ function PeoplePanel() {
           <div className="space-y-1">
             <Label className="text-[#1a472a] text-xs">Status</Label>
             <Select value={status} onValueChange={(v) => setStatus(v as SubscriberStatusFilter)}>
-              <SelectTrigger className="bg-white min-w-[10rem] border-[#1a472a]/20">
+              <SelectTrigger className="bg-white min-w-[10rem] border-[#1a472a]/60">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -392,7 +392,7 @@ function PeoplePanel() {
           <div className="space-y-1">
             <Label className="text-[#1a472a] text-xs">Signup source</Label>
             <Select value={source} onValueChange={setSource}>
-              <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/20">
+              <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/60">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

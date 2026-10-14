@@ -102,7 +102,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 maxLength={200}
-                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
+                className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
               />
             </div>
 
@@ -116,7 +116,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                   onChange={(e) => setAim(e.target.value)}
                   maxLength={300}
                   placeholder="..."
-                  className="flex-1 bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
+                  className="flex-1 bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                 />
               </div>
               <p className="text-white/60 text-[11px] mt-1">
@@ -151,7 +151,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm [&>option]:bg-[#0d2818]"
+                className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm [&>option]:bg-[#0d2818]"
               >
                 {CATEGORIES.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
@@ -184,7 +184,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                       value={newValue}
                       onChange={(e) => setNewValue(e.target.value)}
                       placeholder="Proposed new value"
-                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
+                      className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                     />
                     {parsedNewValue !== null && selectedVar.minValue != null && (parsedNewValue < Number(selectedVar.minValue) || parsedNewValue > Number(selectedVar.maxValue)) && (
                       <p className="text-amber-300 text-[11px]">
@@ -199,7 +199,7 @@ export function RaiseModal({ threadId, threadTitle, open, onClose }: Props) {
                       value={varSearch}
                       onChange={(e) => setVarSearch(e.target.value)}
                       placeholder="Search variables by name or key"
-                      className="w-full bg-white/10 border border-white/15 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
+                      className="w-full bg-white/10 border border-white/45 rounded-lg px-3 py-2 text-white text-sm placeholder:text-white/60"
                     />
                     {varMatches.length > 0 && (
                       <ul className="mt-1 rounded-lg border border-white/10 bg-[#0d2818] divide-y divide-white/5 max-h-48 overflow-y-auto">

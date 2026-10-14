@@ -69,7 +69,7 @@ export default function KnowledgeMapAdminPanel() {
           <select
             value={suggestCatId}
             onChange={e => setSuggestCatId(Number(e.target.value))}
-            className="flex-1 bg-white border border-[#1a472a]/25 text-[#1a472a] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a472a]"
+            className="flex-1 bg-white border border-[#1a472a]/60 text-[#1a472a] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a472a]"
           >
             <option value={0}>Select category…</option>
             {categories.map(c => (
@@ -137,7 +137,7 @@ export default function KnowledgeMapAdminPanel() {
           <select
             value={form.categoryId}
             onChange={e => setForm(f => ({ ...f, categoryId: Number(e.target.value) }))}
-            className="col-span-2 bg-white border border-[#1a472a]/25 text-[#1a472a] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a472a]"
+            className="col-span-2 bg-white border border-[#1a472a]/60 text-[#1a472a] text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-[#1a472a]"
           >
             <option value={0}>Select category…</option>
             {categories.map(c => (

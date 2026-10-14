@@ -220,7 +220,7 @@ export default function VideoWithTutor({ url, title, className = "" }: VideoWith
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about the moment you're watching..."
               maxLength={1000}
-              className="flex-1 bg-transparent border-b border-[#1a472a]/30 focus:border-[#1a472a] outline-none text-sm py-1"
+              className="flex-1 bg-transparent border-b border-[#1a472a]/60 focus:border-[#1a472a] outline-none text-sm py-1"
             />
             <button
               type="submit"

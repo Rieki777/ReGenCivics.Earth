@@ -265,7 +265,7 @@ export function ShipNavRow({ current }: { current?: string }) {
           href="/ship/terms"
           aria-current={current === "/ship/terms" ? "page" : undefined}
           className={cn(
-            "underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700] rounded",
+            "inline-flex min-h-6 pointer-coarse:min-h-11 items-center underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700] rounded",
             current === "/ship/terms" ? "text-[#2f5d3a] dark:text-[#7dd87d] font-medium underline" : "hover:text-foreground",
           )}
         >

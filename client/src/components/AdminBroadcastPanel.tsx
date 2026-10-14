@@ -444,7 +444,7 @@ export function AdminBroadcastPanel() {
                     : "What do you want to share?"
                 }
                 rows={4}
-                className="resize-none border-[#1a472a]/20 focus:border-[#1a472a] pr-16"
+                className="resize-none border-[#1a472a]/60 focus:border-[#1a472a] pr-16"
               />
               {masterCharsLeft != null && (
                 <span
@@ -531,7 +531,7 @@ export function AdminBroadcastPanel() {
               value={link}
               onChange={e => setLink(e.target.value)}
               placeholder="https://..."
-              className="border-[#1a472a]/20 focus:border-[#1a472a]"
+              className="border-[#1a472a]/60 focus:border-[#1a472a]"
             />
           </div>
 
@@ -541,7 +541,7 @@ export function AdminBroadcastPanel() {
               value={imageUrl}
               onChange={e => setImageUrl(e.target.value)}
               placeholder="https://..."
-              className="border-[#1a472a]/20 focus:border-[#1a472a]"
+              className="border-[#1a472a]/60 focus:border-[#1a472a]"
             />
           </div>
 
@@ -721,7 +721,7 @@ export function AdminBroadcastPanel() {
                           onChange={(e) => setChannelBody(id, e.target.value)}
                           placeholder={`Optional ${meta?.label ?? id} body (falls back to master)`}
                           rows={4}
-                          className="resize-none border-[#1a472a]/20 focus:border-[#1a472a] pr-20 bg-white"
+                          className="resize-none border-[#1a472a]/60 focus:border-[#1a472a] pr-20 bg-white"
                         />
                         <span
                           className={`absolute bottom-2 right-3 text-xs font-mono ${
@@ -794,7 +794,7 @@ export function AdminBroadcastPanel() {
                   type="datetime-local"
                   value={scheduledAt}
                   onChange={e => setScheduledAt(e.target.value)}
-                  className="block border border-[#1a472a]/20 rounded-md px-3 py-1.5 text-sm text-[#1a472a] bg-white focus:outline-none focus:border-[#1a472a]"
+                  className="block border border-[#1a472a]/60 rounded-md px-3 py-1.5 text-sm text-[#1a472a] bg-white focus:outline-none focus:border-[#1a472a]"
                 />
               </div>
               <Button

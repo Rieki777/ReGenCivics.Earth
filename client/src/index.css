@@ -206,7 +206,7 @@
   --popover: oklch(0.99 0.005 85);
   --popover-foreground: oklch(0.33 0.07 155); /* forest.base #1a472a */
   --border: oklch(0.88 0.02 80);              /* warm parchment border */
-  --input: oklch(0.92 0.015 80);              /* warm parchment input */
+  --input: oklch(0.6 0.03 150);               /* field edges: 3:1+ on parchment and white (pnpm ui:audit:live) */
   --ring: oklch(0.79 0.16 145);               /* spring.base #7dd87d */
 
   --sidebar-primary: oklch(0.79 0.16 145);    /* spring.base #7dd87d */
@@ -248,7 +248,7 @@
   --muted: oklch(0.25 0.04 145);
   --muted-foreground: oklch(0.70 0.03 85);
   --border: oklch(0.30 0.04 145);
-  --input: oklch(0.22 0.03 145);
+  --input: oklch(0.56 0.05 145);              /* field edges: 3:1+ on the forest background and cards */
   --ring: oklch(0.60 0.15 145);
   
   --sidebar: oklch(0.18 0.04 145);
@@ -2904,6 +2904,28 @@ html[data-contrast="high"] *:focus-visible {
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(125, 216, 125, 0.85);
   border-radius: 3px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   Readability safety nets, the same idea as the focus ring above
+   (pnpm ui:audit:live, ADR-73). Unlayered on purpose, so they hold
+   over component classes.
+
+   1. Touch targets. On a touch screen every standalone link and
+      button in the page body is at least 44px tall (WCAG 2.5.5).
+      Links inside a paragraph are left to flow with the text, and
+      .tap-exempt opts a control out where a layout truly needs it.
+   2. Links in running text carry an underline, so colour is never
+      the only thing that marks them (WCAG 1.4.1).
+   ════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  main :is(a[href], button, [role="button"], [role="tab"], summary):is([class*="flex"], [class*="block"], button, summary, [role="button"], [role="tab"]):not(p *):not(.tap-exempt) {
+    min-height: 44px;
+  }
+}
+main p a[href]:not(.no-underline) {
+  text-decoration-line: underline;
+  text-underline-offset: 2px;
 }
 
 /* ════════════════════════════════════════════════════════════

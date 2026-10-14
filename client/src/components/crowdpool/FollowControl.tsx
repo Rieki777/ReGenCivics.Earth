@@ -515,7 +515,7 @@ function SeasonForm({ tone, lead, defaultEmail, focusOnMount = false, bodyWhenSi
                   aria-invalid={error ? true : undefined}
                   aria-describedby={error ? errorId : undefined}
                   className={dark
-                    ? "bg-white/10 border-white/30 text-white placeholder:text-white/70"
+                    ? "bg-white/10 border-white/45 text-white placeholder:text-white/70"
                     : "bg-white border-[#4a7c59]/40"}
                 />
                 <Button

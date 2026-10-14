@@ -279,7 +279,7 @@ export default function PlaysLibrary() {
           <select
             value={pricing}
             onChange={(e) => setPricing(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="bg-white/5 border border-white/45 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {PRICING_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
@@ -291,7 +291,7 @@ export default function PlaysLibrary() {
           <select
             value={scale}
             onChange={(e) => setScale(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="bg-white/5 border border-white/45 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {SCALE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
@@ -303,7 +303,7 @@ export default function PlaysLibrary() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="bg-white/5 border border-white/45 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#1a472a]">

@@ -239,7 +239,7 @@ export function SeedsClaimDetail({
           defaultValue={claim.adminNotes || ""}
           readOnly
           rows={3}
-          className="w-full p-3 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] resize-none"
+          className="w-full p-3 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] resize-none"
         />
       </div>
 
@@ -567,7 +567,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                   setSearchTerm(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+                className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
               />
             </div>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
@@ -779,7 +779,7 @@ export function AdminSeedsClaimsTab({}: Props) {
                       value={adminNotes}
                       onChange={(e) => setAdminNotes(e.target.value)}
                       rows={3}
-                      className="w-full mt-2 p-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] resize-none"
+                      className="w-full mt-2 p-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] resize-none"
                       placeholder="Add any notes about this decision..."
                     />
                   </div>

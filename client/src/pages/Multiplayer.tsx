@@ -407,7 +407,7 @@ export default function Multiplayer() {
                   <select
                     value={selectedQuestId ?? ""}
                     onChange={(e) => setSelectedQuestId(e.target.value || null)}
-                    className="w-full rounded-xl border bg-white/5 border-white/15 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+                    className="w-full rounded-xl border bg-white/5 border-white/45 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
                   >
                     <option value="" className="bg-[#1a472a]">
                       Pick a quest…
@@ -432,7 +432,7 @@ export default function Multiplayer() {
                     onChange={(e) => setNote(e.target.value.slice(0, 500))}
                     rows={2}
                     placeholder="Skills, tools, or times that work for you"
-                    className="w-full rounded-xl border bg-white/5 border-white/15 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+                    className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
                   />
                 </div>
                 {formMessage && <p className="text-[#d4a574] text-sm">{formMessage}</p>}

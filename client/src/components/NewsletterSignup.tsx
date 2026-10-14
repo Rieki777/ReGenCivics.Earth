@@ -86,7 +86,7 @@ export function NewsletterSignupInline({ className = "" }: { className?: string 
           placeholder="your@email.com"
           aria-label="Email address for the ReGen Civics newsletter"
           required
-          className="pl-9 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-[#7dd87d]/50 text-sm w-full min-w-0"
+          className="pl-9 bg-white/10 border-white/45 text-white placeholder:text-white/70 focus:border-[#7dd87d]/50 text-sm w-full min-w-0"
           style={{ fontFamily: "var(--font-body)" }}
         />
       </div>

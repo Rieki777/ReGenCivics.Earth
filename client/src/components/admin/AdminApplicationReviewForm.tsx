@@ -59,7 +59,7 @@ export function AdminApplicationReviewForm({
     <div>
       <Label className="text-[#1a472a]">{label}</Label>
       <Select value={String(value)} onValueChange={(v) => set(parseInt(v, 10))}>
-        <SelectTrigger className="mt-1 bg-white text-[#1a472a] border-[#1a472a]/30">
+        <SelectTrigger className="mt-1 bg-white text-[#1a472a] border-[#1a472a]/60">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -101,7 +101,7 @@ export function AdminApplicationReviewForm({
       <div>
         <Label htmlFor="decision" className="text-[#1a472a] font-medium">Decision</Label>
         <Select value={decision} onValueChange={(value) => setDecision(value as typeof decision)}>
-          <SelectTrigger id="decision" className="mt-1 bg-white text-[#1a472a] border-[#1a472a]/30">
+          <SelectTrigger id="decision" className="mt-1 bg-white text-[#1a472a] border-[#1a472a]/60">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -135,7 +135,7 @@ export function AdminApplicationReviewForm({
           onChange={(e) => setComments(e.target.value)}
           placeholder="Feedback the applicant will read"
           rows={5}
-          className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30"
+          className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/60"
         />
       </div>
       <div>
@@ -146,7 +146,7 @@ export function AdminApplicationReviewForm({
           onChange={(e) => setInternalNotes(e.target.value)}
           placeholder="Private, admin only"
           rows={3}
-          className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/30"
+          className="mt-1 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 border-[#1a472a]/60"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">

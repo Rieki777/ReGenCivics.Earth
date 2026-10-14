@@ -818,7 +818,7 @@ export default function CrowdPoolingTool({
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
               placeholder={isGenericMode ? "Leave blank or enter 'Generic Contribution'" : "e.g., Sunrise Ecovillage"}
-              className="bg-white border-[#7dd87d]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20"
+              className="bg-white border-[#7dd87d]/60 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20"
             />
           </div>
           
@@ -842,7 +842,7 @@ export default function CrowdPoolingTool({
             </div>
             <div className="flex gap-2">
               <Select value={currency} onValueChange={setCurrency}>
-                <SelectTrigger className="w-32 bg-white border-[#7dd87d]/30">
+                <SelectTrigger className="w-32 bg-white border-[#7dd87d]/60">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -863,7 +863,7 @@ export default function CrowdPoolingTool({
                   onChange={(e) => setTargetAmount(parseFloat(e.target.value) || 100000)}
                   placeholder={hasNoTarget ? "No target set" : "100,000"}
                   disabled={hasNoTarget}
-                  className="pl-8 bg-white border-[#7dd87d]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 disabled:bg-gray-100 disabled:text-gray-300"
+                  className="pl-8 bg-white border-[#7dd87d]/60 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 disabled:bg-gray-100 disabled:text-gray-300"
                 />
               </div>
             </div>
@@ -882,7 +882,7 @@ export default function CrowdPoolingTool({
               value={contributorName}
               onChange={(e) => setContributorName(e.target.value)}
               placeholder="Your full name"
-              className="bg-white border-[#7dd87d]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20"
+              className="bg-white border-[#7dd87d]/60 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20"
             />
           </div>
           
@@ -895,7 +895,7 @@ export default function CrowdPoolingTool({
               value={contributorEmail}
               onChange={(e) => setContributorEmail(e.target.value)}
               placeholder="your@email.com"
-              className="bg-white border-[#7dd87d]/30 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20"
+              className="bg-white border-[#7dd87d]/60 focus:border-[#7dd87d] focus:ring-[#7dd87d]/20"
             />
           </div>
           
@@ -969,7 +969,7 @@ export default function CrowdPoolingTool({
                   value={saveName}
                   onChange={(e) => setSaveName(e.target.value)}
                   placeholder="My Contribution Form"
-                  className="bg-white border-[#7dd87d]/30"
+                  className="bg-white border-[#7dd87d]/60"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -1426,7 +1426,7 @@ export default function CrowdPoolingTool({
                             value={contribution.category}
                             onValueChange={(value) => updateImmediateContribution(contribution.id, 'category', value)}
                           >
-                            <SelectTrigger aria-labelledby={`imm-cat-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/30">
+                            <SelectTrigger aria-labelledby={`imm-cat-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/60">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className="max-h-60">
@@ -1451,7 +1451,7 @@ export default function CrowdPoolingTool({
                               value={contribution.value || ''}
                               onChange={(e) => updateImmediateContribution(contribution.id, 'value', parseFloat(e.target.value) || 0)}
                               placeholder="Value"
-                              className="pl-7 bg-white border-[#7dd87d]/30 w-full text-base"
+                              className="pl-7 bg-white border-[#7dd87d]/60 w-full text-base"
                             />
                           </div>
                           </div>
@@ -1463,7 +1463,7 @@ export default function CrowdPoolingTool({
                           value={contribution.description}
                           onChange={(e) => updateImmediateContribution(contribution.id, 'description', e.target.value)}
                           placeholder={contribution.category === 'crypto' ? 'USDC, ETH, or other tokens' : `Description (e.g., ${immediateCategories.find(c => c.id === contribution.category)?.description || 'item details'})`}
-                          className="bg-white border-[#7dd87d]/30 w-full"
+                          className="bg-white border-[#7dd87d]/60 w-full"
                         />
                         </div>
                         {contribution.category === 'crypto' && (
@@ -1676,7 +1676,7 @@ export default function CrowdPoolingTool({
                             value={contribution.roleName}
                             onChange={(e) => updateFutureContribution(contribution.id, 'roleName', e.target.value)}
                             placeholder="Role name (e.g., Builder, Gardener, Cook)"
-                            className="bg-white border-[#7dd87d]/30 flex-1"
+                            className="bg-white border-[#7dd87d]/60 flex-1"
                           />
                           <Button
                             variant="ghost"
@@ -1697,7 +1697,7 @@ export default function CrowdPoolingTool({
                               value={contribution.weeks || ''}
                               onChange={(e) => updateFutureContribution(contribution.id, 'weeks', parseInt(e.target.value) || 0)}
                               placeholder="52"
-                              className="bg-white border-[#7dd87d]/30 w-full text-base px-2"
+                              className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
                             />
                           </div>
                           <div className="min-w-0">
@@ -1708,7 +1708,7 @@ export default function CrowdPoolingTool({
                               value={contribution.hoursPerWeek || ''}
                               onChange={(e) => updateFutureContribution(contribution.id, 'hoursPerWeek', parseInt(e.target.value) || 0)}
                               placeholder="8"
-                              className="bg-white border-[#7dd87d]/30 w-full text-base px-2"
+                              className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
                             />
                           </div>
                           <div className="min-w-0">
@@ -1719,7 +1719,7 @@ export default function CrowdPoolingTool({
                               value={contribution.hourlyRate || ''}
                               onChange={(e) => updateFutureContribution(contribution.id, 'hourlyRate', parseFloat(e.target.value) || 0)}
                               placeholder="40"
-                              className="bg-white border-[#7dd87d]/30 w-full text-base px-2"
+                              className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
                             />
                           </div>
                         </div>
@@ -1730,7 +1730,7 @@ export default function CrowdPoolingTool({
                             value={contribution.capital}
                             onValueChange={(value) => updateFutureCapital(contribution.id, value as CapitalType)}
                           >
-                            <SelectTrigger aria-labelledby={`fut-cap-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/30">
+                            <SelectTrigger aria-labelledby={`fut-cap-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/60">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -1854,7 +1854,7 @@ export default function CrowdPoolingTool({
                 value={saveName}
                 onChange={(e) => setSaveName(e.target.value)}
                 placeholder="My gift map"
-                className="bg-white border-[#7dd87d]/30"
+                className="bg-white border-[#7dd87d]/60"
               />
             </div>
             <div className="flex items-center gap-2">

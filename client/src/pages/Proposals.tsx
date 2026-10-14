@@ -192,19 +192,19 @@ export default function Proposals() {
                       value={title}
                       onChange={e => setTitle(e.target.value)}
                       placeholder="Proposal title"
-                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
                       maxLength={200}
                     />
                     <textarea
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       placeholder="Describe your proposal. What should change and why?"
-                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
+                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
                     />
                     <select
                       value={category}
                       onChange={e => setCategory(e.target.value)}
-                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
+                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
                     >
                       <option value="" className="bg-[#1a472a]">Select category</option>
                       {CATEGORIES.map(c => (
@@ -214,7 +214,7 @@ export default function Proposals() {
                     <select
                       value={templateType}
                       onChange={e => setTemplateType(e.target.value)}
-                      className="w-full bg-white/10 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
+                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
                     >
                       <option value="" className="bg-[#1a472a]">Template type (optional)</option>
                       {TEMPLATE_TYPES.map(t => (
@@ -259,7 +259,7 @@ export default function Proposals() {
             <select
               value={categoryFilter}
               onChange={e => setCategoryFilter(e.target.value)}
-              className="bg-white/10 border border-white/20 text-white rounded-lg px-3 py-1.5 text-sm outline-none"
+              className="bg-white/10 border border-white/45 text-white rounded-lg px-3 py-1.5 text-sm outline-none"
             >
               <option value="" className="bg-[#1a472a]">All Categories</option>
               {CATEGORIES.map(c => (
@@ -269,7 +269,7 @@ export default function Proposals() {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
-              className="bg-white/10 border border-white/20 text-white rounded-lg px-3 py-1.5 text-sm outline-none"
+              className="bg-white/10 border border-white/45 text-white rounded-lg px-3 py-1.5 text-sm outline-none"
             >
               <option value="" className="bg-[#1a472a]">All Statuses</option>
               {STATUS_OPTIONS.map(s => (

@@ -142,21 +142,23 @@ Every `FIXES_TO_MAKE_*.md` CLAUDE CODE row needs an Evidence column (file:line, 
 Any change to a screen people see gets a harness story (`harness/stories.tsx`) and passes the audit before it ships:
 
 ```bash
-pnpm ui:audit <story> [<story> ...]   # no names: every story
+pnpm ui:audit <story> [<story> ...]   # no names: every story (the audit-selftest story only runs when named)
+pnpm ui:audit audit-selftest          # must FAIL, once per check: proves each check still bites
+pnpm ui:audit:live --base http://localhost:3202 --as user|admin [--only /path]   # the running app, route by route
 ```
 
-`harness/audit.mjs` renders each story at 1280 and 390 wide, in the theme the app really uses (public pages `html.dark`, admin light), and fails on: text contrast under WCAG AA (4.5:1, or 3:1 for large text) measured against the real background, placeholders and typed text under 4.5:1, field outlines under 3:1 (WCAG 1.4.11), touch targets under 44px (links inside a sentence are exempt), sideways scroll, and page errors. Screenshots land in `harness/shots/` (gitignored); look at them too, because the numbers cannot judge hierarchy or layout. ADR-73 has the history.
+The checks live in `harness/audit-checks.mjs`; `harness/audit.mjs` runs them on stories and `harness/audit-live.mjs` on every route of the running app (public routes from `shared/appRoutes.ts`, every Admin tab and `/admin/*` page), both at 1280 wide and as a 390-wide touch phone, in the theme the app really uses (public pages `html.dark`, admin light). They fail on: text contrast under WCAG AA (4.5:1, or 3:1 for large text) against the real background; placeholders and typed text under 4.5:1; field outlines under 3:1 (WCAG 1.4.11); targets under 44px on touch and 24px for a mouse (links inside a sentence exempt); a control with no visible keyboard focus, or a focus ring under 3:1 (WCAG 2.4.7); a link in running text marked by colour alone, or a chosen toggle, tab or chip that differs from its siblings by colour alone (WCAG 1.4.1); sideways scroll; and page errors or the error screen. Screenshots land in `harness/shots/` (gitignored); look at them too, because the numbers cannot judge hierarchy or layout. The live run writes `harness/shots/live/<as>.md`, with findings on most pages grouped as site-wide (the shared chrome). Run the live audit only against a local server on the scratch database (memory `project_regen_scratch_db`, never `.env`), signed in with a session minted from a local JWT secret. ADR-73 has the history.
 
 **The loop. The audit improves every time something slips past it.** When a UI problem reaches Rye, a screenshot, an end-to-end run, or production without the audit catching it:
 
 1. Fix the problem.
-2. Ask why the audit missed it, and teach `harness/audit.mjs` to catch that whole class of problem (a new check, a wrong exemption, a theme or state the story did not reproduce). Add a story or a `BEFORE` step for the state where it showed up (after a failed send, signed in, dark theme, mid-scroll).
-3. Run the audit on the old code or story: the new check has to fail it before your fix and pass after. A check that has never failed is unproven.
+2. Ask why the audit missed it, and teach `harness/audit-checks.mjs` to catch that whole class of problem (a new check, a wrong exemption, a theme or state the story did not reproduce). Add a story or a `BEFORE` step for the state where it showed up (after a failed send, signed in, dark theme, mid-scroll).
+3. Prove it: add the bad case to the `audit-selftest` story (beside a good one) and run it; the new check has to fail the bad case and pass the good one. A check that has never failed is unproven.
 4. Write one line about the miss in the check's comment, so the next agent knows what it guards.
 
-Misses the audit learned from so far: oklab gradients read as white, scroll-reveal sections measured at opacity 0, typed text never measured, field outlines unchecked, stories rendered without the app's `dark` class. Not yet covered and worth adding next: focus-visible rings on every control, colour used as the only signal, reading order on narrow screens, and text clipped by fixed heights.
+Misses the audit learned from so far: oklab gradients read as white; scroll-reveal sections measured at opacity 0; typed text never measured; field outlines unchecked; stories rendered without the app's `dark` class; a hidden outline's colour change counted as visible focus; tabbing from the top of the harness never reached the story; 44px applied to mouse targets buried real problems; a button wrapped in a link counted as a sentence link; phone runs without touch skipped the site's pointer-coarse sizing. Not yet covered and worth adding next: reading order on narrow screens, and text clipped by fixed heights.
 
-Keep a real end-to-end pass on a local server against the scratch database (memory `project_regen_scratch_db`, never `.env`) for any new flow. The harness renders components with canned data; it cannot see pop-ups, browser form validation or theme overrides that only appear in the running app, and each one found there goes back into the loop above.
+Keep a real end-to-end pass on a local server against the scratch database for any new flow. The harness renders components with canned data; it cannot see pop-ups, browser form validation or theme overrides that only appear in the running app, and each one found there goes back into the loop above.
 
 ## Key constraints, writing, voice
 

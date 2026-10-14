@@ -35,7 +35,7 @@ export function LandProjectVoteField({
             const found = picks.find((p) => String(p.id) === e.target.value);
             if (found) onPick(found);
           }}
-          className="mb-2 w-full min-h-11 rounded-xl border border-white/20 bg-[#0d2818] px-4 py-2 text-base text-white focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
+          className="mb-2 w-full min-h-11 rounded-xl border border-white/45 bg-[#0d2818] px-4 py-2 text-base text-white focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
         >
           <option value="">Pick your project</option>
           {picks.map((p) => (
@@ -53,7 +53,7 @@ export function LandProjectVoteField({
         onBlur={onBlur}
         placeholder="Project name"
         aria-label="Your land project"
-        className="min-h-11 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-base text-white placeholder-white/40 focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
+        className="min-h-11 w-full rounded-xl border border-white/45 bg-white/10 px-4 py-2 text-base text-white placeholder-white/40 focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
       />
       <Link
         href="/apply"
