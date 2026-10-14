@@ -405,10 +405,11 @@ function defaultStages(week: number): BoardStage[] {
 /**
  * Week 3's deck: ONE constant holds the Google Slides file and the table of
  * slide numbers to page ids. This is the clean Week 3 copy, "PART 2 NEEDS,
- * Week 3 (Season 2)" (Rye, 2026-10-13), shared by link: 35 slides. Slides 1 to
+ * Week 3 (Season 2)" (Rye, 2026-10-13), shared by link: 36 slides. Slides 1 to
  * 3 are new (the two-part framing, where answers go, why this matters now);
- * 4 to 35 are the original deck's slides in their original order, which kept
- * their page ids in the copy. A link opens
+ * 4 to 36 are the original deck's slides in their original order, which kept
+ * their page ids in the copy, except 18 (the original 22, "Why are we
+ * inside?", pasted back in on 2026-10-14, which took a new id). A link opens
  * https://docs.google.com/presentation/d/<fileId>/edit#slide=id.<pageId>.
  */
 export const WEEK3_DECK = {
@@ -431,24 +432,25 @@ export const WEEK3_DECK = {
     15: "g22bfe7ee262_5_0", // was 14
     16: "g22bfe7ee262_0_294", // was 15
     17: "g22bfe7ee262_0_478", // was 19
-    18: "g22bfe7ee262_0_919", // was 23
-    19: "g22bfe7ee262_0_965", // was 24
-    20: "g22bfe7ee262_0_620", // was 26
-    21: "g22bfe7ee262_0_639", // was 28
-    22: "g22bfe7ee262_0_1016", // was 35
-    23: "g22bfe7ee262_0_1104", // was 37
-    24: "g22bfe7ee262_0_1159", // was 38
-    25: "g22bfe7ee262_0_1224", // was 39
-    26: "g22bfe7ee262_0_1261", // was 40
-    27: "g22bfe7ee262_0_1378", // was 41
-    28: "g22bfe7ee262_0_1440", // was 42
-    29: "g22bfe7ee262_0_1502", // was 43
-    30: "g22bfe7ee262_0_1533", // was 44
-    31: "g22bfe7ee262_0_1612", // was 46
-    32: "g22bfe7ee262_0_1777", // was 47
-    33: "g22bfe7ee262_0_1849", // was 50
-    34: "g22bfe7ee262_0_2276", // was 56
-    35: "g22bfe7ee262_0_2345", // was 57
+    18: "h7b4cdac3707b58bd_3_0", // was 22: Why are we inside? (Jack Schwartz)
+    19: "g22bfe7ee262_0_919", // was 23
+    20: "g22bfe7ee262_0_965", // was 24
+    21: "g22bfe7ee262_0_620", // was 26
+    22: "g22bfe7ee262_0_639", // was 28
+    23: "g22bfe7ee262_0_1016", // was 35
+    24: "g22bfe7ee262_0_1104", // was 37
+    25: "g22bfe7ee262_0_1159", // was 38
+    26: "g22bfe7ee262_0_1224", // was 39
+    27: "g22bfe7ee262_0_1261", // was 40
+    28: "g22bfe7ee262_0_1378", // was 41
+    29: "g22bfe7ee262_0_1440", // was 42
+    30: "g22bfe7ee262_0_1502", // was 43
+    31: "g22bfe7ee262_0_1533", // was 44
+    32: "g22bfe7ee262_0_1612", // was 46
+    33: "g22bfe7ee262_0_1777", // was 47
+    34: "g22bfe7ee262_0_1849", // was 50
+    35: "g22bfe7ee262_0_2276", // was 56
+    36: "g22bfe7ee262_0_2345", // was 57
   } as Readonly<Record<number, string>>,
 } as const;
 
@@ -667,7 +669,7 @@ const WEEK_3: BoardStage[] = [
       "Greet people by name. \"Open the board on your own screen and tap your project while we gather.\" Point to the QR.",
       "Say it plainly: this is Part 1 of 2. Today is the big picture, the human needs each project is here to meet. Next week we design your Game in Village OS from today's answers.",
       "Read any \"You asked us to cover\" notes in one breath.",
-      "Press Start at 10:00, never earlier. Moving past the Welcome starts the session clock.",
+      "When you go live, press Start session at the top. Moving between stages never starts the clock, so you can look around first.",
     ],
   },
   {
@@ -824,8 +826,9 @@ const WEEK_3: BoardStage[] = [
   {
     kind: "needs", step: "meet", name: "Who meets each need", short: "Who meets", min: 12, line: "Who meets each seed on your land",
     lede: "A human need can be met by each household on its own ground, by circles of people in roles, by a market, or by one holder for everyone. Play is a fifth way. Each project mixes its own.",
-    slides: [{ n: 17 }, { n: 18 }, { n: 19 }, { n: 21 }, { n: 26 }, { n: 22, also: true }, { n: 20, deeper: true }],
+    slides: [{ n: 17 }, { n: 18 }, { n: 19 }, { n: 20 }, { n: 22 }, { n: 27 }, { n: 23, also: true }, { n: 21, deeper: true }],
     videos: [
+      { label: "Why are we inside? Jack Schwartz (plays on slide 18)", href: slideHref(3, 18) ?? "" },
       { label: "A couple turns their land into a permaculture food forest", href: "https://www.youtube.com/watch?v=6GJFL0MD9fc" },
       { label: "The same food forest at 28 years old", href: "https://www.youtube.com/watch?v=mdi_9o92XcU" },
     ],
@@ -840,17 +843,18 @@ const WEEK_3: BoardStage[] = [
       { key: "pulse-b", title: "How's this landing?", mode: "pick", scope: "room", anonymous: true, options: PULSE, max: 1 },
     ],
     cues: [
-      "Slide 17: every economy is a game, and Monopoly is one. Slide 18: access to land, four ways.",
-      "Slide 19: the same chart with legal structure added. Legal structures come in Weeks 10 and 11.",
-      "Slide 21: water, and \"there is no market for free water.\" Ask: \"Who wins when this human need is met, and who wins when it isn't?\"",
-      "Slide 26: keep human needs out of markets, and let markets carry wants. Read \"the room leans\" back.",
-      "Slide 22 for the power lines if there's time. Slide 20 is on the board as \"go deeper\".",
+      "Slide 17: every economy is a game, and Monopoly is one.",
+      "Slide 18: why are we inside? Play the short Jack Schwartz clip from the slide, then slide 19: access to land, four ways.",
+      "Slide 20: the same chart with legal structure added. Legal structures come in Weeks 10 and 11.",
+      "Slide 22: water, and \"there is no market for free water.\" Ask: \"Who wins when this human need is met, and who wins when it isn't?\"",
+      "Slide 27: keep human needs out of markets, and let markets carry wants. Read \"the room leans\" back.",
+      "Slide 23 for the power lines if there's time. Slide 21 is on the board as \"go deeper\".",
     ],
   },
   {
     kind: "prompt", name: "Who decides", short: "Decides", min: 7, line: "How you decide today, and how you want to",
     lede: "When each household meets its own core human needs on its own ground, shared decisions come up less often and can take their time.",
-    slides: [{ n: 23 }, { n: 24 }],
+    slides: [{ n: 24 }, { n: 25 }],
     prompts: [
       { key: "decide-now", title: "How does your project decide today?", mode: "pick", scope: "project", options: opts(DECIDE_OPTIONS), max: 1 },
       { key: "decide-aim", title: "How do you want to decide?", mode: "pick", scope: "project", options: opts(DECIDE_OPTIONS), max: 1 },
@@ -862,7 +866,7 @@ const WEEK_3: BoardStage[] = [
       },
     ],
     cues: [
-      "Slide 23: the ways to decide, and the \"Vitally\" line. Slide 24: play-based co-creation, \"Love = Diversity of Games\".",
+      "Slide 24: the ways to decide, and the \"Vitally\" line. Slide 25: play-based co-creation, \"Love = Diversity of Games\".",
       "\"A rite or a festival can take the place of a meeting.\"",
       "Run it in 6 minutes if behind.",
     ],
@@ -870,7 +874,7 @@ const WEEK_3: BoardStage[] = [
   {
     kind: "prompt", name: "Circles and players", short: "Circles", min: 8, line: "Your first circles, and the players to start",
     lede: "An economy is people coming together to meet each other's human needs. A whole economy takes enough roles, and enough players to fill them.",
-    slides: [{ n: 25 }, { n: 27 }, { n: 28 }, { n: 31 }],
+    slides: [{ n: 26 }, { n: 28 }, { n: 29 }, { n: 32 }],
     prompts: [
       { key: "circles", title: "Which circles would your project start with? Tap up to four.", mode: "pick", scope: "project", options: opts(CIRCLES), max: 4 },
       { key: "players", title: "We need at least ___ players to start our Game.", mode: "pick", scope: "project", options: opts(PLAYER_COUNTS), max: 1 },
@@ -884,15 +888,15 @@ const WEEK_3: BoardStage[] = [
       },
     ],
     cues: [
-      "Slide 25: when each economy works, and \"an economy is people coming together to help meet each other's needs.\"",
-      "Slide 27: \"We need at least ___ players to start the Infinite Game.\" Slide 28: your own R-Ikigai; say \"what earns tokens\".",
-      "Slide 31: cells that overlap can share and remix.",
+      "Slide 26: when each economy works, and \"an economy is people coming together to help meet each other's needs.\"",
+      "Slide 28: \"We need at least ___ players to start the Infinite Game.\" Slide 29: your own R-Ikigai; say \"what earns tokens\".",
+      "Slide 32: cells that overlap can share and remix.",
     ],
   },
   {
     kind: "prompt", name: "From the centre out", short: "Centre out", min: 5, line: "One economy at the centre, and one rite",
     lede: "A project grows from love, play and flow at its centre, out through trust, roles and markets. People come deeper in through rites of passage.",
-    slides: [{ n: 29 }, { n: 32 }, { n: 33 }, { n: 30, also: true }],
+    slides: [{ n: 30 }, { n: 33 }, { n: 34 }, { n: 31, also: true }],
     prompts: [
       { key: "economies", title: "Which economy should hold most of your project's life?", mode: "pick", scope: "project", options: opts(ECONOMIES), max: 1 },
       {
@@ -903,18 +907,18 @@ const WEEK_3: BoardStage[] = [
       },
     ],
     cues: [
-      "Slide 29: membranes, from tokens in to love, play and flow. Slide 32: rites carry people inward. Slide 33: soul, gift, role, market.",
+      "Slide 30: membranes, from tokens in to love, play and flow. Slide 33: rites carry people inward. Slide 34: soul, gift, role, market.",
       "Rhyme it with the site's own Rite of Passage quests, and Visitor, Friend, Citizen, Steward.",
-      "Past 11:30: slide 33 and the economies tap only, 1 minute. Slide 30 only if there's time. If \"R-Tokens\" comes up, say $ReGen.",
+      "Past 11:30: slide 34 and the economies tap only, 1 minute. Slide 31 only if there's time. If \"R-Tokens\" comes up, say $ReGen.",
     ],
   },
   {
     kind: "needs", step: "room", name: "Your project in one breath", short: "One breath", min: 8, line: "Each project reads what it's for",
     lede: "Each project reads what it's for, in about a minute. The rest of us listen and send thanks in the chat.",
-    slides: [{ n: 34 }],
+    slides: [{ n: 35 }],
     prompts: [{ ref: "purpose", title: "Polish your first line. All this is for ___", hint: "This is the line your project reads aloud." }],
     cues: [
-      "Switch the share from the deck to the board. Slide 34 can sit behind it: \"The map is not the territory.\"",
+      "Switch the share from the deck to the board. Slide 35 can sit behind it: \"The map is not the territory.\"",
       "Each project gets the floor for about a minute. Thanks go in the chat; read a few aloud.",
       "More than 8 projects: 30 seconds each.",
     ],
@@ -922,7 +926,7 @@ const WEEK_3: BoardStage[] = [
   {
     kind: "prompt", name: "Your questions, and next week", short: "Questions", min: 9, line: "Questions answered, and one move before Week 4",
     lede: "Let's take your questions. Then each project names one move before Week 4, when we build all of this in Village OS.",
-    slides: [{ n: 35 }],
+    slides: [{ n: 36 }],
     pictures: [
       { src: "/season2/week3/clarity-resources.jpg", alt: "Clarity and Resources: a tree of light with branches for the ReGen Game framework, legal, organisation, the fund, the crowdpooling platform and the accelerator", caption: WHERE_GOING.pieces },
       { src: "/season2/week3/bridging-worlds.jpg", alt: "Bridging Worlds: a stone bridge across a chasm, from a smoky city to a green village", caption: WHERE_GOING.together },
@@ -941,7 +945,7 @@ const WEEK_3: BoardStage[] = [
     ],
     cues: [
       "Share the wall. Answer the top questions and tap \"Answered\" on each.",
-      "Slide 35: today was step 2 of the box, patterns of co-creation. Next week is step 4: membranes, circles, roles and quests, in Village OS.",
+      "Slide 36: today was step 2 of the box, patterns of co-creation. Next week is step 4: membranes, circles, roles and quests, in Village OS.",
       "Legal is Weeks 10 and 11. Crowd pooling is Week 13, in one line.",
       "Close on the big picture: the Clarity + Resources picture, then Bridging Worlds. One aim of all this design is that each project can network with others and that supporters and funders can understand it and back it. We build that path together, one piece each week. The cooperative is in design: not yet a legal entity, and it accepts no money.",
       "Each project names one move. Read the \"set up next week\" picks: that's Week 4's agenda.",
@@ -1439,7 +1443,9 @@ export type BoardAction =
 
 /**
  * Apply one facilitator action at server time `now`. Pure: the caller stores
- * the result. Moving past the welcome starts the session clock if nobody has.
+ * the result. Only "startSession" starts the session clock (Rye, 2026-10-14:
+ * a facilitator clicking through the stages before going live started it twice,
+ * so moving stages and running the breath no longer do).
  */
 export function applyBoardAction(state: BoardState, action: BoardAction, now: number): BoardState {
   const s: BoardState = {
@@ -1456,7 +1462,6 @@ export function applyBoardAction(state: BoardState, action: BoardAction, now: nu
         s.stage = stage;
         s.stageStartedAt = now;
       }
-      if (!s.sessionStartedAt && stage >= 1) s.sessionStartedAt = now;
       return s;
     }
     case "startSession":
@@ -1486,7 +1491,6 @@ export function applyBoardAction(state: BoardState, action: BoardAction, now: nu
       if (action.rounds != null) s.breath.rounds = Math.min(20, Math.max(1, Math.round(action.rounds)));
       if (action.run === true) {
         s.breath.startedAt = now;
-        if (!s.sessionStartedAt) s.sessionStartedAt = now;
       } else if (action.run === false) {
         s.breath.startedAt = null;
       }

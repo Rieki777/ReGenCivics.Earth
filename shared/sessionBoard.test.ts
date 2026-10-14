@@ -189,14 +189,17 @@ describe("the facilitator's actions", () => {
   const t0 = 1_800_000_000_000;
   const base = defaultBoardState(2);
 
-  it("going past the welcome starts the session clock once", () => {
+  it("moving between stages never starts the session clock; only Start does (Rye, 2026-10-14)", () => {
     const a = applyBoardAction(base, { type: "go", stage: 1 }, t0);
     expect(a.stage).toBe(1);
     expect(a.stageStartedAt).toBe(t0);
-    expect(a.sessionStartedAt).toBe(t0);
+    expect(a.sessionStartedAt).toBeNull();
     const b = applyBoardAction(a, { type: "go", stage: 3 }, t0 + 60_000);
-    expect(b.sessionStartedAt).toBe(t0);
+    expect(b.sessionStartedAt).toBeNull();
     expect(b.stageStartedAt).toBe(t0 + 60_000);
+    const started = applyBoardAction(b, { type: "startSession" }, t0 + 90_000);
+    expect(started.sessionStartedAt).toBe(t0 + 90_000);
+    expect(applyBoardAction(started, { type: "go", stage: 5 }, t0 + 120_000).sessionStartedAt).toBe(t0 + 90_000);
   });
 
   it("clamps the stage to the board", () => {
@@ -226,7 +229,7 @@ describe("the facilitator's actions", () => {
   it("changing the breath pattern stops the breath; running stamps it", () => {
     let s = applyBoardAction(base, { type: "breath", run: true }, t0);
     expect(s.breath.startedAt).toBe(t0);
-    expect(s.sessionStartedAt).toBe(t0);
+    expect(s.sessionStartedAt).toBeNull();
     s = applyBoardAction(s, { type: "breath", pattern: "box" }, t0 + 5_000);
     expect(s.breath).toMatchObject({ pattern: "box", startedAt: null });
   });
@@ -534,7 +537,7 @@ describe("week 3: What your project is for (Rye, 2026-10-13)", () => {
   it("slides use the clean deck's numbers, and every one is in the deck's table", () => {
     const pages = WEEK3_DECK.pages;
     const numbers = Object.keys(pages).map(Number);
-    expect(numbers).toEqual(Array.from({ length: 35 }, (_, i) => i + 1));
+    expect(numbers).toEqual(Array.from({ length: 36 }, (_, i) => i + 1));
     const ids = Object.values(pages);
     expect(new Set(ids).size).toBe(ids.length);
     for (const s of stages) for (const ref of s.slides ?? []) expect(pages[ref.n], `${s.name} slide ${ref.n}`).toBeTruthy();
@@ -546,13 +549,14 @@ describe("week 3: What your project is for (Rye, 2026-10-13)", () => {
     expect(on("What your project is for")).toEqual([6]);
     expect(on("How deep, how wide")).toEqual([7, 8, 13]);
     expect(on("Living ways")).toEqual([9, 11, 14, 15, 16]);
-    // 18 is the land chart; 19 is its legal-structure build step (Rye kept it, legal box removed).
-    expect(on("Who meets each need")).toEqual([17, 18, 19, 21, 26]);
-    expect(on("Who decides")).toEqual([23, 24]);
-    expect(on("Circles and players")).toEqual([25, 27, 28, 31]);
-    expect(on("From the centre out")).toEqual([29, 32, 33]);
-    expect(on("Your project in one breath")).toEqual([34]);
-    expect(on("Your questions, and next week")).toEqual([35]);
+    // 18 is "Why are we inside?" (the original 22, back in on 2026-10-14); 19 is the land chart;
+    // 20 is its legal-structure build step (Rye kept it, legal box removed).
+    expect(on("Who meets each need")).toEqual([17, 18, 19, 20, 22, 27]);
+    expect(on("Who decides")).toEqual([24, 25]);
+    expect(on("Circles and players")).toEqual([26, 28, 29, 32]);
+    expect(on("From the centre out")).toEqual([30, 33, 34]);
+    expect(on("Your project in one breath")).toEqual([35]);
+    expect(on("Your questions, and next week")).toEqual([36]);
     // The clean copy has every slide: no placeholder is left.
     for (const id of ids) expect(isPlaceholderSlideId(id), id).toBe(false);
   });
@@ -567,7 +571,7 @@ describe("week 3: What your project is for (Rye, 2026-10-13)", () => {
     expect(slideHref(2, 1)).toBeNull();
     const living = stageSlides(3, stages[8]);
     expect(living.filter((s) => s.also).map((s) => s.n)).toEqual([10, 12]);
-    expect(stageSlides(3, stages[9]).find((s) => s.deeper)?.n).toBe(20);
+    expect(stageSlides(3, stages[9]).find((s) => s.deeper)?.n).toBe(21);
   });
 
   it("answers and questions are kinds of row; only notes go through addItem", () => {
