@@ -2,7 +2,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Globe } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { getLanguageInfo } from '@/lib/i18n';
-import { triggerGoogleTranslate, resetGoogleTranslate } from '@/components/GoogleTranslate';
+import { triggerGoogleTranslate, resetGoogleTranslate, loadGoogleTranslate } from '@/components/GoogleTranslate';
 
 export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   const { language, setLanguage, languages } = useLanguage();
@@ -23,7 +23,12 @@ export function LanguageSwitcher({ compact = false }: { compact?: boolean }) {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          // Fetch Google Translate as the menu opens, so it is ready by the
+          // time a language is picked. Nobody else pays for it.
+          if (!isOpen) void loadGoogleTranslate();
+          setIsOpen(!isOpen);
+        }}
         className={`flex items-center gap-1.5 rounded-full transition-all duration-200 hover:bg-white/10 ${
           compact 
             ? 'p-1.5 text-sm' 

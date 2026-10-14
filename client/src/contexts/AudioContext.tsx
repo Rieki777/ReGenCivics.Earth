@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useRef, useState, useEffect, useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useLocation } from 'wouter'
 import { indexFromSlug } from '@/utils/songSlug'
 
@@ -89,11 +89,43 @@ interface AudioContextValue {
   seek: (t: number) => void
 }
 
-const AudioCtx = createContext<AudioContextValue | null>(null)
+// The play position, kept out of the context value. 'timeupdate' fires ~4x/s
+// while music plays, and with the time in the value every useAudio()
+// component (nav bars, menus, whole pages) re-rendered on each tick.
+// useAudio() below subscribes a component only once it reads `currentTime`.
+interface TimeStore {
+  get: () => number
+  set: (t: number) => void
+  subscribe: (onChange: () => void) => () => void
+}
+
+function createTimeStore(initial: number): TimeStore {
+  let time = initial
+  const listeners = new Set<() => void>()
+  return {
+    get: () => time,
+    set: (t) => {
+      if (t === time) return
+      time = t
+      listeners.forEach(l => l())
+    },
+    subscribe: (onChange) => {
+      listeners.add(onChange)
+      return () => { listeners.delete(onChange) }
+    },
+  }
+}
+
+type AudioCtxValue = Omit<AudioContextValue, 'currentTime'> & { timeStore: TimeStore }
+
+const AudioCtx = createContext<AudioCtxValue | null>(null)
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const persisted = typeof window !== 'undefined' ? loadPersisted() : null
+  // Read once: it only seeds initial state, and the provider re-renders on
+  // every playback tick.
+  const [persisted] = useState(() => typeof window !== 'undefined' ? loadPersisted() : null)
+  const [timeStore] = useState(() => createTimeStore(persisted?.time ?? 0))
   const [currentIndex, setCurrentIndex] = useState(persisted?.index ?? 0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isBuffering, setIsBuffering] = useState(false)
@@ -123,7 +155,10 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       errorChainRef.current = 0
       setCurrentIndex(i => (i + 1) % PLAYLIST.length)
     })
-    audio.addEventListener('timeupdate', () => setCurrentTime(audio.currentTime))
+    audio.addEventListener('timeupdate', () => {
+      setCurrentTime(audio.currentTime)
+      timeStore.set(audio.currentTime)
+    })
     audio.addEventListener('durationchange', () => setDuration(audio.duration))
     // Keep React state in sync with the element itself so playback started
     // or paused OUTSIDE our buttons (lock screen, control center, headset
@@ -290,7 +325,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     // Reflect the jump immediately instead of waiting for 'timeupdate',
     // so the seek bar doesn't snap back for a frame after a drag.
     setCurrentTime(t)
-  }, [])
+    timeStore.set(t)
+  }, [timeStore])
 
   const playSong = useCallback((index: number) => {
     hasInteracted.current = true
@@ -385,21 +421,51 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } catch { /* progressive enhancement */ }
   }, [duration, currentTime])
 
+  // Memoized so a provider render that changes none of these (a playback
+  // tick, a route change) does not re-render every useAudio() component.
+  const value = useMemo(() => ({
+    isPlaying, isBuffering, currentSong: PLAYLIST[currentIndex], currentIndex,
+    playlist: PLAYLIST,
+    togglePlay, nextSong, prevSong, playSong, playSongBySlug, queueSongBySlug,
+    volume, setVolume, muted, toggleMute,
+    duration, seek, timeStore,
+  }), [
+    isPlaying, isBuffering, currentIndex,
+    togglePlay, nextSong, prevSong, playSong, playSongBySlug, queueSongBySlug,
+    volume, setVolume, muted, toggleMute,
+    duration, seek, timeStore,
+  ])
+
   return (
-    <AudioCtx.Provider value={{
-      isPlaying, isBuffering, currentSong: PLAYLIST[currentIndex], currentIndex,
-      playlist: PLAYLIST,
-      togglePlay, nextSong, prevSong, playSong, playSongBySlug, queueSongBySlug,
-      volume, setVolume, muted, toggleMute,
-      duration, currentTime, seek,
-    }}>
+    <AudioCtx.Provider value={value}>
       {children}
     </AudioCtx.Provider>
   )
 }
 
-export function useAudio() {
+export function useAudio(): AudioContextValue {
   const ctx = useContext(AudioCtx)
   if (!ctx) throw new Error('useAudio must be used within AudioProvider')
-  return ctx
+  const { timeStore } = ctx
+  // Set the first time this component reads `currentTime` while rendering.
+  // Until then a tick doesn't wake it, so a nav bar that only shows
+  // play/pause skips the ~4x/s re-render; the seek bars still tick.
+  const readsTimeRef = useRef(false)
+  const subscribe = useCallback(
+    (onChange: () => void) => timeStore.subscribe(() => {
+      if (readsTimeRef.current) onChange()
+    }),
+    [timeStore],
+  )
+  const currentTime = useSyncExternalStore(subscribe, timeStore.get)
+  return useMemo(() => {
+    const { timeStore: _timeStore, ...rest } = ctx
+    return {
+      ...rest,
+      get currentTime() {
+        readsTimeRef.current = true
+        return currentTime
+      },
+    }
+  }, [ctx, currentTime])
 }

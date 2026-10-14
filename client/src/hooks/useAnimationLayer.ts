@@ -7,6 +7,8 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { addsElements } from "@/lib/addsElements";
+import { watchTyping } from "@/lib/stillWhileTyping";
 
 // ─────────────────────────────────────────────────────────────
 // Shared helpers
@@ -36,6 +38,14 @@ export function useSeasonalTheme() {
     const season = getSeason();
     document.documentElement.setAttribute("data-season", season);
   }, []);
+}
+
+// ─────────────────────────────────────────────────────────────
+// Decorative motion holds still while someone types (lib/stillWhileTyping)
+// ─────────────────────────────────────────────────────────────
+
+export function useStillWhileTyping() {
+  useEffect(() => watchTyping(), []);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -146,8 +156,8 @@ export function useInkReveal() {
     // route changes swap the whole tree, so most .ink-reveal elements mount
     // long after this effect runs. Watch for them instead of scanning once.
     let queued = false;
-    const mo = new MutationObserver(() => {
-      if (queued) return;
+    const mo = new MutationObserver((mutations) => {
+      if (queued || !addsElements(mutations)) return;
       queued = true;
       window.setTimeout(() => {
         queued = false;
@@ -224,21 +234,22 @@ export function useGlobalMagnetic() {
     const onMove = (ev: PointerEvent) => {
       if (rafId) return;
       rafId = window.requestAnimationFrame(() => {
-        for (const el of targets) {
-          const rect = el.getBoundingClientRect();
+        // Read every rect before writing any transform: a write between two
+        // reads makes the browser restyle again for the next read.
+        const rects = targets.map((el) => el.getBoundingClientRect());
+        targets.forEach((el, i) => {
+          const rect = rects[i];
           const cx = rect.left + rect.width / 2;
           const cy = rect.top + rect.height / 2;
           const dx = ev.clientX - cx;
           const dy = ev.clientY - cy;
           const dist = Math.sqrt(dx * dx + dy * dy);
           const radius = Math.max(rect.width, rect.height) * 0.9;
-          if (dist > radius) {
-            el.style.transform = "translate(0px, 0px)";
-          } else {
-            const strength = 0.18;
-            el.style.transform = `translate(${dx * strength}px, ${dy * strength}px)`;
-          }
-        }
+          const next = dist > radius
+            ? "translate(0px, 0px)"
+            : `translate(${dx * 0.18}px, ${dy * 0.18}px)`;
+          if (el.style.transform !== next) el.style.transform = next;
+        });
         rafId = 0;
       });
     };

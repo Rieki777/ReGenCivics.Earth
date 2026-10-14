@@ -17,6 +17,7 @@
  *   colour only   links in running text need a cue besides colour, and a
  *                 chosen toggle, tab or chip must differ from its siblings by
  *                 more than colour (WCAG 1.4.1)
+ *   main thread   no endless animation the compositor cannot run (typing lag)
  */
 
 /** Installs window.__audit in the page: colour maths and the page-side checks. */
@@ -275,6 +276,52 @@ export function installAuditLib() {
     // Sideways scroll.
     const over = document.documentElement.scrollWidth - document.documentElement.clientWidth;
     if (over > 1) failures.push(`page scrolls sideways by ${over}px`);
+
+    // Endless animations the compositor cannot run. Each one makes the browser
+    // restyle and repaint on the main thread every frame, forever, and every
+    // keystroke on the page waits behind that work. Only transform, opacity and
+    // filter on an ordinary element run off the main thread; a shape inside an
+    // SVG never does. Miss that taught this: the mycelium background pulsed 21
+    // SVG shapes on every page, Google Translate's hidden spinner turned
+    // forever, and CTA, role-card and badge glows animated background-position
+    // and box-shadow, so typing took 50 to 100ms per key on a mid-range phone
+    // and nothing here looked at motion (2026-10-14).
+    const COMPOSITED = new Set(["opacity", "transform", "translate", "rotate", "scale", "filter", "backdrop-filter", "offset-distance", "offset-rotate"]);
+    const animSeen = new Set();
+    for (const a of document.getAnimations ? document.getAnimations() : []) {
+      const effect = a.effect;
+      const target = effect && effect.target;
+      if (a.playState !== "running" || !target || !root.contains(target)) continue;
+      if (effect.getComputedTiming().endTime !== Infinity) continue;
+      const props = new Set();
+      for (const kf of effect.getKeyframes()) {
+        for (const k of Object.keys(kf)) {
+          if (!["offset", "computedOffset", "easing", "composite"].includes(k)) props.add(k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase()));
+        }
+      }
+      const svgShape = target instanceof SVGElement && !(target instanceof SVGSVGElement);
+      const slow = [...props].filter((p) => !COMPOSITED.has(p));
+      // A blur or drop-shadow filter moves pixels, and Chrome keeps that
+      // animation on the main thread too.
+      if (effect.getKeyframes().some((kf) => /blur\(|drop-shadow\(/.test(String(kf.filter || "") + String(kf.backdropFilter || "")))) slow.push("a blur or drop-shadow filter");
+      if (!svgShape && !slow.length) continue;
+      const name = a.animationName || a.transitionProperty || "animation";
+      const where = `${target.tagName.toLowerCase()}${target.getAttribute("class") ? "." + target.getAttribute("class").trim().split(/\s+/).slice(0, 2).join(".") : ""}`;
+      const why = svgShape ? "a shape inside an SVG" : slow.join(", ");
+      const msg = `main thread: endless "${name}" on ${where} animates ${why}; use transform or opacity on an ordinary element`;
+      if (animSeen.has(msg)) continue;
+      animSeen.add(msg);
+      failures.push(msg);
+    }
+    // SVG's own <animate> (SMIL) never leaves the main thread either, and
+    // document.getAnimations() does not list it.
+    for (const el of root.querySelectorAll("animate, animateTransform, animateMotion, set")) {
+      if (el.getAttribute("repeatCount") !== "indefinite" && el.getAttribute("repeatDur") !== "indefinite") continue;
+      const msg = `main thread: endless SVG <${el.tagName}> on ${el.getAttribute("attributeName") || "its path"}; draw it still, or move an ordinary element with a CSS transform`;
+      if (animSeen.has(msg)) continue;
+      animSeen.add(msg);
+      failures.push(msg);
+    }
     return failures;
   }
 

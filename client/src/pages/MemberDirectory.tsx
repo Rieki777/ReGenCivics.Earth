@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
 import { BackButton } from "@/components/BackButton";
 import { resolveAssetUrl } from "@/lib/utils";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const FOCUS_AREAS = ["Land", "Water", "Energy", "Food", "Governance", "Culture", "Finance"];
 
@@ -174,12 +175,18 @@ export default function MemberDirectory() {
   const [cursor, setCursor] = useState(0);
   const LIMIT = 24;
 
-  const { data, isLoading } = trpc.userProfiles.list.useQuery({
-    search: search.trim() || undefined,
-    interests: selectedInterest ?? undefined,
-    limit: LIMIT,
-    cursor,
-  });
+  // Search once typing pauses, not on every key, and keep the current cards
+  // on screen while the next results load.
+  const debouncedSearch = useDebouncedValue(search, 250);
+  const { data, isLoading } = trpc.userProfiles.list.useQuery(
+    {
+      search: debouncedSearch.trim() || undefined,
+      interests: selectedInterest ?? undefined,
+      limit: LIMIT,
+      cursor,
+    },
+    { placeholderData: (prev) => prev },
+  );
 
   const members = data?.members ?? [];
   const nextCursor = data?.nextCursor ?? null;

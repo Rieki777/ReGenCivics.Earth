@@ -19,7 +19,7 @@
  * { title, capitalType, kind, hoursPerWeek?, weeks?, estimatedValue, rationale }.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -91,7 +91,9 @@ function formatMoney(amount: number, symbol: string): string {
   return `${symbol}${Math.round(amount).toLocaleString()}`;
 }
 
-export function DesignCompanion({
+// Memoized: the campaign creator re-renders on every key in its detail
+// fields, and most of them never reach the draft this panel reads.
+export const DesignCompanion = memo(function DesignCompanion({
   open,
   onOpenChange,
   draft,
@@ -181,7 +183,8 @@ export function DesignCompanion({
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history, suggestions, pending, errored]);
 
-  const localCoverage = analyzeCoverage(draft.needs);
+  // Coverage changes only with the needs, not with the text fields.
+  const localCoverage = useMemo(() => analyzeCoverage(draft.needs), [draft.needs]);
   const fallbackGaps = errored ? recommendGaps(localCoverage, { max: 3 }) : [];
 
   return (
@@ -337,7 +340,7 @@ export function DesignCompanion({
       </SheetContent>
     </Sheet>
   );
-}
+});
 
 /** A single add-able suggestion. Adds only when tapped; never automatically. */
 function SuggestionCard({

@@ -33,7 +33,11 @@ const routeFiles = [join(srcDir, "App.tsx"), join(srcDir, "pages/core/CoreApp.ts
 
 // --- Allowlist: links that are known-acceptable and should not fail the gate.
 // Keep this short and justified. Each entry is matched against the raw link.
-const ALLOW = [];
+const ALLOW = [
+  // A calendar feed, served by Express (server/routes/calendarFeed.ts), not a
+  // client <Route>; production answers it with text/calendar (2026-10-14).
+  "/calendar/interop-circle.ics",
+];
 
 // --- 1. Build the route table from every route tree's <Route path="..."> decls.
 const staticRoutes = new Set();

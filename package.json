@@ -33,6 +33,7 @@
     "ui:shots": "node harness/shoot.mjs",
     "ui:audit": "node harness/audit.mjs",
     "ui:audit:live": "node harness/audit-live.mjs",
+    "perf:typing": "node harness/typing-bench.mjs",
     "gate": "node scripts/gate.mjs",
     "check:foundations": "node scripts/check-migration-numbers.mjs && node scripts/check-env-example.mjs",
     "preview": "vite preview",

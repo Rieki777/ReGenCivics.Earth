@@ -226,6 +226,20 @@ iPhone Safari is the primary platform. Every user-facing surface (main site, Shi
 
 ---
 
+## 13. Typing stays instant
+
+Adopted 2026-10-14 after people reported typing lag across the site. With the CPU slowed to a mid-range phone's speed, keystrokes took 50 to 100ms, the first one on any page about 350ms while Google Translate loaded, and about 330ms each in a forum reply box under 40 replies. Nothing in the JavaScript was slow on its own; the main thread was busy with work nobody could see. Five rules keep it fast:
+
+- **No endless animation the compositor cannot run.** Only `transform`, `opacity` and `filter` on an ordinary element animate off the main thread. Never animate a shape inside an SVG, and never animate `background-position`, `box-shadow`, colours or sizes forever: slide a pseudo-element with a transform, or pulse the opacity of a layer that holds a fixed shadow. One such animation anywhere on the page makes the browser restyle every frame, and every keystroke waits behind it. `pnpm ui:audit` fails them ("main thread").
+- **Decorative motion holds still while someone types.** Put purely decorative animation (particles, ambient backgrounds) inside a `.decor-layer`; it pauses while a text field has focus (`client/src/lib/stillWhileTyping.ts`), and a canvas loop checks `isTyping()` and stops when off screen. Even a compositor animation is restyled on the main thread whenever a keystroke forces a style update: the home page's 46 leaves and stars doubled each key's delay.
+- **Third-party scripts load on intent, not on first interaction.** Google Translate loads when the language menu opens. Loading it on everyone's first keypress froze that keystroke for about 300ms and left Google's spinner animating forever.
+- **A field's state lives in the smallest component that needs it.** Typing in a reply box must not re-render the thread, the message list or the page. Move the draft into a composer child, memoize markdown rendering, and never declare components inside render.
+- **Debounce whatever a keystroke triggers beyond the field**: a server query, a storage write, a link preview, a map or list rebuild. Use `useDebouncedValue` (`client/src/hooks/useDebouncedValue.ts`) and keep previous results while the next ones load.
+
+Measure, do not guess: `pnpm perf:typing` types into real fields with the CPU slowed to a mid-range phone's speed and reports each keystroke's delay (`harness/typing-bench.mjs`). Under 50ms per key is the bar.
+
+---
+
 ## What is NOT a hard constraint
 
 The following are preferences, not steering rules. They live in `.ai/docs/DECISIONS.md` (architectural choices) or in skills (process):

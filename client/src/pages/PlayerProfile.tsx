@@ -70,6 +70,7 @@ import { FocusAreaPicker } from '@/components/FocusAreaPicker';
 import { SEO } from '@/components/SEO';
 import { SeedOfLifeIcon } from '@/components/SeedOfLifeIcon';
 import { trpc } from '@/lib/trpc';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
@@ -157,6 +158,19 @@ function BioregionPreviewRow({ bioregionId }: { bioregionId: number }) {
   );
 }
 
+// Progress bar for the profile creation steps. At module scope, so a keystroke
+// in the form doesn't make it a new component and remount it.
+function ProgressBar({ step }: { step: number }) {
+  return (
+    <div className="flex items-center gap-2 mb-6">
+      {[1, 2, 3].map(s => (
+        <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${step >= s ? 'bg-[#7dd87d]' : 'bg-[#1a472a]/10'}`} />
+      ))}
+      <span className="text-xs text-[#1a472a]/75 whitespace-nowrap">Step {step} of 3</span>
+    </div>
+  );
+}
+
 // Profile Creation Form
 function ProfileTransitionAnimation() {
   return (
@@ -194,8 +208,31 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
   });
   const [baseAccountName, setBaseAccountName] = useState(() => sessionStorage.getItem('playerProfileDraft_baseAccountName') ?? '');
 
-  const persist = (key: string, val: string) => sessionStorage.setItem(`playerProfileDraft_${key}`, val);
-  const clearDraft = () => ['displayName', 'role', 'soul', 'desires', 'gifts', 'dreamingOf', 'bioregionId', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
+  // Keep the draft in sessionStorage once typing pauses (500ms), not on every
+  // key. A write still waiting when the form unmounts or the page is hidden
+  // goes out then; clearDraft drops it.
+  const pendingDraftRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const fields = { displayName, role, soul, desires, gifts, dreamingOf, baseAccountName };
+    pendingDraftRef.current = () => {
+      pendingDraftRef.current = null;
+      for (const [key, val] of Object.entries(fields)) sessionStorage.setItem(`playerProfileDraft_${key}`, val);
+    };
+    const timer = setTimeout(() => pendingDraftRef.current?.(), 500);
+    return () => clearTimeout(timer);
+  }, [displayName, role, soul, desires, gifts, dreamingOf, baseAccountName]);
+  useEffect(() => {
+    const flush = () => pendingDraftRef.current?.();
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, []);
+  const clearDraft = () => {
+    pendingDraftRef.current = null;
+    ['displayName', 'role', 'soul', 'desires', 'gifts', 'dreamingOf', 'bioregionId', 'baseAccountName'].forEach(k => sessionStorage.removeItem(`playerProfileDraft_${k}`));
+  };
 
   const createMutation = trpc.playerProfiles.create.useMutation({
     onSuccess: () => {
@@ -226,51 +263,41 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
 
   if (isTransitioning) return <ProfileTransitionAnimation />;
 
-  // Progress bar
-  const ProgressBar = () => (
-    <div className="flex items-center gap-2 mb-6">
-      {[1, 2, 3].map(s => (
-        <div key={s} className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${step >= s ? 'bg-[#7dd87d]' : 'bg-[#1a472a]/10'}`} />
-      ))}
-      <span className="text-xs text-[#1a472a]/75 whitespace-nowrap">Step {step} of 3</span>
-    </div>
-  );
-
   return (
     <div className="space-y-4">
-      <ProgressBar />
+      <ProgressBar step={step} />
 
       {/* Step 1. Who Are You? */}
       {step === 1 && (
         <div className="space-y-5">
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-2 block">Your Name *</label>
-            <Input value={displayName} onChange={e => { setDisplayName(e.target.value); persist('displayName', e.target.value); }} placeholder="Your player name" className={`${LIGHT_CARD_FIELD}`} />
+            <Input value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your player name" className={`${LIGHT_CARD_FIELD}`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your role in this renaissance?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">e.g. Land steward, gardener, builder, artist…</p>
-            <Textarea value={role} onChange={e => { setRole(e.target.value); persist('role', e.target.value); }} placeholder="Land steward, gardener, builder, artist…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
+            <Textarea value={role} onChange={e => setRole(e.target.value)} placeholder="Land steward, gardener, builder, artist…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What's your soul's mission?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">The deeper calling that brought you here…</p>
-            <Textarea value={soul} onChange={e => { setSoul(e.target.value); persist('soul', e.target.value); }} placeholder="The deeper calling that brought you here…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
+            <Textarea value={soul} onChange={e => setSoul(e.target.value)} placeholder="The deeper calling that brought you here…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you looking to get from this ecosystem?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">What would make this worth your time and energy?</p>
-            <Textarea value={desires} onChange={e => { setDesires(e.target.value); persist('desires', e.target.value); }} placeholder="What would make this worth your time and energy?" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
+            <Textarea value={desires} onChange={e => setDesires(e.target.value)} placeholder="What would make this worth your time and energy?" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What would you like to offer the ecosystem?</label>
             <p className="text-xs text-[#1a472a]/75 mb-2">Skills, resources, wisdom, connections…</p>
-            <Textarea value={gifts} onChange={e => { setGifts(e.target.value); persist('gifts', e.target.value); }} placeholder="Skills, resources, wisdom, connections…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
+            <Textarea value={gifts} onChange={e => setGifts(e.target.value)} placeholder="Skills, resources, wisdom, connections…" className={`${LIGHT_CARD_FIELD} min-h-[70px]`} />
             <p className="text-xs text-[#1a472a]/80 mt-1.5">Your gifts and needs will be added to the <a href="/marketplace" className="underline hover:text-[#1a472a]/80">Gifts + Needs Marketplace</a>, where others in the network can find and connect with you.</p>
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What are you dreaming of building or becoming? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
-            <Textarea value={dreamingOf} onChange={e => { setDreamingOf(e.target.value); persist('dreamingOf', e.target.value); }} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals..." className={`${LIGHT_CARD_FIELD} min-h-[60px]`} />
+            <Textarea value={dreamingOf} onChange={e => setDreamingOf(e.target.value)} placeholder="A food forest in the highlands, a new kind of school, a way of living that heals..." className={`${LIGHT_CARD_FIELD} min-h-[60px]`} />
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
@@ -326,7 +353,7 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
                   </PopoverContent>
                 </Popover>
               </div>
-              <Input value={baseAccountName} onChange={e => { setBaseAccountName(e.target.value); persist('baseAccountName', e.target.value); }} placeholder="e.g., 0xaAaF…354e" className={`${LIGHT_CARD_FIELD} font-mono`} />
+              <Input value={baseAccountName} onChange={e => setBaseAccountName(e.target.value)} placeholder="e.g., 0xaAaF…354e" className={`${LIGHT_CARD_FIELD} font-mono`} />
             </div>
             <a href="https://app.hypha.earth/en/network" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-[#7dd87d] hover:underline">
               Create a Hypha account <ExternalLink className="w-3 h-3" />
@@ -2221,9 +2248,11 @@ function OrgClaimsSection({ orgClaims }: { orgClaims: any[] }) {
   const [newThread, setNewThread] = useState<{ name: string; threadId: number } | null>(null);
   const claimMutation = trpc.orgClaims.claim.useMutation();
 
+  // Search once typing pauses, not on every key.
+  const debouncedSearch = useDebouncedValue(searchQuery, 250);
   const { data: searchResults } = trpc.orgClaims.search.useQuery(
-    { q: searchQuery },
-    { enabled: searchQuery.length > 2 }
+    { q: debouncedSearch },
+    { enabled: debouncedSearch.length > 2 }
   );
 
   const handleClaim = async () => {

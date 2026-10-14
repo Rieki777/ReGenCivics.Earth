@@ -24,6 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SEO, pageSEO } from "@/components/SEO";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { trpc } from "@/lib/trpc";
 import { resolveAssetUrl } from "@/lib/utils";
 import React, {
@@ -31,6 +32,7 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
   KeyboardEvent,
 } from "react";
 import { useSearch } from "wouter";
@@ -121,9 +123,12 @@ function ComposeModal({ onClose, onConversationCreated }: ComposeModalProps) {
   const [selectedUserName, setSelectedUserName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
+  // Search once typing pauses rather than on every key, and keep the last
+  // results up while the next ones load.
+  const debouncedName = useDebouncedValue(nameInput, 250);
   const { data: searchResults } = trpc.userProfiles.list.useQuery(
-    { search: nameInput, limit: 5 },
-    { enabled: nameInput.length >= 2 }
+    { search: debouncedName, limit: 5 },
+    { enabled: debouncedName.length >= 2, placeholderData: (prev) => prev }
   );
 
   const getOrCreate = trpc.messages.conversations.getOrCreate.useMutation({
@@ -506,10 +511,16 @@ function extractLinks(content: string, max = 3): string[] {
   return matches.slice(0, max);
 }
 
+function linkHostname(url: string): string {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url; // malformed URL: fall back to the raw string
+  }
+}
+
 function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobile }: ThreadPanelProps) {
-  const [inputText, setInputText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const utils = trpc.useUtils();
 
   const { data, isLoading, fetchNextPage, hasNextPage } =
@@ -521,17 +532,6 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
       }
     );
 
-  const sendMessage = trpc.messages.messages.send.useMutation({
-    onSuccess: () => {
-      utils.messages.messages.list.invalidate({ conversationId });
-      utils.messages.conversations.list.invalidate();
-      setInputText("");
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-      }
-    },
-  });
-
   const deleteMessage = trpc.messages.messages.delete.useMutation({
     onSuccess: () => {
       utils.messages.messages.list.invalidate({ conversationId });
@@ -541,11 +541,17 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
 
   const markRead = trpc.messages.conversations.markRead.useMutation();
 
-  // Flatten pages into chronological order (oldest first)
-  const messages: MessageItem[] = (data?.pages ?? [])
-    .slice()
-    .reverse()
-    .flatMap((page: { messages: MessageItem[]; nextCursor?: number | null }) => page.messages);
+  // Flatten pages into chronological order (oldest first). This, the day
+  // grouping and the links below are memoized on the query data, so a
+  // re-render that leaves the messages alone does none of it again.
+  const messages = useMemo<MessageItem[]>(
+    () =>
+      (data?.pages ?? [])
+        .slice()
+        .reverse()
+        .flatMap((page: { messages: MessageItem[]; nextCursor?: number | null }) => page.messages),
+    [data]
+  );
 
   // Auto-scroll to bottom when messages arrive
   useEffect(() => {
@@ -564,45 +570,33 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
     return () => window.removeEventListener("focus", handleFocus);
   }, [fireMarkRead]);
 
-  // Auto-resize textarea
-  function handleTextareaChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const el = e.target;
-    el.style.height = "auto";
-    const lineHeight = 24;
-    const maxHeight = lineHeight * 5;
-    el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
-    setInputText(el.value);
-  }
-
-  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  }
-
-  function handleSend() {
-    const trimmed = inputText.trim();
-    if (!trimmed || sendMessage.isPending) return;
-    if (trimmed.length > 5000) return;
-    sendMessage.mutate({ conversationId, content: trimmed });
-  }
-
-  const charCount = inputText.length;
-  const showCharCount = charCount > 4000;
-  const charOver = charCount > 5000;
-
   // Group messages by day
-  const groupedMessages: Array<{ dayLabel: string; key: string; msgs: MessageItem[] }> = [];
-  for (const msg of messages) {
-    const key = dayKey(msg.createdAt);
-    const last = groupedMessages[groupedMessages.length - 1];
-    if (last && last.key === key) {
-      last.msgs.push(msg);
-    } else {
-      groupedMessages.push({ dayLabel: formatDayLabel(msg.createdAt), key, msgs: [msg] });
+  const groupedMessages = useMemo(() => {
+    const groups: Array<{ dayLabel: string; key: string; msgs: MessageItem[] }> = [];
+    for (const msg of messages) {
+      const key = dayKey(msg.createdAt);
+      const last = groups[groups.length - 1];
+      if (last && last.key === key) {
+        last.msgs.push(msg);
+      } else {
+        groups.push({ dayLabel: formatDayLabel(msg.createdAt), key, msgs: [msg] });
+      }
     }
-  }
+    return groups;
+  }, [messages]);
+
+  // Link cards under each message, by message id
+  const linksById = useMemo(() => {
+    const byId = new Map<number, Array<{ url: string; hostname: string }>>();
+    for (const msg of messages) {
+      if (msg.deletedAt) continue;
+      const links = extractLinks(msg.content);
+      if (links.length > 0) {
+        byId.set(msg.id, links.map((url) => ({ url, hostname: linkHostname(url) })));
+      }
+    }
+    return byId;
+  }, [messages]);
 
   const displayName = otherUser?.name ?? "Conversation";
 
@@ -669,7 +663,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
             {group.msgs.map((msg) => {
               const isSelf = msg.senderId === currentUserId;
               const isDeleted = !!msg.deletedAt;
-              const links = isDeleted ? [] : extractLinks(msg.content);
+              const links = linksById.get(msg.id) ?? [];
               return (
                 <div
                   key={msg.id}
@@ -722,13 +716,7 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
                     </div>
                     {links.length > 0 && (
                       <div className={`flex flex-col gap-1.5 mt-2 w-full ${isSelf ? "items-end" : "items-start"}`}>
-                        {links.map((url, i) => {
-                          let hostname = url;
-                          try {
-                            hostname = new URL(url).hostname;
-                          } catch {
-                            /* malformed URL — fall back to raw string */
-                          }
+                        {links.map(({ url, hostname }, i) => {
                           return (
                             <a
                               key={`${msg.id}-link-${i}`}
@@ -759,35 +747,92 @@ function ThreadPanel({ conversationId, currentUserId, otherUser, onBack, isMobil
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area. text-base on mobile: fonts under 16px make iOS Safari
-          zoom the whole page on focus. Bottom padding respects the iPhone
-          home indicator. */}
-      <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        {showCharCount && (
-          <div className={`text-xs mb-1 text-right ${charOver ? "text-red-500 font-semibold" : "text-[#1a472a]/80"}`}>
-            {charCount} / 5000
-          </div>
-        )}
-        <div className="flex items-end gap-2">
-          <textarea
-            ref={textareaRef}
-            value={inputText}
-            onChange={handleTextareaChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Write a message… (Shift+Enter for new line)"
-            rows={1}
-            className="flex-1 resize-none rounded-xl border border-[#1a472a]/60 bg-white px-3 py-2 text-base md:text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
-            style={{ minHeight: "44px", maxHeight: "120px" }}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={!inputText.trim() || sendMessage.isPending || charOver}
-            className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white rounded-xl p-2 h-11 w-11 flex-shrink-0"
-            aria-label="Send"
-          >
-            <Send className="w-5 h-5" />
-          </Button>
+      <ThreadComposer conversationId={conversationId} />
+    </div>
+  );
+}
+
+// ─── Thread composer ──────────────────────────────────────────────────────────
+
+// The composer owns the draft text, so a keystroke re-renders this box and
+// not the whole thread above it.
+function ThreadComposer({ conversationId }: { conversationId: number }) {
+  const [inputText, setInputText] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const utils = trpc.useUtils();
+
+  const sendMessage = trpc.messages.messages.send.useMutation({
+    onSuccess: () => {
+      utils.messages.messages.list.invalidate({ conversationId });
+      utils.messages.conversations.list.invalidate();
+      setInputText("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
+    },
+  });
+
+  // Auto-resize textarea. Measuring at height "auto" forces a reflow, so it
+  // only runs when text was removed or has outgrown the box: text that only
+  // grew can never need a shorter one.
+  function handleTextareaChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const el = e.target;
+    const lineHeight = 24;
+    const maxHeight = lineHeight * 5;
+    if (el.value.length < inputText.length || Math.min(el.scrollHeight, maxHeight) > el.offsetHeight) {
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
+    }
+    setInputText(el.value);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  function handleSend() {
+    const trimmed = inputText.trim();
+    if (!trimmed || sendMessage.isPending) return;
+    if (trimmed.length > 5000) return;
+    sendMessage.mutate({ conversationId, content: trimmed });
+  }
+
+  const charCount = inputText.length;
+  const showCharCount = charCount > 4000;
+  const charOver = charCount > 5000;
+
+  // Input area. text-base on mobile: fonts under 16px make iOS Safari zoom
+  // the whole page on focus. Bottom padding respects the iPhone home
+  // indicator.
+  return (
+    <div className="flex-shrink-0 border-t border-[#1a472a]/10 bg-[#f0ebe3] px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      {showCharCount && (
+        <div className={`text-xs mb-1 text-right ${charOver ? "text-red-500 font-semibold" : "text-[#1a472a]/80"}`}>
+          {charCount} / 5000
         </div>
+      )}
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={textareaRef}
+          value={inputText}
+          onChange={handleTextareaChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Write a message… (Shift+Enter for new line)"
+          rows={1}
+          className="flex-1 resize-none rounded-xl border border-[#1a472a]/60 bg-white px-3 py-2 text-base md:text-sm text-[#1a472a] placeholder-[#1a472a]/40 focus:outline-none focus:border-[#7dd87d] focus:ring-2 focus:ring-[#7dd87d]/20 transition-colors"
+          style={{ minHeight: "44px", maxHeight: "120px" }}
+        />
+        <Button
+          onClick={handleSend}
+          disabled={!inputText.trim() || sendMessage.isPending || charOver}
+          className="bg-[#1a472a] hover:bg-[#1a472a]/90 text-white rounded-xl p-2 h-11 w-11 flex-shrink-0"
+          aria-label="Send"
+        >
+          <Send className="w-5 h-5" />
+        </Button>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@
  * Opens an inline compose form  -  select a template, edit subject/body, then send.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -243,11 +243,30 @@ export function EmailTemplateSelector({
 
   const draftKey = `email_draft_${recipientEmail}`;
 
-  // Persist draft to localStorage while composing
+  // Persist draft to localStorage while composing, once typing pauses (800ms)
+  // rather than on every key. Closing the composer, unmounting or hiding the
+  // page writes a pending draft at once; sending or scheduling drops it.
+  const pendingDraftRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!isComposing || (!subject && !body)) return;
-    localStorage.setItem(draftKey, JSON.stringify({ subject, body, templateId: selectedTemplateId, layout }));
+    pendingDraftRef.current = () => {
+      pendingDraftRef.current = null;
+      localStorage.setItem(draftKey, JSON.stringify({ subject, body, templateId: selectedTemplateId, layout }));
+    };
+    const timer = setTimeout(() => pendingDraftRef.current?.(), 800);
+    return () => clearTimeout(timer);
   }, [isComposing, subject, body, selectedTemplateId, layout, draftKey]);
+  useEffect(() => {
+    if (!isComposing) pendingDraftRef.current?.();
+  }, [isComposing]);
+  useEffect(() => {
+    const flush = () => pendingDraftRef.current?.();
+    window.addEventListener("pagehide", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      flush();
+    };
+  }, []);
 
   const sendEmailMutation = trpc.email.sendDirect.useMutation();
   const scheduleEmailMutation = trpc.scheduledEmails.schedule.useMutation();
@@ -316,6 +335,7 @@ export function EmailTemplateSelector({
           scheduledFor: new Date(scheduledFor).toISOString(),
         });
         toast({ title: "Email Scheduled!", description: `Will send to ${recipientName || recipientEmail} on ${new Date(scheduledFor).toLocaleString()}` });
+        pendingDraftRef.current = null;
         localStorage.removeItem(draftKey);
         setHasDraft(false);
         setIsComposing(false);
@@ -342,6 +362,7 @@ export function EmailTemplateSelector({
         layout,
       });
       toast({ title: "Email Sent!", description: `Successfully sent to ${recipientName || recipientEmail}` });
+      pendingDraftRef.current = null;
       localStorage.removeItem(draftKey);
       setHasDraft(false);
       setIsComposing(false);

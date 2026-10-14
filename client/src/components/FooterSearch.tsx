@@ -2,7 +2,7 @@
  * FooterSearch - Search bar in the footer using cmdk command palette
  * Indexes all pages, key sections, and actions
  */
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Search, ArrowRight, Leaf, Coins, Users, Map, BookOpen, Calendar, FileText, Shield, Globe, HelpCircle, Scroll } from "lucide-react";
 import {
@@ -91,17 +91,9 @@ export function FooterSearch() {
     [navigate]
   );
 
-  // Global Cmd+K / Ctrl+K keyboard shortcut
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
+  // Cmd+K / Ctrl+K belongs to CommandPalette, which App mounts beside the
+  // footer. This listened too, so the shortcut opened two search dialogs at
+  // once, each pulling focus from the other.
 
   return (
     <>

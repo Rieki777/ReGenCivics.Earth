@@ -364,22 +364,38 @@ export default function CrowdPoolingTool({
     }
   }, []);
   
-  // Auto-save to localStorage when form changes
+  // Auto-save to localStorage when form changes, once typing pauses (800ms),
+  // so a keystroke doesn't serialize and write the whole form. A save still
+  // waiting when the tool unmounts or the page is hidden goes out then.
+  const pendingSaveRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    const dataToSave = {
-      projectName,
-      targetAmount,
-      currency,
-      contributorName,
-      contributorEmail,
-      immediateContributions,
-      futureContributions,
-      isGenericMode,
-      hasNoTarget,
-      savedAt: new Date().toISOString()
+    pendingSaveRef.current = () => {
+      pendingSaveRef.current = null;
+      const dataToSave = {
+        projectName,
+        targetAmount,
+        currency,
+        contributorName,
+        contributorEmail,
+        immediateContributions,
+        futureContributions,
+        isGenericMode,
+        hasNoTarget,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    const timer = setTimeout(() => pendingSaveRef.current?.(), 800);
+    return () => clearTimeout(timer);
   }, [projectName, targetAmount, currency, contributorName, contributorEmail, immediateContributions, futureContributions, isGenericMode, hasNoTarget]);
+  useEffect(() => {
+    const flush = () => pendingSaveRef.current?.();
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, []);
   
   // Clear form function
   const clearForm = () => {

@@ -557,11 +557,14 @@ function ThemedLoadingShimmer({ theme, overlayColor }: { theme: PageTheme; overl
 
   return (
     <div
-      className="absolute inset-0 z-[1] flex items-center justify-center"
+      className="absolute inset-0 z-[1] flex items-center justify-center overflow-hidden"
       style={{ backgroundColor: `rgb(${overlayColor})` }}
     >
+      {/* A double-width band that slides (index.css, .bg-loading-sweep):
+          a transform runs on the compositor, where background-position
+          repainted the whole page every frame until the image arrived. */}
       <div
-        className="absolute inset-0"
+        className="bg-loading-sweep"
         style={{
           background: `linear-gradient(
             110deg,
@@ -571,8 +574,6 @@ function ThemedLoadingShimmer({ theme, overlayColor }: { theme: PageTheme; overl
             rgba(${overlayColor}, 1) 60%,
             rgba(${overlayColor}, 1) 100%
           )`,
-          backgroundSize: "200% 100%",
-          animation: "bg-shimmer 2s ease-in-out infinite",
         }}
       />
       <div className="relative z-10 text-4xl animate-pulse opacity-60">
@@ -928,7 +929,11 @@ export default function PageBackground({
           mobile per Rye's 2026-04-27 ask. The prefers-reduced-motion check
           inside AmbientParticles still suppresses motion for users who
           explicitly opted out. */}
-      <ThemeParticles theme={theme} />
+      {/* decor-layer: the particles hold still while someone types
+          (lib/stillWhileTyping.ts). display: contents keeps layout as it was. */}
+      <div className="decor-layer contents">
+        <ThemeParticles theme={theme} />
+      </div>
 
       {/* Content layer */}
       <div className="relative z-20 page-bg-content">

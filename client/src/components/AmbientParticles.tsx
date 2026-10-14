@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { isTyping, onTypingChange } from "@/lib/stillWhileTyping";
 
 const COLORS = ["rgba(125,216,125,0.4)", "rgba(255,215,0,0.3)", "rgba(125,216,125,0.2)"];
 
@@ -12,7 +13,8 @@ export function AmbientParticles() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animId: number;
+    let animId = 0;
+    let onScreen = true;
     const particles = Array.from({ length: 10 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -45,8 +47,24 @@ export function AmbientParticles() {
       }
       animId = requestAnimationFrame(draw);
     };
-    animId = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(animId); window.removeEventListener("resize", resize); };
+    // Draw only while the canvas is on screen and nobody is typing: a canvas
+    // loop asks for a frame every vsync, and each frame costs the main thread
+    // that keystrokes need (STEERING.md section 13).
+    const sync = () => {
+      const run = onScreen && !isTyping();
+      if (run && !animId) animId = requestAnimationFrame(draw);
+      if (!run && animId) { cancelAnimationFrame(animId); animId = 0; }
+    };
+    const io = new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; sync(); });
+    io.observe(canvas);
+    const offTyping = onTypingChange(sync);
+    sync();
+    return () => {
+      io.disconnect();
+      offTyping();
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" aria-hidden="true" />;

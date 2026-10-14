@@ -3,9 +3,15 @@
  * Creates a subtle light green mycelium thread pattern that connects across pages
  *
  * Performance notes:
- * - Uses CSS filter blur (GPU-composited) instead of SVG feGaussianBlur (CPU-rasterized)
- * - 13 node circles instead of 20, reducing per-frame animation work
- * - will-change: opacity on the container for layer promotion
+ * - The network itself never animates. Only the container breathes, through
+ *   one opacity animation the compositor runs off the main thread
+ *   (.mycelial-breathe in index.css).
+ * - It used to pulse each of its 21 paths and circles. An animation on a shape
+ *   inside an SVG cannot leave the main thread, so the browser restyled and
+ *   repainted this full-screen layer every frame, on every page, and each
+ *   keystroke on the site waited behind that work (typing took 50 to 100ms per
+ *   key on a mid-range phone). Keep animations off the shapes inside.
+ * - The blur on each path is painted once, not per frame, now nothing inside moves.
  */
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
@@ -18,9 +24,8 @@ export function MycelialBackground() {
 
   return (
     <div
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30"
+      className="decor-layer mycelial-breathe fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-30"
       aria-hidden="true"
-      style={{ willChange: 'opacity' }}
     >
       <svg
         className="w-full h-full"
@@ -43,32 +48,28 @@ export function MycelialBackground() {
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="1.5"
-            className="animate-pulse"
-            style={{ animationDuration: '8s', ...blurStyle }}
+            style={blurStyle}
           />
           <path
             d="M-50 400 Q 300 380, 500 420 T 900 400 T 1300 440 T 1700 400 T 2000 420"
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="1"
-            className="animate-pulse"
-            style={{ animationDuration: '10s', animationDelay: '2s', ...blurStyle }}
+            style={blurStyle}
           />
           <path
             d="M-50 600 Q 250 620, 450 580 T 850 620 T 1250 580 T 1650 620 T 2000 580"
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="1.2"
-            className="animate-pulse"
-            style={{ animationDuration: '9s', animationDelay: '1s', ...blurStyle }}
+            style={blurStyle}
           />
           <path
             d="M-50 800 Q 350 780, 550 820 T 950 800 T 1350 840 T 1750 800 T 2000 820"
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="1"
-            className="animate-pulse"
-            style={{ animationDuration: '11s', animationDelay: '3s', ...blurStyle }}
+            style={blurStyle}
           />
 
           {/* Vertical connecting threads */}
@@ -77,32 +78,28 @@ export function MycelialBackground() {
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="0.8"
-            className="animate-pulse"
-            style={{ animationDuration: '12s', ...blurStyle }}
+            style={blurStyle}
           />
           <path
             d="M700 0 Q 680 250, 720 450 T 680 650 T 720 850 T 680 1100"
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="0.8"
-            className="animate-pulse"
-            style={{ animationDuration: '10s', animationDelay: '4s', ...blurStyle }}
+            style={blurStyle}
           />
           <path
             d="M1100 0 Q 1120 200, 1080 400 T 1120 600 T 1080 800 T 1120 1100"
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="0.8"
-            className="animate-pulse"
-            style={{ animationDuration: '11s', animationDelay: '2s', ...blurStyle }}
+            style={blurStyle}
           />
           <path
             d="M1500 0 Q 1480 250, 1520 450 T 1480 650 T 1520 850 T 1480 1100"
             fill="none"
             stroke="url(#myceliumGradient)"
             strokeWidth="0.8"
-            className="animate-pulse"
-            style={{ animationDuration: '13s', animationDelay: '1s', ...blurStyle }}
+            style={blurStyle}
           />
 
           {/* Branching threads */}
@@ -165,12 +162,7 @@ export function MycelialBackground() {
             r="3"
             fill="#7dd87d"
             opacity="0.4"
-            className="animate-pulse"
-            style={{
-              animationDuration: `${3 + (i % 4)}s`,
-              animationDelay: `${i * 0.2}s`,
-              ...blurStyle,
-            }}
+            style={blurStyle}
           />
         ))}
       </svg>

@@ -13,6 +13,27 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-14 (typing lag): every keystroke reaches the screen fast again
+
+- **Why typing lagged**: no single script was slow. The main thread was busy with motion nobody could see, and every keystroke waited behind it. On every page, the mycelium background pulsed 21 SVG shapes. Google Translate loaded on everyone's first click or keypress, which froze that keystroke for about 350ms, and then left its hidden spinner turning forever. CTA, role-card, badge, Quest and Ship glows animated background-position and box-shadow. Each of these made the browser restyle every frame.
+- **Site-wide**: the background now breathes as one compositor layer. Translate loads when the language menu opens. The glows and shimmers are now transform and opacity animations. Decorative layers (`.decor-layer`) and the home page's canvas particles hold still while a text field has focus, and the canvas stops when off screen. The page-wide DOM watchers skip text-only changes. Ctrl+K opens a single search dialog (the footer search used to grab it too).
+- **Forms**:
+  - The forum reply box owns its draft, so the thread no longer re-renders per key. The editor stops rebuilding its toolbars and measuring the caret, and markdown output is memoized.
+  - DMs and the guide chat got their own composers.
+  - Map search, member search, campaign creation, crowd pooling, the profile form and admin email drafts debounce whatever a keystroke triggers.
+  - Playing music no longer re-renders the nav four times a second.
+- **Measured**: local build on the scratch database, CPU slowed 4x, before and after interleaved. Median keystroke times:
+  - Forum reply in a 40-reply thread: 580 → 32ms (phone 576 → 40).
+  - DMs: 112 → 24ms.
+  - New post: 136 → 48ms.
+  - Home: 168 → 76ms (phone 112 → 40).
+  - Community and glossary search: 100 → 32-36ms.
+  - Apply: 80 → 32ms.
+  - Members: 60 → 20ms.
+  - Idle main thread on most pages fell from as high as 98% to under 3%. The full suite passes (4731 tests), along with `pnpm gate` and the link audit. Forum reply, DM composer, Translate and Ctrl+K were checked end to end.
+- **Guards so it stays fast** (STEERING.md section 13): `pnpm ui:audit` fails any endless animation the compositor cannot run (SVG shapes, SMIL, background-position, box-shadow, blur or drop-shadow filters), proven by the audit-selftest story. `pnpm perf:typing` measures keystroke delay (`harness/typing-bench.mjs`).
+- Carryover: the Season Wheel on /seasons (flow ring and now-pulse), LivingTree's SMIL and `tree-breathe`, the progress map's SMIL, the CORE hero kicker shimmer, and CreateCampaign's detail fields, which still re-render the page per key.
+
 ## 2026-10-13 (Season 2 Week 3, What your project is for): the human needs board, every answer under Submissions, the data for Village OS
 
 - **Week 3's board** (ADR-74), Part 1 of 2 with Week 4: 18 stages, 120 minutes. Tap your project (tiles from the board, public Season 2 applications and Week 2's cards; add one, or come to learn), "Why this matters now" (a Nate Hagens clip), then the PART 2 NEEDS deck's argument with one main move each: the ten human needs as cards with three seeds, depth and breadth ladders, living ways, who meets each need, who decides, circles and players, the centre out, each project's card read aloud, questions, Tell us.

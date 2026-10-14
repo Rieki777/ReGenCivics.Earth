@@ -27,7 +27,7 @@
  * from 2026-09-27 because the close date is binding).
  */
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef, memo } from 'react';
 import SEO, { pageSEO } from '@/components/SEO';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +88,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import {
   CAPITAL_TYPES,
   CAPITAL_LABELS,
@@ -633,12 +634,14 @@ export default function CreateCampaign() {
   const wantedId = Number(new URLSearchParams(search).get('application')) || null;
   const openReady = typeof window !== 'undefined' && window.location.hash === '#ready';
 
-  // Applicant search for campaign creation
+  // Applicant search for campaign creation. The list asks the server once
+  // typing pauses, and keeps its rows on screen while the next ones load.
   const [applicantSearch, setApplicantSearch] = useState('');
+  const debouncedApplicantSearch = useDebouncedValue(applicantSearch, 250);
   const [selectedApplication, setSelectedApplication] = useState<any>(null);
   const { data: applicants, isLoading: applicantsLoading } = trpc.applicantsForCampaign.list.useQuery(
-    { search: applicantSearch },
-    { enabled: !!user }
+    { search: debouncedApplicantSearch },
+    { enabled: !!user, placeholderData: (prev) => prev }
   );
   // The same read with no search, so the front door's state never comes from
   // a filtered list. While the search box is empty it shares the picker
@@ -803,6 +806,16 @@ export default function CreateCampaign() {
   // Region hint for fair-value bands: prefer the first land region, else the
   // project location. The coach matches loosely, so either form is fine.
   const coachRegion = landRequirements[0]?.regions?.[0] || projectLocation || '';
+
+  // The draft the design companion reads, rebuilt only when one of its parts
+  // changes, so the memoized panel skips keys typed in the other fields.
+  const companionDraft = useMemo(() => ({
+    projectName: campaignName,
+    location: projectLocation,
+    region: coachRegion,
+    vision: projectVision,
+    needs: draftNeeds,
+  }), [campaignName, projectLocation, coachRegion, projectVision, draftNeeds]);
 
   // Adds a coach suggestion to the right wizard list. A role/shift becomes a
   // role; everything else becomes an other-need. Never auto-called; it only
@@ -1841,13 +1854,7 @@ export default function CreateCampaign() {
       <DesignCompanion
         open={companionOpen}
         onOpenChange={setCompanionOpen}
-        draft={{
-          projectName: campaignName,
-          location: projectLocation,
-          region: coachRegion,
-          vision: projectVision,
-          needs: draftNeeds,
-        }}
+        draft={companionDraft}
         onAddSuggestion={handleAddSuggestion}
         currencySymbol={currencySymbol}
       />
@@ -1856,7 +1863,9 @@ export default function CreateCampaign() {
 }
 
 // Land Section Component
-function LandSection({ 
+// The step sections are memoized: their props stay the same while someone
+// types in the campaign details above, so the open step doesn't re-render.
+const LandSection = memo(function LandSection({
   requirements, 
   setRequirements, 
   currencySymbol, 
@@ -2199,10 +2208,10 @@ function LandSection({
       )}
     </div>
   );
-}
+});
 
 // Equipment Section Component
-function EquipmentSection({ 
+const EquipmentSection = memo(function EquipmentSection({
   equipment, 
   setEquipment, 
   currencySymbol, 
@@ -2516,10 +2525,10 @@ function EquipmentSection({
       )}
     </div>
   );
-}
+});
 
 // Roles Section Component
-function RolesSection({
+const RolesSection = memo(function RolesSection({
   roles,
   setRoles,
   currencySymbol,
@@ -2947,10 +2956,10 @@ function RolesSection({
       )}
     </div>
   );
-}
+});
 
 // Other Needs Section Component
-function OtherNeedsSection({ 
+const OtherNeedsSection = memo(function OtherNeedsSection({
   needs, 
   setNeeds, 
   currencySymbol, 
@@ -3271,7 +3280,7 @@ function OtherNeedsSection({
       )}
     </div>
   );
-}
+});
 
 // ── Need terms: when a need is wanted, how a thing may come, where work happens
 

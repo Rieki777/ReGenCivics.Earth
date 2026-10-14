@@ -293,14 +293,16 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
           animation: rgi-img-in 0.85s cubic-bezier(.2,.7,.3,1) forwards;
         }
 
-        /* Headline gradient shimmer */
+        /* Headline gradient shimmer. Two sweeps, then it rests: an endless
+           background-position animation restyles the page every frame on the
+           main thread (STEERING.md section 13). */
         @keyframes rgi-shimmer { to { background-position: 200% center; } }
         .rgi-heading {
           background: linear-gradient(100deg, #ffffff 20%, var(--rgi-accent) 42%, #ffffff 62%);
           background-size: 200% auto;
           -webkit-background-clip: text; background-clip: text;
           -webkit-text-fill-color: transparent; color: transparent;
-          animation: rgi-shimmer 6s linear infinite;
+          animation: rgi-shimmer 6s linear 2;
         }
         /* The h2 carries both classes, and animation is a shorthand: without
            this, .rgi-heading's shimmer replaces .rgi-stagger's rgi-rise, the
@@ -309,7 +311,7 @@ export function QuestGameIntro({ onEnter }: QuestGameIntroProps) {
         .rgi-heading.rgi-stagger {
           animation:
             rgi-rise 0.7s cubic-bezier(.2,.7,.3,1) forwards,
-            rgi-shimmer 6s linear infinite;
+            rgi-shimmer 6s linear 2;
         }
 
         /* CTA halo */

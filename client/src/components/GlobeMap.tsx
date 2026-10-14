@@ -11,10 +11,11 @@
  * - Country dropdown filter
  * - Project/org images on entity cards
  */
-import { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, memo } from "react";
 import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, Sprout, Search, AlertCircle, Filter, X, MessageCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { cdnImg } from "@/lib/utils";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Link } from "wouter";
 import { projectPathForApplication } from "@shared/projectKey";
 
@@ -610,7 +611,9 @@ function ProjectDetailPanel({ applicationId, status }: { applicationId: number; 
 }
 
 // Entity Card Component - mobile-first with image, season tag, inactive tag, role tags
-function EntityCard({
+// Memoized: typing in the search re-renders the map, and the cards' props
+// don't change until the results do.
+const EntityCard = memo(function EntityCard({
   entity,
   isSelected,
   onSelect,
@@ -828,7 +831,7 @@ function EntityCard({
       </div>
     </div>
   );
-}
+});
 
 // Filter Tab Component
 function FilterTab({
@@ -987,6 +990,12 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     return Array.from(set).sort();
   }, [allEntities]);
 
+  // The search boxes stay bound to searchQuery; the list and the globe follow
+  // it once typing pauses, so a keystroke doesn't rebuild every marker.
+  // Clearing applies at once, so Clear filters resets everything together.
+  const debouncedSearch = useDebouncedValue(searchQuery, 250);
+  const appliedSearch = searchQuery ? debouncedSearch : "";
+
   // Track filter dependencies including showInactive
   // Filter entities by type, search query, and country
   const filteredEntities = useMemo(() => {
@@ -1006,8 +1015,8 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     if (dietaryFilter) {
       result = result.filter((e) => e.dietaryPatterns?.includes(dietaryFilter));
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (appliedSearch.trim()) {
+      const q = appliedSearch.toLowerCase();
       result = result.filter(
         (e) =>
           e.name.toLowerCase().includes(q) ||
@@ -1017,11 +1026,16 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       );
     }
     return result;
-  }, [allEntities, filter, showInactive, searchQuery, countryFilter, meetingFreqFilter, dietaryFilter]);
+  }, [allEntities, filter, showInactive, appliedSearch, countryFilter, meetingFreqFilter, dietaryFilter]);
 
   // Separate pinned vs global/orbiting entities
   const pinnedEntities = useMemo(() => filteredEntities.filter((e) => !e.isGlobal), [filteredEntities]);
   const globalEntities = useMemo(() => filteredEntities.filter((e) => e.isGlobal), [filteredEntities]);
+
+  // Which entities are on the globe, in order. The marker effect keys on this
+  // rather than on the arrays, so a search that leaves the same results
+  // doesn't rebuild every marker and replay the sprout animation.
+  const visibleIdsKey = useMemo(() => filteredEntities.map((e) => e.id).join("|"), [filteredEntities]);
 
   // Counts for filter tabs
   const counts = useMemo(() => ({
@@ -1326,7 +1340,10 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     // No orbit arcs - clean globe
     globe.arcsData([]);
 
-  }, [filteredEntities, pinnedEntities, globalEntities, globeReady]);
+    // pinnedEntities and globalEntities follow from visibleIdsKey and
+    // allEntities: the same ids from the same data are the same objects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleIdsKey, allEntities, globeReady]);
 
   // Season activity layer: per-bioregion aggregate glow (quest completions this
   // season, green) plus active multiplayer crews (amber), on the otherwise

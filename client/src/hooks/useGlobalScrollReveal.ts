@@ -11,6 +11,7 @@
  */
 import { useEffect } from "react";
 import { useReducedMotion } from "./useReducedMotion";
+import { addsElements } from "@/lib/addsElements";
 
 export function useGlobalScrollReveal() {
   const skipAnim = useReducedMotion();
@@ -73,7 +74,10 @@ export function useGlobalScrollReveal() {
     // Re-observe after navigation (wouter doesn't fire popstate consistently)
     // Debounce to avoid firing observeAll on every single DOM mutation
     let debounceTimer: ReturnType<typeof setTimeout>;
-    const mutationObserver = new MutationObserver(() => {
+    const mutationObserver = new MutationObserver((mutations) => {
+      // A controlled textarea swaps its text node on every keystroke; only
+      // added elements can carry data-reveal.
+      if (!addsElements(mutations)) return;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(observeAll, 100);
     });

@@ -4,6 +4,7 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import React, { useEffect, forwardRef, useImperativeHandle, useState, useRef, useCallback } from 'react'
 import { trpc } from '@/lib/trpc'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { ForumMarkdown } from '@/components/ForumMarkdown'
 import {
   Bold, Italic, Heading2, Heading3, Link2, Code, List,
@@ -146,6 +147,180 @@ function fileToBase64(file: File): Promise<string> {
   })
 }
 
+const stopBlur = (e: React.MouseEvent) => { e.preventDefault() }
+
+// Shared toolbar buttons, used in both the desktop (top) and mobile (bottom)
+// toolbars. Declared here rather than inside RichEditor so React keeps the same
+// buttons between keystrokes instead of rebuilding both toolbars every time.
+function ToolbarButton({
+  onClick, isActive, title, children,
+}: {
+  onClick: () => void
+  isActive?: boolean
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onMouseDown={stopBlur}
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      aria-pressed={isActive}
+      className={`flex items-center justify-center rounded-md min-h-[44px] min-w-[44px] sm:min-h-[30px] sm:min-w-[30px] px-1 transition-colors hover:bg-white/15 ${
+        isActive ? 'bg-white/20 text-white' : 'text-white/70'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+type ToolbarContentsProps = {
+  editor: NonNullable<ReturnType<typeof useEditor>>
+  isPreview: boolean
+  setIsPreview: React.Dispatch<React.SetStateAction<boolean>>
+  setLinkUrl: React.Dispatch<React.SetStateAction<string>>
+  setLinkPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
+  isUploading: boolean
+  handleImageFile: (file: File, editorInstance: NonNullable<ReturnType<typeof useEditor>>) => Promise<boolean>
+}
+
+function ToolbarContents({
+  editor, isPreview, setIsPreview, setLinkUrl, setLinkPanelOpen, isUploading, handleImageFile,
+}: ToolbarContentsProps) {
+  return (
+    <>
+      {/* Write / Preview toggle */}
+      <button
+        type="button"
+        onMouseDown={stopBlur}
+        onClick={() => setIsPreview((p) => !p)}
+        title={isPreview ? 'Back to editor' : 'Preview'}
+        aria-label={isPreview ? 'Back to editor' : 'Preview'}
+        className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium min-h-[44px] sm:min-h-[30px] transition-colors hover:bg-white/15 text-white/70"
+      >
+        {isPreview ? <><Pencil className="w-3.5 h-3.5" /> Write</> : <><Eye className="w-3.5 h-3.5" /> Preview</>}
+      </button>
+
+      <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        isActive={editor.isActive('bold')}
+        title="Bold (Ctrl+B)"
+      >
+        <Bold className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        isActive={editor.isActive('italic')}
+        title="Italic (Ctrl+I)"
+      >
+        <Italic className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCode().run()}
+        isActive={editor.isActive('code')}
+        title="Inline code"
+      >
+        <Code className="w-4 h-4" />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        isActive={editor.isActive('heading', { level: 2 })}
+        title="Heading 2"
+      >
+        <Heading2 className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+        isActive={editor.isActive('heading', { level: 3 })}
+        title="Heading 3"
+      >
+        <Heading3 className="w-4 h-4" />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
+
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        isActive={editor.isActive('bulletList')}
+        title="Bullet list"
+      >
+        <List className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        isActive={editor.isActive('orderedList')}
+        title="Numbered list"
+      >
+        <ListOrdered className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        isActive={editor.isActive('blockquote')}
+        title="Blockquote"
+      >
+        <Quote className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        isActive={editor.isActive('codeBlock')}
+        title="Code block"
+      >
+        <AlignLeft className="w-4 h-4" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        isActive={false}
+        title="Divider"
+      >
+        <Minus className="w-4 h-4" />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
+
+      {/* Link */}
+      <ToolbarButton
+        onClick={() => {
+          const existing = editor.getAttributes('link').href || ''
+          setLinkUrl(existing)
+          setLinkPanelOpen((o) => !o)
+        }}
+        isActive={editor.isActive('link')}
+        title="Insert link"
+      >
+        <Link2 className="w-4 h-4" />
+      </ToolbarButton>
+
+      {/* Image upload */}
+      <label
+        title="Upload image"
+        aria-label="Upload image"
+        className={`flex items-center justify-center rounded-md min-h-[44px] min-w-[44px] sm:min-h-[30px] sm:min-w-[30px] px-1 cursor-pointer transition-colors hover:bg-white/15 text-white/70 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+        onMouseDown={stopBlur}
+      >
+        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+        <input
+          type="file"
+          accept="image/*"
+          className="sr-only"
+          onChange={async (e) => {
+            const file = e.target.files?.[0]
+            if (file) await handleImageFile(file, editor)
+            e.target.value = ''
+          }}
+        />
+      </label>
+    </>
+  )
+}
+
 export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function RichEditor(
   { value, onChange, placeholder, className },
   ref
@@ -170,14 +345,19 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
   useEffect(() => { uploadRef.current = uploadMutation.mutateAsync }, [uploadMutation.mutateAsync])
 
   // @mention suggestions. Only fetches while the mention menu is open; matches
-  // members and the AI elders by handle prefix or name.
+  // members and the AI elders by handle prefix or name. Waits for a short pause
+  // so each letter typed after "@" is not its own request.
+  const debouncedMentionQuery = useDebouncedValue(mentionQuery, 200)
   const mentionSearch = trpc.playerProfiles.searchMentions.useQuery(
-    { query: mentionQuery },
+    { query: debouncedMentionQuery },
     { enabled: mentionOpen, staleTime: 30_000, placeholderData: (prev) => prev },
   )
   const mentionResults = mentionOpen ? (mentionSearch.data ?? []) : []
 
   const editorContainerRef = useRef<HTMLDivElement>(null)
+  // The markdown onUpdate last sent through onChange, so the value syncing
+  // effect below can recognise its own echo without serializing the doc again.
+  const lastMarkdownRef = useRef<string | null>(null)
 
   const editor = useEditor({
     extensions: [
@@ -188,6 +368,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
     content: value,
     onUpdate: ({ editor }) => {
       const md = serializeToMarkdown(editor)
+      lastMarkdownRef.current = md
       onChange(md)
       setPreviewContent(md)
 
@@ -195,10 +376,14 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
       const { from } = editor.state.selection
       const resolvedPos = editor.state.doc.resolve(from)
       const nodeText = resolvedPos.parent.textContent
-      const containerRect = editorContainerRef.current?.getBoundingClientRect()
-      const coords = editor.view.coordsAtPos(from)
-      const posAtCursor = () =>
-        containerRect ? { top: coords.bottom - containerRect.top + 4, left: coords.left - containerRect.left } : null
+      // Measuring the caret forces a layout, so only do it when a menu is
+      // opening or open, never on an ordinary keystroke.
+      const posAtCursor = () => {
+        const containerRect = editorContainerRef.current?.getBoundingClientRect()
+        if (!containerRect) return null
+        const coords = editor.view.coordsAtPos(from)
+        return { top: coords.bottom - containerRect.top + 4, left: coords.left - containerRect.left }
+      }
 
       if (nodeText.startsWith('/')) {
         setSlashFilter(nodeText.slice(1))
@@ -243,12 +428,14 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
   }), [editor])
 
   useEffect(() => {
-    if (editor && value !== serializeToMarkdown(editor)) {
+    if (!editor) return
+    // onUpdate keeps lastMarkdownRef equal to the serialized doc (it fires on
+    // every doc change), so only the very first run has to serialize.
+    if (lastMarkdownRef.current === null) lastMarkdownRef.current = serializeToMarkdown(editor)
+    if (value !== lastMarkdownRef.current) {
       editor.commands.setContent(value)
     }
   }, [value, editor])
-
-  const stopBlur = useCallback((e: React.MouseEvent) => { e.preventDefault() }, [])
 
   // Image upload helper (paste / drop)
   const handleImageFile = useCallback(async (file: File, editorInstance: NonNullable<ReturnType<typeof useEditor>>) => {
@@ -344,162 +531,8 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
     c.label.toLowerCase().includes(slashFilter.toLowerCase())
   )
 
-  // Shared toolbar buttons — rendered once, used in both desktop (top) and mobile (bottom)
-  function ToolbarButton({
-    onClick, isActive, title, children,
-  }: {
-    onClick: () => void
-    isActive?: boolean
-    title: string
-    children: React.ReactNode
-  }) {
-    return (
-      <button
-        type="button"
-        onMouseDown={stopBlur}
-        onClick={onClick}
-        title={title}
-        aria-label={title}
-        aria-pressed={isActive}
-        className={`flex items-center justify-center rounded-md min-h-[44px] min-w-[44px] sm:min-h-[30px] sm:min-w-[30px] px-1 transition-colors hover:bg-white/15 ${
-          isActive ? 'bg-white/20 text-white' : 'text-white/70'
-        }`}
-      >
-        {children}
-      </button>
-    )
-  }
-
-  function ToolbarContents() {
-    return (
-      <>
-        {/* Write / Preview toggle */}
-        <button
-          type="button"
-          onMouseDown={stopBlur}
-          onClick={() => setIsPreview((p) => !p)}
-          title={isPreview ? 'Back to editor' : 'Preview'}
-          aria-label={isPreview ? 'Back to editor' : 'Preview'}
-          className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium min-h-[44px] sm:min-h-[30px] transition-colors hover:bg-white/15 text-white/70"
-        >
-          {isPreview ? <><Pencil className="w-3.5 h-3.5" /> Write</> : <><Eye className="w-3.5 h-3.5" /> Preview</>}
-        </button>
-
-        <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
-
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          isActive={editor.isActive('bold')}
-          title="Bold (Ctrl+B)"
-        >
-          <Bold className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          isActive={editor.isActive('italic')}
-          title="Italic (Ctrl+I)"
-        >
-          <Italic className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleCode().run()}
-          isActive={editor.isActive('code')}
-          title="Inline code"
-        >
-          <Code className="w-4 h-4" />
-        </ToolbarButton>
-
-        <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
-
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          isActive={editor.isActive('heading', { level: 2 })}
-          title="Heading 2"
-        >
-          <Heading2 className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          isActive={editor.isActive('heading', { level: 3 })}
-          title="Heading 3"
-        >
-          <Heading3 className="w-4 h-4" />
-        </ToolbarButton>
-
-        <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
-
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          isActive={editor.isActive('bulletList')}
-          title="Bullet list"
-        >
-          <List className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          isActive={editor.isActive('orderedList')}
-          title="Numbered list"
-        >
-          <ListOrdered className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          isActive={editor.isActive('blockquote')}
-          title="Blockquote"
-        >
-          <Quote className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          isActive={editor.isActive('codeBlock')}
-          title="Code block"
-        >
-          <AlignLeft className="w-4 h-4" />
-        </ToolbarButton>
-        <ToolbarButton
-          onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          isActive={false}
-          title="Divider"
-        >
-          <Minus className="w-4 h-4" />
-        </ToolbarButton>
-
-        <div className="w-px h-5 bg-white/15 mx-0.5 self-center" />
-
-        {/* Link */}
-        <ToolbarButton
-          onClick={() => {
-            const existing = editor.getAttributes('link').href || ''
-            setLinkUrl(existing)
-            setLinkPanelOpen((o) => !o)
-          }}
-          isActive={editor.isActive('link')}
-          title="Insert link"
-        >
-          <Link2 className="w-4 h-4" />
-        </ToolbarButton>
-
-        {/* Image upload */}
-        <label
-          title="Upload image"
-          aria-label="Upload image"
-          className={`flex items-center justify-center rounded-md min-h-[44px] min-w-[44px] sm:min-h-[30px] sm:min-w-[30px] px-1 cursor-pointer transition-colors hover:bg-white/15 text-white/70 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
-          onMouseDown={stopBlur}
-        >
-          {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={async (e) => {
-              const file = e.target.files?.[0]
-              if (file) await handleImageFile(file, editor)
-              e.target.value = ''
-            }}
-          />
-        </label>
-      </>
-    )
+  const toolbarProps: ToolbarContentsProps = {
+    editor, isPreview, setIsPreview, setLinkUrl, setLinkPanelOpen, isUploading, handleImageFile,
   }
 
   return (
@@ -519,7 +552,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
     >
       {/* Desktop toolbar — top, hidden on mobile */}
       <div className="hidden sm:flex gap-0.5 p-1.5 border-b border-white/10 flex-wrap items-center">
-        <ToolbarContents />
+        <ToolbarContents {...toolbarProps} />
       </div>
 
       {/* Link URL panel */}
@@ -583,7 +616,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
 
       {/* Mobile sticky toolbar — bottom, only on mobile */}
       <div className="sm:hidden flex gap-0.5 p-1.5 border-t border-white/10 flex-wrap items-center overflow-x-auto sticky bottom-0 bg-[#1a472a]/95 backdrop-blur-sm rounded-b-lg">
-        <ToolbarContents />
+        <ToolbarContents {...toolbarProps} />
       </div>
 
       {/* @mention menu */}

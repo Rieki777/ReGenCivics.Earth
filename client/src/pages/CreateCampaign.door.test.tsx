@@ -180,7 +180,7 @@ describe("/create-campaign, the creator front door", () => {
     expect(screen.getByRole("button", { name: /Oak Hollow/ })).toBeInTheDocument();
   });
 
-  it("a steward who did not apply keeps the picker and its search box when a search matches nothing", () => {
+  it("a steward who did not apply keeps the picker and its search box when a search matches nothing", async () => {
     const oak: App = { id: 9, projectName: "Oak Hollow", status: "approved", location: "Devon" };
     h.myApps = [];
     h.listRows = (search) => (search === "" ? [oak] : []);
@@ -188,7 +188,8 @@ describe("/create-campaign, the creator front door", () => {
     expect(screen.getByRole("button", { name: /Oak Hollow/ })).toBeInTheDocument();
     fireEvent.change(screen.getByPlaceholderText(SEARCH), { target: { value: "zzz" } });
     expect(screen.getByPlaceholderText(SEARCH)).toBeInTheDocument();
-    expect(screen.getByText("No projects match your search.")).toBeInTheDocument();
+    // The search reaches the list once typing pauses.
+    expect(await screen.findByText("No projects match your search.")).toBeInTheDocument();
     expect(screen.getByText("Pick the project this campaign is for. We fill in what your application already says.")).toBeInTheDocument();
     expect(screen.queryByText(NO_APPLICATION)).toBeNull();
   });

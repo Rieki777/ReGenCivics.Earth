@@ -44,6 +44,7 @@ import { VineDivider } from "@/components/dividers/VineDivider";
 import { Pullquote } from "@/components/Pullquote";
 import { ForYouLabel } from "@/components/ForYouLabel";
 import { decodeEntities } from "@/utils/sanitize";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -101,11 +102,102 @@ const REMOVED_PROJECTS = new Set([
   "Highland Lake CampUS",
 ]);
 
+// Module-level so its identity is stable: SEO redoes all its head writes
+// whenever this array is a new one.
+const COMMUNITY_BREADCRUMBS = [{ name: "Home", url: "/" }, { name: "Community", url: "/community" }];
+
+/**
+ * The search box and its post results. It owns the text being typed, so a
+ * keystroke re-renders this section only, not the whole page. The page hears
+ * the query once typing pauses, for the topic filter in the General panel.
+ */
+function CommunitySearch({ onQueryChange }: { onQueryChange: (query: string) => void }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  // Debounce search query for post full-text search (300ms)
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
+  useEffect(() => {
+    onQueryChange(debouncedSearchQuery);
+  }, [debouncedSearchQuery, onQueryChange]);
+
+  // Full-text post search (only when debounced query is >= 2 chars)
+  const isSearching = debouncedSearchQuery.length >= 2;
+  const { data: searchResults, isFetching: isSearchFetching } = trpc.forum.search.useQuery(
+    { q: debouncedSearchQuery },
+    { enabled: isSearching, staleTime: 30 * 1000 }
+  );
+
+  return (
+    <section className="container px-4 max-w-4xl mx-auto mt-4 mb-6 relative z-20">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
+        <Input
+          placeholder="Search posts and topics..."
+          aria-label="Search posts and topics"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="pl-10 bg-white border-[#4a7c59]/20 rounded-xl focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
+          style={{ fontFamily: 'var(--font-body)' }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              // Clearing resets the topic filter at once; only typing waits.
+              onQueryChange("");
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
+            aria-label="Clear search"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Post search results overlay */}
+      {isSearching && (
+        <div className="mt-2 bg-white border border-[#e8e4de] rounded-xl shadow-lg overflow-hidden">
+          {isSearchFetching ? (
+            <div className="flex items-center gap-2 px-4 py-3 text-sm text-[#4a7c59]">
+              <span className="w-3 h-3 rounded-full border-2 border-[#7dd87d] border-t-transparent animate-spin" />
+              Searching...
+            </div>
+          ) : !searchResults || searchResults.length === 0 ? (
+            <div className="px-4 py-4 text-sm text-[#1a472a]/80 text-center">
+              No results found for &ldquo;{debouncedSearchQuery}&rdquo;
+            </div>
+          ) : (
+            <ul>
+              {searchResults.map((post) => (
+                <li key={post.id}>
+                  <Link
+                    href={`/community/post/${post.id}`}
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-[#f0f7f0] transition-colors border-b border-[#e8e4de] last:border-0"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    <MessageCircle className="w-4 h-4 text-[#7dd87d] flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-[#1a472a] truncate">{post.title}</p>
+                      <p className="text-xs text-[#1a472a]/75 truncate">
+                        {post.categoryName} &middot; {post.authorName}
+                      </p>
+                    </div>
+                    <ArrowRight className="w-3.5 h-3.5 text-[#4a7c59]/30 flex-shrink-0 mt-0.5" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Community() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
+  // The search text once typing pauses (CommunitySearch owns the live input).
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
   // Remember which element (General/Earth/Water/Fire/Air) the player last
   // opened, so returning from a thread or subcategory reopens that panel
@@ -132,11 +224,6 @@ export default function Community() {
       });
     }
   };
-  // Debounce search query for post full-text search (300ms)
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearchQuery(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   // Repeat visitors land at the section-picker grid instead of the intro
   // up top. First visit sets the flag and keeps the full scroll position;
@@ -241,13 +328,6 @@ export default function Community() {
     [allPosts]
   );
 
-  // Full-text post search (only when debounced query is >= 2 chars)
-  const isSearching = debouncedSearchQuery.length >= 2;
-  const { data: searchResults, isFetching: isSearchFetching } = trpc.forum.search.useQuery(
-    { q: debouncedSearchQuery },
-    { enabled: isSearching, staleTime: 30 * 1000 }
-  );
-
   // Slugs shown in dedicated section panels - exclude from General list
   const SECTION_SLUGS = new Set([
     'quests-gameplay', 'epic-quests', 'alliance-partners', 'air-conversations',
@@ -291,7 +371,7 @@ export default function Community() {
   return (
     <PageTransition>
     <div className="min-h-screen bg-gradient-to-b from-[#0a1f12] via-[#0d2818] to-[#122e1c]">
-      <SEO {...pageSEO.community} breadcrumbs={[{ name: "Home", url: "/" }, { name: "Community", url: "/community" }]} />
+      <SEO {...pageSEO.community} breadcrumbs={COMMUNITY_BREADCRUMBS} />
       <BannerDisplay bannerKey="community-banner" />
 
       {/* Hero Section */}
@@ -379,65 +459,7 @@ export default function Community() {
       </section>
 
       {/* Search Bar */}
-      <section className="container px-4 max-w-4xl mx-auto mt-4 mb-6 relative z-20">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
-          <Input
-            placeholder="Search posts and topics..."
-            aria-label="Search posts and topics"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white border-[#4a7c59]/20 rounded-xl focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
-            style={{ fontFamily: 'var(--font-body)' }}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
-              aria-label="Clear search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-
-        {/* Post search results overlay */}
-        {isSearching && (
-          <div className="mt-2 bg-white border border-[#e8e4de] rounded-xl shadow-lg overflow-hidden">
-            {isSearchFetching ? (
-              <div className="flex items-center gap-2 px-4 py-3 text-sm text-[#4a7c59]">
-                <span className="w-3 h-3 rounded-full border-2 border-[#7dd87d] border-t-transparent animate-spin" />
-                Searching...
-              </div>
-            ) : !searchResults || searchResults.length === 0 ? (
-              <div className="px-4 py-4 text-sm text-[#1a472a]/80 text-center">
-                No results found for &ldquo;{debouncedSearchQuery}&rdquo;
-              </div>
-            ) : (
-              <ul>
-                {searchResults.map((post) => (
-                  <li key={post.id}>
-                    <Link
-                      href={`/community/post/${post.id}`}
-                      className="flex items-start gap-3 px-4 py-3 hover:bg-[#f0f7f0] transition-colors border-b border-[#e8e4de] last:border-0"
-                      onClick={() => setSearchQuery("")}
-                    >
-                      <MessageCircle className="w-4 h-4 text-[#7dd87d] flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[#1a472a] truncate">{post.title}</p>
-                        <p className="text-xs text-[#1a472a]/75 truncate">
-                          {post.categoryName} &middot; {post.authorName}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-[#4a7c59]/30 flex-shrink-0 mt-0.5" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
-      </section>
+      <CommunitySearch onQueryChange={setSearchQuery} />
 
       {/* Community Pulse Strip. White text used because the bg-[#7dd87d]/25
           tint over the dark gradient renders as mid-green, so dark green

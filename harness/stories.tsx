@@ -584,7 +584,25 @@ export const STORIES: Record<string, Story> = {
         <style>{`
           .audit-no-focus:focus-visible { outline: none !important; box-shadow: none !important; }
           .audit-faint-focus:focus-visible { outline: none !important; box-shadow: 0 0 0 2px #e9f5e9 !important; }
+          @keyframes audit-bg-slide { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+          .audit-bg-slide { background: linear-gradient(90deg, #ffffff, #c8ecc8); background-size: 200% 100%; animation: audit-bg-slide 4s linear infinite; }
+          @keyframes audit-blur-pulse { from { filter: blur(0); } to { filter: blur(2px); } }
+          .audit-blur-pulse { animation: audit-blur-pulse 3s ease-in-out infinite alternate; }
         `}</style>
+        {/* Endless motion: the two bad ones run on the main thread, the good
+            one (opacity on an ordinary element) runs on the compositor. */}
+        <svg width="40" height="20" aria-hidden="true">
+          <circle cx="10" cy="10" r="6" fill="#1a472a" className="animate-pulse" />
+          <circle cx="30" cy="10" r="5" fill="#1a472a">
+            <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+        <p className="audit-bg-slide rounded px-3 py-2">Bad: a background that slides forever</p>
+        <span aria-hidden="true" className="audit-blur-pulse inline-block h-3 w-3 rounded-full bg-[#1a472a]" />
+        <p className="flex items-center gap-2 px-3 py-2">
+          <span aria-hidden="true" className="animate-pulse inline-block h-3 w-3 rounded-full bg-[#1a472a]" />
+          Good: an opacity pulse on an ordinary element
+        </p>
         <button type="button" className="audit-no-focus min-h-11 rounded border border-[#1a472a] px-4">Bad: no focus style</button>
         <button type="button" className="audit-faint-focus min-h-11 rounded border border-[#1a472a] px-4">Bad: faint focus ring</button>
         <button type="button" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good: clear focus ring</button>

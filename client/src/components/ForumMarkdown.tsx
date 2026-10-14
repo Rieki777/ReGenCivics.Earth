@@ -7,6 +7,7 @@
  * thumbnail and click-to-play. The original link text is preserved as a
  * caption above the embed when the user chose a non-URL label.
  */
+import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Components } from 'react-markdown';
@@ -181,13 +182,20 @@ function linkifyBareUrls(text: string): string {
 }
 
 export function ForumMarkdown({ content, className = '' }: ForumMarkdownProps) {
-  const sanitized = sanitizeForClient(content);
-  const processed = linkifyBareUrls(sanitized);
-  return (
-    <div className={`forum-markdown ${className}`}>
+  // Parsing is the expensive part. Reusing the same element until the text
+  // changes lets React skip it when the parent re-renders for other reasons.
+  const rendered = useMemo(() => {
+    const sanitized = sanitizeForClient(content);
+    const processed = linkifyBareUrls(sanitized);
+    return (
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
         {processed}
       </ReactMarkdown>
+    );
+  }, [content]);
+  return (
+    <div className={`forum-markdown ${className}`}>
+      {rendered}
     </div>
   );
 }

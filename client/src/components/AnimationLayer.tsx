@@ -21,6 +21,7 @@ import {
   useScrollProgress,
   useGlobalMagnetic,
   useGlobalRipple,
+  useStillWhileTyping,
 } from "@/hooks/useAnimationLayer";
 
 function ScrollProgressRing() {
@@ -43,6 +44,7 @@ export function AnimationLayer() {
   useBlurUp();
   useGlobalMagnetic();
   useGlobalRipple();
+  useStillWhileTyping();
 
   // Re-run blur-up on route changes. Ink reveal handles late-mounted elements
   // itself via the MutationObserver in useInkReveal, so it is not repeated

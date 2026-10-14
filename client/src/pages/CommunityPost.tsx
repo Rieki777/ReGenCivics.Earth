@@ -127,12 +127,98 @@ function ChainNav({ postId, chainId, currentStage }: { postId: number; chainId: 
   );
 }
 
+/**
+ * The reply box. It owns the draft so a keystroke re-renders only this box,
+ * not the whole thread above it. draftRef keeps the text if the box remounts
+ * (the thread reloading), as the page-level state it replaced did.
+ */
+function ReplyComposer({
+  postId,
+  replyingTo,
+  onPosted,
+  editorRef,
+  draftRef,
+}: {
+  postId: number;
+  replyingTo: number | null;
+  onPosted: () => void;
+  editorRef: React.RefObject<RichEditorHandle | null>;
+  draftRef: React.RefObject<string>;
+}) {
+  const utils = trpc.useUtils();
+  const [replyContent, setReplyContent] = useState(() => draftRef.current);
+  useEffect(() => { draftRef.current = replyContent; }, [draftRef, replyContent]);
+
+  // Link preview for the reply composer
+  const { preview: replyLinkPreview, isLoading: replyLinkPreviewLoading, url: replyLinkPreviewUrl } = useLinkPreview(replyContent);
+
+  const createReplyMutation = trpc.forum.createReply.useMutation({
+    onSuccess: () => {
+      setReplyContent("");
+      onPosted();
+      utils.forum.replies.invalidate({ postId });
+      utils.forum.postById.invalidate({ id: postId });
+      toast.success("Reply posted!");
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to post reply");
+    },
+  });
+
+  const handleSubmitReply = () => {
+    if (!replyContent.trim()) return;
+    createReplyMutation.mutate({
+      postId,
+      content: replyContent.trim(),
+      parentReplyId: replyingTo || undefined,
+    });
+  };
+
+  return (
+    <>
+      {/* compact reply editor */}
+      <RichEditor
+        ref={editorRef}
+        value={replyContent}
+        onChange={setReplyContent}
+        placeholder="Share your thoughts..."
+        className="min-h-[100px] text-[#1a472a] mb-3"
+      />
+      {replyLinkPreviewUrl && (
+        <LinkPreviewCard
+          url={replyLinkPreviewUrl}
+          title={replyLinkPreview?.title}
+          description={replyLinkPreview?.description}
+          image={replyLinkPreview?.image}
+          siteName={replyLinkPreview?.siteName}
+          loading={replyLinkPreviewLoading}
+        />
+      )}
+      <div className="flex justify-end">
+        <Button
+          onClick={handleSubmitReply}
+          disabled={!replyContent.trim() || createReplyMutation.isPending}
+          className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full px-5 text-sm"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          {createReplyMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+          ) : (
+            <Send className="w-4 h-4 mr-1.5" />
+          )}
+          Reply
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export default function CommunityPost() {
   const { id } = useParams<{ id: string }>();
   const postId = parseInt(id || '0');
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  const [replyContent, setReplyContent] = useState("");
+  const replyDraftRef = useRef("");
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'post' | 'reply'; id: number } | null>(null);
   const [editingPost, setEditingPost] = useState(false);
@@ -171,9 +257,6 @@ export default function CommunityPost() {
   const [translatingPost, setTranslatingPost] = useState(false);
   const [translatedReplies, setTranslatedReplies] = useState<Record<number, string>>({});
   const [translatingReplyId, setTranslatingReplyId] = useState<number | null>(null);
-
-  // Link preview for the reply composer
-  const { preview: replyLinkPreview, isLoading: replyLinkPreviewLoading, url: replyLinkPreviewUrl } = useLinkPreview(replyContent);
 
   const translateMutation = trpc.translate.content.useMutation();
 
@@ -274,19 +357,6 @@ export default function CommunityPost() {
     { orgName: entityOrgName },
     { enabled: isEntitySpace && !!entityOrgName, staleTime: 10 * 60 * 1000 }
   );
-
-  const createReplyMutation = trpc.forum.createReply.useMutation({
-    onSuccess: () => {
-      setReplyContent("");
-      setReplyingTo(null);
-      utils.forum.replies.invalidate({ postId });
-      utils.forum.postById.invalidate({ id: postId });
-      toast.success("Reply posted!");
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to post reply");
-    },
-  });
 
   const toggleLikeMutation = trpc.forum.toggleLike.useMutation({
     onSuccess: () => {
@@ -403,15 +473,6 @@ export default function CommunityPost() {
       }
     }, 150);
   }, [replies]);
-
-  const handleSubmitReply = () => {
-    if (!replyContent.trim()) return;
-    createReplyMutation.mutate({
-      postId,
-      content: replyContent.trim(),
-      parentReplyId: replyingTo || undefined,
-    });
-  };
 
   const handleLikePost = () => {
     if (!isAuthenticated) {
@@ -1143,39 +1204,13 @@ export default function CommunityPost() {
                 </button>
               </div>
             )}
-            {/* compact reply editor */}
-            <RichEditor
-              ref={replyRef}
-              value={replyContent}
-              onChange={setReplyContent}
-              placeholder="Share your thoughts..."
-              className="min-h-[100px] text-[#1a472a] mb-3"
+            <ReplyComposer
+              postId={postId}
+              replyingTo={replyingTo}
+              onPosted={() => setReplyingTo(null)}
+              editorRef={replyRef}
+              draftRef={replyDraftRef}
             />
-            {replyLinkPreviewUrl && (
-              <LinkPreviewCard
-                url={replyLinkPreviewUrl}
-                title={replyLinkPreview?.title}
-                description={replyLinkPreview?.description}
-                image={replyLinkPreview?.image}
-                siteName={replyLinkPreview?.siteName}
-                loading={replyLinkPreviewLoading}
-              />
-            )}
-            <div className="flex justify-end">
-              <Button
-                onClick={handleSubmitReply}
-                disabled={!replyContent.trim() || createReplyMutation.isPending}
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold rounded-full px-5 text-sm"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                {createReplyMutation.isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
-                ) : (
-                  <Send className="w-4 h-4 mr-1.5" />
-                )}
-                Reply
-              </Button>
-            </div>
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-[#e8e4de] p-5 text-center">

@@ -121,11 +121,9 @@ export function AIChatBox({
   emptyStateMessage = "Start a conversation with AI",
   suggestedPrompts,
 }: AIChatBoxProps) {
-  const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputAreaRef = useRef<HTMLFormElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Filter out system messages
   const displayMessages = messages.filter((msg) => msg.role !== "system");
@@ -166,26 +164,11 @@ export function AIChatBox({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedInput = input.trim();
-    if (!trimmedInput || isLoading) return;
-
-    onSendMessage(trimmedInput);
-    setInput("");
+  const handleSend = (content: string) => {
+    onSendMessage(content);
 
     // Scroll immediately after sending
     scrollToBottom();
-
-    // Keep focus on input
-    textareaRef.current?.focus();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
   };
 
   return (
@@ -307,34 +290,78 @@ export function AIChatBox({
       </div>
 
       {/* Input Area */}
-      <form
-        ref={inputAreaRef}
-        onSubmit={handleSubmit}
-        className="flex gap-2 p-4 border-t bg-background/50 items-end"
-      >
-        <Textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          className="flex-1 min-w-0 max-w-full max-h-32 resize-none min-h-9"
-          rows={1}
-        />
-        <Button
-          type="submit"
-          size="icon"
-          disabled={!input.trim() || isLoading}
-          className="shrink-0 h-[38px] w-[38px]"
-          aria-label="Send message"
-        >
-          {isLoading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Send className="size-4" />
-          )}
-        </Button>
-      </form>
+      <ChatInput
+        formRef={inputAreaRef}
+        onSend={handleSend}
+        isLoading={isLoading}
+        placeholder={placeholder}
+      />
     </div>
+  );
+}
+
+type ChatInputProps = {
+  formRef: React.RefObject<HTMLFormElement | null>;
+  onSend: (content: string) => void;
+  isLoading: boolean;
+  placeholder: string;
+};
+
+/**
+ * The input row. It owns the draft text, so a keystroke re-renders this form
+ * and not the message list above it.
+ */
+function ChatInput({ formRef, onSend, isLoading, placeholder }: ChatInputProps) {
+  const [input, setInput] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedInput = input.trim();
+    if (!trimmedInput || isLoading) return;
+
+    onSend(trimmedInput);
+    setInput("");
+
+    // Keep focus on input
+    textareaRef.current?.focus();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
+  return (
+    <form
+      ref={formRef}
+      onSubmit={handleSubmit}
+      className="flex gap-2 p-4 border-t bg-background/50 items-end"
+    >
+      <Textarea
+        ref={textareaRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        className="flex-1 min-w-0 max-w-full max-h-32 resize-none min-h-9"
+        rows={1}
+      />
+      <Button
+        type="submit"
+        size="icon"
+        disabled={!input.trim() || isLoading}
+        className="shrink-0 h-[38px] w-[38px]"
+        aria-label="Send message"
+      >
+        {isLoading ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <Send className="size-4" />
+        )}
+      </Button>
+    </form>
   );
 }

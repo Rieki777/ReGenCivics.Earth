@@ -508,16 +508,30 @@
 /* Max-width utility for readable long-form text */
 .prose-readable { max-width: 68ch; }
 
-/* Breathing gradient on primary CTAs */
+/* Breathing gradient on primary CTAs. The gradient sits on a double-width
+   layer that slides, because a transform runs on the compositor; animating
+   background-position repainted the button on the main thread every frame. */
 .breathing-cta {
-  background: linear-gradient(135deg, #7dd87d, #9de89d, #7dd87d);
-  background-size: 200% 200%;
-  animation: breathing-gradient 8s ease-in-out infinite;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #7dd87d;
 }
-
-@keyframes breathing-gradient {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+.breathing-cta::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(135deg, #7dd87d, #9de89d, #7dd87d);
+  animation: breathing-cta-slide 8s ease-in-out infinite;
+}
+@keyframes breathing-cta-slide {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-50%); }
 }
 
 /* Seasonal color wash overlay */
@@ -533,6 +547,27 @@
 .seasonal-wash--summer { background: #ffd700; }
 .seasonal-wash--fall { background: #d4a574; }
 .seasonal-wash--winter { background: #4a7c59; }
+
+/* While someone types, decorative motion holds still (lib/stillWhileTyping.ts
+   sets data-typing while a text field has focus). Even an animation the
+   compositor runs is restyled on the main thread whenever a keystroke forces
+   a style update; the home page's drifting leaves and stars doubled each
+   key's delay. Put purely decorative motion inside a .decor-layer. */
+html[data-typing] .decor-layer,
+html[data-typing] .decor-layer * {
+  animation-play-state: paused !important;
+}
+
+/* The mycelium network behind every page (MycelialBackground.tsx) breathes as
+   one layer. Opacity on an ordinary element runs on the compositor, so this
+   costs the main thread nothing; never animate the shapes inside the SVG. */
+@keyframes mycelial-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.17; }
+}
+.mycelial-breathe {
+  animation: mycelial-breathe 9s ease-in-out infinite;
+}
 
 /* Forest-tinted shadows */
 .shadow-forest-sm { box-shadow: 0 1px 2px rgba(13, 40, 24, 0.08); }
@@ -598,8 +633,8 @@
   }
 
   @keyframes glow {
-    0%, 100% { box-shadow: 0 0 20px rgba(125, 216, 125, 0.3); }
-    50% { box-shadow: 0 0 40px rgba(125, 216, 125, 0.6); }
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
   }
   
   @keyframes bounce-gentle {
@@ -642,7 +677,19 @@
     animation: shimmer 2s infinite;
   }
   
+  /* The glow is a fixed shadow on a pseudo-element whose opacity pulses
+     (compositor); animating box-shadow repainted on the main thread. */
   .animate-glow {
+    position: relative;
+  }
+  .animate-glow::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 40px rgba(125, 216, 125, 0.6);
+    opacity: 0.4;
+    pointer-events: none;
     animation: glow 2s ease-in-out infinite;
   }
   
@@ -650,23 +697,23 @@
     animation: bounce-gentle 2s ease-in-out infinite;
   }
 
-  /* Quest card shimmer effects */
-  @keyframes gold-shimmer {
-    0%   { background-position: -300% 0; }
-    100% { background-position: 300% 0; }
-  }
-  @keyframes green-shimmer {
-    0%   { background-position: -300% 0; }
-    100% { background-position: 300% 0; }
+  /* Card shimmer: the light band sits in the middle of a triple-width
+     pseudo-element, which slides from fully off the right edge to fully off
+     the left with a transform, so the compositor runs it. These animated
+     background-position, which repainted each card on the main thread every
+     frame (the role cards on /about use the same sweep). */
+  @keyframes card-sweep {
+    0%   { transform: translateX(13.34%); }
+    100% { transform: translateX(-80%); }
   }
 
+  /* The gold ring pulses as an inset shadow on a pseudo-element whose
+     opacity animates, which the compositor runs. Animating box-shadow (or a
+     drop-shadow filter, which moves pixels) stays on the main thread, and the
+     card clips its children, so the ring sits just inside its edge. */
   @keyframes quest-gold-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.3), 0 4px 16px rgba(212, 165, 116, 0.18);
-    }
-    50% {
-      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.55), 0 0 28px rgba(255, 215, 0, 0.32), 0 6px 20px rgba(212, 165, 116, 0.22);
-    }
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
   }
 
   /* Particle trail border — animates a bright arc around the card edge.
@@ -684,12 +731,26 @@
   .quest-card-gold {
     position: relative;
     overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.3), 0 0 22px rgba(255, 215, 0, 0.2), 0 4px 16px rgba(212, 165, 116, 0.18);
+  }
+  .quest-card-gold::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 2px rgba(255, 215, 0, 0.55), inset 0 0 20px rgba(255, 215, 0, 0.14);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 2;
     animation: quest-gold-pulse 3s ease-in-out infinite;
   }
   .quest-card-gold::before {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300%;
     background: linear-gradient(
       105deg,
       transparent 20%,
@@ -698,10 +759,8 @@
       rgba(212, 165, 116, 0.25) 62%,
       transparent 80%
     );
-    background-size: 300% 100%;
-    animation: gold-shimmer 10s ease-in-out infinite;
+    animation: card-sweep 2.5s ease-in-out infinite;
     pointer-events: none;
-    border-radius: inherit;
     z-index: 1;
     mix-blend-mode: overlay;
   }
@@ -710,6 +769,8 @@
   }
   .quest-card-gold:hover {
     box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.7), 0 0 36px rgba(255, 215, 0, 0.4), 0 8px 32px rgba(212, 165, 116, 0.3);
+  }
+  .quest-card-gold:hover::after {
     animation-play-state: paused;
   }
 
@@ -720,7 +781,10 @@
   .quest-card-green::before {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300%;
     background: linear-gradient(
       105deg,
       transparent 20%,
@@ -729,10 +793,8 @@
       rgba(125, 216, 125, 0.10) 62%,
       transparent 80%
     );
-    background-size: 300% 100%;
-    animation: green-shimmer 16s ease-in-out infinite;
+    animation: card-sweep 4s ease-in-out infinite;
     pointer-events: none;
-    border-radius: inherit;
   }
   .quest-card-green {
     border-color: rgba(125, 216, 125, 0.4) !important;
@@ -751,17 +813,18 @@
   .ship-nav-book::after {
     content: '';
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300%;
     background: linear-gradient(
       105deg,
       transparent 30%,
       rgba(140, 245, 170, 0.55) 50%,
       transparent 70%
     );
-    background-size: 300% 100%;
-    animation: green-shimmer 3.5s ease-in-out infinite;
+    animation: card-sweep 1.2s ease-in-out infinite;
     pointer-events: none;
-    border-radius: inherit;
     z-index: 2;
     mix-blend-mode: screen;
   }
@@ -1476,10 +1539,19 @@
   }
 }
 
-/* Loading shimmer for background images */
+/* Loading shimmer for background images (PageBackground.tsx). The band sits
+   in the middle of a double-width layer, which slides from left to right. */
+.bg-loading-sweep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  animation: bg-shimmer 1s ease-in-out infinite;
+}
 @keyframes bg-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% { transform: translateX(-60%); }
+  100% { transform: translateX(10%); }
 }
 
 /* ===== THEME-SPECIFIC ANIMATIONS ===== */
@@ -1902,13 +1974,16 @@
   overflow: hidden;
 }
 
+/* The light band sweeps across on a triple-width layer that slides with a
+   transform, so the compositor runs it. It animated background-position,
+   which repainted every card (18 on /about) on the main thread every frame. */
 .role-card-shimmer::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
   bottom: 0;
+  left: 0;
+  width: 300%;
   background: linear-gradient(
     105deg,
     transparent 20%,
@@ -1917,30 +1992,32 @@
     rgba(125, 216, 125, 0.08) 62%,
     transparent 80%
   );
-  background-size: 300% 100%;
-  animation: role-shimmer 20s ease-in-out infinite;
+  animation: card-sweep 5s ease-in-out infinite;
   pointer-events: none;
   z-index: 1;
-  border-radius: inherit;
-}
-
-@keyframes role-shimmer {
-  0%   { background-position: -300% 0; }
-  100% { background-position: 300% 0; }
 }
 
 .role-card-shimmer:hover::before {
-  animation-duration: 4s;
+  animation-duration: 1s;
 }
 
-/* Golden opportunity glow for high-need roles */
-.role-golden-opportunity {
+/* Golden opportunity glow for high-need roles. The glow is a fixed shadow on
+   a pseudo-element whose opacity pulses, which the compositor can run;
+   animating box-shadow itself repaints on the main thread every frame. */
+.role-golden-opportunity::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 24px 6px rgba(251, 191, 36, 0.15);
+  opacity: 0;
+  pointer-events: none;
   animation: golden-glow 4s ease-in-out infinite;
 }
 
 @keyframes golden-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-  50% { box-shadow: 0 0 24px 6px rgba(251, 191, 36, 0.15); }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -2123,7 +2200,7 @@
   .hover-lift:hover { transform: none !important; }
   .root-underline::after { transition: none !important; }
   .hero-gradient-shift { animation: none !important; }
-  .tier-badge-glow { animation: none !important; }
+  .tier-badge-glow::after { animation: none !important; }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -2555,13 +2632,28 @@ body {
 /* ════════════════════════════════════════════════════════════
    Idea 12. Tier badge living glow
    ════════════════════════════════════════════════════════════ */
+/* The stronger glow is a fixed shadow on a pseudo-element whose opacity
+   pulses, which the compositor runs. Animating box-shadow repainted every
+   badge on the main thread every frame, and a forum thread shows one beside
+   each author, right where people type their replies. */
 .tier-badge-glow {
+  position: relative;
+  box-shadow: 0 0 8px rgba(125, 216, 125, 0.15);
+}
+.tier-badge-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 16px rgba(125, 216, 125, 0.25);
+  opacity: 0;
+  pointer-events: none;
   animation: tier-glow 4s ease-in-out infinite;
 }
 
 @keyframes tier-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(125, 216, 125, 0.15); }
-  50% { box-shadow: 0 0 16px rgba(125, 216, 125, 0.25); }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 /* ════════════════════════════════════════════════════════════
    SACRED GEOMETRY DIVIDERS (Idea 7)
