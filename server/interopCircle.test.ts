@@ -138,4 +138,40 @@ describe.skipIf(skipIfNoDb)("Interoperability Circle sync", () => {
       .where(and(eq(eventSignups.eventId, rows[rows.length - 1].id), isNull(eventSignups.cancelledAt)));
     expect(after).toHaveLength(0);
   });
+
+  it("cancels a second live row in one week, keeping the first, and stops its reminders", async () => {
+    const db = (await getDb())!;
+    const now = new Date("2030-02-06T12:00:00Z");
+    const before = await upcomingCircleRows(db, now);
+    const keep = before[before.length - 1];
+    // The production shape: a leftover copy a day later in the same week.
+    const dupStart = new Date(keep.startTime.getTime() + 26 * HOUR);
+    const result = await db.insert(events).values({
+      title: keep.title,
+      type: "special",
+      startTime: dupStart,
+      endTime: new Date(dupStart.getTime() + 90 * 60_000),
+      timezone: keep.timezone,
+      season: INTEROP_CIRCLE_SEASON,
+      status: "upcoming",
+    });
+    const dupId = Number((result as any)[0]?.insertId ?? (result as any).insertId);
+    await db.insert(eventAutoReminders).values({
+      eventId: dupId, enabled: 1, audienceMode: "custom",
+      audienceConfig: { includeEventSignups: true }, offsetsJson: [1440],
+    });
+
+    const r = await syncInteropCircle({ force: true, now });
+    expect(r).toMatchObject({ deduplicated: 1 });
+
+    const [dup] = await db.select().from(events).where(eq(events.id, dupId));
+    expect(dup.status).toBe("cancelled");
+    const [kept] = await db.select().from(events).where(eq(events.id, keep.id));
+    expect(kept.status).toBe("upcoming");
+    const [cfg] = await db.select().from(eventAutoReminders).where(eq(eventAutoReminders.eventId, dupId));
+    expect(cfg.enabled).toBe(0);
+
+    const again = await syncInteropCircle({ force: true, now });
+    expect(again).toMatchObject({ deduplicated: 0 });
+  });
 });

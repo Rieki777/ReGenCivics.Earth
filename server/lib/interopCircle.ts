@@ -254,6 +254,8 @@ export type CircleSyncResult = {
   inserted: number;
   moved: number;
   notified: number;
+  /** Second live rows in one week, cancelled this run. */
+  deduplicated: number;
 };
 
 let running: Promise<CircleSyncResult | null> | null = null;
@@ -288,9 +290,34 @@ async function runSync(now: Date): Promise<CircleSyncResult | null> {
 
   const existing = await upcomingCircleRows(database, now);
   const byWeek = new Map<string, (typeof existing)[number]>();
+  const extras: (typeof existing)[number][] = [];
   for (const row of existing) {
     const key = circleWeekKey(new Date(row.startTime));
-    if (!byWeek.has(key)) byWeek.set(key, row);
+    const kept = byWeek.get(key);
+    if (!kept) byWeek.set(key, row);
+    // A live row beats a cancelled one, so a week an admin cancelled and the
+    // sync refilled keeps the live session.
+    else if (kept.status === "cancelled" && row.status !== "cancelled") {
+      byWeek.set(key, row);
+      extras.push(kept);
+    } else extras.push(row);
+  }
+
+  // A second live row in one week is a duplicate: two syncs racing at insert
+  // (two processes, each with its own `running` guard) left one in production,
+  // a Thursday copy that never moved when the vote went to Wednesday, because
+  // nothing past the first row of a week was ever looked at. Cancel it, so the
+  // feed tells every subscribed calendar to drop it, and stop its reminders.
+  // Rows an admin edited stay, as everywhere else in this sync.
+  const duplicateIds = extras
+    .filter((r) => r.status !== "cancelled" && !r.manualOverride)
+    .map((r) => r.id);
+  if (duplicateIds.length) {
+    await database.update(events).set({ status: "cancelled" }).where(inArray(events.id, duplicateIds));
+    await database
+      .update(eventAutoReminders)
+      .set({ enabled: 0 })
+      .where(inArray(eventAutoReminders.eventId, duplicateIds));
   }
 
   const freezeUntil = now.getTime() + INTEROP_FREEZE_HOURS * 3_600_000;
@@ -355,7 +382,13 @@ async function runSync(now: Date): Promise<CircleSyncResult | null> {
   }
 
   const notified = movedIds.length ? await notifyMove(database, movedIds, slot.label, now) : 0;
-  return { slot: state.slot, inserted: insertedIds.length, moved: movedIds.length, notified };
+  return {
+    slot: state.slot,
+    inserted: insertedIds.length,
+    moved: movedIds.length,
+    notified,
+    deduplicated: duplicateIds.length,
+  };
 }
 
 /** One email per person signed up for any moved session, naming the new time. */
