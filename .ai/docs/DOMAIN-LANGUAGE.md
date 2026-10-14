@@ -371,7 +371,7 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Session board**. The live board for one weekly Season episode, at `/season2/week/:week` (weeks 2 to 13), linked under its week wherever the Season's schedule is listed. Shown on the facilitator's screen and open on everyone's own device at once. What lands on it stays as the week's record: the Season's memory. Defined in `shared/sessionBoard.ts`.
 
-**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, A Game we build together, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has all ten; other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
+**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, A Game we build together, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has ten of these; Week 3 has its own eighteen (check-in, prompt and needs stages, ADR-74); other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
 
 **Offer** (on a board). A hand raised on the "A Game we build together" stage to coach a village or build a module, stored as a board vote (`offer:coach`, `offer:build`). Everyone sees the counts; only the facilitator sees who, by account name, with guests as a count, folded until opened since their screen is the one shown on the stream. An offer is interest, not a commitment or a contract.
 
@@ -384,6 +384,16 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Room votes**. Votes for an opportunity called out in the call or the chat, counted on the board by the facilitator and added to the votes people cast on the board themselves (three each).
 
 **Village OS**. The village coordination platform each project's Game runs on; Amora runs it at amora.regencivics.earth. Written "Village OS" in prose, `village-os` in code.
+
+**Human needs** (on a board, ADR-74). The ten needs from the PART 2 NEEDS deck that a project says it is here to meet: Vitality & Survival Needs, Significance, Love, Growth, Contribution, Routine, Diversity, Autonomy, Play, Honesty, with Village OS's own ids (`vitality`, `significance`, ...) in `shared/humanNeeds.ts`. Always written "human needs" on the site, because plain "needs" means a project's crowdpool asks (`project_needs`, the Needs tab). Not the homepage's seven local needs (housing, food, water, air, joy, meaning, purpose), which live inside these ten.
+
+**Seed** (on a human needs card). One of the three human needs a project marks as at the heart of what it is for. Each seed then gets where the project's people are today, where it wants them in three years, who it's for, and who will meet it. Not $ReGen's old SEEDS currency and not a Village OS seed (the first-draft village built from an application).
+
+**Check-in** (on a board). Tapping your project at the start of a weekly session, so everything you answer after it is kept with that project's card on that week's board. The tiles come live from the board's cards, public Season 2 applications and earlier weeks' cards; "Here to learn" answers for the room.
+
+**Answer** (on a board). One reply to one prompt on a prompt or needs stage: a pick or a short line, stored as a board row of kind `answer` keyed by the prompt. Anonymous prompts show only counts. The private "I feel ___ because I need ___" card is never an answer: it is never stored.
+
+**Weekly sessions** (under Submissions). The section of a signed-in person's profile, Submissions tab, that lists every board they wrote on, week by week, with their projects and answers. A guest's answers join it when they sign in on the same browser and say yes.
 
 ### Get your Village OS (ADR-69)
 

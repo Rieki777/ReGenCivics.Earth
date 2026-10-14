@@ -32,6 +32,11 @@ import ToolSubmit from "@/pages/ToolSubmit";
 import { Router, Route } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { defaultBoardState } from "@shared/sessionBoard";
+import { EXPORT_COPY, weekHeading } from "@shared/boardEntries";
+import { needsSummary, projectCardLines, projectView } from "@shared/humanNeeds";
+import { SessionSubmissions } from "@/components/profile/SessionSubmissions";
+import { SessionBoardExport } from "@/components/admin/SessionBoardExport";
+import { Toaster } from "@/components/ui/sonner";
 
 export type Story = {
   title: string;
@@ -261,6 +266,306 @@ const LIBRARY_TOOL = {
   categories: [{ name: "Finance", slug: "finance" }, { name: "Governance", slug: "governance" }],
   partnerName: "Seed Commons", partnerUrl: "https://seedcommons.org", usedByProjects: 3, interopStage: "not_assessed",
   endorsements: [{ id: 1, userName: "Maya", comment: "We moved our land fund onto this in a week.", createdAt: "2026-10-10" }],
+};
+
+/* ------------------------------------------------ Week 3 board (2026-10-14) */
+
+/**
+ * Week 3's board, mid-session: 47 minutes in, three minutes into the stage the
+ * room is on. Rows marked `mine` come back from whoami as this browser's own,
+ * so take-back buttons, pressed picks and "Yours" tags show the way they do
+ * live. Ids: 1xx this person, 2xx a teammate on the same card, 3xx other projects.
+ */
+type W3Row = { id: number; block: string | null; text: string; projectId: number | null; kind?: string; chosen?: boolean; mine?: boolean };
+
+function w3Card(id: number, name: string, place: string | null = null, applicationId: number | null = null) {
+  return { id, name, place, url: null, phase: null, whereNow: null, ready: [], nextMove: null, shared: false, hidden: false, applicationId, displayName: null };
+}
+
+const W3_CARDS = [
+  w3Card(5, "Toa Hermitage", "Big Island, Hawai'i", 41),
+  w3Card(7, "Amora", "Dominicalito, Costa Rica", 57),
+  w3Card(9, "Lupine Hollow", "Willamette Valley, Oregon"),
+  w3Card(11, "Riverbend Commons"),
+];
+
+const TOA = 5;
+const AMORA = 7;
+const LUPINE = 9;
+
+/** Human needs picked and seeds planted on stage 6, read again on 7, 9 and 13. */
+const W3_NEEDS_ROWS: W3Row[] = [
+  { id: 101, block: "needs", text: "love", projectId: TOA, mine: true },
+  { id: 102, block: "needs", text: "vitality", projectId: TOA, mine: true },
+  { id: 103, block: "needs", text: "growth", projectId: TOA, mine: true },
+  { id: 104, block: "needs", text: "play", projectId: TOA, mine: true },
+  { id: 105, block: "top", text: "love", projectId: TOA, mine: true },
+  { id: 106, block: "top", text: "vitality", projectId: TOA, mine: true },
+  { id: 201, block: "needs", text: "love", projectId: TOA },
+  { id: 202, block: "needs", text: "autonomy", projectId: TOA },
+  { id: 203, block: "top", text: "love", projectId: TOA },
+  { id: 301, block: "needs", text: "vitality", projectId: AMORA },
+  { id: 302, block: "needs", text: "love", projectId: AMORA },
+  { id: 303, block: "needs", text: "significance", projectId: AMORA },
+  { id: 304, block: "top", text: "vitality", projectId: AMORA },
+  { id: 305, block: "top", text: "love", projectId: AMORA },
+  { id: 306, block: "top", text: "contribution", projectId: AMORA },
+  { id: 307, block: "needs", text: "routine", projectId: LUPINE },
+  { id: 308, block: "needs", text: "love", projectId: LUPINE },
+  { id: 309, block: "top", text: "routine", projectId: LUPINE },
+];
+
+/** Stage 7's answers: today, the goal and who it's for, per seed. */
+const W3_DEPTH_ROWS: W3Row[] = [
+  { id: 210, block: "n-love", text: "deprived", projectId: TOA },
+  { id: 110, block: "n-love", text: "unmet", projectId: TOA, mine: true },
+  { id: 111, block: "g-love", text: "thriving", projectId: TOA, mine: true },
+  { id: 112, block: "b-love", text: "100", projectId: TOA, mine: true },
+  { id: 113, block: "n-vitality", text: "alive", projectId: TOA, mine: true },
+  { id: 114, block: "g-vitality", text: "satisfied", projectId: TOA, mine: true },
+  { id: 115, block: "whole", text: "50", projectId: TOA, mine: true },
+  { id: 310, block: "n-vitality", text: "unmet", projectId: AMORA },
+  { id: 311, block: "g-vitality", text: "thriving", projectId: AMORA },
+  { id: 312, block: "n-love", text: "alive", projectId: AMORA },
+  { id: 313, block: "g-love", text: "thriving", projectId: AMORA },
+  { id: 314, block: "n-routine", text: "satisfied", projectId: LUPINE },
+  { id: 315, block: "g-routine", text: "alive", projectId: LUPINE },
+];
+
+/** Stage 9's answers: who meets each seed. */
+const W3_MEET_ROWS: W3Row[] = [
+  { id: 120, block: "m-love", text: "circle", projectId: TOA, mine: true },
+  { id: 220, block: "m-love", text: "play", projectId: TOA },
+  { id: 320, block: "m-vitality", text: "household", projectId: AMORA },
+  { id: 321, block: "m-love", text: "play", projectId: AMORA },
+  { id: 322, block: "m-routine", text: "circle", projectId: LUPINE },
+  { id: 121, block: "want", text: "Guest stays in the hale. A want, and it pays for the water", projectId: TOA, mine: true },
+];
+
+/** The rest of a project's card, so stage 13 reads like a real room. */
+const W3_CARD_ROWS: W3Row[] = [
+  { id: 130, block: "purpose", text: "twelve families living well on land we heal together", projectId: TOA, mine: true },
+  { id: 131, block: "circles", text: "food", projectId: TOA, mine: true },
+  { id: 132, block: "circles", text: "water", projectId: TOA, mine: true },
+  { id: 133, block: "players", text: "13-30", projectId: TOA, mine: true },
+  { id: 134, block: "players-now", text: "6-12", projectId: TOA, mine: true },
+  { id: 330, block: "purpose", text: "a village where every child knows the forest by name", projectId: AMORA },
+  { id: 331, block: "whole", text: "100", projectId: AMORA },
+  { id: 332, block: "circles", text: "love", projectId: AMORA },
+  { id: 333, block: "players", text: "31-150", projectId: AMORA },
+  { id: 340, block: "purpose", text: "a seed library the whole valley can borrow from", projectId: LUPINE },
+  { id: 350, block: "purpose", text: "Everyone here leaves with one friend they didn't have", projectId: null },
+];
+
+/** Questions on the wall, from three projects and the room. */
+const W3_ASK_ROWS: W3Row[] = [
+  { id: 360, kind: "ask", block: "s3", text: "How do we start a game with only four of us on the land?", projectId: AMORA, chosen: true },
+  { id: 140, kind: "ask", block: "s3", text: "Can a land trust hold the land and the game both?", projectId: TOA, mine: true },
+  { id: 361, kind: "ask", block: "s3", text: "Where do tokens come in, if human needs stay out of markets?", projectId: null },
+  { id: 362, kind: "ask", block: "s7", text: "Is the three-year goal for the people living there now, or everyone who might come?", projectId: LUPINE },
+];
+
+function week3Board(stage: number, opts: {
+  rows?: W3Row[];
+  facilitator?: boolean;
+  answerCounts?: Record<string, Record<string, number>>;
+  anon?: { key: string; option: string }[];
+  displayName?: string;
+  /** "I'm here to learn today" in place of a project. */
+  learn?: boolean;
+} = {}) {
+  const now = Date.now();
+  const state = defaultBoardState(3);
+  state.stage = stage;
+  state.sessionStartedAt = now - 47 * 60_000;
+  state.stageStartedAt = now - 3 * 60_000;
+  const rows = opts.rows ?? [];
+  const facilitator = !!opts.facilitator;
+  mockData["sessionBoard.get"] = {
+    week: 3,
+    status: "open",
+    version: 7,
+    serverNow: now,
+    state,
+    canFacilitate: facilitator,
+    notes: [],
+    hands: {},
+    offers: {},
+    answerCounts: opts.answerCounts ?? {},
+    checkins: { [TOA]: 2, [AMORA]: 3, [LUPINE]: 1 },
+    offerPeople: null,
+    projects: W3_CARDS,
+    items: rows.map((r, i) => ({
+      id: r.id, kind: r.kind ?? "answer", text: r.text, projectId: r.projectId, block: r.block, theme: null,
+      chosen: !!r.chosen, votes: 0, roomVotes: 0, fromItemId: null, hidden: false, displayName: null,
+      createdAt: new Date(now - (rows.length - i) * 60_000).toISOString(),
+    })),
+    facilitatorLists: facilitator
+      ? {
+        register: [],
+        applications: [
+          { id: 41, projectName: "Toa Hermitage" },
+          { id: 57, projectName: "Amora" },
+          { id: 63, projectName: "Green Gulch Land Trust" },
+        ],
+      }
+      : null,
+  };
+  mockData["sessionBoard.version"] = { version: 7, status: "open" };
+  if (facilitator) {
+    // Facilitators are signed in. No guest rows, so no claim question over the board.
+    mockData["auth.me"] = { id: 2, name: "Rye", email: "rye@example.org", role: "admin" };
+    mockData["sessionBoard.guestRows.result"] = { rows: 0 };
+  }
+  mockData["sessionBoard.whoami.result"] = {
+    itemIds: rows.filter((r) => r.mine).map((r) => r.id),
+    projectIds: [],
+    votes: [],
+    hands: [],
+    offers: [],
+    anon: opts.anon ?? [],
+    checkins: [TOA],
+    canFacilitate: facilitator,
+  };
+  // Wednesday as it runs: Week 3 started 47 minutes ago, Week 4 is next.
+  mockData["seasonSchedule.state"] = {
+    sessions: [
+      { week: 3, title: null, startTime: new Date(now - 47 * 60_000).toISOString(), endTime: new Date(now + 73 * 60_000).toISOString(), status: "scheduled" },
+      { week: 4, title: null, startTime: new Date(now + 7 * 86_400_000).toISOString(), endTime: new Date(now + 7 * 86_400_000 + 120 * 60_000).toISOString(), status: "scheduled" },
+    ],
+  };
+  try {
+    localStorage.setItem("session-board:project:3", JSON.stringify(opts.learn ? { learn: true } : { cardId: TOA, name: "Toa Hermitage" }));
+    if (opts.displayName) localStorage.setItem("session-board:name", opts.displayName);
+  } catch {
+    /* the story still renders with no pick kept */
+  }
+}
+
+/** The page itself at /season2/week/3, so the header, rail and footer are in every Week 3 story. */
+function Week3Page() {
+  const { hook } = memoryLocation({ path: "/season2/week/3", static: true });
+  return (
+    <Router hook={hook}>
+      <Route path="/season2/week/:week"><SessionBoard /></Route>
+    </Router>
+  );
+}
+
+/** Thirteen tiles from all three sources: this board's cards, Week 2's cards, and applications. */
+const W3_TILES = [
+  { ref: "p5", name: "Toa Hermitage", place: "Big Island, Hawai'i", cardId: TOA, from: "board", fromWeek: null, here: 2 },
+  { ref: "p7", name: "Amora", place: "Dominicalito, Costa Rica", cardId: AMORA, from: "board", fromWeek: null, here: 3 },
+  { ref: "p9", name: "Lupine Hollow", place: "Willamette Valley, Oregon", cardId: LUPINE, from: "board", fromWeek: null, here: 1 },
+  { ref: "p11", name: "Riverbend Commons", place: null, cardId: 11, from: "board", fromWeek: null, here: 0 },
+  { ref: "w2p14", name: "Cedar Spiral", place: "Vancouver Island, Canada", cardId: null, from: "earlier", fromWeek: 2, here: 0 },
+  { ref: "w2p15", name: "The Long Field", place: "Devon, England", cardId: null, from: "earlier", fromWeek: 2, here: 0 },
+  { ref: "w2p16", name: "Kinship Acres", place: null, cardId: null, from: "earlier", fromWeek: 2, here: 0 },
+  { ref: "a63", name: "Green Gulch Land Trust", place: "Marin, California", cardId: null, from: "application", fromWeek: null, here: 0 },
+  { ref: "a64", name: "Casa Semilla", place: "Oaxaca, Mexico", cardId: null, from: "application", fromWeek: null, here: 0 },
+  { ref: "a65", name: "Sky Meadow Farm", place: "Vermont", cardId: null, from: "application", fromWeek: null, here: 0 },
+  { ref: "a66", name: "Mossy Creek Village", place: "Asheville, North Carolina", cardId: null, from: "application", fromWeek: null, here: 0 },
+  { ref: "a67", name: "Tierra Viva Regenerative Cooperative of the Southern Highlands", place: "Cusco, Peru", cardId: null, from: "application", fromWeek: null, here: 0 },
+  { ref: "a68", name: "Hill Farm", place: "Vermont", cardId: null, from: "application", fromWeek: null, here: 0 },
+];
+
+/* ------------------------------------------------ profile: weekly sessions */
+
+const W3_AT = "2026-10-14T18:05:00.000Z";
+const W2_AT = "2026-10-07T18:40:00.000Z";
+
+const SUBMISSION_WEEKS = [
+  {
+    ...weekHeading(2),
+    week: 2,
+    lastAt: W2_AT,
+    projects: [{ cardId: 3, name: "Toa Hermitage", how: "added" }],
+    entries: [
+      { id: "w2-1", stage: "Drop in", label: "Your arrival word", value: "Grateful", project: null, anonymous: false, at: W2_AT },
+      { id: "w2-2", stage: "Project circle", label: "A pain point you named", value: "Nobody owns the water schedule, so it slips every dry season", project: "Toa Hermitage", anonymous: false, at: W2_AT },
+      { id: "w2-3", stage: "Project circle", label: "A growth opportunity you named", value: "A shared tool library with the two farms down the road", project: "Toa Hermitage", anonymous: false, at: W2_AT },
+      { id: "w2-4", stage: "Harvest", label: "You voted for", value: "A shared tool library with the two farms down the road", project: null, anonymous: false, at: W2_AT },
+      { id: "w2-5", stage: null, label: "You raised a hand for", value: "Week 4: Game & Organisation Co-Creation Part 2", project: null, anonymous: false, at: W2_AT },
+    ],
+  },
+  {
+    ...weekHeading(3),
+    week: 3,
+    lastAt: W3_AT,
+    projects: [{ cardId: TOA, name: "Toa Hermitage", how: "checked in" }],
+    entries: [
+      { id: "w3-1", stage: "What you came for", label: "A question you asked", value: "Can a land trust hold the land and the game both?", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-2", stage: "What you came for", label: "What you wanted to leave with", value: "A first draft of our circles", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-3", stage: "What it's all for", label: "How well your main organisation meets your human needs", value: "Some", project: null, anonymous: true, at: W3_AT },
+      { id: "w3-4", stage: "What it's all for", label: "Your project's first line", value: "twelve families living well on land we heal together", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-5", stage: "What your project is for", label: "A human need your project is here to meet", value: "Love", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-6", stage: "What your project is for", label: "A seed you planted", value: "Love", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-7", stage: "How deep, how wide", label: "Love: where your people are today", value: "Unmet", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-8", stage: "How deep, how wide", label: "Love: where you want them in three years", value: "Thriving", project: "Toa Hermitage", anonymous: false, at: W3_AT },
+      { id: "w3-9", stage: "Tell us", label: "Something that landed for you", value: "Keeping human needs out of markets. I had never put it that plainly.", project: null, anonymous: false, at: W3_AT },
+    ],
+  },
+];
+
+/** The profile page's own ground (PlayerProfile.tsx), around the Submissions tab. */
+function ProfileGround({ children }: { children: ReactNode }) {
+  return (
+    <div className="-mx-6 -mb-6 min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
+      <div className="mx-auto max-w-4xl px-4 py-8">{children}</div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------ admin: the export */
+
+const EXPORT_ROWS = [...W3_NEEDS_ROWS, ...W3_DEPTH_ROWS, ...W3_MEET_ROWS, ...W3_CARD_ROWS].map((r) => ({
+  id: r.id, kind: r.kind ?? "answer", block: r.block, text: r.text, projectId: r.projectId, createdAt: W3_AT,
+}));
+
+const EXPORT_FIXTURE = {
+  generatedAt: "2026-10-14T19:00:00.000Z",
+  why: EXPORT_COPY.why,
+  weeks: [
+    {
+      week: 2, ...weekHeading(2), status: "open",
+      projects: [], anonymous: [], votes: [], summary: null, projectViews: [],
+      rows: [
+        {
+          id: 90, kind: "pain", key: null, stage: "Project circle", label: "A pain point you named", value: "Nobody owns the water schedule",
+          projectId: null, projectName: null, applicationId: null, displayName: "Rye", author: "signed-in",
+          userId: 1, chosen: false, hidden: false, createdAt: W2_AT,
+        },
+      ],
+    },
+    {
+      week: 3, ...weekHeading(3), status: "open",
+      projects: [
+        { cardId: TOA, name: "Toa Hermitage", place: "Big Island, Hawai'i", applicationId: 41, applicationName: "Toa Hermitage", applicationStatus: "approved", projectPath: "/project/41-toa-hermitage", adminPath: "/admin?tab=applications&open=41", hidden: false, addedBy: null, checkins: 2 },
+        { cardId: AMORA, name: "Amora", place: "Dominicalito, Costa Rica", applicationId: 57, applicationName: "Amora", applicationStatus: "under_review", projectPath: null, adminPath: "/admin?tab=applications&open=57", hidden: false, addedBy: null, checkins: 3 },
+        { cardId: LUPINE, name: "Lupine Hollow", place: "Willamette Valley, Oregon", applicationId: null, applicationName: null, applicationStatus: null, projectPath: null, adminPath: null, hidden: false, addedBy: "guest", checkins: 1 },
+      ],
+      rows: [],
+      anonymous: [
+        { key: "pulse-a", label: "How it was landing", value: "Clear", createdAt: W3_AT },
+        { key: "pulse-a", label: "How it was landing", value: "Clear", createdAt: W3_AT },
+        { key: "pulse-a", label: "How it was landing", value: "Too fast", createdAt: W3_AT },
+        { key: "pulse-b", label: "How it was landing", value: "Want to go deeper", createdAt: W3_AT },
+        { key: "useful", label: "How useful the session was", value: "Very", createdAt: W3_AT },
+      ],
+      votes: [],
+      summary: needsSummary(EXPORT_ROWS),
+      projectViews: [TOA, AMORA, LUPINE].map((id) => ({
+        cardId: id,
+        name: W3_CARDS.find((c) => c.id === id)!.name,
+        lines: projectCardLines(projectView(EXPORT_ROWS, id)),
+        villageOs: { needs: [] },
+      })),
+    },
+    {
+      week: 4, ...weekHeading(4), status: "none",
+      projects: [], rows: [], anonymous: [], votes: [], summary: null, projectViews: [],
+    },
+  ],
 };
 
 export const STORIES: Record<string, Story> = {
@@ -774,6 +1079,282 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="-m-6">
         <SeasonWheel now={new Date("2027-01-20T18:00:00Z")} />
+      </div>
+    ),
+  },
+
+  /**
+   * Week 3, stage 2 "Tap your project", as a guest on a phone: thirteen tiles
+   * from this board, Week 2 and applications (so the filter shows), Toa
+   * Hermitage picked. The audit taps "Change project" and opens "Add your
+   * project" with a name typed, so the tiles, the pressed pick and the add
+   * form are all measured.
+   */
+  "week3-checkin": {
+    title: "Week 3, Tap your project: tiles from all three sources, one picked, adding a project",
+    setup: () => {
+      week3Board(1);
+      mockData["sessionBoard.checkInOptions"] = { tiles: W3_TILES };
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** The same stage for the facilitator: "You're with ...", the name field, and card care open. */
+  "week3-checkin-host": {
+    title: "Week 3, Tap your project: picked, facilitator, link, merge and hide open",
+    setup: () => {
+      week3Board(1, { facilitator: true, displayName: "Rye" });
+      mockData["sessionBoard.checkInOptions"] = { tiles: W3_TILES.slice(0, 6) };
+    },
+    render: () => <Week3Page />,
+  },
+
+  /**
+   * Stage 4 for someone here to learn: the "Answering for the room" chip, the
+   * question wall as a guest sees it (an answered one, one of mine), and hopes.
+   */
+  "week3-came-for": {
+    title: "Week 3, What you came for: here to learn, the question wall, a two-line note",
+    setup: () => {
+      week3Board(3, {
+        learn: true,
+        rows: [
+          ...W3_ASK_ROWS,
+          { id: 150, block: "hope", text: "How other projects decide who joins", projectId: null, mine: true },
+          { id: 250, block: "hope", text: "Clarity on who decides what", projectId: TOA },
+          { id: 363, block: "hope", text: "How to bring the neighbours in", projectId: AMORA },
+        ],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /**
+   * Stage 6 "What it's all for": the room's anonymous pick with counts, the
+   * private card with words tapped in (the audit types and taps), and the
+   * project's first line under the "For Toa Hermitage" chip.
+   */
+  "week3-prompt": {
+    title: "Week 3, What it's all for: anonymous pick, the private card, a note for the project",
+    setup: () => {
+      week3Board(5, {
+        rows: [
+          { id: 130, block: "purpose", text: "twelve families living well on land we heal together", projectId: TOA, mine: true },
+          { id: 330, block: "purpose", text: "a village where every child knows the forest by name", projectId: AMORA },
+        ],
+        answerCounts: { mate: { hardly: 1, little: 3, some: 4, mostly: 2, fully: 0 } },
+        anon: [{ key: "mate", option: "some" }],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 7: four human needs picked, two seeds planted, teammates' counts, and Across the room. */
+  "week3-needs-pick": {
+    title: "Week 3, What your project is for: some picked, seeds planted",
+    setup: () => {
+      week3Board(6, {
+        rows: [...W3_NEEDS_ROWS, { id: 107, block: "other", text: "Belonging to a place", projectId: TOA, mine: true }],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 8: a seed with today and the goal set (so the rung's meaning shows), a teammate who differs, and the ladder. */
+  "week3-needs-depth": {
+    title: "Week 3, How deep, how wide: today and goal set, the rung meaning, the room's ladder",
+    setup: () => {
+      week3Board(7, {
+        rows: [...W3_NEEDS_ROWS, ...W3_DEPTH_ROWS],
+        answerCounts: { "pulse-a": { clear: 5, deeper: 2, fast: 1, lost: 0 } },
+        anon: [{ key: "pulse-a", option: "clear" }],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 10: who meets each seed, with the deck's tip opened on "A market", and The room leans. */
+  "week3-needs-meet": {
+    title: "Week 3, Who meets each need: ways with small print, a tip open, the room leans",
+    setup: () => {
+      week3Board(9, { rows: [...W3_NEEDS_ROWS, ...W3_DEPTH_ROWS, ...W3_MEET_ROWS] });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 14: "Polish your first line" and every project's card, read aloud. */
+  "week3-room-card": {
+    title: "Week 3, Your project in one breath: the first line and every project's card",
+    setup: () => {
+      week3Board(13, { rows: [...W3_NEEDS_ROWS, ...W3_DEPTH_ROWS, ...W3_MEET_ROWS, ...W3_CARD_ROWS] });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 15 for the facilitator: the wall with Mark answered, the box picks, one move, Week 4 picks. */
+  "week3-questions": {
+    title: "Week 3, Your questions and next week: facilitator marks answered",
+    setup: () => {
+      week3Board(14, {
+        facilitator: true,
+        rows: [
+          ...W3_ASK_ROWS,
+          { id: 160, block: "box", text: "vision", projectId: TOA, mine: true },
+          { id: 161, block: "box", text: "patterns", projectId: TOA, mine: true },
+          { id: 162, block: "week4", text: "circles", projectId: TOA, mine: true },
+        ],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 16: the Season feedback box (Week 4 from the schedule), one line, and the anonymous pick. */
+  "week3-tellus": {
+    title: "Week 3, Tell us: the feedback box with a topic typed and shared",
+    setup: () => {
+      week3Board(15, {
+        rows: [{ id: 170, block: "landed", text: "Keeping human needs out of markets", projectId: null, mine: true }],
+        answerCounts: { useful: { notyet: 0, little: 1, useful: 3, very: 4, exactly: 2 } },
+        anon: [{ key: "useful", option: "very" }],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 17: closing words (one of mine, with its take-back), Week 3's numbers, and the board staying open. */
+  "week3-close": {
+    title: "Week 3, Close: closing words and the week's numbers",
+    setup: () => {
+      week3Board(16, {
+        rows: [
+          ...W3_NEEDS_ROWS,
+          ...W3_ASK_ROWS,
+          { id: 380, kind: "leave", block: null, text: "Rooted", projectId: null },
+          { id: 381, kind: "leave", block: null, text: "Curious", projectId: null },
+          { id: 180, kind: "leave", block: null, text: "Grateful", projectId: null, mine: true },
+        ],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 1, the first screen everyone sees on Wednesday: Welcome, Part 1 of 2. */
+  "week3-welcome": {
+    title: "Week 3, Welcome: the first screen, as a guest",
+    setup: () => {
+      week3Board(0);
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 3, Drop in: the breath and an arrival word, one of mine with its take-back. */
+  "week3-dropin": {
+    title: "Week 3, Drop in: the breath and arrival words",
+    setup: () => {
+      week3Board(2, {
+        rows: [
+          { id: 390, kind: "arrive", block: null, text: "Rested", projectId: null },
+          { id: 190, kind: "arrive", block: null, text: "Hopeful", projectId: null, mine: true },
+        ],
+      });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 5, Why now: the clip link and one line for the project. */
+  "week3-whynow": {
+    title: "Week 3, Why now: the clip and one line",
+    setup: () => {
+      week3Board(4, { rows: [{ id: 191, block: "whynow", text: "We have less time than I thought to get the water right", projectId: TOA, mine: true }] });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 9, Living ways: the chestnut line, empty so its example shows, and the allies pick. */
+  "week3-living": {
+    title: "Week 3, Living ways: the chestnut and the allies",
+    setup: () => {
+      week3Board(8, { rows: [...W3_NEEDS_ROWS, { id: 192, block: "allies", text: "birds", projectId: TOA, mine: true }] });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stages 11 to 13: who decides, circles and players, from the centre out. */
+  "week3-decides": {
+    title: "Week 3, Who decides: today and the aim, and a game in place of a meeting",
+    setup: () => {
+      week3Board(10, { rows: W3_NEEDS_ROWS });
+    },
+    render: () => <Week3Page />,
+  },
+  "week3-circles": {
+    title: "Week 3, Circles and players",
+    setup: () => {
+      week3Board(11, { rows: [...W3_NEEDS_ROWS, ...W3_CARD_ROWS] });
+    },
+    render: () => <Week3Page />,
+  },
+  "week3-centre": {
+    title: "Week 3, From the centre out: one economy and one rite",
+    setup: () => {
+      week3Board(12, { rows: W3_NEEDS_ROWS });
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** Stage 18, after the Close: get your Village OS. */
+  "week3-village": {
+    title: "Week 3, Your village: get your Village OS",
+    setup: () => {
+      week3Board(17);
+    },
+    render: () => <Week3Page />,
+  },
+
+  /** The profile's Submissions, Weekly sessions: Week 3 open, Week 2 opened by the audit. */
+  "profile-weekly-sessions": {
+    title: "Profile > Submissions: Weekly sessions, Week 3 and Week 2",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["sessionBoard.mySubmissions"] = { weeks: SUBMISSION_WEEKS };
+      try { localStorage.removeItem("season-voter-key"); } catch { /* nothing kept */ }
+    },
+    render: () => (
+      <ProfileGround>
+        <SessionSubmissions />
+      </ProfileGround>
+    ),
+  },
+
+  /** Signed in on a browser that answered as a guest: the claim question, before anything moves. */
+  "profile-guest-claim": {
+    title: "Profile > Submissions: We found 4 answers given as a guest in this browser",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["sessionBoard.mySubmissions"] = { weeks: [] };
+      mockData["sessionBoard.guestRows.result"] = { rows: 4 };
+      try {
+        localStorage.setItem("season-voter-key", "s0123456789abcdef0123456789abcdef");
+        localStorage.removeItem(`session-board:claim-declined:${SIGNED_IN.id}`);
+      } catch { /* the question needs the key */ }
+    },
+    render: () => (
+      <ProfileGround>
+        <SessionSubmissions />
+        <Toaster />
+      </ProfileGround>
+    ),
+  },
+
+  /** Admin > Events: the export panel after "See each week's summary", every disclosure open. Light theme. */
+  "admin-session-export": {
+    title: "Admin > Events: Weekly session answers, each week's summary",
+    setup: () => {
+      mockData["sessionBoard.adminExport"] = EXPORT_FIXTURE;
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <SessionBoardExport />
       </div>
     ),
   },

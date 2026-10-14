@@ -684,3 +684,30 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
   .sb-bar-fill { transition: none; }
 }
 
+/* ---------- week 3 on: the readability gate (pnpm ui:audit, 2026-10-14) ----------
+   A board with a check-in stage carries .sb-prompt-week on .sb-app, so these
+   reach Week 3 and later weeks and leave Week 2's board as it ran. Every tap
+   target is 44px at every width (the phone rule above already did this below
+   760px), and every field's edge reads at 3:1 against the panel it sits on. */
+.sb-prompt-week { --sb-field-edge: #6f9a78; }
+.sb-prompt-week .sb-field { border-color: var(--sb-field-edge); }
+.sb-prompt-week .sb-mark { min-height: 44px; justify-content: center; }
+.sb-prompt-week .sb-small { min-height: 44px; }
+.sb-prompt-week .sb-x { width: 44px; height: 44px; }
+.sb-q-meta .sb-toggle { align-content: center; }
+/* A one-line add wraps its button under the field before the placeholder is cut off. */
+.sb-prompt .sb-add, .sb-ask-foot .sb-add { flex-wrap: wrap; }
+.sb-prompt .sb-add .sb-field, .sb-ask-foot .sb-add .sb-field { flex: 1 1 16rem; }
+/* A one-line answer is a textarea that grows with its words, so a long line
+   and its example wrap on a phone. Where field-sizing isn't supported, a phone
+   shows two lines. */
+.sb-note-one textarea.sb-field { min-height: 44px; resize: none; field-sizing: content; overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  /* On a phone the field takes the whole row and the mic and button sit under
+     it: "Type a word and press Enter" read "Type a word and press Ente". */
+  .sb-prompt-week .sb-add { flex-wrap: wrap; }
+  .sb-prompt-week .sb-add .sb-field { flex: 1 1 100%; }
+  @supports not (field-sizing: content) {
+    .sb-note-one textarea.sb-field { min-height: calc(3em + 22px); }
+  }
+}

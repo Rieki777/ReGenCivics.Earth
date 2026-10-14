@@ -791,7 +791,7 @@ const WEEK_3: BoardStage[] = [
       {
         key: "want",
         title: "Name one thing your project will offer. Does it meet a human need or a want?",
-        placeholder: "What it is, then human need or want",
+        placeholder: "Name it, then human need or want",
         mode: "note", scope: "project", max: 3,
       },
       { key: "pulse-b", title: "How's this landing?", mode: "pick", scope: "room", anonymous: true, options: PULSE, max: 1 },

@@ -141,6 +141,24 @@ export function installAuditLib() {
       if (r < 4.5) failures.push(`placeholder ${r.toFixed(2)} < 4.5: "${el.getAttribute("placeholder").slice(0, 50)}"`);
     }
 
+    // Placeholders cut off. A one-line field cannot wrap, so a long example
+    // loses its end: Week 3's board read "Type a word and press Ente" and "The
+    // human need, and the living wa" on a phone and passed every check here
+    // (2026-10-14). Measured against the field's text box, 2px of slack for the
+    // last glyph's edge. Textareas wrap, so they are not measured.
+    const measure = document.createElement("canvas").getContext("2d");
+    for (const el of root.querySelectorAll("input[placeholder]")) {
+      if (!visible(el) || el.value) continue;
+      const text = el.getAttribute("placeholder");
+      if (!text) continue;
+      const cs = getComputedStyle(el);
+      const ph = getComputedStyle(el, "::placeholder");
+      measure.font = `${ph.fontStyle} ${ph.fontWeight} ${ph.fontSize} ${ph.fontFamily}`;
+      const need = measure.measureText(text).width;
+      const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      if (need > room + 2) failures.push(`placeholder cut off (${Math.round(need)}px in ${Math.round(room)}px): "${text.slice(0, 50)}"`);
+    }
+
     // Field edges and typed text. Miss that taught typed text: input values
     // are not text nodes, so the contrast walk never saw them.
     for (const el of root.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=range]):not([type=file]), textarea, select")) {
@@ -168,7 +186,9 @@ export function installAuditLib() {
     // pointer-coarse:min-h-11. Miss that taught this: 44px everywhere flagged
     // every desktop nav item, burying the real problems.
     const MIN = matchMedia("(pointer: coarse)").matches ? 44 : 24;
-    for (const el of root.querySelectorAll("button, a[href], input:not([type=hidden]), select, textarea, [role=radio], [role=checkbox], [role=button], [role=tab], [role=switch]")) {
+    // A <summary> is a control too: the admin export's "Each project's card"
+    // disclosures were 16px tall and nothing here looked at them (2026-10-14).
+    for (const el of root.querySelectorAll("button, a[href], summary, input:not([type=hidden]), select, textarea, [role=radio], [role=checkbox], [role=button], [role=tab], [role=switch]")) {
       if (!visible(el) || opacityOf(el) < 0.05) continue;
       // The clickable area is the element plus everything inside it: a tap on
       // a child lands on the parent link. Miss that taught this: the site's

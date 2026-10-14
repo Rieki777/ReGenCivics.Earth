@@ -288,7 +288,9 @@ function Board({ week }: { week: number }) {
   const sessionRunning = !!state?.sessionStartedAt && !closedAt;
 
   return (
-    <div className="sb-app">
+    // sb-prompt-week carries the readability fixes (44px targets, field
+    // outlines at 3:1) to Week 3 on, and leaves Week 2's board as it ran.
+    <div className={`sb-app${promptWeek ? " sb-prompt-week" : ""}`}>
       <SEO title={`${title} · Live board`} description={`The live board for Season 2, ${title}. Type in your project, your pain points and the growth opportunities you see.`} />
       <header className="sb-top">
         <Link href="/season2" className="sb-mark">

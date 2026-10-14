@@ -162,7 +162,7 @@ function WeekSummary({ week }: { week: BoardExportWeek }) {
   return (
     <div className="rounded-lg border border-white/10 p-3 space-y-3" data-testid="export-week">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <a href={week.href} className="text-white font-semibold hover:underline">{week.title}</a>
+        <a href={week.href} className="inline-flex items-center min-h-11 text-white font-semibold hover:underline">{week.title}</a>
         {week.status === "closed" && <span className="text-xs text-amber-300">{PANEL_COPY.closed}</span>}
       </div>
       {week.status === "none" ? (
@@ -184,7 +184,7 @@ function WeekSummary({ week }: { week: BoardExportWeek }) {
           )}
           {week.projectViews.length > 0 && (
             <details className="text-xs">
-              <summary className="cursor-pointer text-[#7dd87d]">Each project's card ({week.projectViews.length})</summary>
+              <summary className="cursor-pointer min-h-11 py-3 text-[#7dd87d]">Each project's card ({week.projectViews.length})</summary>
               <div className="mt-2 space-y-2">
                 {week.projectViews.map((v) => (
                   <div key={v.cardId ?? "room"} className="rounded-md bg-black/20 p-2">
@@ -197,7 +197,7 @@ function WeekSummary({ week }: { week: BoardExportWeek }) {
           )}
           {shownProjects.length > 0 && (
             <details className="text-xs">
-              <summary className="cursor-pointer text-[#7dd87d]">Projects on the board ({shownProjects.length})</summary>
+              <summary className="cursor-pointer min-h-11 py-3 text-[#7dd87d]">Projects on the board ({shownProjects.length})</summary>
               <ul className="mt-2 space-y-1">
                 {shownProjects.map((p) => (
                   <li key={p.cardId} className="text-white/80">
@@ -240,6 +240,13 @@ export function SessionBoardExportView({ data }: { data: BoardExport }) {
 
 type Busy = null | "summary" | "json" | "csv";
 
+/**
+ * The admin page runs in the light theme, where Card gives this dark card dark
+ * ink, so an outline button with no colour of its own read at 1.46:1 (pnpm
+ * ui:audit, 2026-10-14). Light ink and a spring edge, on hover too.
+ */
+const EXPORT_BUTTON = "min-h-11 text-white border-[#7dd87d]/50 hover:bg-[#7dd87d]/15 hover:text-white";
+
 export function SessionBoardExport() {
   const utils = trpc.useUtils();
   const [data, setData] = useState<BoardExport | null>(null);
@@ -274,15 +281,15 @@ export function SessionBoardExport() {
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" className="min-h-11" disabled={busy != null} onClick={() => void run("summary")}>
+          <Button size="sm" variant="outline" className={EXPORT_BUTTON} disabled={busy != null} onClick={() => void run("summary")}>
             {busy === "summary" ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
             {PANEL_COPY.summary}
           </Button>
-          <Button size="sm" variant="outline" className="min-h-11" disabled={busy != null} onClick={() => void run("json")}>
+          <Button size="sm" variant="outline" className={EXPORT_BUTTON} disabled={busy != null} onClick={() => void run("json")}>
             {busy === "json" ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileJson className="w-4 h-4" />}
             {EXPORT_COPY.json}
           </Button>
-          <Button size="sm" variant="outline" className="min-h-11" disabled={busy != null} onClick={() => void run("csv")}>
+          <Button size="sm" variant="outline" className={EXPORT_BUTTON} disabled={busy != null} onClick={() => void run("csv")}>
             {busy === "csv" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {EXPORT_COPY.csv}
           </Button>

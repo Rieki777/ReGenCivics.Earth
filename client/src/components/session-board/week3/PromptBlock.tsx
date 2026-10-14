@@ -288,7 +288,26 @@ function NoteOne({ current, label, placeholder, disabled, onSave, draftKey }: {
   return (
     <>
       <form className="sb-add sb-note-one" onSubmit={submit}>
-        <input className="sb-field" value={draft} onChange={(e) => change(e.target.value)} placeholder={placeholder} maxLength={BOARD_LIMITS.note} aria-label={label} autoComplete="off" disabled={disabled} />
+        {/* A textarea so a long line and its example wrap on a phone instead of
+            running off the edge ("A planting festival in place of the v").
+            Still one line: Enter saves, and a pasted line break becomes a space. */}
+        <textarea
+          className="sb-field"
+          rows={1}
+          value={draft}
+          onChange={(e) => change(e.target.value.replace(/[\r\n]+/g, " "))}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter" || e.shiftKey || e.nativeEvent.isComposing) return;
+            e.preventDefault();
+            e.currentTarget.form?.requestSubmit();
+          }}
+          enterKeyHint="done"
+          placeholder={placeholder}
+          maxLength={BOARD_LIMITS.note}
+          aria-label={label}
+          autoComplete="off"
+          disabled={disabled}
+        />
         <BoardMic label={speakLabel(label)} value={draft} onChange={change} disabled={disabled || busy} />
         <button className="sb-btn" type="submit" disabled={disabled || busy || !draft.trim() || unchanged}>Save</button>
       </form>

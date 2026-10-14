@@ -38,6 +38,44 @@ const BEFORE = {
     await page.getByRole("button", { name: /Send my application/ }).click();
     await page.waitForTimeout(200);
   },
+  // Week 3 (2026-10-14): the states people reach by tapping, not on arrival.
+  "week3-checkin": async (page) => {
+    await page.getByRole("button", { name: "Change project" }).click();
+    await page.getByRole("button", { name: /Not on the list\? Add your project/ }).click();
+    await page.getByRole("textbox", { name: "Project name" }).fill("Hill Farm");
+    await page.waitForTimeout(200);
+  },
+  "week3-checkin-host": async (page) => {
+    await page.getByText("Facilitators: link, merge and hide cards").click();
+    await page.waitForTimeout(200);
+  },
+  "week3-prompt": async (page) => {
+    await page.getByRole("textbox", { name: /Just for you/ }).fill("I feel stretched because I need");
+    await page.getByRole("button", { name: "Ease", exact: true }).click();
+    await page.waitForTimeout(200);
+  },
+  "week3-needs-meet": async (page) => {
+    await page.getByRole("article", { name: /Vitality/ }).getByRole("button", { name: /A market/ }).click();
+    await page.waitForTimeout(200);
+  },
+  "week3-tellus": async (page) => {
+    await page.getByRole("textbox", { name: /What do you want to dig into/ }).fill("How to price a membership so nobody is priced out");
+    await page.getByRole("checkbox", { name: /Share this with the cohort/ }).check();
+    await page.waitForTimeout(200);
+  },
+  "profile-weekly-sessions": async (page) => {
+    await page.getByRole("button", { name: /Week 2:/ }).click();
+    await page.waitForTimeout(200);
+  },
+  "profile-guest-claim": async (page) => {
+    await page.locator("[data-sonner-toast]").first().waitFor({ timeout: 5_000 });
+  },
+  "admin-session-export": async (page) => {
+    await page.getByRole("button", { name: /See each week's summary/ }).click();
+    await page.getByTestId("export-week").first().waitFor({ timeout: 5_000 });
+    await page.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
+    await page.waitForTimeout(200);
+  },
 };
 
 fs.mkdirSync(SHOTS, { recursive: true });

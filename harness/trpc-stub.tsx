@@ -32,6 +32,9 @@ function makeProxy(path: string[]): any {
       if (prop === "useQuery") {
         return () => ({
           data: mockData[key],
+          // React Query stamps every result. The session board reads it to set
+          // its clock offset; without it the running clock read NaN:NaN.
+          dataUpdatedAt: mockData[key] === undefined ? 0 : Date.now(),
           isLoading: false,
           isPending: false,
           isError: false,
@@ -66,6 +69,14 @@ function makeProxy(path: string[]): any {
       return makeProxy([...path, String(prop)]);
     },
     apply() {
+      // A direct read, `utils.client.sessionBoard.adminExport.query()` or
+      // `utils.sessionBoard.get.fetch()`, answers from the same canned data.
+      // Decided on the call, not the property, so a procedure that is itself
+      // named "query" (`trpc.globalSearch.query.useQuery`) still resolves.
+      const last = path[path.length - 1];
+      if (last === "query" || last === "fetch") {
+        return Promise.resolve(mockData[path.slice(0, -1).join(".").replace(/^client\./, "")]);
+      }
       return undefined;
     },
   });

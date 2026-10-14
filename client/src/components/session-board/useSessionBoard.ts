@@ -220,6 +220,13 @@ const claims = new Map<number, { promise: Promise<ClaimOutcome | null>; settled:
 const CLAIM_DECLINED_STORAGE = (userId: number) => `session-board:claim-declined:${userId}`;
 
 /**
+ * Sonner draws toast buttons 24px tall. These two decide whose answers move,
+ * often on a phone, so they get a full 44px target (pnpm ui:audit, 2026-10-14).
+ * Inline, because the toast renders outside every page's stylesheet scope.
+ */
+const CLAIM_BUTTON = { minHeight: 44, height: "auto", paddingInline: 14, fontSize: 14 } as const;
+
+/**
  * "We found N answers given as a guest in this browser. Add them?" Resolves
  * "yes", "no" (Not mine), or "later" when the toast is closed without a choice.
  */
@@ -236,6 +243,8 @@ function askToClaim(rows: number): Promise<"yes" | "no" | "later"> {
         duration: Infinity,
         action: { label: SUBMISSIONS_COPY.claimYes, onClick: () => done("yes") },
         cancel: { label: SUBMISSIONS_COPY.claimNo, onClick: () => done("no") },
+        actionButtonStyle: CLAIM_BUTTON,
+        cancelButtonStyle: CLAIM_BUTTON,
         onDismiss: () => done("later"),
       });
     } catch {

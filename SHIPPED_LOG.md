@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-13 (Season 2 Week 3, What your project is for): the human needs board, every answer under Submissions, the data for Village OS
+
+- **Week 3's board** (ADR-74), Part 1 of 2 with Week 4: 18 stages, 120 minutes. Tap your project (tiles from the board, public Season 2 applications and Week 2's cards; add one, or come to learn), "Why this matters now" (a Nate Hagens clip), then the PART 2 NEEDS deck's argument with one main move each: the ten human needs as cards with three seeds, depth and breadth ladders, living ways, who meets each need, who decides, circles and players, the centre out, each project's card read aloud, questions, Tell us.
+- **The clean deck**: "PART 2 NEEDS, Week 3 (Season 2)", 35 slides shared by link, notes rewritten, Rye's animations kept; every stage links the slides on screen.
+- **Every answer in the profile**: Submissions gains "Weekly sessions", every week with a board, Week 2 included. A guest who signs in later on the same browser is asked before their answers move over.
+- **Data for building Village OS**: Admin, Events gets every week's answers as JSON or CSV with a per-week human needs summary, in Village OS's own human needs keys so Week 4 can load them straight in.
+- **Boards stay open** for people going through the weeks at their own pace; the private "I feel ___ because I need ___" card never leaves the screen.
+- Source: `docs/planning/week3-episode/WEEK3_BOARD_SPEC_V1.md` and `API_CONTRACT.md`. Tested end to end on a local server against a scratch database (guest on a phone, facilitator on desktop, a guest who then signs in), reviewed through three lenses (22 findings fixed), and passed `pnpm ui:audit`.
+- Carryover: server-signed guest keys and a bulk "remove this author" for facilitators; the project page panel showing a project's weekly answers; Week 4's board with "Copy for Village OS"; the Village OS "Paste your card" step (village-os repo).
+
 ## 2026-10-13 (the Tools Library fills in from the applications): partner tools, land project usage, a review queue, safer links, readable pages
 
 - **Alliance Partners bring their tools** (ADR-73): up to five on the application, each a link and a sentence (app, physical tool, or service or method). Sending the application queues them for the library; approving the partner lists the ticked ones under the partner's name; the invite email links each listing. A link the library already has is linked, never listed twice (migration 0299).

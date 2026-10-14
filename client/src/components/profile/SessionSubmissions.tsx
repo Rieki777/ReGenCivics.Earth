@@ -123,9 +123,9 @@ export function WeeklySessionsView({
       <div className="flex items-center gap-2 mb-1">
         <CalendarDays className="w-4 h-4 text-[#7dd87d]" />
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider">{SUBMISSIONS_COPY.title}</h3>
-        <span className="text-white/60 text-xs">({sorted.length})</span>
+        <span className="text-white/75 text-xs">({sorted.length})</span>
       </div>
-      <p className="text-white/60 text-xs mb-3">{SUBMISSIONS_COPY.lede}</p>
+      <p className="text-white/75 text-xs mb-3">{SUBMISSIONS_COPY.lede}</p>
 
       {loading ? (
         <div className="bg-white/5 rounded-lg px-4 py-5 flex justify-center">
@@ -133,12 +133,12 @@ export function WeeklySessionsView({
         </div>
       ) : error ? (
         <div className="bg-white/5 rounded-lg px-4 py-5 text-center">
-          <p className="text-white/60 text-sm">{error}</p>
+          <p className="text-white/75 text-sm">{error}</p>
         </div>
       ) : sorted.length === 0 ? (
         <div className="bg-white/5 rounded-lg px-4 py-5 text-center">
-          <p className="text-white/60 text-sm">{SUBMISSIONS_COPY.empty}</p>
-          <p className="text-white/60 text-sm mt-1">{GUEST_LINE}</p>
+          <p className="text-white/75 text-sm">{SUBMISSIONS_COPY.empty}</p>
+          <p className="text-white/75 text-sm mt-1">{GUEST_LINE}</p>
           <a
             href={weekHeading(emptyWeek).href}
             className="mt-2 inline-flex items-center min-h-11 text-[#7dd87d] text-sm font-medium hover:underline"
@@ -169,7 +169,7 @@ export function WeeklySessionsView({
                     )}
                     <span className="min-w-0">
                       <span className="block text-white font-medium text-sm">{w.title}</span>
-                      <span className="block text-white/70 text-xs mt-0.5">
+                      <span className="block text-white/75 text-xs mt-0.5">
                         {countLine(w.entries.length)}
                         {day(w.lastAt) ? ` · Updated ${day(w.lastAt)}` : ""}
                       </span>
@@ -196,9 +196,9 @@ export function WeeklySessionsView({
                         <ul className="space-y-1.5">
                           {g.entries.map((e) => (
                             <li key={e.id} className="rounded-md bg-black/10 px-3 py-2">
-                              <p className="text-white/60 text-xs">{e.label}</p>
+                              <p className="text-white/75 text-xs">{e.label}</p>
                               <p className="text-white text-sm break-words">{e.value}</p>
-                              <p className="text-white/50 text-xs mt-0.5">
+                              <p className="text-white/75 text-xs mt-0.5">
                                 {e.anonymous ? SUBMISSIONS_COPY.anonymous : e.project ?? SUBMISSIONS_COPY.forRoom}
                               </p>
                             </li>
