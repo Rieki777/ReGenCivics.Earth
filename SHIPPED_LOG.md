@@ -34,6 +34,16 @@ Add new entries to the top. Format per entry:
 - **Guards so it stays fast** (STEERING.md section 13): `pnpm ui:audit` fails any endless animation the compositor cannot run (SVG shapes, SMIL, background-position, box-shadow, blur or drop-shadow filters), proven by the audit-selftest story. `pnpm perf:typing` measures keystroke delay (`harness/typing-bench.mjs`).
 - Carryover: the Season Wheel on /seasons (flow ring and now-pulse), LivingTree's SMIL and `tree-breathe`, the progress map's SMIL, the CORE hero kicker shimmer, and CreateCampaign's detail fields, which still re-render the page per key.
 
+## 2026-10-14 (Week 3, live): slides on the board, a Start-only clock, mini breathwork, circles from each project's human needs
+
+- **Week 3 ran live** on the board shipped the night before (four projects checked in, more than 130 notes and answers), with these changes made on Rye's word before and during the session (ADR-75).
+- **Slides and videos built into the page**: every stage shows its slides from the clean deck as pictures that open the slide in the deck, the slides' videos as direct links (Gabor Maté, crows, dolphins, Janine Benyus, the food forest), and the big picture at the start and the end (Bridging Worlds, Clarity + Resources). The third picture, the $RCivics token index, stays off the board: its investor wording breaks the fund-claims rule until counsel and the Legal session rule on it.
+- **The clean deck grew to 36 slides**: the original "Why are we inside?" slide (Jack Schwartz) is back as slide 18, and the board renumbered to match.
+- **Only "Start session" starts the clock**: clicking through the stages before going live had started it twice; the board was reset to a fresh state three times by hand that morning.
+- **Mini breathwork** on Drop in: 50, 65 or 80 breaths at a slow, medium or fast pace, every screen breathing together.
+- **Circles and players starts from each project's human needs**: each need the project picked asks which circles meet it; projects name their own circles, tap every circle they start with, and say the overall shape of their Game in place of "Which circle calls you".
+- Carryover: re-render the slide pictures whenever the deck changes (the table and pictures are numbered together); the breathwork controls' UI story; Week 4's board, which can carry each need's circles into Village OS need links.
+
 ## 2026-10-13 (Season 2 Week 3, What your project is for): the human needs board, every answer under Submissions, the data for Village OS
 
 - **Week 3's board** (ADR-74), Part 1 of 2 with Week 4: 18 stages, 120 minutes. Tap your project (tiles from the board, public Season 2 applications and Week 2's cards; add one, or come to learn), "Why this matters now" (a Nate Hagens clip), then the PART 2 NEEDS deck's argument with one main move each: the ten human needs as cards with three seeds, depth and breadth ladders, living ways, who meets each need, who decides, circles and players, the centre out, each project's card read aloud, questions, Tell us.
