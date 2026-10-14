@@ -208,13 +208,13 @@ function WeekSummary({ week }: { week: BoardExportWeek }) {
                     {p.adminPath && (
                       <>
                         {" · "}
-                        <a href={p.adminPath} className="text-[#7dd87d] hover:underline">Open the application</a>
+                        <a href={p.adminPath} className="text-[#7dd87d] underline underline-offset-2">Open the application</a>
                       </>
                     )}
                     {p.projectPath && (
                       <>
                         {" · "}
-                        <a href={p.projectPath} className="text-[#7dd87d] hover:underline">Project page</a>
+                        <a href={p.projectPath} className="text-[#7dd87d] underline underline-offset-2">Project page</a>
                       </>
                     )}
                   </li>

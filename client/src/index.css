@@ -2745,6 +2745,15 @@ body {
   --normal-bg: #2a2418;
   --normal-border: rgba(212, 165, 116, 0.3);
 }
+/* Keyboard focus on a toast and its buttons. Sonner's own ring is a faint
+   dark shadow, about 1.1:1 on the forest toast. Found by the focus check on
+   Week 3's "add your guest answers?" question (2026-10-14). */
+[data-sonner-toaster] [data-sonner-toast]:focus-visible,
+[data-sonner-toaster] [data-sonner-toast] [data-button]:focus-visible,
+[data-sonner-toaster] [data-sonner-toast] [data-close-button]:focus-visible {
+  outline: 2px solid #7dd87d;
+  outline-offset: 2px;
+}
 
 /* ════════════════════════════════════════════════════════════
    Idea 14. Quest card progressive disclosure (three-tier)
