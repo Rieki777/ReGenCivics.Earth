@@ -5,7 +5,7 @@ import * as db from "../db";
 import { getDb } from "../db";
 import { TRPCError } from "@trpc/server";
 import { and, eq, notInArray, sql } from "drizzle-orm";
-import { applicationEvents, applications, orgClaims, type InsertApplication } from "../../drizzle/schema";
+import { applications, orgClaims, type InsertApplication } from "../../drizzle/schema";
 import { checkRateLimit } from "../rate-limit";
 import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
@@ -19,7 +19,14 @@ import {
   APPLICATION_EMAIL_STATUSES,
   mapApplicationEmailRecipients,
 } from "../lib/applicationEmailRecipients";
-import { getOrCreateTeamUserId } from "../lib/team-user";
+import {
+  sendVoteInviteBacklog,
+  sendVoteInviteById,
+  setApplicationStatus,
+  voteInviteBacklog,
+  voteInviteOutcomeLabel,
+  voteInviteState,
+} from "../lib/approvalHandoff";
 
 /**
  * Statuses the /apply form may no longer change (bundle 1, section 16.3;
@@ -415,188 +422,45 @@ export const applicationsRouter = router({
       return db.getApplicationsByStatus(input.status);
     }),
 
-  // Admin: Update application status
+  // Admin: Update application status. Every admin status change goes through
+  // setApplicationStatus (server/lib/approvalHandoff.ts), so an approval runs
+  // the same handoff from the dropdown, bulk approve, the kanban board and a
+  // scored review: tier detection, the forum thread once, and the vote invite.
   updateStatus: adminProcedure
     .input(z.object({
       id: z.number(),
       status: z.enum(["draft", "submitted", "under_review", "approved", "active", "inactive", "rejected", "changes_requested"]),
+      /** Email the vote invite on approval. Off for a quiet approval. */
+      notify: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      await db.updateApplication(input.id, { status: input.status });
-
-      // Inline tier detection on approval. Land Project Co-Creator
-      // criterion fires the moment status moves to 'approved' or
-      // 'active'. We look up the application to get its userId and
-      // run the detector for that user. Non-fatal if it errors.
-      if (input.status === "approved" || input.status === "active") {
-        try {
-          const app = await db.getApplicationById(input.id);
-          if (app?.userId) {
-            const { detectTierProgression } = await import("../lib/tierDetector");
-            await detectTierProgression(app.userId);
-          }
-        } catch (err) {
-          console.warn("[applications.updateStatus] tier detection failed (non-fatal):", err);
-        }
-      }
-
-      // Log to application events table
-      try {
-        const drizzleDb = await getDb();
-        if (drizzleDb) {
-          await drizzleDb.insert(applicationEvents).values({
-            applicationId: input.id,
-            eventType: 'status_change',
-            description: `Status changed to: ${input.status}`,
-            adminUserId: ctx.user.id,
-          });
-        }
-      } catch (e) {
-        console.warn("Failed to log application event:", e);
-      }
-
-      // Also write to the immutable admin audit log
-      await db.logAdminAction({
+      const result = await setApplicationStatus({
+        id: input.id,
+        status: input.status,
         adminUserId: ctx.user.id,
-        action: "application.status_change",
-        entityType: "application",
-        entityId: input.id,
-        description: `Changed application status to: ${input.status}`,
-        metadata: { newStatus: input.status },
+        notify: input.notify,
       });
-
-      // Notify owner of status change
-      const updatedApp = await db.getApplicationById(input.id);
-      if (updatedApp) {
-        // Status-specific email content
-        const statusMessages: Record<string, { subject: string; content: string }> = {
-          under_review: {
-            subject: `Your Application is Under Review - ${updatedApp.projectName}`,
-            content: `Great news! Your application for **${updatedApp.projectName}** is now being reviewed by our team.\n\nWe'll be in touch soon with our feedback. In the meantime, feel free to explore our resources and connect with other regenerative projects in our network.\n\n**What happens next:**\n- Our review team will evaluate your application\n- We may reach out with questions\n- You'll receive a decision notification\n\nThank you for your patience!`,
-          },
-          approved: {
-            subject: `Congratulations! Your Application is Approved - ${updatedApp.projectName}`,
-            content: `Wonderful news! Your application for **${updatedApp.projectName}** has been approved!\n\nWelcome to the ReGen Civics community. We're excited to support your regenerative work.\n\n**Next Steps:**\n- Our team will reach out to schedule an onboarding call\n- You'll receive access to our partner resources\n- Connect with other projects in our network\n\nWe look forward to co-creating a regenerative future together!`,
-          },
-          rejected: {
-            subject: `Application Update - ${updatedApp.projectName}`,
-            content: `Thank you for your application for **${updatedApp.projectName}**.\n\nAfter careful review, we've determined that your project isn't the right fit for our current season. This doesn't reflect on the value of your work - it simply means our current focus areas don't align.\n\n**What you can do:**\n- Review our feedback (if provided)\n- Consider reapplying in a future season\n- Stay connected through our newsletter\n\nWe appreciate your interest in regenerative development and wish you success in your work.`,
-          },
-          changes_requested: {
-            subject: `Changes Requested - ${updatedApp.projectName}`,
-            content: `We've reviewed your application for **${updatedApp.projectName}** and would like to request some additional information or changes.\n\nPlease review the feedback from our team and update your application accordingly. Once you've made the requested changes, we'll continue with the review process.\n\n**How to proceed:**\n- Review the feedback provided\n- Update your application with the requested information\n- Resubmit for continued review\n\nWe're looking forward to learning more about your project!`,
-          },
-        };
-
-        try {
-          // Notify owner (admin)
-          await notifyOwner({
-            title: `Application Status Updated: ${updatedApp.projectName}`,
-            content: `Application status changed to: **${input.status}**\n\n**Project:** ${updatedApp.projectName}\n**Location:** ${updatedApp.location}\n**Contact:** ${updatedApp.contactEmail}`,
-          });
-
-          // Send status-specific email to applicant if we have their email
-          if (updatedApp.contactEmail && statusMessages[input.status]) {
-            const msg = statusMessages[input.status];
-            await notifyOwner({
-              title: msg.subject,
-              content: `**To:** ${updatedApp.contactEmail}\n\n${msg.content}`,
-            });
-          }
-        } catch (e) {
-          console.warn("Failed to send notification:", e);
-        }
-
-        // Auto-create forum thread in Active Projects category on approval
-        if (input.status === "approved") {
-          try {
-            const cats = await db.listForumCategories();
-            let landProjectsCat = cats.find(c => c.slug === "land-projects");
-
-            // Auto-create the category if it doesn't exist
-            if (!landProjectsCat) {
-              const catId = await db.createForumCategory({
-                name: "Land Projects",
-                slug: "land-projects",
-                description: "Land projects approved by ReGen Civics. Follow updates, ask questions, and connect with the teams.",
-                sortOrder: 99,
-              });
-              landProjectsCat = { id: catId, slug: "land-projects", name: "Land Projects" } as any;
-            }
-
-            if (landProjectsCat) {
-              const typeLabel = updatedApp.projectType === "early_stage" ? "early-stage" : "mature";
-              const landStatusLabel: Record<string, string> = { owned: "owned", leased: "leased", committed: "committed to purchase", seeking: "seeking land" };
-
-              // Build rich community metrics line
-              const metrics: string[] = [];
-              if (updatedApp.projectSizeHectares) metrics.push(`${updatedApp.projectSizeHectares} hectares`);
-              if (updatedApp.currentPeopleCount) metrics.push(`${updatedApp.currentPeopleCount} people currently`);
-              if (updatedApp.intendedPeopleCount) metrics.push(`${updatedApp.intendedPeopleCount} intended`);
-
-              // Build mixed use label
-              let mixedUseStr = "";
-              try {
-                const mu = JSON.parse(updatedApp.mixedUse ?? "[]");
-                if (Array.isArray(mu) && mu.length) mixedUseStr = mu.join(", ");
-              } catch { /* ignore */ }
-
-              const threadContent = [
-                `**${updatedApp.projectName}** is a ${typeLabel} regenerative land project based in ${updatedApp.location}${updatedApp.country ? `, ${updatedApp.country}` : ""}.`,
-                "",
-                `**Vision**`,
-                updatedApp.vision,
-                "",
-                `**Land status:** ${landStatusLabel[updatedApp.landStatus] ?? updatedApp.landStatus}`,
-                metrics.length ? `**Scale:** ${metrics.join(" | ")}` : "",
-                mixedUseStr ? `**Uses:** ${mixedUseStr}` : "",
-                updatedApp.meetingFrequency ? `**Community gathering:** ${updatedApp.meetingFrequency.replace(/_/g, " ")}` : "",
-                "",
-                `**Regenerative practices**`,
-                updatedApp.regenerativePractices,
-                "",
-                `**Governance approach**`,
-                updatedApp.governanceApproach,
-                "",
-                `**Community engagement**`,
-                updatedApp.communityEngagement,
-                "",
-                `**Team:** ${updatedApp.teamDescription} (${updatedApp.teamSize} people)`,
-                "",
-                `**Current funding:** ${updatedApp.currentFunding || "Not disclosed"}`,
-                `**Funding needs:** ${updatedApp.fundingNeeds}`,
-                "",
-                updatedApp.timeCommitment ? `**Time commitment:** ${updatedApp.timeCommitment}` : "",
-                updatedApp.websiteUrl ? `**Website:** ${updatedApp.websiteUrl}` : "",
-                "",
-                `---`,
-                `Follow this thread for updates from the team. Ask questions, offer support, or share resources below.`,
-                "",
-                `[Apply to support this project](/apply) | [View on map](/map)`,
-              ].filter(l => l !== null && l !== undefined && !(l === "" && false)).join("\n").replace(/\n{3,}/g, "\n\n").trim();
-
-              const teamAuthorId = await getOrCreateTeamUserId();
-              if (!teamAuthorId) {
-                console.warn("Failed to resolve ReGen Civics Team user; skipping land project forum thread");
-              } else {
-                await db.createForumPost({
-                  categoryId: landProjectsCat.id,
-                  authorId: teamAuthorId,
-                  title: `${updatedApp.projectName} - ${updatedApp.location}`,
-                  content: threadContent,
-                  isPinned: 1,
-                  postType: "discussion",
-                });
-              }
-            }
-          } catch (e) {
-            console.warn("Failed to auto-create forum thread for approved project:", e);
-          }
-        }
-      }
-
-      return { success: true };
+      return { success: true, ...result };
     }),
+
+  // Admin: whether this application's vote invite went out.
+  voteInviteState: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => voteInviteState(input.id)),
+
+  // Admin: send (or send again) one application's vote invite.
+  sendVoteInvite: adminProcedure
+    .input(z.object({ id: z.number(), force: z.boolean().optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const outcome = await sendVoteInviteById(input.id, { adminUserId: ctx.user.id, force: input.force });
+      return { outcome, label: voteInviteOutcomeLabel(outcome) };
+    }),
+
+  // Admin: approved projects that never got a vote invite through.
+  voteInviteBacklog: adminProcedure.query(async () => voteInviteBacklog()),
+
+  // Admin: send the backlog, stopping at the hourly email limit.
+  sendVoteInviteBacklog: adminProcedure.mutation(async ({ ctx }) => sendVoteInviteBacklog(ctx.user.id)),
 
   // Public: Search applications by name/location (for org claim form)
   search: publicProcedure
@@ -738,6 +602,13 @@ export const applicantsForCampaignRouter = router({
     }),
 });
 
+const REVIEW_DECISION_STATUS = {
+  approve: "approved",
+  reject: "rejected",
+  request_changes: "changes_requested",
+  pending: null,
+} as const;
+
 export const reviewsRouter = router({
   // Admin: Create a review
   create: adminProcedure
@@ -757,16 +628,15 @@ export const reviewsRouter = router({
         reviewerId: ctx.user.id,
       });
 
-      // Update application status based on decision
-      if (input.decision === "approve") {
-        await db.updateApplication(input.applicationId, { status: "approved" });
-      } else if (input.decision === "reject") {
-        await db.updateApplication(input.applicationId, { status: "rejected" });
-      } else if (input.decision === "request_changes") {
-        await db.updateApplication(input.applicationId, { status: "changes_requested" });
-      }
+      // The decision moves the status through the same path as the status
+      // dropdown, so an approval here also runs the handoff and emails the
+      // vote invite.
+      const nextStatus = REVIEW_DECISION_STATUS[input.decision];
+      const change = nextStatus
+        ? await setApplicationStatus({ id: input.applicationId, status: nextStatus, adminUserId: ctx.user.id })
+        : null;
 
-      return { id: reviewId };
+      return { id: reviewId, handoff: change?.handoff ?? null };
     }),
 
   // Get reviews for an application

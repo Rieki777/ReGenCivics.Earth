@@ -349,6 +349,14 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Season notes**. What a project wants to talk about next, and feedback on the facilitation, sent from `/season-schedule#notes`. Filed against the next session and anonymous unless signed. The writer chooses who sees it: only the organizers (the default, read in Admin, Events, Season Schedule panel) or the whole cohort, where it joins the **shared agenda** on the page. An admin can take a shared note down but never publish a private one.
 
+### Approval handoff (ADR-71)
+
+**Approval**. An application moving into `approved` or `active` from any other status. Moving between those two is not a new approval.
+
+**Approval handoff**. Everything an approval does, in one place (`server/lib/approvalHandoff.ts`): tier detection, the project's Land Projects forum thread, and the vote invite. It runs once per application, however many times the status goes back and forth.
+
+**Vote invite** (call time vote invite). The email an approved applicant gets: vote for the Season's weekly call time on the Season Schedule, how to join the calls, and their status page. Logged in `email_logs` as `land_project_vote_invite` against the application id. A **quiet approval** approves without it; Admin can send it later from the application's panel.
+
 ### Session boards (ADR-68)
 
 **Session board**. The live board for one weekly Season episode, at `/season2/week/:week` (weeks 2 to 13), linked under its week wherever the Season's schedule is listed. Shown on the facilitator's screen and open on everyone's own device at once. What lands on it stays as the week's record: the Season's memory. Defined in `shared/sessionBoard.ts`.

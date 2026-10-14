@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-13 (approval handoff, PR 1 of 3): approving a land project sends the call time vote invite, once
+
+- **One path for every approval** (ADR-71): the status dropdown, bulk approve, the kanban board and a scored review all go through `setApplicationStatus` (`server/lib/approvalHandoff.ts`). A compare-and-set on the old status means two clicks, two admins or a kanban Undo and re-drop can never post a second forum thread or send a second email.
+- **The applicant hears about it**: approval emails the call time vote invite, which links the Season Schedule vote, the schedule and calendar, and the status page, and says the reminders carry the join link. Before this, the approved message reached only the site owner, and scored reviews approved with no thread or notice at all.
+- **Admin sees what happened**: approve with the invite on (default) or quietly; each approved application shows whether its invite went out, with Send / Send again; a banner sends the invite to approved projects that never got one, one at a time, stopping at the hourly email limit. A held or rate-limited invite lands on the application's timeline instead of passing silently.
+- **Kanban asks before a drop that approves**, the bulk dialog's Approved letter no longer repeats the old Season 2 quality-check text, and the review form's toast says whether the invite went out.
+- Source: `docs/planning/ALLIANCE_PARTNER_APPLICATION_PLAN.md` (the review findings and PRs 2 and 3: alliance partner applications, the Circle invite and member badges). Carryover: rejection and changes requested still reach only the owner.
+
 ## 2026-10-10 (crowdpool bundle 1, part two): each audience sees its own pages, a way back for sent-back campaigns, kinder offer forms
 
 - **The Ready to crowdpool list moves to the founder front door** (Rye, 2026-10-05): `/create-campaign#ready` shows it in every state, signed out included, and a steward's project page shows it before a campaign exists. `READINESS_HREF` points there, and old `/crowd-pooling#ready` links (emails already sent) forward on the client. `server/audience-links.test.ts` stops any founder link pointing at a contributor page again.

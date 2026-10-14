@@ -218,6 +218,8 @@ function InquiryBoard({ inquiries }: { inquiries: any[] }) {
   );
 }
 
+const APPROVED_STATUSES = new Set(['approved', 'active']);
+
 function ApplicationBoard({ applications }: { applications: any[] }) {
   const utils = trpc.useUtils();
   const updateMutation = trpc.applications.updateStatus.useMutation({
@@ -229,8 +231,14 @@ function ApplicationBoard({ applications }: { applications: any[] }) {
     const app = applications.find((a) => String(a.id) === itemId);
     if (!app || app.status === newStatus) return;
     const prevStatus = app.status;
+    // Approving emails the applicant the call time vote invite, which no Undo
+    // can take back, so a drop that approves asks first.
+    const approving = APPROVED_STATUSES.has(newStatus) && !APPROVED_STATUSES.has(prevStatus);
+    if (approving && !window.confirm(`Approve ${app.projectName || 'this project'}? This emails them the call time vote invite.`)) return;
     updateMutation.mutate({ id: app.id, status: newStatus as any });
-    toast(`Moved to ${newStatus.replace(/_/g, ' ')}`, {
+    toast(approving ? `Approved. The vote invite is on its way.` : `Moved to ${newStatus.replace(/_/g, ' ')}`, {
+      // Undo puts the status back. It cannot unsend an email, and approving
+      // again later sends nothing twice (server/lib/approvalHandoff.ts).
       action: { label: 'Undo', onClick: () => updateMutation.mutate({ id: app.id, status: prevStatus }) },
       duration: 5000,
     });

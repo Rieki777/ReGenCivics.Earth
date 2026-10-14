@@ -27,17 +27,27 @@ export function AdminApplicationReviewForm({
   const [teamScore, setTeamScore] = useState(3);
 
   const createReview = trpc.reviews.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (res) => {
       utils.applications.getById.invalidate({ id: applicationId });
       utils.reviews.getByApplicationId.invalidate({ applicationId });
       utils.applications.list.invalidate();
+      utils.applications.voteInviteState.invalidate({ id: applicationId });
+      utils.applications.voteInviteBacklog.invalidate();
       setComments("");
       setInternalNotes("");
       setDecision("pending");
-      // No "The applicant will be notified.": status emails reach only the
-      // site owner today, who forwards each decision by hand (bundle 1,
-      // section 15, question 11).
-      toast({ title: "Review saved." });
+      // An approval emails the applicant the call time vote invite
+      // (server/lib/approvalHandoff.ts). Other decisions still reach only the
+      // site owner, who forwards them by hand (bundle 1, section 15, question 11).
+      const invite = res.handoff?.invite;
+      toast({
+        title: "Review saved.",
+        description: invite === "sent"
+          ? "The applicant got the call time vote invite."
+          : invite && invite !== "already_sent"
+            ? "The vote invite did not go out. Send it from the invite panel above."
+            : undefined,
+      });
       onSaved?.();
     },
     onError: (err) => {

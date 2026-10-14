@@ -26,6 +26,34 @@ import { BulkActionBar } from "./BulkActionBar";
 import { ApplicationTimeline } from "./ApplicationTimeline";
 import { ImpactDataPanel } from "./ImpactDataPanel";
 import { ADMIN_SEASON_CHIP, adminStatusChipClass } from "@/lib/adminContrast";
+import { VoteInviteBacklogBar, VoteInvitePanel } from "./VoteInvitePanel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+
+type StatusChange = Awaited<ReturnType<ReturnType<typeof trpc.applications.updateStatus.useMutation>["mutateAsync"]>>;
+
+/** One line on what approval did: how many vote invites went out, and any that did not. */
+export function approvalSummary(results: StatusChange[]): string | null {
+  const handoffs = results.map((r) => r.handoff).filter((h): h is NonNullable<typeof h> => h != null);
+  if (handoffs.length === 0) return null;
+  const sent = handoffs.filter((h) => h.invite === "sent").length;
+  const quiet = handoffs.filter((h) => h.invite === "not_requested").length;
+  const notSent = handoffs.length - sent - quiet - handoffs.filter((h) => h.invite === "already_sent").length;
+  const parts: string[] = [];
+  if (sent) parts.push(`${sent} vote invite${sent === 1 ? "" : "s"} sent`);
+  if (quiet) parts.push(`${quiet} approved without email`);
+  if (notSent) parts.push(`${notSent} invite${notSent === 1 ? "" : "s"} not sent, see each application's panel`);
+  return parts.length ? parts.join(", ") : null;
+}
 
 const ActivityTimeline = lazy(() =>
   import("@/components/ActivityTimeline").then((m) => ({ default: m.ActivityTimeline }))
@@ -136,6 +164,9 @@ export function AdminApplicationsTab({
   const utils = trpc.useUtils();
   const updateStatus = trpc.applications.updateStatus.useMutation();
   const [bulkPending, setBulkPending] = useState(false);
+  // Bulk approve asks first, with the vote invite email on by default.
+  const [approveIds, setApproveIds] = useState<number[] | null>(null);
+  const [emailOnApprove, setEmailOnApprove] = useState(true);
 
   // Filter on the stored season tag (applications.season, migration 0219).
   // Dates can't separate the cohorts: the Season 1 batch was seeded with
@@ -171,17 +202,30 @@ export function AdminApplicationsTab({
     const ids = Array.from(selectedIds);
     if (!status || ids.length === 0) { setSelectedIds(new Set()); return; }
 
-    // Approve/reject change an applicant's outcome, so confirm them.
-    if (action === 'approve' || action === 'reject') {
-      const verb = action === 'approve' ? 'Approve' : 'Reject';
-      if (!window.confirm(`${verb} ${ids.length} application${ids.length === 1 ? '' : 's'}? This changes their status.`)) return;
+    // Approve opens its own dialog, which asks about the vote invite email.
+    if (action === 'approve') {
+      setEmailOnApprove(true);
+      setApproveIds(ids);
+      return;
     }
+    // Reject changes an applicant's outcome, so confirm it.
+    if (action === 'reject') {
+      if (!window.confirm(`Reject ${ids.length} application${ids.length === 1 ? '' : 's'}? This changes their status.`)) return;
+    }
+    await runBulk(ids, status);
+  }
 
+  async function runBulk(ids: number[], status: "under_review" | "approved" | "rejected", notify?: boolean) {
     setBulkPending(true);
     try {
-      await Promise.all(ids.map((id) => updateStatus.mutateAsync({ id, status })));
+      // One at a time: each approval sends an email, and the hourly limit is
+      // shared, so a burst of parallel sends gains nothing.
+      const results: StatusChange[] = [];
+      for (const id of ids) results.push(await updateStatus.mutateAsync({ id, status, notify }));
       await utils.applications.list.invalidate();
-      toast.success(`Updated ${ids.length} application${ids.length === 1 ? '' : 's'} to ${status.replace(/_/g, ' ')}`);
+      utils.applications.voteInviteBacklog.invalidate();
+      const summary = approvalSummary(results);
+      toast.success(`Updated ${ids.length} application${ids.length === 1 ? '' : 's'} to ${status.replace(/_/g, ' ')}${summary ? `. ${summary}.` : ''}`);
       setSelectedIds(new Set());
     } catch (e: any) {
       toast.error(`Bulk update failed: ${e?.message || 'unknown error'}`);
@@ -192,6 +236,35 @@ export function AdminApplicationsTab({
 
   return (
     <>
+    <AlertDialog open={approveIds != null} onOpenChange={(open) => { if (!open) setApproveIds(null); }}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            Approve {approveIds?.length ?? 0} application{approveIds?.length === 1 ? "" : "s"}?
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            Each project gets its Land Projects forum thread. With the email on, each applicant also gets the
+            call time vote invite: a link to vote on the Season Schedule and how to join the calls.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <label className="flex items-center gap-3 text-sm text-[#1a472a] min-h-11">
+          <Checkbox checked={emailOnApprove} onCheckedChange={(v) => setEmailOnApprove(v === true)} />
+          Email each applicant the call time vote invite
+        </label>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={() => {
+              const ids = approveIds ?? [];
+              setApproveIds(null);
+              void runBulk(ids, "approved", emailOnApprove);
+            }}
+          >
+            {emailOnApprove ? "Approve and email" : "Approve quietly"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -226,6 +299,7 @@ export function AdminApplicationsTab({
             </Button>
           </div>
         </div>
+        <VoteInviteBacklogBar />
         <div className="flex gap-2 mt-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
@@ -344,6 +418,7 @@ export function AdminApplicationsTab({
                       <SheetDescription className="text-[#1a472a]/80">{app.location}</SheetDescription>
                     </SheetHeader>
                     <div className="flex-1 min-h-0 overflow-y-auto space-y-4 px-6 py-4">
+                      <VoteInvitePanel applicationId={app.id} status={app.status} />
                       <ApplicationAnswersPanel application={app} />
                       <Suspense fallback={null}>
                         <ActivityTimeline

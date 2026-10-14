@@ -32,7 +32,9 @@ import {
 const DEFAULT_TEMPLATE: Record<string, TemplateType> = {
   submitted: "follow_up",
   under_review: "follow_up",
-  approved: "land_project_accepted",
+  // Approval already emails each project the call time vote invite
+  // (server/lib/approvalHandoff.ts), so this letter starts as a plain note.
+  approved: "follow_up",
   rejected: "rejection",
   changes_requested: "more_info",
 };
@@ -220,6 +222,11 @@ export function ApplicantStatusEmailDialog({
             Draft a message to the land projects in this status. Each contact gets their own copy.
             Write in markdown. Use {"{{name}}"}, {"{{email}}"}, and {"{{projectName}}"} to fill in their details.
           </DialogDescription>
+          {status === "approved" && (
+            <p className="text-sm text-[#1a472a] bg-[#fffaf0] border border-[#d4a574]/50 rounded-md p-3">
+              Approving a project emails it the call time vote invite. Projects approved before that started show in the banner on the Applications list, which sends theirs.
+            </p>
+          )}
         </DialogHeader>
 
         {recipientsQuery.isLoading ? (

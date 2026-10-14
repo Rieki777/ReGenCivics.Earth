@@ -355,7 +355,7 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 }
 
-function sessionWhen(start: Date): string {
+export function sessionWhen(start: Date): string {
   const date = start.toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", timeZone: SESSION_TIME_ZONE,
   });
@@ -369,7 +369,7 @@ function sessionWhen(start: Date): string {
  * a preferences link would do nothing for them; everyone else gets Manage
  * email preferences (ADR-55).
  */
-async function moveFooterHtml(email: string, topic: ReturnType<typeof communityTopicForAudience>): Promise<string> {
+export async function moveFooterHtml(email: string, topic: ReturnType<typeof communityTopicForAudience>): Promise<string> {
   if (isAlwaysIncluded(email)) {
     const stop = `${APP_BASE_URL}${ALWAYS_INCLUDED_STOP_PATH}`;
     return `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;">${escapeHtml(ALWAYS_INCLUDED_FOOTER_TEXT)} <a href="${stop}" style="color:#8a8a8a;">${escapeHtml(stop.replace(/^https?:\/\//, ""))}</a>.</p>`;
@@ -542,7 +542,7 @@ export async function syncSeason(database: Db, config: SeasonScheduleConfig, now
 }
 
 /** Whether any of a Season's sessions can still be ahead. A finished Season has nothing to move. */
-function stillRunning(config: SeasonScheduleConfig, now: Date): boolean {
+export function stillRunning(config: SeasonScheduleConfig, now: Date): boolean {
   const ends = seasonEnds(config);
   return ends != null && ends.getTime() > now.getTime();
 }
