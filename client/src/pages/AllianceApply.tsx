@@ -23,6 +23,7 @@ import {
   ALLIANCE_ROLES,
   ALLIANCE_STATUS_PATH,
   ALLIANCE_APPLY_PATH,
+  ALLIANCE_SHARE,
   cleanRoles,
   missingForSubmit,
 } from "@shared/allianceApplication";
@@ -166,7 +167,7 @@ export default function AllianceApply() {
   if (!user) {
     return (
       <div className="min-h-screen bg-[#f0ebe3] flex items-center justify-center p-4">
-        <SEO title="Become an Alliance Partner | ReGen Civics" description="Apply to join the ReGen Civics Alliance and the Interoperability Circle." url={ALLIANCE_APPLY_PATH} />
+        <SEO title={ALLIANCE_SHARE.title} description={ALLIANCE_SHARE.description} image={ALLIANCE_SHARE.image} url={ALLIANCE_APPLY_PATH} />
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-bold text-[#1a472a] mb-3" style={{ fontFamily: "var(--font-display)" }}>Become an Alliance Partner</h1>
           <p className="text-[#1a472a]/80 mb-5">Sign in to start your application. It saves as you go, so you can come back to it.</p>
@@ -196,7 +197,7 @@ export default function AllianceApply() {
 
   return (
     <div className="min-h-screen bg-[#f0ebe3] py-10 px-4">
-      <SEO title="Become an Alliance Partner | ReGen Civics" description="Apply to join the ReGen Civics Alliance and the Interoperability Circle." url={ALLIANCE_APPLY_PATH} />
+      <SEO title={ALLIANCE_SHARE.title} description={ALLIANCE_SHARE.description} image={ALLIANCE_SHARE.image} url={ALLIANCE_APPLY_PATH} />
       <div className="max-w-2xl mx-auto">
         <Link href="/ally" className="inline-flex min-h-11 items-center text-sm font-medium text-[#2d5a3d] hover:underline">&larr; About the Alliance</Link>
         <h1 className="text-3xl font-bold text-[#1a472a] mt-4 mb-2" style={{ fontFamily: "var(--font-display)" }}>

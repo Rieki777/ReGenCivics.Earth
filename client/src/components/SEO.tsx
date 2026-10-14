@@ -337,7 +337,7 @@ export const pageSEO = {
     title: 'Alliance Organizations | ReGen Civics',
     description: 'The alliance organizations co-creating the ReGenerative Renaissance alongside ReGen Civics. A network built on shared values and real collaboration.',
     keywords: 'regenerative alliance, partner organizations, regenerative network',
-    image: `${BASE_URL}/og-default.jpg`,
+    image: '/og/apply-alliance.jpg',
     url: '/ally'
   },
   play: {

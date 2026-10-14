@@ -84,3 +84,15 @@ export const ALLIANCE_STATUS_LABEL: Record<AllianceStatus, string> = {
 
 export const ALLIANCE_APPLY_PATH = "/apply/alliance";
 export const ALLIANCE_STATUS_PATH = "/apply/alliance/status";
+
+/**
+ * What a shared /apply/alliance link shows (link previews read the server's
+ * meta, server/_core/vite.ts ROUTE_META; the page's own SEO reads this too).
+ * Before 2026-10-13 the link fell back to /apply's land project preview.
+ */
+export const ALLIANCE_SHARE = {
+  title: "Become an Alliance Partner: ReGen Civics",
+  description:
+    "For organizations that support land projects with services, tools, knowledge or relationships. Join the Alliance and the Interoperability Circle, and add your tools to the ReGen Tools Library.",
+  image: "/og/apply-alliance.jpg",
+} as const;

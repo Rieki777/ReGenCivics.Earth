@@ -1,3 +1,4 @@
+import { ALLIANCE_SHARE } from "../../shared/allianceApplication";
 import express, { type Express } from "express";
 import { COOP } from "../../shared/fund";
 import { SITE_DESCRIPTION } from "../../shared/siteCopy";
@@ -306,9 +307,11 @@ export function serveStatic(app: Express) {
     "/blog":        { title: "Blog: ReGen Civics", description: "Insights, stories, and updates from the ReGenerative Renaissance." },
     "/connect":     { title: "Connect: ReGen Civics", description: "Join the conversation. Find us on WhatsApp, Discord, and beyond.", image: `${BASE_URL}/og/connect.jpg` },
     "/apply":       { title: "Apply: ReGen Civics Incubator", description: "Apply to have your land project supported through the ReGen Civics incubator.", image: `${BASE_URL}/og/apply.jpg` },
+    // Alliance Partners, not land projects: its own preview (ADR-73). Longest prefix wins.
+    "/apply/alliance": { title: ALLIANCE_SHARE.title, description: ALLIANCE_SHARE.description, image: `${BASE_URL}${ALLIANCE_SHARE.image}` },
     "/tokenomics":  { title: "Tokenomics: ReGen Civics", description: COOP.tokensNote, image: `${BASE_URL}/og/tokenomics.jpg` },
     "/land":        { title: "Land Projects: ReGen Civics", description: "Regenerative land projects healing soils, communities, and bioregions.", image: `${BASE_URL}/og/land.jpg` },
-    "/ally":        { title: "Allies & Partners: ReGen Civics", description: "Organizations and individuals working alongside ReGen Civics to build the ReGenerative Renaissance." },
+    "/ally":        { title: "Allies & Partners: ReGen Civics", description: "Organizations and individuals working alongside ReGen Civics to build the ReGenerative Renaissance.", image: `${BASE_URL}${ALLIANCE_SHARE.image}` },
     "/seasons":     { title: "Seasons: The ReGen Civics Year", description: "The ReGen Civics year turns through four seasons: land projects design their games in winter, crowdpool in spring, build on the land in summer, and rest in fall.", image: `${BASE_URL}/og/seasons.jpg` },
     "/team":        { title: "Team: ReGen Civics", description: "The people behind ReGen Civics. Community builders, developers, land stewards, and movement catalysts.", image: `${BASE_URL}/og/team.jpg` },
     "/crowd-pooling": { title: "Map your Character Gifts: ReGen Civics", description: CROWDPOOLING, image: `${BASE_URL}/og/crowd-pooling.jpg` },
