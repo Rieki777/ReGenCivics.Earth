@@ -4,7 +4,7 @@
  * this file reads and writes the rows and keeps `version` moving so every open
  * page knows when to fetch again.
  */
-import { and, asc, eq, inArray, like, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, like, ne, sql } from "drizzle-orm";
 import {
   applications,
   roleHolders,
@@ -21,6 +21,7 @@ import { isAdminRole } from "@shared/adminRole";
 import { CROWDPOOL_READINESS } from "@shared/crowdpoolReadiness";
 import {
   BOARD_FACILITATOR_ROLE_SLUGS,
+  CHECKIN_APPLICATION_STATUSES,
   applyBoardAction,
   cleanBoardLine,
   normalizeBoardState,
@@ -132,7 +133,11 @@ export async function readBoardRows(db: Db, boardId: number, opts: { includeHidd
   return { projects: shownProjects, items: shownItems, counts };
 }
 
-/** How many of something one person has already put on a board. */
+/**
+ * How many of something one person has already put on a board. Items here
+ * are notes: answers have their own ceilings (BOARD_LIMITS.answersPerAuthor),
+ * so a full answer walk never crowds out someone's notes.
+ */
 export async function countByAuthor(
   db: Db,
   table: "items" | "projects",
@@ -144,7 +149,11 @@ export async function countByAuthor(
     const [row] = await db
       .select({ n: sql<number>`COUNT(*)` })
       .from(sessionBoardItems)
-      .where(and(eq(sessionBoardItems.boardId, boardId), inArray(sessionBoardItems.authorKey, keys)));
+      .where(and(
+        eq(sessionBoardItems.boardId, boardId),
+        inArray(sessionBoardItems.authorKey, keys),
+        ne(sessionBoardItems.kind, "answer"),
+      ));
     return Number(row?.n ?? 0);
   }
   const [row] = await db
@@ -154,9 +163,22 @@ export async function countByAuthor(
   return Number(row?.n ?? 0);
 }
 
+/**
+ * Rows on a board. Items here are notes: answers are counted on their own.
+ * Hidden rows don't count, so hiding a flood of spam frees the room it took.
+ */
 export async function countRows(db: Db, table: "items" | "projects", boardId: number): Promise<number> {
-  const t = table === "items" ? sessionBoardItems : sessionBoardProjects;
-  const [row] = await db.select({ n: sql<number>`COUNT(*)` }).from(t).where(eq(t.boardId, boardId));
+  if (table === "items") {
+    const [row] = await db
+      .select({ n: sql<number>`COUNT(*)` })
+      .from(sessionBoardItems)
+      .where(and(eq(sessionBoardItems.boardId, boardId), ne(sessionBoardItems.kind, "answer"), eq(sessionBoardItems.hidden, 0)));
+    return Number(row?.n ?? 0);
+  }
+  const [row] = await db
+    .select({ n: sql<number>`COUNT(*)` })
+    .from(sessionBoardProjects)
+    .where(and(eq(sessionBoardProjects.boardId, boardId), eq(sessionBoardProjects.hidden, 0)));
   return Number(row?.n ?? 0);
 }
 
@@ -182,14 +204,36 @@ export async function mineOnBoard(db: Db, boardId: number, keys: string[]) {
       .where(and(eq(sessionBoardItems.boardId, boardId), inArray(sessionBoardItems.authorKey, keys))),
     db.select({ id: sessionBoardProjects.id }).from(sessionBoardProjects)
       .where(and(eq(sessionBoardProjects.boardId, boardId), inArray(sessionBoardProjects.authorKey, keys))),
+    // Oldest first, so the last check-in is the last one listed.
     db.select({ target: sessionBoardVotes.target }).from(sessionBoardVotes)
-      .where(and(eq(sessionBoardVotes.boardId, boardId), inArray(sessionBoardVotes.voterKey, keys))),
+      .where(and(eq(sessionBoardVotes.boardId, boardId), inArray(sessionBoardVotes.voterKey, keys)))
+      .orderBy(asc(sessionBoardVotes.id)),
   ]);
   return {
     itemIds: items.map((r) => r.id),
     projectIds: projects.map((r) => r.id),
     targets: votes.map((r) => r.target),
   };
+}
+
+/**
+ * One person's anonymous answers on a board (key and option), so their page
+ * can show their own pick: the public read leaves those rows out.
+ */
+export async function anonOnBoard(db: Db, boardId: number, keys: string[], anonKeys: Iterable<string>): Promise<{ key: string; option: string }[]> {
+  const blocks = Array.from(anonKeys);
+  if (keys.length === 0 || blocks.length === 0) return [];
+  const rows = await db
+    .select({ block: sessionBoardItems.block, text: sessionBoardItems.text })
+    .from(sessionBoardItems)
+    .where(and(
+      eq(sessionBoardItems.boardId, boardId),
+      eq(sessionBoardItems.kind, "answer"),
+      inArray(sessionBoardItems.block, blocks),
+      inArray(sessionBoardItems.authorKey, keys),
+    ))
+    .orderBy(asc(sessionBoardItems.createdAt), asc(sessionBoardItems.id));
+  return rows.filter((r) => r.block).map((r) => ({ key: r.block as string, option: r.text }));
 }
 
 /**
@@ -223,8 +267,10 @@ export async function offerPeople(db: Db, boardId: number): Promise<Record<strin
 
 /**
  * For the facilitator: the projects on the Season's register (their own name
- * and link, as they typed them on /season-schedule) and the approved
- * applications a circle project can be linked to.
+ * and link, as they typed them on /season-schedule) and the applications a
+ * circle project can be linked to: every one open for check-in (submitted,
+ * under review, approved, active), since most Week 3 projects are still in
+ * review.
  */
 export async function facilitatorLists(db: Db, season: string, applicationSeason: number) {
   const [register, apps] = await Promise.all([
@@ -240,7 +286,7 @@ export async function facilitatorLists(db: Db, season: string, applicationSeason
     db
       .select({ id: applications.id, projectName: applications.projectName })
       .from(applications)
-      .where(and(eq(applications.season, applicationSeason), inArray(applications.status, ["approved", "active"])))
+      .where(and(eq(applications.season, applicationSeason), inArray(applications.status, [...CHECKIN_APPLICATION_STATUSES])))
       .orderBy(asc(applications.projectName)),
   ]);
   return { register, applications: apps };

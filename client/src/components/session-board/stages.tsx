@@ -1,8 +1,12 @@
 /**
  * The stages of a live session board (ADR-68). Each one is a screen the room
  * moves through together; anyone can type into it, and the facilitator runs it.
+ *
+ * Week 3 (2026-10-14) adds three kinds whose components live in ./week3/ and
+ * are re-exported here, so the page and the STAGE_RENDERERS test find every
+ * stage by name in this one file.
  */
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode, type Ref, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type Ref } from "react";
 import { CROWDPOOL_READINESS, GAME_NEEDS, GAME_NEEDS_LABEL, GAME_NEEDS_LEAD } from "@shared/crowdpoolReadiness";
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 import {
@@ -11,6 +15,7 @@ import {
   BREATH_PATTERNS,
   BREATH_ROUNDS,
   BOARD_OFFERS,
+  CLOSE_COPY_WEEK3,
   GAME_BLOCKS,
   LAST_BOARD_WEEK,
   OPPORTUNITY_THEMES,
@@ -23,6 +28,7 @@ import {
   TOGETHER_COPY,
   type BoardStage,
 } from "@shared/sessionBoard";
+import { shownAnswerRows } from "@shared/humanNeeds";
 import {
   AMORA_CIRCLES_EMBED_URL,
   AMORA_CIRCLES_URL,
@@ -30,12 +36,17 @@ import {
   VILLAGE_OS_OFFER,
   VILLAGE_OS_PATH,
 } from "@shared/villageOsOffer";
-import { DictationButton, dictationSupported } from "@/components/admin/dictation";
+import { dictationSupported } from "@/components/admin/dictation";
 import { trpc } from "@/lib/trpc";
 import { JoinBoard } from "./JoinBoard";
 import { RaiseHand } from "./RaiseHandForm";
-import type { BoardActions, BoardItem, BoardProject, Mine, SessionBoardData } from "./useSessionBoard";
-import { foldSpokenPunctuation, phaseFromSpeech } from "./spokenStage";
+import type { BoardActions, BoardItem, BoardProject, Mine, MyProject, SessionBoardData } from "./useSessionBoard";
+import { phaseFromSpeech } from "./spokenStage";
+import { BoardMic, Chips, NEW_TAB, QuickAdd, SlideLine, SpokenLine, StageHead, plural, speakLabel } from "./week3/parts";
+
+export { CheckIn } from "./week3/CheckIn";
+export { PromptStage } from "./week3/PromptStage";
+export { NeedsStage } from "./week3/NeedsStage";
 
 export type StageProps = {
   board: SessionBoardData;
@@ -49,11 +60,20 @@ export type StageProps = {
   actions: BoardActions;
   now: number;
   serverNow: () => number;
+  /** Moves this screen, and for a facilitator the whole room. */
   go: (i: number) => void;
+  /** The project this browser checked in with, "here to learn", or nothing yet. */
+  myProject: MyProject;
+  setMyProject: (p: MyProject) => void;
+  /** The name kept in this browser. Only facilitators see it. */
+  displayName: string;
+  setDisplayName: (v: string) => void;
+  signedIn: boolean;
+  /** Moves THIS screen only, never the room, facilitators included. */
+  look: (i: number) => void;
 };
 
 const THEME_TITLE: Record<string, string> = Object.fromEntries(OPPORTUNITY_THEMES.map((t) => [t.key, t.title]));
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const fmt = (secs: number) => {
   const t = Math.max(0, Math.floor(secs));
   const h = Math.floor(t / 3600);
@@ -61,113 +81,6 @@ const fmt = (secs: number) => {
   const s = t % 60;
   return (h ? `${h}:${String(m).padStart(2, "0")}` : String(m)) + ":" + String(s).padStart(2, "0");
 };
-
-function StageHead({ stages, index, title, lede, children }: { stages: BoardStage[]; index: number; title: string; lede?: ReactNode; children?: ReactNode }) {
-  return (
-    <header className="sb-head">
-      <p className="sb-kicker">Stage {index + 1} of {stages.length} · {stages[index].min} min</p>
-      <h1 className="sb-title">{title}</h1>
-      {lede ? <p className="sb-lede">{lede}</p> : null}
-      {children}
-    </header>
-  );
-}
-
-function speakLabel(label: string): string {
-  return label.startsWith("Add ") ? `Speak ${label.slice(4)}` : `Speak into ${label}`;
-}
-
-/** The shared admin mic, hidden when this browser cannot listen. */
-function BoardMic({
-  value,
-  onChange,
-  targetRef,
-  label,
-  disabled,
-  onListeningChange,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-  targetRef?: RefObject<HTMLTextAreaElement | HTMLInputElement | null>;
-  label: string;
-  disabled?: boolean;
-  onListeningChange?: (listening: boolean) => void;
-}) {
-  if (!dictationSupported()) return null;
-  return (
-    <DictationButton
-      className="sb-mic"
-      errorAlign="end"
-      label={label}
-      value={value}
-      onChange={onChange}
-      targetRef={targetRef}
-      disabled={disabled}
-      onListeningChange={onListeningChange}
-    />
-  );
-}
-
-/** One input that adds a note on Enter, or when the mic is turned off. */
-function QuickAdd({ placeholder, max, label, onAdd, button = false }: { placeholder: string; max: number; label: string; onAdd: (text: string) => Promise<unknown> | void; button?: boolean }) {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const fieldRef = useRef<HTMLInputElement | null>(null);
-  const textRef = useRef(text);
-  textRef.current = text;
-  const commit = async (raw: string) => {
-    const v = foldSpokenPunctuation(raw);
-    if (!v || busy) return;
-    setBusy(true);
-    try {
-      const r = await onAdd(v);
-      if (r != null) setText("");
-    } catch {
-      /* Leave the words in the field when the add fails. */
-    } finally {
-      setBusy(false);
-    }
-  };
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    void commit(text);
-  };
-  return (
-    <form className="sb-add" onSubmit={submit}>
-      <input ref={fieldRef} className="sb-field" value={text} onChange={(e) => setText(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete="off" />
-      <BoardMic
-        label={speakLabel(label)}
-        value={text}
-        targetRef={fieldRef}
-        disabled={busy}
-        onChange={setText}
-        onListeningChange={(on) => {
-          if (!on && textRef.current.trim()) void commit(textRef.current);
-        }}
-      />
-      {button ? <button className="sb-btn" type="submit" disabled={busy}>Add</button> : null}
-    </form>
-  );
-}
-
-/** Notes as chips, with take-back for the writer and the facilitator. */
-function Chips({ items, mine, facilitator, actions, className = "sb-chips" }: { items: BoardItem[]; mine: Mine; facilitator: boolean; actions: BoardActions; className?: string }) {
-  return (
-    <ul className={className}>
-      {items.map((i) => {
-        const removable = facilitator || mine.itemIds.has(i.id);
-        return (
-          <li key={i.id} className={`sb-chip${removable ? " sb-has-x" : ""}${i.hidden ? " sb-r-hidden" : ""}`}>
-            <span className="sb-chip-t">{i.text}</span>
-            {removable ? (
-              <button type="button" className="sb-x" aria-label={`Take back "${i.text}"`} onClick={() => void actions.removeItem(i.id)}>×</button>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 /**
  * A field that saves as you type (after a pause) and when you leave it, and
@@ -284,7 +197,7 @@ function YearWheel({ week }: { week: number }) {
   );
 }
 
-export function Welcome({ board, week, stages, facilitator, actions, go }: StageProps) {
+export function Welcome({ board, week, stages, index, facilitator, actions, go }: StageProps) {
   const w = boardWelcome(week);
   const plan = board.state.plan;
   const total = sessionMinutes(plan, stages);
@@ -294,6 +207,7 @@ export function Welcome({ board, week, stages, facilitator, actions, go }: Stage
         <p className="sb-kicker">Season 2 · Design Season · Week {week} of 13</p>
         <h1 className="sb-hero">{w.title}</h1>
         {w.lede ? <p className="sb-lede">{w.lede}</p> : null}
+        <SlideLine week={week} stage={stages[index]} />
         <div>
           <div className="sb-agenda-head"><h2 className="sb-h3">Today</h2><span className="sb-agenda-total">{total} min</span></div>
           <ol className="sb-agenda">
@@ -505,8 +419,6 @@ const MODULES = [
   { t: "Profiles", d: "Who's here, and what each person brings." },
 ];
 
-const NEW_TAB = <span className="sr-only"> (opens in a new tab)</span>;
-
 /**
  * Amora's circles map: its map-only view live in a frame when Amora's headers
  * let this origin frame it (villageOs.amoraMap), and a dated picture otherwise.
@@ -715,18 +627,6 @@ function upNext(projects: BoardProject[], currentId: number | null): BoardProjec
   return order.find((p) => !p.shared && !p.hidden) ?? null;
 }
 
-function SpokenLine({ value, onChange, placeholder, max, label, autoComplete = "off" }: {
-  value: string; onChange: (v: string) => void; placeholder: string; max: number; label: string; autoComplete?: string;
-}) {
-  const fieldRef = useRef<HTMLInputElement | null>(null);
-  return (
-    <div className="sb-dictate">
-      <input ref={fieldRef} className="sb-field" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} maxLength={max} aria-label={label} autoComplete={autoComplete} />
-      <BoardMic label={speakLabel(label)} value={value} onChange={onChange} targetRef={fieldRef} />
-    </div>
-  );
-}
-
 /** A mic beside the stage chips. "Sprout" presses Sprout. It does not read the notes. */
 function StageMic({ onPhase }: { onPhase: (phase: ProjectPhase) => void }) {
   const [heard, setHeard] = useState("");
@@ -783,7 +683,7 @@ function AddProject({ actions, onAdded, displayName, setDisplayName }: { actions
   );
 }
 
-export function Circle(props: StageProps & { displayName: string; setDisplayName: (v: string) => void }) {
+export function Circle(props: StageProps) {
   const { board, stages, index, facilitator, canWrite, mine, actions, now } = props;
   const { sel, setLocalSel } = useSelected(board, facilitator);
   const next = upNext(board.projects, sel?.id ?? null);
@@ -1158,25 +1058,45 @@ export function Ahead({ board, week, stages, index, facilitator, canWrite, mine,
 
 /* ================================================================== close */
 
+/** Week 3's numbers on the Close: projects checked in, human needs named, seeds planted, questions asked. */
+export function week3CloseStats(board: Pick<SessionBoardData, "items" | "projects"> & { checkins?: Record<number, number> }): [string, string][] {
+  const hiddenCards = board.projects.filter((p) => p.hidden).map((p) => p.id);
+  const rows = shownAnswerRows(board.items, hiddenCards).filter((i) => i.kind === "answer");
+  const answered = new Set(rows.map((r) => r.projectId).filter((id): id is number => id != null));
+  const checkedIn = board.projects.filter((p) => !p.hidden && ((board.checkins?.[p.id] ?? 0) > 0 || answered.has(p.id))).length;
+  const named = new Set(rows.filter((r) => r.block === "needs").map((r) => r.text)).size;
+  const seeds = rows.filter((r) => r.block === "top").length;
+  const asks = board.items.filter((i) => i.kind === "ask" && !i.hidden).length;
+  const values = [checkedIn, named, seeds, asks];
+  return CLOSE_COPY_WEEK3.stats.map((t, i) => [t, String(values[i] ?? 0)]);
+}
+
 export function Close({ board, week, stages, index, facilitator, canWrite, mine, actions }: StageProps) {
   const [confirm, setConfirm] = useState(false);
+  // A week with a check-in stage (Week 3 on) asks prompts instead of running a
+  // circle, and its board stays open for people going at their own pace (Rye,
+  // 2026-10-13): its own numbers, and no "Close the board" one tap from End session.
+  const promptWeek = stages.some((s) => s.kind === "checkin");
   const words = board.items.filter((i) => i.kind === "leave");
   const opps = board.items.filter((i) => i.kind === "opp" && !i.hidden);
   const pains = board.items.filter((i) => i.kind === "pain" && !i.hidden);
   const quests = board.items.filter((i) => i.kind === "game" && i.block === "quests" && !i.hidden).length;
   const projects = board.projects.filter((p) => !p.hidden);
   const shared = projects.filter((p) => p.shared).length;
-  const top = opps.filter((o) => o.votes > 0).sort((a, b) => b.votes - a.votes || a.id - b.id).slice(0, 3);
+  const top = promptWeek ? [] : opps.filter((o) => o.votes > 0).sort((a, b) => b.votes - a.votes || a.id - b.id).slice(0, 3);
   const next = SEASON2_CURRICULUM.find((e) => e.week === week + 1);
-  const stats: [string, string][] = [
-    ["Projects shared", projects.length ? `${shared} of ${projects.length}` : "0"],
-    ["Growth opportunities", String(opps.length)],
-    ["Pain points named", String(pains.length)],
-    ["Quests drafted", String(quests)],
-  ];
+  const stats: [string, string][] = promptWeek
+    ? week3CloseStats(board)
+    : [
+      ["Projects shared", projects.length ? `${shared} of ${projects.length}` : "0"],
+      ["Growth opportunities", String(opps.length)],
+      ["Pain points named", String(pains.length)],
+      ["Quests drafted", String(quests)],
+    ];
+  const lede = stages[index].lede ?? "One word as you leave. Thank you for bringing your projects to this table.";
   return (
     <>
-      <StageHead stages={stages} index={index} title="Close" lede="One word as you leave. Thank you for bringing your projects to this table." />
+      <StageHead stages={stages} index={index} title="Close" lede={lede} week={week} />
       <div className="sb-close">
         <div className="sb-col">
           {canWrite ? <QuickAdd placeholder="Type a word and press Enter" max={BOARD_LIMITS.word} label="Closing word" button onAdd={(text) => actions.addItem({ kind: "leave", text })} /> : null}
@@ -1200,7 +1120,7 @@ export function Close({ board, week, stages, index, facilitator, canWrite, mine,
           <p>{next.description}</p>
         </div>
       ) : null}
-      {facilitator ? (
+      {facilitator && (board.status !== "open" || !promptWeek) ? (
         <div className="sb-row">
           {board.status === "open" ? (
             confirm ? (

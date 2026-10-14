@@ -75,6 +75,7 @@ import { getLoginUrl } from '@/const';
 import { toast } from 'sonner';
 import { BackButton } from "@/components/BackButton";
 import { TokenBox } from "@/components/profile/TokenBox";
+import { SessionSubmissions } from "@/components/profile/SessionSubmissions";
 import { DigestPreferences } from "@/components/DigestPreferences";
 import { UserNotificationPreferences } from "@/components/UserNotificationPreferences";
 import { StorytellerToggle } from "@/components/StorytellerToggle";
@@ -2401,6 +2402,7 @@ function SubmissionsTab() {
         emptyMessage="No Alliance Partner application yet."
         emptyAction={{ label: "Become an Alliance Partner", href: "/apply/alliance" }}
       />
+      <SessionSubmissions />
       <SubmissionsSection
         title="Incubator Season Campaigns"
         icon={Layers}
@@ -2707,6 +2709,14 @@ export default function PlayerProfile() {
                   <CreateProfileForm onSuccess={() => refetch()} />
                 </CardContent>
               </Card>
+              {/* A signed-in person with no player profile yet (a guest who just
+                  signed in from a session board, say) still sees their weekly
+                  session answers, as the board's "Tap your project" stage says. */}
+              <ErrorBoundary fallback={<div className="py-12 text-center text-white/60 text-sm">Something went quiet here. Try refreshing.</div>}>
+                <div className="mt-6" id="submissions">
+                  <SessionSubmissions />
+                </div>
+              </ErrorBoundary>
             </AnimatedSection>
           ) : (
             // Has profile  -  tabbed layout

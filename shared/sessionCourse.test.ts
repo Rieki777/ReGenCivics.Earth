@@ -89,7 +89,8 @@ describe("mapStagesToSide", () => {
   });
 
   it("assigns a chapter that names the stage", () => {
-    const later = boardStages(3);
+    // Week 3 has its own design with no circle; week 4 still runs the default stages.
+    const later = boardStages(4);
     const spans = mapStagesToSide(later, "live", {
       chapters: [
         { tSeconds: 0, title: "Welcome" },

@@ -56,7 +56,7 @@ export const SEASON2_CURRICULUM: Season2Episode[] = [
     week: 4,
     title: "Game & Organisation Co-Creation Part 2",
     description:
-      "Putting the structure into practice. Standing up your organisation, writing your first agreements, and deciding who decides what.",
+      "Putting the structure into practice in Village OS. Standing up your organisation, writing your first agreements, and deciding who decides what.",
     audience: "cohort",
   },
   {

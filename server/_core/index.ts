@@ -35,6 +35,22 @@ if (process.env.SENTRY_DSN) {
     sampleRate: 1.0,
     tracesSampleRate: 0.1,
     environment: process.env.NODE_ENV || "production",
+    // A session board's guest key is a bearer credential and rides in tRPC
+    // request bodies (claimGuest, answer, checkIn, whoami, ...). Never let a
+    // captured request body carry one to Sentry.
+    beforeSend(event) {
+      const data = event.request?.data;
+      if (data != null && event.request) {
+        let text = "";
+        try {
+          text = typeof data === "string" ? data : JSON.stringify(data);
+        } catch {
+          text = "voterKey"; // can't read it, so don't send it
+        }
+        if (/voterKey/i.test(text)) event.request.data = "[removed: holds a board key]";
+      }
+      return event;
+    },
   });
 }
 import { fileURLToPath } from "url";

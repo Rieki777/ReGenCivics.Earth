@@ -5,11 +5,15 @@
 import { describe, expect, it } from "vitest";
 import { defaultBoardState } from "@shared/sessionBoard";
 import {
+  adjustAnswerCount,
+  adjustCheckins,
   adjustMap,
   adjustVotes,
   createBoardWriter,
+  ensureProject,
   patchBoardAction,
   patchProject,
+  removeItems,
 } from "./boardWriter";
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -175,5 +179,33 @@ describe("optimistic board paints", () => {
     expect(board.items[0].votes).toBe(0);
     expect(board.hands[3]).toBeUndefined();
     expect(board.offers.coach).toBe(1);
+  });
+
+  it("moves an anonymous prompt's counts and the check-ins, never below zero", () => {
+    let board = {
+      answerCounts: { mate: { hardly: 0, some: 2 } } as Record<string, Record<string, number>>,
+      checkins: { 7: 1 } as Record<number, number>,
+    };
+    // A changed pick: the new option up, the old one down.
+    board = adjustAnswerCount(board, "mate", "hardly", 1);
+    board = adjustAnswerCount(board, "mate", "some", -1);
+    board = adjustAnswerCount(board, "useful", "very", -1);
+    board = adjustCheckins(board, 7, 1);
+    board = adjustCheckins(board, 9, 1);
+    board = adjustCheckins(board, 9, -2);
+    expect(board.answerCounts.mate).toEqual({ hardly: 1, some: 1 });
+    expect(board.answerCounts.useful).toEqual({ very: 0 });
+    expect(board.checkins).toEqual({ 7: 2 });
+  });
+
+  it("takes back a row and what it cascaded, and keeps a just-made card until the next read", () => {
+    const items = [{ id: 1 }, { id: 2 }, { id: -5 }, { id: 3 }];
+    const board = { items, projects: [{ id: 4, name: "Toa Hermitage" }] };
+    expect(removeItems(board, [2, -5, 99]).items).toEqual([{ id: 1 }, { id: 3 }]);
+    expect(removeItems(board, [])).toBe(board);
+    expect(removeItems(board, [99])).toBe(board);
+    const withCard = ensureProject(board, { id: 8, name: "River Commons" });
+    expect(withCard.projects.map((p) => p.id)).toEqual([4, 8]);
+    expect(ensureProject(withCard, { id: 8, name: "River Commons" })).toBe(withCard);
   });
 });

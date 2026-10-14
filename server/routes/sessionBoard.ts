@@ -37,16 +37,23 @@ import {
   GAME_BLOCK_KEYS,
   ITEM_KINDS,
   LAST_BOARD_WEEK,
+  NOTE_ITEM_KINDS,
   OPPORTUNITY_THEME_KEYS,
+  OPTION_KEY_RE,
   PROJECT_PHASE_KEYS,
+  PROMPT_KEY_RE,
   SESSION_BOARD_SEASON,
+  TILE_REF_RE,
+  anonymousKeys,
   boardIdentity,
   boardStages,
+  canAskFrom,
   cleanBoardLine,
   cleanBoardText,
   hasSessionBoard,
   maxTextFor,
   normalizeBoardState,
+  parseAskBlock,
   voteTarget,
 } from "@shared/sessionBoard";
 import { cleanRepoUrl } from "@shared/interopTools";
@@ -54,6 +61,7 @@ import { cleanNoteText } from "@shared/seasonSchedule";
 import {
   READY_KEYS,
   actOnBoard,
+  anonOnBoard,
   bumpVersion,
   canFacilitate,
   countByAuthor,
@@ -68,6 +76,20 @@ import {
   readBoardRows,
   type Db,
 } from "../lib/sessionBoard";
+import {
+  ANSWER_COPY,
+  answerOnBoard,
+  anonymousCounts,
+  checkinCounts,
+  claimGuestRows,
+  countGuestRows,
+  isAnonymousAnswer,
+  mergeCardsOnBoard,
+  isPickAnswer,
+  removeItemOnBoard,
+} from "../lib/sessionBoardAnswers";
+import { checkInOnBoard, checkInOptions } from "../lib/sessionBoardCheckIn";
+import { buildBoardExport, submissionsFor } from "../lib/sessionBoardExport";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
 import { courseProgress, getCourseMap, markCourseWatched, presentCourse, remapUnmappedLiveCourses, saveCourseMap } from "../lib/sessionCourseStore";
@@ -79,6 +101,12 @@ const PROJECT_LIMIT = { windowMs: 60_000, max: 6 };
 const VOTE_LIMIT = { windowMs: 60_000, max: 40 };
 const WHOAMI_LIMIT = { windowMs: 60_000, max: 30 };
 const FACILITATE_LIMIT = { windowMs: 60_000, max: 240 };
+/** A household on one wifi shares a guest limit, so answers get room. */
+const ANSWER_LIMIT = { windowMs: 60_000, max: 90 };
+const CHECKIN_LIMIT = { windowMs: 60_000, max: 20 };
+const CLAIM_LIMIT = { windowMs: 60_000, max: 6 };
+const SUBMISSIONS_LIMIT = { windowMs: 60_000, max: 30 };
+const EXPORT_LIMIT = { windowMs: 60_000, max: 10 };
 
 /** Season 2's applications carry season = 2 (shared/incubatorSeason.ts). */
 const APPLICATION_SEASON = 2;
@@ -112,6 +140,13 @@ function requireKeys(keys: string[]): string[] {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Reload the page so your browser can hold your place on the board." });
   }
   return keys;
+}
+
+/** Only a week whose board has a "Tap your project" stage takes check-ins. Week 2's never does. */
+function assertCheckInStage(week: number) {
+  if (!boardStages(week).some((s) => s.kind === "checkin")) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "This week's board has no check-in." });
+  }
 }
 
 /** The board as a participant may write to it: it exists and is still open, unless they facilitate. */
@@ -170,15 +205,48 @@ const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("shareSecs"), secs: z.number().int().min(BOARD_LIMITS.minShareSecs).max(BOARD_LIMITS.maxShareSecs) }),
 ]);
 
+/** A game canvas block, or `s<stage index>` for a question for the wall. */
+const blockInput = z.union([z.enum(GAME_BLOCK_KEYS), z.string().regex(/^s\d{1,2}$/)]);
+
 export const addItemInput = z.object({
   week: weekInput,
   voterKey: voterKeySchema.optional(),
-  kind: z.enum(ITEM_KINDS),
+  // Notes only: an `answer` row is written through `answer`, never here.
+  kind: z.enum(NOTE_ITEM_KINDS),
   // Bounded well above the stored length so a long paste is trimmed, not refused.
   text: z.string().min(1).max(1000),
   projectId: idInput.optional(),
-  block: z.enum(GAME_BLOCK_KEYS).optional(),
+  block: blockInput.optional(),
   displayName: z.string().max(200).optional(),
+});
+
+/** One answer to a stage's prompt (API_CONTRACT 3.5). */
+export const answerInput = z.discriminatedUnion("op", [
+  z.object({
+    op: z.literal("pick"),
+    week: weekInput,
+    voterKey: voterKeySchema.optional(),
+    key: z.string().regex(PROMPT_KEY_RE),
+    projectId: idInput.nullable(),
+    option: z.string().regex(OPTION_KEY_RE),
+    on: z.boolean(),
+    displayName: z.string().max(200).optional(),
+  }),
+  z.object({
+    op: z.literal("note"),
+    week: weekInput,
+    voterKey: voterKeySchema.optional(),
+    key: z.string().regex(PROMPT_KEY_RE),
+    projectId: idInput.nullable(),
+    text: z.string().min(1).max(1000),
+    displayName: z.string().max(200).optional(),
+  }),
+]);
+
+export const checkInInput = z.object({
+  week: weekInput,
+  voterKey: voterKeySchema.optional(),
+  ref: z.string().regex(TILE_REF_RE),
 });
 
 export const updateProjectInput = z.object({
@@ -253,6 +321,12 @@ export const sessionBoardRouter = router({
         if (target.startsWith("week:")) hands[Number(target.slice(5))] = n;
         else if (target.startsWith("offer:")) offers[target.slice(6)] = n;
       }
+      // Anonymous answers never reach a page as rows, facilitators included:
+      // the room sees counts by option, and each person their own pick (whoami).
+      const anon = anonymousKeys(input.week);
+      const answerCounts = anonymousCounts(input.week, rows.items);
+      const checkins = checkinCounts(rows.counts);
+      const shownItems = rows.items.filter((i) => !isAnonymousAnswer(anon, i));
 
       const lists = facilitator ? await facilitatorLists(db, SESSION_BOARD_SEASON, APPLICATION_SEASON) : null;
       // Who offered to coach or build, for the facilitator only: names of
@@ -269,6 +343,8 @@ export const sessionBoardRouter = router({
         notes,
         hands,
         offers,
+        answerCounts,
+        checkins,
         offerPeople: offerList,
         projects: rows.projects.map((p) => ({
           id: p.id,
@@ -284,7 +360,7 @@ export const sessionBoardRouter = router({
           applicationId: facilitator ? p.applicationId : null,
           displayName: facilitator ? p.displayName : null,
         })),
-        items: rows.items.map((i) => ({
+        items: shownItems.map((i) => ({
           id: i.id,
           kind: i.kind,
           text: i.text,
@@ -325,22 +401,47 @@ export const sessionBoardRouter = router({
       const keys = callerKeys(ctx.user, input.voterKey);
       const board = await findBoard(db, SESSION_BOARD_SEASON, input.week);
       const mine = board ? await mineOnBoard(db, board.id, keys) : { itemIds: [], projectIds: [], targets: [] };
+      const anon = board ? await anonOnBoard(db, board.id, keys, anonymousKeys(input.week)) : [];
       return {
         itemIds: mine.itemIds,
         projectIds: mine.projectIds,
         votes: mine.targets.filter((t) => t.startsWith("item:")).map((t) => Number(t.slice(5))),
         hands: mine.targets.filter((t) => t.startsWith("week:")).map((t) => Number(t.slice(5))),
         offers: mine.targets.filter((t) => t.startsWith("offer:")).map((t) => t.slice(6)),
+        /** This person's own anonymous answers: the page shows their pick, the room only counts. */
+        anon,
+        /** Cards this person checked in with on this board, oldest first. */
+        checkins: mine.targets.filter((t) => t.startsWith("checkin:")).map((t) => Number(t.slice(8))),
         canFacilitate: await canFacilitate(db, ctx.user),
       };
     }),
 
-  /** Public: add a word, a pain point, an opportunity or a game note. */
+  /** Public: add a word, a pain point, an opportunity, a game note, or a question for the wall. */
   addItem: publicProcedure
     .use(rateLimited(WRITE_LIMIT))
     .input(addItemInput)
     .mutation(async ({ ctx, input }) => {
       const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
+      assertWeek(input.week);
+
+      // Where the note goes, checked before the database: a question comes
+      // from a prompt or needs stage of this week's board (so Week 2's board
+      // never takes one), a game note names a block on the canvas.
+      let block: string | null = null;
+      if (input.kind === "ask") {
+        const stage = parseAskBlock(input.block);
+        if (stage == null || !canAskFrom(input.week, stage)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Ask from a stage on this board." });
+        }
+        block = input.block ?? null;
+      }
+      if (input.kind === "game") {
+        if (!input.block || !(GAME_BLOCK_KEYS as readonly string[]).includes(input.block)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Pick a block on the canvas." });
+        }
+        block = input.block;
+      }
+
       const db = await database();
       const facilitator = await canFacilitate(db, ctx.user);
       const board = await writableBoard(db, input.week, facilitator);
@@ -349,17 +450,12 @@ export const sessionBoardRouter = router({
       if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "Write something first." });
 
       let projectId: number | null = null;
-      if (input.kind === "pain" || input.kind === "opp") {
+      if (input.kind === "pain" || input.kind === "opp" || input.kind === "ask") {
         if (input.projectId != null) {
           const p = await projectOnBoard(db, board.id, input.projectId);
           if (!p || p.hidden) throw new TRPCError({ code: "NOT_FOUND", message: "That project is not on this board." });
           projectId = p.id;
         }
-      }
-      let block: string | null = null;
-      if (input.kind === "game") {
-        if (!input.block) throw new TRPCError({ code: "BAD_REQUEST", message: "Pick a block on the canvas." });
-        block = input.block;
       }
 
       if (!facilitator) {
@@ -394,17 +490,16 @@ export const sessionBoardRouter = router({
       const keys = callerKeys(ctx.user, input.voterKey);
       const board = await writableBoard(db, input.week, facilitator);
       const item = await itemOnBoard(db, board.id, input.itemId);
-      if (!item) return { ok: true as const };
-      if (!facilitator && !(item.authorKey && keys.includes(item.authorKey))) {
+      if (!item) return { ok: true as const, removedIds: [] as number[] };
+      const wrote = !!item.authorKey && keys.includes(item.authorKey);
+      if (!facilitator && !wrote) {
         throw new TRPCError({ code: "FORBIDDEN", message: "You can only take back what you wrote." });
       }
-      await db.delete(sessionBoardItems).where(eq(sessionBoardItems.id, item.id));
-      await db.delete(sessionBoardVotes).where(and(
-        eq(sessionBoardVotes.boardId, board.id),
-        eq(sessionBoardVotes.target, voteTarget.item(item.id)),
-      ));
-      await bumpVersion(db, board.id);
-      return { ok: true as const };
+      // Taking back a human need takes its seed and per-need answers with it:
+      // the caller's own when they wrote it, else its author's.
+      const cascadeKeys = wrote ? keys : item.authorKey ? [item.authorKey] : [];
+      const removedIds = await removeItemOnBoard(db, { boardId: board.id, item, cascadeKeys });
+      return { ok: true as const, removedIds };
     }),
 
   /** Public: put your land project in the circle. */
@@ -597,6 +692,118 @@ export const sessionBoardRouter = router({
     }))
     .mutation(({ ctx, input }) => signUpOnBoard(ctx, input)),
 
+  /**
+   * Public: answer one of a stage's prompts (API_CONTRACT 3.5). A pick adds or
+   * takes back an option; a note keeps the person's words. One row per person
+   * per prompt and project, up to the prompt's `max`. The private card never
+   * comes here: its key is refused.
+   */
+  answer: publicProcedure
+    .use(rateLimited(ANSWER_LIMIT))
+    .input(answerInput)
+    .mutation(async ({ ctx, input }) => {
+      const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
+      const db = await database();
+      const facilitator = await canFacilitate(db, ctx.user);
+      const board = await writableBoard(db, input.week, facilitator);
+      const { week: _week, voterKey: _voterKey, ...answer } = input;
+      return answerOnBoard(db, { boardId: board.id, week: input.week, keys, facilitator, input: answer });
+    }),
+
+  /**
+   * Public: the tiles on "Tap your project": this board's cards, earlier
+   * weeks' cards, and Season 2 applications with no card here yet. Names, and
+   * a place only where the project page is public. Not rate-limited, like
+   * `get`; the application and earlier-week reads are cached for 15 seconds.
+   */
+  checkInOptions: publicProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ input }) => {
+      assertWeek(input.week);
+      assertCheckInStage(input.week);
+      const db = await database();
+      return checkInOptions(db, { season: SESSION_BOARD_SEASON, week: input.week, appSeason: APPLICATION_SEASON });
+    }),
+
+  /**
+   * Public: check in with a tile. Finds or makes this board's card for it and
+   * marks the caller as here. Anyone can tap any project, no sign-in needed.
+   */
+  checkIn: publicProcedure
+    .use(rateLimited(CHECKIN_LIMIT))
+    .input(checkInInput)
+    .mutation(async ({ ctx, input }) => {
+      const keys = requireKeys(callerKeys(ctx.user, input.voterKey));
+      assertWeek(input.week);
+      assertCheckInStage(input.week);
+      const db = await database();
+      const facilitator = await canFacilitate(db, ctx.user);
+      const board = await writableBoard(db, input.week, facilitator);
+      return checkInOnBoard(db, {
+        season: SESSION_BOARD_SEASON,
+        boardId: board.id,
+        week: input.week,
+        keys,
+        ref: input.ref,
+        appSeason: APPLICATION_SEASON,
+      });
+    }),
+
+  /**
+   * Signed in: bring what this browser wrote as a guest onto the account, on
+   * every board, once. Holding the key already lets its holder edit and take
+   * back those rows, so this adds no new power. The key is never logged.
+   */
+  guestRows: protectedProcedure
+    .use(rateLimited(CLAIM_LIMIT))
+    .input(z.object({ voterKey: voterKeySchema }))
+    .mutation(async ({ input }) => {
+      // Signed in: how much this browser wrote as a guest, so the page can ask
+      // "Add them to your profile?" before anything moves. A count only.
+      const db = await database();
+      try {
+        return { rows: await countGuestRows(db, input.voterKey) };
+      } catch (err) {
+        const raw = err instanceof Error ? err.message : String(err);
+        console.error("[sessionBoard] guestRows failed", raw.split(input.voterKey).join("[key]"));
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "That didn't load. Try again in a minute." });
+      }
+    }),
+
+  claimGuest: protectedProcedure
+    .use(rateLimited(CLAIM_LIMIT))
+    .input(z.object({ voterKey: voterKeySchema }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await database();
+      try {
+        return await claimGuestRows(db, input.voterKey, ctx.user.id);
+      } catch (err) {
+        const raw = err instanceof Error ? err.message : String(err);
+        console.error("[sessionBoard] claimGuest failed", raw.split(input.voterKey).join("[key]"));
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "That didn't save. Try again in a minute." });
+      }
+    }),
+
+  /** Signed in: everything this person gave on the weekly boards, for their profile's Submissions. */
+  mySubmissions: protectedProcedure
+    .use(rateLimited(SUBMISSIONS_LIMIT))
+    .query(async ({ ctx }) => {
+      const db = await database();
+      return submissionsFor(db, SESSION_BOARD_SEASON, ctx.user.id);
+    }),
+
+  /**
+   * Admin: every week's board as data, to shape how we build Village OS. The
+   * page turns it into CSV with boardExportCsv. No guest key ever leaves.
+   */
+  adminExport: adminProcedure
+    .use(rateLimited(EXPORT_LIMIT))
+    .input(z.object({ weeks: z.array(weekInput).max(12).optional() }).optional())
+    .query(async ({ input }) => {
+      const db = await database();
+      return buildBoardExport(db, SESSION_BOARD_SEASON, input?.weeks);
+    }),
+
   /* ---------------------------------------------------------- facilitator */
 
   /** Facilitator: move the room, run the clocks, the breath and the share timer. */
@@ -633,6 +840,9 @@ export const sessionBoardRouter = router({
       if (input.roomVotes !== undefined) set.roomVotes = input.roomVotes;
       if (input.hidden !== undefined) set.hidden = input.hidden ? 1 : 0;
       if (input.text !== undefined) {
+        if (isPickAnswer(input.week, item)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: ANSWER_COPY.rewordPick });
+        }
         const text = cleanBoardLine(input.text, maxTextFor(item.kind as (typeof ITEM_KINDS)[number]));
         if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "A note needs words." });
         set.text = text;
@@ -666,6 +876,20 @@ export const sessionBoardRouter = router({
       await db.update(sessionBoardProjects).set(set).where(eq(sessionBoardProjects.id, p.id));
       await bumpVersion(db, board.id);
       return { ok: true as const };
+    }),
+
+  /**
+   * Facilitator: one project with two cards. Moves every answer, note,
+   * question and check-in from the stray to the card to keep, then hides the
+   * stray, so nothing anyone wrote drops out of the room or the export.
+   */
+  mergeProject: facilitatorProcedure
+    .input(z.object({ week: weekInput, projectId: idInput, intoId: idInput }))
+    .mutation(async ({ input }) => {
+      assertWeek(input.week);
+      const db = await database();
+      const board = await ensureBoard(db, SESSION_BOARD_SEASON, input.week);
+      return mergeCardsOnBoard(db, { boardId: board.id, week: input.week, fromId: input.projectId, intoId: input.intoId });
     }),
 
   /** Facilitator: turn a chosen opportunity into a quest on the game canvas, once. */

@@ -204,3 +204,42 @@ export function createBoardWriter(hooks: Hooks) {
 }
 
 export type BoardWriter = ReturnType<typeof createBoardWriter>;
+
+/** An anonymous prompt's room counts (`answerCounts[key][option]`). Never below zero. */
+export function adjustAnswerCount<B extends { answerCounts?: Record<string, Record<string, number>> }>(
+  board: B,
+  key: string,
+  option: string,
+  delta: number,
+): B {
+  const all = board.answerCounts ?? {};
+  const slot = { ...(all[key] ?? {}) };
+  slot[option] = Math.max(0, (slot[option] ?? 0) + delta);
+  return { ...board, answerCounts: { ...all, [key]: slot } };
+}
+
+/** People checked in with a card (`checkins[cardId]`). A count of zero drops the key. */
+export function adjustCheckins<B extends { checkins?: Record<number, number> }>(
+  board: B,
+  cardId: number,
+  delta: number,
+): B {
+  const next = { ...(board.checkins ?? {}) };
+  const n = Math.max(0, (next[cardId] ?? 0) + delta);
+  if (n === 0) delete next[cardId];
+  else next[cardId] = n;
+  return { ...board, checkins: next };
+}
+
+/** Take rows off the board by id (a take-back and anything it cascaded). */
+export function removeItems<B extends { items: Array<{ id: number }> }>(board: B, ids: Iterable<number>): B {
+  const gone = new Set(ids);
+  if (gone.size === 0) return board;
+  const items = board.items.filter((item) => !gone.has(item.id));
+  return items.length === board.items.length ? board : { ...board, items };
+}
+
+/** A card the page knows exists (a check-in just made it) before the next read brings it in. */
+export function ensureProject<B extends { projects: Array<{ id: number }> }>(board: B, card: B["projects"][number]): B {
+  return board.projects.some((p) => p.id === card.id) ? board : { ...board, projects: [...board.projects, card] };
+}

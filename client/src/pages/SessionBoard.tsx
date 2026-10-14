@@ -16,6 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "wouter";
 import { SEO } from "@/components/SEO";
 import {
+  BOARD_LIMITS,
   LAST_BOARD_WEEK,
   boardStages,
   hasSessionBoard,
@@ -30,15 +31,19 @@ import {
 import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
 import { episodeByWeek } from "@shared/season2Curriculum";
 import { useSessionBoard } from "@/components/session-board/useSessionBoard";
+import { useAuth } from "@/_core/hooks/useAuth";
 import {
   Ahead,
   Breath,
+  CheckIn,
   Circle,
   Close,
   Game,
   GetVillageOS,
   Harvest,
+  NeedsStage,
   OpenSeason,
+  PromptStage,
   Together,
   VillageOS,
   Welcome,
@@ -61,7 +66,18 @@ const fmtClock = (ms: number) => {
   return (h ? `${h}:${String(m).padStart(2, "0")}` : String(m)) + ":" + String(s).padStart(2, "0");
 };
 
-const WIDE: StageKind[] = ["circle", "harvest", "game"];
+const WIDE: StageKind[] = ["circle", "harvest", "game", "checkin", "needs"];
+
+/** A text field on the stage has focus: someone is typing there right now. */
+function typingOnStage(root: HTMLElement | null): boolean {
+  if (!root || typeof document === "undefined") return false;
+  const a = document.activeElement as HTMLElement | null;
+  if (!a || !root.contains(a)) return false;
+  if (a.tagName === "TEXTAREA" || a.isContentEditable) return true;
+  if (a.tagName !== "INPUT") return false;
+  const type = (a as HTMLInputElement).type;
+  return type === "text" || type === "search" || type === "" || type === "email" || type === "url";
+}
 
 export default function SessionBoard() {
   const params = useParams<{ week: string }>();
@@ -88,7 +104,9 @@ function NoBoard() {
 
 function Board({ week }: { week: number }) {
   const stages = useMemo(() => boardStages(week), [week]);
-  const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName } = useSessionBoard(week);
+  const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName, myProject, setMyProject } = useSessionBoard(week);
+  const { user } = useAuth();
+  const signedIn = !!user;
   const facilitator = !!board?.canFacilitate;
   const open = board?.status !== "closed";
   const canWrite = !!board && (open || facilitator);
@@ -98,13 +116,35 @@ function Board({ week }: { week: number }) {
   const live = board?.state.stage ?? 0;
   const [view, setView] = useState(0);
   const [following, setFollowing] = useState(true);
+  // A facilitator who taps "Tap your project" or "Go back" looks at another
+  // stage on this screen only; the room stays where it is until they move it.
+  const [looking, setLooking] = useState(false);
+
+  // While someone types on a stage, the room moving on never pulls the screen
+  // (and their words) away; a bar offers to go there instead.
+  const [held, setHeld] = useState(false);
+  // Set by look(): the next stage shown gets focus on its heading, since the
+  // button that moved there (Change, Tap your project, Go to ...) is gone.
+  const focusStage = useRef(false);
 
   const go = useCallback((i: number) => {
     const to = Math.max(0, Math.min(stages.length - 1, i));
+    // A facilitator only looking at another stage moves this screen alone:
+    // the arrows, keys and rail never yank the room from there.
+    // Arriving back on the room's own stage ends the looking.
+    if (facilitator && looking) {
+      setView(to);
+      if (to === live) {
+        setLooking(false);
+        setFollowing(true);
+      }
+      return;
+    }
     setView(to);
     const plan = board?.state.plan ?? stages.map((s) => s.min);
     const planned = sessionMinutes(plan, stages) * 60_000;
     const ended = board ? sessionClosedAt(board.state, planned, Date.now()) != null : false;
+    setLooking(false);
     if (facilitator && open) {
       actions.act({ type: "go", stage: to });
     }
@@ -115,7 +155,21 @@ function Board({ week }: { week: number }) {
       chosen: to,
       liveStage: live,
     }));
-  }, [stages, facilitator, open, actions, live, board]);
+  }, [stages, facilitator, open, actions, live, board, looking]);
+
+  // This screen only, never the room (contract check 8).
+  const look = useCallback((i: number) => {
+    focusStage.current = true;
+    setView(Math.max(0, Math.min(stages.length - 1, i)));
+    setFollowing(false);
+    setLooking(true);
+  }, [stages.length]);
+  const backToLive = useCallback(() => {
+    setFollowing(true);
+    setLooking(false);
+    setHeld(false);
+    setView(live);
+  }, [live]);
 
   // One clock for the page, in server time.
   const [now, setNow] = useState(() => serverNow());
@@ -127,7 +181,16 @@ function Board({ week }: { week: number }) {
   const [cuesOpen, setCuesOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const railRef = useRef<HTMLOListElement>(null);
-  useEffect(() => { mainRef.current?.scrollTo({ top: 0 }); }, [view]);
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+    if (!focusStage.current) return;
+    focusStage.current = false;
+    const h = mainRef.current?.querySelector<HTMLElement>(".sb-stage h1, .sb-stage h2");
+    if (h) {
+      if (!h.hasAttribute("tabindex")) h.setAttribute("tabindex", "-1");
+      h.focus({ preventScroll: true });
+    }
+  }, [view]);
   // The phone rail scrolls inside itself. Keep the stage people are on in that window.
   useEffect(() => {
     const rail = railRef.current;
@@ -176,11 +239,18 @@ function Board({ week }: { week: number }) {
     if (!keepsFollowingRoom({
       boardLoaded: !!board,
       sessionEnded: closedAt != null,
-      facilitator,
+      facilitator: facilitator && !looking,
       following,
     })) return;
+    if (!facilitator && view !== live && typingOnStage(mainRef.current)) {
+      setHeld(true);
+      return;
+    }
+    setHeld(false);
     setView(live);
-  }, [board, closedAt, facilitator, following, live]);
+    // view is read, never a trigger: a follower's own tap is handled by go().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [board, closedAt, facilitator, looking, following, live]);
   const sessionElapsed = state ? sessionElapsedMs(state, plannedMs, now) : null;
   const schedule = useSeasonSchedule();
   const nextSession = useMemo(() => {
@@ -207,8 +277,15 @@ function Board({ week }: { week: number }) {
   const stageShort = (index: number) => (showSessionRecap(index, sessionEnded && !!board) ? "Recap" : stages[index].short);
 
   const stageProps: StageProps | null = board
-    ? { board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go }
+    ? {
+      board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go,
+      myProject, setMyProject, displayName, setDisplayName, signedIn, look,
+    }
     : null;
+  // A week with a check-in stage (Week 3 on) keeps its Welcome under the Recap,
+  // so people going at their own pace still read the Part 1 of 2 framing.
+  const promptWeek = stages.some((s) => s.kind === "checkin");
+  const sessionRunning = !!state?.sessionStartedAt && !closedAt;
 
   return (
     <div className="sb-app">
@@ -222,7 +299,7 @@ function Board({ week }: { week: number }) {
           <p className="sb-rail-current">{stageName(view)}</p>
           <ol className="sb-rail" aria-label="Session stages" ref={railRef}>
             {stages.map((s, i) => (
-              <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", !facilitator && i === live && i !== view ? "sb-live" : "", watched.has(i) ? "sb-sprout" : ""].filter(Boolean).join(" ")}>
+              <li key={s.kind + i} className={[i === view ? "sb-now" : "", i < view ? "sb-done" : "", (!facilitator || looking) && !sessionEnded && i === live && i !== view ? "sb-live" : "", watched.has(i) ? "sb-sprout" : ""].filter(Boolean).join(" ")}>
                 <button type="button" className="sb-rail-btn" title={stageName(i)} aria-label={watched.has(i) ? `${stageName(i)}, watched` : stageName(i)} aria-current={i === view ? "step" : undefined} onClick={() => go(i)}>
                   {watched.has(i) ? <CourseSprout /> : null}
                   <span className="sb-dot" />
@@ -252,6 +329,12 @@ function Board({ week }: { week: number }) {
       <section className="sb-main" ref={mainRef} id="board" aria-label="Week board">
         <section className={`sb-stage${WIDE.includes(stage.kind) ? " sb-wide" : ""}`} aria-label={stageName(view)}>
           {!open ? <p className="sb-banner">This board is closed and kept as the record of {title}. Browse every stage with the arrows.</p> : null}
+          {held && following && view !== live && !sessionEnded ? (
+            <p className="sb-banner" role="status">
+              The room moved to {stageName(live)}.{" "}
+              <button type="button" className="sb-btn sb-small" onClick={backToLive}>Go there</button>
+            </p>
+          ) : null}
           {open && endedDate ? (
             <p className="sb-banner">
               This session ended {endedDate}.{nextSession ? ` Next session: Week ${nextSession.week}, ${boardDate(nextSession.start.getTime())}.` : ""}
@@ -271,17 +354,25 @@ function Board({ week }: { week: number }) {
           )}
           {loading || !stageProps ? (
             <p className="sb-empty">{error ? "The board didn't load. Check your connection and refresh the page." : "Opening the board..."}</p>
-          ) : showRecap ? <SessionRecap week={week} />
+          ) : showRecap ? (
+            <>
+              <SessionRecap week={week} />
+              {promptWeek ? <Welcome {...stageProps} /> : null}
+            </>
+          )
             : stage.kind === "welcome" ? <Welcome {...stageProps} />
             : stage.kind === "breath" ? <Breath {...stageProps} />
             : stage.kind === "open" ? <OpenSeason {...stageProps} />
             : stage.kind === "villageos" ? <VillageOS {...stageProps} />
             : stage.kind === "together" ? <Together {...stageProps} />
-            : stage.kind === "circle" ? <Circle {...stageProps} displayName={displayName} setDisplayName={setDisplayName} />
+            : stage.kind === "circle" ? <Circle {...stageProps} />
             : stage.kind === "harvest" ? <Harvest {...stageProps} />
             : stage.kind === "game" ? <Game {...stageProps} />
             : stage.kind === "ahead" ? <Ahead {...stageProps} />
             : stage.kind === "getvillageos" ? <GetVillageOS {...stageProps} />
+            : stage.kind === "checkin" ? <CheckIn {...stageProps} />
+            : stage.kind === "prompt" ? <PromptStage {...stageProps} />
+            : stage.kind === "needs" ? <NeedsStage {...stageProps} />
             : <Close {...stageProps} />}
         </section>
       </section>
@@ -296,8 +387,8 @@ function Board({ week }: { week: number }) {
         </div>
         <button type="button" className="sb-btn sb-primary" disabled={view === stages.length - 1} onClick={() => go(view + 1)}>{view < stages.length - 1 ? stageShort(view + 1) : "Done"} →</button>
         <div className="sb-foot-tools">
-          {!facilitator && view !== live && open ? (
-            <button type="button" className="sb-btn sb-ghost" onClick={() => { setFollowing(true); setView(live); }}>Back to live</button>
+          {(!facilitator || looking) && view !== live && open && !sessionEnded ? (
+            <button type="button" className="sb-btn sb-ghost" onClick={backToLive}>Back to live</button>
           ) : null}
           {facilitator ? (
             <button type="button" className="sb-btn sb-ghost" aria-expanded={cuesOpen} aria-controls="sb-cues" onClick={() => setCuesOpen((v) => !v)}>Cues</button>
@@ -319,8 +410,20 @@ function Board({ week }: { week: number }) {
           </div>
           <ul>{stage.cues.map((c) => <li key={c}>{c}</li>)}</ul>
           <div className="sb-row">
+            {open && sessionRunning ? (
+              <button
+                type="button"
+                className="sb-btn sb-small"
+                aria-label={`Add five minutes to ${stages[live]?.name ?? "this stage"}`}
+                disabled={planFor(live) >= BOARD_LIMITS.maxStageMinutes}
+                onClick={() => actions.act({ type: "plan", stage: live, minutes: Math.min(BOARD_LIMITS.maxStageMinutes, planFor(live) + 5) })}
+              >
+                +5 min
+              </button>
+            ) : null}
             <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => actions.act({ type: "restartClocks" })}>Restart the clocks</button>
           </div>
+          {open && sessionRunning ? <p className="sb-hint">+5 min goes to the stage the room is on: {stages[live]?.name}, now {planFor(live)} min.</p> : null}
           <p className="sb-hint">Keys: ← and → move the room, 1 to {Math.min(9, stages.length)} jump, C shows or hides these cues.</p>
         </aside>
       ) : null}
