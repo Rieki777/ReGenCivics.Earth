@@ -22,6 +22,7 @@ import { adminRouter, adminAIRouter, imageStudioRouter, scheduledEmailsRouter, b
 import { marketplaceRouter, amasRouter, projectConnectionsRouter, communityRouter } from "./routes/community";
 import { glossaryRouter, knowledgeMapRouter, translateRouter, customGameInquiriesRouter, blogRouter, rssFeedRouter } from "./routes/knowledge";
 import { customGameApplicationsRouter } from "./routes/customGameApplications";
+import { allianceApplicationsRouter } from "./routes/allianceApplications";
 import { bioregionsRouter, userBioregionsRouter, bloomsRouter } from "./routes/geo";
 import { messagesRouter } from "./routes/messages";
 import { recordingsRouter } from "./routes/recordings";
@@ -179,6 +180,7 @@ export const appRouter = router({
   translate: translateRouter,
   customGameInquiries: customGameInquiriesRouter,
   customGameApplications: customGameApplicationsRouter,
+  allianceApplications: allianceApplicationsRouter,
   blog: blogRouter,
   rssFeed: rssFeedRouter,
 

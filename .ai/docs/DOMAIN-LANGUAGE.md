@@ -355,6 +355,10 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Approval handoff**. Everything an approval does, in one place (`server/lib/approvalHandoff.ts`): tier detection, the project's Land Projects forum thread, and the vote invite. It runs once per application, however many times the status goes back and forth.
 
+**Alliance Partner application** (ADR-72). An organization's application at `/apply/alliance`, stored in `alliance_applications`, separate from a land project application; one person can hold both. Reviewed in Admin > Alliance. Approval makes them an **Alliance Partner**: registered in `organisations`, signed up for every Interoperability Circle week, and sent the Circle's vote invite. An old `/connect` alliance **inquiry** is not an application until an admin converts it.
+
+**Member badge** (ADR-72). "Accepted land project" or "Alliance Partner" beside a vote on the Season Schedule register or the Circle's time vote. Worked out when the tally is read, so a vote cast before approval shows it once the voter is approved. A badge says who someone is; it never gates the vote, which stays open to everyone.
+
 **Vote invite** (call time vote invite). The email an approved applicant gets: vote for the Season's weekly call time on the Season Schedule, how to join the calls, and their status page. Logged in `email_logs` as `land_project_vote_invite` against the application id. A **quiet approval** approves without it; Admin can send it later from the application's panel.
 
 ### Session boards (ADR-68)

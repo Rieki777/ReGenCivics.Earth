@@ -51,6 +51,7 @@ import {
   Flame,
   Scroll,
   ClipboardList,
+  Handshake,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -2075,6 +2076,21 @@ function applicationStatusColor(status: string): "green" | "amber" | "red" | "bl
   return map[status] ?? "gray";
 }
 
+/** What an Alliance Partner applicant can do next: edit until decided, then their next steps. */
+function allianceApplicationActions(app: { status: string }): {
+  primaryAction: { label: string; href: string };
+  secondaryAction?: { label: string; href: string };
+} {
+  if (["approved", "active", "inactive"].includes(app.status)) {
+    return {
+      primaryAction: { label: "Next steps", href: "/apply/alliance/status" },
+      secondaryAction: { label: "The Circle", href: "/interop-sessions" },
+    };
+  }
+  const label = app.status === "draft" ? "Continue editing" : app.status === "changes_requested" ? "Review & resubmit" : app.status === "rejected" ? "Edit & send again" : "Edit";
+  return { primaryAction: { label, href: "/apply/alliance" }, secondaryAction: { label: "Status", href: "/apply/alliance/status" } };
+}
+
 /**
  * What the applicant can do next with a land project application. The /apply
  * form can change it until it is accepted (LOCKED_APPLICATION_STATUSES in
@@ -2344,6 +2360,7 @@ function SubmissionsTab() {
   const { data: savedCalcs = [] } = trpc.savedContributions.list.useQuery();
   const { data: investorInquiry } = trpc.investorInquiries.mine.useQuery(undefined, { enabled: isAdmin });
   const { data: orgClaims = [] } = trpc.orgClaims.mine.useQuery();
+  const { data: allianceApps = [] } = trpc.allianceApplications.mine.useQuery();
 
   return (
     <div className="space-y-8 py-2">
@@ -2364,6 +2381,24 @@ function SubmissionsTab() {
         )}
         emptyMessage="No applications yet."
         emptyAction={{ label: "Apply Now", href: "/apply" }}
+      />
+      {/* Alliance Partner applications (ADR-72). One person can hold both kinds. */}
+      <SubmissionsSection
+        title="Alliance Partner Applications"
+        icon={Handshake}
+        items={allianceApps}
+        renderItem={(app: any) => (
+          <SubmissionCard
+            key={app.id}
+            title={app.organizationName || "Your organization"}
+            status={app.status}
+            statusColor={applicationStatusColor(app.status)}
+            updatedAt={app.updatedAt}
+            {...allianceApplicationActions(app)}
+          />
+        )}
+        emptyMessage="No Alliance Partner application yet."
+        emptyAction={{ label: "Become an Alliance Partner", href: "/apply/alliance" }}
       />
       <SubmissionsSection
         title="Incubator Season Campaigns"

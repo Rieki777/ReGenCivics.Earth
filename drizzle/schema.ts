@@ -2716,6 +2716,63 @@ export const customGameApplications = mysqlTable("custom_game_applications", {
 export type CustomGameApplication = typeof customGameApplications.$inferSelect;
 export type InsertCustomGameApplication = typeof customGameApplications.$inferInsert;
 
+// ─── Alliance Partner Applications (migration 0297, ADR-72) ──────────────────
+// An organization applies at /apply/alliance, is reviewed in Admin > Alliance,
+// and on approval joins the Interoperability Circle. Its own table: one person
+// can hold a land project application and an alliance one. userId is null for
+// an application converted from an alliance inquiry whose writer has no
+// account yet; contactEmail carries it until they sign in.
+export const allianceApplications = mysqlTable("alliance_applications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  contactEmail: varchar("contactEmail", { length: 320 }).notNull(),
+  contactName: varchar("contactName", { length: 255 }),
+  organizationName: varchar("organizationName", { length: 255 }).default("").notNull(),
+  organizationUrl: varchar("organizationUrl", { length: 512 }),
+  /** JSON array of role and support tags (shared/allianceApplication.ts ALLIANCE_ROLES). */
+  roles: text("roles"),
+  otherSupport: varchar("otherSupport", { length: 255 }),
+  scope: mysqlEnum("scope", ["local", "global"]).default("local").notNull(),
+  location: varchar("location", { length: 255 }),
+  country: varchar("country", { length: 100 }),
+  latitude: double("latitude"),
+  longitude: double("longitude"),
+  supportDescription: text("supportDescription"),
+  partnershipDescription: text("partnershipDescription"),
+  /** The tool they build, for the Circle's register. http or https only. */
+  toolRepoUrl: varchar("toolRepoUrl", { length: 500 }),
+  status: mysqlEnum("status", [
+    "draft", "submitted", "under_review", "approved", "active", "inactive", "rejected", "changes_requested",
+  ]).default("draft").notNull(),
+  /** The review team's note the applicant sees with changes requested or a decision. */
+  reviewNote: text("reviewNote"),
+  sourceInquiryId: int("sourceInquiryId"),
+  /** The organisations row made on approval. */
+  organisationId: int("organisationId"),
+  submittedAt: timestamp("submittedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  index("alliance_applications_user_idx").on(table.userId),
+  index("alliance_applications_status_idx").on(table.status),
+  index("alliance_applications_email_idx").on(table.contactEmail),
+  uniqueIndex("alliance_applications_inquiry_idx").on(table.sourceInquiryId),
+]));
+export type AllianceApplication = typeof allianceApplications.$inferSelect;
+export type InsertAllianceApplication = typeof allianceApplications.$inferInsert;
+
+/** The review timeline of one alliance application (migration 0297). */
+export const allianceApplicationEvents = mysqlTable("alliance_application_events", {
+  id: int("id").autoincrement().primaryKey(),
+  allianceApplicationId: int("allianceApplicationId").notNull(),
+  eventType: mysqlEnum("eventType", ["status_change", "email_sent", "note_added", "admin_action"]).notNull(),
+  description: text("description").notNull(),
+  adminUserId: int("adminUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  index("alliance_application_events_app_idx").on(table.allianceApplicationId),
+]));
+
 // ─── Alliance Organisations ────────────────────────────────────────────────────
 // Registry of alliance partner organisations. Mirrors the hardcoded list in
 // Connect.tsx but stored in DB so they can have forum threads, status, etc.
@@ -6585,11 +6642,14 @@ export const interopTimeVotes = mysqlTable("interopTimeVotes", {
   voterKey: varchar("voterKey", { length: 64 }).notNull(),
   /** Optional, shown beside the slot so the group knows who is coming. */
   displayName: varchar("displayName", { length: 80 }),
+  /** The signed-in voter, for the member badges (migration 0298). Null for a guest. */
+  userId: int("userId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
   uniqueIndex("interop_vote_voter_idx").on(table.voterKey),
   index("interop_vote_slot_idx").on(table.slot),
+  index("interop_vote_user_idx").on(table.userId),
 ]));
 
 /**
@@ -6611,11 +6671,14 @@ export const seasonScheduleVotes = mysqlTable("season_schedule_votes", {
   projectName: varchar("projectName", { length: 120 }),
   /** Optional link the project shares with the cohort. http or https only (cleanRepoUrl). */
   projectUrl: varchar("projectUrl", { length: 500 }),
+  /** The signed-in voter, for the member badges (migration 0298). Null for a guest. */
+  userId: int("userId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ([
   uniqueIndex("season_schedule_votes_voter_idx").on(table.season, table.voterKey),
   index("season_schedule_votes_season_idx").on(table.season),
+  index("season_schedule_votes_user_idx").on(table.userId),
 ]));
 
 /**

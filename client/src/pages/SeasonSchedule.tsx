@@ -14,8 +14,9 @@
  * shared/applicationWindow.ts, so it says the same thing as /apply and /season2.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { MemberBadgeChips } from "@/components/CallTimeVoteNudge";
 import { LandProjectVoteField, type AppliedProjectPick } from "@/components/LandProjectVoteField";
 import { SITE_ORIGIN } from "@shared/sessionLinks";
 import { projectPathForApplication } from "@shared/projectKey";
@@ -249,6 +250,17 @@ export default function SeasonSchedule() {
   const upcoming = sessions.filter((s) => s.end.getTime() > now.getTime() && s.status !== "cancelled");
   const nextUp = upcoming.find((s) => s.start.getTime() > now.getTime()) ?? null;
   const register = data?.register ?? [];
+
+  // Signed in: attach this browser's vote to the account, so the project's
+  // badge shows on the register (ADR-72).
+  const linkMyVote = trpc.seasonSchedule.linkMyVote.useMutation();
+  const linkedVote = useRef(false);
+  useEffect(() => {
+    if (!user || !voterKey || linkedVote.current) return;
+    linkedVote.current = true;
+    linkMyVote.mutate({ season, voterKey });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, voterKey, season]);
   const publicNotes = data?.publicNotes ?? [];
 
   function save(slots: SeasonSlotKey[]) {
@@ -649,6 +661,7 @@ export default function SeasonSchedule() {
                         </a>
                       )}
                       {entry.names && <span className="text-white/55 text-sm">{entry.names}</span>}
+                      <MemberBadgeChips badges={entry.badges} />
                     </li>
                   ))}
                 </ul>

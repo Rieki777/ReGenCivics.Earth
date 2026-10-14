@@ -335,8 +335,8 @@ describe("the register and the notes", () => {
       onlyHttp,
     );
     expect(entries).toEqual([
-      { project: "rainbow bridge hawaii", names: "Kai", url: "https://rainbowbridge.example" },
-      { project: null, names: "Ana", url: "https://aquarella.example" },
+      { project: "rainbow bridge hawaii", names: "Kai", url: "https://rainbowbridge.example", badges: [] },
+      { project: null, names: "Ana", url: "https://aquarella.example", badges: [] },
     ]);
   });
 

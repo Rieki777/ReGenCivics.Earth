@@ -1710,7 +1710,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
             <span className="text-[#7dd87d]">Global Network</span>
           </h2>
           <div className="mt-3 flex flex-col gap-2">
-            <a href="/connect?path=alliance" className="inline-flex items-center gap-2 px-4 py-2 border border-[#d4a574] text-[#d4a574] rounded-full text-xs font-semibold hover:bg-[#d4a574]/10 transition-colors w-fit">
+            <a href="/apply/alliance" className="inline-flex items-center gap-2 px-4 py-2 border border-[#d4a574] text-[#d4a574] rounded-full text-xs font-semibold hover:bg-[#d4a574]/10 transition-colors w-fit">
               <Building2 className="w-3 h-3" /> Join as Alliance Partner
             </a>
             <a href="/apply" className="inline-flex items-center gap-2 px-4 py-2 border border-[#7dd87d] text-[#7dd87d] rounded-full text-xs font-semibold hover:bg-[#7dd87d]/10 transition-colors w-fit">
@@ -1899,7 +1899,7 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
         {/* Mobile CTAs */}
         <div className="bg-[#0a1f14] px-4 pb-6 flex flex-col gap-2">
           <a href="/apply" className="block w-full text-center text-sm bg-[#7dd87d] text-[#1a472a] py-3 rounded-full font-bold hover:bg-[#9de89d] transition-colors">Apply as a New Land Project</a>
-          <a href="/connect?path=alliance" className="block w-full text-center text-sm bg-[#7dd87d]/20 text-[#7dd87d] py-3 rounded-full font-bold border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30 transition-colors">Become an Alliance Partner</a>
+          <a href="/apply/alliance" className="block w-full text-center text-sm bg-[#7dd87d]/20 text-[#7dd87d] py-3 rounded-full font-bold border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30 transition-colors">Become an Alliance Partner</a>
         </div>
       </div>
     </div>

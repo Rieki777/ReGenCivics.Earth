@@ -4,10 +4,12 @@
  * Build spec bundle 1, section 16.3. An accepted founder's status card links
  * every next step (the sessions, what the review checks, their project page
  * and the campaign wizard opened on their project), so the page names what
- * to do next instead of "Join the Community". Nothing here promises an
- * emailed decision: decision emails reach only the site owner today
- * (section 15, question 11). The draft, rejected and changes-requested lines
- * keep their words (section 13).
+ * to do next instead of "Join the Community". Approval emails the founder the
+ * call time vote invite (ADR-71); other decisions still reach only the site
+ * owner (section 15, question 11), so nothing here promises those by email.
+ * Until the founder has voted for the Season's call time, the card says so
+ * (ADR-72). The draft, rejected and changes-requested lines keep their words
+ * (section 13).
  */
 import type { ReactNode } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -21,6 +23,7 @@ import { defaultCrowdpoolOpening } from "@shared/crowdpoolCalendar";
 import { formatCloseDate } from "@shared/campaignProgress";
 import { projectPathForApplication } from "@shared/projectKey";
 import { isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { SeasonVoteNudge } from "@/components/CallTimeVoteNudge";
 
 /** Where Sign in brings the person back to. */
 export const APPLY_STATUS_SIGN_IN_HREF = `/sign-in?returnTo=${encodeURIComponent("/apply/status")}`;
@@ -99,6 +102,7 @@ function CreatorPath({ app, now }: { app: StatusApplication & { id: number }; no
   const hosted = isAcceptedForHosting({ status: app.status, season: app.season ?? null });
   return (
     <div className="mt-4 pt-4 border-t border-white/10">
+      <SeasonVoteNudge />
       <ul className="flex flex-wrap gap-x-5 gap-y-1">
         <li><Link href="/season-schedule" className={statusLink}>{CREATOR_PATH.sessions} &rarr;</Link></li>
         <li><Link href={READINESS_HREF} className={statusLink}>{CREATOR_PATH.ready} &rarr;</Link></li>

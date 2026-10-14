@@ -216,7 +216,7 @@ export default function Ally() {
                 className="bg-cyan-400 text-[#1a472a] hover:bg-cyan-300 font-bold px-8 py-4 text-lg w-full sm:w-auto h-auto"
                 style={{ fontFamily: "var(--font-accent)" }}
               >
-                <Link href="/connect?path=alliance">
+                <Link href="/apply/alliance">
                   <Handshake className="w-5 h-5 mr-2" />
                   Apply as Alliance Partner
                 </Link>
@@ -469,7 +469,7 @@ export default function Ally() {
                   className="bg-cyan-400 text-[#1a472a] hover:bg-cyan-300 font-bold px-8 py-4 text-lg h-auto"
                   style={{ fontFamily: "var(--font-accent)" }}
                 >
-                  <Link href="/connect?path=alliance">
+                  <Link href="/apply/alliance">
                     Apply as Alliance Partner
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Link>

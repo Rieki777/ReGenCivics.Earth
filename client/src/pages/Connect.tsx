@@ -351,6 +351,12 @@ export default function Connect() {
       window.location.href = "/apply";
       return;
     }
+    // Alliance partners apply at /apply/alliance (ADR-72): a saved draft, a
+    // review in Admin, and on approval the Interoperability Circle.
+    if (pathId === "alliance") {
+      window.location.href = "/apply/alliance";
+      return;
+    }
     setStep("form");
   };
   

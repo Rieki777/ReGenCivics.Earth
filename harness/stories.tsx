@@ -21,6 +21,9 @@ import { SeasonWheel } from "@/components/SeasonWheel";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import SessionBoard from "@/pages/SessionBoard";
+import AllianceApply from "@/pages/AllianceApply";
+import AllianceApplyStatus from "@/pages/AllianceApplyStatus";
+import { AdminAllianceApplications } from "@/components/admin/AdminAllianceApplications";
 import { Router, Route } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { defaultBoardState } from "@shared/sessionBoard";
@@ -207,7 +210,80 @@ function BlockedMicStory() {
   );
 }
 
+/** An Alliance Partner application at each stage (ADR-72). */
+const ALLIANCE_APP = {
+  id: 7,
+  userId: 1,
+  contactEmail: "ana@seedcommons.org",
+  contactName: "Ana Ribeiro",
+  organizationName: "Seed Commons",
+  organizationUrl: "https://seedcommons.org",
+  roles: JSON.stringify(["Funding", "Coordination", "Legal"]),
+  otherSupport: null,
+  scope: "local",
+  location: "Oaxaca",
+  country: "Mexico",
+  latitude: null,
+  longitude: null,
+  supportDescription: "We run a flow fund and legal clinics for land trusts in two bioregions.",
+  partnershipDescription: "A shared treasury template the land projects can adopt.",
+  toolRepoUrl: "https://github.com/seedcommons/treasury",
+  status: "submitted",
+  reviewNote: null,
+  sourceInquiryId: null,
+  organisationId: null,
+  submittedAt: new Date("2026-10-12T18:00:00Z"),
+  createdAt: new Date("2026-10-11T18:00:00Z"),
+  updatedAt: new Date("2026-10-12T18:00:00Z"),
+};
+
+const SIGNED_IN = { id: 1, name: "Ana Ribeiro", email: "ana@seedcommons.org", role: "user" };
+
 export const STORIES: Record<string, Story> = {
+  "alliance-apply-form": {
+    title: "Become an Alliance Partner: the application form, mid-draft",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["allianceApplications.mine"] = [{ ...ALLIANCE_APP, status: "draft", submittedAt: null, supportDescription: "We run a flow fund" }];
+    },
+    render: () => <AllianceApply />,
+  },
+
+  "alliance-status-approved": {
+    title: "Alliance Partner status: approved, not voted yet",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["allianceApplications.mine"] = [{ ...ALLIANCE_APP, status: "approved" }];
+      mockData["interopSessions.linkMyVote.result"] = { voted: false };
+    },
+    render: () => <AllianceApplyStatus />,
+  },
+
+  "alliance-status-changes": {
+    title: "Alliance Partner status: changes requested, with the review note",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["allianceApplications.mine"] = [{ ...ALLIANCE_APP, status: "changes_requested", reviewNote: "Could you add a link to the treasury template?" }];
+    },
+    render: () => <AllianceApplyStatus />,
+  },
+
+  "alliance-admin-applications": {
+    title: "Admin > Alliance: applications list with the invite backlog",
+    setup: () => {
+      mockData["allianceApplications.list"] = [
+        ALLIANCE_APP,
+        { ...ALLIANCE_APP, id: 8, organizationName: "Mycelium Mapping Co", contactName: "Jo", contactEmail: "jo@mycelium.org", status: "approved", sourceInquiryId: 42, roles: JSON.stringify(["Technology"]) },
+      ];
+      mockData["allianceApplications.inviteBacklog"] = [{ id: 8, organizationName: "Mycelium Mapping Co", contactEmail: "jo@mycelium.org" }];
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminAllianceApplications />
+      </div>
+    ),
+  },
+
   /**
    * The first-run quest intro over the bottom nav. Two things to check:
    * nothing scrolls horizontally, and the Next / Skip controls clear the bar.

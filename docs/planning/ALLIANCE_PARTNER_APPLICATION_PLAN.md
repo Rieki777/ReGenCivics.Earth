@@ -1,6 +1,6 @@
 # Alliance partner applications and the approval handoff
 
-Date: 2026-10-13. Owner: Rye. Status: PR 1 built; PRs 2 and 3 planned.
+Date: 2026-10-13. Owner: Rye. Status: all three built. PR 1 shipped as d16c3e41 (ADR-71); PRs 2 and 3 shipped together (ADR-72).
 
 ## Goal
 
@@ -42,20 +42,25 @@ An alliance partner applies, is reviewed and approved in Admin the way a land pr
 
 `server/lib/approvalHandoff.ts`, ADR-71. Every admin status change goes through `setApplicationStatus`. An approval runs tier detection, the forum thread (once) and the vote invite (once). Admin: approve dialog with the invite on by default, a per-application invite panel with send and send again, a backlog banner, a kanban confirm, honest review-form toasts.
 
-## PR 2: alliance partner applications
+## PR 2: alliance partner applications (built, ADR-72)
 
 - Table `alliance_applications` (own table, the `custom_game_applications` precedent): `userId`, organization name, URL, role, scope, location and coordinates, country, support categories, other support, description, organizational capital, the tool they build (optional, feeds the Circle's tool register), `status` with the same enum as `applications`, `submittedAt`, `sourceInquiryId` (set when converted), timestamps. One open application per user. Migration via the runner.
 - Router `allianceApplications`: `create`, `update`, `submit`, `mine`, admin `list`, `get`, `updateStatus` (through a `setAllianceApplicationStatus` sibling of `setApplicationStatus`), events log (`alliance_application_events`, or a `kind` column on `applicationEvents`; decide at build time by checking `applicationEvents` readers).
 - Client: `/apply/alliance` (form with autosave, reusing the `/connect` alliance fields and the Weaver companion), `/apply/alliance/status`, Submissions tab entry with the same edit rules. `/ally` and `/connect?path=alliance` point here.
 - Admin: Alliance tab gains an Applications section with the same controls as land projects (status list, detail sheet, review notes, bulk approve dialog). Inquiries stay below it with a **Convert to application** button that copies the inquiry's fields, links the user by email when an account exists (otherwise holds the application under the inquiry's email until they sign in), and marks the inquiry `completed`.
 
-## PR 3: alliance approval handoff, Circle membership, badges
+## PR 3: alliance approval handoff, Circle membership, badges (built, ADR-72)
 
 - `setAllianceApplicationStatus` approval: `organisations` row (active), Circle membership (event sign-ups on upcoming Circle weeks through the existing `join` path, so the welcome email and carry-forward apply), and the Circle vote invite (template `alliance_partner_vote_invite`, same once-only rule, same admin panel and backlog). A converted inquiry approved this way gets the same invite.
 - Votes: nullable `userId` on `season_schedule_votes` and `interopTimeVotes`, stamped from the session on every vote; a signed-in visit attaches the browser's existing row. Tallies return a `badge` per voter (`land_project`, `alliance_partner`, both) from approved applications, computed at read time, so earlier votes gain the badge the moment the voter is approved.
 - Status pages: "You have not voted for a call time yet" until the signed-in user has a vote row.
 - A person holding both kinds gets both badges and both invites.
 
-## Open questions
+## Decided while building
 
-None blocking. PR 2 decides whether alliance events share `applicationEvents` once its readers are checked.
+- Alliance events live in their own `alliance_application_events`, since `applicationEvents` is keyed by land application id.
+- The inquiry form never asked for the organization's name, so Convert asks the admin for it, guessing from the link.
+- Convert approves by default (the convert-plus-email Rye asked for); unticking it leaves the application for review.
+- The alliance invite stands in for the Circle's own welcome email, so a new partner gets one letter.
+- A Circle vote cast as a guest earns its badge through the register row that gained the partner's email when they joined; a Season vote also matches by its project name.
+- Found by the integration test: schema.ts declares three `organisations` rating columns production never got, so drizzle's insert would fail there; the registry insert is raw SQL.

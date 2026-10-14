@@ -12,8 +12,9 @@
  */
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { sql } from "drizzle-orm";
-import { adminProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { adminProcedure, protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { badgeIndex, emptyBadgeIndex, seasonVoteBadges } from "../lib/memberBadges";
 import { getDb, setSiteSetting } from "../db";
 import { seasonScheduleVotes } from "../../drizzle/schema";
 import {
@@ -105,6 +106,7 @@ export const seasonScheduleRouter = router({
       // Names are withheld here, not just hidden by the page, so they cannot be
       // read from the network before the threshold.
       const tally = publicSeasonTally(state.tally, config.revealNamesAt);
+      const badges = await badgeIndex(db).catch(() => emptyBadgeIndex());
       return {
         season: state.season,
         name: state.name,
@@ -123,7 +125,10 @@ export const seasonScheduleRouter = router({
         // The projects in the room: names, projects and links people chose to
         // share. The links are cleaned again on the way out, so a row written
         // before the cleaner, or by any future caller, is still safe in an href.
-        register: seasonRegister(state.votes, cleanDisplayName, cleanRepoUrl),
+        // Each entry carries its badges (accepted land project, Alliance
+        // Partner), worked out now from the voter or the project's name, so a
+        // vote cast before approval shows the badge as soon as it lands.
+        register: seasonRegister(state.votes, cleanDisplayName, cleanRepoUrl, 60, (row) => seasonVoteBadges(badges, row)),
         nextWeek,
         notesForNext,
         // Only the notes their writers chose to share, and only what they chose
@@ -166,7 +171,7 @@ export const seasonScheduleRouter = router({
       projectName: z.string().max(300).optional(),
       projectUrl: z.string().max(500).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const config = configFor(input.season);
       const db = await database();
       const now = new Date();
@@ -207,9 +212,11 @@ export const seasonScheduleRouter = router({
       }
       await db
         .insert(seasonScheduleVotes)
-        .values({ season: config.season, voterKey: input.voterKey, slots: stored, displayName, projectName, projectUrl })
+        .values({ season: config.season, voterKey: input.voterKey, slots: stored, displayName, projectName, projectUrl, userId: ctx.user?.id ?? null })
         .onDuplicateKeyUpdate({
-          set: { slots: stored, displayName, projectName, projectUrl, updatedAt: sql`CURRENT_TIMESTAMP` },
+          // A signed-in vote records its voter for the badges; a guest's
+          // never clears one that is already there.
+          set: { slots: stored, displayName, projectName, projectUrl, ...(ctx.user ? { userId: ctx.user.id } : {}), updatedAt: sql`CURRENT_TIMESTAMP` },
         });
       return { ok: true as const };
     }),
@@ -229,7 +236,7 @@ export const seasonScheduleRouter = router({
       projectName: z.string().max(300).optional(),
       projectUrl: z.string().max(500).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const config = configFor(input.season);
       const projectUrl = cleanRepoUrl(input.projectUrl);
       if (input.projectUrl && input.projectUrl.trim() && !projectUrl) {
@@ -244,9 +251,10 @@ export const seasonScheduleRouter = router({
       const db = await database();
       await db
         .insert(seasonScheduleVotes)
-        .values({ season: config.season, voterKey: input.voterKey, slots: "", displayName, projectName, projectUrl })
+        .values({ season: config.season, voterKey: input.voterKey, slots: "", displayName, projectName, projectUrl, userId: ctx.user?.id ?? null })
         .onDuplicateKeyUpdate({
           set: {
+            ...(ctx.user ? { userId: ctx.user.id } : {}),
             ...(displayName ? { displayName } : {}),
             ...(projectName ? { projectName } : {}),
             ...(projectUrl ? { projectUrl } : {}),
@@ -254,6 +262,39 @@ export const seasonScheduleRouter = router({
           },
         });
       return { ok: true as const };
+    }),
+
+  /**
+   * Signed in: attach this browser's vote to the account, so the badges know
+   * whose it is, and say whether this person has voted this Season. Called by
+   * the Season Schedule and the status page when someone signed in opens them.
+   */
+  linkMyVote: protectedProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({ season: seasonInput, voterKey: voterKeySchema.optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const config = configFor(input.season);
+      const db = await database();
+      if (input.voterKey) {
+        await db
+          .update(seasonScheduleVotes)
+          .set({ userId: ctx.user.id })
+          .where(and(
+            eq(seasonScheduleVotes.season, config.season),
+            eq(seasonScheduleVotes.voterKey, input.voterKey),
+            isNull(seasonScheduleVotes.userId),
+          ));
+      }
+      const [row] = await db
+        .select({ id: seasonScheduleVotes.id })
+        .from(seasonScheduleVotes)
+        .where(and(
+          eq(seasonScheduleVotes.season, config.season),
+          eq(seasonScheduleVotes.userId, ctx.user.id),
+          sql`${seasonScheduleVotes.slots} <> ''`,
+        ))
+        .limit(1);
+      return { voted: !!row, season: config.season, name: config.name };
     }),
 
   /**

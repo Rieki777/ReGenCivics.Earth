@@ -41,6 +41,10 @@ vi.mock("./EmailHistoryPanel", () => ({
   EmailHistoryPanel: () => null,
 }));
 
+vi.mock("./AdminAllianceApplications", () => ({
+  ConvertInquiryButton: () => null,
+}));
+
 describe("InquirySection alliance list rows", () => {
   it("shows a visible application blurb under name and email without opening the row", () => {
     render(

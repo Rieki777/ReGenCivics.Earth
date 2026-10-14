@@ -19,7 +19,9 @@
  * Events tab work the same as for every other session.
  */
 
-import { adminProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, rateLimited, router } from "../_core/trpc";
+import { badgeIndex, emptyBadgeIndex, partnerVoterKeys } from "../lib/memberBadges";
+import { mergeBadges, type MemberBadge } from "@shared/memberBadges";
 import { z } from "zod";
 import { getDb } from "../db";
 import { eventSignups, interopTimeVotes, interopTools } from "../../drizzle/schema";
@@ -154,7 +156,7 @@ export const interopSessionsRouter = router({
     const offered = await offeredSlots();
     const keys = offered.map((s) => s.key);
     const database = await getDb();
-    const empty = keys.map((slot) => ({ slot, count: 0, names: [] as string[] }));
+    const empty = keys.map((slot) => ({ slot, count: 0, names: [] as string[], members: [] as { name: string; badges: MemberBadge[] }[] }));
     if (!database) return { slots: empty, total: 0, offered };
     await ensureTable(database);
 
@@ -163,7 +165,7 @@ export const interopSessionsRouter = router({
     // count them capped the tally at the read limit, silently, once the Circle
     // outgrew it.
     let combos: { slot: string; count: number }[] = [];
-    let named: { slot: string; displayName: string | null }[] = [];
+    let named: { slot: string; displayName: string | null; voterKey: string; userId: number | null }[] = [];
     try {
       [combos, named] = await Promise.all([
         database
@@ -171,7 +173,12 @@ export const interopSessionsRouter = router({
           .from(interopTimeVotes)
           .groupBy(interopTimeVotes.slot),
         database
-          .select({ slot: interopTimeVotes.slot, displayName: interopTimeVotes.displayName })
+          .select({
+            slot: interopTimeVotes.slot,
+            displayName: interopTimeVotes.displayName,
+            voterKey: interopTimeVotes.voterKey,
+            userId: interopTimeVotes.userId,
+          })
           .from(interopTimeVotes)
           .orderBy(desc(interopTimeVotes.updatedAt))
           .limit(NAME_SCAN_LIMIT),
@@ -183,20 +190,29 @@ export const interopSessionsRouter = router({
     }
 
     const { perSlot, total } = countsFromCombos(combos, keys);
+    // Badges beside the names: the voter's account, or (for a vote cast before
+    // votes recorded accounts) the Circle register row their browser key owns,
+    // which gains their email when they join. Worked out on every read, so a
+    // vote cast before its voter was approved shows the badge once they are.
+    const index = await badgeIndex(database).catch(() => emptyBadgeIndex());
+    const partnerKeys = await partnerVoterKeys(database, index, named.map((r) => r.voterKey));
+    const badgesOf = (row: { voterKey: string; userId: number | null }): MemberBadge[] =>
+      mergeBadges(row.userId != null ? index.byUser.get(row.userId) : undefined, partnerKeys.has(row.voterKey) ? ["alliance_partner"] : []);
     const parsed = named.map((r) => ({ ...r, slots: parseSlots(r.slot) }));
     const slots = keys.map((slot) => {
-      const names: string[] = [];
+      const members: { name: string; badges: MemberBadge[] }[] = [];
       const seen = new Set<string>();
       for (const row of parsed) {
-        if (!row.slots.includes(slot) || names.length >= NAMES_PER_SLOT) continue;
+        if (!row.slots.includes(slot) || members.length >= NAMES_PER_SLOT) continue;
         const name = cleanDisplayName(row.displayName);
         // One line per person: a wall of the same name is the cheapest way to
         // deface a public list.
         if (!name || seen.has(name.toLowerCase())) continue;
         seen.add(name.toLowerCase());
-        names.push(name);
+        members.push({ name, badges: badgesOf(row) });
       }
-      return { slot, count: perSlot[slot] ?? 0, names };
+      // names stays for pages loaded before the badges shipped.
+      return { slot, count: perSlot[slot] ?? 0, names: members.map((m) => m.name), members };
     });
 
     return { slots, total, offered };
@@ -252,7 +268,7 @@ export const interopSessionsRouter = router({
       // cleanDisplayName rather than rejected with nothing to show for it.
       displayName: z.string().max(200).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const database = await getDb();
       if (!database) return { ok: false as const };
       await ensureTable(database);
@@ -270,9 +286,11 @@ export const interopSessionsRouter = router({
 
       await database
         .insert(interopTimeVotes)
-        .values({ slot: stored, voterKey: input.voterKey, displayName: name })
+        .values({ slot: stored, voterKey: input.voterKey, displayName: name, userId: ctx.user?.id ?? null })
         .onDuplicateKeyUpdate({
-          set: { slot: stored, displayName: name, updatedAt: sql`CURRENT_TIMESTAMP` },
+          // A signed-in vote records its voter for the badges; a guest's never
+          // clears one already there.
+          set: { slot: stored, displayName: name, ...(ctx.user ? { userId: ctx.user.id } : {}), updatedAt: sql`CURRENT_TIMESTAMP` },
         });
 
       void syncInteropCircle();
@@ -341,7 +359,7 @@ export const interopSessionsRouter = router({
       // cleanDisplayName rather than rejected with nothing to show for it.
       displayName: z.string().max(200).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const database = await getDb();
       if (!database) return { ok: false as const };
       await ensureTable(database);
@@ -350,12 +368,38 @@ export const interopSessionsRouter = router({
 
       await database
         .insert(interopTimeVotes)
-        .values({ slot: input.slot, voterKey: input.voterKey, displayName: name })
+        .values({ slot: input.slot, voterKey: input.voterKey, displayName: name, userId: ctx.user?.id ?? null })
         .onDuplicateKeyUpdate({
-          set: { slot: input.slot, displayName: name, updatedAt: sql`CURRENT_TIMESTAMP` },
+          set: { slot: input.slot, displayName: name, ...(ctx.user ? { userId: ctx.user.id } : {}), updatedAt: sql`CURRENT_TIMESTAMP` },
         });
 
       return { ok: true as const };
+    }),
+
+  /**
+   * Signed in: attach this browser's vote to the account, so the badges know
+   * whose it is, and say whether this person has a hand raised. Called by the
+   * Circle page and the Alliance Partner status page.
+   */
+  linkMyVote: protectedProcedure
+    .use(rateLimited(VOTE_LIMIT))
+    .input(z.object({ voterKey: voterKeySchema.optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const database = await getDb();
+      if (!database) return { voted: false };
+      await ensureTable(database);
+      if (input.voterKey) {
+        await database
+          .update(interopTimeVotes)
+          .set({ userId: ctx.user.id })
+          .where(and(eq(interopTimeVotes.voterKey, input.voterKey), isNull(interopTimeVotes.userId)));
+      }
+      const [row] = await database
+        .select({ id: interopTimeVotes.id })
+        .from(interopTimeVotes)
+        .where(eq(interopTimeVotes.userId, ctx.user.id))
+        .limit(1);
+      return { voted: !!row };
     }),
 
   /** Public: drop a vote entirely, for someone whose week stops working. */

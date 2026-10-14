@@ -32,6 +32,7 @@ import { getDb } from "../db";
 import { sendEmail, toAbsoluteUrl, type EmailSendStatus } from "../_core/email";
 import { notifyOwner } from "../_core/notification";
 import { getOrCreateTeamUserId, LAND_PROJECTS_CATEGORY_SLUG } from "./team-user";
+import { clearBadgeCache } from "./memberBadges";
 import { moveFooterHtml, seasonEpisodeRows, sessionWhen, stillRunning } from "./seasonSchedule";
 import { ACTIVE_SEASON, seasonConfig } from "@shared/seasonSchedule";
 import { ACCEPTANCE_LINE } from "@shared/applicationWindow";
@@ -155,6 +156,8 @@ export async function setApplicationStatus(opts: {
   if (affected === 0) return { previous, changed: false, handoff: null };
 
   await timeline(opts.id, "status_change", `Status changed to: ${opts.status}`, opts.adminUserId);
+  // The vote badges read approvals; a change shows on the next tally.
+  clearBadgeCache();
   await db.logAdminAction({
     adminUserId: opts.adminUserId,
     action: "application.status_change",
@@ -318,14 +321,22 @@ export type VoteInviteState = {
 
 /** What Admin shows for one application's invite. */
 export async function voteInviteState(applicationId: number): Promise<VoteInviteState> {
+  return inviteLogState(VOTE_INVITE_TEMPLATE, "application", applicationId);
+}
+
+/**
+ * One invite's state from email_logs, by template and the record it was sent
+ * for. Shared by the land project and alliance partner invites.
+ */
+export async function inviteLogState(template: string, inquiryType: string, inquiryId: number): Promise<VoteInviteState> {
   const d = await database();
   const rows = await d
     .select({ status: emailLogs.status, sentAt: emailLogs.sentAt })
     .from(emailLogs)
     .where(and(
-      eq(emailLogs.template, VOTE_INVITE_TEMPLATE),
-      eq(emailLogs.inquiryType, "application"),
-      eq(emailLogs.inquiryId, applicationId),
+      eq(emailLogs.template, template),
+      eq(emailLogs.inquiryType, inquiryType),
+      eq(emailLogs.inquiryId, inquiryId),
     ))
     .orderBy(desc(emailLogs.sentAt), desc(emailLogs.id))
     .limit(20);
@@ -339,14 +350,19 @@ export async function voteInviteState(applicationId: number): Promise<VoteInvite
 
 /** Application ids among these that already got an invite through. */
 export async function applicationsWithInvite(ids: number[]): Promise<Set<number>> {
+  return idsWithInvite(VOTE_INVITE_TEMPLATE, "application", ids);
+}
+
+/** Record ids among these whose invite (this template) reached Resend. */
+export async function idsWithInvite(template: string, inquiryType: string, ids: number[]): Promise<Set<number>> {
   if (ids.length === 0) return new Set();
   const d = await database();
   const rows = await d
     .select({ id: emailLogs.inquiryId })
     .from(emailLogs)
     .where(and(
-      eq(emailLogs.template, VOTE_INVITE_TEMPLATE),
-      eq(emailLogs.inquiryType, "application"),
+      eq(emailLogs.template, template),
+      eq(emailLogs.inquiryType, inquiryType),
       inArray(emailLogs.inquiryId, ids),
       inArray(emailLogs.status, [...INVITE_DELIVERED]),
     ));

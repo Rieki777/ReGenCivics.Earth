@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Handshake, Palette, HomeIcon, UserCheck } from "lucide-react";
 import { RoleSubmissionsView } from "@/components/RoleSubmissionsView";
+import { AdminAllianceApplications } from "./AdminAllianceApplications";
 
 interface SimpleInquirySectionProps {
   pathType: string;
@@ -20,6 +21,8 @@ interface Props {
 
 export function AdminAllianceTab({ inquiries, InquirySectionComp }: Omit<Props, 'AdminPlayersTabComp'>) {
   return (
+    <div className="space-y-6">
+    <AdminAllianceApplications />
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
         <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>
@@ -27,13 +30,14 @@ export function AdminAllianceTab({ inquiries, InquirySectionComp }: Omit<Props, 
           Alliance Partner Inquiries
         </CardTitle>
         <CardDescription>
-          Organizations interested in joining the ReGen Civics Alliance
+          Inquiries from the old /connect form. Open one to convert it into an application.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0">
         <InquirySectionComp pathType="alliance" inquiries={inquiries || []} />
       </CardContent>
     </Card>
+    </div>
   );
 }
 

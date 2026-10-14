@@ -28,6 +28,8 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { trpc } from '@/lib/trpc';
 import { seasonTwoPhase } from '@shared/seasonTwoPhase';
 import { InteropSheets } from '@/components/interop/InteropSheets';
+import { MemberBadgeChips } from '@/components/CallTimeVoteNudge';
+import type { MemberBadge } from '@shared/memberBadges';
 
 type SlotKey = InteropSlotKey;
 /** Fallback only. The offered set comes from the server so admin can change it. */
@@ -116,6 +118,17 @@ export default function InteropSessions() {
     setAgent(readStored(AGENT_STORAGE));
   }, []);
 
+  // Signed in: attach this browser's vote to the account, so an Alliance
+  // Partner's or land project's badge shows beside it (ADR-72).
+  const linkMyVote = trpc.interopSessions.linkMyVote.useMutation();
+  const linked = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !voterKey || linked.current) return;
+    linked.current = true;
+    linkMyVote.mutate({ voterKey });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, voterKey]);
+
   // Signed-in members get their account email prefilled, unless they typed one.
   useEffect(() => {
     if (user?.email) setEmail((current) => current || user.email!);
@@ -180,10 +193,16 @@ export default function InteropSessions() {
   const SLOTS = useMemo(() => tally.data?.offered ?? DEFAULT_SLOTS, [tally.data]);
 
   const counts = useMemo(() => {
-    const map: Record<string, { count: number; names: string[] }> = {};
-    for (const s of SLOTS) map[s.key] = { count: 0, names: [] };
+    const map: Record<string, { count: number; names: string[]; members: { name: string; badges: MemberBadge[] }[] }> = {};
+    for (const s of SLOTS) map[s.key] = { count: 0, names: [], members: [] };
     for (const row of tally.data?.slots ?? []) {
-      if (map[row.slot]) map[row.slot] = { count: row.count, names: row.names };
+      if (map[row.slot]) {
+        map[row.slot] = {
+          count: row.count,
+          names: row.names,
+          members: row.members ?? row.names.map((name) => ({ name, badges: [] })),
+        };
+      }
     }
     return map;
   }, [tally.data, SLOTS]);
@@ -397,7 +416,7 @@ export default function InteropSessions() {
 
               <div className="space-y-4">
                 {SLOTS.map((slot) => {
-                  const { count, names } = counts[slot.key];
+                  const { count, members } = counts[slot.key];
                   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                   const isLeader = leader?.key === slot.key && count > 0;
                   const isMine = mySlots.includes(slot.key);
@@ -440,8 +459,16 @@ export default function InteropSessions() {
                           {count === 1 ? '1 hand' : `${count} hands`}
                         </span>
                       </div>
-                      {names.length > 0 && (
-                        <p className="text-white/50 text-xs mt-2">{names.join(', ')}</p>
+                      {members.length > 0 && (
+                        <p className="text-white/60 text-xs mt-2 leading-6">
+                          {members.map((m, i) => (
+                            <span key={m.name}>
+                              {i > 0 && ', '}
+                              {m.name}
+                              <MemberBadgeChips badges={m.badges} />
+                            </span>
+                          ))}
+                        </p>
                       )}
                     </div>
                   );
@@ -578,7 +605,7 @@ export default function InteropSessions() {
           {/* The register the sign-up builds: what the movement is actually running. */}
           {(directory.data?.entries.length ?? 0) > 0 && (
             <AnimatedSection>
-              <section className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
+              <section id="directory" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">
                 <div className="flex items-center gap-3 mb-3">
                   <Wrench className="w-5 h-5 text-[#7dd87d]" />
                   <p className="text-[#7dd87d] text-xs font-semibold tracking-[0.2em] uppercase">The register</p>

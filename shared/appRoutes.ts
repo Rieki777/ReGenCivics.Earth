@@ -38,6 +38,8 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/admin/voice-rules",
   "/ally",
   "/apply",
+  "/apply/alliance",
+  "/apply/alliance/status",
   "/apply/status",
   "/apply/success",
   "/assembly",

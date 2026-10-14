@@ -64,6 +64,16 @@ export const SITE_CANONICAL_PAGES: readonly SitePage[] = [
     description: "Applicants check the status of a submitted application.",
   },
   {
+    path: "/apply/alliance",
+    title: "Become an Alliance Partner",
+    description: "Organizations that support land projects apply to join the Alliance and the Interoperability Circle.",
+  },
+  {
+    path: "/apply/alliance/status",
+    title: "Alliance Partner application status",
+    description: "Alliance Partner applicants check their application and, once approved, vote for the Circle's call time.",
+  },
+  {
     path: "/investor",
     title: "Investor",
     description: "Investor overview and path into the movement.",

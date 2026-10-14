@@ -19,12 +19,20 @@ type App = {
 const h = vi.hoisted(() => ({
   user: { id: 1, role: "user" } as { id: number; role: string } | null,
   apps: [] as App[],
+  voted: null as boolean | null,
 }));
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     applications: {
       myApplications: { useQuery: () => ({ data: h.apps, isLoading: false }) },
+    },
+    seasonSchedule: {
+      linkMyVote: {
+        useMutation: (opts?: { onSuccess?: (r: { voted: boolean }) => void }) => ({
+          mutate: () => { if (h.voted !== null) opts?.onSuccess?.({ voted: h.voted }); },
+        }),
+      },
     },
   },
 }));
@@ -47,6 +55,7 @@ const hrefOf = (name: string | RegExp) => screen.getByRole("link", { name }).get
 
 describe("/apply/status", () => {
   beforeEach(() => {
+    h.voted = null;
     h.user = { id: 1, role: "user" };
     h.apps = [];
   });
@@ -168,5 +177,21 @@ describe("/apply/status", () => {
     h.apps = [app({ status: "approved" })];
     const { container } = render(<ApplyStatus now={BEFORE_OPENING} />);
     expect(container.textContent).not.toContain(String.fromCharCode(0x2014));
+  });
+
+  it("asks an accepted founder who has not voted to vote for the Season's call time", () => {
+    h.apps = [app({ status: "approved" })];
+    h.voted = false;
+    render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(screen.getByText(/haven't voted for a call time yet/)).toBeDefined();
+    expect(hrefOf(/Vote for your Season's call time/)).toBe("/season-schedule");
+  });
+
+  it("says so once they have voted", () => {
+    h.apps = [app({ status: "approved" })];
+    h.voted = true;
+    render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(screen.queryByText(/haven't voted/)).toBeNull();
+    expect(screen.getByText(/You have voted for your Season's call time/)).toBeDefined();
   });
 });

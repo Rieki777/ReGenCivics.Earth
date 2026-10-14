@@ -143,7 +143,7 @@ export async function resolveCircleState(database: Db, now: Date): Promise<Circl
   return { slot, pinned, leader, leaderSince, applied, counts };
 }
 
-function circleWhen(start: Date): string {
+export function circleWhen(start: Date): string {
   const date = start.toLocaleDateString("en-US", {
     weekday: "long", month: "long", day: "numeric", timeZone: SESSION_TIME_ZONE,
   });
@@ -179,7 +179,7 @@ function circleEmailShell(heading: string, bodyHtml: string, footerHtml: string)
  * browser history, referrers and server logs. The token proves the caller read
  * mail sent to that address, and proves nothing else.
  */
-async function unsubscribeLink(email: string): Promise<string> {
+export async function unsubscribeLink(email: string): Promise<string> {
   const token = await buildPrefsToken(email);
   return `${APP_BASE_URL}/interop-sessions?leave=${encodeURIComponent(token)}`;
 }

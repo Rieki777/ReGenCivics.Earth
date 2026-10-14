@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-13 (Alliance Partner applications, PRs 2 and 3 of 3): apply, review, approve into the Circle, badges on the votes
+
+- **Alliance partners apply like land projects** (ADR-72): `/apply/alliance` saves a draft as you type and says what is missing before it sends; `/apply/alliance/status` shows the steps, the review note and the next steps; the profile's Submissions tab lists it beside land project applications. `/connect?path=alliance`, `/ally`, `/showcase` and the globe now lead there. One person can hold both kinds (migration 0297).
+- **Admin > Alliance reviews them the same way**: a list, a detail sheet with the answers, timeline and a note the applicant sees, the approve dialog with the email on by default, the invite panel and the backlog banner. Each old `/connect` inquiry gets **Convert to Alliance Partner application**, which carries every field over, asks for the organization's name, and by default approves at once.
+- **Approval brings them into the Interoperability Circle**, once: registered in `organisations`, signed up for every upcoming Circle week (reminders and Leave the Circle included), their tool filed in the register, and one email with the Circle's call time vote and how to join.
+- **Badges beside the votes**: "Accepted land project" and "Alliance Partner" on the Season Schedule register and the Circle's time vote, worked out when the tally is read, so votes cast before approval carry them (migration 0298 records signed-in voters; a signed-in visit attaches an earlier guest vote). Both votes stay open to everyone.
+- **Status pages ask until you vote**: accepted founders and approved partners see "You haven't voted for a call time yet" with the link, until they have.
+- Source: `docs/planning/ALLIANCE_PARTNER_APPLICATION_PLAN.md`. Carryover: rejection and changes requested still email nobody but the owner; the applicant sees the note on their status page.
+
 ## 2026-10-13 (approval handoff, PR 1 of 3): approving a land project sends the call time vote invite, once
 
 - **One path for every approval** (ADR-71): the status dropdown, bulk approve, the kanban board and a scored review all go through `setApplicationStatus` (`server/lib/approvalHandoff.ts`). A compare-and-set on the old status means two clicks, two admins or a kanban Undo and re-drop can never post a second forum thread or send a second email.

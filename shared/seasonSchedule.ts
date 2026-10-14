@@ -34,6 +34,7 @@
  * so local times move mid-Season. clockShift() and clockBlip() work that out
  * from the real session dates rather than assuming it.
  */
+import { mergeBadges, type MemberBadge } from "./memberBadges";
 import {
   SEASON2_EPISODE_DATES,
   SESSION_DURATION_HOURS,
@@ -330,6 +331,8 @@ export interface SeasonVoteRow {
   displayName: string | null;
   projectName: string | null;
   projectUrl?: string | null;
+  /** The signed-in voter (migration 0298), for the member badges. Never shown. */
+  userId?: number | null;
 }
 
 export interface SeasonSlotTally {
@@ -449,6 +452,8 @@ export interface SeasonRegisterEntry {
   /** The people who named this project, joined: "Maya, Kai". */
   names: string | null;
   url: string | null;
+  /** Accepted land project, Alliance Partner (shared/memberBadges.ts). */
+  badges: MemberBadge[];
 }
 
 /**
@@ -464,21 +469,23 @@ export function seasonRegister(
   clean: (raw: string | null | undefined) => string | null,
   cleanUrl: (raw: string | null | undefined) => string | null,
   limit = 60,
+  badgesFor: (row: SeasonVoteRow) => readonly MemberBadge[] = () => [],
 ): SeasonRegisterEntry[] {
-  const byKey = new Map<string, { project: string | null; names: string[]; url: string }>();
+  const byKey = new Map<string, { project: string | null; names: string[]; url: string; badges: MemberBadge[] }>();
   for (const row of rows) {
     const url = cleanUrl(row.projectUrl ?? null);
     if (!url) continue;
     const project = clean(row.projectName);
     const name = clean(row.displayName);
     const key = project ? `p:${projectKey(project)}` : `u:${url}`;
-    const entry = byKey.get(key) ?? { project, names: [], url };
+    const entry = byKey.get(key) ?? { project, names: [], url, badges: [] };
     if (name && !entry.names.some((n) => n.toLowerCase() === name.toLowerCase())) entry.names.push(name);
+    entry.badges = mergeBadges(entry.badges, badgesFor(row));
     byKey.set(key, entry);
   }
   return [...byKey.values()]
     .slice(0, limit)
-    .map((e) => ({ project: e.project, names: e.names.length ? e.names.join(", ") : null, url: e.url }));
+    .map((e) => ({ project: e.project, names: e.names.length ? e.names.join(", ") : null, url: e.url, badges: e.badges }));
 }
 
 /** The week of the next session that has not started yet, or null once the Season is over. */

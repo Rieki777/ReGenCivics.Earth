@@ -19,6 +19,7 @@ import {
 } from "@/lib/adminInquiry";
 import { ContactNotesPanel, ContactTagsPanel, ReminderPanel, AssigneeSelect } from "./AdminContactPanels";
 import { EmailHistoryPanel } from "./EmailHistoryPanel";
+import { ConvertInquiryButton } from "./AdminAllianceApplications";
 import { GeneralInquiryAnswersPanel } from "./GeneralInquiryAnswersPanel";
 
 const ActivityTimeline = lazy(() => import("@/components/ActivityTimeline").then(m => ({ default: m.ActivityTimeline })));
@@ -741,6 +742,8 @@ export function InquirySection({
               </div>
 
               <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-[#1a472a]/10">
+                {/* Alliance inquiries can become applications (ADR-72). */}
+                {pathType === "alliance" && <ConvertInquiryButton inquiry={inquiry} />}
                 {/* Assignee */}
                 <AssigneeSelect contactType="inquiry" contactId={inquiry.id} />
                 {/* Status update row */}

@@ -94,6 +94,7 @@ export async function readSeasonVotes(database: Db, season: string) {
       displayName: seasonScheduleVotes.displayName,
       projectName: seasonScheduleVotes.projectName,
       projectUrl: seasonScheduleVotes.projectUrl,
+      userId: seasonScheduleVotes.userId,
     })
     .from(seasonScheduleVotes)
     .where(eq(seasonScheduleVotes.season, season))

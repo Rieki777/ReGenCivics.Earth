@@ -40,10 +40,13 @@ function makeProxy(path: string[]): any {
         });
       }
       if (prop === "useMutation") {
-        return () => ({
+        // onSuccess can sit on the hook or on the call; fire both, like tRPC.
+        return (hookOpts?: { onSuccess?: (d: unknown) => void }) => ({
           mutate: (input?: unknown, opts?: { onSuccess?: (d: unknown) => void }) => {
             mutationLog.push({ path: key, input });
-            opts?.onSuccess?.(mockData[`${key}.result`] ?? { ok: true });
+            const result = mockData[`${key}.result`] ?? { ok: true };
+            hookOpts?.onSuccess?.(result);
+            opts?.onSuccess?.(result);
           },
           mutateAsync: async (input?: unknown) => {
             mutationLog.push({ path: key, input });
