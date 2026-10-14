@@ -1257,10 +1257,35 @@ export const BREATH_PATTERNS = {
   settle: { title: "Long exhale", sub: "In 4 · out 6", phases: [["Breathe in", 4, "in"], ["Breathe out", 6, "out"]] },
   box: { title: "Box", sub: "4 · 4 · 4 · 4", phases: [["Breathe in", 4, "in"], ["Hold", 4, "hold-in"], ["Breathe out", 4, "out"], ["Hold", 4, "hold-out"]] },
   even: { title: "Even", sub: "In 5 · out 5", phases: [["Breathe in", 5, "in"], ["Breathe out", 5, "out"]] },
+  /** Mini breathwork (Rye, 2026-10-14): deep, connected breaths, counted one by one; its count and pace are set apart. */
+  power: { title: "Mini breathwork", sub: "50 to 80 deep breaths", phases: [["Breathe in", 2, "in"], ["Let go", 2, "out"]] },
 } as const satisfies Record<string, { title: string; sub: string; phases: ReadonlyArray<readonly [string, number, "in" | "out" | "hold-in" | "hold-out"]> }>;
 export type BreathKey = keyof typeof BREATH_PATTERNS;
 export const BREATH_KEYS = Object.keys(BREATH_PATTERNS) as [BreathKey, ...BreathKey[]];
 export const BREATH_ROUNDS = [3, 6, 10] as const;
+
+/** Mini breathwork's pace: seconds in and out for each breath. */
+export const BREATH_PACES = {
+  slow: { title: "Slow", in: 3, out: 3 },
+  medium: { title: "Medium", in: 2, out: 2 },
+  fast: { title: "Fast", in: 1.5, out: 1.5 },
+} as const;
+export type BreathPace = keyof typeof BREATH_PACES;
+export const BREATH_PACE_KEYS = Object.keys(BREATH_PACES) as [BreathPace, ...BreathPace[]];
+/** How many breaths mini breathwork counts (Rye: a setting from 50 to 80). */
+export const BREATHWORK_COUNTS = [50, 65, 80] as const;
+/** The most rounds a breath can run: mini breathwork's 80 breaths. */
+export const BREATH_MAX_ROUNDS = 80;
+
+type BreathPhase = readonly [string, number, "in" | "out" | "hold-in" | "hold-out"];
+/** The phases one round runs: the pattern's own, or for mini breathwork, one breath at its pace. */
+export function breathPhases(breath: { pattern: BreathKey; pace?: BreathPace }): readonly BreathPhase[] {
+  if (breath.pattern === "power") {
+    const p = BREATH_PACES[breath.pace ?? "medium"] ?? BREATH_PACES.medium;
+    return [["Breathe in", p.in, "in"], ["Let go", p.out, "out"]];
+  }
+  return (BREATH_PATTERNS[breath.pattern] ?? BREATH_PATTERNS.settle).phases;
+}
 
 /**
  * What a row on the board can be. `ask` is a question for the wall (block
@@ -1365,7 +1390,7 @@ export type BoardState = {
   endedAt: number | null;
   /** Planned minutes, one per stage. */
   plan: number[];
-  breath: { pattern: BreathKey; rounds: number; startedAt: number | null };
+  breath: { pattern: BreathKey; rounds: number; startedAt: number | null; pace: BreathPace };
   speaker: { projectId: number | null; secs: number; startedAt: number | null; accum: number };
 };
 
@@ -1376,7 +1401,7 @@ export function defaultBoardState(week: number): BoardState {
     sessionStartedAt: null,
     endedAt: null,
     plan: boardStages(week).map((s) => s.min),
-    breath: { pattern: "settle", rounds: 6, startedAt: null },
+    breath: { pattern: "settle", rounds: 6, startedAt: null, pace: "medium" },
     speaker: { projectId: null, secs: 180, startedAt: null, accum: 0 },
   };
 }
@@ -1417,8 +1442,9 @@ export function normalizeBoardState(raw: unknown, week: number): BoardState {
     plan: base.plan.map((dflt, i) => clampInt(planIn[i], 1, BOARD_LIMITS.maxStageMinutes, dflt)),
     breath: {
       pattern,
-      rounds: clampInt(breath.rounds, 1, 20, base.breath.rounds),
+      rounds: clampInt(breath.rounds, 1, BREATH_MAX_ROUNDS, base.breath.rounds),
       startedAt: stampOrNull(breath.startedAt),
+      pace: typeof breath.pace === "string" && breath.pace in BREATH_PACES ? (breath.pace as BreathPace) : base.breath.pace,
     },
     speaker: {
       projectId: finite(speaker.projectId) && speaker.projectId > 0 ? Math.floor(speaker.projectId) : null,
@@ -1436,7 +1462,7 @@ export type BoardAction =
   | { type: "endSession" }
   | { type: "restartClocks" }
   | { type: "plan"; stage: number; minutes: number }
-  | { type: "breath"; pattern?: BreathKey; rounds?: number; run?: boolean }
+  | { type: "breath"; pattern?: BreathKey; rounds?: number; run?: boolean; pace?: BreathPace }
   | { type: "speaker"; projectId: number | null }
   | { type: "timer"; op: "start" | "pause" | "reset" }
   | { type: "shareSecs"; secs: number };
@@ -1487,8 +1513,15 @@ export function applyBoardAction(state: BoardState, action: BoardAction, now: nu
       if (action.pattern && action.pattern !== s.breath.pattern) {
         s.breath.pattern = action.pattern;
         s.breath.startedAt = null;
+        // Mini breathwork counts breaths, the others count rounds: switching resets to a sensible count.
+        if (action.pattern === "power" && s.breath.rounds < BREATHWORK_COUNTS[0]) s.breath.rounds = BREATHWORK_COUNTS[0];
+        if (action.pattern !== "power" && s.breath.rounds > 20) s.breath.rounds = 6;
       }
-      if (action.rounds != null) s.breath.rounds = Math.min(20, Math.max(1, Math.round(action.rounds)));
+      if (action.pace && action.pace in BREATH_PACES && action.pace !== s.breath.pace) {
+        s.breath.pace = action.pace;
+        s.breath.startedAt = null;
+      }
+      if (action.rounds != null) s.breath.rounds = Math.min(BREATH_MAX_ROUNDS, Math.max(1, Math.round(action.rounds)));
       if (action.run === true) {
         s.breath.startedAt = now;
       } else if (action.run === false) {
@@ -1527,13 +1560,13 @@ export type BreathMoment =
 /** Where the shared breath is at `now`, so every screen breathes together. */
 export function breathAt(breath: BoardState["breath"], now: number): BreathMoment {
   if (!breath.startedAt) return { idle: true };
-  const pattern = BREATH_PATTERNS[breath.pattern] ?? BREATH_PATTERNS.settle;
-  const cycle = pattern.phases.reduce((a, p) => a + p[1], 0);
+  const phases = breathPhases(breath);
+  const cycle = phases.reduce((a, p) => a + p[1], 0);
   const t = Math.max(0, (now - breath.startedAt) / 1000);
   const round = Math.floor(t / cycle) + 1;
   if (round > breath.rounds) return { done: true };
   let r = t % cycle;
-  for (const [label, secs, kind] of pattern.phases) {
+  for (const [label, secs, kind] of phases) {
     if (r < secs) return { round, label, kind, progress: r / secs, secondsLeft: Math.ceil(secs - r) };
     r -= secs;
   }

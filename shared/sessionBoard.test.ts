@@ -13,6 +13,7 @@ import {
   boardStages,
   boardWelcome,
   breathAt,
+  BREATHWORK_COUNTS,
   cleanBoardLine,
   cleanBoardText,
   defaultBoardState,
@@ -278,14 +279,35 @@ describe("reading a stored state back", () => {
 describe("the shared breath", () => {
   const t0 = 1_800_000_000_000;
   it("is idle until started and done after the last round", () => {
-    expect(breathAt({ pattern: "settle", rounds: 2, startedAt: null }, t0)).toEqual({ idle: true });
-    expect(breathAt({ pattern: "settle", rounds: 2, startedAt: t0 }, t0 + 20_000)).toEqual({ done: true });
+    expect(breathAt({ pattern: "settle", rounds: 2, startedAt: null, pace: "medium" }, t0)).toEqual({ idle: true });
+    expect(breathAt({ pattern: "settle", rounds: 2, startedAt: t0, pace: "medium" }, t0 + 20_000)).toEqual({ done: true });
   });
   it("walks the pattern: in for 4, out for 6", () => {
-    const b = { pattern: "settle" as const, rounds: 2, startedAt: t0 };
+    const b = { pattern: "settle" as const, rounds: 2, startedAt: t0, pace: "medium" as const };
     expect(breathAt(b, t0 + 1_000)).toMatchObject({ round: 1, kind: "in", label: "Breathe in", secondsLeft: 3 });
     expect(breathAt(b, t0 + 5_000)).toMatchObject({ round: 1, kind: "out" });
     expect(breathAt(b, t0 + 11_000)).toMatchObject({ round: 2, kind: "in" });
+  });
+  it("mini breathwork counts 50 to 80 breaths at a slow, medium or fast pace (Rye, 2026-10-14)", () => {
+    const fast = { pattern: "power" as const, rounds: 50, startedAt: t0, pace: "fast" as const };
+    expect(breathAt(fast, t0 + 1_000)).toMatchObject({ round: 1, kind: "in", label: "Breathe in" });
+    expect(breathAt(fast, t0 + 2_000)).toMatchObject({ round: 1, kind: "out", label: "Let go" });
+    expect(breathAt(fast, t0 + 3_100)).toMatchObject({ round: 2, kind: "in" });
+    expect(breathAt(fast, t0 + 149_000)).toMatchObject({ round: 50 });
+    expect(breathAt(fast, t0 + 151_000)).toEqual({ done: true });
+    const slow = { ...fast, pace: "slow" as const, rounds: 80 };
+    expect(breathAt(slow, t0 + 6_100)).toMatchObject({ round: 2 });
+    expect(breathAt(slow, t0 + 479_000)).toMatchObject({ round: 80 });
+    expect(BREATHWORK_COUNTS).toEqual([50, 65, 80]);
+    // Choosing it moves the count to 50 breaths; leaving it brings the rounds back to 6.
+    const base = defaultBoardState(3);
+    const on = applyBoardAction(base, { type: "breath", pattern: "power" }, t0);
+    expect(on.breath).toMatchObject({ pattern: "power", rounds: 50, pace: "medium" });
+    const eighty = applyBoardAction(applyBoardAction(on, { type: "breath", rounds: 80 }, t0), { type: "breath", pace: "slow" }, t0);
+    expect(eighty.breath).toMatchObject({ rounds: 80, pace: "slow" });
+    expect(applyBoardAction(eighty, { type: "breath", pattern: "settle" }, t0).breath.rounds).toBe(6);
+    // A stored board from before keeps working: no pace reads as medium.
+    expect(normalizeBoardState(JSON.stringify({ breath: { pattern: "power", rounds: 65 } }), 3).breath).toMatchObject({ pattern: "power", rounds: 65, pace: "medium" });
   });
 });
 

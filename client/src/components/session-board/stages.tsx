@@ -14,6 +14,9 @@ import {
   BREATH_KEYS,
   BREATH_PATTERNS,
   BREATH_ROUNDS,
+  BREATH_PACES,
+  BREATH_PACE_KEYS,
+  BREATHWORK_COUNTS,
   BOARD_OFFERS,
   CLOSE_COPY_WEEK3,
   GAME_BLOCKS,
@@ -287,7 +290,9 @@ export function Breath({ board, stages, index, facilitator, canWrite, mine, acti
       const m = breathAt(breath, serverNow());
       let sc = 0.72;
       let cueText = "Ready when you are";
-      let subText = `${pattern.title} · ${pattern.sub} · ${breath.rounds} rounds`;
+      const power = breath.pattern === "power";
+      const pace = BREATH_PACES[breath.pace] ?? BREATH_PACES.medium;
+      let subText = power ? `${pattern.title} · ${pace.title} · ${breath.rounds} breaths` : `${pattern.title} · ${pattern.sub} · ${breath.rounds} rounds`;
       if ("done" in m) {
         cueText = "Rest here";
         subText = "Notice how you feel.";
@@ -295,7 +300,7 @@ export function Breath({ board, stages, index, facilitator, canWrite, mine, acti
         const e = 0.5 - 0.5 * Math.cos(Math.PI * m.progress);
         sc = m.kind === "in" ? 0.55 + 0.45 * e : m.kind === "out" ? 1 - 0.45 * e : m.kind === "hold-in" ? 1 : 0.55;
         cueText = m.label;
-        subText = `Round ${m.round} of ${breath.rounds} · ${m.secondsLeft}`;
+        subText = power ? `Breath ${m.round} of ${breath.rounds}` : `Round ${m.round} of ${breath.rounds} · ${m.secondsLeft}`;
       }
       if (orb.current) {
         if (reduced) {
@@ -338,12 +343,33 @@ export function Breath({ board, stages, index, facilitator, canWrite, mine, acti
                   </button>
                 ))}
               </div>
-              <p className="sb-label">Rounds</p>
-              <div className="sb-row">
-                {BREATH_ROUNDS.map((n) => (
-                  <button key={n} type="button" className="sb-toggle" aria-pressed={breath.rounds === n} onClick={() => actions.act({ type: "breath", rounds: n })}>{n}</button>
-                ))}
-              </div>
+              {breath.pattern === "power" ? (
+                <>
+                  <p className="sb-label">Breaths</p>
+                  <div className="sb-row">
+                    {BREATHWORK_COUNTS.map((n) => (
+                      <button key={n} type="button" className="sb-toggle" aria-pressed={breath.rounds === n} onClick={() => actions.act({ type: "breath", rounds: n })}>{n}</button>
+                    ))}
+                  </div>
+                  <p className="sb-label">Pace</p>
+                  <div className="sb-row">
+                    {BREATH_PACE_KEYS.map((k) => (
+                      <button key={k} type="button" className="sb-toggle" aria-pressed={breath.pace === k} onClick={() => actions.act({ type: "breath", pace: k })}>
+                        <span>{BREATH_PACES[k].title}</span><small>In {BREATH_PACES[k].in} · out {BREATH_PACES[k].out}</small>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="sb-label">Rounds</p>
+                  <div className="sb-row">
+                    {BREATH_ROUNDS.map((n) => (
+                      <button key={n} type="button" className="sb-toggle" aria-pressed={breath.rounds === n} onClick={() => actions.act({ type: "breath", rounds: n })}>{n}</button>
+                    ))}
+                  </div>
+                </>
+              )}
               <button type="button" className="sb-btn sb-primary" onClick={() => actions.act({ type: "breath", run: !running })}>
                 {running ? "Stop" : breath.startedAt ? "Breathe again" : "Start breathing"}
               </button>
