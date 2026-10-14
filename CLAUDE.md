@@ -24,6 +24,7 @@ Personal working preferences live in `~/.claude/CLAUDE.md` (global) and the `cus
 | Find the right skill for a task | `.ai/docs/SKILLS-INDEX.md` | Curated catalog. Skills self-surface; project skills live in `.claude/skills/`, cross-project ones in `~/.claude/skills/`. |
 | Find a spec, planning doc, audit, or season record | `.ai/docs/PROJECT-INDEX.md` | Annotated map of `docs/planning/`, `docs/` and the root canon. |
 | Deploy, or check a deploy | `docs/DEPLOYMENT.md` | Railway services, CLI scripts, and why every call pins `-s`. |
+| Build or change a screen people see | `harness/stories.tsx` + this file's "UI readability gate" section | Add a story, pass `pnpm ui:audit`. Anything the audit missed goes back into the audit. |
 | Touch auth, OAuth, the cookie module, or JWT verification | `.ai/docs/security/OWASP-TOP10.md` (A01, A07) + `OPS-PLAYBOOK.md` Procedure 10 | Confirm the posture. Verify the flow in production. |
 | Add a tRPC procedure, webhook, env var, cookie, or LLM feature | `.ai/docs/security/BUILD-PLAYBOOK.md` | Run the matching checklist section before merging. |
 | Send user content to an LLM (chat, forum, video summary, glossary) | `.ai/docs/security/AI-AUTOMATION-RISKS.md` | Read it end to end. Treat user text as untrusted instruction. |
@@ -135,6 +136,27 @@ rg -g '*.css' '<className-you-added>' client/src/   # gate 2: per new className 
 `pnpm gate` runs the truncation audit and the typecheck, and finds a working Python itself. Prefer it over the hand-written form (`py scripts/audit-truncation.py` on Windows, `python3 …` on the Linux cowork VM, plus `pnpm check`); on Windows `python3` is a Store stub that exits 0 without running the audit. Why the old commands here were wrong for three months: `STEERING.md` section 3. The truncation gate is the one never to skip: FUSE truncation is silent, and typecheck does not catch it.
 
 Every `FIXES_TO_MAKE_*.md` CLAUDE CODE row needs an Evidence column (file:line, grep result, screenshot path, script output). No evidence = status stays `CODED`, never `VERIFIED`.
+
+## UI readability gate (`pnpm ui:audit`) and its improvement loop
+
+Any change to a screen people see gets a harness story (`harness/stories.tsx`) and passes the audit before it ships:
+
+```bash
+pnpm ui:audit <story> [<story> ...]   # no names: every story
+```
+
+`harness/audit.mjs` renders each story at 1280 and 390 wide, in the theme the app really uses (public pages `html.dark`, admin light), and fails on: text contrast under WCAG AA (4.5:1, or 3:1 for large text) measured against the real background, placeholders and typed text under 4.5:1, field outlines under 3:1 (WCAG 1.4.11), touch targets under 44px (links inside a sentence are exempt), sideways scroll, and page errors. Screenshots land in `harness/shots/` (gitignored); look at them too, because the numbers cannot judge hierarchy or layout. ADR-73 has the history.
+
+**The loop. The audit improves every time something slips past it.** When a UI problem reaches Rye, a screenshot, an end-to-end run, or production without the audit catching it:
+
+1. Fix the problem.
+2. Ask why the audit missed it, and teach `harness/audit.mjs` to catch that whole class of problem (a new check, a wrong exemption, a theme or state the story did not reproduce). Add a story or a `BEFORE` step for the state where it showed up (after a failed send, signed in, dark theme, mid-scroll).
+3. Run the audit on the old code or story: the new check has to fail it before your fix and pass after. A check that has never failed is unproven.
+4. Write one line about the miss in the check's comment, so the next agent knows what it guards.
+
+Misses the audit learned from so far: oklab gradients read as white, scroll-reveal sections measured at opacity 0, typed text never measured, field outlines unchecked, stories rendered without the app's `dark` class. Not yet covered and worth adding next: focus-visible rings on every control, colour used as the only signal, reading order on narrow screens, and text clipped by fixed heights.
+
+Keep a real end-to-end pass on a local server against the scratch database (memory `project_regen_scratch_db`, never `.env`) for any new flow. The harness renders components with canned data; it cannot see pop-ups, browser form validation or theme overrides that only appear in the running app, and each one found there goes back into the loop above.
 
 ## Key constraints, writing, voice
 
