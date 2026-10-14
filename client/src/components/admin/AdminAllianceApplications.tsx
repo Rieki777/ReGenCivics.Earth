@@ -43,7 +43,7 @@ const STATUS_LABEL: Record<AllianceStatus, string> = {
   changes_requested: "Changes requested",
 };
 
-type HandoffSummary = { organisation: string; circle: string; invite: string } | null;
+type HandoffSummary = { organisation: string; circle: string; tools?: number; invite: string } | null;
 
 /** One line on what an approval did, for the toast. */
 export function allianceApprovalSummary(handoff: HandoffSummary): string | null {
@@ -52,6 +52,7 @@ export function allianceApprovalSummary(handoff: HandoffSummary): string | null 
   if (handoff.circle === "joined") parts.push("signed up for the Circle");
   else if (handoff.circle === "no_sessions") parts.push("no Circle weeks are on the calendar yet");
   else if (handoff.circle === "failed") parts.push("the Circle sign-up failed");
+  if (handoff.tools) parts.push(`${handoff.tools} tool${handoff.tools === 1 ? "" : "s"} listed in the library`);
   if (handoff.invite === "sent") parts.push("vote invite sent");
   else if (handoff.invite === "not_requested") parts.push("approved without email");
   else if (handoff.invite !== "already_sent") parts.push("vote invite not sent, see the invite panel");
@@ -74,6 +75,8 @@ function ApplicationSheetBody({ id }: { id: number }) {
   const [note, setNote] = useState<string | null>(null);
   const [pending, setPending] = useState<AllianceStatus | null>(null);
   const [emailOnApprove, setEmailOnApprove] = useState(true);
+  /** The pending library tools ticked to approve with the partner. */
+  const [toolPick, setToolPick] = useState<Set<number>>(new Set());
   const setNoteMut = trpc.allianceApplications.setReviewNote.useMutation({
     onSuccess: () => { toast.success("Note saved. The applicant sees it on their status page."); utils.allianceApplications.get.invalidate({ id }); setNote(null); },
     onError: (e) => toast.error(e.message),
@@ -92,7 +95,8 @@ function ApplicationSheetBody({ id }: { id: number }) {
 
   if (detail.isLoading) return <div className="p-6"><Loader2 className="h-5 w-5 animate-spin text-[#1a472a]" /></div>;
   if (!detail.data) return <p className="p-6 text-sm text-[#1a472a]">Could not load this application.</p>;
-  const { app, events } = detail.data;
+  const { app, events, tools } = detail.data;
+  const pendingTools = tools.filter((t) => t.createdByApplication && t.status === "pending");
   const roles = cleanRoles(app.roles);
   const noteValue = note ?? app.reviewNote ?? "";
 
@@ -100,6 +104,7 @@ function ApplicationSheetBody({ id }: { id: number }) {
     const approving = (status === "approved" || status === "active") && !["approved", "active"].includes(app.status);
     if (approving) {
       setEmailOnApprove(true);
+      setToolPick(new Set(pendingTools.map((t) => t.toolId)));
       setPending(status);
       return;
     }
@@ -118,7 +123,24 @@ function ApplicationSheetBody({ id }: { id: number }) {
         <Field label="Where" value={app.scope === "global" ? "Global" : [app.location, app.country].filter(Boolean).join(", ") || "Location-based"} />
         <Field label="How they support land projects" value={app.supportDescription} />
         <Field label="What they would like to build" value={app.partnershipDescription} />
-        <Field label="Tool or repo" value={app.toolRepoUrl} />
+        <Field label="Repo (older applications)" value={app.toolRepoUrl} />
+        <Field
+          label="Tools for the library"
+          value={tools.length ? (
+            <ul className="space-y-1">
+              {tools.map((t) => (
+                <li key={t.toolId}>
+                  <a className="underline" href={t.websiteUrl} target="_blank" rel="noopener noreferrer nofollow">{t.name}</a>{" "}
+                  <span className="text-xs text-[#1a472a]/70">
+                    ({t.status === "approved" ? "listed" : t.status === "rejected" ? "not listed" : "waiting"}
+                    {t.createdByApplication ? "" : ", already in the library"})
+                  </span>
+                  {t.shortSummary && <span className="block text-xs text-[#1a472a]/80">{t.shortSummary}</span>}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        />
         <Field label="Converted from inquiry" value={app.sourceInquiryId ? `#${app.sourceInquiryId}` : null} />
       </div>
 
@@ -134,7 +156,7 @@ function ApplicationSheetBody({ id }: { id: number }) {
       <div className="flex items-center gap-2">
         <span className="shrink-0 text-xs text-[#1a472a]/80">Status:</span>
         <Select value={app.status} onValueChange={(v) => change(v as AllianceStatus)}>
-          <SelectTrigger className="min-h-11 flex-1 text-sm"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="min-h-11 flex-1 text-sm" aria-label="Application status"><SelectValue /></SelectTrigger>
           <SelectContent>
             {ALLIANCE_STATUSES.map((s) => <SelectItem key={s} value={s}>{STATUS_LABEL[s]}</SelectItem>)}
           </SelectContent>
@@ -171,13 +193,32 @@ function ApplicationSheetBody({ id }: { id: number }) {
             <Checkbox checked={emailOnApprove} onCheckedChange={(v) => setEmailOnApprove(v === true)} />
             Email them the call time vote invite
           </label>
+          {pendingTools.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-[#1a472a]">List these tools in the library</p>
+              {pendingTools.map((t) => (
+                <label key={t.toolId} className="flex min-h-11 items-center gap-3 text-sm text-[#1a472a]">
+                  <Checkbox
+                    checked={toolPick.has(t.toolId)}
+                    onCheckedChange={(v) => setToolPick((prev) => {
+                      const next = new Set(prev);
+                      if (v === true) next.add(t.toolId); else next.delete(t.toolId);
+                      return next;
+                    })}
+                  />
+                  {t.name}
+                </label>
+              ))}
+              <p className="text-xs text-[#1a472a]/75">An unticked tool stays in Tools waiting for review.</p>
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 const status = pending;
                 setPending(null);
-                if (status) updateStatus.mutate({ id, status, notify: emailOnApprove });
+                if (status) updateStatus.mutate({ id, status, notify: emailOnApprove, toolIds: [...toolPick] });
               }}
             >
               {emailOnApprove ? "Approve and email" : "Approve quietly"}

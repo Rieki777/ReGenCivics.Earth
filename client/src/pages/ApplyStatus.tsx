@@ -24,6 +24,7 @@ import { formatCloseDate } from "@shared/campaignProgress";
 import { projectPathForApplication } from "@shared/projectKey";
 import { isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import { SeasonVoteNudge } from "@/components/CallTimeVoteNudge";
+import { ProjectToolsPicker } from "@/components/ProjectToolsPicker";
 
 /** Where Sign in brings the person back to. */
 export const APPLY_STATUS_SIGN_IN_HREF = `/sign-in?returnTo=${encodeURIComponent("/apply/status")}`;
@@ -156,7 +157,7 @@ export default function ApplyStatus({ now }: { now?: Date } = {}) {
     <div className="min-h-screen bg-[#f0ebe3] py-12 px-4">
       <SEO title="Application Status | ReGen Civics" description="Track your land project application through the review process." url="/apply/status" />
       <div className="max-w-2xl mx-auto">
-        <Link href="/apply" className="text-sm text-[#4a7c59] hover:underline flex items-center gap-1 mb-6">
+        <Link href="/apply" className="text-sm font-medium text-[#2d5a3d] hover:underline inline-flex min-h-11 items-center gap-1 mb-4">
           &larr; Back to Apply
         </Link>
 
@@ -226,6 +227,12 @@ export default function ApplyStatus({ now }: { now?: Date } = {}) {
                   <Link href="/game" className={statusLink}>Play the Game &rarr;</Link>
                 </div>
               )}
+            </div>
+
+            {/* The library tools the project uses (ADR-73). Open after acceptance, when /apply is locked. */}
+            <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
+              <h3 className="font-semibold text-[#1a472a] mb-2">Tools your project uses</h3>
+              <ProjectToolsPicker applicationId={application.id} />
             </div>
           </div>
         )}

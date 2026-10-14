@@ -37,6 +37,8 @@ import {
   setAllianceApplicationStatus,
 } from "../lib/allianceApproval";
 import { voteInviteOutcomeLabel } from "../lib/approvalHandoff";
+import { applicationTools, syncApplicationTools, type ApplicationToolRow } from "../lib/toolLibrary";
+import { cleanDraftTools, draftToolsMissing, MAX_DRAFT_TOOLS } from "@shared/toolLibrary";
 
 async function database() {
   const d = await getDb();
@@ -61,6 +63,14 @@ const fieldsInput = z.object({
   supportDescription: text(5000),
   partnershipDescription: text(5000),
   toolRepoUrl: text(500),
+  /** The tools they bring to the ReGen Tools Library (ADR-73). Up to five. */
+  tools: z.array(z.object({
+    name: z.string().max(300).optional(),
+    url: z.string().max(600).optional(),
+    description: z.string().max(3000).optional(),
+    kind: z.string().max(20).optional(),
+    isOpenSource: z.boolean().optional(),
+  })).max(MAX_DRAFT_TOOLS).optional(),
 });
 type FieldsInput = z.infer<typeof fieldsInput>;
 
@@ -93,6 +103,7 @@ function cleanFields(input: FieldsInput) {
   if (input.longitude !== undefined) out.longitude = input.longitude;
   if (input.supportDescription !== undefined) out.supportDescription = str(input.supportDescription);
   if (input.partnershipDescription !== undefined) out.partnershipDescription = str(input.partnershipDescription);
+  if (input.tools !== undefined) out.tools = JSON.stringify(cleanDraftTools(input.tools));
   return out;
 }
 
@@ -112,11 +123,14 @@ async function claimAndList(user: { id: number; email?: string | null }) {
       .set({ userId: user.id })
       .where(and(isNull(allianceApplications.userId), sql`LOWER(${allianceApplications.contactEmail}) = ${email}`));
   }
-  return d
+  const rows = await d
     .select()
     .from(allianceApplications)
     .where(eq(allianceApplications.userId, user.id))
     .orderBy(desc(allianceApplications.createdAt));
+  const out: Array<(typeof rows)[number] & { libraryTools: ApplicationToolRow[] }> = [];
+  for (const row of rows) out.push({ ...row, libraryTools: await applicationTools(d, row.id).catch(() => []) });
+  return out;
 }
 
 const WRITE_LIMIT = { windowMs: 60_000, max: 40 };
@@ -162,7 +176,13 @@ export const allianceApplicationsRouter = router({
           .set(fields)
           .where(and(eq(allianceApplications.id, existing.id), notInArray(allianceApplications.status, [...ALLIANCE_LOCKED])));
       }
-      return getAllianceApplication(existing.id);
+      const saved = await getAllianceApplication(existing.id);
+      // A sent application's tools are already in the review queue; an edit
+      // keeps the queue in step. A draft's tools wait for the send.
+      if (saved && fields.tools !== undefined && (saved.status === "submitted" || saved.status === "under_review")) {
+        if (!draftToolsMissing(cleanDraftTools(saved.tools))) await syncApplicationTools(d, saved);
+      }
+      return saved;
     }),
 
   /** Send the application for review. Says what is missing instead of failing quietly. */
@@ -176,6 +196,8 @@ export const allianceApplicationsRouter = router({
         return { ok: true as const, alreadySent: true, status: app.status };
       }
       const missing = missingForSubmit(app);
+      const toolGap = draftToolsMissing(cleanDraftTools(app.tools));
+      if (toolGap) missing.push(toolGap);
       if (missing.length) {
         throw new TRPCError({ code: "BAD_REQUEST", message: `Add ${missing.join(", ")} before sending.` });
       }
@@ -187,6 +209,15 @@ export const allianceApplicationsRouter = router({
       if (affected === 0) return { ok: true as const, alreadySent: true, status: app.status };
 
       await allianceTimeline(app.id, "status_change", app.status === "draft" ? "Submitted by the applicant" : "Sent again by the applicant", null);
+      // Their tools join the library's review queue with the application.
+      try {
+        const synced = await syncApplicationTools(d, { ...app, userId: app.userId ?? ctx.user.id });
+        if (synced.length) {
+          await allianceTimeline(app.id, "admin_action", `Tools in the library queue: ${synced.map((t) => t.name).join(", ")}`, null);
+        }
+      } catch (err) {
+        console.warn("[allianceApplications] tool sync failed:", err);
+      }
       try {
         const { declarePath } = await import("../lib/tierDetector");
         await declarePath(ctx.user.id, "ally");
@@ -248,17 +279,25 @@ export const allianceApplicationsRouter = router({
         .from(allianceApplicationEvents)
         .where(eq(allianceApplicationEvents.allianceApplicationId, input.id))
         .orderBy(desc(allianceApplicationEvents.createdAt), desc(allianceApplicationEvents.id));
-      return { app, events };
+      const tools = await applicationTools(d, input.id).catch(() => [] as ApplicationToolRow[]);
+      return { app, events, tools };
     }),
 
   updateStatus: adminProcedure
-    .input(z.object({ id: z.number().int(), status: z.enum(ALLIANCE_STATUSES), notify: z.boolean().optional() }))
+    .input(z.object({
+      id: z.number().int(),
+      status: z.enum(ALLIANCE_STATUSES),
+      notify: z.boolean().optional(),
+      /** The pending library tools to approve with the partner; omitted means all. */
+      toolIds: z.array(z.number().int()).max(20).optional(),
+    }))
     .mutation(async ({ ctx, input }) => {
       const result = await setAllianceApplicationStatus({
         id: input.id,
         status: input.status,
         adminUserId: ctx.user.id,
         notify: input.notify,
+        toolIds: input.toolIds,
       });
       return { success: true, ...result };
     }),

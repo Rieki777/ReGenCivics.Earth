@@ -51,6 +51,7 @@ vi.mock("../_core/email", () => ({
 }));
 vi.mock("../_core/notification", () => ({ notifyOwner: vi.fn(async () => true) }));
 vi.mock("./memberBadges", () => ({ clearBadgeCache: vi.fn() }));
+vi.mock("./toolLibrary", () => ({ applicationTools: vi.fn(async () => []), approveApplicationTools: vi.fn(async () => []) }));
 // approvalHandoff is imported for real (its labels and transition rule); its
 // own heavy imports are stubbed.
 vi.mock("./seasonSchedule", () => ({
@@ -96,7 +97,7 @@ describe("setAllianceApplicationStatus", () => {
     selects.push([{ status: "submitted" }], [{ ...app }], [], []);
     const res = await setAllianceApplicationStatus({ id: 9, status: "approved", adminUserId: 1 });
     expect(res.changed).toBe(true);
-    expect(res.handoff).toEqual({ organisation: "created", circle: "joined", invite: "sent" });
+    expect(res.handoff).toEqual({ organisation: "created", circle: "joined", tools: 0, invite: "sent" });
     expect(addCircleSignups).toHaveBeenCalledWith(fakeDb, [301], [{ email: "ana@seed.org", name: "Ana" }]);
     expect(executes).toBe(1);
     expect(inserts).toContainEqual(expect.objectContaining({ email: "ana@seed.org", repoUrl: "https://github.com/seed/tool" }));
@@ -110,7 +111,7 @@ describe("setAllianceApplicationStatus", () => {
     invited = true;
     selects.push([{ status: "rejected" }], [{ ...app, organisationId: 55 }], [{ id: 55 }], [{ id: 3 }]);
     const res = await setAllianceApplicationStatus({ id: 9, status: "approved", adminUserId: 1 });
-    expect(res.handoff).toEqual({ organisation: "exists", circle: "joined", invite: "already_sent" });
+    expect(res.handoff).toEqual({ organisation: "exists", circle: "joined", tools: 0, invite: "already_sent" });
     expect(sendEmail).not.toHaveBeenCalled();
     expect(executes).toBe(0);
   });

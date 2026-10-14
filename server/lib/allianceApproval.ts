@@ -43,6 +43,7 @@ import {
   type VoteInviteOutcome,
   type VoteInviteState,
 } from "./approvalHandoff";
+import { applicationTools, approveApplicationTools } from "./toolLibrary";
 import {
   addCircleSignups,
   circleWhen,
@@ -59,6 +60,8 @@ export const ALLIANCE_INQUIRY_TYPE = "alliance_application";
 export type AllianceHandoffResult = {
   organisation: "created" | "exists" | "failed";
   circle: "joined" | "no_sessions" | "failed";
+  /** How many of the application's library tools this approval approved. */
+  tools: number;
   invite: VoteInviteOutcome;
 };
 
@@ -101,6 +104,11 @@ export async function setAllianceApplicationStatus(opts: {
   adminUserId: number;
   /** Email the Circle vote invite on approval. Defaults to true. */
   notify?: boolean;
+  /**
+   * The application's pending library tools to approve with it. Omitted:
+   * all of them. The approve dialog sends the ones left ticked (ADR-73).
+   */
+  toolIds?: number[];
 }): Promise<AllianceStatusChangeResult> {
   const d = await database();
   const [row] = await d
@@ -146,6 +154,12 @@ export async function setAllianceApplicationStatus(opts: {
   let handoff: AllianceHandoffResult | null = null;
   if (app && isApprovalTransition(previous, opts.status)) {
     const organisation = await ensureOrganisation(app);
+    let tools = 0;
+    try {
+      tools = (await approveApplicationTools(await database(), app.id, opts.adminUserId, opts.toolIds)).length;
+    } catch (err) {
+      console.warn("[allianceApproval] tool approval failed:", err);
+    }
     const circle = await joinCircle(app);
     const invite = opts.notify === false
       ? "not_requested" as const
@@ -153,7 +167,7 @@ export async function setAllianceApplicationStatus(opts: {
     if (invite === "not_requested") {
       await allianceTimeline(opts.id, "admin_action", voteInviteOutcomeLabel(invite), opts.adminUserId);
     }
-    handoff = { organisation, circle, invite };
+    handoff = { organisation, circle, tools, invite };
   }
   return { previous, changed: true, handoff };
 }
@@ -207,7 +221,11 @@ async function joinCircle(app: AllianceApplication): Promise<AllianceHandoffResu
     const email = app.contactEmail.trim().toLowerCase();
     await addCircleSignups(d, rows.map((r) => r.id), [{ email, name: app.contactName ?? null }]);
 
-    const repoUrl = cleanRepoUrl(app.toolRepoUrl);
+    // The Circle's register takes one link: the repo they gave, else their
+    // first app or software tool in the library.
+    const libraryTools = await applicationTools(d, app.id);
+    const firstSoftware = libraryTools.find((t) => t.status === "approved" && (t.toolKind ?? "software") === "software");
+    const repoUrl = cleanRepoUrl(app.toolRepoUrl) ?? cleanRepoUrl(firstSoftware?.websiteUrl);
     const name = (app.organizationName || app.contactName || "").slice(0, 80) || null;
     const [byEmail] = await d.select({ id: interopTools.id }).from(interopTools).where(eq(interopTools.email, email)).limit(1);
     if (byEmail) {
@@ -230,6 +248,8 @@ export type CircleInviteCopyInput = {
   /** "Wednesdays, 4pm PT", or null when no week is on the calendar yet. */
   slotLabel: string | null;
   next: Date | null;
+  /** Their tools now listed in the library. */
+  tools?: Array<{ name: string; slug: string }>;
   footerHtml: string;
 };
 
@@ -238,6 +258,18 @@ const h3 = `style="color:#4a7c59;margin:24px 0 8px 0;"`;
 
 function button(url: string, label: string): string {
   return `<div style="text-align:center;margin:18px 0;"><a href="${textForEmail(url)}" style="display:inline-block;background:#1a472a;color:#ffffff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;">${textForEmail(label)}</a></div>`;
+}
+
+/** The tools section of the invite: each listing, and the Circle's interoperability sheet. */
+function toolsBlock(tools: Array<{ name: string; slug: string }>): string {
+  if (!tools.length) return "";
+  const items = tools
+    .map((t) => `<li><a href="${textForEmail(toAbsoluteUrl(`/tools/${t.slug}`))}" style="color:#1a472a;font-weight:bold;">${textForEmail(t.name)}</a></li>`)
+    .join("");
+  return `
+      <h3 ${h3}>3. Your tools are in the ReGen Tools Library</h3>
+      <ul ${p}>${items}</ul>
+      <p ${p}>You can edit each listing from its page while you are signed in. To show how your tool connects with the others, fill in its interoperability sheet on the <a href="${textForEmail(toAbsoluteUrl("/interop-sessions"))}" style="color:#1a472a;font-weight:bold;">Circle page</a>.</p>`;
 }
 
 /** Subject and body of the Circle vote invite. Pure, so the copy is testable. */
@@ -265,7 +297,8 @@ export function circleInviteEmail(input: CircleInviteCopyInput): { subject: stri
       ${when}
       <p ${p}><a href="${textForEmail(calendarUrl)}" style="color:#1a472a;font-weight:bold;">Subscribe to the Circle calendar</a> and it keeps itself up to date when the time moves.</p>
       <p ${p}>Bring a link to your work, a sentence or two on what it does and who it serves, and what you would like to build with the other partners.</p>
-      <h3 ${h3}>3. Your partnership page</h3>
+      ${toolsBlock(input.tools ?? [])}
+      <h3 ${h3}>${input.tools?.length ? "4" : "3"}. Your partnership page</h3>
       <p ${p}>Your status page keeps every next step in one place.</p>
       ${button(statusUrl, "Open your status page")}
       <div style="margin-top:25px;padding-top:20px;border-top:1px solid #e0e0e0;">
@@ -305,12 +338,22 @@ async function attemptCircleInvite(app: AllianceApplication, opts: { force?: boo
     console.warn("[allianceApproval] Circle schedule lookup failed:", err);
   }
 
+  let tools: Array<{ name: string; slug: string }> = [];
+  try {
+    tools = (await applicationTools(await database(), app.id))
+      .filter((t) => t.status === "approved")
+      .map((t) => ({ name: t.name, slug: t.slug }));
+  } catch (err) {
+    console.warn("[allianceApproval] tool lookup failed:", err);
+  }
+
   const leave = await unsubscribeLink(app.contactEmail);
   const { subject, html } = circleInviteEmail({
     recipientName: app.contactName ?? null,
     organizationName: app.organizationName || "Your organization",
     slotLabel,
     next,
+    tools,
     footerHtml: `<p style="color:#8a8a8a;font-size:11px;margin:16px 0 0 0;line-height:1.6;">You are signed up for the ${textForEmail(INTEROP_CIRCLE_TITLE)} as an Alliance Partner. <a href="${textForEmail(leave)}" style="color:#8a8a8a;">Leave the Circle</a></p>`,
   });
   const result = await sendEmail({

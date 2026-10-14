@@ -73,6 +73,11 @@ import { trpc } from "@/lib/trpc";
 const OnboardingWizard = lazy(() => import("./components/OnboardingWizard").then(m => ({ default: m.OnboardingWizard })));
 const RegenIntroGate = lazy(() => import("./components/RegenIntroGate").then(m => ({ default: m.RegenIntroGate })));
 
+/** Pages where the first-visit welcome stays closed: a private offer, and the forms people are sent to fill in. */
+export function skipsIntroGate(path: string): boolean {
+  return path === "/offer" || path === "/apply" || path.startsWith("/apply/") || path === "/tools/submit";
+}
+
 // Routes that bypass site chrome (nav, footer, background effects)
 const ADMIN_ROUTES = ["/admin", "/admin/"];
 function isAdminRoute(path: string) {
@@ -638,8 +643,10 @@ function MainApp() {
           {/* SiteTour removed -- Fix 82; ReGenGuide is now the single help entry point */}
           {!bareMode && <OnboardingController />}
           {/* Not on the private offer page: someone opening their offer from an
-              email sees it first, not a first-visit welcome over it. */}
-          {!bareMode && location !== "/offer" && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
+              email sees it first, not a first-visit welcome over it. Nor on the
+              application and tool forms: someone sent straight to a form came to
+              fill it in, and the welcome opened over it mid-typing (ADR-73). */}
+          {!bareMode && !skipsIntroGate(location) && <Suspense fallback={null}><RegenIntroGate /></Suspense>}
           <ReturnToHandler />
         </TooltipProvider>
       </ThemeProvider>

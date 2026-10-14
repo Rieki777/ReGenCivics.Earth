@@ -359,6 +359,12 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Member badge** (ADR-72). "Accepted land project" or "Alliance Partner" beside a vote on the Season Schedule register or the Circle's time vote. Worked out when the tally is read, so a vote cast before approval shows it once the voter is approved. A badge says who someone is; it never gates the vote, which stays open to everyone.
 
+**ReGen Tools Library** (ADR-73). The directory at `/tools` (table `regen_tools`): apps, physical tools, and services or methods land projects use. An entry is **pending** until an admin lists it in Admin > Alliance > Tools waiting for review, or approves the Alliance Partner whose application brought it. An entry's **owner** (its submitter, or that partner) can edit it.
+
+**Tool kind**. App or software, physical tool, or service or method (`regen_tools.toolKind`). Not a category, which is a topic tag.
+
+**Used by** (a tool). How many accepted land projects say they use it, from the picker in `/apply` and on `/apply/status` (`regen_tool_project_usage`).
+
 **Vote invite** (call time vote invite). The email an approved applicant gets: vote for the Season's weekly call time on the Season Schedule, how to join the calls, and their status page. Logged in `email_logs` as `land_project_vote_invite` against the application id. A **quiet approval** approves without it; Admin can send it later from the application's panel.
 
 ### Session boards (ADR-68)

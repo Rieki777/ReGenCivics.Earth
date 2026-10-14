@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Handshake, Palette, HomeIcon, UserCheck } from "lucide-react";
 import { RoleSubmissionsView } from "@/components/RoleSubmissionsView";
 import { AdminAllianceApplications } from "./AdminAllianceApplications";
+import { AdminToolQueue } from "./AdminToolQueue";
 
 interface SimpleInquirySectionProps {
   pathType: string;
@@ -23,6 +24,7 @@ export function AdminAllianceTab({ inquiries, InquirySectionComp }: Omit<Props, 
   return (
     <div className="space-y-6">
     <AdminAllianceApplications />
+    <AdminToolQueue />
     <Card className="bg-white border-2 border-[#1a472a]/10">
       <CardHeader>
         <CardTitle className="text-[#1a472a] flex items-center gap-2" style={{ fontFamily: 'var(--font-display)' }}>

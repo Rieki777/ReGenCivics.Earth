@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-13 (the Tools Library fills in from the applications): partner tools, land project usage, a review queue, safer links, readable pages
+
+- **Alliance Partners bring their tools** (ADR-73): up to five on the application, each a link and a sentence (app, physical tool, or service or method). Sending the application queues them for the library; approving the partner lists the ticked ones under the partner's name; the invite email links each listing. A link the library already has is linked, never listed twice (migration 0299).
+- **Tools waiting for review** in Admin > Alliance: partner tools and everything from /tools/submit. Before this, submitted tools had nowhere to be seen.
+- **Owners edit their listings** from the tool page; **land projects say which tools they use** (in /apply and on /apply/status), and tools show "used by N land projects".
+- **Every tool page worked again**: /tools/:slug threw on load for every tool (it read fields the server never sent). Rewritten against the real fields.
+- **Safer**: the submit prefill can no longer be pointed at the server's own network; links are http or https only; same-name tools get a numbered slug; submit, prefill and the AI matcher are rate limited.
+- **Readable**: `pnpm ui:audit` measures contrast, field edges, typed text, 44px targets and sideways scroll at desktop and phone widths in the app's own theme; all twelve screens on this path pass. The welcome pop-up stays off the forms people are sent to, and the alliance form accepts a link typed without https://.
+- Source: `docs/planning/ALLIANCE_PARTNER_APPLICATION_PLAN.md`. Tested end to end on a local server against a scratch database: apply with a tool, review, approve, listing, owner edit, Circle vote with badge.
+
 ## 2026-10-13 (Alliance Partner applications, PRs 2 and 3 of 3): apply, review, approve into the Circle, badges on the votes
 
 - **Alliance partners apply like land projects** (ADR-72): `/apply/alliance` saves a draft as you type and says what is missing before it sends; `/apply/alliance/status` shows the steps, the review note and the next steps; the profile's Submissions tab lists it beside land project applications. `/connect?path=alliance`, `/ally`, `/showcase` and the globe now lead there. One person can hold both kinds (migration 0297).

@@ -198,7 +198,7 @@ export function InquirySection({
             placeholder={`Search ${config.label.toLowerCase()} by name, email, or message...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
+            className="w-full min-h-11 pl-9 pr-4 py-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50"
           />
         </div>
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -219,7 +219,7 @@ export function InquirySection({
                 <Button
                   variant="outline"
                   size="sm"
-                  className={`border-[#1a472a]/30 text-[#1a472a] ${activeFilter ? 'bg-[#7dd87d]/20 border-[#7dd87d]' : ''}`}
+                  className={`min-h-11 border-[#1a472a]/30 text-[#1a472a] ${activeFilter ? 'bg-[#7dd87d]/20 border-[#7dd87d]' : ''}`}
                   onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
@@ -284,7 +284,7 @@ export function InquirySection({
           
           <div className="flex items-center gap-2">
             {/* Select All Checkbox */}
-            <div className="flex items-center gap-2 mr-2">
+            <div className="flex min-h-11 items-center gap-2 mr-2">
               <Checkbox
                 checked={selectedItems.size === filteredInquiries.length && filteredInquiries.length > 0}
                 onCheckedChange={selectAll}
@@ -300,7 +300,7 @@ export function InquirySection({
             <Button
               variant="outline"
               size="sm"
-              className="border-[#7dd87d] text-[#1a472a]"
+              className="min-h-11 border-[#7dd87d] text-[#1a472a]"
               onClick={() => setShowExportDropdown(!showExportDropdown)}
             >
               <Download className="w-4 h-4 mr-2" />
@@ -612,12 +612,17 @@ export function InquirySection({
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 min-w-0 flex-1">
-                    <Checkbox
-                      checked={selectedItems.has(inquiry.id)}
-                      onCheckedChange={() => toggleItemSelection(inquiry.id)}
+                    <label
+                      className="-my-2 -ml-3 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center"
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-1"
-                    />
+                    >
+                      <Checkbox
+                        checked={selectedItems.has(inquiry.id)}
+                        onCheckedChange={() => toggleItemSelection(inquiry.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Select ${inquiry.fullName || inquiry.email}`}
+                      />
+                    </label>
                     <div className={`w-10 h-10 rounded-full ${config.color}/20 flex items-center justify-center`}>
                       <Icon className="w-5 h-5 text-[#1a472a]" />
                     </div>

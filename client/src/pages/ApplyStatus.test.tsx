@@ -27,6 +27,11 @@ vi.mock("@/lib/trpc", () => ({
     applications: {
       myApplications: { useQuery: () => ({ data: h.apps, isLoading: false }) },
     },
+    tools: {
+      options: { useQuery: () => ({ data: [{ id: 1, name: "Hylo", slug: "hylo", toolKind: null }] }) },
+      projectTools: { useQuery: () => ({ data: [] }) },
+      setProjectTools: { useMutation: () => ({ mutate: () => {}, isPending: false, isError: false }) },
+    },
     seasonSchedule: {
       linkMyVote: {
         useMutation: (opts?: { onSuccess?: (r: { voted: boolean }) => void }) => ({
@@ -193,5 +198,12 @@ describe("/apply/status", () => {
     render(<ApplyStatus now={BEFORE_OPENING} />);
     expect(screen.queryByText(/haven't voted/)).toBeNull();
     expect(screen.getByText(/You have voted for your Season's call time/)).toBeDefined();
+  });
+
+  it("lets the project pick the library tools it uses", () => {
+    h.apps = [app({ status: "approved" })];
+    render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(screen.getByText("Tools your project uses")).toBeDefined();
+    expect(screen.getByRole("button", { name: /Hylo/ }).getAttribute("aria-pressed")).toBe("false");
   });
 });

@@ -83,7 +83,7 @@ export default function AllianceApplyStatus() {
     <div className="min-h-screen bg-[#f0ebe3] py-12 px-4">
       <SEO title="Alliance Partner application | ReGen Civics" description="Track your Alliance Partner application." url={ALLIANCE_STATUS_PATH} />
       <div className="max-w-2xl mx-auto">
-        <Link href="/ally" className="text-sm text-[#4a7c59] hover:underline">&larr; About the Alliance</Link>
+        <Link href="/ally" className="inline-flex min-h-11 items-center text-sm font-medium text-[#2d5a3d] hover:underline">&larr; About the Alliance</Link>
         <h1 className="text-3xl font-bold text-[#1a472a] mt-4 mb-6" style={{ fontFamily: "var(--font-display)" }}>
           Alliance Partner application
         </h1>
@@ -110,6 +110,33 @@ export default function AllianceApplyStatus() {
                 </Link>
               )}
             </div>
+
+            {(app.libraryTools?.length ?? 0) > 0 && (
+              <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
+                <h3 className="font-semibold text-[#1a472a] mb-1">Your tools in the library</h3>
+                <p className="text-sm text-[#1a472a]/80 mb-3">
+                  {approved
+                    ? "Your tools are on the ReGen Tools Library. Edit each listing from its page."
+                    : "They are listed on the ReGen Tools Library once your partnership is approved."}
+                </p>
+                <ul className="divide-y divide-[#1a472a]/10">
+                  {app.libraryTools!.map((t) => (
+                    <li key={t.toolId} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                      <span className="font-medium text-[#1a472a]">{t.name}</span>
+                      {t.status === "approved" ? (
+                        <Link href={`/tools/${t.slug}`} className="inline-flex min-h-11 items-center text-sm font-semibold text-[#1a472a] underline">
+                          Listed: view or edit
+                        </Link>
+                      ) : t.status === "rejected" ? (
+                        <span className="text-sm text-[#1a472a]/75">Not listed</span>
+                      ) : (
+                        <span className="text-sm text-[#1a472a]/75">In review with your application</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
               <h3 className="font-semibold text-[#1a472a] mb-6">Review progress</h3>

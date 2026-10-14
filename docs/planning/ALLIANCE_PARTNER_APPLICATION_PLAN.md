@@ -56,6 +56,10 @@ An alliance partner applies, is reviewed and approved in Admin the way a land pr
 - Status pages: "You have not voted for a call time yet" until the signed-in user has a vote row.
 - A person holding both kinds gets both badges and both invites.
 
+## Tools Library (built, ADR-73)
+
+Partners bring up to five tools on the application; they queue with it and are listed when the partner is approved (each untickable). Admin > Alliance > Tools waiting for review covers these and /tools/submit. Owners edit their listings; land projects pick the tools they use, which /tools shows as "used by N land projects". The tools router's prefill fetch, links, slugs and rate limits were hardened, and every tool page, broken on load, was rewritten. `pnpm ui:audit` gates readability on all twelve screens of this path.
+
 ## Decided while building
 
 - Alliance events live in their own `alliance_application_events`, since `applicationEvents` is keyed by land application id.

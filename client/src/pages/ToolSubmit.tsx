@@ -47,6 +47,8 @@ export default function ToolSubmit() {
   const [summary, setSummary] = useState("");
   const [description, setDescription] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
+  /** Set when the library already had this link (ADR-73): we point to it instead of listing it twice. */
+  const [existing, setExisting] = useState<{ slug: string; approved: boolean } | null>(null);
   const [pricing, setPricing] = useState("free");
   const [regions, setRegions] = useState("");
   const [problemStatements, setProblemStatements] = useState("");
@@ -65,7 +67,8 @@ export default function ToolSubmit() {
   });
 
   const submitTool = trpc.tools.submitTool.useMutation({
-    onSuccess: () => {
+    onSuccess: (res) => {
+      setExisting(res?.existing ?? null);
       setStep("success");
     },
   });
@@ -125,7 +128,7 @@ export default function ToolSubmit() {
       <div className="pt-20 px-4">
         <div className="max-w-2xl mx-auto">
           <Link href="/tools">
-            <button className="flex items-center gap-2 text-white/70 hover:text-white/70 text-sm transition-colors mb-6">
+            <button className="flex min-h-11 items-center gap-2 text-white/80 hover:text-white text-sm transition-colors mb-4">
               <ArrowLeft className="w-4 h-4" /> Back to Tools Library
             </button>
           </Link>
@@ -158,14 +161,14 @@ export default function ToolSubmit() {
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       placeholder="https://example.com"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/70 pl-10"
+                      className="min-h-11 bg-white/5 border-white/45 text-white placeholder:text-white/70 pl-10"
                       onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                     />
                   </div>
                   <Button
                     onClick={handleAnalyze}
                     disabled={!url.trim()}
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
+                    className="min-h-11 bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
                   >
                     Analyze
                   </Button>
@@ -201,7 +204,7 @@ export default function ToolSubmit() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="descriptive names are best"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
+                    className="min-h-11 bg-white/5 border-white/45 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -212,7 +215,7 @@ export default function ToolSubmit() {
                     value={summary}
                     onChange={(e) => setSummary(e.target.value)}
                     placeholder="One-line description of what this tool does"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
+                    className="min-h-11 bg-white/5 border-white/45 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -223,7 +226,7 @@ export default function ToolSubmit() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="What does this tool do? Who is it for? How does it support regenerative work?"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[100px]"
+                    className="bg-white/5 border-white/45 text-white placeholder:text-white/70 min-h-[100px]"
                   />
                 </div>
 
@@ -235,10 +238,10 @@ export default function ToolSubmit() {
                       <button
                         key={cat}
                         onClick={() => toggleCategory(cat)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                        className={`min-h-11 px-4 py-1 rounded-full text-sm font-medium transition-colors ${
                           categories.includes(cat)
                             ? "bg-[#7dd87d] text-[#1a472a]"
-                            : "bg-white/5 text-white/70 border border-white/10 hover:border-white/20"
+                            : "bg-white/5 text-white/85 border border-white/30 hover:border-white/50"
                         }`}
                       >
                         {categories.includes(cat) ? (
@@ -263,7 +266,7 @@ export default function ToolSubmit() {
                         className={`px-4 py-1.5 rounded-full text-xs font-medium transition-colors ${
                           pricing === opt.value
                             ? "bg-[#7dd87d] text-[#1a472a]"
-                            : "bg-white/5 text-white/70 border border-white/10 hover:border-white/20"
+                            : "bg-white/5 text-white/85 border border-white/30 hover:border-white/50"
                         }`}
                       >
                         {opt.label}
@@ -279,7 +282,7 @@ export default function ToolSubmit() {
                     value={regions}
                     onChange={(e) => setRegions(e.target.value)}
                     placeholder="e.g., North America, Europe, Global"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70"
+                    className="min-h-11 bg-white/5 border-white/45 text-white placeholder:text-white/70"
                   />
                 </div>
 
@@ -292,7 +295,7 @@ export default function ToolSubmit() {
                     value={problemStatements}
                     onChange={(e) => setProblemStatements(e.target.value)}
                     placeholder={"I need to track soil health over time\nI want to coordinate land stewardship across properties"}
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/70 min-h-[80px]"
+                    className="bg-white/5 border-white/45 text-white placeholder:text-white/70 min-h-[80px]"
                   />
                   <p className="text-white/70 text-xs mt-1">
                     These help other people find this tool when they describe their problems.
@@ -324,8 +327,10 @@ export default function ToolSubmit() {
                 </div>
 
                 {submitTool.isError && (
-                  <p className="text-red-400 text-sm mt-2">
-                    Something went wrong. Please try again.
+                  <p className="text-red-300 text-sm mt-2" role="alert">
+                    {submitTool.error?.message?.includes("link") || submitTool.error?.message?.includes("Too many")
+                      ? submitTool.error.message
+                      : "Something went wrong. Please try again."}
                   </p>
                 )}
               </div>
@@ -335,10 +340,19 @@ export default function ToolSubmit() {
             {step === "success" && (
               <div className="bg-white/5 border border-[#7dd87d]/20 rounded-2xl p-8 text-center">
                 <CheckCircle2 className="w-12 h-12 text-[#7dd87d] mx-auto mb-4" />
-                <h2 className="text-white text-xl font-semibold mb-2">Tool submitted</h2>
-                <p className="text-white/60 text-sm mb-6">
-                  Thank you for sharing this with the community. Your submission will be reviewed and added to the library soon.
+                <h2 className="text-white text-xl font-semibold mb-2">{existing ? "Already in the library" : "Tool submitted"}</h2>
+                <p className="text-white/70 text-sm mb-6">
+                  {existing
+                    ? existing.approved
+                      ? "That link is already listed, so nothing new was added."
+                      : "Someone has already sent that link in, and it is waiting for review."
+                    : "Thank you for sharing this with the community. Your submission will be reviewed and added to the library soon."}
                 </p>
+                {existing?.approved && (
+                  <p className="mb-6">
+                    <Link href={`/tools/${existing.slug}`} className="text-[#7dd87d] underline">See its listing</Link>
+                  </p>
+                )}
                 <div className="flex gap-3 justify-center">
                   <Link href="/tools">
                     <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold">

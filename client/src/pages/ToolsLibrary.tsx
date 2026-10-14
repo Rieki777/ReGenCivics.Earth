@@ -3,7 +3,8 @@
  * Route: /tools
  */
 import { useState } from "react";
-import { Wrench, Sparkles, ExternalLink, Loader2, Users, Search, X } from "lucide-react";
+import { Wrench, Sparkles, ExternalLink, Loader2, Users, Search, X, Handshake, Sprout } from "lucide-react";
+import { usedByLine } from "@shared/toolLibrary";
 import { SEO } from "@/components/SEO";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { Button } from "@/components/ui/button";
@@ -106,7 +107,7 @@ export default function ToolsLibrary() {
             {/* AI Matcher toggle */}
             <Button
               onClick={() => setShowMatcher(!showMatcher)}
-              className="bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30 mb-4"
+              className="bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30 mb-4 min-h-11"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               {showMatcher ? "Close Problem Matcher" : "Describe Your Problem"}
@@ -216,7 +217,7 @@ export default function ToolsLibrary() {
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              className={`min-h-11 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === cat
                   ? "bg-[#7dd87d] text-[#1a472a]"
                   : "bg-white/5 text-white/60 border border-white/10 hover:text-white hover:border-white/20"
@@ -232,7 +233,7 @@ export default function ToolsLibrary() {
           <select
             value={pricing}
             onChange={(e) => setPricing(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="min-h-11 bg-white/5 border border-white/45 text-white/90 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/60"
           >
             {PRICING_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
@@ -244,7 +245,7 @@ export default function ToolsLibrary() {
           <select
             value={toolType}
             onChange={(e) => setToolType(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="min-h-11 bg-white/5 border border-white/45 text-white/90 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/60"
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
@@ -256,7 +257,7 @@ export default function ToolsLibrary() {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="bg-white/5 border border-white/10 text-white/80 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#7dd87d]/40"
+            className="min-h-11 bg-white/5 border border-white/45 text-white/90 text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/60"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value} className="bg-[#1a472a]">
@@ -272,7 +273,7 @@ export default function ToolsLibrary() {
                 setPricing("");
                 setToolType("");
               }}
-              className="text-white/60 hover:text-white/70 text-sm underline flex items-center gap-1"
+              className="min-h-11 text-white/75 hover:text-white text-sm underline flex items-center gap-1"
             >
               <X className="w-3 h-3" /> Clear filters
             </button>
@@ -283,8 +284,7 @@ export default function ToolsLibrary() {
         <div className="mt-4 flex justify-end">
           <Link href="/tools/submit">
             <Button
-              size="sm"
-              className="bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30"
+              className="min-h-11 bg-[#7dd87d]/20 text-[#7dd87d] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/30"
             >
               Submit a Tool
             </Button>
@@ -361,6 +361,18 @@ export default function ToolsLibrary() {
                     {summary}
                   </p>
 
+                  {/* Who brought it and who uses it (ADR-73) */}
+                  {(tool.partnerName || tool.usedByProjects > 0) && (
+                    <div className="mb-2 flex flex-col gap-1 text-[11px] text-[#c9f2c9]">
+                      {tool.partnerName && (
+                        <span className="flex items-center gap-1"><Handshake className="h-3 w-3 text-[#7dd87d]" aria-hidden="true" /> Alliance Partner: {tool.partnerName}</span>
+                      )}
+                      {tool.usedByProjects > 0 && (
+                        <span className="flex items-center gap-1"><Sprout className="h-3 w-3 text-[#7dd87d]" aria-hidden="true" /> {usedByLine(tool.usedByProjects)}</span>
+                      )}
+                    </div>
+                  )}
+
                   {/* Category pills */}
                   <div className="flex flex-wrap gap-1">
                     {categories.slice(0, 3).map((cat, i) => (
@@ -388,12 +400,12 @@ export default function ToolsLibrary() {
                         e.stopPropagation();
                         trackClick.mutate({ toolId: tool.id });
                       }}
-                      className="text-[#7dd87d] text-xs font-medium flex items-center gap-1 hover:underline"
+                      className="-my-2 inline-flex min-h-11 items-center gap-1 px-2 text-[#7dd87d] text-sm font-medium hover:underline"
                     >
                       Explore <ExternalLink className="w-3 h-3" />
                     </a>
                   ) : (
-                    <span className="text-[#7dd87d] text-xs font-medium flex items-center gap-1">
+                    <span className="text-[#7dd87d] text-sm font-medium flex items-center gap-1">
                       Explore <ExternalLink className="w-3 h-3" />
                     </span>
                   )}

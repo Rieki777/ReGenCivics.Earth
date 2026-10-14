@@ -26,6 +26,9 @@ import {
   cleanRoles,
   missingForSubmit,
 } from "@shared/allianceApplication";
+import { cleanDraftTools, draftToolsMissing, type DraftTool } from "@shared/toolLibrary";
+import { DraftToolsEditor } from "@/components/DraftToolsEditor";
+import { TickBox } from "@/components/TickBox";
 
 export const ALLIANCE_APPLY_SIGN_IN_HREF = `/sign-in?returnTo=${encodeURIComponent(ALLIANCE_APPLY_PATH)}`;
 
@@ -42,7 +45,8 @@ type Form = {
   longitude: number | null;
   supportDescription: string;
   partnershipDescription: string;
-  toolRepoUrl: string;
+  /** The tools they bring to the library (ADR-73). Replaces the single repo field. */
+  tools: DraftTool[];
 };
 
 const EMPTY: Form = {
@@ -58,10 +62,10 @@ const EMPTY: Form = {
   longitude: null,
   supportDescription: "",
   partnershipDescription: "",
-  toolRepoUrl: "",
+  tools: [],
 };
 
-const field = "mt-2 min-h-11 bg-white text-[#1a472a] border-[#1a472a]/25 placeholder:text-[#1a472a]/55";
+const field = "mt-2 min-h-11 bg-white dark:bg-white text-[#1a472a] border-[#1a472a]/60 placeholder:text-[#1a472a]/70 focus-visible:border-[#1a472a] focus-visible:ring-[#7dd87d]/50";
 const help = "text-sm text-[#1a472a]/75 mt-1";
 const sectionTitle = "text-lg font-semibold text-[#1a472a]";
 
@@ -96,7 +100,12 @@ export default function AllianceApply() {
       longitude: app.longitude ?? null,
       supportDescription: app.supportDescription ?? "",
       partnershipDescription: app.partnershipDescription ?? "",
-      toolRepoUrl: app.toolRepoUrl ?? "",
+      // A repo saved before the tools section existed becomes its first tool.
+      tools: (() => {
+        const saved = cleanDraftTools(app.tools);
+        if (saved.length || !app.toolRepoUrl) return saved;
+        return [{ name: "", url: app.toolRepoUrl, description: "", kind: "software" as const, isOpenSource: false }];
+      })(),
     });
   }, [app, mine.isLoading, user]);
 
@@ -124,11 +133,17 @@ export default function AllianceApply() {
   const toggleRole = (id: string) =>
     set("roles", form.roles.includes(id) ? form.roles.filter((r) => r !== id) : [...form.roles, id]);
 
-  const missing = useMemo(() => missingForSubmit(form), [form]);
+  const [triedSend, setTriedSend] = useState(false);
+  const missing = useMemo(() => {
+    const gaps = missingForSubmit(form);
+    const toolGap = draftToolsMissing(cleanDraftTools(form.tools));
+    return toolGap ? [...gaps, toolGap] : gaps;
+  }, [form]);
   const locked = app ? (ALLIANCE_LOCKED as readonly string[]).includes(app.status) : false;
   const sent = app && ["submitted", "under_review"].includes(app.status);
 
   async function handleSend() {
+    setTriedSend(true);
     if (missing.length) {
       toast.error(`Add ${missing.join(", ")} before sending.`);
       return;
@@ -183,7 +198,7 @@ export default function AllianceApply() {
     <div className="min-h-screen bg-[#f0ebe3] py-10 px-4">
       <SEO title="Become an Alliance Partner | ReGen Civics" description="Apply to join the ReGen Civics Alliance and the Interoperability Circle." url={ALLIANCE_APPLY_PATH} />
       <div className="max-w-2xl mx-auto">
-        <Link href="/ally" className="text-sm text-[#4a7c59] hover:underline">&larr; About the Alliance</Link>
+        <Link href="/ally" className="inline-flex min-h-11 items-center text-sm font-medium text-[#2d5a3d] hover:underline">&larr; About the Alliance</Link>
         <h1 className="text-3xl font-bold text-[#1a472a] mt-4 mb-2" style={{ fontFamily: "var(--font-display)" }}>
           Become an Alliance Partner
         </h1>
@@ -191,7 +206,7 @@ export default function AllianceApply() {
           Alliance Partners support land projects with services, tools, knowledge or relationships. Approved partners join
           the Interoperability Circle, the weekly working group for the people building what sits under the land projects.
         </p>
-        <p className="text-sm text-[#1a472a]/70 mb-6" aria-live="polite">
+        <p className="text-sm text-[#1a472a]/85 mb-6" aria-live="polite">
           {save.isPending ? "Saving…" : dirty ? "Unsaved changes" : app ? "Saved" : "Your answers save as you type."}
         </p>
 
@@ -203,6 +218,7 @@ export default function AllianceApply() {
         )}
 
         <form
+          noValidate
           className="space-y-6 rounded-2xl bg-white p-6 border border-[#1a472a]/10"
           onSubmit={(e) => { e.preventDefault(); void handleSend(); }}
         >
@@ -233,7 +249,7 @@ export default function AllianceApply() {
                     key={r.id}
                     className={`flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border-2 p-3 transition-colors ${on ? "border-[#4a7c59] bg-[#7dd87d]/15" : "border-[#1a472a]/15 hover:border-[#4a7c59]/50"}`}
                   >
-                    <input type="checkbox" checked={on} onChange={() => toggleRole(r.id)} className="mt-1 accent-[#1a472a]" />
+                    <TickBox checked={on} onChange={() => toggleRole(r.id)} className="mt-0.5" />
                     <span>
                       <span className="block text-sm font-semibold text-[#1a472a]"><span aria-hidden="true">{r.icon}</span> {r.name}</span>
                       <span className="block text-xs text-[#1a472a]/75">{r.description}</span>
@@ -315,16 +331,12 @@ export default function AllianceApply() {
             <Textarea id="partnershipDescription" value={form.partnershipDescription} onChange={(e) => set("partnershipDescription", e.target.value)} className={`${field} min-h-[100px]`} />
           </div>
 
-          <div>
-            <Label htmlFor="toolRepoUrl" className="text-[#1a472a]">Your tool or repo, if you build one</Label>
-            <p className={help}>Optional. It goes in the Interoperability Circle's tools register when you are approved.</p>
-            <Input id="toolRepoUrl" type="url" inputMode="url" value={form.toolRepoUrl} onChange={(e) => set("toolRepoUrl", e.target.value)} placeholder="https://github.com/your-org/your-tool" className={field} />
-          </div>
+          <DraftToolsEditor tools={form.tools} onChange={(next) => set("tools", next)} showProblems={triedSend} />
 
           {missing.length > 0 && (
             <p className="text-sm text-[#1a472a]/80">Still to add: {missing.join(", ")}.</p>
           )}
-          <Button type="submit" className="min-h-11 w-full bg-[#1a472a] hover:bg-[#2d5a3d] sm:w-auto" disabled={save.isPending || submit.isPending}>
+          <Button type="submit" className="min-h-12 w-full bg-[#1a472a] px-6 text-base font-semibold text-white hover:bg-[#2d5a3d] sm:w-auto" disabled={save.isPending || submit.isPending}>
             {submit.isPending || save.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             {sent ? "Save changes" : app?.status === "changes_requested" || app?.status === "rejected" ? "Send again" : "Send my application"}
           </Button>

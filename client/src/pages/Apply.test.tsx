@@ -73,6 +73,7 @@ vi.mock('wouter', () => ({
 vi.mock('@/components/FileUpload', () => ({ FileUpload: () => null }));
 vi.mock('@/components/Map', () => ({ MapView: () => null }));
 vi.mock('@/components/NeedsOffersFields', () => ({ NeedsOffersFields: () => null }));
+vi.mock('@/components/ProjectToolsPicker', () => ({ ProjectToolsPicker: () => null }));
 
 vi.mock('@/components/SEO', () => ({
   SEO: () => null,

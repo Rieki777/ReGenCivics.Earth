@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileUpload } from "@/components/FileUpload";
 import { trpc } from "@/lib/trpc";
+import { ProjectToolsPicker } from "@/components/ProjectToolsPicker";
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Loader2, Save, MapPin, Map as MapIcon, HelpCircle } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useLocation, Link } from "wouter";
@@ -1399,6 +1400,12 @@ export default function Apply() {
               <h2 className="text-2xl font-bold text-[#1a472a] mb-4">
                 Additional Information
               </h2>
+
+              {/* The library tools the project uses (ADR-73). Saves on its own, outside formData. */}
+              <div>
+                <Label>Tools your project uses</Label>
+                <div className="mt-1"><ProjectToolsPicker applicationId={applicationId} /></div>
+              </div>
 
               <div>
                 <Label htmlFor="websiteUrl">Website URL</Label>

@@ -40,7 +40,7 @@ function Nudge({ voted, href, label, votedLine }: { voted: boolean | null; href:
       <p className="flex items-center gap-2 text-sm font-semibold text-white">
         <Vote className="h-4 w-4 text-[#7dd87d]" aria-hidden="true" /> You haven't voted for a call time yet.
       </p>
-      <Link href={href} className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-[#7dd87d] underline underline-offset-4 hover:text-white">
+      <Link href={href} className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-white underline decoration-[#7dd87d] decoration-2 underline-offset-4 hover:decoration-white">
         {label} &rarr;
       </Link>
     </div>

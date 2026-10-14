@@ -1,4 +1,4 @@
-import { bigint, char, date, decimal, index, int, json, mediumtext, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex } from "drizzle-orm/mysql-core";
+import { bigint, char, date, decimal, index, int, json, mediumtext, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean, tinyint, double, unique, uniqueIndex, primaryKey } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -2741,6 +2741,8 @@ export const allianceApplications = mysqlTable("alliance_applications", {
   partnershipDescription: text("partnershipDescription"),
   /** The tool they build, for the Circle's register. http or https only. */
   toolRepoUrl: varchar("toolRepoUrl", { length: 500 }),
+  /** Draft list of tools they bring, JSON (shared/toolLibrary.ts DraftTool[]); migration 0299. */
+  tools: text("tools"),
   status: mysqlEnum("status", [
     "draft", "submitted", "under_review", "approved", "active", "inactive", "rejected", "changes_requested",
   ]).default("draft").notNull(),
@@ -4091,6 +4093,8 @@ export const regenTools = mysqlTable("regen_tools", {
   contactEmail: varchar("contactEmail", { length: 255 }),
   isOpenSource: boolean("isOpenSource").default(false),
   isPhysical: boolean("isPhysical").default(false),
+  /** App or software, physical tool, or service or method (migration 0299). */
+  toolKind: mysqlEnum("toolKind", ["software", "physical", "service"]),
   regions: json("regions"),
   integrations: json("integrations"),
   problemStatements: json("problemStatements"),
@@ -4103,6 +4107,31 @@ export const regenTools = mysqlTable("regen_tools", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 export type RegenTool = typeof regenTools.$inferSelect;
+
+/**
+ * Which library tools an Alliance Partner application brought (migration
+ * 0299, ADR-73). createdByApplication is 1 when the application's submission
+ * made the library entry, 0 when it linked one that already had the link.
+ */
+export const allianceApplicationTools = mysqlTable("alliance_application_tools", {
+  allianceApplicationId: int("allianceApplicationId").notNull(),
+  toolId: int("toolId").notNull(),
+  createdByApplication: tinyint("createdByApplication").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  primaryKey({ columns: [table.allianceApplicationId, table.toolId] }),
+  index("alliance_application_tools_tool_idx").on(table.toolId),
+]));
+
+/** The library tools a land project says it uses (migration 0299, ADR-73). */
+export const regenToolProjectUsage = mysqlTable("regen_tool_project_usage", {
+  applicationId: int("applicationId").notNull(),
+  toolId: int("toolId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  primaryKey({ columns: [table.applicationId, table.toolId] }),
+  index("regen_tool_project_usage_tool_idx").on(table.toolId),
+]));
 
 export const regenToolCategoryMap = mysqlTable("regen_tool_category_map", {
   toolId: int("toolId").notNull(),

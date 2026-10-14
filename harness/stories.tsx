@@ -24,6 +24,11 @@ import SessionBoard from "@/pages/SessionBoard";
 import AllianceApply from "@/pages/AllianceApply";
 import AllianceApplyStatus from "@/pages/AllianceApplyStatus";
 import { AdminAllianceApplications } from "@/components/admin/AdminAllianceApplications";
+import { AdminToolQueue } from "@/components/admin/AdminToolQueue";
+import ToolDetail from "@/pages/ToolDetail";
+import ToolsLibrary from "@/pages/ToolsLibrary";
+import ApplyStatus from "@/pages/ApplyStatus";
+import ToolSubmit from "@/pages/ToolSubmit";
 import { Router, Route } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { defaultBoardState } from "@shared/sessionBoard";
@@ -239,6 +244,25 @@ const ALLIANCE_APP = {
 
 const SIGNED_IN = { id: 1, name: "Ana Ribeiro", email: "ana@seedcommons.org", role: "user" };
 
+/** Two tools an applicant brings: one fine, one still missing its sentence (ADR-73). */
+const DRAFT_TOOLS = JSON.stringify([
+  { name: "Commons Treasury", url: "https://github.com/seedcommons/treasury", description: "A shared treasury template land projects adopt to pool and steward funds together.", kind: "software", isOpenSource: true },
+  { name: "", url: "https://seedcommons.org/press-kit", description: "", kind: "physical", isOpenSource: false },
+]);
+
+const LIBRARY_TOOL = {
+  id: 4, name: "Commons Treasury", slug: "commons-treasury", websiteUrl: "https://github.com/seedcommons/treasury",
+  logoUrl: null, cardImageUrl: null,
+  shortSummary: "A shared treasury template land projects adopt to pool and steward funds together.",
+  longDescription: "Set up in an afternoon. Works with Hypha and any multisig. Ships with a plain-language agreement template.",
+  pricingModel: "open_source", gettingStartedUrl: "https://seedcommons.org/start", isOpenSource: 1, isPhysical: 0, toolKind: "software",
+  regions: ["Americas", "Europe"], integrations: null, problemStatements: null, status: "approved", totalClicks: 42, seasonSpotlight: null,
+  createdAt: "2026-10-13", updatedAt: "2026-10-13",
+  categories: [{ name: "Finance", slug: "finance" }, { name: "Governance", slug: "governance" }],
+  partnerName: "Seed Commons", partnerUrl: "https://seedcommons.org", usedByProjects: 3, interopStage: "not_assessed",
+  endorsements: [{ id: 1, userName: "Maya", comment: "We moved our land fund onto this in a week.", createdAt: "2026-10-10" }],
+};
+
 export const STORIES: Record<string, Story> = {
   "alliance-apply-form": {
     title: "Become an Alliance Partner: the application form, mid-draft",
@@ -247,6 +271,96 @@ export const STORIES: Record<string, Story> = {
       mockData["allianceApplications.mine"] = [{ ...ALLIANCE_APP, status: "draft", submittedAt: null, supportDescription: "We run a flow fund" }];
     },
     render: () => <AllianceApply />,
+  },
+
+  "alliance-apply-tools": {
+    title: "Alliance form: the Your tools section, after trying to send",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["allianceApplications.mine"] = [{ ...ALLIANCE_APP, status: "draft", submittedAt: null, tools: DRAFT_TOOLS, libraryTools: [] }];
+    },
+    render: () => <AllianceApply />,
+  },
+
+  "alliance-status-tools": {
+    title: "Alliance status: approved, with tools listed and one in review",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["allianceApplications.mine"] = [{
+        ...ALLIANCE_APP, status: "approved",
+        libraryTools: [
+          { toolId: 4, createdByApplication: true, name: "Commons Treasury", slug: "commons-treasury", websiteUrl: "https://github.com/seedcommons/treasury", shortSummary: null, status: "approved", toolKind: "software" },
+          { toolId: 5, createdByApplication: true, name: "Press Kit", slug: "press-kit", websiteUrl: "https://seedcommons.org/press-kit", shortSummary: null, status: "pending", toolKind: "physical" },
+        ],
+      }];
+      mockData["interopSessions.linkMyVote.result"] = { voted: true };
+    },
+    render: () => <AllianceApplyStatus />,
+  },
+
+  "admin-tool-queue": {
+    title: "Admin > Alliance: tools waiting for review",
+    setup: () => {
+      mockData["tools.listPending"] = [
+        { id: 5, name: "Press Kit", slug: "press-kit", websiteUrl: "https://seedcommons.org/press-kit", shortSummary: "A printable kit for telling a land project's story at markets and gatherings.", longDescription: null, toolKind: "physical", isOpenSource: 0, contactEmail: "ana@seedcommons.org", createdAt: "2026-10-13", submitterName: "Ana Ribeiro", allianceApplicationId: 7, allianceOrganization: "Seed Commons", allianceStatus: "under_review" },
+        { id: 6, name: "Soil Ledger", slug: "soil-ledger", websiteUrl: "https://soilledger.example/app", shortSummary: "Track soil tests across seasons.", longDescription: null, toolKind: "software", isOpenSource: 1, contactEmail: null, createdAt: "2026-10-12", submitterName: "Jo", allianceApplicationId: null, allianceOrganization: null, allianceStatus: null },
+      ];
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminToolQueue />
+      </div>
+    ),
+  },
+
+  "tool-detail-partner": {
+    title: "A tool page: Alliance Partner, used by land projects, owner can edit",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["tools.getBySlug"] = LIBRARY_TOOL;
+      mockData["tools.mine"] = [LIBRARY_TOOL];
+      mockData["tools.list"] = [LIBRARY_TOOL, { ...LIBRARY_TOOL, id: 9, slug: "hylo", name: "Hylo", pricingModel: "free", partnerName: null, usedByProjects: 0 }];
+    },
+    render: () => {
+      const { hook } = memoryLocation({ path: "/tools/commons-treasury", static: true });
+      return (
+        <Router hook={hook}>
+          <Route path="/tools/:slug"><ToolDetail /></Route>
+        </Router>
+      );
+    },
+  },
+
+  "tools-library-cards": {
+    title: "The Tools Library with a partner's tool",
+    setup: () => {
+      mockData["tools.list"] = [LIBRARY_TOOL, { ...LIBRARY_TOOL, id: 9, slug: "hylo", name: "Hylo", pricingModel: "free", partnerName: null, usedByProjects: 0, shortSummary: "Community coordination platform connecting people and projects." }];
+      mockData["tools.categories"] = [{ id: 1, name: "Finance", slug: "finance", toolCount: 1 }];
+    },
+    render: () => <ToolsLibrary />,
+  },
+
+  "apply-status-tools-picker": {
+    title: "Land project status: accepted, with the tools picker",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+      mockData["applications.myApplications"] = [{ id: 3, projectName: "Hill Farm", status: "approved", location: "Vermont", season: 2, submittedAt: "2026-10-01" }];
+      mockData["tools.options"] = [
+        { id: 1, name: "Gitcoin", slug: "gitcoin", toolKind: null },
+        { id: 2, name: "Hypha", slug: "hypha", toolKind: null },
+        { id: 3, name: "Hylo", slug: "hylo", toolKind: null },
+        { id: 4, name: "Commons Treasury", slug: "commons-treasury", toolKind: "software" },
+      ];
+      mockData["tools.projectTools"] = [2, 3];
+      mockData["seasonSchedule.linkMyVote.result"] = { voted: false };
+    },
+    render: () => <ApplyStatus />,
+  },
+
+  "tool-submit": {
+    title: "Submit a tool: the first step",
+    setup: () => { mockData["auth.me"] = SIGNED_IN; },
+    render: () => <ToolSubmit />,
   },
 
   "alliance-status-approved": {
