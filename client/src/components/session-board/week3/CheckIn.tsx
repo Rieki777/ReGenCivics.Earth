@@ -16,6 +16,7 @@
  */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { BOARD_LIMITS, CHECKIN_COPY, fillCopy, foldProjectName, tileRef } from "@shared/sessionBoard";
+import { CARRY_COPY } from "@shared/boardCarry";
 import { AuthDialog } from "@/components/AuthDialog";
 import { trpc } from "@/lib/trpc";
 import { useCheckInTiles } from "../useSessionBoard";
@@ -135,7 +136,7 @@ function CardCare({ props }: { props: StageProps }) {
 }
 
 export function CheckIn(props: StageProps) {
-  const { board, week, stages, index, facilitator, canWrite, mine, actions, myProject, setMyProject, displayName, setDisplayName, signedIn } = props;
+  const { board, week, stages, index, facilitator, canWrite, mine, actions, myProject, setMyProject, displayName, setDisplayName, signedIn, carry } = props;
   const stage = stages[index];
   const { tiles, loading, failed, retry } = useCheckInTiles(week, board.version);
   const [choosing, setChoosing] = useState(false);
@@ -143,6 +144,7 @@ export function CheckIn(props: StageProps) {
   const [pending, setPending] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [notSame, setNotSame] = useState(false);
   const utils = trpc.useUtils();
   const pickedId = myCardId(myProject);
   const showTiles = choosing || myProject == null;
@@ -183,6 +185,21 @@ export function CheckIn(props: StageProps) {
     }
   };
 
+  // Week 4 on: "Last week you were with X. Same today?", from this browser's
+  // last check-in, else the person's own earlier cards (a new device).
+  // Never on the facilitator's shared screen.
+  const last = carry?.on && !facilitator ? carry.last ?? carry.earlier[0] ?? null : null;
+  // The tile for that project today: the earlier card's own tile, the card here
+  // that carries it (found by application or a link, whatever its name), or one by its name.
+  const carrier = last ? carry.data?.cards.find((c) => c.from.some((f) => f.cardId === last.cardId))?.cardId ?? null : null;
+  const sameTile = last
+    ? (tiles as CheckInTile[]).find((t) => t.ref === `w${last.week}p${last.cardId}`)
+      ?? (carrier != null ? (tiles as CheckInTile[]).find((t) => t.cardId === carrier) : undefined)
+      ?? (tiles as CheckInTile[]).find((t) => foldProjectName(t.name) === foldProjectName(last.name))
+      ?? null
+    : null;
+  const askSame = !!sameTile && myProject == null && !notSame && canWrite;
+
   const pickedName = myProject?.kind === "project"
     ? board.projects.find((p) => p.id === myProject.cardId)?.name ?? myProject.name
     : null;
@@ -210,6 +227,19 @@ export function CheckIn(props: StageProps) {
             </div>
           ) : null}
 
+          {askSame && sameTile && last ? (
+            <div className="sb-panel sb-same" role="group" aria-labelledby="sb-same-q">
+              <p id="sb-same-q" className="sb-picked-name">
+                {fillCopy(last.week === week - 1 ? CARRY_COPY.sameToday : CARRY_COPY.sameTodayEarlier, { name: last.name, week: last.week })}
+              </p>
+              <div className="sb-row">
+                <button type="button" className="sb-btn sb-primary" disabled={pending != null} onClick={() => void tap(sameTile)}>
+                  {pending === sameTile.ref ? CHECKIN_COPY.joining : fillCopy(CARRY_COPY.sameYes, { name: sameTile.name })}
+                </button>
+                <button type="button" className="sb-btn sb-ghost" onClick={() => setNotSame(true)}>{CARRY_COPY.sameNo}</button>
+              </div>
+            </div>
+          ) : null}
           {showTiles ? (
             <>
               {tiles.length > TILE_FILTER_AT ? (

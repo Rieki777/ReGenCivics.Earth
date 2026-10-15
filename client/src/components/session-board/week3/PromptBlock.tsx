@@ -178,7 +178,7 @@ function AskBlock({ p, props }: { p: ShownPrompt; props: StageProps }) {
  * up to `max`. Counts beside a choice are how many people (on this card, or
  * the room for an anonymous prompt) picked it, never who.
  */
-export function PickBlock({ p, props, compact = false, after, title }: {
+export function PickBlock({ p, props, compact = false, after, title, onPick }: {
   p: ShownPrompt;
   props: StageProps;
   compact?: boolean;
@@ -186,6 +186,8 @@ export function PickBlock({ p, props, compact = false, after, title }: {
   after?: (picked: string[]) => ReactNode;
   /** A shorter heading than the prompt's own, for a row inside a card. */
   title?: string;
+  /** Week 4 on: a tap that first copies last week's answer across (../week4/game.ts). */
+  onPick?: (option: string, on: boolean) => void;
 }) {
   const { board, mine, actions, canWrite, myProject } = props;
   const headId = useId();
@@ -220,7 +222,8 @@ export function PickBlock({ p, props, compact = false, after, title }: {
               disabled={!canWrite}
               onClick={() => {
                 setTip(o.tip ? o.key : null);
-                void actions.answerPick({ key: p.key, option: o.key, on: !on, projectId });
+                if (onPick) onPick(o.key, !on);
+                else void actions.answerPick({ key: p.key, option: o.key, on: !on, projectId });
               }}
             >
               <span className="sb-opt-t">{o.label}</span>
@@ -316,7 +319,14 @@ function NoteOne({ current, label, placeholder, disabled, onSave, draftKey }: {
   );
 }
 
-function NoteBlock({ p, props }: { p: ShownPrompt; props: StageProps }) {
+function NoteBlock({ p, props, onNote, after }: {
+  p: ShownPrompt;
+  props: StageProps;
+  /** Week 4 on: a save that first copies last week's lines across. */
+  onNote?: (text: string) => Promise<unknown>;
+  /** Drawn under the field (last week's lines, say). */
+  after?: ReactNode;
+}) {
   const { board, mine, actions, canWrite, facilitator, myProject } = props;
   const headId = useId();
   const projectId = projectIdFor(p, myProject);
@@ -327,7 +337,7 @@ function NoteBlock({ p, props }: { p: ShownPrompt; props: StageProps }) {
   // field with the project's latest line when this person hasn't written one.
   const current = myRows[0]?.text ?? (p.isRef ? newestFirst(answerRows(shown, p.key, projectId))[0]?.text ?? "" : "");
   const wall = newestFirst(shown.filter((i) => i.kind === "answer" && i.block === p.key));
-  const save = (text: string) => actions.answerNote({ key: p.key, text, projectId });
+  const save = (text: string) => (onNote ? onNote(text) : actions.answerNote({ key: p.key, text, projectId }));
   return (
     <section className="sb-prompt" aria-labelledby={headId}>
       <div className="sb-prompt-head">
@@ -341,6 +351,7 @@ function NoteBlock({ p, props }: { p: ShownPrompt; props: StageProps }) {
           : <QuickAdd placeholder={p.placeholder ?? "Type and press Enter"} max={BOARD_LIMITS.note} label={p.title} button onAdd={save} />
       ) : null}
       <PromptLink p={p} />
+      {after}
       {wall.length ? (
         <ul className="sb-wall">
           {wall.map((r) => {
@@ -363,7 +374,12 @@ function NoteBlock({ p, props }: { p: ShownPrompt; props: StageProps }) {
 
 /* ---------------------------------------------------------------- dispatch */
 
-export function PromptBlock({ p, props }: { p: ShownPrompt; props: StageProps }) {
+export function PromptBlock({ p, props, onNote, noteAfter }: {
+  p: ShownPrompt;
+  props: StageProps;
+  onNote?: (text: string) => Promise<unknown>;
+  noteAfter?: ReactNode;
+}) {
   switch (p.mode) {
     case "private":
       return <PrivateCard p={p} />;
@@ -372,6 +388,6 @@ export function PromptBlock({ p, props }: { p: ShownPrompt; props: StageProps })
     case "pick":
       return <PickBlock p={p} props={props} />;
     default:
-      return <NoteBlock p={p} props={props} />;
+      return <NoteBlock p={p} props={props} onNote={onNote} after={noteAfter} />;
   }
 }

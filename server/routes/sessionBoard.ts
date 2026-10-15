@@ -87,10 +87,12 @@ import {
   countGuestRows,
   isAnonymousAnswer,
   mergeCardsOnBoard,
+  isCardAnswer,
   isPickAnswer,
   removeItemOnBoard,
 } from "../lib/sessionBoardAnswers";
 import { checkInOnBoard, checkInOptions } from "../lib/sessionBoardCheckIn";
+import { earlierAnswerWeeks, earlierCardFor, earlierCardsFor, readCarry } from "../lib/sessionBoardCarry";
 import { buildBoardExport, submissionsFor } from "../lib/sessionBoardExport";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
@@ -241,8 +243,11 @@ export const answerInput = z.discriminatedUnion("op", [
     voterKey: voterKeySchema.optional(),
     key: z.string().regex(PROMPT_KEY_RE),
     projectId: idInput.nullable(),
-    text: z.string().min(1).max(1000),
+    // A card's JSON escapes quotes, so it can run past the 1000 it is cleaned down to.
+    text: z.string().min(1).max(2500),
     displayName: z.string().max(200).optional(),
+    /** A new card: the server picks this person's first free slot of the key's kind. */
+    fresh: z.boolean().optional(),
   }),
 ]);
 
@@ -405,6 +410,9 @@ export const sessionBoardRouter = router({
       const board = await findBoard(db, SESSION_BOARD_SEASON, input.week);
       const mine = board ? await mineOnBoard(db, board.id, keys) : { itemIds: [], projectIds: [], targets: [] };
       const anon = board ? await anonOnBoard(db, board.id, keys, anonymousKeys(input.week)) : [];
+      // Week 4 on: the earlier cards this person played for, so a new device
+      // can still offer "Last week you were with X. Same today?".
+      const earlier = await earlierCardsFor(db, SESSION_BOARD_SEASON, input.week, keys);
       return {
         itemIds: mine.itemIds,
         projectIds: mine.projectIds,
@@ -415,6 +423,8 @@ export const sessionBoardRouter = router({
         anon,
         /** Cards this person checked in with on this board, oldest first. */
         checkins: mine.targets.filter((t) => t.startsWith("checkin:")).map((t) => Number(t.slice(8))),
+        /** Earlier weeks' cards this person checked in with or answered for, newest first. */
+        earlier,
         canFacilitate: await canFacilitate(db, ctx.user),
       };
     }),
@@ -729,6 +739,22 @@ export const sessionBoardRouter = router({
     }),
 
   /**
+   * Public: what each card on this board carries from earlier weeks' boards
+   * (Week 4 on, shared/boardCarry.ts): the earlier cards it is the same
+   * project as, their answer rows, and the questions still open from the week
+   * before. Every row is already on an earlier board's public read; anonymous
+   * answers and author keys never come back. Not rate-limited, like `get`;
+   * the earlier boards are cached for 15 seconds.
+   */
+  carry: publicProcedure
+    .input(z.object({ week: weekInput }))
+    .query(async ({ input }) => {
+      assertWeek(input.week);
+      const db = await database();
+      return readCarry(db, SESSION_BOARD_SEASON, input.week);
+    }),
+
+  /**
    * Public: check in with a tile. Finds or makes this board's card for it and
    * marks the caller as here. Anyone can tap any project, no sign-in needed.
    */
@@ -820,6 +846,31 @@ export const sessionBoardRouter = router({
       return { ok: true as const, state };
     }),
 
+  /**
+   * Facilitator: say whether a card here is the same project as an earlier
+   * week's card found only by its name. `fromCardId` 0 says "not this one";
+   * null takes the link back. A name alone never carries another project's
+   * answers without a person saying yes.
+   */
+  confirmCarry: facilitatorProcedure
+    .input(z.object({ week: weekInput, cardId: idInput, fromCardId: z.number().int().min(0).nullable() }))
+    .mutation(async ({ input }) => {
+      assertWeek(input.week);
+      if (!earlierAnswerWeeks(input.week).length) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This week's board carries nothing from earlier weeks." });
+      }
+      const db = await database();
+      const board = await ensureBoard(db, SESSION_BOARD_SEASON, input.week);
+      const p = await projectOnBoard(db, board.id, input.cardId);
+      if (!p || p.hidden) throw new TRPCError({ code: "NOT_FOUND", message: "That project is not on this board." });
+      if (input.fromCardId) {
+        const from = await earlierCardFor(db, SESSION_BOARD_SEASON, input.week, input.fromCardId);
+        if (!from) throw new TRPCError({ code: "NOT_FOUND", message: "That card isn't on an earlier week's board." });
+      }
+      const state = await actOnBoard(db, board.id, input.week, { type: "carry", cardId: p.id, from: input.fromCardId, by: "facilitator" }, Date.now());
+      return { ok: true as const, state };
+    }),
+
   /** Facilitator: theme, choose, count room votes, hide, or fix the wording of a note. */
   curateItem: facilitatorProcedure
     .input(z.object({
@@ -845,6 +896,9 @@ export const sessionBoardRouter = router({
       if (input.text !== undefined) {
         if (isPickAnswer(input.week, item)) {
           throw new TRPCError({ code: "BAD_REQUEST", message: ANSWER_COPY.rewordPick });
+        }
+        if (isCardAnswer(input.week, item)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: ANSWER_COPY.rewordCard });
         }
         const text = cleanBoardLine(input.text, maxTextFor(item.kind as (typeof ITEM_KINDS)[number]));
         if (!text) throw new TRPCError({ code: "BAD_REQUEST", message: "A note needs words." });

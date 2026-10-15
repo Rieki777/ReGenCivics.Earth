@@ -26,7 +26,8 @@ export default defineConfig({
   // Serve the app's real static assets so self-hosted fonts and images
   // resolve; otherwise everything silently falls back to system fonts.
   publicDir: path.resolve(here, "..", "client", "public"),
-  server: { port: 5199, strictPort: true },
+  // HARNESS_PORT lets two worktrees audit at once; 5199 stays the default.
+  server: { port: Number(process.env.HARNESS_PORT) || 5199, strictPort: true },
   // The harness is a dev tool. Nothing here is ever built for production.
   build: { outDir: path.resolve(here, ".out") },
 });

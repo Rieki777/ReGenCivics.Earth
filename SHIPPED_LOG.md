@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-15 (Season 2 Week 4, Game & Organisation Co-Creation Part 2): last week's card comes forward, seats as cards, Copy for Village OS
+
+- **Week 4's board** (ADR-76), 14 stages, 120 minutes, for Wednesday 2026-10-21: check-in with "Last week you were with X. Same today?", Your Week 3 card (what was said, what's still missing and where today answers it, last week's move, Week 3's open questions), Your human needs (need first: change last week's, plant seeds, add your own), Circles for each human need, Seats in each circle (30 minutes), Who decides what, Your first quest, Your Game, built (peer review and Copy for Village OS), questions and Week 5, Tell us, Close.
+- **Week 3's answers carry forward** to each project's Week 4 card: by application, the tile checked in from, the person who played for it, or the facilitator's yes. A change replaces last week's answer one question at a time; Week 3's board is never written.
+- **Seats as cards** with Rye's six fields; held by someone on the team, open as an invitation, or a being. Migration 0300 widens board answers to 1000 characters for them.
+- **Copy for Village OS**: the `needs` list is exactly Village OS's needs scope body, plus the whole-project figure, circles per human need as draft need links, seats with their links, decisions and quests. The admin export carries the same card per project.
+- **Reviewed** through five lenses (carry correctness, security, client and accessibility, copy and the Village OS contract, tests and ship risk). Fixed: a carried seed bringing back a removed human need, writes before last week's answers loaded, the first change running unlocked, links recorded from a name alone or across different applications, a new card overwriting one saved on another device, cards lost when two identities or cards join, copy that sent founders to a paste step Village OS doesn't have yet, own human needs that would make Village OS refuse the whole list. 10 new harness stories pass `pnpm ui:audit`; an end-to-end run on the scratch database (a returning guest from "Same today?" to the copied card, then the facilitator and the export).
+- Source: `docs/planning/week4-episode/WEEK4_BOARD_PLAN.md`.
+- Carryover: the Village OS side reads the card (a "Paste your card from ReGen Civics" step, village-os repo, the Village OS 1.0 launch lane), and validates a stranger's own-need names there too; seat cards becoming Village OS seats at launch; a one-step server copy for a project's first change (two teammates' first changes at the same moment can each copy the list); focus returning to the Add button after a card form closes; the carry read sending only each key's newest week once boards reach Week 5 and on.
+
 ## 2026-10-14 (typing lag): every keystroke reaches the screen fast again
 
 - **Why typing lagged**: no single script was slow. The main thread was busy with motion nobody could see, and every keystroke waited behind it. On every page, the mycelium background pulsed 21 SVG shapes. Google Translate loaded on everyone's first click or keypress, which froze that keystroke for about 350ms, and then left its hidden spinner turning forever. CTA, role-card, badge, Quest and Ship glows animated background-position and box-shadow. Each of these made the browser restyle every frame.

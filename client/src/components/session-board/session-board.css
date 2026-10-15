@@ -734,3 +734,56 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
     .sb-note-one textarea.sb-field { min-height: calc(3em + 22px); }
   }
 }
+
+/* ---------------------------------------------------------------- Week 4 --
+   Season 2, Week 4 (Part 2 of 2): the cards (a seat, a human need of the
+   project's own, what a circle decides, a quest), last week's card carried
+   forward, "Same today?" on the check-in, and Copy for Village OS. */
+.sb-same { display: grid; gap: 12px; border-color: var(--sb-spring); }
+/* A project name can run to 120 characters: the button wraps instead of pushing the page sideways. */
+.sb-same .sb-btn { white-space: normal; text-align: left; height: auto; padding-block: 8px; overflow-wrap: anywhere; }
+.sb-carried { display: grid; gap: 10px; min-width: 0; }
+.sb-carried-move { color: var(--sb-ink-2); overflow-wrap: anywhere; }
+.sb-confirm-list { display: grid; gap: 14px; border-color: var(--sb-lantern); }
+.sb-confirm { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--sb-lantern); background: rgba(212, 165, 116, 0.12); font-weight: 700; }
+.sb-gaps { display: grid; gap: 10px; }
+.sb-gap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.sb-gap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; padding: 6px 4px 6px 12px; border-radius: 10px; border: 1px solid var(--sb-line); background: var(--sb-ground-2); }
+.sb-gap > span { overflow-wrap: anywhere; min-width: 0; }
+.sb-need-sections { display: grid; gap: 16px; min-width: 0; }
+.sb-need-section { display: grid; gap: 12px; padding: clamp(14px, 1.6vw, 22px); border-radius: 16px; border: 1px solid var(--sb-line); border-top: 6px solid var(--sb-hue, var(--sb-spring)); background: var(--sb-panel); min-width: 0; }
+.sb-need-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; }
+.sb-seat-count { font-weight: 800; color: var(--sb-ink-2); font-variant-numeric: tabular-nums; }
+.sb-card-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+.sb-card-item { min-width: 0; }
+.sb-card { display: grid; gap: 8px; align-content: start; height: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--sb-line-strong); border-left: 4px solid var(--sb-hue, var(--sb-spring)); background: var(--sb-ground-2); }
+.sb-card-title { margin: 0; font-family: var(--sb-display); font-weight: 700; font-size: 19px; overflow-wrap: anywhere; }
+.sb-card-line { color: var(--sb-ink-2); overflow-wrap: anywhere; }
+.sb-card-facts { margin: 0; display: grid; gap: 4px; }
+.sb-card-facts > div { display: grid; grid-template-columns: minmax(7.5em, auto) minmax(0, 1fr); gap: 10px; }
+.sb-card-facts dt { color: var(--sb-muted); font-size: 14px; font-weight: 800; }
+.sb-card-facts dd { margin: 0; color: var(--sb-ink-2); overflow-wrap: anywhere; }
+.sb-card-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.sb-card-form { display: grid; gap: 14px; max-width: 720px; min-width: 0; }
+.sb-card-field { display: grid; gap: 6px; min-width: 0; }
+.sb-card-label { font-weight: 800; color: var(--sb-ink-2); }
+.sb-card-form select.sb-field { max-width: 100%; }
+.sb-own-suggest { justify-content: space-between; }
+.sb-vos-copy { display: grid; gap: 10px; min-width: 0; }
+.sb-vos-json summary { cursor: pointer; min-height: 44px; display: inline-flex; align-items: center; font-weight: 800; color: var(--sb-spring-ink); }
+.sb-vos-json summary:focus-visible, .sb-vos-json pre:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 2px; }
+.sb-vos-json pre { margin: 8px 0 0; max-height: 320px; overflow: auto; padding: 12px; border-radius: 10px; border: 1px solid var(--sb-line); background: var(--sb-ground-2); color: var(--sb-ink-2); font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; line-height: 1.5; white-space: pre; }
+.sb-built-cards .sb-pcard { gap: 10px; }
+@media (max-width: 560px) {
+  .sb-card-facts > div { grid-template-columns: 1fr; gap: 0; }
+}
+.sb-opt-tick { grid-column: 2; grid-row: 1; font-weight: 800; }
+/* A card's one-line field wraps instead of cutting its example off on a phone. */
+textarea.sb-field.sb-card-text { min-height: 44px; resize: none; field-sizing: content; overflow-wrap: anywhere; line-height: 1.4; }
+@supports not (field-sizing: content) {
+  textarea.sb-field.sb-card-text { min-height: calc(2.8em + 22px); }
+}
+@media (max-width: 560px) {
+  .sb-need-section { padding: 12px; }
+  .sb-need-section .sb-card-form { padding: 12px; }
+}

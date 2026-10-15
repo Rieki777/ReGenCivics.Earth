@@ -113,8 +113,8 @@ describe("the stages", () => {
       const stages = boardStages(w);
       const mins = stages.map((s) => s.min);
       const sum = mins.reduce((a, m) => a + m, 0);
-      // Week 3 is its own design at 120 minutes (WEEK3_BOARD_SPEC_V1 section 2); the rest stay 121.
-      expect(sum, `week ${w} default`).toBe(w === 3 ? 120 : 121);
+      // Weeks 3 and 4 are their own designs at 120 minutes; the rest stay 121.
+      expect(sum, `week ${w} default`).toBe(w === 3 || w === 4 ? 120 : 121);
       expect(sessionMinutes(mins, stages), `week ${w}`).toBe(sum);
       expect(sessionMinutes(defaultBoardState(w).plan, stages), `week ${w} board`).toBe(sum);
       expect(stages.filter((s) => s.kind === "getvillageos"), `week ${w}`).toHaveLength(1);
@@ -167,7 +167,8 @@ describe("the stages", () => {
     expect(boardWelcome(3).lede.length).toBeGreaterThan(20);
     expect(boardWelcome(2).leaveWith).toContain("Some projects at the table, and where each one is");
     expect(boardWelcome(3).leaveWith[0]).toBe("Your project's human needs, with three seeds planted at its heart");
-    expect(boardWelcome(4).leaveWith[0]).toBe("Where the projects at the table are this week");
+    expect(boardWelcome(4).leaveWith[0]).toBe("Your human needs, checked and ready for Village OS");
+    expect(boardWelcome(5).leaveWith[0]).toBe("Where the projects at the table are this week");
     const leave = [2, 3, 13].flatMap((w) => boardWelcome(w).leaveWith).join(" ");
     expect(leave).not.toMatch(/every project at the table/i);
     expect(leave).not.toMatch(/where every project is/i);

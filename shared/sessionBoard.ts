@@ -45,7 +45,13 @@ import {
   USEFUL_SCALE,
   WEEK4_PICKS,
   WHOLE_STOPS,
+  MOVED_SCALE,
+  SEAT_HELP,
+  TOGETHER_DECISIONS,
+  WEEK5_PICKS,
 } from "./humanNeeds";
+import { CARD_TEXT_MAX, cardSlotKeys, type CardKind } from "./boardCards";
+import type { CarryBy, CarryLink } from "./boardCarry";
 
 export const SESSION_BOARD_SEASON = "Season 2";
 export const FIRST_BOARD_WEEK = 2;
@@ -173,6 +179,13 @@ export type BoardPrompt = {
   full?: string;
   /** For the per-need prompts (n-, g-, b-, m-): which human need. */
   need?: string;
+  /**
+   * A card answer (Week 4 on, shared/boardCards.ts): a note whose words are a
+   * small JSON object of several fields. The server cleans it field by field.
+   */
+  card?: CardKind;
+  /** The longest text a note answer keeps, when it isn't BOARD_LIMITS.note. */
+  maxText?: number;
 };
 
 /** A prompt defined on an earlier stage, shown again here, with its words optionally changed. */
@@ -200,8 +213,12 @@ export type BoardStage = {
   pictures?: readonly StagePicture[];
   /** The questions this stage asks, in order. */
   prompts?: readonly (BoardPrompt | PromptRef)[];
-  /** needs stages only: which part of the human needs walk. */
-  step?: "pick" | "depth" | "meet" | "circles" | "room";
+  /**
+   * needs stages only: which part of the human needs walk. Week 4 adds
+   * `carry` (last week's card), `confirm` (check and add human needs, seeds,
+   * depth), `seats`, `decide` and `quests`.
+   */
+  step?: "pick" | "depth" | "meet" | "circles" | "room" | "carry" | "confirm" | "seats" | "decide" | "quests";
   /** A quote panel. */
   quote?: string;
   /** Plain lines shown with the stage (a bridge line, a footer). */
@@ -994,10 +1011,260 @@ const WEEK_3: BoardStage[] = [
   { ...GET_VILLAGE_OS },
 ];
 
+/* ---------------------------------------------------------------- week 4 */
+
+/** The card slots a stage asks: one prompt per slot, each a card of `kind` (shared/boardCards.ts). */
+const cardPrompts = (kind: CardKind, title: string): BoardPrompt[] =>
+  cardSlotKeys(kind).map((key) => ({ key, title, mode: "note", scope: "project", max: 1, card: kind, maxText: CARD_TEXT_MAX }));
+
+/** Week 4's own words: the stage heads read them, and the tests sweep them. */
+export const WEEK4_COPY = {
+  carryTitle: "Your Week 3 card",
+  needsTitle: "Your human needs",
+  seatsTitle: "Seats in each circle",
+  decideTitle: "Who decides what",
+  questsTitle: "Your first quest",
+  builtTitle: "Your Game, built",
+  copy: "Copy for Village OS",
+  copied: "Copied. Keep it for setting up your Village OS, or send it to whoever sets up your village.",
+  copyFailed: "Your browser didn't copy it. The card is open and selected below: copy it from there.",
+  copyHint: "Everything your project said in Week 3 and today, as a card Village OS can read.",
+  showCopy: "Show what's in it",
+  seatsPerNeed: "{seats} · {held} held",
+  seatsCount: "Seats by human need",
+  noNeeds: "Name your project's human needs first, on {stage}.",
+  ownCircles: "Your own circles",
+  close: ["Projects checked in", "Human needs with a circle", "Seats written", "Questions asked"],
+  closeLine: "The board stays open. Come back any time to finish a stage.",
+} as const;
+
+/**
+ * Week 4, "Game & Organisation Co-Creation Part 2" (Wednesday 2026-10-21,
+ * 10:00 PDT), Part 2 of 2: the practical half, in Village OS. Rye,
+ * 2026-10-14: each project's Week 3 answers come forward; need first, and
+ * projects can change and add their own human needs; the circles that meet
+ * each human need; the seats in each circle as cards with six fields (held by
+ * someone on the team, open as an invitation, or a being; hours a week or a
+ * clear contribution); who decides what; and a first quest. The whole Season
+ * ends in launching each project's Village OS from what the episodes uncover,
+ * so the board makes a card ready to paste. 14 stages, 120 minutes.
+ *
+ * Stage positions are fixed from the first save of Week 4's board (planned
+ * minutes are kept by position), so this list never gets a stage inserted.
+ */
+const WEEK_4: BoardStage[] = [
+  {
+    kind: "welcome", name: "Welcome", short: "Welcome", min: 4, line: "Part 2 of 2: build it in Village OS",
+    cues: [
+      "Greet people by name. \"Open the board on your own screen and tap your project while we gather.\" Point to the QR.",
+      "Say it plainly: this is Part 2 of 2, the practical half. Last week each project named the human needs it is here to meet. Today we build its Game around them, and every project leaves with a card ready for its Village OS.",
+      "Read the \"You asked us to cover\" notes in one breath: practising in your own context, and peer review.",
+      "When you go live, press Start session at the top. Moving between stages never starts the clock.",
+    ],
+  },
+  {
+    kind: "checkin", name: CHECKIN_COPY.title, short: "Your project", min: 4, line: "Tap your project, or add it",
+    lede: "Everything you add today is kept with your project's card, together with what it said last week. Here with a teammate? Tap the same card.",
+    cues: [
+      "\"Tap your project. If you were here last week, your project is waiting: one tap says same today.\"",
+      "Two cards for one project: merge the stray into the one to keep. A new card with an application: link it with the select.",
+      "A card found only by its name waits for you: open Your Week 3 card and answer \"Is this the same project?\"",
+    ],
+  },
+  {
+    kind: "breath", name: "Drop in", short: "Drop in", min: 5, line: "Breathe together and arrive",
+    cues: [
+      "Long exhale, six rounds, or mini breathwork if the room wants it.",
+      "Then one word each, on the board or in the chat.",
+    ],
+  },
+  {
+    kind: "needs", step: "carry", name: WEEK4_COPY.carryTitle, short: "Week 3 card", min: 10, line: "What you said last week, and what's still open",
+    lede: "Here's what your project said last week. Read it with your people. Anything you change today replaces last week's answer, and anything you leave comes with you.",
+    prompts: [
+      { key: "moved", title: "Did your move from last week happen?", mode: "pick", scope: "project", options: opts(MOVED_SCALE), max: 1 },
+      {
+        key: "moved-line",
+        title: "What moved, or what got in the way?",
+        placeholder: "We read our card with our people and changed two things",
+        mode: "note", scope: "project", max: 1,
+      },
+    ],
+    cues: [
+      "Read one project's card aloud as the example, then give everyone three minutes with their own.",
+      "Point at \"Not answered yet\": each gap gets answered on today's stages.",
+      "Answer the role questions still open from Week 3 first: inviting people into roles, counting contribution, what a role is worth. Today's seats stage is the long answer.",
+      "Ask each project: did your move happen?",
+    ],
+  },
+  {
+    kind: "needs", step: "confirm", name: WEEK4_COPY.needsTitle, short: "Human needs", min: 12, line: "Check them, plant your seeds, add your own",
+    lede: "Human needs first. These are the human needs your project named last week. Change anything that's no longer true, plant three seeds at its heart, and add any human need of your own. Then, for each seed, how deep and for how many.",
+    prompts: [
+      { key: "needs", title: "The human needs your project is here to meet", mode: "pick", scope: "project", options: NEED_OPTIONS, max: 10 },
+      { key: "top", title: NEEDS_COPY.plant, mode: "pick", scope: "project", options: NEED_OPTIONS, max: 3, full: "Three seeds each. Take one back to move it." },
+      ...cardPrompts("own", "A human need of your own"),
+      ...DEPTH_PROMPTS,
+      {
+        key: "whole",
+        title: "What share of your people's human needs does your project mean to meet?",
+        hint: "Ten percent is a good neighbour. A hundred percent is a whole world, and it takes a whole economy behind it.",
+        mode: "pick", scope: "project", options: opts(WHOLE_STOPS), max: 1,
+      },
+    ],
+    cues: [
+      "Share Amora's Village OS: Admin, The Game, What this village is for. Walk screens 1 to 4 with Amora's own answers. Amora planted no seeds last week, so plant them live.",
+      "\"Change anything that's no longer true. Add any human need of your own. Each seed gets how deep and for how many.\"",
+      "Copy for Village OS sits at the foot of this stage and on Your Game, built. Founders keep the card for setting up their village.",
+    ],
+  },
+  {
+    kind: "needs", step: "circles", name: "Circles for each human need", short: "Circles", min: 12, line: "The circles that meet each human need",
+    lede: "An economy is people coming together to meet each other's human needs. For each human need on your card, seeds first, tap the circles that meet it. Then name your own circles, the ones you start with, and how many players it takes.",
+    prompts: [
+      ...CIRCLE_PROMPTS,
+      {
+        key: "circles-own",
+        title: "Name your own circles",
+        hint: "Each circle and what it holds, in a few words. Up to five.",
+        placeholder: "Kitchen: feeding everyone",
+        mode: "note", scope: "project", max: 5,
+      },
+      { key: "circles", title: "Which circles does your project start with? Tap every one that fits.", mode: "pick", scope: "project", options: opts(CIRCLES), max: CIRCLES.length },
+      { key: "players", title: "We need at least ___ players to start our Game.", mode: "pick", scope: "project", options: opts(PLAYER_COUNTS), max: 1 },
+      { key: "players-now", title: "How many are playing now?", mode: "pick", scope: "project", options: opts(PLAYER_COUNTS), max: 1 },
+      { key: "shape", title: "What's the overall shape of your Game?", mode: "pick", scope: "project", options: opts(GAME_SHAPES), max: 1 },
+      {
+        key: "shape-line",
+        title: "Sketch your Game's structure in one line",
+        hint: "Who's at the centre, which circles, and how they connect.",
+        placeholder: "Twelve families, five circles, linked with two farms in our watershed",
+        mode: "note", scope: "project", max: 1,
+      },
+      { key: "pulse-a", title: "How's this landing?", mode: "pick", scope: "room", anonymous: true, options: PULSE, max: 1 },
+    ],
+    cues: [
+      "Nobody reached this step last week, so it gets its full time today.",
+      "In Amora's Village OS, open the org chart: each circle here becomes a circle there.",
+      "Seeds first. A circle can meet more than one human need, and a human need can have more than one circle.",
+      "Glance at the pulse.",
+    ],
+  },
+  {
+    kind: "needs", step: "seats", name: WEEK4_COPY.seatsTitle, short: "Seats", min: 30, line: "The seats that meet each human need, and who holds them",
+    lede: "A circle starts with seats. For each human need, add the seats that meet it. Write each one so someone could say yes to it: what it works toward, what it answers for, and what it asks of them. If someone on your team already holds it, name them.",
+    prompts: [
+      ...cardPrompts("seat", "A seat"),
+      { key: "seat-help", title: "What would help most with your seats?", mode: "pick", scope: "project", options: opts(SEAT_HELP), max: SEAT_HELP.length },
+    ],
+    cues: [
+      "This is the heart of today. Thirty minutes.",
+      "In Amora's Village OS, open Roles: a seat's card has its aim, what it answers for, and why it matters. Show one, front and back.",
+      "\"Need first: take your first seed, add the seats that meet it, then the next.\" Each seat names who holds it now, or stays open as an invitation. A being can hold a seat, with someone speaking for it.",
+      "Seats end with the season unless you say otherwise, so a short-term role is just a seat. One that grows can become a circle.",
+      "Read the count by human need back to the room: which human needs have seats, and which have nobody yet.",
+      "Legal structures for roles come in Weeks 10 and 11.",
+    ],
+  },
+  {
+    kind: "needs", step: "decide", name: WEEK4_COPY.decideTitle, short: "Decides", min: 12, line: "What each circle decides, and what you decide together",
+    lede: "Last week you said how you decide today and how you want to. Now split it up: each circle decides what's its own, and a few things the whole project decides together.",
+    prompts: [
+      ...cardPrompts("decide", "What a circle decides"),
+      { key: "together", title: "What does the whole project decide together?", mode: "pick", scope: "project", options: opts(TOGETHER_DECISIONS), max: TOGETHER_DECISIONS.length },
+      { key: "decide-aim", title: "How does the whole project decide those?", mode: "pick", scope: "project", options: opts(DECIDE_OPTIONS), max: 1 },
+      {
+        key: "agreement",
+        title: "One agreement your people could say yes to this month",
+        placeholder: "Each circle decides what's its own, and brings the rest to the full moon circle",
+        mode: "note", scope: "project", max: 1,
+      },
+      { key: "pulse-b", title: "How's this landing?", mode: "pick", scope: "room", anonymous: true, options: PULSE, max: 1 },
+    ],
+    cues: [
+      "In Amora's Village OS, open Governance. A seat's card also says what it decides on and its way of deciding.",
+      "\"Each circle decides what's its own. What's left for everyone?\"",
+      "It takes a village: talking with others before deciding is exactly what a circle is for.",
+    ],
+  },
+  {
+    kind: "needs", step: "quests", name: WEEK4_COPY.questsTitle, short: "Quest", min: 7, line: "One quest that grows a human need",
+    lede: "A quest is one thing someone can do that grows a human need, a seed if you can. Make it small enough to finish before Week 5.",
+    prompts: [...cardPrompts("quest", "A quest")],
+    cues: [
+      "In Amora's Village OS, open Quests and propose one, tagged to its human need.",
+      "Running behind: two minutes, one quest from each project said out loud.",
+    ],
+  },
+  {
+    kind: "needs", step: "room", name: WEEK4_COPY.builtTitle, short: "Built", min: 9, line: "Each project reads its Game, and gets its card",
+    lede: "Each project reads its Game in about a minute. The next project reflects back one thing it would play. Then copy your card for Village OS.",
+    prompts: [
+      {
+        key: "purpose",
+        title: "Your project's first line. All this is for ___",
+        hint: "Change it if it has grown since last week.",
+        placeholder: "twelve families living well on land we heal together",
+        mode: "note", scope: "project", max: 1,
+      },
+    ],
+    cues: [
+      "Switch the share from Village OS to the board.",
+      "Each project reads its Game for about a minute. The next project reflects back one thing it would play: that's the peer review Templeofroots.com asked for.",
+      "More than 8 projects: 30 seconds each, reflections in the chat.",
+      "\"Copy for Village OS\" on each card. Founders keep it for setting up their village.",
+    ],
+  },
+  {
+    kind: "prompt", name: "Your questions, and Week 5", short: "Questions", min: 8, line: "Questions answered, and one move before Week 5",
+    lede: "Let's take your questions. Then each project names one move before Week 5, when we write your Game Guide and start your economic system.",
+    prompts: [
+      { key: "ask", title: "Your questions on circles, seats and Village OS", placeholder: PROMPT_COPY.askPlaceholder, mode: "ask", scope: "project" },
+      {
+        key: "move",
+        title: "One move before Week 5",
+        placeholder: "Ask Ana if she'll hold the water keeper seat",
+        mode: "note", scope: "project", max: 1,
+      },
+      { key: "week5", title: "What do you want to work on in Week 5?", mode: "pick", scope: "project", options: opts(WEEK5_PICKS), max: 3 },
+    ],
+    notes: ["Legal structures come in Weeks 10 and 11. Pooling what everyone brings comes in Week 13."],
+    cues: [
+      "Share the wall. Answer the top questions and tap \"Answered\" on each.",
+      "Each project names one move. Read the Week 5 picks: that's Week 5's agenda.",
+      "Running behind: 5 minutes.",
+    ],
+  },
+  {
+    kind: "prompt", name: "Tell us", short: "Tell us", min: 4, line: "How today landed",
+    lede: "Tell me how today landed. It shapes next week.",
+    feedback: true,
+    prompts: [
+      { key: "landed", title: "One thing that landed for you today", mode: "note", scope: "room", max: 2 },
+      { key: "useful", title: "How useful was today for your project?", mode: "pick", scope: "room", anonymous: true, options: opts(USEFUL_SCALE), max: 1 },
+    ],
+    cues: [
+      "\"Tell me how today landed. Tick share if you want your Week 5 topic on next week's welcome.\"",
+      "Three quiet minutes.",
+    ],
+  },
+  {
+    kind: "close", name: "Close", short: "Close", min: 2, line: "One word, and thanks",
+    lede: `One word as you leave. Thank you for building your Games together today. ${WEEK4_COPY.closeLine}`,
+    cues: [
+      "One word each. Read the numbers.",
+      "Say the board stays open, and every project can copy its card for Village OS any time.",
+      "Then press End session. Leave the board open.",
+    ],
+  },
+  { ...GET_VILLAGE_OS },
+];
+
 /** The stages a week's board walks through, in order. */
 export function boardStages(week: number): BoardStage[] {
   if (week === 2) return WEEK_2;
   if (week === 3) return WEEK_3;
+  if (week === 4) return WEEK_4;
   return defaultStages(week);
 }
 
@@ -1225,6 +1492,20 @@ export function boardWelcome(week: number): { title: string; lede: string; leave
       ],
     };
   }
+  if (week === 4) {
+    // Rye, 2026-10-14: Part 2 of 2, the practical half, built from Week 3's answers.
+    return {
+      title: ep?.title ?? "Game & Organisation Co-Creation Part 2",
+      lede: "This is Part 2 of 2, the practical half. Last week you named the human needs your project is here to meet. Today we build your Game around them: the circles that meet each one, the seats in each circle and who holds them, who decides what, and your first quest. You leave with a card ready for your Village OS.",
+      leaveWith: [
+        "Your human needs, checked and ready for Village OS",
+        "The circles that meet each human need",
+        "The seats in each circle, and who holds them",
+        "Who decides what, and one first agreement",
+        "A first quest that grows a seed",
+      ],
+    };
+  }
   return {
     title: ep?.title ?? `Week ${week}`,
     lede: ep?.description ?? "",
@@ -1410,7 +1691,19 @@ export type BoardState = {
   plan: number[];
   breath: { pattern: BreathKey; rounds: number; startedAt: number | null; pace: BreathPace };
   speaker: { projectId: number | null; secs: number; startedAt: number | null; accum: number };
+  /**
+   * Week 4 on (shared/boardCarry.ts): which earlier week's card each card on
+   * this board carries its answers from, by card id. Written when someone
+   * checks in from an earlier week's tile, when a person checks in with a
+   * project they played for last week, and when a facilitator confirms a
+   * match found only by name. `from` 0 is a facilitator's "not this one".
+   */
+  carry: Record<string, CarryLink>;
 };
+
+/** How many carry links a board keeps: one per card, and a board holds 150 cards. */
+const MAX_CARRY_LINKS = 400;
+const CARRY_BYS: readonly CarryBy[] = ["tile", "person", "facilitator"];
 
 export function defaultBoardState(week: number): BoardState {
   return {
@@ -1421,7 +1714,25 @@ export function defaultBoardState(week: number): BoardState {
     plan: boardStages(week).map((s) => s.min),
     breath: { pattern: "settle", rounds: 6, startedAt: null, pace: "medium" },
     speaker: { projectId: null, secs: 180, startedAt: null, accum: 0 },
+    carry: {},
   };
+}
+
+/** A stored carry map read back: unknown cards, bad ids and unknown kinds drop. */
+function normalizeCarry(raw: unknown): Record<string, CarryLink> {
+  const out: Record<string, CarryLink> = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (Object.keys(out).length >= MAX_CARRY_LINKS) break;
+    if (!/^\d{1,10}$/.test(k) || Number(k) <= 0) continue;
+    const link = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
+    const from = link.from;
+    const by = link.by;
+    if (typeof from !== "number" || !Number.isInteger(from) || from < 0) continue;
+    if (typeof by !== "string" || !(CARRY_BYS as readonly string[]).includes(by)) continue;
+    out[k] = { from, by: by as CarryBy };
+  }
+  return out;
 }
 
 const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
@@ -1470,6 +1781,7 @@ export function normalizeBoardState(raw: unknown, week: number): BoardState {
       startedAt: stampOrNull(speaker.startedAt),
       accum: finite(speaker.accum) && speaker.accum > 0 ? Math.min(speaker.accum, 24 * 3600) : 0,
     },
+    carry: normalizeCarry(src.carry),
   };
 }
 
@@ -1483,7 +1795,9 @@ export type BoardAction =
   | { type: "breath"; pattern?: BreathKey; rounds?: number; run?: boolean; pace?: BreathPace }
   | { type: "speaker"; projectId: number | null }
   | { type: "timer"; op: "start" | "pause" | "reset" }
-  | { type: "shareSecs"; secs: number };
+  | { type: "shareSecs"; secs: number }
+  /** Link a card here to an earlier week's card (`from` 0: not this one), or clear the link (null). */
+  | { type: "carry"; cardId: number; from: number | null; by: CarryBy };
 
 /**
  * Apply one facilitator action at server time `now`. Pure: the caller stores
@@ -1497,6 +1811,7 @@ export function applyBoardAction(state: BoardState, action: BoardAction, now: nu
     plan: [...state.plan],
     breath: { ...state.breath },
     speaker: { ...state.speaker },
+    carry: { ...(state.carry ?? {}) },
   };
   const last = s.plan.length - 1;
   switch (action.type) {
@@ -1565,6 +1880,15 @@ export function applyBoardAction(state: BoardState, action: BoardAction, now: nu
     case "shareSecs":
       s.speaker.secs = Math.min(BOARD_LIMITS.maxShareSecs, Math.max(BOARD_LIMITS.minShareSecs, Math.round(action.secs)));
       return s;
+    case "carry": {
+      const key = String(Math.round(action.cardId));
+      if (!(action.cardId > 0)) return s;
+      if (action.from == null) delete s.carry[key];
+      else if (action.from >= 0 && (key in s.carry || Object.keys(s.carry).length < MAX_CARRY_LINKS)) {
+        s.carry[key] = { from: Math.round(action.from), by: action.by };
+      }
+      return s;
+    }
   }
 }
 

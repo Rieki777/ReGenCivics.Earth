@@ -29,6 +29,9 @@ import {
   type NeedsSummary,
   type VillageOsScope,
 } from "./humanNeeds";
+import { CARD_LABELS, cardKindOfKey, cardLine, parseCard } from "./boardCards";
+import type { CardRef, CarryMatch } from "./boardCarry";
+import type { VillageOsCard } from "./villageOsCard";
 
 /** One line of what someone gave: what it was, and what they said. */
 export type Entry = { label: string; value: string };
@@ -64,14 +67,25 @@ const ANSWER_LABELS: Record<string, string> = {
   week4: "What you want to set up in Village OS",
   landed: "Something that landed for you",
   useful: "How useful the session was",
+  whynow: "What the clip stirred in you",
+  "circles-own": "A circle of your own",
+  shape: "The shape of your Game",
+  "shape-line": "Your Game's structure in one line",
+  moved: "Whether your move happened",
+  "moved-line": "What moved, or what got in the way",
+  "seat-help": "What would help most with your seats",
+  together: "Something the whole project decides together",
+  agreement: "Your first agreement",
+  week5: "What you want to work on in Week 5",
 };
 
-/** The per-need keys: n-love, g-love, b-love, m-love. */
+/** The per-need keys: n-love, g-love, b-love, m-love, c-love. */
 const PER_NEED: Record<string, string> = {
   n: "where your people are today",
   g: "where you want them in three years",
   b: "who it's for",
   m: "who meets it",
+  c: "a circle that meets it",
 };
 
 function optionLabel(week: number, key: string, value: string): string {
@@ -102,12 +116,19 @@ export function describeItem(week: number, item: EntryItem): Entry {
 }
 
 function describeAnswer(week: number, key: string, text: string): Entry {
-  const per = /^([ngbm])-([a-z]+)$/.exec(key);
+  // A card (Week 4 on): a seat, a human need of your own, what a circle decides, a quest.
+  const kind = cardKindOfKey(key);
+  if (kind) {
+    const card = parseCard(kind, text);
+    return { label: CARD_LABELS[kind], value: card ? cardLine(kind, card) : text };
+  }
+  const per = /^([ngbmc])-([a-z]+)$/.exec(key);
   if (per && humanNeedById(per[2])) {
     const need = needShort(per[2]);
     const label = `${need}: ${PER_NEED[per[1]]}`;
     if (per[1] === "n" || per[1] === "g") return { label, value: NEED_RUNGS.find((r) => r.key === text)?.label ?? text };
     if (per[1] === "b") return { label, value: BREADTH_STOPS.find((b) => b.key === text)?.label ?? text };
+    if (per[1] === "c") return { label, value: optionLabel(week, key, text) };
     return { label, value: MEET_WAYS.find((w) => w.key === text)?.label ?? text };
   }
   if (key === "needs" || key === "top") {
@@ -288,8 +309,21 @@ export type BoardExportWeek = {
   votes: { target: string; label: string; value: string; count: number }[];
   /** The week's human needs answers in one place, for weeks that ask them. */
   summary: NeedsSummary | null;
-  /** Each project's card, for weeks that ask the human needs questions. */
-  projectViews: { cardId: number | null; name: string; lines: string[]; villageOs: VillageOsScope }[];
+  /**
+   * Each project's card, for weeks that ask the human needs questions. From
+   * Week 4 on, a card includes what it carried from earlier weeks
+   * (`carriedFrom`, `match`), and `villageOsCard` is the whole "Copy for
+   * Village OS" card.
+   */
+  projectViews: {
+    cardId: number | null;
+    name: string;
+    lines: string[];
+    villageOs: VillageOsScope;
+    villageOsCard?: VillageOsCard;
+    match?: CarryMatch;
+    carriedFrom?: CardRef[];
+  }[];
 };
 
 export type BoardExport = { generatedAt: string; why: string; weeks: BoardExportWeek[] };
