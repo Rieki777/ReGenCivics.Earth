@@ -104,7 +104,7 @@ function NoBoard() {
 
 function Board({ week }: { week: number }) {
   const stages = useMemo(() => boardStages(week), [week]);
-  const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName, myProject, setMyProject } = useSessionBoard(week);
+  const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName, myProject, setMyProject, carry } = useSessionBoard(week);
   const { user } = useAuth();
   const signedIn = !!user;
   const facilitator = !!board?.canFacilitate;
@@ -279,7 +279,7 @@ function Board({ week }: { week: number }) {
   const stageProps: StageProps | null = board
     ? {
       board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go,
-      myProject, setMyProject, displayName, setDisplayName, signedIn, look,
+      myProject, setMyProject, displayName, setDisplayName, signedIn, look, carry,
     }
     : null;
   // A week with a check-in stage (Week 3 on) keeps its Welcome under the Recap,

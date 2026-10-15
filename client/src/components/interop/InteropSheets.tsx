@@ -135,7 +135,7 @@ function TermPicker({
           }}
           placeholder="Type your own, or pick below"
           aria-label={`Add a ${AXIS_LABEL[axis].toLowerCase()}`}
-          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-3 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-3 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
         />
         <button
           type="button"
@@ -294,7 +294,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
                 onChange={(e) => setToolName(e.target.value)}
                 placeholder="Tool or protocol name"
                 aria-label="Tool or protocol name"
-                className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
               />
               <input
                 type="text"
@@ -304,7 +304,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="Repo, docs or hub page"
                 aria-label="A link the group can open"
-                className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
               />
             </div>
 
@@ -315,7 +315,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
               placeholder="What does it do? A couple of sentences is plenty."
               aria-label="What the tool does"
               rows={3}
-              className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]"
+              className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]"
             />
 
             <div className="grid gap-5 md:grid-cols-2">
@@ -337,7 +337,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
               placeholder="How do you expect to interoperate? What would another tool have to do to connect to yours? Paste as much as you like."
               aria-label="How the tool expects to interoperate"
               rows={5}
-              className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d]"
+              className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]"
             />
 
             <div>
@@ -376,7 +376,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
               onChange={(e) => setContactName(e.target.value)}
               placeholder="Your name (optional)"
               aria-label="Your name, shown beside the sheet"
-              className="w-full sm:w-72 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+              className="w-full sm:w-72 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
             />
 
             {submit.isError && <p className="text-red-300 text-sm">{submit.error.message}</p>}
@@ -579,7 +579,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
                 onChange={(e) => setProposalTerm(e.target.value)}
                 placeholder="What should we adopt?"
                 aria-label="What to adopt"
-                className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
               />
             </div>
             <textarea
@@ -589,7 +589,7 @@ export function InteropSheets({ voterKey }: { voterKey: string }) {
               placeholder="Why? What does it unlock that we cannot do now?"
               aria-label="Why the group should adopt it"
               rows={2}
-              className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 text-sm focus:outline-none focus:border-[#7dd87d]"
+              className="w-full bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 text-sm focus:outline-none focus:border-[#7dd87d]"
             />
             {propose.isError && <p className="text-red-300 text-sm">{propose.error.message}</p>}
             <button

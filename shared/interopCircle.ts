@@ -205,6 +205,23 @@ export const INTEROP_APPLIED_SETTING = "interop_circle_applied_slot";
 export const INTEROP_LEADER_SETTING = "interop_circle_leader";
 
 /**
+ * "1" while the Circle is on a break. The sync then cancels every upcoming
+ * week (calendar subscribers see each one as cancelled, reminders stop) and
+ * adds none, and the page takes no new sign-ups. Sign-ups stay on the rows,
+ * so clearing the setting carries everyone onto the next new week.
+ */
+export const INTEROP_PAUSED_SETTING = "interop_circle_paused";
+
+export function isPausedValue(v: string | null | undefined): boolean {
+  return v === "1" || v === "true";
+}
+
+/** What the page says while the Circle is paused. */
+export const INTEROP_PAUSED_NOTICE =
+  "The Circle is taking a break. We will pick these calls up again in a few weeks, once we have the " +
+  "capacity to hold them well, and everyone signed up will hear from us first.";
+
+/**
  * The leading slot from per-slot hand counts. Ties go to the earlier slot in
  * the week so the answer is stable; no hands at all means no leader.
  */

@@ -12,10 +12,11 @@ import {
   addCircleSignups,
   ensureVotesTable,
   leaveCircle,
+  reopenCancelledWeeks,
   syncInteropCircle,
   upcomingCircleRows,
 } from "./lib/interopCircle";
-import { INTEROP_CIRCLE_SEASON, INTEROP_PIN_SETTING } from "@shared/interopCircle";
+import { INTEROP_CIRCLE_SEASON, INTEROP_PAUSED_SETTING, INTEROP_PIN_SETTING } from "@shared/interopCircle";
 import { resolveAutoReminderRecipients } from "./jobs/eventReminders";
 import { loadFeedRows, renderFeed } from "./lib/calendarFeed";
 
@@ -173,5 +174,32 @@ describe.skipIf(skipIfNoDb)("Interoperability Circle sync", () => {
 
     const again = await syncInteropCircle({ force: true, now });
     expect(again).toMatchObject({ deduplicated: 0 });
+  });
+
+  it("pausing cancels every upcoming week and adds none; resuming reopens them with their sign-ups", async () => {
+    const db = (await getDb())!;
+    const now = new Date("2030-02-06T12:00:00Z");
+    const live = (await upcomingCircleRows(db, now)).filter((r) => r.status !== "cancelled");
+    expect(live.length).toBeGreaterThan(0);
+
+    await setSiteSetting(INTEROP_PAUSED_SETTING, "1");
+    const r = await syncInteropCircle({ force: true, now });
+    expect(r).toMatchObject({ paused: true, cancelled: live.length, inserted: 0 });
+    const during = await upcomingCircleRows(db, now);
+    expect(during.every((x) => x.status === "cancelled")).toBe(true);
+    const cfg = await db.select().from(eventAutoReminders).where(inArray(eventAutoReminders.eventId, live.map((x) => x.id)));
+    expect(cfg.every((c) => c.enabled === 0)).toBe(true);
+
+    // A later week, past the old horizon, still gets nothing while paused.
+    const later = await syncInteropCircle({ force: true, now: new Date("2030-03-06T12:00:00Z") });
+    expect(later).toMatchObject({ paused: true, inserted: 0 });
+
+    await setSiteSetting(INTEROP_PAUSED_SETTING, "");
+    await reopenCancelledWeeks(db, now);
+    await syncInteropCircle({ force: true, now });
+    const back = (await upcomingCircleRows(db, now)).filter((x) => x.status !== "cancelled");
+    expect(back.map((x) => x.id)).toEqual(expect.arrayContaining(live.map((x) => x.id)));
+    const weeks = new Set(back.map((x) => x.startTime.toISOString().slice(0, 10)));
+    expect(weeks.size).toBe(back.length);
   });
 });

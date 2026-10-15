@@ -58,6 +58,29 @@ const BEFORE = {
     await page.getByRole("article", { name: /Vitality/ }).getByRole("button", { name: /A market/ }).click();
     await page.waitForTimeout(200);
   },
+  // Week 4 (2026-10-21): the add forms and the card's text, reached by tapping.
+  "week4-seats": async (page) => {
+    await page.getByRole("button", { name: /Add a seat for Vitality/ }).click();
+    await page.getByRole("textbox", { name: "Seat name" }).fill("Seed saver");
+    await page.waitForTimeout(200);
+  },
+  "week4-needs": async (page) => {
+    await page.getByRole("button", { name: "Add a human need of your own" }).click();
+    await page.getByRole("textbox", { name: "The human need" }).fill("Wisdom");
+    await page.waitForTimeout(200);
+  },
+  "week4-decide": async (page) => {
+    await page.getByRole("button", { name: /Add what a circle decides: Food & Fertility/ }).click();
+    await page.waitForTimeout(200);
+  },
+  "week4-quests": async (page) => {
+    await page.getByRole("button", { name: "Add a quest" }).click();
+    await page.waitForTimeout(200);
+  },
+  "week4-built": async (page) => {
+    await page.getByText("Show what's in it").first().click();
+    await page.waitForTimeout(200);
+  },
   "week3-tellus": async (page) => {
     await page.getByRole("textbox", { name: /What do you want to dig into/ }).fill("How to price a membership so nobody is priced out");
     await page.getByRole("checkbox", { name: /Share this with the cohort/ }).check();

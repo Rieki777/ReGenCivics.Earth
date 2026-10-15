@@ -48,7 +48,10 @@ import {
   type AnswerRow,
 } from "@shared/humanNeeds";
 import { projectPathForApplication } from "@shared/projectKey";
+import { mergeCarried } from "@shared/boardCarry";
+import { cardsForProject, gameLines, toVillageOsCard } from "@shared/villageOsCard";
 import { voteCounts, type Db } from "./sessionBoard";
+import { earlierAnswerWeeks, readCarry } from "./sessionBoardCarry";
 
 /* -------------------------------------------------------------- profile */
 
@@ -296,7 +299,7 @@ function emptyWeek(week: number, status: BoardExportWeek["status"]): BoardExport
 }
 
 /** One week's board, everything on it, for the admin export. */
-async function exportWeek(db: Db, board: { id: number; week: number; status: string }): Promise<BoardExportWeek> {
+async function exportWeek(db: Db, season: string, board: { id: number; week: number; status: string }): Promise<BoardExportWeek> {
   const week = board.week;
   const stages = boardStages(week);
   const anon = anonymousKeys(week);
@@ -381,10 +384,30 @@ async function exportWeek(db: Db, board: { id: number; week: number; status: str
     const shown = shownAnswerRows(answerRows, hiddenCards);
     summary = needsSummary(shown);
     const named = shown.filter((r) => !(r.block && anon.has(r.block)));
+    // Week 4 on: each card is the sum of its weeks (shared/boardCarry.ts).
+    const carry = earlierAnswerWeeks(week).length ? await readCarry(db, season, week) : null;
     for (const c of cards) {
-      if (c.hidden || !named.some((r) => r.projectId === c.id)) continue;
-      const view = projectView(named, c.id);
-      projectViews.push({ cardId: c.id, name: c.name, lines: projectCardLines(view), villageOs: toVillageOsScope(view) });
+      if (c.hidden) continue;
+      const link = carry?.cards.find((x) => x.cardId === c.id);
+      const fromIds = new Set((link?.from ?? []).map((f) => f.cardId));
+      const rows = carry ? mergeCarried(named, carry.rows, c.id, fromIds) : named;
+      if (!rows.some((r) => r.projectId === c.id)) continue;
+      const view = projectView(rows, c.id);
+      if (!carry) {
+        projectViews.push({ cardId: c.id, name: c.name, lines: projectCardLines(view), villageOs: toVillageOsScope(view) });
+        continue;
+      }
+      const projectCards = cardsForProject(rows, c.id);
+      const weeks = [week, ...new Set((link?.from ?? []).map((f) => f.week))];
+      projectViews.push({
+        cardId: c.id,
+        name: c.name,
+        lines: gameLines(view, projectCards),
+        villageOs: toVillageOsScope(view),
+        villageOsCard: toVillageOsCard({ project: c.name, applicationId: c.applicationId, weeks, view, cards: projectCards }),
+        match: link?.match ?? "none",
+        carriedFrom: link?.from ?? [],
+      });
     }
     if (named.some((r) => r.projectId == null)) {
       const view = projectView(named, null);
@@ -423,7 +446,7 @@ export async function buildBoardExport(db: Db, season: string, weeks?: readonly 
   const out: BoardExportWeek[] = [];
   for (const week of list) {
     const board = byWeek.get(week);
-    out.push(board ? await exportWeek(db, board) : emptyWeek(week, "none"));
+    out.push(board ? await exportWeek(db, season, board) : emptyWeek(week, "none"));
   }
   return { generatedAt: new Date().toISOString(), why: EXPORT_WHY, weeks: out };
 }

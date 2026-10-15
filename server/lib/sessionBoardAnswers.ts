@@ -21,7 +21,9 @@ import {
 import {
   BOARD_LIMITS,
   PROMPT_COPY,
+  applyBoardAction,
   cleanBoardLine,
+  normalizeBoardState,
   promptFull,
   promptMax,
   promptsForWeek,
@@ -29,6 +31,7 @@ import {
   type BoardPrompt,
 } from "@shared/sessionBoard";
 import { NEEDS_KEYS, perNeedKeys } from "@shared/humanNeeds";
+import { CARD_COPY, CARD_TEXT_MAX, cardKindOfKey, cardSlotKeys, cardText, parseCard } from "@shared/boardCards";
 import type { Db } from "./sessionBoard";
 
 /** The handle a drizzle transaction callback receives. */
@@ -45,11 +48,12 @@ export const ANSWER_COPY = {
   tooMany: "You've answered a lot on this board already. Ask the facilitator to add the rest.",
   full: "This board is full.",
   rewordPick: "A pick can't be reworded. Hide it instead.",
+  rewordCard: "A card can't be reworded here. Its writer can change it, or hide it instead.",
 } as const;
 
 export type AnswerInput =
   | { op: "pick"; key: string; projectId: number | null; option: string; on: boolean; displayName?: string }
-  | { op: "note"; key: string; projectId: number | null; text: string; displayName?: string };
+  | { op: "note"; key: string; projectId: number | null; text: string; displayName?: string; fresh?: boolean };
 
 export type AnswerResult = { ok: true; id: number | null; removedIds: number[] };
 
@@ -119,8 +123,14 @@ export async function checkAnswer(
   }
 
   let text = "";
-  if (input.op === "note") {
-    text = cleanBoardLine(input.text, BOARD_LIMITS.note) ?? "";
+  if (input.op === "note" && prompt.card) {
+    // A card (Week 4 on): every field cleaned and checked, stored in short keys.
+    const card = parseCard(prompt.card, input.text);
+    if (!card) bad(CARD_COPY.bad[prompt.card]);
+    text = cardText(prompt.card, card);
+    if (text.length > CARD_TEXT_MAX) bad(CARD_COPY.tooLong);
+  } else if (input.op === "note") {
+    text = cleanBoardLine(input.text, prompt.maxText ?? BOARD_LIMITS.note) ?? "";
     if (!text) bad(ANSWER_COPY.empty);
   } else {
     text = input.option;
@@ -189,11 +199,32 @@ export async function answerOnBoard(
   opts: { boardId: number; week: number; keys: string[]; facilitator: boolean; input: AnswerInput },
 ): Promise<AnswerResult> {
   const { boardId, week, keys, facilitator, input } = opts;
-  const { prompt, projectId, text, displayName } = await checkAnswer(db, boardId, week, input);
+  const checked = await checkAnswer(db, boardId, week, input);
+  const { projectId, text, displayName } = checked;
+  let prompt = checked.prompt;
   const max = promptMax(prompt);
 
   return db.transaction(async (tx) => {
     await lockBoard(tx, boardId);
+    // A new card (Week 4 on) takes this person's first free slot of its kind,
+    // chosen here under the lock: a page that hadn't loaded this person's rows
+    // yet, or a second device, never writes over a card already saved.
+    if (input.op === "note" && input.fresh && prompt.card) {
+      const slots = cardSlotKeys(prompt.card);
+      const used = new Set((await tx
+        .select({ block: sessionBoardItems.block })
+        .from(sessionBoardItems)
+        .where(and(
+          eq(sessionBoardItems.boardId, boardId),
+          eq(sessionBoardItems.kind, "answer"),
+          inArray(sessionBoardItems.block, slots),
+          sameProject(projectId),
+          inArray(sessionBoardItems.authorKey, keys),
+        ))).map((r) => r.block));
+      const free = slots.find((k) => !used.has(k));
+      if (!free) bad(CARD_COPY[prompt.card].full);
+      prompt = promptsForWeek(week).get(free) ?? prompt;
+    }
     const mine = await tx
       .select({ id: sessionBoardItems.id, text: sessionBoardItems.text })
       .from(sessionBoardItems)
@@ -345,6 +376,55 @@ export function answerRowsOverRules(week: number, rows: readonly AnswerRowLite[]
 }
 
 /**
+ * One person's card rows (Week 4 on, shared/boardCards.ts) after two
+ * identities or two project cards were joined: a card is a person's whole
+ * answer, so two cards in one slot never cost one of them. The older one
+ * moves to the next free slot of its kind on that project; only when every
+ * slot is taken does the rule above drop the oldest. Returns the moves.
+ */
+export function reslotCards(rows: readonly AnswerRowLite[]): { id: number; block: string }[] {
+  const groups = new Map<string, AnswerRowLite[]>();
+  for (const r of rows) {
+    const kind = cardKindOfKey(r.block);
+    if (!kind) continue;
+    const k = `${r.projectId ?? "room"}|${kind}`;
+    const list = groups.get(k);
+    if (list) list.push(r); else groups.set(k, [r]);
+  }
+  const moves: { id: number; block: string }[] = [];
+  for (const list of groups.values()) {
+    const kind = cardKindOfKey(list[0].block)!;
+    const used = new Set(list.map((r) => r.block as string));
+    const free = cardSlotKeys(kind).filter((k) => !used.has(k));
+    const bySlot = new Map<string, AnswerRowLite[]>();
+    for (const r of list) {
+      const l = bySlot.get(r.block as string);
+      if (l) l.push(r); else bySlot.set(r.block as string, [r]);
+    }
+    for (const same of bySlot.values()) {
+      if (same.length < 2) continue;
+      // The newest keeps its slot; the others take free ones while there are any.
+      const older = [...same].sort((a, b) => stamp(b.createdAt) - stamp(a.createdAt) || b.id - a.id).slice(1);
+      for (const r of older) {
+        const slot = free.shift();
+        if (!slot) break;
+        moves.push({ id: r.id, block: slot });
+      }
+    }
+  }
+  return moves;
+}
+
+/** Apply `reslotCards` to stored rows and to the list in hand, so the rules after it see the new slots. */
+async function reslotStored(tx: Tx, rows: AnswerRowLite[]): Promise<void> {
+  for (const m of reslotCards(rows)) {
+    await tx.update(sessionBoardItems).set({ block: m.block }).where(eq(sessionBoardItems.id, m.id));
+    const r = rows.find((x) => x.id === m.id);
+    if (r) r.block = m.block;
+  }
+}
+
+/**
  * Move every row a guest browser key owns, on every board, to the account
  * that signed in on that browser (API_CONTRACT 3.8). A vote the account
  * already has is merged (the guest's copy goes); answers are brought back
@@ -430,6 +510,7 @@ export async function claimGuestRows(db: Db, voterKey: string, userId: number): 
           eq(sessionBoardItems.authorKey, to),
         ))
         .orderBy(asc(sessionBoardItems.id));
+      await reslotStored(tx, answers);
       const drop = answerRowsOverRules(board.week, answers);
       if (drop.length) await tx.delete(sessionBoardItems).where(inArray(sessionBoardItems.id, drop));
 
@@ -534,7 +615,10 @@ export async function mergeCardsOnBoard(
         const list = byAuthor.get(r.authorKey as string);
         if (list) list.push(r); else byAuthor.set(r.authorKey as string, [r]);
       }
-      for (const list of byAuthor.values()) drop.push(...answerRowsOverRules(week, list));
+      for (const list of byAuthor.values()) {
+        await reslotStored(tx, list);
+        drop.push(...answerRowsOverRules(week, list));
+      }
       drop = drop.sort((a, b) => a - b);
       if (drop.length) await tx.delete(sessionBoardItems).where(inArray(sessionBoardItems.id, drop));
     }
@@ -544,6 +628,15 @@ export async function mergeCardsOnBoard(
     if (Object.keys(keep).length) await tx.update(sessionBoardProjects).set(keep).where(eq(sessionBoardProjects.id, intoId));
     // The stray keeps its name and link while hidden, so its tile never comes back.
     await tx.update(sessionBoardProjects).set({ hidden: 1 }).where(eq(sessionBoardProjects.id, fromId));
+    // Week 4 on: the stray's link to an earlier week's card moves with its answers.
+    const [stateRow] = await tx.select({ state: sessionBoards.state }).from(sessionBoards).where(eq(sessionBoards.id, boardId)).for("update");
+    const state = normalizeBoardState(stateRow?.state ?? null, week);
+    const link = state.carry[String(fromId)];
+    if (link) {
+      let next = applyBoardAction(state, { type: "carry", cardId: fromId, from: null, by: link.by }, Date.now());
+      if (!next.carry[String(intoId)]) next = applyBoardAction(next, { type: "carry", cardId: intoId, from: link.from, by: link.by }, Date.now());
+      await tx.update(sessionBoards).set({ state: JSON.stringify(next) }).where(eq(sessionBoards.id, boardId));
+    }
 
     await bump(tx, boardId);
     return {
@@ -573,6 +666,12 @@ export async function countGuestRows(db: Db, voterKey: string): Promise<number> 
 export function isPickAnswer(week: number, item: { kind: string; block: string | null }): boolean {
   if (item.kind !== "answer" || !item.block) return false;
   return promptsForWeek(week).get(item.block)?.mode === "pick";
+}
+
+/** For `curateItem`: a card is JSON its form writes, so a facilitator's free-text edit would break it. */
+export function isCardAnswer(week: number, item: { kind: string; block: string | null }): boolean {
+  if (item.kind !== "answer" || !item.block) return false;
+  return !!promptsForWeek(week).get(item.block)?.card;
 }
 
 /** Rows of a board that are anonymous answers (left out of `get`). */

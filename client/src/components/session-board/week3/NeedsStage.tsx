@@ -36,11 +36,18 @@ import {
   type ProjectView,
   type SingleAnswer,
 } from "@shared/humanNeeds";
+import { CARRY_COPY, firstChangeCopy, withCarried } from "@shared/boardCarry";
 import type { BoardItem, SessionBoardData } from "../useSessionBoard";
 import type { StageProps } from "../stages";
 import { cardName, myAnswerRows, myCardId, oldestFirst, shownRows, stageIndexOf } from "./answers";
 import { StageHead, plural } from "./parts";
 import { AskFoot, PickBlock, ProjectFor, PromptBlock, StageExtras, type ShownPrompt } from "./PromptBlock";
+import { CarryStage, CarryWait } from "../week4/CarryStage";
+import { NeedsConfirm } from "../week4/NeedsConfirm";
+import { SeatsStage } from "../week4/SeatsStage";
+import { DecideStage, QuestsStage } from "../week4/DecideQuests";
+import { BuiltStage } from "../week4/BuiltStage";
+import { onlyCarried, type GameRow } from "../week4/game";
 
 const hueStyle = (id: string): CSSProperties => ({ ["--sb-hue" as string]: humanNeedById(id)?.hue ?? "var(--sb-spring)" });
 
@@ -60,18 +67,91 @@ function seedsFor(board: SessionBoardData, props: StageProps, view: ProjectView)
   return mine.length ? mine : view.seeds;
 }
 
+/**
+ * Every `needs` stage. A board that carries earlier weeks' answers (Week 4
+ * on, ../week4/) draws its own steps; the circles step is shared, and reads
+ * each card with its earlier weeks merged in.
+ */
 export function NeedsStage(props: StageProps) {
-  const { board, week, stages, index, myProject } = props;
+  const step = props.stages[props.index].step;
+  if (props.carry?.on) {
+    if (step === "carry") return <CarryStage {...props} />;
+    // Nothing here writes until last week's answers are in: a tap made before
+    // they load would replace them for everyone (a change replaces last week's).
+    if (props.carry.loading || props.carry.failed || !props.carry.data) return <CarryWait {...props} />;
+    if (step === "confirm") return <NeedsConfirm {...props} />;
+    if (step === "seats") return <SeatsStage {...props} />;
+    if (step === "decide") return <DecideStage {...props} />;
+    if (step === "quests") return <QuestsStage {...props} />;
+    if (step === "room") return <BuiltStage {...props} />;
+  }
+  return <NeedsWalk {...props} />;
+}
+
+function NeedsWalk(props: StageProps) {
+  const { board, week, stages, index, myProject, carry } = props;
   const stage = stages[index];
   const prompts = resolvedPrompts(week, index);
   const byKey = new Map<string, ShownPrompt>(prompts.map((p) => [p.key, p]));
-  const rows = useMemo(() => shownRows(board), [board]);
+  const rows = useMemo(
+    () => (carry?.on ? (withCarried(shownRows(board), carry.data) as BoardItem[]) : shownRows(board)),
+    [board, carry?.on, carry?.data],
+  );
   const pid = myCardId(myProject);
   const view = useMemo(() => projectView(rows, pid), [rows, pid]);
   const summary = useMemo(() => needsSummary(rows), [rows]);
-  const block = (key: string) => {
+  /** Last week's answers for a key on this card, while nobody has answered it today. */
+  const lastWeek = (key: string): string[] => {
+    if (!carry?.on || pid == null || !onlyCarried(rows as GameRow[], key, pid)) return [];
+    const texts = rows.filter((r) => r.kind === "answer" && r.block === key && r.projectId === pid).map((r) => r.text);
+    return texts.filter((t, i) => texts.indexOf(t) === i);
+  };
+  const block = (key: string, compact = false) => {
     const p = byKey.get(key);
-    return p ? <PromptBlock key={key} p={p} props={props} /> : null;
+    if (!p) return null;
+    if (!carry?.on || pid == null || p.anonymous) return <PromptBlock key={key} p={p} props={props} />;
+    // A board that carries earlier weeks: last week's answer shows under the
+    // question until today has one, and the first change copies the rest of it
+    // across, so one tap never wipes what the project said last week.
+    if (p.mode === "pick") {
+      const many = (p.max ?? 1) > 1;
+      return (
+        <PickBlock
+          key={key}
+          p={p}
+          props={props}
+          compact={compact}
+          after={(picked) => {
+            const last = picked.length ? [] : lastWeek(key);
+            const words = last.map((v) => p.options?.find((o) => o.key === v)?.label ?? v);
+            return words.length ? <p className="sb-hint">{fillCopy(CARRY_COPY.lastWeek, { value: words.join(", ") })}</p> : null;
+          }}
+          onPick={many ? (option, on) => {
+            const copy = firstChangeCopy(rows as GameRow[], key, pid, { option, on });
+            for (const o of copy) void props.actions.answerPick({ key, option: o, on: true, projectId: pid });
+            if (on) void props.actions.answerPick({ key, option, on: true, projectId: pid });
+            else if (!copy.length) void props.actions.answerPick({ key, option, on: false, projectId: pid });
+          } : undefined}
+        />
+      );
+    }
+    if (p.mode === "note" && (p.max ?? 1) > 1) {
+      const last = lastWeek(key);
+      return (
+        <PromptBlock
+          key={key}
+          p={p}
+          props={props}
+          noteAfter={last.length ? <p className="sb-hint">{fillCopy(CARRY_COPY.lastWeek, { value: last.join("; ") })}</p> : null}
+          onNote={async (text) => {
+            // Last week's lines become this person's first, then the new one, inside the prompt's room.
+            for (const line of last.slice(0, Math.max(0, (p.max ?? 1) - 1))) void props.actions.answerNote({ key, text: line, projectId: pid });
+            return props.actions.answerNote({ key, text, projectId: pid });
+          }}
+        />
+      );
+    }
+    return <PromptBlock key={key} p={p} props={props} />;
   };
 
   let body: ReactNode;
@@ -93,14 +173,14 @@ export function NeedsStage(props: StageProps) {
           <ul className="sb-seed-cards">
             {picked.map((id) => (
               <li key={id}>
-                <SeedCard id={id} step="circles" props={props} byKey={byKey} view={view} />
+                <SeedCard id={id} step="circles" props={props} byKey={byKey} view={view} pick={carry?.on ? block : undefined} />
               </li>
             ))}
           </ul>
         ) : (
           <NoSeeds props={props} />
         )}
-        <div className="sb-prompts">{["circles-own", "circles", "players", "players-now", "shape", "shape-line"].map(block)}</div>
+        <div className="sb-prompts">{["circles-own", "circles", "players", "players-now", "shape", "shape-line"].map((k) => block(k))}</div>
       </>
     );
   } else if (stage.step === "depth" || stage.step === "meet") {
@@ -119,7 +199,7 @@ export function NeedsStage(props: StageProps) {
         ) : (
           <NoSeeds props={props} />
         )}
-        <div className="sb-prompts">{extra.map(block)}</div>
+        <div className="sb-prompts">{extra.map((k) => block(k))}</div>
         {stage.step === "depth" ? <Ladder board={board} rows={rows} /> : <Leans summary={summary} />}
       </>
     );
@@ -270,12 +350,14 @@ function NoSeeds({ props }: { props: StageProps }) {
   );
 }
 
-function SeedCard({ id, step, props, byKey, view }: {
+function SeedCard({ id, step, props, byKey, view, pick }: {
   id: HumanNeedId;
   step: "depth" | "meet" | "circles";
   props: StageProps;
   byKey: Map<string, ShownPrompt>;
   view: ProjectView;
+  /** The stage's own block for a key (a board that carries earlier weeks copies last week's picks). */
+  pick?: (key: string, compact?: boolean) => ReactNode;
 }) {
   const need = humanNeedById(id);
   const per = view.perNeed[id];
@@ -305,7 +387,7 @@ function SeedCard({ id, step, props, byKey, view }: {
           {row(`b-${id}`, () => <Differ answer={per?.breadth} label={(v) => `${v}%`} />)}
         </>
       ) : step === "circles" ? (
-        row(`c-${id}`)
+        pick ? pick(`c-${id}`, true) : row(`c-${id}`)
       ) : (
         row(`m-${id}`, () => <Differ answer={per?.meet} label={wayLabel} />)
       )}
