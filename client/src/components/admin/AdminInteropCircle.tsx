@@ -43,10 +43,11 @@ export function AdminInteropCircle() {
   const pin = trpc.interopSessions.adminPin.useMutation({ onSuccess: refresh });
   const sync = trpc.interopSessions.adminSync.useMutation({ onSuccess: refresh });
   const setOffered = trpc.interopSessions.adminSetOfferedSlots.useMutation({ onSuccess: refresh });
+  const setPaused = trpc.interopSessions.adminSetPaused.useMutation({ onSuccess: refresh });
 
   const data = state.data;
   const offered = data?.offered ?? INTEROP_SLOTS;
-  const busy = pin.isPending || sync.isPending || setOffered.isPending;
+  const busy = pin.isPending || sync.isPending || setOffered.isPending || setPaused.isPending;
 
   /** Toggle a weekday on or off the offer, keeping every other slot's hour. */
   function toggleOffered(key: InteropSlotKey) {
@@ -84,6 +85,16 @@ export function AdminInteropCircle() {
         {state.isLoading && <Loader2 className="w-4 h-4 animate-spin text-white/60" />}
         {data && (
           <>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className={data.paused ? "text-amber-300" : "text-white/70"}>
+                {data.paused
+                  ? "Paused. Every upcoming week is cancelled and the page takes no sign-ups."
+                  : "Running. Weekly sessions are on the calendar."}
+              </p>
+              <Button size="sm" variant="outline" className="bg-transparent border-white/45 text-white hover:bg-white/10 hover:text-white" onClick={() => setPaused.mutate({ paused: !data.paused })} disabled={busy}>
+                {data.paused ? "Resume the Circle" : "Pause the Circle"}
+              </Button>
+            </div>
             <div className="grid gap-2 sm:grid-cols-3">
               {offered.map((s) => (
                 <div
@@ -117,7 +128,7 @@ export function AdminInteropCircle() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button size="sm" variant="outline" onClick={() => sync.mutate()} disabled={busy}>
+              <Button size="sm" variant="outline" className="bg-transparent border-white/45 text-white hover:bg-white/10 hover:text-white" onClick={() => sync.mutate()} disabled={busy}>
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 <span className="ml-2">Sync now</span>
               </Button>
@@ -127,7 +138,7 @@ export function AdminInteropCircle() {
             )}
             <div className="border-t border-white/10 pt-4">
               <p className="text-white/70 mb-1">Slots on offer</p>
-              <p className="text-white/40 text-xs mb-3">
+              <p className="text-white/60 text-xs mb-3">
                 Which weekdays people can raise a hand for, and the Pacific hour each one runs at. Changing this
                 rebuilds the upcoming weeks. Votes for a day you remove stop counting but are not deleted, so
                 putting it back restores them.

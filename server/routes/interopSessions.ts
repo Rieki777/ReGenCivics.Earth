@@ -28,6 +28,8 @@ import { eventSignups, interopTimeVotes, interopTools } from "../../drizzle/sche
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import {
+  INTEROP_PAUSED_NOTICE,
+  INTEROP_PAUSED_SETTING,
   INTEROP_PIN_SETTING,
   INTEROP_SLOTS_SETTING,
   INTEROP_SLOT_KEYS as INTEROP_SLOTS,
@@ -41,7 +43,9 @@ import {
 import {
   addCircleSignups,
   ensureVotesTable as ensureTable,
+  isCirclePaused,
   leaveCircle,
+  reopenCancelledWeeks,
   resolveCircleState,
   sendCircleWelcome,
   syncInteropCircle,
@@ -420,9 +424,10 @@ export const interopSessionsRouter = router({
    */
   schedule: publicProcedure.query(async () => {
     const database = await getDb();
-    if (!database) return { slot: null, pinned: false, sessions: [] as { id: number; startTime: Date; status: string }[], members: 0 };
+    if (!database) return { slot: null, pinned: false, paused: false, sessions: [] as { id: number; startTime: Date; status: string }[], members: 0 };
     await syncInteropCircle();
     const now = new Date();
+    const paused = await isCirclePaused();
     const state = await resolveCircleState(database, now);
     const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
     const nextId = rows[0]?.id;
@@ -437,6 +442,7 @@ export const interopSessionsRouter = router({
     return {
       slot: state.slot,
       pinned: state.pinned != null,
+      paused,
       sessions: rows.slice(0, SCHEDULE_PREVIEW).map((r) => ({ id: r.id, startTime: r.startTime, status: r.status })),
       members,
     };
@@ -462,6 +468,7 @@ export const interopSessionsRouter = router({
     .mutation(async ({ input }) => {
       const database = await getDb();
       if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      if (await isCirclePaused()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: INTEROP_PAUSED_NOTICE });
 
       // Read first, and only sync when there is nothing to join. syncInteropCircle
       // already debounces itself to once a minute, and forcing past that on every
@@ -580,6 +587,7 @@ export const interopSessionsRouter = router({
     const byId = new Map(counts.map((c) => [c.eventId, Number(c.n)]));
     return {
       ...state,
+      paused: await isCirclePaused(),
       // The offered set is a setting, so the panel edits what is live rather
       // than what happened to be compiled into the admin bundle.
       offered: await offeredSlots(),
@@ -617,6 +625,23 @@ export const interopSessionsRouter = router({
     .input(z.object({ slot: z.enum(INTEROP_SLOTS).nullable() }))
     .mutation(async ({ input }) => {
       await setSiteSetting(INTEROP_PIN_SETTING, input.slot ?? "");
+      const result = await syncInteropCircle({ force: true });
+      return { ok: true as const, result };
+    }),
+
+  /**
+   * Admin: put the Circle on a break, or bring it back. Pausing cancels every
+   * upcoming week at once; resuming reopens those weeks with their sign-ups,
+   * and the sync then moves them to the current slot and refills the horizon.
+   */
+  adminSetPaused: adminProcedure
+    .input(z.object({ paused: z.boolean() }))
+    .mutation(async ({ input }) => {
+      await setSiteSetting(INTEROP_PAUSED_SETTING, input.paused ? "1" : "");
+      if (!input.paused) {
+        const database = await getDb();
+        if (database) await reopenCancelledWeeks(database);
+      }
       const result = await syncInteropCircle({ force: true });
       return { ok: true as const, result };
     }),

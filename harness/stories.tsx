@@ -29,6 +29,8 @@ import ToolDetail from "@/pages/ToolDetail";
 import ToolsLibrary from "@/pages/ToolsLibrary";
 import ApplyStatus from "@/pages/ApplyStatus";
 import ToolSubmit from "@/pages/ToolSubmit";
+import InteropSessions from "@/pages/InteropSessions";
+import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
 import { Router, Route } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { defaultBoardState } from "@shared/sessionBoard";
@@ -687,6 +689,49 @@ export const STORIES: Record<string, Story> = {
         </Router>
       );
     },
+  },
+
+  "interop-paused": {
+    title: "Interoperability Circle page while the Circle is on a break",
+    setup: () => {
+      mockData["interopSessions.tally"] = {
+        slots: [
+          { slot: "tue", count: 1, names: [], members: [] },
+          { slot: "wed", count: 3, names: [], members: [] },
+          { slot: "thu", count: 1, names: [], members: [] },
+        ],
+        total: 5,
+        offered: [
+          { key: "tue", weekday: 2, hourPT: 10, label: "Tuesdays, 10:00am PT", zones: "10:00am PT · 1:00pm ET" },
+          { key: "wed", weekday: 3, hourPT: 16, label: "Wednesdays, 4:00pm PT", zones: "4:00pm PT · 7:00pm ET" },
+          { key: "thu", weekday: 4, hourPT: 18, label: "Thursdays, 6:00pm PT", zones: "6:00pm PT · 9:00pm ET" },
+        ],
+      };
+      mockData["interopSessions.schedule"] = { slot: "wed", pinned: false, paused: true, sessions: [], members: 1 };
+      mockData["interopSessions.directory"] = { entries: [], total: 0 };
+    },
+    render: () => <InteropSessions />,
+  },
+
+  "admin-interop-paused": {
+    title: "Admin > Events: Interoperability Circle panel, paused",
+    setup: () => {
+      mockData["interopSessions.adminState"] = {
+        slot: "wed", pinned: null, leader: "wed", leaderSince: null, applied: "wed",
+        counts: { mon: 0, tue: 1, wed: 3, thu: 1, fri: 0, sat: 0, sun: 0 },
+        paused: true,
+        offered: [
+          { key: "tue", weekday: 2, hourPT: 10, label: "Tuesdays, 10:00am PT", zones: "" },
+          { key: "wed", weekday: 3, hourPT: 16, label: "Wednesdays, 4:00pm PT", zones: "" },
+        ],
+        sessions: [{ id: 160, startTime: "2026-11-05T00:00:00Z", status: "cancelled", manualOverride: false, signups: 1 }],
+      };
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminInteropCircle />
+      </div>
+    ),
   },
 
   "tools-library-cards": {

@@ -41,8 +41,11 @@ import {
   INTEROP_CIRCLE_WEEKS_AHEAD,
   INTEROP_FREEZE_HOURS,
   INTEROP_LEADER_SETTING,
+  INTEROP_PAUSED_SETTING,
   INTEROP_PIN_SETTING,
   INTEROP_REMINDER_OFFSETS,
+  INTEROP_SLOT_KEYS,
+  isPausedValue,
 
   circleWeekKey,
   interopSlot,
@@ -256,6 +259,9 @@ export type CircleSyncResult = {
   notified: number;
   /** Second live rows in one week, cancelled this run. */
   deduplicated: number;
+  /** Set when the Circle is paused: this run only cancelled weeks. */
+  paused?: boolean;
+  cancelled?: number;
 };
 
 let running: Promise<CircleSyncResult | null> | null = null;
@@ -280,9 +286,49 @@ export function syncInteropCircle(opts: { force?: boolean; now?: Date } = {}): P
   return running;
 }
 
+/** True while an admin has the Circle on a break (INTEROP_PAUSED_SETTING). */
+export async function isCirclePaused(): Promise<boolean> {
+  return isPausedValue(await getSiteSetting(INTEROP_PAUSED_SETTING));
+}
+
+/**
+ * Paused: cancel every upcoming week, admin-edited ones included, and turn
+ * off their reminders. Cancelled rather than deleted, so the calendar feed
+ * tells each subscribed calendar to drop the session, and the sign-ups stay
+ * put for when the Circle comes back.
+ */
+async function cancelUpcoming(database: Db, now: Date): Promise<number> {
+  const live = (await upcomingCircleRows(database, now)).filter((r) => r.status !== "cancelled");
+  if (!live.length) return 0;
+  const ids = live.map((r) => r.id);
+  await database.update(events).set({ status: "cancelled" }).where(inArray(events.id, ids));
+  await database.update(eventAutoReminders).set({ enabled: 0 }).where(inArray(eventAutoReminders.eventId, ids));
+  return ids.length;
+}
+
+/**
+ * Coming back from a break: reopen the upcoming cancelled weeks an admin did
+ * not edit, reminders and all. A week that ends up with two live rows is
+ * cancelled again by the sync's duplicate check.
+ */
+export async function reopenCancelledWeeks(database: Db, now: Date = new Date()): Promise<number> {
+  const rows = (await upcomingCircleRows(database, now)).filter((r) => r.status === "cancelled" && !r.manualOverride);
+  if (!rows.length) return 0;
+  const ids = rows.map((r) => r.id);
+  await database.update(events).set({ status: "upcoming" }).where(inArray(events.id, ids));
+  await database.update(eventAutoReminders).set({ enabled: 1 }).where(inArray(eventAutoReminders.eventId, ids));
+  return ids.length;
+}
+
 async function runSync(now: Date): Promise<CircleSyncResult | null> {
   const database = await getDb();
   if (!database) return null;
+
+  if (await isCirclePaused()) {
+    const cancelled = await cancelUpcoming(database, now);
+    const applied = await readSlotSetting(INTEROP_APPLIED_SETTING);
+    return { slot: applied ?? INTEROP_SLOT_KEYS[0], inserted: 0, moved: 0, notified: 0, deduplicated: 0, paused: true, cancelled };
+  }
 
   const state = await resolveCircleState(database, now);
   const slot = interopSlot(state.slot);
@@ -444,6 +490,36 @@ export async function sendCircleWelcome(opts: { email: string; name: string | nu
     `You signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${await unsubscribeLink(opts.email)}" style="color:#999;">Leave the Circle</a>`,
   );
   await sendEmail({ to: [opts.email], subject: "You are signed up for the Interoperability Circle", html, template: "interop_circle_welcome" });
+}
+
+/** Everyone still signed up for an upcoming week, cancelled weeks included, one row per address. */
+export async function circleMembers(database: Db, now: Date = new Date()) {
+  const ids = (await upcomingCircleRows(database, now)).map((r) => r.id);
+  if (!ids.length) return [];
+  const rows = await database
+    .select({ email: eventSignups.email, name: eventSignups.name })
+    .from(eventSignups)
+    .where(and(inArray(eventSignups.eventId, ids), eq(eventSignups.signupType, "reminder"), isNull(eventSignups.cancelledAt)));
+  const people = new Map<string, { email: string; name: string | null }>();
+  for (const r of rows) {
+    const key = r.email.toLowerCase();
+    if (!people.has(key) || (!people.get(key)!.name && r.name)) people.set(key, { email: r.email, name: r.name });
+  }
+  return [...people.values()];
+}
+
+/** The "we are taking a break" email, one per person signed up. */
+export async function sendCirclePauseNotice(opts: { email: string; name: string | null }) {
+  const hello = opts.name ? `<p style="color:#444;line-height:1.7;">Hi ${escapeHtml(opts.name)},</p>` : "";
+  const html = circleEmailShell(
+    "The Circle is taking a break",
+    `${hello}<p style="color:#444;line-height:1.7;">We are pausing the Interoperability Circle calls for now, and we will pick them up again in a few more weeks.</p>
+     <p style="color:#444;line-height:1.7;">The upcoming sessions are cancelled, so no reminders will arrive. If you added the Circle calendar, the sessions drop off it on their own.</p>
+     <p style="color:#444;line-height:1.7;">You stay signed up. When we have the capacity to hold these sessions in an effective and generative way, we will email you first with the new time.</p>
+     <p style="color:#444;line-height:1.7;">Thank you for showing up for this work.</p>`,
+    `You are signed up for the ${INTEROP_CIRCLE_TITLE}. <a href="${await unsubscribeLink(opts.email)}" style="color:#999;">Leave the Circle</a>`,
+  );
+  return sendEmail({ to: [opts.email], subject: "The Interoperability Circle is taking a break", html, template: "interop_circle_paused" });
 }
 
 /** Leave: cancel this person on every future Circle row. */
