@@ -2551,15 +2551,17 @@ body {
   height: 32px;
 }
 
-/* 29. LIVING TREE BREATHE, gentle scale + glow loop */
+/* 29. LIVING TREE BREATHE, a gentle scale loop under a still glow. The glow
+   used to breathe too, but a drop-shadow that moves keeps the animation on
+   the main thread, so it holds its resting size (STEERING.md section 13). */
 @keyframes tree-breathe {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(125, 216, 125, 0.18)); }
-  50%      { transform: scale(1.018); filter: drop-shadow(0 0 18px rgba(125, 216, 125, 0.32)); }
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.018); }
 }
 .tree-breathe {
+  filter: drop-shadow(0 0 8px rgba(125, 216, 125, 0.18));
   animation: tree-breathe 7s ease-in-out infinite;
   transform-origin: bottom center;
-  will-change: transform, filter;
 }
 
 /* 12. LEAF DRIFT, three ambient leaves drifting subtly across
@@ -3072,6 +3074,10 @@ main p a[href]:not(.no-underline) {
    The ReGen Civics Year wheel (SeasonWheel.tsx, top of /seasons).
    Season particles drift over the hero, a dashed ring flows
    clockwise inside the wheel, and a white marker pulses at "now".
+   All three move ordinary elements with transform and opacity, so
+   the compositor runs them (STEERING.md section 13): the ring is
+   its own svg turned whole, never a dash offset on a shape inside
+   one, and the pulse is an HTML circle laid over the wheel.
    Reduced motion: no particles, no flow, no pulse.
    ════════════════════════════════════════════════════════════ */
 .rw-particles {
@@ -3110,20 +3116,26 @@ main p a[href]:not(.no-underline) {
   80% { opacity: var(--rw-opacity, 0.9); }
   100% { transform: translate3d(var(--rw-drift, 20px), -70vh, 0) scale(0.7); opacity: 0; }
 }
+/* One turn in 68s keeps the old flow's pace: the dashes moved 96
+   units every 7s around a ring of radius 147.5. */
 .rw-flow {
-  animation: rw-flow 7s linear infinite;
+  transform-origin: center;
+  animation: rw-flow 68s linear infinite;
 }
 @keyframes rw-flow {
-  to { stroke-dashoffset: -96; }
+  to { transform: rotate(360deg); }
 }
 .rw-now-pulse {
-  transform-box: fill-box;
-  transform-origin: center;
+  position: absolute;
+  border-radius: 9999px;
+  background: #ffffff;
+  pointer-events: none;
   animation: rw-now-pulse 2.4s ease-out infinite;
 }
+/* Drawn at its widest and scaled down from there (1 / 2.8 at the start). */
 @keyframes rw-now-pulse {
-  0% { transform: scale(1); opacity: 0.75; }
-  100% { transform: scale(2.8); opacity: 0; }
+  0% { transform: scale(0.3571); opacity: 0.75; }
+  100% { transform: scale(1); opacity: 0; }
 }
 .rw-panel-in {
   animation: rw-panel-in 0.45s ease-out both;

@@ -55,6 +55,21 @@ const R_IN = 152;
 const R_MID = (R_OUT + R_IN) / 2;
 const R_IMG = 143;
 const R_FLOW = 147.5;
+/**
+ * The "now" pulse at its widest (11 units growing 2.8 times). The circle is
+ * drawn that size and scaled down, so the compositor never enlarges a small
+ * bitmap and the edge stays as sharp as the old SVG circle's.
+ */
+const NOW_PULSE_MAX_R = 11 * 2.8;
+
+/**
+ * The flow ring's dashes: 77 of them fill the ring exactly, so the ring can
+ * turn whole without carrying a seam around (the old "2 10" left a doubled
+ * dash where the circle closes).
+ */
+const FLOW_DASHES = `2 ${Math.round(((2 * Math.PI * R_FLOW) / 77 - 2) * 1000) / 1000}`;
+/** Half the side of the turning ring's own square: the ring and its stroke. */
+const FLOW_BOX = R_FLOW + 1.5;
 
 /**
  * Where each season's quarter starts on the dial, in SVG degrees (0 is three
@@ -80,6 +95,11 @@ function polar(r: number, deg: number): [number, number] {
 
 function fmt(n: number) {
   return Math.round(n * 100) / 100;
+}
+
+/** A length in viewBox units as a share of the square wheel box, for HTML layers. */
+function vbPercent(n: number) {
+  return `${Math.round((n / VB) * 100 * 1000) / 1000}%`;
 }
 
 /** An annular sector from a0 to a1 (degrees, clockwise). */
@@ -131,7 +151,7 @@ const LEAVES = ["#ea8a3c", "#d4a574", "#c4552b", "#e8a838"];
 
 function SeasonParticles({ season }: { season: RegenSeasonKey }) {
   return (
-    <div key={season} className="rw-particles rw-panel-in" aria-hidden="true">
+    <div key={season} className="rw-particles rw-panel-in decor-layer" aria-hidden="true">
       {SEEDS.map((p, i) => {
         const rises = season === "summer";
         let style: CSSProperties = {
@@ -353,6 +373,12 @@ export function SeasonWheel({ now }: { now?: Date }) {
                 style={{ background: `${look.color}33` }}
               />
 
+              {/* The wheel is drawn in five stacked layers so its two endless
+                  motions run on the compositor, never on the main thread
+                  (STEERING.md section 13): the village, the flowing ring (its
+                  own svg, turned whole with a CSS transform), the quarters and
+                  markers, the "now" pulse (an HTML circle), and the NOW pill.
+                  The order is the old single drawing's, so nothing moved. */}
               <svg
                 viewBox={`0 0 ${VB} ${VB}`}
                 className="relative w-full h-full select-none"
@@ -367,6 +393,63 @@ export function SeasonWheel({ now }: { now?: Date }) {
                     <stop offset="0.62" stopColor="#0a1f14" stopOpacity="0" />
                     <stop offset="1" stopColor="#0a1f14" stopOpacity="0.7" />
                   </radialGradient>
+                </defs>
+
+                {/* The village, one painting per season, crossfaded */}
+                <circle cx={C} cy={C} r={R_IMG} fill="#0a1f14" />
+                <g clipPath="url(#rw-disc)">
+                  {REGEN_SEASON_ORDER.filter((key) => painted.has(key)).map((key) => (
+                    <image
+                      key={key}
+                      href={LOOK[key].image}
+                      xlinkHref={LOOK[key].image}
+                      x={C - R_IMG * 1.78}
+                      y={C - R_IMG}
+                      width={R_IMG * 3.56}
+                      height={R_IMG * 2}
+                      preserveAspectRatio="xMidYMid slice"
+                      style={{ opacity: key === selected ? 1 : 0, transition: "opacity 900ms ease" }}
+                    />
+                  ))}
+                  <circle cx={C} cy={C} r={R_IMG} fill="url(#rw-vignette)" />
+                </g>
+                <circle cx={C} cy={C} r={R_IMG} fill="none" stroke="rgba(240,235,227,0.18)" strokeWidth="1" />
+              </svg>
+
+              {/* The flow of the year, clockwise: the whole layer turns. It is
+                  only as big as the ring, so the turning square stays inside
+                  the wheel and the compositor holds a smaller bitmap. */}
+              <svg
+                viewBox={`${C - FLOW_BOX} ${C - FLOW_BOX} ${FLOW_BOX * 2} ${FLOW_BOX * 2}`}
+                className="rw-flow decor-layer pointer-events-none absolute"
+                style={{
+                  left: vbPercent(C - FLOW_BOX),
+                  top: vbPercent(C - FLOW_BOX),
+                  width: vbPercent(FLOW_BOX * 2),
+                  height: vbPercent(FLOW_BOX * 2),
+                }}
+                aria-hidden="true"
+                focusable="false"
+              >
+                <circle
+                  cx={C}
+                  cy={C}
+                  r={R_FLOW}
+                  fill="none"
+                  stroke="rgba(240,235,227,0.45)"
+                  strokeWidth="1.5"
+                  strokeDasharray={FLOW_DASHES}
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              <svg
+                viewBox={`0 0 ${VB} ${VB}`}
+                className="absolute inset-0 h-full w-full select-none"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <defs>
                   {REGEN_SEASON_ORDER.map((key) => (
                     <radialGradient
                       key={key}
@@ -399,39 +482,6 @@ export function SeasonWheel({ now }: { now?: Date }) {
                     );
                   })}
                 </defs>
-
-                {/* The village, one painting per season, crossfaded */}
-                <circle cx={C} cy={C} r={R_IMG} fill="#0a1f14" />
-                <g clipPath="url(#rw-disc)">
-                  {REGEN_SEASON_ORDER.filter((key) => painted.has(key)).map((key) => (
-                    <image
-                      key={key}
-                      href={LOOK[key].image}
-                      xlinkHref={LOOK[key].image}
-                      x={C - R_IMG * 1.78}
-                      y={C - R_IMG}
-                      width={R_IMG * 3.56}
-                      height={R_IMG * 2}
-                      preserveAspectRatio="xMidYMid slice"
-                      style={{ opacity: key === selected ? 1 : 0, transition: "opacity 900ms ease" }}
-                    />
-                  ))}
-                  <circle cx={C} cy={C} r={R_IMG} fill="url(#rw-vignette)" />
-                </g>
-                <circle cx={C} cy={C} r={R_IMG} fill="none" stroke="rgba(240,235,227,0.18)" strokeWidth="1" />
-
-                {/* The flow of the year, clockwise */}
-                <circle
-                  className="rw-flow"
-                  cx={C}
-                  cy={C}
-                  r={R_FLOW}
-                  fill="none"
-                  stroke="rgba(240,235,227,0.45)"
-                  strokeWidth="1.5"
-                  strokeDasharray="2 10"
-                  strokeLinecap="round"
-                />
 
                 {/* The four quarters */}
                 {REGEN_SEASON_ORDER.map((key) => {
@@ -533,33 +583,47 @@ export function SeasonWheel({ now }: { now?: Date }) {
                     </g>
                   );
                 })}
+              </svg>
 
-                {/* Now */}
-                <g>
-                  <circle className="rw-now-pulse" cx={fmt(nowX)} cy={fmt(nowY)} r="11" fill="#ffffff" />
-                  <rect
-                    x={fmt(nowX - 24)}
-                    y={fmt(nowY - 10.5)}
-                    width="48"
-                    height="21"
-                    rx="10.5"
-                    fill="#ffffff"
-                    stroke={LOOK[current].ink}
-                    strokeWidth="2"
-                  />
-                  <text
-                    x={fmt(nowX)}
-                    y={fmt(nowY + 3.8)}
-                    textAnchor="middle"
-                    fontSize="10.5"
-                    fontWeight="800"
-                    letterSpacing="1.5"
-                    fill={LOOK[current].ink}
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    NOW
-                  </text>
-                </g>
+              {/* Now: a white circle pulses out from under the pill */}
+              <span
+                aria-hidden="true"
+                className="rw-now-pulse decor-layer"
+                style={{
+                  left: vbPercent(nowX - NOW_PULSE_MAX_R),
+                  top: vbPercent(nowY - NOW_PULSE_MAX_R),
+                  width: vbPercent(NOW_PULSE_MAX_R * 2),
+                  height: vbPercent(NOW_PULSE_MAX_R * 2),
+                }}
+              />
+              <svg
+                viewBox={`0 0 ${VB} ${VB}`}
+                className="pointer-events-none absolute inset-0 h-full w-full select-none"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <rect
+                  x={fmt(nowX - 24)}
+                  y={fmt(nowY - 10.5)}
+                  width="48"
+                  height="21"
+                  rx="10.5"
+                  fill="#ffffff"
+                  stroke={LOOK[current].ink}
+                  strokeWidth="2"
+                />
+                <text
+                  x={fmt(nowX)}
+                  y={fmt(nowY + 3.8)}
+                  textAnchor="middle"
+                  fontSize="10.5"
+                  fontWeight="800"
+                  letterSpacing="1.5"
+                  fill={LOOK[current].ink}
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  NOW
+                </text>
               </svg>
 
               {/* Season tabs, one in each corner beside its quarter. They are 44px

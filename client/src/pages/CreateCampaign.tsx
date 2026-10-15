@@ -111,7 +111,7 @@ import {
 // Navigation is rendered globally in App.tsx
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { CAMPAIGN_TEMPLATES } from '@/data/campaignTemplates';
+import { CAMPAIGN_TEMPLATES, type CampaignTemplate } from '@/data/campaignTemplates';
 import { MAX_ROLE_HOURS, fullTimeLabel } from "@shared/roleCapacity";
 import { CSVImportDialog } from '@/components/CSVImportDialog';
 import { estimateLandPrice, estimateEquipmentPrice, suggestHourlyRate, EQUIPMENT_BASE_PRICES, ROLE_SKILL_LEVELS } from '@/data/regionalCostData';
@@ -666,27 +666,19 @@ export default function CreateCampaign() {
   // overwrite the paused application.
   const appsPaused = (userApplications ?? []).filter((app: any) => app.status === 'inactive');
 
-  // Campaign data
-  const [campaignName, setCampaignName] = useState('');
-  const [campaignDescription, setCampaignDescription] = useState('');
-  const [daoLink, setDaoLink] = useState('');
+  // Campaign details. The Campaign Details card owns its fields while someone
+  // types (CampaignDetails, below), so a key there re-renders the card and not
+  // this page. The page keeps only what it needs: the values when it sends
+  // (detailsRef), whether the three required fields are filled, and the name,
+  // place and vision the design companion reads, once typing pauses.
+  const detailsRef = useRef<CampaignDetailsValues>(EMPTY_DETAILS);
+  const [detailsComplete, setDetailsComplete] = useState(false);
+  const [companionText, setCompanionText] = useState<CompanionText>(EMPTY_COMPANION_TEXT);
+  const initialDetails = useMemo(
+    () => (selectedApplication ? detailsFromApplication(selectedApplication) : EMPTY_DETAILS),
+    [selectedApplication],
+  );
   const [currency, setCurrency] = useState('USD');
-  const [currencyOpen, setCurrencyOpen] = useState(false);
-  
-  // Application data fields (from project application)
-  const [projectLocation, setProjectLocation] = useState('');
-  const [projectVision, setProjectVision] = useState('');
-  const [landStatus, setLandStatus] = useState('');
-  const [projectSizeHectares, setProjectSizeHectares] = useState<number | null>(null);
-  const [teamSize, setTeamSize] = useState<number | null>(null);
-  const [teamDescription, setTeamDescription] = useState('');
-  const [regenerativePractices, setRegenerativePractices] = useState('');
-  const [governanceApproach, setGovernanceApproach] = useState('');
-  const [communityEngagement, setCommunityEngagement] = useState('');
-  const [websiteUrl, setWebsiteUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [companionOpen, setCompanionOpen] = useState(false);
   const currencySymbol = currencies.find(c => c.code === currency)?.symbol || '$';
   
@@ -805,17 +797,68 @@ export default function CreateCampaign() {
 
   // Region hint for fair-value bands: prefer the first land region, else the
   // project location. The coach matches loosely, so either form is fine.
-  const coachRegion = landRequirements[0]?.regions?.[0] || projectLocation || '';
+  const coachRegion = landRequirements[0]?.regions?.[0] || companionText.location || '';
 
   // The draft the design companion reads, rebuilt only when one of its parts
-  // changes, so the memoized panel skips keys typed in the other fields.
+  // changes, so the memoized panel skips everything else.
   const companionDraft = useMemo(() => ({
-    projectName: campaignName,
-    location: projectLocation,
+    projectName: companionText.projectName,
+    location: companionText.location,
     region: coachRegion,
-    vision: projectVision,
+    vision: companionText.vision,
     needs: draftNeeds,
-  }), [campaignName, projectLocation, coachRegion, projectVision, draftNeeds]);
+  }), [companionText, coachRegion, draftNeeds]);
+
+  // The card sends the companion's text once typing pauses. Unchanged text
+  // keeps the old object, so the page skips the render.
+  const handleCompanionText = useCallback((next: CompanionText) => {
+    setCompanionText((prev) =>
+      prev.projectName === next.projectName && prev.location === next.location && prev.vision === next.vision
+        ? prev
+        : next,
+    );
+  }, []);
+
+  // The coach's opening pass reads the draft the moment the panel opens, so
+  // it takes the text as typed, even within the pause.
+  const openCompanion = () => {
+    handleCompanionText(companionTextFrom(detailsRef.current));
+    setCompanionOpen(true);
+  };
+
+  // A template fills the four need lists here; the card fills its own name
+  // and description.
+  const handleTemplate = useCallback((template: CampaignTemplate) => {
+    setLandRequirements([{
+      id: generateId(),
+      hectares: template.land.hectares,
+      regions: template.land.regions,
+      features: template.land.features,
+      description: template.land.description,
+      videoUrl: '',
+      estimatedValue: estimateLandPrice(template.land.hectares, template.land.regions),
+      customValue: null
+    }]);
+    // Equipment templates take a gift or a loan
+    setEquipment(template.equipment.map(eq => ({
+      ...eq,
+      id: generateId(),
+      customValue: null,
+      acceptsGift: true,
+      acceptsLoan: true,
+    })));
+    setRoles(template.roles.map(role => ({
+      ...role,
+      id: generateId(),
+      estimatedValue: role.hoursPerWeek * role.weeksNeeded * role.hourlyRate,
+      customValue: null
+    })));
+    setOtherNeeds(template.otherNeeds.map(need => ({
+      ...need,
+      id: generateId(),
+      customValue: null
+    })));
+  }, []);
 
   // Adds a coach suggestion to the right wizard list. A role/shift becomes a
   // role; everything else becomes an other-need. Never auto-called; it only
@@ -876,12 +919,13 @@ export default function CreateCampaign() {
 
   // Handle campaign submission
   const handleSubmitCampaign = async () => {
-    if (!campaignName || !campaignDescription) {
+    const details = detailsRef.current;
+    if (!details.campaignName || !details.campaignDescription) {
       toast.error('Please provide a campaign name and description');
       return;
     }
-    
-    if (!daoLink) {
+
+    if (!details.daoLink) {
       toast.error('Please provide your DAO link for proposal submissions');
       return;
     }
@@ -1022,47 +1066,39 @@ export default function CreateCampaign() {
     
     // Submit campaign with all rich project data
     createCampaignMutation.mutate({
-      title: campaignName,
-      description: campaignDescription,
-      projectName: campaignName,
-      location: projectLocation || landRequirements[0]?.regions?.[0] || undefined,
+      title: details.campaignName,
+      description: details.campaignDescription,
+      projectName: details.campaignName,
+      location: details.projectLocation || landRequirements[0]?.regions?.[0] || undefined,
       // No money sends 0. There is no default share filled in for the project.
       financialTarget: moneyAsk,
       currency,
       applicationId: selectedApplication?.id,
-      vision: projectVision || undefined,
-      landStatus: landStatus || undefined,
-      landSize: projectSizeHectares ? `${projectSizeHectares} hectares` : undefined,
-      teamSize: teamSize || undefined,
-      teamDescription: teamDescription || undefined,
-      regenerativePractices: regenerativePractices || undefined,
-      governanceModel: governanceApproach || undefined,
-      communityEngagement: communityEngagement || undefined,
-      websiteUrl: websiteUrl || undefined,
-      videoUrl: videoUrl || undefined,
-      daoLink: daoLink || undefined,
+      vision: details.projectVision || undefined,
+      landStatus: details.landStatus || undefined,
+      landSize: details.projectSizeHectares ? `${details.projectSizeHectares} hectares` : undefined,
+      teamSize: details.teamSize || undefined,
+      teamDescription: details.teamDescription || undefined,
+      regenerativePractices: details.regenerativePractices || undefined,
+      governanceModel: details.governanceApproach || undefined,
+      communityEngagement: details.communityEngagement || undefined,
+      websiteUrl: details.websiteUrl || undefined,
+      videoUrl: details.videoUrl || undefined,
+      daoLink: details.daoLink || undefined,
       durationDays,
       items,
       ...(moneyRoutes.length > 0 ? { moneyRoutes } : {}),
     });
   };
   
-  // Auto-populate from selected application
+  // Auto-populate from selected application: the details card starts from
+  // what the application says (initialDetails), and the page holds the same
+  // until the card reports.
   const handleSelectApplication = useCallback((app: any) => {
+    const details = detailsFromApplication(app);
+    detailsRef.current = details;
+    setCompanionText(companionTextFrom(details));
     setSelectedApplication(app);
-    setCampaignName(app.projectName || '');
-    setCampaignDescription(app.vision || '');
-    setProjectLocation(app.location || '');
-    setProjectVision(app.vision || '');
-    setLandStatus(app.landStatus || '');
-    setProjectSizeHectares(app.projectSizeHectares ? parseFloat(app.projectSizeHectares) : null);
-    setTeamSize(app.teamSize || null);
-    setTeamDescription(app.teamDescription || '');
-    setRegenerativePractices(app.regenerativePractices || '');
-    setGovernanceApproach(app.governanceModel || app.governanceApproach || '');
-    setCommunityEngagement(app.communityEngagement || '');
-    setWebsiteUrl(app.websiteUrl || '');
-    setVideoUrl(app.videoUrl || '');
     toast.success(`Project "${app.projectName}" loaded! Review and customize your campaign details.`);
   }, []);
 
@@ -1309,356 +1345,17 @@ export default function CreateCampaign() {
         </div>
 
         {/* Campaign Info */}
-        <div className="bg-white rounded-2xl p-6 mb-6 border border-[#7dd87d]/30 [color-scheme:light]">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-            <h2 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
-              Campaign Details
-            </h2>
-            <div className="flex gap-2">
-            {/* Template Selector */}
-            <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="border-[#d4a017] text-[#d4a017] text-sm">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Use Template
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Choose a Campaign Template</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3 mt-4">
-                  <p className="text-sm text-[#1a472a]/75">
-                    Start with a pre-filled template for common project types:
-                  </p>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {CAMPAIGN_TEMPLATES.map((template) => {
-                      const IconComponent = template.icon === 'home' ? Home : template.icon === 'tree' ? TreePine : Wheat;
-                      return (
-                        <button
-                          key={template.id}
-                          onClick={() => {
-                            // Load template data
-                            setCampaignName(template.name);
-                            setCampaignDescription(template.description);
-                            
-                            // Load land
-                            const landId = generateId();
-                            setLandRequirements([{
-                              id: landId,
-                              hectares: template.land.hectares,
-                              regions: template.land.regions,
-                              features: template.land.features,
-                              description: template.land.description,
-                              videoUrl: '',
-                              estimatedValue: estimateLandPrice(template.land.hectares, template.land.regions),
-                              customValue: null
-                            }]);
-                            
-                            // Load equipment: equipment templates take a gift or a loan
-                            setEquipment(template.equipment.map(eq => ({
-                              ...eq,
-                              id: generateId(),
-                              customValue: null,
-                              acceptsGift: true,
-                              acceptsLoan: true,
-                            })));
-                            
-                            // Load roles
-                            setRoles(template.roles.map(role => ({
-                              ...role,
-                              id: generateId(),
-                              estimatedValue: role.hoursPerWeek * role.weeksNeeded * role.hourlyRate,
-                              customValue: null
-                            })));
-                            
-                            // Load other needs
-                            setOtherNeeds(template.otherNeeds.map(need => ({
-                              ...need,
-                              id: generateId(),
-                              customValue: null
-                            })));
-                            
-                            setShowTemplateDialog(false);
-                            toast.success(`${template.name} template loaded! Customize as needed.`);
-                          }}
-                          className="flex flex-col items-start gap-3 p-4 bg-gradient-to-br from-[#f0f7f0] to-white rounded-xl border-2 border-[#7dd87d]/30 hover:border-[#d4a017] transition-all text-left group"
-                        >
-                          <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#d4a017]/20 transition-colors">
-                            <IconComponent className="w-6 h-6 text-[#4a7c59] group-hover:text-[#d4a017]" />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-[#1a472a] mb-1">{template.name}</h3>
-                            <p className="text-xs text-[#1a472a]/80 leading-relaxed">{template.description}</p>
-                          </div>
-                          <div className="flex flex-wrap gap-2 text-xs">
-                            <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
-                              {template.equipment.length} equipment items
-                            </span>
-                            <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
-                              {template.roles.length} roles
-                            </span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            {user && userApplications && userApplications.length > 0 && (
-              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="border-[#7dd87d] text-[#4a7c59] text-sm">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Import from Application
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Import from Application</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3 mt-4">
-                    <p className="text-sm text-[#1a472a]/75">
-                      Select an application to pre-fill your campaign details:
-                    </p>
-                    {userApplications.map((app: any) => (
-                      <button
-                        key={app.id}
-                        onClick={() => {
-                          // Import application data
-                          setCampaignName(app.projectName || '');
-                          setCampaignDescription(app.vision || '');
-                          setProjectLocation(app.location || '');
-                          setProjectVision(app.vision || '');
-                          setLandStatus(app.landStatus || '');
-                          setProjectSizeHectares(app.projectSizeHectares || null);
-                          setTeamSize(app.teamSize || null);
-                          setTeamDescription(app.teamDescription || '');
-                          setRegenerativePractices(app.regenerativePractices || '');
-                          setGovernanceApproach(app.governanceApproach || '');
-                          setCommunityEngagement(app.communityEngagement || '');
-                          setWebsiteUrl(app.websiteUrl || '');
-                          setVideoUrl(app.videoUrl || '');
-                          setShowImportDialog(false);
-                          toast.success('Application data imported!');
-                        }}
-                        className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/30 transition-colors"
-                      >
-                        <div className="font-medium text-[#1a472a]">{app.projectName}</div>
-                        <div className="text-xs text-[#1a472a]/80">
-                          {app.location} - {app.status}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-            </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">Campaign Name</label>
-              <Input
-                value={campaignName}
-                onChange={(e) => setCampaignName(e.target.value)}
-                placeholder="e.g., Terra Nova Regenerative Farm"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">Currency</label>
-              <Popover open={currencyOpen} onOpenChange={setCurrencyOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={currencyOpen}
-                    className="w-full justify-between bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-left font-normal"
-                  >
-                    {(() => {
-                      const c = currencies.find(c => c.code === currency);
-                      return c ? `${c.symbol} ${c.name} (${c.code})` : 'Select currency...';
-                    })()}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[320px] p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Search currency..." />
-                    <CommandList>
-                      <CommandEmpty>No currency found.</CommandEmpty>
-                      <CommandGroup className="max-h-[300px] overflow-auto">
-                        {currencies.map(c => (
-                          <CommandItem
-                            key={c.code}
-                            value={`${c.code} ${c.name} ${c.symbol}`}
-                            onSelect={() => {
-                              setCurrency(c.code);
-                              setCurrencyOpen(false);
-                            }}
-                          >
-                            <Check className={`mr-2 h-4 w-4 ${currency === c.code ? 'opacity-100' : 'opacity-0'}`} />
-                            <span className="font-medium mr-2">{c.symbol}</span>
-                            <span>{c.name}</span>
-                            <span className="ml-auto text-xs text-muted-foreground">{c.code}</span>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">Description</label>
-              <Textarea
-                value={campaignDescription}
-                onChange={(e) => setCampaignDescription(e.target.value)}
-                placeholder="Describe your project vision and goals..."
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[100px]"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#1a472a] mb-1">
-                DAO Link for Proposals <span className="text-red-500">*</span>
-              </label>
-              <Input
-                value={daoLink}
-                onChange={(e) => setDaoLink(e.target.value)}
-                placeholder="https://app.hypha.earth/en/dho/your-project/agreements/create/propose-contribution"
-                className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-              />
-              <p className="text-xs text-[#1a472a]/80 mt-1">
-                This is where contributors will submit their proposals. Required for listing your project.
-              </p>
-            </div>
-            
-            {/* Additional Project Info - Collapsible */}
-            <div className="md:col-span-2 mt-4">
-              <details className="group">
-                <summary className="cursor-pointer text-sm font-medium text-[#4a7c59] hover:text-[#1a472a] flex items-center gap-2">
-                  <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
-                  Additional Project Information (from application)
-                </summary>
-                <div className="mt-4 space-y-4 pl-6 border-l-2 border-[#7dd87d]/30">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a472a] mb-1">Location</label>
-                      <Input
-                        value={projectLocation}
-                        onChange={(e) => setProjectLocation(e.target.value)}
-                        placeholder="e.g., Costa Rica, Guanacaste Province"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a472a] mb-1">Land Status</label>
-                      <Select value={landStatus} onValueChange={setLandStatus}>
-                        <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="owned">Owned</SelectItem>
-                          <SelectItem value="leased">Leased</SelectItem>
-                          <SelectItem value="committed">Committed</SelectItem>
-                          <SelectItem value="seeking">Seeking Land</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a472a] mb-1">Project Size (hectares)</label>
-                      <Input
-                        type="number"
-                        value={projectSizeHectares || ''}
-                        onChange={(e) => setProjectSizeHectares(parseFloat(e.target.value) || null)}
-                        placeholder="e.g., 150"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a472a] mb-1">Team Size</label>
-                      <Input
-                        type="number"
-                        value={teamSize || ''}
-                        onChange={(e) => setTeamSize(parseInt(e.target.value) || null)}
-                        placeholder="e.g., 12"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a472a] mb-1">Project Vision</label>
-                    <Textarea
-                      value={projectVision}
-                      onChange={(e) => setProjectVision(e.target.value)}
-                      placeholder="Describe your project's long-term vision..."
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a472a] mb-1">Team Description</label>
-                    <Textarea
-                      value={teamDescription}
-                      onChange={(e) => setTeamDescription(e.target.value)}
-                      placeholder="Describe your team's background and expertise..."
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a472a] mb-1">Regenerative Practices</label>
-                    <Textarea
-                      value={regenerativePractices}
-                      onChange={(e) => setRegenerativePractices(e.target.value)}
-                      placeholder="What regenerative practices will you implement?"
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a472a] mb-1">Governance Approach</label>
-                    <Textarea
-                      value={governanceApproach}
-                      onChange={(e) => setGovernanceApproach(e.target.value)}
-                      placeholder="How will decisions be made in your community?"
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a472a] mb-1">Community Engagement</label>
-                    <Textarea
-                      value={communityEngagement}
-                      onChange={(e) => setCommunityEngagement(e.target.value)}
-                      placeholder="How do you engage with the broader community?"
-                      className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
-                    />
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a472a] mb-1">Website URL</label>
-                      <Input
-                        value={websiteUrl}
-                        onChange={(e) => setWebsiteUrl(e.target.value)}
-                        placeholder="https://yourproject.com"
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#1a472a] mb-1">Video URL</label>
-                      <Input
-                        value={videoUrl}
-                        onChange={(e) => setVideoUrl(e.target.value)}
-                        placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
-                        className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
-                      />
-                      <p className="text-xs text-[#1a472a]/75 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
-                    </div>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
-        </div>
+        <CampaignDetails
+          key={selectedApplication.id}
+          initial={initialDetails}
+          valuesRef={detailsRef}
+          onCompleteChange={setDetailsComplete}
+          onCompanionText={handleCompanionText}
+          currency={currency}
+          onCurrencyChange={setCurrency}
+          importableApps={userApplications}
+          onTemplate={handleTemplate}
+        />
         
         {/* Step Navigation - Mobile Optimized */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-6">
@@ -1816,7 +1513,7 @@ export default function CreateCampaign() {
           ) : (
             <Button
               onClick={handleSubmitCampaign}
-              disabled={isSubmitting || !campaignName || !campaignDescription || !daoLink}
+              disabled={isSubmitting || !detailsComplete}
               className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-xl px-8 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
@@ -1843,7 +1540,7 @@ export default function CreateCampaign() {
       {/* Design coach: opens at any step, suggests, never blocks a launch */}
       <button
         type="button"
-        onClick={() => setCompanionOpen(true)}
+        onClick={openCompanion}
         className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex items-center gap-2 rounded-full bg-[#4a7c59] hover:bg-[#1a472a] text-white pl-4 pr-5 py-3 shadow-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[#7dd87d] focus:ring-offset-2"
         aria-label="Open the design coach"
       >
@@ -1861,6 +1558,434 @@ export default function CreateCampaign() {
     </div>
   );
 }
+
+// ── Campaign Details ─────────────────────────────────────────────────────────
+
+/** What the Campaign Details card holds, sent with the campaign. */
+interface CampaignDetailsValues {
+  campaignName: string;
+  campaignDescription: string;
+  daoLink: string;
+  projectLocation: string;
+  projectVision: string;
+  landStatus: string;
+  projectSizeHectares: number | null;
+  teamSize: number | null;
+  teamDescription: string;
+  regenerativePractices: string;
+  governanceApproach: string;
+  communityEngagement: string;
+  websiteUrl: string;
+  videoUrl: string;
+}
+
+const EMPTY_DETAILS: CampaignDetailsValues = {
+  campaignName: '',
+  campaignDescription: '',
+  daoLink: '',
+  projectLocation: '',
+  projectVision: '',
+  landStatus: '',
+  projectSizeHectares: null,
+  teamSize: null,
+  teamDescription: '',
+  regenerativePractices: '',
+  governanceApproach: '',
+  communityEngagement: '',
+  websiteUrl: '',
+  videoUrl: '',
+};
+
+/**
+ * The details an application already holds, for a picked project and for
+ * Import from Application. No application carries a DAO link, so an import
+ * keeps the one typed.
+ */
+function detailsFromApplication(app: any, daoLink = ''): CampaignDetailsValues {
+  return {
+    campaignName: app.projectName || '',
+    campaignDescription: app.vision || '',
+    daoLink,
+    projectLocation: app.location || '',
+    projectVision: app.vision || '',
+    landStatus: app.landStatus || '',
+    projectSizeHectares: app.projectSizeHectares ? parseFloat(app.projectSizeHectares) : null,
+    teamSize: app.teamSize || null,
+    teamDescription: app.teamDescription || '',
+    regenerativePractices: app.regenerativePractices || '',
+    governanceApproach: app.governanceModel || app.governanceApproach || '',
+    communityEngagement: app.communityEngagement || '',
+    websiteUrl: app.websiteUrl || '',
+    videoUrl: app.videoUrl || '',
+  };
+}
+
+/** The parts of the details the design companion reads. */
+interface CompanionText {
+  projectName: string;
+  location: string;
+  vision: string;
+}
+
+const EMPTY_COMPANION_TEXT: CompanionText = { projectName: '', location: '', vision: '' };
+
+function companionTextFrom(details: CampaignDetailsValues): CompanionText {
+  return { projectName: details.campaignName, location: details.projectLocation, vision: details.projectVision };
+}
+
+/**
+ * The Campaign Details card. It owns its fields, so a key typed here
+ * re-renders this card and nothing else on the page (STEERING.md section 13).
+ * The page reads the values when it sends (valuesRef), hears when the three
+ * required fields fill or empty (onCompleteChange), and gets the name, place
+ * and vision the design companion reads once typing pauses (onCompanionText).
+ */
+const CampaignDetails = memo(function CampaignDetails({
+  initial,
+  valuesRef,
+  onCompleteChange,
+  onCompanionText,
+  currency,
+  onCurrencyChange,
+  importableApps,
+  onTemplate,
+}: {
+  initial: CampaignDetailsValues;
+  valuesRef: React.RefObject<CampaignDetailsValues>;
+  onCompleteChange: (complete: boolean) => void;
+  onCompanionText: (text: CompanionText) => void;
+  currency: string;
+  onCurrencyChange: (code: string) => void;
+  importableApps: any[] | undefined;
+  onTemplate: (template: CampaignTemplate) => void;
+}) {
+  const [values, setValues] = useState(initial);
+  const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const set = <K extends keyof CampaignDetailsValues>(key: K, value: CampaignDetailsValues[K]) =>
+    setValues((v) => ({ ...v, [key]: value }));
+
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values, valuesRef]);
+
+  const complete = !!(values.campaignName && values.campaignDescription && values.daoLink);
+  useEffect(() => {
+    onCompleteChange(complete);
+  }, [complete, onCompleteChange]);
+
+  const projectName = useDebouncedValue(values.campaignName, 400);
+  const location = useDebouncedValue(values.projectLocation, 400);
+  const vision = useDebouncedValue(values.projectVision, 400);
+  useEffect(() => {
+    onCompanionText({ projectName, location, vision });
+  }, [projectName, location, vision, onCompanionText]);
+
+  return (
+    <div className="bg-white rounded-2xl p-6 mb-6 border border-[#7dd87d]/30 [color-scheme:light]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <h2 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
+          Campaign Details
+        </h2>
+        <div className="flex gap-2">
+        {/* Template Selector */}
+        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="border-[#d4a017] text-[#d4a017] text-sm">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Use Template
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Choose a Campaign Template</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-4">
+              <p className="text-sm text-[#1a472a]/75">
+                Start with a pre-filled template for common project types:
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                {CAMPAIGN_TEMPLATES.map((template) => {
+                  const IconComponent = template.icon === 'home' ? Home : template.icon === 'tree' ? TreePine : Wheat;
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => {
+                        // Load template data: the name and description here,
+                        // the needs on the page.
+                        setValues((v) => ({ ...v, campaignName: template.name, campaignDescription: template.description }));
+                        onTemplate(template);
+                        setShowTemplateDialog(false);
+                        toast.success(`${template.name} template loaded! Customize as needed.`);
+                      }}
+                      className="flex flex-col items-start gap-3 p-4 bg-gradient-to-br from-[#f0f7f0] to-white rounded-xl border-2 border-[#7dd87d]/30 hover:border-[#d4a017] transition-all text-left group"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#d4a017]/20 transition-colors">
+                        <IconComponent className="w-6 h-6 text-[#4a7c59] group-hover:text-[#d4a017]" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[#1a472a] mb-1">{template.name}</h3>
+                        <p className="text-xs text-[#1a472a]/80 leading-relaxed">{template.description}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
+                          {template.equipment.length} equipment items
+                        </span>
+                        <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
+                          {template.roles.length} roles
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        {importableApps && importableApps.length > 0 && (
+          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-[#7dd87d] text-[#4a7c59] text-sm">
+                <FileText className="w-4 h-4 mr-2" />
+                Import from Application
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Import from Application</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 mt-4">
+                <p className="text-sm text-[#1a472a]/75">
+                  Select an application to pre-fill your campaign details:
+                </p>
+                {importableApps.map((app: any) => (
+                  <button
+                    key={app.id}
+                    onClick={() => {
+                      // Import application data
+                      setValues((v) => detailsFromApplication(app, v.daoLink));
+                      setShowImportDialog(false);
+                      toast.success('Application data imported!');
+                    }}
+                    className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/30 transition-colors"
+                  >
+                    <div className="font-medium text-[#1a472a]">{app.projectName}</div>
+                    <div className="text-xs text-[#1a472a]/80">
+                      {app.location} - {app.status}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+        </div>
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-[#1a472a] mb-1">Campaign Name</label>
+          <Input
+            value={values.campaignName}
+            onChange={(e) => set('campaignName', e.target.value)}
+            placeholder="e.g., Terra Nova Regenerative Farm"
+            className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[#1a472a] mb-1">Currency</label>
+          <Popover open={currencyOpen} onOpenChange={setCurrencyOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={currencyOpen}
+                className="w-full justify-between bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-left font-normal"
+              >
+                {(() => {
+                  const c = currencies.find(c => c.code === currency);
+                  return c ? `${c.symbol} ${c.name} (${c.code})` : 'Select currency...';
+                })()}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[320px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search currency..." />
+                <CommandList>
+                  <CommandEmpty>No currency found.</CommandEmpty>
+                  <CommandGroup className="max-h-[300px] overflow-auto">
+                    {currencies.map(c => (
+                      <CommandItem
+                        key={c.code}
+                        value={`${c.code} ${c.name} ${c.symbol}`}
+                        onSelect={() => {
+                          onCurrencyChange(c.code);
+                          setCurrencyOpen(false);
+                        }}
+                      >
+                        <Check className={`mr-2 h-4 w-4 ${currency === c.code ? 'opacity-100' : 'opacity-0'}`} />
+                        <span className="font-medium mr-2">{c.symbol}</span>
+                        <span>{c.name}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">{c.code}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-[#1a472a] mb-1">Description</label>
+          <Textarea
+            value={values.campaignDescription}
+            onChange={(e) => set('campaignDescription', e.target.value)}
+            placeholder="Describe your project vision and goals..."
+            className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[100px]"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-[#1a472a] mb-1">
+            DAO Link for Proposals <span className="text-red-500">*</span>
+          </label>
+          <Input
+            value={values.daoLink}
+            onChange={(e) => set('daoLink', e.target.value)}
+            placeholder="https://app.hypha.earth/en/dho/your-project/agreements/create/propose-contribution"
+            className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+          />
+          <p className="text-xs text-[#1a472a]/80 mt-1">
+            This is where contributors will submit their proposals. Required for listing your project.
+          </p>
+        </div>
+
+        {/* Additional Project Info - Collapsible */}
+        <div className="md:col-span-2 mt-4">
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-medium text-[#4a7c59] hover:text-[#1a472a] flex items-center gap-2">
+              <ChevronRight className="w-4 h-4 transition-transform group-open:rotate-90" />
+              Additional Project Information (from application)
+            </summary>
+            <div className="mt-4 space-y-4 pl-6 border-l-2 border-[#7dd87d]/30">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Location</label>
+                  <Input
+                    value={values.projectLocation}
+                    onChange={(e) => set('projectLocation', e.target.value)}
+                    placeholder="e.g., Costa Rica, Guanacaste Province"
+                    className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Land Status</label>
+                  <Select value={values.landStatus} onValueChange={(v) => set('landStatus', v)}>
+                    <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="owned">Owned</SelectItem>
+                      <SelectItem value="leased">Leased</SelectItem>
+                      <SelectItem value="committed">Committed</SelectItem>
+                      <SelectItem value="seeking">Seeking Land</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Project Size (hectares)</label>
+                  <Input
+                    type="number"
+                    value={values.projectSizeHectares || ''}
+                    onChange={(e) => set('projectSizeHectares', parseFloat(e.target.value) || null)}
+                    placeholder="e.g., 150"
+                    className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Team Size</label>
+                  <Input
+                    type="number"
+                    value={values.teamSize || ''}
+                    onChange={(e) => set('teamSize', parseInt(e.target.value) || null)}
+                    placeholder="e.g., 12"
+                    className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a472a] mb-1">Project Vision</label>
+                <Textarea
+                  value={values.projectVision}
+                  onChange={(e) => set('projectVision', e.target.value)}
+                  placeholder="Describe your project's long-term vision..."
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a472a] mb-1">Team Description</label>
+                <Textarea
+                  value={values.teamDescription}
+                  onChange={(e) => set('teamDescription', e.target.value)}
+                  placeholder="Describe your team's background and expertise..."
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a472a] mb-1">Regenerative Practices</label>
+                <Textarea
+                  value={values.regenerativePractices}
+                  onChange={(e) => set('regenerativePractices', e.target.value)}
+                  placeholder="What regenerative practices will you implement?"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a472a] mb-1">Governance Approach</label>
+                <Textarea
+                  value={values.governanceApproach}
+                  onChange={(e) => set('governanceApproach', e.target.value)}
+                  placeholder="How will decisions be made in your community?"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#1a472a] mb-1">Community Engagement</label>
+                <Textarea
+                  value={values.communityEngagement}
+                  onChange={(e) => set('communityEngagement', e.target.value)}
+                  placeholder="How do you engage with the broader community?"
+                  className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
+                />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Website URL</label>
+                  <Input
+                    value={values.websiteUrl}
+                    onChange={(e) => set('websiteUrl', e.target.value)}
+                    placeholder="https://yourproject.com"
+                    className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#1a472a] mb-1">Video URL</label>
+                  <Input
+                    value={values.videoUrl}
+                    onChange={(e) => set('videoUrl', e.target.value)}
+                    placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                    className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
+                  />
+                  <p className="text-xs text-[#1a472a]/75 mt-1">Supports YouTube, Vimeo, Dailymotion, Wistia, Loom, and direct .mp4 links</p>
+                </div>
+              </div>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // Land Section Component
 // The step sections are memoized: their props stay the same while someone
