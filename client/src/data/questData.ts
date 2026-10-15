@@ -242,7 +242,7 @@ export const questData = {
     isRoutine: true,
     minimumTime: "1 moon cycle (every other day)",
     forumSlug: "routine-quest-14-love-to-heal-your-body",
-    forumUrl: "/community/post/623",
+    forumUrl: "/community/post/676",
   },
 };
 
