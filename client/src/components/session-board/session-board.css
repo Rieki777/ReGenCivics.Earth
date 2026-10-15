@@ -747,6 +747,8 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-carried { display: grid; gap: 10px; min-width: 0; }
 .sb-carried-move { color: var(--sb-ink-2); overflow-wrap: anywhere; }
 .sb-confirm-list { display: grid; gap: 14px; border-color: var(--sb-lantern); }
+/* A card waiting on the facilitator's "same project?": why it waits, and Start without Week 3. */
+.sb-carry-pending { display: grid; gap: 12px; justify-items: start; border-color: var(--sb-lantern); }
 .sb-confirm { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--sb-lantern); background: rgba(212, 165, 116, 0.12); font-weight: 700; }
 .sb-gaps { display: grid; gap: 10px; }
 .sb-gap-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
