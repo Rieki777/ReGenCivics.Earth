@@ -386,6 +386,8 @@ export type ProjectView = {
   /** Week 4: what the whole project decides together, and its first agreement. */
   together: Record<string, number>;
   agreement: TextAnswer;
+  /** Week 4: the first step someone takes to come in. */
+  entry: TextAnswer;
   box: Record<string, number>;
   week4: Record<string, number>;
   /** Short-text answers. */
@@ -534,6 +536,7 @@ export function projectView(items: readonly AnswerRow[], projectId: number | nul
     movedLine: text(of("moved-line")),
     together: tally(of("together")),
     agreement: text(of("agreement")),
+    entry: text(of("entry")),
     box: tally(of("box")),
     week4: tally(of("week4")),
     purpose: text(of("purpose")),

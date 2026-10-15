@@ -157,6 +157,21 @@ export function mergeCarried<T extends AnswerRow>(
 }
 
 /**
+ * One project's answers from several weeks, merged with no board at hand:
+ * pass each week's rows for the project (any card ids) and get one set of
+ * rows on `cardId`, the latest week winning each key, the human needs moving
+ * as one group (the same rule as `mergeCarried`). For readers that gather a
+ * project's weeks themselves, such as its Village OS profile.
+ */
+export function mergeProjectWeeks(weeks: readonly { week: number; rows: readonly AnswerRow[] }[], cardId: number): (AnswerRow | (CarriedRow & { carried: true }))[] {
+  if (!weeks.length) return [];
+  const [latest, ...earlier] = [...weeks].sort((a, b) => b.week - a.week);
+  const current = latest.rows.filter((r) => r.kind === "answer").map((r) => ({ ...r, projectId: cardId }));
+  const carried: CarriedRow[] = earlier.flatMap((w) => w.rows.filter((r) => r.kind === "answer").map((r) => ({ ...r, projectId: cardId, week: w.week })));
+  return mergeCarried(current, carried, cardId, new Set([cardId]));
+}
+
+/**
  * Every row a room view reads: this board's rows, plus each card's carried
  * rows merged the same way. Rows for the room (no card) never carry.
  */

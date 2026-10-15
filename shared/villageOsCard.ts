@@ -63,25 +63,61 @@ export type DraftNeedLink = {
   circleLabel: string;
 };
 
+/**
+ * A seat, named the way Village OS names a seat's commitments
+ * (shared/roleSheetWords.ts in village-os: aim, domain, accountabilities,
+ * why, term, nextHolder, decides). What the board doesn't ask is null and
+ * takes Village OS's default: a term ends with the season.
+ */
 export type VillageOsSeat = {
   name: string;
   circle: string;
   circleLabel: string;
+  /** How many people can hold it. The board asks one seat per card. */
+  seats: number;
   aim: string;
-  answersFor: string;
+  /** What it decides on. The board asks this per circle (`circles[].decidesOn`), so a seat has none of its own. */
+  domain: string | null;
+  /** What it answers for. */
+  accountabilities: string;
+  /** Why it matters: the human need it meets. */
+  why: string;
+  term: null;
+  nextHolder: null;
+  decides: null;
   heldBy: HeldBy;
   who: string;
-  contribution: string;
+  /** Hours a week when the words say so, and the words as written. */
+  contribution: { hoursPerWeek?: number; text?: string };
   needLinks: { needKey: string; subjectType: "role"; weight: "primary" | "partial" }[];
 };
 
+/**
+ * "4 hours a week", "4h/week", "about 6 hrs per week" give hours a week;
+ * anything else ("two mornings a week") stays as words only.
+ */
+export function parseContribution(words: string): { hoursPerWeek?: number; text?: string } {
+  const text = words.trim();
+  if (!text) return {};
+  const m = /(\d+(?:[.,]\d+)?)\s*(?:hours?|hrs?|h)\b\s*(?:a|per|each|every|\/)?\s*(?:week|wk|w)\b/i.exec(text);
+  const hours = m ? Number(m[1].replace(",", ".")) : NaN;
+  return Number.isFinite(hours) && hours > 0 && hours <= 168 ? { hoursPerWeek: hours, text } : { text };
+}
+
+/** The card's shape name, so Village OS's importer can refuse one it doesn't know. */
+export const VILLAGE_CARD_SCHEMA = "regen-civics/village-card@1";
+
 export type VillageOsCard = {
+  schema: typeof VILLAGE_CARD_SCHEMA;
   needs: VillageOsNeedEntry[];
   variables: { "needs.totality_target_pct"?: number };
   needLinks: DraftNeedLink[];
   seats: VillageOsSeat[];
-  circles: { circle: string; label: string; needs: string[]; decidesOn: string[]; startsWith: boolean }[];
+  /** `decidesBy` is Village OS's `circles.decides_by` (consent, consensus, majority, lead, elders, founder, do-ocracy, delegated, other). */
+  circles: { circle: string; label: string; needs: string[]; decidesOn: string[]; decidesBy: string | null; startsWith: boolean }[];
   decisions: { together: string[]; how: string | null; agreement: string | null };
+  /** The first step someone takes to come in. */
+  entry: string | null;
   quests: { quest: string; need: string | null }[];
   customNeeds: { needKey: string; label: string }[];
   firstLine: string | null;
@@ -169,15 +205,22 @@ export function toVillageOsCard(input: {
   // village has taken on, so a seat on one that isn't in the list keeps no link.
   const seatsPerNeed = new Map<string, number>();
   for (const s of cards.seats) seatsPerNeed.set(s.card.need, (seatsPerNeed.get(s.card.need) ?? 0) + 1);
+  const ownLabels = ownNeedLabels(cards.own);
   const seats: VillageOsSeat[] = cards.seats.map(({ card: s }) => ({
     name: s.name,
     circle: s.circle,
     circleLabel: circleLabel(s.circle),
+    seats: 1,
     aim: s.aim,
-    answersFor: s.answersFor,
+    domain: null,
+    accountabilities: s.answersFor,
+    why: `Meets ${needKeyLabel(s.need, ownLabels)}`,
+    term: null,
+    nextHolder: null,
+    decides: null,
     heldBy: s.heldBy,
     who: s.who,
-    contribution: s.contribution,
+    contribution: parseContribution(s.contribution),
     needLinks: inScope.has(s.need) ? [{ needKey: s.need, subjectType: "role", weight: (seatsPerNeed.get(s.need) ?? 0) > 1 ? "partial" : "primary" }] : [],
   }));
 
@@ -186,7 +229,7 @@ export function toVillageOsCard(input: {
   const circle = (key: string) => {
     let c = circles.get(key);
     if (!c) {
-      c = { circle: key, label: key === OWN_CIRCLE.key ? OWN_CIRCLE.label : circleLabel(key), needs: [], decidesOn: [], startsWith: false };
+      c = { circle: key, label: key === OWN_CIRCLE.key ? OWN_CIRCLE.label : circleLabel(key), needs: [], decidesOn: [], decidesBy: null, startsWith: false };
       circles.set(key, c);
     }
     return c;
@@ -201,13 +244,18 @@ export function toVillageOsCard(input: {
     const c = circle(s.card.circle);
     if (!c.needs.includes(s.card.need)) c.needs.push(s.card.need);
   }
-  for (const d of cards.decide) circle(d.card.circle).decidesOn.push(d.card.decidesOn);
+  for (const d of cards.decide) {
+    const c = circle(d.card.circle);
+    c.decidesOn.push(d.card.decidesOn);
+    if (d.card.how) c.decidesBy = d.card.how;
+  }
 
   const together = TOGETHER_DECISIONS.filter((t) => (view.together[t.key] ?? 0) > 0).map((t) => t.label);
   const purpose = view.purpose.latest?.trim().replace(/^all this is for\s*/i, "") ?? "";
 
   const whole = scope.totalityTargetPct;
   return {
+    schema: VILLAGE_CARD_SCHEMA,
     needs,
     variables: whole != null ? { "needs.totality_target_pct": whole } : {},
     needLinks,
@@ -218,6 +266,7 @@ export function toVillageOsCard(input: {
       how: label(DECIDE_OPTIONS, view.decideAim.value),
       agreement: view.agreement.latest,
     },
+    entry: view.entry.latest,
     // A quest on a human need the village hasn't taken on keeps its words, without the tag.
     quests: cards.quests.map(({ card }) => ({ quest: card.quest, need: inScope.has(card.need) ? card.need : null })),
     customNeeds,
@@ -263,6 +312,7 @@ export function gameLines(view: ProjectView, cards: ProjectCards): string[] {
   const together = TOGETHER_DECISIONS.filter((t) => (view.together[t.key] ?? 0) > 0).map((t) => t.label.toLowerCase());
   if (together.length) lines.push(`Decided together: ${together.join(", ")}.`);
   if (view.agreement.latest) lines.push(`First agreement: ${view.agreement.latest}`);
+  if (view.entry.latest) lines.push(`The first step in: ${view.entry.latest}`);
   for (const e of cards.quests) lines.push(`Quest: ${cardLine("quest", e.card, own)}.`);
   return lines;
 }

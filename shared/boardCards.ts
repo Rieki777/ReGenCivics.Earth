@@ -100,8 +100,25 @@ export type SeatCard = {
 /** A human need the project is pursuing that isn't one of the ten. */
 export type OwnNeedCard = { label: string; goal: string; breadth: string };
 
-/** What one circle decides on. */
-export type DecideCard = { circle: string; decidesOn: string };
+/**
+ * How a circle decides, in Village OS's own words (`circles.decides_by`), so
+ * the card carries it across as it is.
+ */
+export const DECIDES_BY = [
+  { key: "consent", label: "By consent" },
+  { key: "consensus", label: "By consensus" },
+  { key: "majority", label: "By majority vote" },
+  { key: "lead", label: "A lead decides" },
+  { key: "elders", label: "Elders decide" },
+  { key: "founder", label: "The founder decides" },
+  { key: "do-ocracy", label: "Whoever does the work decides" },
+  { key: "delegated", label: "Handed to someone" },
+  { key: "other", label: "Another way" },
+] as const;
+export type DecidesBy = (typeof DECIDES_BY)[number]["key"];
+
+/** What one circle decides on, and how (optional). */
+export type DecideCard = { circle: string; decidesOn: string; how?: DecidesBy };
 
 /** A first quest, and the human need it grows. */
 export type QuestCard = { quest: string; need: string };
@@ -163,6 +180,7 @@ export const CARD_COPY = {
     circle: "The circle",
     decidesOn: "What it decides on",
     decidesOnPlaceholder: "what we plant, where, and when",
+    how: "How it decides",
     save: "Save",
     full: "That's twelve of yours. Take one back to add another.",
   },
@@ -200,6 +218,7 @@ const CIRCLE_KEYS = new Set<string>(CIRCLES.map((c) => c.key));
 const RUNG_KEYS = new Set<string>(NEED_RUNGS.map((r) => r.key));
 const BREADTH_KEYS = new Set<string>(BREADTH_STOPS.map((b) => b.key));
 const HELD_KEYS = new Set<string>(HELD_BY.map((h) => h.key));
+const DECIDES_KEYS = new Set<string>(DECIDES_BY.map((d) => d.key));
 /** Village OS's own rule (needKeyProblem): a name of lowercase letters, digits and hyphens, never one of the ten. */
 const CUSTOM_NEED_RE = /^custom:[a-z0-9][a-z0-9-]{0,49}$/;
 
@@ -286,7 +305,8 @@ export function cleanCard<K extends CardKind>(kind: K, raw: unknown): CardOf<K> 
     const circle = cleanCircle(o.circle);
     const decidesOn = line(o.decidesOn, CARD_LIMITS.decidesOn);
     if (!circle || !decidesOn) return null;
-    return { circle, decidesOn } as CardOf<K>;
+    const how = typeof o.how === "string" && DECIDES_KEYS.has(o.how) ? (o.how as DecidesBy) : undefined;
+    return (how ? { circle, decidesOn, how } : { circle, decidesOn }) as CardOf<K>;
   }
   const quest = line(o.quest, CARD_LIMITS.quest);
   const need = cleanNeedKey(o.need);
@@ -300,7 +320,7 @@ export function cleanCard<K extends CardKind>(kind: K, raw: unknown): CardOf<K> 
 const SHORT: Record<CardKind, Record<string, string>> = {
   seat: { name: "n", circle: "c", need: "d", aim: "a", answersFor: "f", heldBy: "h", who: "w", contribution: "t" },
   own: { label: "l", goal: "g", breadth: "b" },
-  decide: { circle: "c", decidesOn: "o" },
+  decide: { circle: "c", decidesOn: "o", how: "b" },
   quest: { quest: "q", need: "d" },
 };
 
@@ -410,7 +430,8 @@ export function cardLine(kind: CardKind, card: CardOf<CardKind>, own: ReadonlyMa
   }
   if (kind === "decide") {
     const d = card as DecideCard;
-    return `${circleLabel(d.circle)} decides on ${midSentence(d.decidesOn)}`;
+    const how = DECIDES_BY.find((x) => x.key === d.how)?.label;
+    return `${circleLabel(d.circle)} decides on ${midSentence(d.decidesOn)}${how ? ` (${midSentence(how)})` : ""}`;
   }
   const q = card as QuestCard;
   return `${q.quest} (grows ${needKeyLabel(q.need, own)})`;

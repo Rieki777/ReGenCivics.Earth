@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import {
   CARD_COPY,
   CARD_LIMITS,
+  DECIDES_BY,
   HELD_BY,
   cardLine,
   cardText,
@@ -23,6 +24,7 @@ import {
   type CardKind,
   type CardOf,
   type DecideCard,
+  type DecidesBy,
   type HeldBy,
   type OwnNeedCard,
   type QuestCard,
@@ -288,8 +290,9 @@ export function DecideForm({ circle: fixed, initial, onSave, onCancel, circlesFi
 }) {
   const [circle, setCircle] = useState(initial?.circle ?? fixed ?? circlesFirst[0] ?? "");
   const [decidesOn, setDecidesOn] = useState(initial?.decidesOn ?? "");
+  const [how, setHow] = useState<DecidesBy | "">(initial?.how ?? "");
   const [busy, setBusy] = useState(false);
-  const card = cleanCard("decide", { circle, decidesOn });
+  const card = cleanCard("decide", { circle, decidesOn, how: how || undefined });
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!card || busy) return;
@@ -309,6 +312,7 @@ export function DecideForm({ circle: fixed, initial, onSave, onCancel, circlesFi
       <Field label={fixed ? `What ${circleLabel(fixed)} decides on` : CARD_COPY.decide.decidesOn}>
         {(id) => <Line id={id} value={decidesOn} onChange={setDecidesOn} max={CARD_LIMITS.decidesOn} placeholder={CARD_COPY.decide.decidesOnPlaceholder} autoFocus={focusFirst} />}
       </Field>
+      <Choices label={CARD_COPY.decide.how} choices={DECIDES_BY} value={how} onChange={(v) => setHow(v === how ? "" : (v as DecidesBy))} />
       <FormFoot busy={busy} ok={!!card} save={CARD_COPY.decide.save} onCancel={onCancel} />
     </form>
   );

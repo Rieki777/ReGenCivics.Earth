@@ -1156,6 +1156,13 @@ const WEEK_4: BoardStage[] = [
     prompts: [
       ...cardPrompts("seat", "A seat"),
       { key: "seat-help", title: "What would help most with your seats?", mode: "pick", scope: "project", options: opts(SEAT_HELP), max: SEAT_HELP.length },
+      {
+        key: "entry",
+        title: "The first step someone takes to come in",
+        hint: "How a stranger finds an open seat and says yes to it.",
+        placeholder: "come to a work day, then a welcome circle",
+        mode: "note", scope: "project", max: 1,
+      },
     ],
     cues: [
       "This is the heart of today. Thirty minutes.",

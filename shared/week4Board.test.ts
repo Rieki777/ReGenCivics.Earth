@@ -26,12 +26,13 @@ import {
   isCarried,
   matchCard,
   mergeCarried,
+  mergeProjectWeeks,
   withCarried,
   type CarriedRow,
   type EarlierCard,
 } from "./boardCarry";
 import { describeItem } from "./boardEntries";
-import { HUMAN_NEED_IDS, customNeedKey, projectView, type AnswerRow } from "./humanNeeds";
+import { HUMAN_NEED_IDS, NEED_RUNGS, customNeedKey, projectView, type AnswerRow } from "./humanNeeds";
 import {
   CHECKIN_COPY,
   PROMPT_COPY,
@@ -50,7 +51,7 @@ import {
   type BoardPrompt,
 } from "./sessionBoard";
 import { VILLAGE_OS_OFFER } from "./villageOsOffer";
-import { cardGaps, cardsForProject, gameLines, ownCircleName, toVillageOsCard, villageOsCardText } from "./villageOsCard";
+import { VILLAGE_CARD_SCHEMA, cardGaps, cardsForProject, gameLines, ownCircleName, parseContribution, toVillageOsCard, villageOsCardText, type VillageOsCard } from "./villageOsCard";
 
 const at = (min: number) => new Date(Date.UTC(2026, 9, 21, 17, min)).toISOString();
 let nextId = 1;
@@ -369,6 +370,22 @@ describe("carry links in the board's state", () => {
   });
 });
 
+/* --------------------------------------------- the generic merge of a project's weeks */
+
+describe("merging a project's weeks without a board", () => {
+  it("takes each week's rows under any card ids and gives one set, the latest week winning each key", () => {
+    const merged = mergeProjectWeeks([
+      { week: 3, rows: [row("needs", "love", 33), row("needs", "play", 33), row("whole", "25", 33), row("top", "play", 33)] },
+      { week: 4, rows: [row("needs", "love", 501), row("whole", "50", 501)] },
+    ], 900);
+    const view = projectView(merged, 900);
+    expect(view.needs.map((n) => n.id)).toEqual(["love"]);
+    expect(view.seeds).toEqual([]);
+    expect(view.whole.value).toBe("50");
+    expect(mergeProjectWeeks([], 900)).toEqual([]);
+  });
+});
+
 /* ------------------------------------------------------ the Village OS card */
 
 describe("the card for Village OS", () => {
@@ -383,7 +400,8 @@ describe("the card for Village OS", () => {
     row("own-1", cardText("own", { label: "Spiritual practice", goal: "thriving", breadth: "100" }), 9),
     row("seat-1", cardText("seat", SEAT), 9),
     row("seat-2", cardText("seat", { ...SEAT, name: "Initiation guide", circle: "festivals", need: "play", heldBy: "open", who: "" }), 9),
-    row("dec-1", cardText("decide", { circle: "water", decidesOn: "when we irrigate" }), 9),
+    row("dec-1", cardText("decide", { circle: "water", decidesOn: "when we irrigate", how: "consent" }), 9),
+    row("entry", "Come to a work day, then a welcome circle", 9),
     row("quest-1", cardText("quest", { quest: "Clear the spring", need: "vitality" }), 9),
     row("together", "join", 9), row("decide-aim", "consent", 9), row("agreement", "Circles decide what's theirs", 9),
     row("purpose", "All this is for future generations", 9),
@@ -413,7 +431,8 @@ describe("the card for Village OS", () => {
       { needKey: "play", subjectType: "role", circle: "festivals", circleLabel: "Festivals & Rites" },
     ]);
     expect(card.seats[0]).toMatchObject({ name: "Water keeper", circle: "water", heldBy: "team", who: "Ana", needLinks: [{ needKey: "vitality", subjectType: "role", weight: "primary" }] });
-    expect(card.circles.find((c) => c.circle === "water")).toMatchObject({ startsWith: true, needs: ["vitality"], decidesOn: ["when we irrigate"] });
+    expect(card.circles.find((c) => c.circle === "water")).toMatchObject({ startsWith: true, needs: ["vitality"], decidesOn: ["when we irrigate"], decidesBy: "consent" });
+    expect(card.entry).toBe("Come to a work day, then a welcome circle");
     expect(card.circles.some((c) => c.circle === "own:Kitchen")).toBe(true);
     expect(card.decisions).toEqual({ together: ["Who joins"], how: "Everyone, by consent or consensus", agreement: "Circles decide what's theirs" });
     expect(card.quests).toEqual([{ quest: "Clear the spring", need: "vitality" }]);
@@ -429,6 +448,28 @@ describe("the card for Village OS", () => {
     expect(card.from).toEqual({ site: "regencivics.earth", project: "Templeofroots.com", applicationId: null, weeks: [3, 4] });
   });
 
+  it("names its shape, and names each seat the way Village OS names a seat's commitments", () => {
+    expect(card.schema).toBe(VILLAGE_CARD_SCHEMA);
+    expect(Object.keys(card)[0]).toBe("schema");
+    expect(card.seats[0]).toEqual({
+      name: "Water keeper", circle: "water", circleLabel: "Living Water", seats: 1,
+      aim: SEAT.aim, domain: null, accountabilities: SEAT.answersFor, why: "Meets Vitality",
+      term: null, nextHolder: null, decides: null, heldBy: "team", who: "Ana",
+      contribution: { hoursPerWeek: 4, text: "4 hours a week" },
+      needLinks: [{ needKey: "vitality", subjectType: "role", weight: "primary" }],
+    });
+    expect(card.seats[1]).toMatchObject({ why: "Meets Play", needLinks: [{ needKey: "play", weight: "primary" }] });
+  });
+
+  it("reads hours a week from the words when they say so, and keeps the words", () => {
+    expect(parseContribution("4 hours a week")).toEqual({ hoursPerWeek: 4, text: "4 hours a week" });
+    expect(parseContribution("4h/week")).toEqual({ hoursPerWeek: 4, text: "4h/week" });
+    expect(parseContribution("about 2.5 hrs per week")).toEqual({ hoursPerWeek: 2.5, text: "about 2.5 hrs per week" });
+    expect(parseContribution("two mornings a week")).toEqual({ text: "two mornings a week" });
+    expect(parseContribution("4 hours")).toEqual({ text: "4 hours" });
+    expect(parseContribution("  ")).toEqual({});
+  });
+
   it("names no money, amount or gate, and reads as plain JSON", () => {
     const text = villageOsCardText(card);
     expect(JSON.parse(text)).toEqual(card);
@@ -440,7 +481,7 @@ describe("the card for Village OS", () => {
     expect(lines[0]).toBe("All this is for future generations.");
     expect(lines).toContain("Vitality is met by Living Water, Food & Fertility.");
     expect(lines.some((l) => l.startsWith("Seat: Water keeper (Living Water)"))).toBe(true);
-    expect(lines).toContain("Living Water decides on when we irrigate.");
+    expect(lines).toContain("Living Water decides on when we irrigate (by consent).");
     expect(lines).toContain("Quest: Clear the spring (grows Vitality).");
   });
 
@@ -459,5 +500,75 @@ describe("the card for Village OS", () => {
 
   it("covers all ten human needs by id", () => {
     expect(HUMAN_NEED_IDS).toHaveLength(10);
+  });
+});
+
+/* ------------------------------------- the real Week 3 shapes, every project a valid card */
+
+/**
+ * The shapes production's Week 3 board holds (2026-10-14), written small:
+ * a project with no application, one carried from Week 2, one that picked all
+ * ten and planted no seed, one that wrote three lines; depth for only some
+ * seeds; circles picked before the per-need circles existed (no c- rows);
+ * and the retired "calls" answer. Every project must make a card Village OS
+ * takes as it is.
+ */
+describe("the real Week 3 shapes", () => {
+  const SAMARA = 32, TEMPLE = 33, AMORA = 34, TOA = 35;
+  const W3: AnswerRow[] = [
+    row("needs", "contribution", SAMARA), row("needs", "autonomy", SAMARA), row("needs", "growth", SAMARA),
+    row("top", "contribution", SAMARA), row("top", "autonomy", SAMARA), row("top", "growth", SAMARA),
+    row("n-contribution", "unmet", SAMARA), row("g-contribution", "thriving", SAMARA), row("b-contribution", "75", SAMARA),
+    row("g-growth", "thriving", SAMARA), row("whole", "50", SAMARA), row("other", "Hope", SAMARA),
+    row("circles", "purpose", SAMARA), row("circles", "organize", SAMARA), row("calls", "Organize & Co-Create", SAMARA),
+    row("decide-aim", "roles", SAMARA), row("purpose", "modeling how self-love in collective resonance generates harmonic organizations", SAMARA),
+    row("needs", "vitality", TEMPLE), row("needs", "play", TEMPLE), row("needs", "love", TEMPLE), row("needs", "growth", TEMPLE),
+    row("top", "vitality", TEMPLE), row("top", "play", TEMPLE), row("top", "growth", TEMPLE),
+    row("g-vitality", "thriving", TEMPLE), row("b-vitality", "75", TEMPLE), row("g-love", "thriving", TEMPLE),
+    row("whole", "50", TEMPLE), row("other", "wisdom", TEMPLE), row("circles", "water", TEMPLE), row("circles", "festivals", TEMPLE),
+    row("m-vitality", "circle", TEMPLE), row("purpose", "All this is for future generations", TEMPLE),
+    ...HUMAN_NEED_IDS.map((id) => row("needs", id, AMORA)), row("whole", "25", AMORA), row("players", "31-150", AMORA),
+    row("hope", "good systems for new earth organizations", TOA), row("whynow", "meeting all the needs within walking distance", TOA), row("other", "spiritual practice", TOA),
+  ];
+  const RUNGS = new Set<string>(NEED_RUNGS.map((r) => r.key));
+  const valid = (card: VillageOsCard) => {
+    for (const n of card.needs) {
+      const custom = /^custom:[a-z0-9][a-z0-9-]*$/.test(n.needKey) && !HUMAN_NEED_IDS.includes(n.needKey.slice(7) as never);
+      expect(HUMAN_NEED_IDS.includes(n.needKey as never) || custom, n.needKey).toBe(true);
+      expect(RUNGS.has(n.depthTarget), n.depthTarget).toBe(true);
+      expect(Number.isInteger(n.breadthTargetPct) && n.breadthTargetPct >= 0 && n.breadthTargetPct <= 100).toBe(true);
+      expect(Number.isInteger(n.sortOrder)).toBe(true);
+      if (n.label != null) expect(n.label.length).toBeLessThanOrEqual(120);
+    }
+    const keys = new Set(card.needs.map((n) => n.needKey));
+    for (const l of card.needLinks) expect(keys.has(l.needKey), l.needKey).toBe(true);
+    for (const s of card.seats) for (const l of s.needLinks) expect(keys.has(l.needKey)).toBe(true);
+    expect(JSON.parse(villageOsCardText(card))).toEqual(card);
+  };
+
+  it("every project makes a card Village OS takes as it is", () => {
+    for (const [cardId, name, applicationId] of [[SAMARA, "Samara's Sanctuary Studios", null], [TEMPLE, "Templeofroots.com", 1231550], [AMORA, "Amora", null], [TOA, "Toa Hermitage", 1231543]] as const) {
+      const rows = mergeProjectWeeks([{ week: 3, rows: W3.filter((r) => r.projectId === cardId) }], 900 + cardId);
+      const view = projectView(rows, 900 + cardId);
+      const card = toVillageOsCard({ project: name, applicationId, weeks: [3, 4], view, cards: cardsForProject(rows, 900 + cardId) });
+      valid(card);
+      expect(card.from.applicationId).toBe(applicationId);
+      // No c- rows yet: nothing claims which circle meets which need, and the circles picked still show.
+      expect(card.needLinks).toEqual([]);
+      if (cardId === SAMARA) {
+        expect(card.needs.map((n) => n.needKey)).toEqual(["growth", "autonomy", "contribution"]);
+        expect(card.circles.filter((c) => c.startsWith).map((c) => c.circle)).toEqual(["purpose", "organize"]);
+        expect(card.customNeeds).toEqual([{ needKey: "custom:hope", label: "Hope" }]);
+      }
+      if (cardId === AMORA) {
+        expect(card.needs).toHaveLength(10);
+        expect(card.needs.every((n) => n.depthTarget === "satisfied" && n.breadthTargetPct === 100)).toBe(true);
+        expect(card.variables).toEqual({ "needs.totality_target_pct": 25 });
+      }
+      if (cardId === TOA) {
+        expect(card.needs).toEqual([]);
+        expect(card.customNeeds).toEqual([{ needKey: "custom:spiritual-practice", label: "spiritual practice" }]);
+      }
+    }
   });
 });

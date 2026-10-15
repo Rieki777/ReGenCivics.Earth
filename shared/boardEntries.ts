@@ -76,6 +76,7 @@ const ANSWER_LABELS: Record<string, string> = {
   "seat-help": "What would help most with your seats",
   together: "Something the whole project decides together",
   agreement: "Your first agreement",
+  entry: "The first step someone takes to come in",
   week5: "What you want to work on in Week 5",
 };
 
