@@ -112,6 +112,8 @@
 .sb-ghost:hover { background: var(--sb-chip); }
 .sb-small { min-height: 36px; padding: 0 12px; font-size: 15px; }
 .sb-btn:disabled { opacity: 0.45; cursor: default; }
+/* A Save that isn't ready yet stays focusable and legible (a card form says why on a tap), and its focus ring stays full strength. */
+.sb-btn[aria-disabled="true"], .sb-btn[aria-disabled="true"]:hover { background: transparent; color: var(--sb-muted); border-color: var(--sb-line-strong); cursor: default; }
 .sb-mini { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--sb-line-strong); background: transparent; color: var(--sb-ink); font-weight: 800; font-size: 17px; cursor: pointer; line-height: 1; }
 .sb-mini:hover { border-color: var(--sb-spring); background: var(--sb-chip); }
 .sb-field { width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--sb-line-strong); background: var(--sb-field); color: var(--sb-ink); }

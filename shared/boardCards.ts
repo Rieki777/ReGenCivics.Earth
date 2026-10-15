@@ -29,6 +29,7 @@ import {
   CIRCLES,
   HUMAN_NEEDS,
   NEED_RUNGS,
+  OWN_CIRCLE,
   customNeedKey,
   humanNeedById,
   isHumanNeedId,
@@ -38,7 +39,7 @@ import { stripHiddenText } from "./hiddenText";
 
 /* ------------------------------------------------------------ the kinds */
 
-export type CardKind = "seat" | "own" | "decide" | "quest";
+export type CardKind = "seat" | "own" | "decide" | "quest" | "meets";
 
 /** Slot keys per kind: `seat-1` to `seat-12`. Each key is a prompt with `max` 1. */
 export const CARD_SLOTS: Record<CardKind, { prefix: string; count: number }> = {
@@ -46,6 +47,9 @@ export const CARD_SLOTS: Record<CardKind, { prefix: string; count: number }> = {
   own: { prefix: "own", count: 5 },
   decide: { prefix: "dec", count: 12 },
   quest: { prefix: "quest", count: 3 },
+  // The circles that meet a human need of the project's own (Week 4's circles
+  // stage): the ten keep their per-need picks (c-<need>), which only know the ten.
+  meets: { prefix: "cown", count: 5 },
 };
 
 export const CARD_KINDS = Object.keys(CARD_SLOTS) as CardKind[];
@@ -101,29 +105,47 @@ export type SeatCard = {
 export type OwnNeedCard = { label: string; goal: string; breadth: string };
 
 /**
- * How a circle decides, in Village OS's own words (`circles.decides_by`), so
- * the card carries it across as it is.
+ * How a circle decides. The keys are Village OS's own `circles.decides_by`
+ * ids, exactly (village-os shared/power.ts DECIDES_BY; pinned by a test), so
+ * the card carries a pick across as it is. Village OS refuses "other" without
+ * one line saying what the way is, so the card asks for that line (`gloss`).
  */
 export const DECIDES_BY = [
   { key: "consent", label: "By consent" },
   { key: "consensus", label: "By consensus" },
   { key: "majority", label: "By majority vote" },
-  { key: "lead", label: "A lead decides" },
-  { key: "elders", label: "Elders decide" },
-  { key: "founder", label: "The founder decides" },
-  { key: "do-ocracy", label: "Whoever does the work decides" },
+  { key: "lead_decides", label: "A lead decides" },
+  { key: "elders_decide", label: "Elders decide" },
+  { key: "founder_decides", label: "The founder decides" },
+  { key: "do_ocracy", label: "Whoever does the work decides" },
   { key: "delegated", label: "Handed to someone" },
+  { key: "hypha", label: "Decided on Hypha" },
   { key: "other", label: "Another way" },
 ] as const;
 export type DecidesBy = (typeof DECIDES_BY)[number]["key"];
 
-/** What one circle decides on, and how (optional). */
-export type DecideCard = { circle: string; decidesOn: string; how?: DecidesBy };
+/** What one circle decides on, and how (optional); "other" comes with its line. */
+export type DecideCard = { circle: string; decidesOn: string; how?: DecidesBy; gloss?: string };
 
 /** A first quest, and the human need it grows. */
 export type QuestCard = { quest: string; need: string };
 
-export type CardOf<K extends CardKind> = K extends "seat" ? SeatCard : K extends "own" ? OwnNeedCard : K extends "decide" ? DecideCard : QuestCard;
+/**
+ * The circles that meet one of the project's own human needs: the same circle
+ * keys the ten's per-need picks take (the nine, and "own" for one of its own),
+ * comma-joined, one card per person per human need.
+ */
+export type MeetsCard = { need: string; circles: string };
+
+export type CardOf<K extends CardKind> = K extends "seat"
+  ? SeatCard
+  : K extends "own"
+    ? OwnNeedCard
+    : K extends "decide"
+      ? DecideCard
+      : K extends "meets"
+        ? MeetsCard
+        : QuestCard;
 
 /** Field caps, in characters, before the JSON wraps them. */
 export const CARD_LIMITS = {
@@ -135,6 +157,8 @@ export const CARD_LIMITS = {
   contribution: 100,
   label: 60,
   decidesOn: 200,
+  /** Village OS's GLOSS_MAX: the line that says what "another way" is. */
+  gloss: 160,
   quest: 200,
 } as const;
 
@@ -181,6 +205,8 @@ export const CARD_COPY = {
     decidesOn: "What it decides on",
     decidesOnPlaceholder: "what we plant, where, and when",
     how: "How it decides",
+    gloss: "Say how, in one line",
+    glossPlaceholder: "the two families who farm it decide together",
     save: "Save",
     full: "That's twelve of yours. Take one back to add another.",
   },
@@ -192,17 +218,24 @@ export const CARD_COPY = {
     save: "Save the quest",
     full: "Three quests each. Take one back to add another.",
   },
+  meets: {
+    full: "That's five of your own human needs with circles. Take one back to add another.",
+  },
   tooLong: "That card is too long. Shorten a field or two and save again.",
   ownCircle: "One of our own circles",
   ownCircleName: "Name of your own circle",
   pickOne: "Pick one",
   remove: "Take back",
   cancel: "Cancel",
+  saved: "Saved: {title}.",
+  takenBack: "Taken back: {title}.",
   bad: {
     seat: "A seat takes a name, a circle and the human need it meets.",
     own: "Name the human need and where you want your people with it. One of the ten? Tick it above instead.",
     decide: "Pick the circle, and say what it decides on.",
+    gloss: "Another way? Say how, in one line.",
     quest: "Write the quest, and pick the human need it grows.",
+    meets: "Pick at least one circle for a human need of your own.",
   },
 } as const;
 
@@ -219,6 +252,7 @@ const RUNG_KEYS = new Set<string>(NEED_RUNGS.map((r) => r.key));
 const BREADTH_KEYS = new Set<string>(BREADTH_STOPS.map((b) => b.key));
 const HELD_KEYS = new Set<string>(HELD_BY.map((h) => h.key));
 const DECIDES_KEYS = new Set<string>(DECIDES_BY.map((d) => d.key));
+const MEETS_KEYS = new Set<string>([...CIRCLES.map((c) => c.key as string), OWN_CIRCLE.key]);
 /** Village OS's own rule (needKeyProblem): a name of lowercase letters, digits and hyphens, never one of the ten. */
 const CUSTOM_NEED_RE = /^custom:[a-z0-9][a-z0-9-]{0,49}$/;
 
@@ -306,12 +340,29 @@ export function cleanCard<K extends CardKind>(kind: K, raw: unknown): CardOf<K> 
     const decidesOn = line(o.decidesOn, CARD_LIMITS.decidesOn);
     if (!circle || !decidesOn) return null;
     const how = typeof o.how === "string" && DECIDES_KEYS.has(o.how) ? (o.how as DecidesBy) : undefined;
-    return (how ? { circle, decidesOn, how } : { circle, decidesOn }) as CardOf<K>;
+    const gloss = how ? line(o.gloss, CARD_LIMITS.gloss) : "";
+    // Village OS refuses "other" with no line saying what the way is.
+    if (how === "other" && !gloss) return null;
+    return (how ? { circle, decidesOn, how, ...(gloss ? { gloss } : {}) } : { circle, decidesOn }) as CardOf<K>;
+  }
+  if (kind === "meets") {
+    // Only a project's own human need: the ten take their circles on their own picks.
+    const need = cleanNeedKey(o.need);
+    if (!need || !need.startsWith("custom:")) return null;
+    const keys = (typeof o.circles === "string" ? o.circles : "").split(",").map((k) => k.trim()).filter((k) => MEETS_KEYS.has(k));
+    const circles = keys.filter((k, i) => keys.indexOf(k) === i);
+    if (!circles.length) return null;
+    return { need, circles: circles.join(",") } as CardOf<K>;
   }
   const quest = line(o.quest, CARD_LIMITS.quest);
   const need = cleanNeedKey(o.need);
   if (!quest || !need) return null;
   return { quest, need } as CardOf<K>;
+}
+
+/** A circles card's circle keys, in the order they were picked. */
+export function meetsCircles(card: MeetsCard): string[] {
+  return card.circles.split(",").filter(Boolean);
 }
 
 /* ------------------------------------------------------ stored as text */
@@ -320,8 +371,9 @@ export function cleanCard<K extends CardKind>(kind: K, raw: unknown): CardOf<K> 
 const SHORT: Record<CardKind, Record<string, string>> = {
   seat: { name: "n", circle: "c", need: "d", aim: "a", answersFor: "f", heldBy: "h", who: "w", contribution: "t" },
   own: { label: "l", goal: "g", breadth: "b" },
-  decide: { circle: "c", decidesOn: "o", how: "b" },
+  decide: { circle: "c", decidesOn: "o", how: "b", gloss: "g" },
   quest: { quest: "q", need: "d" },
+  meets: { need: "d", circles: "c" },
 };
 
 /** A clean card as the text of its answer row. */
@@ -430,8 +482,13 @@ export function cardLine(kind: CardKind, card: CardOf<CardKind>, own: ReadonlyMa
   }
   if (kind === "decide") {
     const d = card as DecideCard;
-    const how = DECIDES_BY.find((x) => x.key === d.how)?.label;
+    const how = d.how === "other" && d.gloss ? d.gloss : DECIDES_BY.find((x) => x.key === d.how)?.label;
     return `${circleLabel(d.circle)} decides on ${midSentence(d.decidesOn)}${how ? ` (${midSentence(how)})` : ""}`;
+  }
+  if (kind === "meets") {
+    const m = card as MeetsCard;
+    const names = meetsCircles(m).map((k) => (k === OWN_CIRCLE.key ? OWN_CIRCLE.label.toLowerCase() : circleLabel(k)));
+    return `${needKeyLabel(m.need, own)} is met by ${names.join(", ")}`;
   }
   const q = card as QuestCard;
   return `${q.quest} (grows ${needKeyLabel(q.need, own)})`;
@@ -443,6 +500,7 @@ export const CARD_LABELS: Record<CardKind, string> = {
   own: "A human need of your own",
   decide: "What a circle decides",
   quest: "A quest you wrote",
+  meets: "The circles that meet a human need of your own",
 };
 
 /** Whether a human need key is one of the ten, for the views that colour by need. */

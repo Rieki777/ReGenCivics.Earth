@@ -10,7 +10,7 @@
  * row it makes.
  */
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { getDb } from "./db";
@@ -24,7 +24,15 @@ import {
 import { actOnBoard, ensureBoard, type Db } from "./lib/sessionBoard";
 import { answerOnBoard, claimGuestRows, isCardAnswer, mergeCardsOnBoard, reslotCards, type AnswerInput } from "./lib/sessionBoardAnswers";
 import { checkInOnBoard, clearCheckInCache } from "./lib/sessionBoardCheckIn";
-import { clearCarryCache, earlierAnswerWeeks, earlierCardFor, earlierCardsFor, readCarry } from "./lib/sessionBoardCarry";
+import {
+  CONFIRM_REFUSALS,
+  assertCarryConfirmable,
+  clearCarryCache,
+  earlierAnswerWeeks,
+  earlierCardFor,
+  earlierCardsFor,
+  readCarry,
+} from "./lib/sessionBoardCarry";
 import { buildBoardExport } from "./lib/sessionBoardExport";
 import { CARD_COPY, CARD_TEXT_MAX, cardText, parseCard, type SeatCard } from "@shared/boardCards";
 import { normalizeBoardState } from "@shared/sessionBoard";
@@ -128,6 +136,20 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     const data = await readCarry(db, SEASON, 4);
     return { data, card: data.cards.find((c) => c.cardId === cardId) };
   };
+  const linkOf = async (cardId: number) => {
+    const [board] = await db.select().from(sessionBoards).where(eq(sessionBoards.id, b4));
+    return normalizeBoardState(board.state, 4).carry[String(cardId)];
+  };
+  const checkInWeek3 = (keys: string[], cardId: number) =>
+    checkInOnBoard(db, { season: SEASON, boardId: b3, week: 3, keys, ref: `p${cardId}`, appSeason: APP_SEASON });
+  /** Week 3's live session: what someone did on Week 3 up to its end counts as playing for a card there. */
+  const week3Session = async (startedAt: number | null, endedAt: number | null) => {
+    const [board] = await db.select().from(sessionBoards).where(eq(sessionBoards.id, b3));
+    const state = { ...normalizeBoardState(board.state, 3), sessionStartedAt: startedAt, endedAt };
+    await db.update(sessionBoards).set({ state: JSON.stringify(state) }).where(eq(sessionBoards.id, b3));
+  };
+  /** Boards on another made-up season, for a Week 4 with no board yet. */
+  const otherBoardIds: number[] = [];
 
   beforeAll(async () => {
     db = (await getDb())!;
@@ -138,10 +160,11 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
 
   afterAll(async () => {
     if (!db) return;
-    await db.delete(sessionBoardVotes).where(inArray(sessionBoardVotes.boardId, boardIds));
-    await db.delete(sessionBoardItems).where(inArray(sessionBoardItems.boardId, boardIds));
-    await db.delete(sessionBoardProjects).where(inArray(sessionBoardProjects.boardId, boardIds));
-    await db.delete(sessionBoards).where(inArray(sessionBoards.id, boardIds));
+    const all = [...boardIds, ...otherBoardIds];
+    await db.delete(sessionBoardVotes).where(inArray(sessionBoardVotes.boardId, all));
+    await db.delete(sessionBoardItems).where(inArray(sessionBoardItems.boardId, all));
+    await db.delete(sessionBoardProjects).where(inArray(sessionBoardProjects.boardId, all));
+    await db.delete(sessionBoards).where(inArray(sessionBoards.id, all));
     if (appIds.length) await db.delete(applications).where(inArray(applications.id, appIds));
   });
 
@@ -219,6 +242,27 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     expect(data.asks.find((a) => a.text === "How do seats start?")?.project).toBe("Carry Tile Grove");
   });
 
+  it("Week 3's open questions show before Week 4 has a board, and while it has no shown card", async () => {
+    const season = `${SEASON} asks`;
+    const w3Board = (await ensureBoard(db, season, 3)).id;
+    otherBoardIds.push(w3Board);
+    await db.insert(sessionBoardItems).values({ boardId: w3Board, kind: "ask", block: "s3", text: "Who holds the keys?", authorKey: "k:w4asker00000001" });
+    await db.insert(sessionBoardItems).values({ boardId: w3Board, kind: "ask", block: "s3", text: "Settled already", authorKey: "k:w4asker00000001", chosen: 1 });
+    const asks = async () => {
+      clearCarryCache();
+      return (await readCarry(db, season, 4)).asks.map((a) => a.text);
+    };
+    // No Week 4 board at all yet (a rehearsal, or someone reading ahead).
+    expect(await asks()).toEqual(["Who holds the keys?"]);
+    // A board, before the first check-in.
+    const w4Board = (await ensureBoard(db, season, 4)).id;
+    otherBoardIds.push(w4Board);
+    expect(await asks()).toEqual(["Who holds the keys?"]);
+    // Only a hidden card on it.
+    await card(w4Board, { name: "Hidden Stray", hidden: 1 });
+    expect(await asks()).toEqual(["Who holds the keys?"]);
+  });
+
   it("a card with the same application carries without any link", async () => {
     const appId = await app("Carry App Village");
     const w3 = await card(b3, { name: "Carry App Village", applicationId: appId });
@@ -234,7 +278,10 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
   it("the person who played for a same-name Week 3 card carries it; a stranger's same name only waits for the facilitator", async () => {
     const w3 = await card(b3, { name: "Lantern Field" });
     const player = ["k:w4lantern0000001"];
+    // The player's answer lands inside Week 3's live session.
+    await week3Session(Date.now() - 60_000, null);
     await answer(b3, 3, player, { op: "pick", key: "players", projectId: w3, option: "6-12", on: true });
+    await week3Session(Date.now() - 60_000, Date.now() + 1000);
     // A card here with the same name, made by someone else (no application, no tile).
     const here = await card(b4, { name: "lantern  field", authorKey: "k:w4someone0000001" });
     // A stranger checks in first: nothing is recorded, it's only a suggestion.
@@ -246,6 +293,43 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     got = await carryOf(here);
     expect(got.card).toMatchObject({ match: "yours", from: [{ cardId: w3 }] });
     expect(await earlierCardsFor(db, SEASON, 4, player)).toEqual([{ week: 3, cardId: w3, name: "Lantern Field" }]);
+  });
+
+  it("play in the two hours after End session still counts: the room kept answering after Week 3's close", async () => {
+    const w3 = await card(b3, { name: "Stayed Late Grove" });
+    const player = ["k:w4stayedlate00001"];
+    // Week 3 ended 40 minutes ago, and this person answered for the card just now.
+    await week3Session(Date.now() - 3 * 3_600_000, Date.now() - 40 * 60_000);
+    await answer(b3, 3, player, { op: "pick", key: "needs", projectId: w3, option: "growth", on: true });
+    const here = await card(b4, { name: "Stayed Late Grove", authorKey: "k:w4someone0000002" });
+    await checkIn(player, `p${here}`);
+    expect(await linkOf(here)).toMatchObject({ from: w3, by: "person" });
+  });
+
+  it("a check-in on a Week 3 card after its session ended proves nothing: the same name waits for the facilitator", async () => {
+    const w3 = await card(b3, { name: "Late Lantern Farm" });
+    await answer(b3, 3, ["k:w4lateteam000001"], { op: "pick", key: "needs", projectId: w3, option: "love", on: true });
+    // Week 3's session ended three hours ago, past the two hours the room may stay; its board stays open to anyone after.
+    await week3Session(Date.now() - 5 * 3_600_000, Date.now() - 3 * 3_600_000);
+    const stranger = ["k:w4latestrange001"];
+    await checkInWeek3(stranger, w3);
+    await answer(b3, 3, stranger, { op: "pick", key: "players", projectId: w3, option: "6-12", on: true });
+    const here = await card(b4, { name: "Late Lantern Farm", authorKey: stranger[0] });
+    await checkIn(stranger, `p${here}`);
+    expect(await linkOf(here)).toBeUndefined();
+    expect((await carryOf(here)).card).toMatchObject({ match: "suggested", from: [], suggested: [{ cardId: w3 }] });
+  });
+
+  it("a Week 3 board whose session never started proves nobody played for its cards", async () => {
+    const w3 = await card(b3, { name: "Unstarted Meadow" });
+    await week3Session(null, null);
+    const player = ["k:w4unstarted00001"];
+    await checkInWeek3(player, w3);
+    await answer(b3, 3, player, { op: "pick", key: "needs", projectId: w3, option: "play", on: true });
+    const here = await card(b4, { name: "Unstarted Meadow" });
+    await checkIn(player, `p${here}`);
+    expect(await linkOf(here)).toBeUndefined();
+    expect((await carryOf(here)).card?.match).toBe("suggested");
   });
 
   it("a facilitator confirms a name match, or says it's a different project", async () => {
@@ -261,6 +345,48 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     expect((await carryOf(here)).card).toMatchObject({ match: "declined", from: [], suggested: [] });
     await actOnBoard(db, b4, 4, { type: "carry", cardId: here, from: null, by: "facilitator" }, Date.now());
     expect((await carryOf(here)).card?.match).toBe("suggested");
+  });
+
+  it("two Week 3 cards with one name: each suggestion counts its answers, and the facilitator's pick carries that card's rows", async () => {
+    // The stray has the lower id: it is the one a single "Yes" used to link.
+    const stray = await card(b3, { name: "Twin Brook" });
+    await answer(b3, 3, ["k:w4twinstray00001"], { op: "pick", key: "needs", projectId: stray, option: "love", on: true });
+    const real = await card(b3, { name: "Twin Brook" });
+    const team = ["k:w4twinreal000001"];
+    await answer(b3, 3, team, { op: "pick", key: "needs", projectId: real, option: "vitality", on: true });
+    await answer(b3, 3, team, { op: "pick", key: "needs", projectId: real, option: "play", on: true });
+    await answer(b3, 3, team, { op: "pick", key: "whole", projectId: real, option: "50", on: true });
+    const here = await card(b4, { name: "Twin Brook" });
+    let got = await carryOf(here);
+    expect(got.card).toMatchObject({ match: "suggested", from: [] });
+    expect(got.card?.suggested).toEqual([
+      { week: 3, cardId: stray, name: "Twin Brook", answers: 1 },
+      { week: 3, cardId: real, name: "Twin Brook", answers: 3 },
+    ]);
+    // What confirmCarry runs, then the link it records.
+    await assertCarryConfirmable(db, { season: SEASON, week: 4, boardId: b4, card: { id: here, applicationId: null }, fromCardId: real });
+    await actOnBoard(db, b4, 4, { type: "carry", cardId: here, from: real, by: "facilitator" }, Date.now());
+    got = await carryOf(here);
+    expect(got.card).toMatchObject({ match: "confirmed", from: [{ cardId: real }] });
+    const twinRows = got.data.rows.filter((r) => r.projectId === real || r.projectId === stray);
+    expect(twinRows.map((r) => r.projectId)).toEqual([real, real, real]);
+    expect(twinRows.map((r) => r.text).sort()).toEqual(["50", "play", "vitality"]);
+  });
+
+  it("a card tied to another application is never suggested, and the facilitator can't link it", async () => {
+    const seven = await app("Casa Verde Seven");
+    const eleven = await app("Casa Verde Eleven");
+    const w3 = await card(b3, { name: "Casa Verde", applicationId: seven });
+    const here = await card(b4, { name: "Casa Verde", applicationId: eleven });
+    expect((await carryOf(here)).card).toMatchObject({ match: "none", from: [], suggested: [] });
+    await expect(assertCarryConfirmable(db, { season: SEASON, week: 4, boardId: b4, card: { id: here, applicationId: eleven }, fromCardId: w3 }))
+      .rejects.toThrow(CONFIRM_REFUSALS.otherApplication);
+    await expect(assertCarryConfirmable(db, { season: SEASON, week: 4, boardId: b4, card: { id: here, applicationId: eleven }, fromCardId: here }))
+      .rejects.toThrow(CONFIRM_REFUSALS.notEarlier);
+    // A link recorded before the application was set carries nothing.
+    await actOnBoard(db, b4, 4, { type: "carry", cardId: here, from: w3, by: "facilitator" }, Date.now());
+    expect((await carryOf(here)).card).toMatchObject({ match: "none", from: [] });
+    await actOnBoard(db, b4, 4, { type: "carry", cardId: here, from: null, by: "facilitator" }, Date.now());
   });
 
   it("a hidden Week 3 card carries nothing and is never suggested", async () => {
@@ -310,6 +436,40 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     expect((await carryOf(keep)).card).toMatchObject({ match: "carried", from: [{ cardId: w3 }] });
   });
 
+  it("merging moves a stray's real link onto a kept card that said 'not this one'", async () => {
+    const w3 = await card(b3, { name: "Merge Fen" });
+    await answer(b3, 3, ["k:w4mergefen00001"], { op: "pick", key: "needs", projectId: w3, option: "love", on: true });
+    clearCheckInCache();
+    const stray = await checkIn(["k:w4mergefen00002"], `w3p${w3}`);
+    expect(await linkOf(stray.cardId)).toEqual({ from: w3, by: "tile" });
+    const keep = await card(b4, { name: "Fen Village" });
+    await actOnBoard(db, b4, 4, { type: "carry", cardId: keep, from: 0, by: "facilitator" }, Date.now());
+    await mergeCardsOnBoard(db, { boardId: b4, week: 4, fromId: stray.cardId, intoId: keep });
+    expect((await carryOf(keep)).card).toMatchObject({ match: "carried", from: [{ cardId: w3 }] });
+    expect(await linkOf(stray.cardId)).toBeUndefined();
+  });
+
+  it("merging leaves a stray's 'not this one' behind: the kept card's own suggestion stays", async () => {
+    const w3 = await card(b3, { name: "Fen Hollow" });
+    const keep = await card(b4, { name: "Fen Hollow" });
+    const stray = await card(b4, { name: "Fen" });
+    await actOnBoard(db, b4, 4, { type: "carry", cardId: stray, from: 0, by: "facilitator" }, Date.now());
+    await mergeCardsOnBoard(db, { boardId: b4, week: 4, fromId: stray, intoId: keep });
+    expect(await linkOf(keep)).toBeUndefined();
+    expect((await carryOf(keep)).card).toMatchObject({ match: "suggested", suggested: [{ cardId: w3 }] });
+  });
+
+  it("a person's link moves in a merge as the facilitator's, so the kept card's other name keeps it", async () => {
+    const w3 = await card(b3, { name: "Merge Thicket" });
+    const stray = await card(b4, { name: "Merge Thicket" });
+    await actOnBoard(db, b4, 4, { type: "carry", cardId: stray, from: w3, by: "person" }, Date.now());
+    expect((await carryOf(stray)).card?.match).toBe("yours");
+    const keep = await card(b4, { name: "Thicket Commons" });
+    await mergeCardsOnBoard(db, { boardId: b4, week: 4, fromId: stray, intoId: keep });
+    expect(await linkOf(keep)).toEqual({ from: w3, by: "facilitator" });
+    expect((await carryOf(keep)).card).toMatchObject({ match: "confirmed", from: [{ cardId: w3 }] });
+  });
+
   it("a guest's seat survives signing in when the account already wrote one in the same slot", async () => {
     const p = await card(b4, { name: "Claim Hollow" });
     const guestKey = "w4claimguest00001";
@@ -332,6 +492,63 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     const got = await carryOf(here);
     expect(got.card?.match).toBe("suggested");
     expect(got.card?.suggested.map((s) => s.cardId).sort()).toEqual([real, junk].sort());
+  });
+
+  it("a tap from a duplicate Week 3 card's ref records no link when it makes the Week 4 card", async () => {
+    const real = await card(b3, { name: "Dup Spring" });
+    await answer(b3, 3, ["k:w4dupreal0000001"], { op: "pick", key: "needs", projectId: real, option: "love", on: true });
+    const junk = await card(b3, { name: "Dup Spring", authorKey: "k:w4dupjunk0000001" });
+    await answer(b3, 3, ["k:w4dupjunk0000001"], { op: "pick", key: "needs", projectId: junk, option: "growth", on: true });
+    clearCheckInCache();
+    const r = await checkIn(["k:w4dupjunk0000001"], `w3p${junk}`);
+    expect(r.created).toBe(true);
+    expect(await linkOf(r.cardId)).toBeUndefined();
+    const got = await carryOf(r.cardId);
+    expect(got.card).toMatchObject({ match: "suggested", from: [] });
+    expect(got.card?.suggested.map((s) => s.cardId).sort()).toEqual([real, junk].sort());
+  });
+
+  it("a Week 3 card another card here carries is taken: a second card neither links it nor is offered it", async () => {
+    const appId = await app("Taken Amora Village");
+    const w3 = await card(b3, { name: "Taken Amora", applicationId: appId });
+    const player = ["k:w4takenplayer001"];
+    await week3Session(Date.now() - 60_000, null);
+    await checkInWeek3(player, w3);
+    await answer(b3, 3, player, { op: "pick", key: "needs", projectId: w3, option: "love", on: true });
+    clearCheckInCache();
+    // The project's card here, made from its application tile, carries Week 3 by application.
+    const first = await checkIn(["k:w4takenfirst001"], `a${appId}`);
+    expect((await carryOf(first.cardId)).card).toMatchObject({ match: "application", from: [{ cardId: w3 }] });
+    // A guest adds the Week 3 name by hand; the player checks in with it.
+    const second = await card(b4, { name: "Taken Amora" });
+    await checkIn(player, `p${second}`);
+    expect(await linkOf(second)).toBeUndefined();
+    const got = await carryOf(second);
+    expect(got.card).toMatchObject({
+      match: "none",
+      from: [],
+      suggested: [],
+      carriedBy: { cardId: first.cardId, name: "Taken Amora Village", earlier: { week: 3, cardId: w3, name: "Taken Amora" } },
+    });
+    await expect(assertCarryConfirmable(db, { season: SEASON, week: 4, boardId: b4, card: { id: second, applicationId: null }, fromCardId: w3 }))
+      .rejects.toThrow("Taken Amora Village already carries Taken Amora from Week 3. Merge this card into it.");
+    // The first card itself can still be confirmed onto it.
+    await expect(assertCarryConfirmable(db, { season: SEASON, week: 4, boardId: b4, card: { id: first.cardId, applicationId: appId }, fromCardId: w3 }))
+      .resolves.toMatchObject({ id: w3 });
+  });
+
+  it("'Same today?' offers the card a person moved to last, by the time of each move", async () => {
+    const a = await card(b3, { name: "Order Grove A" });
+    const b = await card(b3, { name: "Order Grove B" });
+    const player = ["k:w4ordergrove0001"];
+    await checkInWeek3(player, a);
+    await answer(b3, 3, player, { op: "pick", key: "needs", projectId: a, option: "love", on: true });
+    await checkInWeek3(player, b);
+    // A test makes both moves in one second, and a TIMESTAMP keeps whole seconds: move B's check-in a minute on.
+    await db.update(sessionBoardVotes)
+      .set({ createdAt: sql`CURRENT_TIMESTAMP + INTERVAL 1 MINUTE` })
+      .where(and(eq(sessionBoardVotes.boardId, b3), eq(sessionBoardVotes.target, `checkin:${b}`), inArray(sessionBoardVotes.voterKey, player)));
+    expect((await earlierCardsFor(db, SEASON, 4, player)).map((c) => c.cardId)).toEqual([b, a]);
   });
 
   it("only touches its own made-up season's rows", async () => {

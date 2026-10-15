@@ -10,7 +10,7 @@ import { useMemo } from "react";
 import { isCarried, withCarried, type CardCarry, type CarriedRow } from "@shared/boardCarry";
 import { cardKindOfKey, cardsOf, freeSlot, ownNeedLabels, type CardKind } from "@shared/boardCards";
 import { HUMAN_NEED_IDS, projectView, type AnswerRow, type HumanNeedId, type ProjectView } from "@shared/humanNeeds";
-import { cardsForProject, type ProjectCards } from "@shared/villageOsCard";
+import { cardsForProject, circlesPerNeed, type ProjectCards } from "@shared/villageOsCard";
 import type { BoardItem, Mine } from "../useSessionBoard";
 import type { StageProps } from "../stages";
 import { myCardId, shownRows } from "../week3/answers";
@@ -31,6 +31,8 @@ export type Game = {
   own: Map<string, string>;
   /** Its human needs in the order the stages walk them: seeds first, then the rest, then its own. */
   needOrder: string[];
+  /** Which circles meet each of its human needs, the ten's and its own, as people per circle key. */
+  circlesFor: Record<string, Record<string, number>>;
   link: CardCarry | null;
 };
 
@@ -41,7 +43,7 @@ export function gameOf(rows: readonly GameRow[], cardId: number | null, link: Ca
   const own = ownNeedLabels(cards.own);
   const seeds = view.seeds as string[];
   const rest = view.needs.map((n) => n.id as string).filter((id) => !seeds.includes(id));
-  return { cardId, view, cards, own, needOrder: [...seeds, ...rest, ...own.keys()], link };
+  return { cardId, view, cards, own, needOrder: [...seeds, ...rest, ...own.keys()], circlesFor: circlesPerNeed(view, cards), link };
 }
 
 /** The Game of the card this person tapped (null card: the room's answers). */

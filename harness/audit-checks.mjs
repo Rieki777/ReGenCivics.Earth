@@ -277,6 +277,29 @@ export function installAuditLib() {
     const over = document.documentElement.scrollWidth - document.documentElement.clientWidth;
     if (over > 1) failures.push(`page scrolls sideways by ${over}px`);
 
+    // A hint under a field that the field doesn't point to (aria-describedby):
+    // a screen reader reads the label and never the hint. Miss that taught
+    // this: Week 4's seat form said "Ask them first: this board is public"
+    // under "Who on your team", and a VoiceOver user typing a teammate's full
+    // name never heard it (2026-10-15).
+    for (const ctl of root.querySelectorAll("input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, select")) {
+      if (!visible(ctl)) continue;
+      const next = ctl.nextElementSibling;
+      if (!next || next.tagName !== "P" || !visible(next) || !next.textContent.trim()) continue;
+      const ids = (ctl.getAttribute("aria-describedby") || "").split(/\s+/);
+      if (!next.id || !ids.includes(next.id)) failures.push(`hint not tied: "${next.textContent.trim().slice(0, 50)}" under "${label(ctl)}" is not in its aria-describedby`);
+    }
+    // A Save that is disabled while the form holds words: it can't be focused,
+    // so Enter and a screen reader get no reason why. Use aria-disabled and say
+    // what's missing in a live region. Miss that taught this: Week 4's card
+    // forms disabled Save with the reason in a plain paragraph (2026-10-15).
+    for (const form of root.querySelectorAll("form")) {
+      const save = form.querySelector("button[type=submit][disabled], button:not([type])[disabled]");
+      if (!save || !visible(save) || form.getAttribute("aria-busy") === "true") continue;
+      const typed = [...form.querySelectorAll("input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea")].some((f) => f.value.trim());
+      if (typed) failures.push(`silent save: "${label(save)}" is disabled while the form holds words; use aria-disabled and say what's missing`);
+    }
+
     // Endless animations the compositor cannot run. Each one makes the browser
     // restyle and repaint on the main thread every frame, forever, and every
     // keystroke on the page waits behind that work. Only transform, opacity and
@@ -402,6 +425,37 @@ export async function revealAll(page) {
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(800);
+}
+
+/**
+ * Where focus lands after a control that makes itself go away: Cancel on a
+ * form, Take back on a card, "Another project" on the check-in question.
+ * Focus must land on something, not drop to the page. Each is tapped on a
+ * fresh copy of the page (`reset` reloads and replays the story's steps).
+ * Miss that taught this: on Week 4's seats stage, Cancel, Take back and
+ * "Another project" all left focus on <body>, so a screen reader user lost
+ * their place in a long stage (2026-10-15).
+ */
+const GOES_AWAY = [/^Cancel$/, /^Take back/, /^Another project$/];
+
+export async function runFocusReturnChecks(page, rootSel, reset) {
+  const out = [];
+  for (const name of GOES_AWAY) {
+    const button = page.locator(rootSel).getByRole("button", { name }).first();
+    if (!(await button.count()) || !(await button.isVisible())) continue;
+    await button.focus();
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(400);
+    const where = await page.evaluate((sel) => {
+      const a = document.activeElement;
+      const root = document.querySelector(sel) || document.body;
+      if (!a || a === document.body) return "body";
+      return root.contains(a) || !document.querySelector(sel) ? "ok" : "outside";
+    }, rootSel);
+    if (where !== "ok") out.push(`focus lost: after "${String(name).replace(/[/^$]/g, "")}" focus went to ${where === "body" ? "the page" : "outside the story"}`);
+    await reset();
+  }
+  return out;
 }
 
 /** Page-side checks. */

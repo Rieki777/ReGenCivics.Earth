@@ -13,7 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CARRY_COPY, firstChangeCopy } from "@shared/boardCarry";
 import { CARD_COPY, type OwnNeedCard } from "@shared/boardCards";
-import { NEEDS_COPY, fillCopy, resolvedPrompts } from "@shared/sessionBoard";
+import { NEEDS_COPY, WEEK4_COPY, fillCopy, resolvedPrompts } from "@shared/sessionBoard";
 import {
   BREADTH_STOPS,
   HUMAN_NEEDS,
@@ -30,8 +30,8 @@ import type { CSSProperties } from "react";
 import type { StageProps } from "../stages";
 import { myAnswerRows, myCardId } from "../week3/answers";
 import { PickBlock, type ShownPrompt } from "../week3/PromptBlock";
-import { CardItem, OwnNeedForm, saveCard } from "./CardForms";
-import { Week4Frame } from "./CarryStage";
+import { CardItem, OwnNeedForm, hasCardDraft, newCardDraftKey, saveCard, useFocusBack } from "./CardForms";
+import { Week4Frame, isFreshCard } from "./CarryStage";
 import { CopyForVillageOS } from "./CopyForVillageOS";
 import { lastWeekValue, onlyCarried, useMyGame, type GameRow } from "./game";
 
@@ -58,7 +58,9 @@ export function NeedsConfirm(props: StageProps) {
   const seeds = game.view.seeds as string[];
   const myPicks = new Set(myAnswerRows(board.items, mine, "needs", pid).map((r) => r.text));
   const mySeeds = new Set(myAnswerRows(board.items, mine, "top", pid).map((r) => r.text));
-  const [adding, setAdding] = useState<Partial<OwnNeedCard> | null>(null);
+  // A form left half-written reopens with its words (CardForms.tsx drafts).
+  const [adding, setAdding] = useState<Partial<OwnNeedCard> | null>(() => (hasCardDraft(newCardDraftKey("own", pid)) ? {} : null));
+  const focus = useFocusBack();
 
   const [busy, setBusy] = useState(false);
   const pick = (key: "needs" | "top", option: string, on: boolean) => () => actions.answerPick({ key, option, on, projectId: pid });
@@ -149,12 +151,14 @@ export function NeedsConfirm(props: StageProps) {
 
   const left = Math.max(0, SEEDS_PER_PERSON - seeds.length);
   const carriedNeeds = onlyCarried(rows, "needs", pid);
+  // A project new today hasn't named anything "last week": its lede says what to do instead.
+  const fresh = isFreshCard(props, game.link, pid) && !projectPicks.length;
   const otherNamed = [game.view.other.latest, ...game.view.other.others]
     .map((w) => (w ?? "").trim())
     .filter((w, i, all) => w && all.indexOf(w) === i && !game.own.has(customNeedKey(w)));
 
   return (
-    <Week4Frame props={props}>
+    <Week4Frame props={props} lede={fresh ? WEEK4_COPY.needsFresh : undefined}>
       <section className="sb-needs-pick" aria-label="The ten human needs">
         <div className="sb-seeds-row">
           <span className="sb-label" aria-live="polite">{NEEDS_COPY.seedsLeft[Math.min(3, left)]}</span>
@@ -204,7 +208,7 @@ export function NeedsConfirm(props: StageProps) {
                 kind="own"
                 entry={e}
                 own={game.own}
-                edit={(close) => <OwnNeedForm initial={e.card} onSave={(card) => saveCard(props, "own", card, e.key)} onCancel={close} />}
+                edit={(close, draftKey) => <OwnNeedForm draftKey={draftKey} initial={e.card} onSave={(card) => saveCard(props, "own", card, e.key)} onCancel={close} />}
               />
             ))}
           </ul>
@@ -219,9 +223,18 @@ export function NeedsConfirm(props: StageProps) {
         ))}
         {canWrite ? (
           adding ? (
-            <OwnNeedForm key={JSON.stringify(adding)} initial={adding} onSave={(card) => saveCard(props, "own", card, null)} onCancel={() => setAdding(null)} />
+            <OwnNeedForm
+              key={JSON.stringify(adding)}
+              draftKey={newCardDraftKey("own", pid)}
+              initial={adding}
+              onSave={(card) => saveCard(props, "own", card, null)}
+              onCancel={() => {
+                setAdding(null);
+                focus.back("own");
+              }}
+            />
           ) : (
-            <button type="button" className="sb-btn" onClick={() => setAdding({})}>{CARD_COPY.own.add}</button>
+            <button ref={focus.ref("own")} type="button" className="sb-btn" onClick={() => setAdding({})}>{CARD_COPY.own.add}</button>
           )
         ) : null}
       </section>

@@ -13,8 +13,9 @@
  * screen counts what everyone else's counts. Views count people and projects,
  * never names.
  */
-import { useMemo, type CSSProperties, type ReactNode } from "react";
-import { NEEDS_COPY, PROMPT_COPY, fillCopy, resolvedPrompts } from "@shared/sessionBoard";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { toast } from "sonner";
+import { NEEDS_COPY, PROMPT_COPY, WEEK4_COPY, fillCopy, resolvedPrompts } from "@shared/sessionBoard";
 import {
   HUMAN_NEEDS,
   HUMAN_NEED_IDS,
@@ -42,12 +43,13 @@ import type { StageProps } from "../stages";
 import { cardName, myAnswerRows, myCardId, oldestFirst, shownRows, stageIndexOf } from "./answers";
 import { StageHead, plural } from "./parts";
 import { AskFoot, PickBlock, ProjectFor, PromptBlock, StageExtras, type ShownPrompt } from "./PromptBlock";
-import { CarryStage, CarryWait } from "../week4/CarryStage";
+import { CarryPending, CarryStage, CarryWait, startedFresh } from "../week4/CarryStage";
 import { NeedsConfirm } from "../week4/NeedsConfirm";
 import { SeatsStage } from "../week4/SeatsStage";
 import { DecideStage, QuestsStage } from "../week4/DecideQuests";
 import { BuiltStage } from "../week4/BuiltStage";
-import { onlyCarried, type GameRow } from "../week4/game";
+import { gameOf, onlyCarried, type GameRow } from "../week4/game";
+import { OwnNeedCircles } from "../week4/OwnNeedCircles";
 
 const hueStyle = (id: string): CSSProperties => ({ ["--sb-hue" as string]: humanNeedById(id)?.hue ?? "var(--sb-spring)" });
 
@@ -74,11 +76,20 @@ function seedsFor(board: SessionBoardData, props: StageProps, view: ProjectView)
  */
 export function NeedsStage(props: StageProps) {
   const step = props.stages[props.index].step;
+  const [, setFresh] = useState(0);
   if (props.carry?.on) {
     if (step === "carry") return <CarryStage {...props} />;
     // Nothing here writes until last week's answers are in: a tap made before
     // they load would replace them for everyone (a change replaces last week's).
     if (props.carry.loading || props.carry.failed || !props.carry.data) return <CarryWait {...props} />;
+    // A card found only by its name waits for the facilitator's yes: answered
+    // first, today's answers would replace Week 3's once it links, and the
+    // human-needs group would drop last week's other seeds with them.
+    const pid = myCardId(props.myProject);
+    const link = pid != null ? props.carry.data.cards.find((c) => c.cardId === pid) : undefined;
+    if (link?.match === "suggested" && step !== "room" && !startedFresh(pid)) {
+      return <CarryPending props={props} link={link} onFresh={() => setFresh((n) => n + 1)} />;
+    }
     if (step === "confirm") return <NeedsConfirm {...props} />;
     if (step === "seats") return <SeatsStage {...props} />;
     if (step === "decide") return <DecideStage {...props} />;
@@ -99,6 +110,9 @@ function NeedsWalk(props: StageProps) {
   );
   const pid = myCardId(myProject);
   const view = useMemo(() => projectView(rows, pid), [rows, pid]);
+  // Week 4 on: the project's own human needs, which get their circles on a card.
+  const link = carry?.on && pid != null ? carry.data?.cards.find((c) => c.cardId === pid) ?? null : null;
+  const game = useMemo(() => (carry?.on && pid != null ? gameOf(rows as GameRow[], pid, link) : null), [carry?.on, rows, pid, link]);
   const summary = useMemo(() => needsSummary(rows), [rows]);
   /** Last week's answers for a key on this card, while nobody has answered it today. */
   const lastWeek = (key: string): string[] => {
@@ -144,8 +158,26 @@ function NeedsWalk(props: StageProps) {
           props={props}
           noteAfter={last.length ? <p className="sb-hint">{fillCopy(CARRY_COPY.lastWeek, { value: last.join("; ") })}</p> : null}
           onNote={async (text) => {
-            // Last week's lines become this person's first, then the new one, inside the prompt's room.
-            for (const line of last.slice(0, Math.max(0, (p.max ?? 1) - 1))) void props.actions.answerNote({ key, text: line, projectId: pid });
+            const max = p.max ?? 1;
+            if (last.length >= max) {
+              // Last week's lines fill this person's room: carry every one that fits,
+              // say which can't come across, and keep the new words in the field.
+              const lost = last.slice(max);
+              if (lost.length && typeof window !== "undefined" && typeof window.confirm === "function") {
+                let ok = true;
+                try {
+                  ok = window.confirm(fillCopy(WEEK4_COPY.circlesFull, { max, lost: lost.join("; ") }));
+                } catch {
+                  ok = true;
+                }
+                if (!ok) return null;
+              }
+              for (const line of last.slice(0, max)) void props.actions.answerNote({ key, text: line, projectId: pid });
+              toast(fillCopy(WEEK4_COPY.circlesCarried, { text }));
+              return null;
+            }
+            // Last week's lines become this person's first, then the new one.
+            for (const line of last) void props.actions.answerNote({ key, text: line, projectId: pid });
             return props.actions.answerNote({ key, text, projectId: pid });
           }}
         />
@@ -167,15 +199,21 @@ function NeedsWalk(props: StageProps) {
     // The project's own human needs, seeds first, each asking which circles meet it (Rye, 2026-10-14).
     const seeds = seedsFor(board, props, view);
     const picked = [...seeds, ...view.needs.map((n) => n.id).filter((id) => !seeds.includes(id))];
+    const own = game ? [...game.own.entries()] : [];
     body = (
       <>
-        {picked.length ? (
+        {picked.length || own.length ? (
           <ul className="sb-seed-cards">
             {picked.map((id) => (
               <li key={id}>
                 <SeedCard id={id} step="circles" props={props} byKey={byKey} view={view} pick={carry?.on ? block : undefined} />
               </li>
             ))}
+            {game ? own.map(([key, label]) => (
+              <li key={key}>
+                <OwnNeedCircles props={props} game={game} need={key} label={label} />
+              </li>
+            )) : null}
           </ul>
         ) : (
           <NoSeeds props={props} />

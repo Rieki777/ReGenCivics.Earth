@@ -9,6 +9,7 @@ import {
   CARD_COPY,
   CARD_TEXT_MAX,
   CARD_LIMITS,
+  DECIDES_BY,
   cardKindOfKey,
   cardLine,
   cardSlotKeys,
@@ -51,7 +52,20 @@ import {
   type BoardPrompt,
 } from "./sessionBoard";
 import { VILLAGE_OS_OFFER } from "./villageOsOffer";
-import { VILLAGE_CARD_SCHEMA, cardGaps, cardsForProject, gameLines, ownCircleName, parseContribution, toVillageOsCard, villageOsCardText, type VillageOsCard } from "./villageOsCard";
+import {
+  VILLAGE_CARD_SCHEMA,
+  cardGaps,
+  cardLinesWithNeeds,
+  cardsForProject,
+  circlesPerNeed,
+  gameLines,
+  needsBeyondSeeds,
+  ownCircleName,
+  parseContribution,
+  toVillageOsCard,
+  villageOsCardText,
+  type VillageOsCard,
+} from "./villageOsCard";
 
 const at = (min: number) => new Date(Date.UTC(2026, 9, 21, 17, min)).toISOString();
 let nextId = 1;
@@ -278,7 +292,7 @@ describe("carrying Week 3 forward", () => {
   it("matches by application, then a recorded link, then suggests a same-name card", () => {
     expect(matchCard({ id: 1, name: "Amora Village", applicationId: 57 }, earlier, undefined)).toMatchObject({ match: "application", from: [{ cardId: 34, week: 3 }] });
     expect(matchCard({ id: 2, name: "Templeofroots.com", applicationId: null }, earlier, { from: 33, by: "tile" })).toMatchObject({ match: "carried", from: [{ cardId: 33 }] });
-    expect(matchCard({ id: 2, name: "Temple", applicationId: null }, earlier, { from: 33, by: "person" }).match).toBe("yours");
+    expect(matchCard({ id: 2, name: "templeofroots.com", applicationId: null }, earlier, { from: 33, by: "person" }).match).toBe("yours");
     expect(matchCard({ id: 2, name: "Temple", applicationId: null }, earlier, { from: 33, by: "facilitator" }).match).toBe("confirmed");
     // A name alone carries nothing: it waits for a facilitator, and a hidden card is never suggested.
     expect(matchCard({ id: 3, name: "toa  hermitage", applicationId: null }, earlier, undefined)).toEqual({ match: "suggested", from: [], suggested: [{ week: 3, cardId: 35, name: "Toa Hermitage" }] });
@@ -431,7 +445,7 @@ describe("the card for Village OS", () => {
       { needKey: "play", subjectType: "role", circle: "festivals", circleLabel: "Festivals & Rites" },
     ]);
     expect(card.seats[0]).toMatchObject({ name: "Water keeper", circle: "water", heldBy: "team", who: "Ana", needLinks: [{ needKey: "vitality", subjectType: "role", weight: "primary" }] });
-    expect(card.circles.find((c) => c.circle === "water")).toMatchObject({ startsWith: true, needs: ["vitality"], decidesOn: ["when we irrigate"], decidesBy: "consent" });
+    expect(card.circles.find((c) => c.circle === "water")).toMatchObject({ startsWith: true, needs: ["vitality"], decidesOn: ["when we irrigate"], decidesBy: "consent", decidesByAnswers: [{ by: "consent", gloss: null }] });
     expect(card.entry).toBe("Come to a work day, then a welcome circle");
     expect(card.circles.some((c) => c.circle === "own:Kitchen")).toBe(true);
     expect(card.decisions).toEqual({ together: ["Who joins"], how: "Everyone, by consent or consensus", agreement: "Circles decide what's theirs" });
@@ -543,6 +557,12 @@ describe("the real Week 3 shapes", () => {
     const keys = new Set(card.needs.map((n) => n.needKey));
     for (const l of card.needLinks) expect(keys.has(l.needKey), l.needKey).toBe(true);
     for (const s of card.seats) for (const l of s.needLinks) expect(keys.has(l.needKey)).toBe(true);
+    // Village OS's decidesByProblem: one of its ids, and "other" only with its line.
+    for (const c of card.circles) {
+      if (c.decidesBy == null) continue;
+      expect(DECIDES_BY.some((d) => d.key === c.decidesBy), c.decidesBy).toBe(true);
+      if (c.decidesBy === "other") expect(c.decidesByGloss).toBeTruthy();
+    }
     expect(JSON.parse(villageOsCardText(card))).toEqual(card);
   };
 
@@ -570,5 +590,142 @@ describe("the real Week 3 shapes", () => {
         expect(card.customNeeds).toEqual([{ needKey: "custom:spiritual-practice", label: "spiritual practice" }]);
       }
     }
+  });
+});
+
+/* ---------------------------------------- the review of 2026-10-15, pinned */
+
+describe("why a card found only by its name waits before anyone answers", () => {
+  it("today's answers on a suggested card replace Week 3's once the facilitator links it, so the stages hold until then", () => {
+    // Toa's Week 3 card: love, vitality and play, a love seed and a depth answer for love.
+    const last = [
+      carried(3, "needs", "love", 35), carried(3, "needs", "vitality", 35), carried(3, "needs", "play", 35),
+      carried(3, "top", "love", 35), carried(3, "g-love", "thriving", 35),
+    ];
+    // A teammate answered on the suggested card before the yes: vitality and play.
+    const today = [row("needs", "vitality", 9, 10), row("needs", "play", 9, 10)];
+    const view = projectView(mergeCarried(today, last, 9, new Set([35])), 9);
+    expect(view.needs.map((n) => n.id).sort()).toEqual(["play", "vitality"]);
+    expect(view.seeds).toEqual([]);
+    expect(view.perNeed.love).toBeUndefined();
+  });
+});
+
+describe("circles stay with the human needs that are on the card", () => {
+  it("a human need taken off keeps no circles, even when today's c- row outlives it", () => {
+    const last = [carried(3, "needs", "love", 35), carried(3, "needs", "vitality", 35)];
+    const today = [row("c-love", "food", 9, 10), row("needs", "vitality", 9, 10), row("c-vitality", "water", 9, 10)];
+    const merged = mergeCarried(today, last, 9, new Set([35]));
+    const view = projectView(merged, 9);
+    const cards = cardsForProject(merged, 9);
+    expect(view.circlesFor.love).toBeUndefined();
+    expect(view.circlesFor.vitality).toEqual({ water: 1 });
+    expect(gameLines(view, cards).some((l) => l.startsWith("Love is met by"))).toBe(false);
+    // Vitality's circle counts; take that away too and the gap shows.
+    const bare = projectView([row("c-love", "food", 9), row("needs", "vitality", 9)], 9);
+    expect(cardGaps(bare, cardsForProject([], 9)).map((g) => g.key)).toContain("circlesFor");
+  });
+});
+
+describe("a human need of the project's own gets its circles", () => {
+  const OWN = cardText("own", { label: "Spiritual practice", goal: "thriving", breadth: "75" });
+
+  it("a circles card takes only a project's own human need and at least one known circle, deduped", () => {
+    expect(cleanCard("meets", { need: "custom:spiritual-practice", circles: "festivals,own,festivals,nonsense" })).toEqual({ need: "custom:spiritual-practice", circles: "festivals,own" });
+    expect(cleanCard("meets", { need: "love", circles: "festivals" })).toBeNull();
+    expect(cleanCard("meets", { need: "custom:spiritual-practice", circles: "nonsense" })).toBeNull();
+    expect(cleanCard("meets", { need: "custom:love", circles: "festivals" })).toBeNull();
+    expect(cardKindOfKey("cown-5")).toBe("meets");
+    expect(cardKindOfKey("cown-6")).toBeNull();
+    const own = (p: BoardPrompt | unknown): p is BoardPrompt => !isPromptRef(p as never);
+    expect(boardStages(4).find((s) => s.step === "circles")?.prompts?.filter(own).filter((p) => p.card === "meets").map((p) => p.key)).toEqual(cardSlotKeys("meets"));
+    // Week 3 is unchanged: no circles cards there.
+    expect(boardStages(3).some((s) => s.prompts?.filter(own).some((p) => p.card))).toBe(false);
+  });
+
+  it("Toa's shape: only its own human need, a circles card for it, and the card links it and has no circles gap", () => {
+    const rows = [
+      row("own-1", OWN, 9),
+      row("cown-1", cardText("meets", { need: "custom:spiritual-practice", circles: "festivals,own" }), 9),
+      row("cown-1", cardText("meets", { need: "custom:spiritual-practice", circles: "festivals" }), 9, 1, { id: 99_001 }),
+    ];
+    const view = projectView(rows, 9);
+    const cards = cardsForProject(rows, 9);
+    const card = toVillageOsCard({ project: "Toa Hermitage", applicationId: 1231543, weeks: [3, 4], view, cards });
+    expect(card.needLinks.map((l) => [l.needKey, l.circle])).toEqual([["custom:spiritual-practice", "festivals"], ["custom:spiritual-practice", "own"]]);
+    expect(circlesPerNeed(view, cards)["custom:spiritual-practice"]).toEqual({ festivals: 2, own: 1 });
+    const gaps = cardGaps(view, cards).map((g) => g.key);
+    expect(gaps).not.toContain("circlesFor");
+    // Seeds go on the ten only: a project whose human needs are all its own has none to plant.
+    expect(gaps).not.toContain("top");
+    expect(gameLines(view, cards)).toContain("Spiritual practice is met by Festivals & Rites, one of our own circles.");
+  });
+
+  it("a circles card for an own human need that was taken back links nothing", () => {
+    const rows = [row("cown-1", cardText("meets", { need: "custom:spiritual-practice", circles: "festivals" }), 9)];
+    const view = projectView(rows, 9);
+    const cards = cardsForProject(rows, 9);
+    expect(toVillageOsCard({ project: "X", applicationId: null, weeks: [4], view, cards }).needLinks).toEqual([]);
+    expect(circlesPerNeed(view, cards)).toEqual({});
+  });
+});
+
+describe("the read-back shows every human need a card named", () => {
+  it("Templeofroots.com: love picked and not seeded, and wisdom named last week", () => {
+    const rows = [
+      row("needs", "vitality", 9), row("needs", "love", 9), row("top", "vitality", 9),
+      row("other", "wisdom", 9),
+    ];
+    const view = projectView(rows, 9);
+    const lines = gameLines(view, cardsForProject(rows, 9));
+    expect(lines).toContain("Also here to meet: Love.");
+    expect(lines).toContain("Named last week, not added yet: wisdom.");
+    // After the seed lines, before the whole-project line.
+    expect(lines.indexOf("Also here to meet: Love.")).toBe(3);
+  });
+
+  it("Amora: all ten picked, no seeds; an own human need added is no longer listed as named", () => {
+    const rows = [...HUMAN_NEED_IDS.map((id) => row("needs", id, 9)), row("other", "Hope", 9), row("own-1", cardText("own", { label: "Hope", goal: "thriving", breadth: "100" }), 9)];
+    const view = projectView(rows, 9);
+    const beyond = needsBeyondSeeds(view, new Set(["custom:hope"]));
+    expect(beyond[0].startsWith("Here to meet: ")).toBe(true);
+    expect(beyond).toHaveLength(1);
+    expect(cardLinesWithNeeds(view, new Set(["custom:hope"]))[2]).toBe(beyond[0]);
+  });
+});
+
+describe("how a circle decides, in Village OS's own ids", () => {
+  // village-os shared/power.ts DECIDES_BY (origin/main 1be7043, 2026-10-14). Village OS refuses any other id.
+  const VILLAGE_OS_DECIDES_BY = ["consent", "consensus", "majority", "lead_decides", "elders_decide", "founder_decides", "do_ocracy", "delegated", "hypha", "other"];
+
+  it("every key is one of Village OS's ids, and covers all of them", () => {
+    expect(DECIDES_BY.map((d) => d.key)).toEqual(VILLAGE_OS_DECIDES_BY);
+  });
+
+  const card = (rows: AnswerRow[]) => toVillageOsCard({ project: "X", applicationId: null, weeks: [4], view: projectView(rows, 9), cards: cardsForProject(rows, 9) });
+  const dec = (slot: number, d: { circle: string; decidesOn: string; how?: string; gloss?: string }) => row(`dec-${slot}`, cardText("decide", d as never), 9, slot);
+
+  it("a pick goes across as its id", () => {
+    const c = card([dec(1, { circle: "food", decidesOn: "what we plant", how: "do_ocracy" })]);
+    expect(c.circles.find((x) => x.circle === "food")).toMatchObject({ decidesBy: "do_ocracy", decidesByGloss: null, decidesByAnswers: [{ by: "do_ocracy", gloss: null }] });
+  });
+
+  it("another way takes its line: without one the card isn't whole, with one the line goes across", () => {
+    expect(cleanCard("decide", { circle: "food", decidesOn: "what we plant", how: "other" })).toBeNull();
+    expect(cleanCard("decide", { circle: "food", decidesOn: "what we plant", how: "other", gloss: "the two families who farm it" })).toEqual({ circle: "food", decidesOn: "what we plant", how: "other", gloss: "the two families who farm it" });
+    expect(cleanCard("decide", { circle: "food", decidesOn: "what we plant", how: "other", gloss: "x".repeat(400) })?.gloss).toHaveLength(CARD_LIMITS.gloss);
+    const c = card([dec(1, { circle: "food", decidesOn: "what we plant", how: "other", gloss: "the two families who farm it" })]);
+    expect(c.circles.find((x) => x.circle === "food")).toMatchObject({ decidesBy: "other", decidesByGloss: "the two families who farm it" });
+    expect(cardLine("decide", { circle: "food", decidesOn: "what we plant", how: "other", gloss: "The two families who farm it" })).toBe("Food & Fertility decides on what we plant (the two families who farm it)");
+  });
+
+  it("cards that disagree on one circle carry no way, list each one, and show as a gap", () => {
+    const rows = [dec(1, { circle: "water", decidesOn: "when we irrigate", how: "consent" }), dec(2, { circle: "water", decidesOn: "who takes water", how: "lead_decides" })];
+    const c = card(rows);
+    expect(c.circles.find((x) => x.circle === "water")).toMatchObject({ decidesBy: null, decidesByAnswers: [{ by: "consent", gloss: null }, { by: "lead_decides", gloss: null }] });
+    expect(cardGaps(projectView(rows, 9), cardsForProject(rows, 9)).map((g) => g.key)).toContain("decides-by:water");
+    const agree = [dec(1, { circle: "water", decidesOn: "when we irrigate", how: "consent" }), dec(2, { circle: "water", decidesOn: "who takes water", how: "consent" }), dec(3, { circle: "water", decidesOn: "the tank", })];
+    expect(card(agree).circles.find((x) => x.circle === "water")?.decidesBy).toBe("consent");
+    expect(cardGaps(projectView(agree, 9), cardsForProject(agree, 9)).map((g) => g.key)).not.toContain("decides-by:water");
   });
 });

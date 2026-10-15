@@ -92,7 +92,7 @@ import {
   removeItemOnBoard,
 } from "../lib/sessionBoardAnswers";
 import { checkInOnBoard, checkInOptions } from "../lib/sessionBoardCheckIn";
-import { earlierAnswerWeeks, earlierCardFor, earlierCardsFor, readCarry } from "../lib/sessionBoardCarry";
+import { assertCarryConfirmable, earlierAnswerWeeks, earlierCardsFor, readCarry } from "../lib/sessionBoardCarry";
 import { buildBoardExport, submissionsFor } from "../lib/sessionBoardExport";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
@@ -850,7 +850,8 @@ export const sessionBoardRouter = router({
    * Facilitator: say whether a card here is the same project as an earlier
    * week's card found only by its name. `fromCardId` 0 says "not this one";
    * null takes the link back. A name alone never carries another project's
-   * answers without a person saying yes.
+   * answers without a person saying yes. A card tied to another application,
+   * or one another card here already carries, is refused (merge instead).
    */
   confirmCarry: facilitatorProcedure
     .input(z.object({ week: weekInput, cardId: idInput, fromCardId: z.number().int().min(0).nullable() }))
@@ -864,8 +865,7 @@ export const sessionBoardRouter = router({
       const p = await projectOnBoard(db, board.id, input.cardId);
       if (!p || p.hidden) throw new TRPCError({ code: "NOT_FOUND", message: "That project is not on this board." });
       if (input.fromCardId) {
-        const from = await earlierCardFor(db, SESSION_BOARD_SEASON, input.week, input.fromCardId);
-        if (!from) throw new TRPCError({ code: "NOT_FOUND", message: "That card isn't on an earlier week's board." });
+        await assertCarryConfirmable(db, { season: SESSION_BOARD_SEASON, week: input.week, boardId: board.id, card: p, fromCardId: input.fromCardId });
       }
       const state = await actOnBoard(db, board.id, input.week, { type: "carry", cardId: p.id, from: input.fromCardId, by: "facilitator" }, Date.now());
       return { ok: true as const, state };

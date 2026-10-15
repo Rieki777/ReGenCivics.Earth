@@ -338,6 +338,17 @@ function NoteBlock({ p, props, onNote, after }: {
   const current = myRows[0]?.text ?? (p.isRef ? newestFirst(answerRows(shown, p.key, projectId))[0]?.text ?? "" : "");
   const wall = newestFirst(shown.filter((i) => i.kind === "answer" && i.block === p.key));
   const save = (text: string) => (onNote ? onNote(text) : actions.answerNote({ key: p.key, text, projectId }));
+  /** Take a line back, then put focus on the line beside it, or the field, so it never drops to the page. */
+  const takeBack = (button: HTMLElement, id: number) => {
+    const li = button.closest("li");
+    const section = button.closest("section");
+    const next = li?.nextElementSibling?.querySelector<HTMLElement>("button") ?? li?.previousElementSibling?.querySelector<HTMLElement>("button") ?? null;
+    void actions.removeItem(id);
+    // The line leaves the screen at once (the write paints first), so focus moves then.
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => (next?.isConnected ? next : section?.querySelector<HTMLElement>("textarea, input, button"))?.focus());
+    }
+  };
   return (
     <section className="sb-prompt" aria-labelledby={headId}>
       <div className="sb-prompt-head">
@@ -361,7 +372,7 @@ function NoteBlock({ p, props, onNote, after }: {
                 <span className="sb-wall-t">{r.text}</span>
                 {p.scope === "project" ? <span className="sb-from">{cardName(board, r.projectId, PROMPT_COPY.fromRoom)}</span> : null}
                 {removable ? (
-                  <button type="button" className="sb-x" aria-label={`Take back "${r.text}"`} onClick={() => void actions.removeItem(r.id)}>×</button>
+                  <button type="button" className="sb-x" aria-label={`Take back "${r.text}"`} onClick={(ev) => takeBack(ev.currentTarget, r.id)}>×</button>
                 ) : null}
               </li>
             );

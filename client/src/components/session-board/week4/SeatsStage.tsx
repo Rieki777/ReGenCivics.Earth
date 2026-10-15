@@ -20,7 +20,7 @@ import type { StageProps } from "../stages";
 import { myCardId, stageIndexOf } from "../week3/answers";
 import { plural } from "../week3/parts";
 import { PromptBlock } from "../week3/PromptBlock";
-import { CardItem, SeatForm, saveCard, type Choice } from "./CardForms";
+import { CardItem, SeatForm, hasCardDraft, newCardDraftKey, saveCard, useFocusBack, type Choice } from "./CardForms";
 import { Week4Frame } from "./CarryStage";
 import { useMyGame, type Game } from "./game";
 
@@ -46,7 +46,7 @@ export function projectCircles(game: Game): string[] {
     if (c && c !== OWN_CIRCLE.key && !out.includes(c)) out.push(c);
   };
   for (const c of CIRCLES) if ((game.view.circles[c.key] ?? 0) > 0) add(c.key);
-  for (const tally of Object.values(game.view.circlesFor)) for (const k of Object.keys(tally ?? {})) add(k);
+  for (const tally of Object.values(game.circlesFor)) for (const k of Object.keys(tally)) add(k);
   for (const s of game.cards.seats) add(s.card.circle);
   for (const name of ownCircleNames(game)) add(`own:${name}`);
   return out;
@@ -65,7 +65,9 @@ export function SeatsStage(props: StageProps) {
   const { game } = useMyGame(props);
   const pid = myCardId(myProject);
   const prompts = resolvedPrompts(week, index).filter((p) => !p.card);
-  const [adding, setAdding] = useState<string | null>(null);
+  // A seat form left half-written reopens with its words (CardForms.tsx drafts).
+  const [adding, setAdding] = useState<string | null>(() => game.needOrder.find((n) => hasCardDraft(newCardDraftKey("seat", pid, n))) ?? null);
+  const focus = useFocusBack();
 
   if (pid == null) {
     return (
@@ -90,8 +92,9 @@ export function SeatsStage(props: StageProps) {
           kind="seat"
           entry={e}
           own={game.own}
-          edit={(close) => (
+          edit={(close, draftKey) => (
             <SeatForm
+              draftKey={draftKey}
               initial={e.card}
               needs={needChoices(game, e.card.need)}
               circlesFirst={circlesFirstFor(game, e.card.need, started)}
@@ -112,11 +115,11 @@ export function SeatsStage(props: StageProps) {
           {game.needOrder.map((need) => {
             const seats = seatsFor(need);
             const held = seats.filter((s) => s.card.heldBy !== "open").length;
-            const circles = Object.keys(game.view.circlesFor[need as keyof typeof game.view.circlesFor] ?? {});
+            const circles = Object.keys(game.circlesFor[need] ?? {});
             return (
               <section key={need} className="sb-need-section" style={hueStyle(need)} aria-labelledby={`sb-seats-${need}`}>
                 <header className="sb-need-head">
-                  <h3 id={`sb-seats-${need}`} className="sb-seed-head">
+                  <h3 id={`sb-seats-${need}`} className="sb-seed-head" tabIndex={-1}>
                     <span className="sb-hue-dot" aria-hidden="true" />
                     {needKeyLabel(need, game.own)}
                     {game.view.seeds.includes(need as never) ? <span className="sb-seed-chip">Seed</span> : null}
@@ -132,15 +135,19 @@ export function SeatsStage(props: StageProps) {
                 {canWrite ? (
                   adding === need ? (
                     <SeatForm
+                      draftKey={newCardDraftKey("seat", pid, need)}
                       need={need}
                       needs={needChoices(game)}
                       circlesFirst={circlesFirstFor(game, need, started)}
                       ownCircles={ownCircles}
                       onSave={(card) => saveCard(props, "seat", card, null)}
-                      onCancel={() => setAdding(null)}
+                      onCancel={() => {
+                        setAdding(null);
+                        focus.back(need);
+                      }}
                     />
                   ) : (
-                    <button type="button" className="sb-btn" aria-label={`${CARD_COPY.seat.add} for ${needKeyLabel(need, game.own)}`} onClick={() => setAdding(need)}>
+                    <button ref={focus.ref(need)} type="button" className="sb-btn" aria-label={`${CARD_COPY.seat.add} for ${needKeyLabel(need, game.own)}`} onClick={() => setAdding(need)}>
                       {CARD_COPY.seat.add}
                     </button>
                   )
@@ -168,6 +175,6 @@ export function SeatsStage(props: StageProps) {
 
 /** The circles a seat for this human need is offered first: the ones that meet it, then the ones the project starts with. */
 function circlesFirstFor(game: Game, need: string, started: readonly string[]): string[] {
-  const meets = Object.keys(game.view.circlesFor[need as keyof typeof game.view.circlesFor] ?? {}).filter((k) => k !== OWN_CIRCLE.key);
+  const meets = Object.keys(game.circlesFor[need] ?? {}).filter((k) => k !== OWN_CIRCLE.key);
   return [...meets, ...started.filter((k) => !meets.includes(k))];
 }

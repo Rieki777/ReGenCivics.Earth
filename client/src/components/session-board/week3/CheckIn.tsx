@@ -153,6 +153,7 @@ export function CheckIn(props: StageProps) {
   // "Change project", focus goes to the first tile. The first render moves nothing.
   const pickedRef = useRef<HTMLDivElement | null>(null);
   const tilesRef = useRef<HTMLUListElement | null>(null);
+  const filterRef = useRef<HTMLInputElement | null>(null);
   const firstRender = useRef(true);
   useEffect(() => {
     if (firstRender.current) {
@@ -236,7 +237,17 @@ export function CheckIn(props: StageProps) {
                 <button type="button" className="sb-btn sb-primary" disabled={pending != null} onClick={() => void tap(sameTile)}>
                   {pending === sameTile.ref ? CHECKIN_COPY.joining : fillCopy(CARRY_COPY.sameYes, { name: sameTile.name })}
                 </button>
-                <button type="button" className="sb-btn sb-ghost" onClick={() => setNotSame(true)}>{CARRY_COPY.sameNo}</button>
+                <button
+                  type="button"
+                  className="sb-btn sb-ghost"
+                  onClick={() => {
+                    setNotSame(true);
+                    // The panel goes: focus moves to the tiles (or their filter), the same as after "Change project".
+                    requestAnimationFrame(() => (filterRef.current ?? tilesRef.current?.querySelector<HTMLButtonElement>("button:not([disabled])"))?.focus({ preventScroll: true }));
+                  }}
+                >
+                  {CARRY_COPY.sameNo}
+                </button>
               </div>
             </div>
           ) : null}
@@ -244,6 +255,7 @@ export function CheckIn(props: StageProps) {
             <>
               {tiles.length > TILE_FILTER_AT ? (
                 <input
+                  ref={filterRef}
                   type="search"
                   className="sb-field sb-tile-filter"
                   value={query}

@@ -1036,6 +1036,22 @@ export const WEEK4_COPY = {
   ownCircles: "Your own circles",
   close: ["Projects checked in", "Human needs with a circle", "Seats written", "Questions asked"],
   closeLine: "The board stays open. Come back any time to finish a stage.",
+  /** The facilitator's list of cards found only by their name, on every Week 4 stage. */
+  waitingTitle: "Cards found by name",
+  /** A card found only by its name, before the facilitator answers. */
+  pending: "Its Week 3 answers come in here once the facilitator says it is the same project. Answer now and today's answers replace Week 3's for the same questions.",
+  startFresh: "Start without Week 3",
+  /** Under the facilitator's question, once today has answers on that card. */
+  confirmReplaces: "This card has answers from today already. They replace Week 3's for the same questions.",
+  /** A project with nothing from Week 3. */
+  carryFresh: "Your project starts fresh today. Each gap below shows the stage that answers it. Week 3's board stays open if you want to go back.",
+  needsFresh: "Pick the human needs your project is here to meet, plant up to three seeds at its heart, and add any human need of your own. Then, for each seed, say how deep and for how many.",
+  /** The first change to a list of own circles carried from Week 3, when last week's lines fill this person's room. */
+  circlesFull: "Only {max} circles fit on one person's lines. These from last week won't come across: {lost}. Carry the rest?",
+  circlesCarried: "Last week's circles are on the card now. Take one back with × to add \"{text}\".",
+  /** The circles for a human need of the project's own. */
+  ownNeedCircles: "Which circles meet it?",
+  ownNeedCirclesSaved: "Circles for {need}: {circles}.",
 } as const;
 
 /**
@@ -1123,6 +1139,8 @@ const WEEK_4: BoardStage[] = [
     lede: "An economy is people coming together to meet each other's human needs. For each human need on your card, seeds first, tap the circles that meet it. Then name your own circles, the ones you start with, and how many players it takes.",
     prompts: [
       ...CIRCLE_PROMPTS,
+      // A human need of the project's own gets its circles on a card (the ten's c-<need> picks only know the ten).
+      ...cardPrompts("meets", "Which circles meet a human need of your own"),
       {
         key: "circles-own",
         title: "Name your own circles",

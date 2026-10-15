@@ -634,7 +634,16 @@ export async function mergeCardsOnBoard(
     const link = state.carry[String(fromId)];
     if (link) {
       let next = applyBoardAction(state, { type: "carry", cardId: fromId, from: null, by: link.by }, Date.now());
-      if (!next.carry[String(intoId)]) next = applyBoardAction(next, { type: "carry", cardId: intoId, from: link.from, by: link.by }, Date.now());
+      const kept = next.carry[String(intoId)];
+      // Only a real link moves, and on the kept card it replaces nothing but a
+      // "not this one" (from 0). The stray's own "not this one" was about the
+      // stray's name, so it stays behind. A person's link moves as the
+      // facilitator's: merging is the facilitator's call, and the kept card
+      // may have another name (a person's link holds only while names match).
+      if (link.from > 0 && (!kept || kept.from === 0)) {
+        const by = link.by === "person" ? "facilitator" : link.by;
+        next = applyBoardAction(next, { type: "carry", cardId: intoId, from: link.from, by }, Date.now());
+      }
       await tx.update(sessionBoards).set({ state: JSON.stringify(next) }).where(eq(sessionBoards.id, boardId));
     }
 

@@ -8,30 +8,53 @@
  * waiting, without tapping each one.
  */
 import { useState, type ReactNode } from "react";
-import { CARRY_COPY, mergeCarried, type CardCarry, type CarryData } from "@shared/boardCarry";
-import { fillCopy, resolvedPrompts } from "@shared/sessionBoard";
-import { projectCardLines, projectView, type AnswerRow } from "@shared/humanNeeds";
-import { cardGaps } from "@shared/villageOsCard";
+import { CARRY_COPY, mergeCarried, type CardCarry, type CardRef, type CarryData } from "@shared/boardCarry";
+import { WEEK4_COPY, fillCopy, resolvedPrompts } from "@shared/sessionBoard";
+import { projectView, type AnswerRow } from "@shared/humanNeeds";
+import { cardGaps, cardLinesWithNeeds } from "@shared/villageOsCard";
 import type { StageProps } from "../stages";
-import { cardName, myCardId, newestFirst, stageIndexOf } from "../week3/answers";
+import { cardName, myCardId, newestFirst, shownRows, stageIndexOf } from "../week3/answers";
 import { StageHead } from "../week3/parts";
 import { AskFoot, ProjectFor, PromptBlock, StageExtras } from "../week3/PromptBlock";
 import { useMyGame } from "./game";
+import { SayRegion } from "./say";
 
-/** The head, the project chip and the foot every Week 4 needs stage shares. */
-export function Week4Frame({ props, children }: { props: StageProps; children: ReactNode }) {
-  const { week, stages, index } = props;
+/**
+ * The head, the project chip and the foot every Week 4 needs stage shares,
+ * the live region its card forms speak through (./say.tsx), and, for the
+ * facilitator, the cards still waiting on a "same project?" answer, so a card
+ * that arrives late is confirmed on whatever stage the room is on.
+ */
+export function Week4Frame({ props, children, lede }: { props: StageProps; children: ReactNode; lede?: string }) {
+  const { week, stages, index, facilitator, carry } = props;
   const stage = stages[index];
+  // Stage 4 lists them itself, beside the cards already linked.
+  const waiting = facilitator && stage.step !== "carry" ? waitingCards(carry.data) : [];
   return (
-    <>
-      <StageHead stages={stages} index={index} title={stage.name} lede={stage.lede} week={week}>
+    <SayRegion>
+      <StageHead stages={stages} index={index} title={stage.name} lede={lede ?? stage.lede} week={week}>
         <ProjectFor props={props} />
       </StageHead>
       <StageExtras stage={stage} part="top" />
+      {waiting.length ? <WaitingCards props={props} waiting={waiting} /> : null}
       {children}
       <StageExtras stage={stage} part="foot" />
       <AskFoot props={props} />
-    </>
+    </SayRegion>
+  );
+}
+
+/** The cards waiting on the facilitator: found only by their name, or matching a card another one here already carries. */
+function waitingCards(data: CarryData | null | undefined): CardCarry[] {
+  return (data?.cards ?? []).filter((c) => c.match === "suggested" || (c.carriedBy && !c.from.length));
+}
+
+/** For the facilitator: each card found only by its name, with its yes or no. */
+function WaitingCards({ props, waiting }: { props: StageProps; waiting: readonly CardCarry[] }) {
+  return (
+    <section className="sb-panel sb-confirm-list" aria-label={WEEK4_COPY.waitingTitle}>
+      {waiting.map((c) => <ConfirmMatch key={c.cardId} props={props} link={c} />)}
+    </section>
   );
 }
 
@@ -50,6 +73,71 @@ export function CarryWait(props: StageProps) {
       )}
     </Week4Frame>
   );
+}
+
+/**
+ * A participant who chose to start a card found only by its name without
+ * waiting for the facilitator: kept per card for this tab (sessionStorage),
+ * so the stages stay open for them as the room moves.
+ */
+const freshKey = (cardId: number) => `sb-week4-fresh:${cardId}`;
+
+export function startedFresh(cardId: number | null): boolean {
+  if (cardId == null) return false;
+  try {
+    return typeof sessionStorage !== "undefined" && sessionStorage.getItem(freshKey(cardId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function startFresh(cardId: number): void {
+  try {
+    sessionStorage.setItem(freshKey(cardId), "1");
+  } catch {
+    // Storage blocked: the choice holds until the stage changes.
+  }
+}
+
+/**
+ * A Week 4 write stage for a card that is still only "suggested": its Week 3
+ * answers aren't on it yet, and an answer given now would replace last week's
+ * for that question once the facilitator says yes. So the stage waits, says
+ * why, and lets a participant start without Week 3 on purpose. The
+ * facilitator answers in the list above (Week4Frame), on any stage.
+ */
+export function CarryPending({ props, link, onFresh }: { props: StageProps; link: CardCarry; onFresh: () => void }) {
+  const fromWeek = props.carry.data?.fromWeeks[0] ?? props.week - 1;
+  const cardId = link.cardId;
+  return (
+    <Week4Frame props={props}>
+      <div className="sb-panel sb-carry-pending">
+        <p>{sourceLine(link, fromWeek)}</p>
+        <p>{WEEK4_COPY.pending}</p>
+        {props.canWrite && !props.facilitator ? (
+          <button
+            type="button"
+            className="sb-btn"
+            onClick={() => {
+              startFresh(cardId);
+              onFresh();
+            }}
+          >
+            {WEEK4_COPY.startFresh}
+          </button>
+        ) : null}
+      </div>
+    </Week4Frame>
+  );
+}
+
+/**
+ * Whether a card has nothing from an earlier week and isn't waiting on a
+ * facilitator (a name match to confirm, or a second card for a project
+ * another card here already carries, to merge): a project new today.
+ */
+export function isFreshCard(props: Pick<StageProps, "carry">, link: CardCarry | null, cardId: number | null): boolean {
+  return cardId != null && !props.carry.loading && !props.carry.failed && !!props.carry.data && !link?.from.length && link?.match !== "suggested" && !link?.carriedBy;
 }
 
 /** "From Week 3, linked by your application." and the rest, for one card's carry. */
@@ -87,24 +175,67 @@ export function earlierRows(carry: CarryData | null, link: CardCarry | null, car
  * carry read catches up, so a second tap can't land on top of the first.
  */
 export function ConfirmMatch({ props, link }: { props: StageProps; link: CardCarry }) {
-  const [said, setSaid] = useState<"yes" | "no" | null>(null);
-  const ref = link.suggested[0] ?? link.from[0];
-  if (!ref) return null;
+  const [said, setSaid] = useState<{ yes: CardRef } | { no: true } | null>(null);
   const name = cardName(props.board, link.cardId, "");
+  // Another card here carries the only match: the two cards are one project, so the facilitator merges them.
+  if (link.carriedBy && !link.suggested.length) {
+    const e = link.carriedBy.earlier;
+    return (
+      <div className="sb-confirm">
+        <p>
+          <strong>{name}</strong>: {fillCopy(CARRY_COPY.carriedBy, { other: link.carriedBy.name, name: e.name, week: e.week })}
+        </p>
+      </div>
+    );
+  }
+  const refs = link.suggested.length ? link.suggested : link.from;
+  if (!refs.length) return null;
   if (said) {
     return (
       <div className="sb-confirm" role="status">
-        <p>{said === "yes" ? fillCopy(CARRY_COPY.confirmed, { week: ref.week }) : CARRY_COPY.declinedDone}</p>
+        <p>{"yes" in said ? fillCopy(CARRY_COPY.confirmed, { week: said.yes.week }) : CARRY_COPY.declinedDone}</p>
         <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => { props.actions.confirmCarry(link.cardId, null); setSaid(null); }}>{CARRY_COPY.undo}</button>
       </div>
     );
   }
+  const yes = (ref: CardRef) => () => {
+    props.actions.confirmCarry(link.cardId, ref.cardId);
+    setSaid({ yes: ref });
+  };
+  const no = () => {
+    props.actions.confirmCarry(link.cardId, 0);
+    setSaid({ no: true });
+  };
+  // Answers given today on this card win over Week 3's for the same questions once it links: say so before the yes.
+  const answeredToday = shownRows(props.board).some((r) => r.kind === "answer" && r.projectId === link.cardId && (r.block === "needs" || r.block === "top"));
+  const here = name && name !== refs[0].name ? ` (${name} here)` : "";
+  if (refs.length > 1) {
+    // Two earlier cards share the name (a stray and the real one): the facilitator picks, each told apart by its answers.
+    return (
+      <div className="sb-confirm">
+        <p>{fillCopy(CARRY_COPY.confirmPickAsk, { name: name || refs[0].name, week: refs[0].week })}</p>
+        {answeredToday ? <p className="sb-hint">{WEEK4_COPY.confirmReplaces}</p> : null}
+        <div className="sb-row">
+          {refs.map((r) => (
+            <button key={r.cardId} type="button" className="sb-btn sb-small" onClick={yes(r)}>
+              {r.answers === 1
+                ? fillCopy(CARRY_COPY.confirmPickYesOne, { name: r.name, week: r.week })
+                : fillCopy(CARRY_COPY.confirmPickYes, { name: r.name, week: r.week, answers: r.answers ?? 0 })}
+            </button>
+          ))}
+          <button type="button" className="sb-btn sb-small sb-ghost" onClick={no}>{CARRY_COPY.confirmNone}</button>
+        </div>
+      </div>
+    );
+  }
+  const ref = refs[0];
   return (
     <div className="sb-confirm">
-      <p>{fillCopy(CARRY_COPY.confirmAsk, { name: ref.name, week: ref.week })}{name && name !== ref.name ? ` (${name} here)` : ""}</p>
+      <p>{fillCopy(CARRY_COPY.confirmAsk, { name: ref.name, week: ref.week })}{here}</p>
+      {answeredToday ? <p className="sb-hint">{WEEK4_COPY.confirmReplaces}</p> : null}
       <div className="sb-row">
-        <button type="button" className="sb-btn sb-small" onClick={() => { props.actions.confirmCarry(link.cardId, ref.cardId); setSaid("yes"); }}>{CARRY_COPY.confirmYes}</button>
-        <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => { props.actions.confirmCarry(link.cardId, 0); setSaid("no"); }}>{CARRY_COPY.confirmNo}</button>
+        <button type="button" className="sb-btn sb-small" onClick={yes(ref)}>{CARRY_COPY.confirmYes}</button>
+        <button type="button" className="sb-btn sb-small sb-ghost" onClick={no}>{CARRY_COPY.confirmNo}</button>
       </div>
     </div>
   );
@@ -145,8 +276,10 @@ export function CarryStage(props: StageProps) {
   const { game } = useMyGame(props);
   const cardId = myCardId(myProject);
   const fromWeek = carry.data?.fromWeeks[0] ?? week - 1;
-  const prompts = resolvedPrompts(week, index);
-  const waiting = facilitator ? (carry.data?.cards ?? []).filter((c) => c.match === "suggested") : [];
+  // A project with nothing from last week isn't asked about last week's move.
+  const fresh = isFreshCard(props, game.link, cardId);
+  const prompts = resolvedPrompts(week, index).filter((p) => !fresh || (p.key !== "moved" && p.key !== "moved-line"));
+  const waiting = facilitator ? waitingCards(carry.data) : [];
   const gaps = cardId != null ? cardGaps(game.view, game.cards) : [];
   const before = cardId != null ? earlierRows(carry.data, game.link, cardId) : [];
   const lastMove = newestFirst(before.filter((r) => r.block === "move"))[0]?.text ?? null;
@@ -166,10 +299,12 @@ export function CarryStage(props: StageProps) {
   } else {
     // What was said last week only: today's answers show on today's stages.
     const lastWeek = projectView(before as readonly AnswerRow[], cardId);
-    const lines = projectCardLines(lastWeek);
+    const lines = cardLinesWithNeeds(lastWeek, new Set(game.own.keys()));
+    // A short "found" line reads as a label; the longer sentences (not found, waiting, declined) as a sentence.
+    const found = !!game.link?.from.length;
     card = (
       <section className="sb-panel sb-carried" aria-labelledby="sb-carried-h">
-        <p className="sb-label">{sourceLine(game.link, fromWeek)}</p>
+        {found ? <p className="sb-label">{sourceLine(game.link, fromWeek)}</p> : <p>{sourceLine(game.link, fromWeek)}</p>}
         <h3 id="sb-carried-h" className="sb-pcard-name">{cardName(board, cardId, "")}</h3>
         {lastWeek.answered ? (
           <ul className="sb-pcard-lines">{lines.map((l, i) => <li key={i}>{l}</li>)}</ul>
@@ -182,11 +317,9 @@ export function CarryStage(props: StageProps) {
   }
 
   return (
-    <Week4Frame props={props}>
+    <Week4Frame props={props} lede={fresh ? WEEK4_COPY.carryFresh : undefined}>
       {waiting.length ? (
-        <section className="sb-panel sb-confirm-list" aria-label="Cards found by name">
-          {waiting.map((c) => <ConfirmMatch key={c.cardId} props={props} link={c} />)}
-        </section>
+        <WaitingCards props={props} waiting={waiting} />
       ) : null}
       {facilitator ? <LinkedCards props={props} /> : null}
       {card}

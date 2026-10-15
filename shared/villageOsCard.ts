@@ -35,11 +35,12 @@ import {
   PLAYER_COUNTS,
   TOGETHER_DECISIONS,
   customNeedKey,
+  needShort,
   projectCardLines,
   toVillageOsScope,
   type ProjectView,
 } from "./humanNeeds";
-import { cardLine, cardsOf, circleLabel, needKeyLabel, ownNeedLabels, type CardEntry, type CardRow, type HeldBy } from "./boardCards";
+import { cardLine, cardsOf, circleLabel, meetsCircles, needKeyLabel, ownNeedLabels, type CardEntry, type CardRow, type DecidesBy, type HeldBy } from "./boardCards";
 
 export type VillageOsNeedEntry = {
   needKey: string;
@@ -113,8 +114,23 @@ export type VillageOsCard = {
   variables: { "needs.totality_target_pct"?: number };
   needLinks: DraftNeedLink[];
   seats: VillageOsSeat[];
-  /** `decidesBy` is Village OS's `circles.decides_by` (consent, consensus, majority, lead, elders, founder, do-ocracy, delegated, other). */
-  circles: { circle: string; label: string; needs: string[]; decidesOn: string[]; decidesBy: string | null; startsWith: boolean }[];
+  /**
+   * `decidesBy` is Village OS's `circles.decides_by` id (the keys of
+   * DECIDES_BY in shared/boardCards.ts), set only when every card on the
+   * circle that names a way agrees; `decidesByAnswers` lists each way the
+   * cards name, so a founder sees the disagreement. `decidesByGloss` is the
+   * line Village OS requires with "other".
+   */
+  circles: {
+    circle: string;
+    label: string;
+    needs: string[];
+    decidesOn: string[];
+    decidesBy: DecidesBy | null;
+    decidesByGloss: string | null;
+    decidesByAnswers: { by: DecidesBy; gloss: string | null }[];
+    startsWith: boolean;
+  }[];
   decisions: { together: string[]; how: string | null; agreement: string | null };
   /** The first step someone takes to come in. */
   entry: string | null;
@@ -131,7 +147,50 @@ export type ProjectCards = {
   own: readonly CardEntry<"own">[];
   decide: readonly CardEntry<"decide">[];
   quests: readonly CardEntry<"quest">[];
+  /** The circles that meet each of the project's own human needs, one card per person per human need. */
+  meets: readonly CardEntry<"meets">[];
 };
+
+/**
+ * Which circles meet each human need, as people per circle: the ten's
+ * per-need picks (view.circlesFor), plus a circles card for each of the
+ * project's own human needs that is still on its card.
+ */
+export function circlesPerNeed(view: ProjectView, cards: ProjectCards): Record<string, Record<string, number>> {
+  const out: Record<string, Record<string, number>> = {};
+  for (const [need, tally] of Object.entries(view.circlesFor)) if (tally) out[need] = { ...tally };
+  const own = ownNeedLabels(cards.own);
+  for (const { card } of cards.meets) {
+    if (!own.has(card.need)) continue;
+    const tally = (out[card.need] ??= {});
+    for (const k of meetsCircles(card)) tally[k] = (tally[k] ?? 0) + 1;
+  }
+  return out;
+}
+
+/**
+ * The human needs a card picked beyond its seeds, and the ones it named on
+ * Week 3's "A human need that isn't here" and hasn't added as its own:
+ * projectCardLines reads seeds only, so Amora's ten picks and Toa's
+ * "spiritual practice" would otherwise never show.
+ */
+export function needsBeyondSeeds(view: ProjectView, ownKeys: ReadonlySet<string> = new Set()): string[] {
+  const out: string[] = [];
+  const rest = view.needs.map((n) => n.id as string).filter((id) => !(view.seeds as string[]).includes(id));
+  if (rest.length) out.push(`${view.seeds.length ? "Also here to meet" : "Here to meet"}: ${rest.map(needShort).join(", ")}.`);
+  const named = [view.other.latest, ...view.other.others]
+    .map((w) => (w ?? "").trim())
+    .filter((w, i, all) => w && all.indexOf(w) === i && !ownKeys.has(customNeedKey(w)));
+  if (named.length) out.push(`Named last week, not added yet: ${named.join(", ")}.`);
+  return out;
+}
+
+/** projectCardLines with the human needs beyond its seeds, after the seed lines and before the whole-project line. */
+export function cardLinesWithNeeds(view: ProjectView, ownKeys: ReadonlySet<string> = new Set()): string[] {
+  const lines = projectCardLines(view);
+  lines.splice(Math.min(lines.length, 2 + view.seeds.length), 0, ...needsBeyondSeeds(view, ownKeys));
+  return lines;
+}
 
 const label = (list: readonly { key: string; label: string }[], key: string | null) =>
   key == null ? null : list.find((o) => o.key === key)?.label ?? null;
@@ -185,9 +244,9 @@ export function toVillageOsCard(input: {
     customNeeds.push({ needKey: key, label: name.slice(0, 120) });
   }
 
-  // Circles per human need (c-<need>), as draft links onto a seat in that circle.
+  // Circles per human need (c-<need>, and a circles card for one of its own), as draft links onto a seat in that circle.
   const needLinks: DraftNeedLink[] = [];
-  for (const [needKey, tally] of Object.entries(view.circlesFor)) {
+  for (const [needKey, tally] of Object.entries(circlesPerNeed(view, cards))) {
     if (!inScope.has(needKey) || !tally) continue;
     const keys = Object.keys(tally).filter((k) => (tally[k] ?? 0) > 0);
     for (const k of keys) {
@@ -229,7 +288,7 @@ export function toVillageOsCard(input: {
   const circle = (key: string) => {
     let c = circles.get(key);
     if (!c) {
-      c = { circle: key, label: key === OWN_CIRCLE.key ? OWN_CIRCLE.label : circleLabel(key), needs: [], decidesOn: [], decidesBy: null, startsWith: false };
+      c = { circle: key, label: key === OWN_CIRCLE.key ? OWN_CIRCLE.label : circleLabel(key), needs: [], decidesOn: [], decidesBy: null, decidesByGloss: null, decidesByAnswers: [], startsWith: false };
       circles.set(key, c);
     }
     return c;
@@ -244,10 +303,19 @@ export function toVillageOsCard(input: {
     const c = circle(s.card.circle);
     if (!c.needs.includes(s.card.need)) c.needs.push(s.card.need);
   }
+  // Village OS keeps one way of deciding per circle: carry it only when the cards agree.
   for (const d of cards.decide) {
     const c = circle(d.card.circle);
     c.decidesOn.push(d.card.decidesOn);
-    if (d.card.how) c.decidesBy = d.card.how;
+    const by = d.card.how;
+    if (!by) continue;
+    const gloss = by === "other" ? d.card.gloss ?? null : null;
+    if (!c.decidesByAnswers.some((a) => a.by === by && a.gloss === gloss)) c.decidesByAnswers.push({ by, gloss });
+  }
+  for (const c of circles.values()) {
+    if (c.decidesByAnswers.length !== 1) continue;
+    c.decidesBy = c.decidesByAnswers[0].by;
+    c.decidesByGloss = c.decidesByAnswers[0].gloss;
   }
 
   const together = TOGETHER_DECISIONS.filter((t) => (view.together[t.key] ?? 0) > 0).map((t) => t.label);
@@ -289,6 +357,7 @@ export function cardsForProject(rows: readonly CardRow[], cardId: number | null)
     own: cardsOf(rows, "own", cardId),
     decide: cardsOf(rows, "decide", cardId),
     quests: cardsOf(rows, "quest", cardId),
+    meets: cardsOf(rows, "meets", cardId),
   };
 }
 
@@ -299,9 +368,9 @@ export function cardsForProject(rows: readonly CardRow[], cardId: number | null)
  */
 export function gameLines(view: ProjectView, cards: ProjectCards): string[] {
   const own = ownNeedLabels(cards.own);
-  const lines = projectCardLines(view);
+  const lines = cardLinesWithNeeds(view, new Set(own.keys()));
   if (cards.own.length) lines.push(`Its own human needs: ${cards.own.map((e) => cardLine("own", e.card)).join("; ")}.`);
-  for (const [need, tally] of Object.entries(view.circlesFor)) {
+  for (const [need, tally] of Object.entries(circlesPerNeed(view, cards))) {
     const keys = Object.keys(tally ?? {}).filter((k) => (tally?.[k] ?? 0) > 0);
     if (!keys.length) continue;
     const names = keys.map((k) => (k === OWN_CIRCLE.key ? OWN_CIRCLE.label.toLowerCase() : circleLabel(k)));
@@ -327,18 +396,31 @@ export type CardGap = { key: string; label: string; step: "confirm" | "circles" 
 export function cardGaps(view: ProjectView, cards: ProjectCards): CardGap[] {
   const gaps: CardGap[] = [];
   const needs = view.needs.map((n) => n.id as string);
+  const own = ownNeedLabels(cards.own);
   if (!needs.length && !cards.own.length) gaps.push({ key: "needs", label: "The human needs your project is here to meet", step: "confirm" });
-  if (!view.seeds.length) gaps.push({ key: "top", label: "Three seeds at your project's heart", step: "confirm" });
+  // Seeds go on the ten only: a project whose human needs are all its own has none to plant.
+  if (!view.seeds.length && !(needs.length === 0 && cards.own.length)) gaps.push({ key: "top", label: "Three seeds at your project's heart", step: "confirm" });
   const noGoal = view.seeds.filter((id) => !view.perNeed[id]?.goal.value);
   if (noGoal.length) gaps.push({ key: "goal", label: "How deep, and for how many, for each seed", step: "confirm" });
   if (!view.whole.value) gaps.push({ key: "whole", label: "What share of your people's human needs your project means to meet", step: "confirm" });
-  const withCircles = Object.keys(view.circlesFor);
+  const withCircles = Object.keys(circlesPerNeed(view, cards)).filter((k) => needs.includes(k) || own.has(k));
   if (!withCircles.length) gaps.push({ key: "circlesFor", label: "The circles that meet each human need", step: "circles" });
   if (!Object.values(view.circles).some((n) => n > 0) && !view.circlesOwn.length) gaps.push({ key: "circles", label: "The circles you start with", step: "circles" });
   if (!view.players.value) gaps.push({ key: "players", label: "How many players your Game takes to start", step: "circles" });
   if (!view.shape.value) gaps.push({ key: "shape", label: "The shape of your Game", step: "circles" });
   if (!cards.seats.length) gaps.push({ key: "seats", label: "The seats in each circle", step: "seats" });
   if (!cards.decide.length && !Object.values(view.together).some((n) => n > 0)) gaps.push({ key: "decide", label: "Who decides what", step: "decide" });
+  // Village OS keeps one way of deciding per circle: cards that name two need settling.
+  const ways = new Map<string, Set<string>>();
+  for (const d of cards.decide) {
+    if (!d.card.how) continue;
+    const s = ways.get(d.card.circle) ?? new Set<string>();
+    s.add(`${d.card.how}:${d.card.how === "other" ? d.card.gloss ?? "" : ""}`);
+    ways.set(d.card.circle, s);
+  }
+  for (const [circleKey, s] of ways) {
+    if (s.size > 1) gaps.push({ key: `decides-by:${circleKey}`, label: `How ${circleLabel(circleKey)} decides: your cards name more than one way`, step: "decide" });
+  }
   if (!cards.quests.length) gaps.push({ key: "quest", label: "A first quest", step: "quests" });
   if (!view.purpose.latest) gaps.push({ key: "purpose", label: "Your project's first line: All this is for ___", step: "room" });
   return gaps;

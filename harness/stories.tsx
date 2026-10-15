@@ -515,6 +515,7 @@ const W4_ROWS: W3Row[] = [
   { id: 1110, block: "together", text: "join", projectId: TOA, mine: true },
   { id: 1111, block: "together", text: "land", projectId: TOA, mine: true },
   { id: 1112, block: "quest-1", text: QUEST_SPRING, projectId: TOA, mine: true },
+  { id: 1113, block: "cown-1", text: JSON.stringify({ d: "custom:spiritual-practice", c: "festivals,own" }), projectId: TOA, mine: true },
   { id: 3101, block: "needs", text: "vitality", projectId: AMORA },
   { id: 3102, block: "top", text: "vitality", projectId: AMORA },
   { id: 3103, block: "seat-1", text: JSON.stringify({ n: "Garden lead", c: "food", d: "vitality", a: "Food from the garden every week", h: "team", w: "Dana", t: "Two mornings a week" }), projectId: AMORA },
@@ -556,7 +557,19 @@ function w4Carry() {
   };
 }
 
-function week4Board(stage: number, opts: { rows?: W3Row[]; facilitator?: boolean; picked?: boolean; displayName?: string } = {}) {
+/** Green Gulch Land Trust: a card new today, with nothing from Week 3 (match "none"). */
+const GULCH = 13;
+
+function week4Board(stage: number, opts: {
+  rows?: W3Row[];
+  facilitator?: boolean;
+  picked?: boolean;
+  displayName?: string;
+  /** The card this person tapped (Toa Hermitage by default). */
+  project?: { cardId: number; name: string };
+  /** Green Gulch on the board too, new today. */
+  fresh?: boolean;
+} = {}) {
   const now = Date.now();
   const state = defaultBoardState(4);
   state.stage = stage;
@@ -568,8 +581,8 @@ function week4Board(stage: number, opts: { rows?: W3Row[]; facilitator?: boolean
   mockData["sessionBoard.get"] = {
     week: 4, status: "open", version: 9, serverNow: now, state, canFacilitate: facilitator, notes: [],
     hands: {}, offers: {}, answerCounts: { "pulse-a": { clear: 3, deeper: 2, fast: 0, lost: 0 }, "pulse-b": { clear: 1, deeper: 0, fast: 0, lost: 0 } },
-    checkins: { [TOA]: 2, [AMORA]: 3, [LUPINE]: 1 }, offerPeople: null,
-    projects: W4_CARDS,
+    checkins: { [TOA]: 2, [AMORA]: 3, [LUPINE]: 1, ...(opts.fresh ? { [GULCH]: 1 } : {}) }, offerPeople: null,
+    projects: opts.fresh ? [...W4_CARDS, w3Card(GULCH, "Green Gulch Land Trust", "Marin, California", 63)] : W4_CARDS,
     items: rows.map((r, i) => ({
       id: r.id, kind: r.kind ?? "answer", text: r.text, projectId: r.projectId, block: r.block, theme: null,
       chosen: !!r.chosen, votes: 0, roomVotes: 0, fromItemId: null, hidden: false, displayName: null,
@@ -578,14 +591,16 @@ function week4Board(stage: number, opts: { rows?: W3Row[]; facilitator?: boolean
     facilitatorLists: facilitator ? { register: [], applications: [{ id: 41, projectName: "Toa Hermitage" }, { id: 57, projectName: "Amora" }] } : null,
   };
   mockData["sessionBoard.version"] = { version: 9, status: "open" };
-  mockData["sessionBoard.carry"] = w4Carry();
+  const carry = w4Carry();
+  if (opts.fresh) carry.cards.push({ cardId: GULCH, match: "none", from: [], suggested: [] });
+  mockData["sessionBoard.carry"] = carry;
   if (facilitator) {
     mockData["auth.me"] = { id: 2, name: "Rye", email: "rye@example.org", role: "admin" };
     mockData["sessionBoard.guestRows.result"] = { rows: 0 };
   }
   mockData["sessionBoard.whoami.result"] = {
     itemIds: rows.filter((r) => r.mine).map((r) => r.id), projectIds: [], votes: [], hands: [], offers: [], anon: [],
-    checkins: opts.picked === false ? [] : [TOA], earlier: [{ week: 3, cardId: W3_FOR_TOA, name: "Toa Hermitage" }], canFacilitate: facilitator,
+    checkins: opts.picked === false ? [] : [opts.project?.cardId ?? TOA], earlier: [{ week: 3, cardId: W3_FOR_TOA, name: "Toa Hermitage" }], canFacilitate: facilitator,
   };
   mockData["seasonSchedule.state"] = {
     sessions: [
@@ -595,7 +610,7 @@ function week4Board(stage: number, opts: { rows?: W3Row[]; facilitator?: boolean
   };
   try {
     if (opts.picked === false) localStorage.removeItem("session-board:project:4");
-    else localStorage.setItem("session-board:project:4", JSON.stringify({ cardId: TOA, name: "Toa Hermitage" }));
+    else localStorage.setItem("session-board:project:4", JSON.stringify(opts.project ?? { cardId: TOA, name: "Toa Hermitage" }));
     localStorage.setItem("session-board:last-project", JSON.stringify({ name: "Toa Hermitage", cardId: W3_FOR_TOA, ref: `p${W3_FOR_TOA}`, week: 3 }));
     if (opts.displayName) localStorage.setItem("session-board:name", opts.displayName);
   } catch {
@@ -653,6 +668,40 @@ const SUBMISSION_WEEKS = [
     ],
   },
 ];
+
+/**
+ * The audit self-test's controls that go away: Cancel leaves focus on the
+ * page (bad), Take back moves it to the heading (good).
+ */
+function SelfTestGoesAway() {
+  const [bad, setBad] = useState(true);
+  const [good, setGood] = useState(true);
+  const headRef = useRef<HTMLHeadingElement>(null);
+  return (
+    <section>
+      <h3 ref={headRef} tabIndex={-1}>Controls that go away</h3>
+      {bad ? (
+        <button type="button" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]" onClick={() => setBad(false)}>Cancel</button>
+      ) : (
+        <p>Bad: Cancel went, and focus went to the page.</p>
+      )}
+      {good ? (
+        <button
+          type="button"
+          className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]"
+          onClick={() => {
+            setGood(false);
+            requestAnimationFrame(() => headRef.current?.focus());
+          }}
+        >
+          Take back
+        </button>
+      ) : (
+        <p>Good: focus moved to the heading.</p>
+      )}
+    </section>
+  );
+}
 
 /** The profile page's own ground (PlayerProfile.tsx), around the Submissions tab. */
 function ProfileGround({ children }: { children: ReactNode }) {
@@ -775,6 +824,29 @@ export const STORIES: Record<string, Story> = {
           <button type="button" aria-pressed="true" className="min-h-11 rounded border-2 border-[#1a472a] px-3 font-semibold focus-visible:ring-2 focus-visible:ring-[#1a472a]">✓ Good on</button>
           <button type="button" aria-pressed="false" className="min-h-11 rounded border border-[#1a472a] px-3 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good off</button>
         </div>
+        {/* A hint under a field: the bad one isn't tied to its field, the good one is. */}
+        <div>
+          <label htmlFor="audit-hint-bad">Bad: who holds it</label>
+          <input id="audit-hint-bad" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Ana" />
+          <p id="audit-hint-bad-p">Bad: ask them first, this board is public.</p>
+        </div>
+        <div>
+          <label htmlFor="audit-hint-good">Good: who holds it</label>
+          <input id="audit-hint-good" aria-describedby="audit-hint-good-p" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Ana" />
+          <p id="audit-hint-good-p">Good: ask them first, this board is public.</p>
+        </div>
+        {/* A Save that can't say why: disabled with words in the form, beside one that stays focusable. */}
+        <form onSubmit={(e) => e.preventDefault()}>
+          <label htmlFor="audit-save-bad">Bad: seat name</label>
+          <input id="audit-save-bad" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Seed saver" />
+          <button type="submit" disabled className="min-h-11 rounded border border-[#1a472a] px-4">Bad: Save, disabled</button>
+        </form>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <label htmlFor="audit-save-good">Good: seat name</label>
+          <input id="audit-save-good" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Seed saver" />
+          <button type="submit" aria-disabled="true" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good: Save, says why</button>
+        </form>
+        <SelfTestGoesAway />
       </div>
     ),
   },
@@ -1617,6 +1689,49 @@ export const STORIES: Record<string, Story> = {
   "week4-close": {
     title: "Week 4, Close: projects, human needs with a circle, seats, questions",
     setup: () => week4Board(12),
+    render: () => <Week4Page />,
+  },
+
+  /** A card found only by its name, before the facilitator's yes: the write stages wait (2026-10-15). */
+  "week4-pending": {
+    title: "Week 4, Seats in each circle: a card waiting on the facilitator, Start without Week 3",
+    setup: () => week4Board(6, { project: { cardId: LUPINE, name: "Lupine Hollow" } }),
+    render: () => <Week4Page />,
+  },
+
+  /** The facilitator on a write stage: the cards found by name, confirmed wherever the room is. */
+  "week4-seats-host": {
+    title: "Week 4, Seats in each circle: the facilitator's cards found by name",
+    setup: () => week4Board(6, { facilitator: true, displayName: "Rye" }),
+    render: () => <Week4Page />,
+  },
+
+  /** Two Week 3 cards share Lupine Hollow's name (a stray and the real one): the facilitator picks by their answers. */
+  "week4-carry-two-same-name": {
+    title: "Week 4, Your Week 3 card: the facilitator picks between two cards with one name",
+    setup: () => {
+      week4Board(3, { facilitator: true, displayName: "Rye" });
+      const carry = mockData["sessionBoard.carry"] as ReturnType<typeof w4Carry>;
+      const lupine = carry.cards.find((c) => c.cardId === LUPINE)!;
+      lupine.suggested = [
+        { week: 3, cardId: 408, name: "Lupine Hollow", answers: 1 } as never,
+        { week: 3, cardId: 409, name: "Lupine Hollow", answers: 31 } as never,
+      ];
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** A project new today: no "did last week's move happen", and a lede for starting fresh. */
+  "week4-carry-fresh": {
+    title: "Week 4, Your Week 3 card: a project new today",
+    setup: () => week4Board(3, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    render: () => <Week4Page />,
+  },
+
+  /** Your human needs for a project new today: nothing named last week. */
+  "week4-needs-fresh": {
+    title: "Week 4, Your human needs: a project new today",
+    setup: () => week4Board(4, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
     render: () => <Week4Page />,
   },
 

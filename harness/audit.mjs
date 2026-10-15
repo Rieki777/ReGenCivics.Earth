@@ -15,7 +15,7 @@ import { chromium } from "playwright";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
-import { revealAll, runFocusChecks, runPageChecks } from "./audit-checks.mjs";
+import { revealAll, runFocusChecks, runFocusReturnChecks, runPageChecks } from "./audit-checks.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SHOTS = path.join(here, "shots");
@@ -61,8 +61,40 @@ const BEFORE = {
   // Week 4 (2026-10-21): the add forms and the card's text, reached by tapping.
   "week4-seats": async (page) => {
     await page.getByRole("button", { name: /Add a seat for Vitality/ }).click();
-    await page.getByRole("textbox", { name: "Seat name" }).fill("Seed saver");
+    const name = page.getByRole("textbox", { name: "Seat name" });
+    await name.fill("Seed saver");
+    // Enter (the phone's Next) moves on and never saves a half-written seat.
+    await name.press("Enter");
+    const at = await page.evaluate(() => document.activeElement?.tagName);
+    if (at !== "SELECT") throw new Error(`Enter on Seat name moved focus to ${at}, not the circle select`);
+    if (!(await name.isVisible())) throw new Error("Enter on Seat name closed the form");
+    await page.getByRole("textbox", { name: "What it works toward" }).fill("Seeds for every bed");
+    await page.getByRole("button", { name: "Someone on our team holds it" }).click();
+    // A half-written seat survives leaving the stage and coming back (week3/drafts.ts).
+    await page.locator(".sb-rail-btn").nth(5).click();
     await page.waitForTimeout(200);
+    await page.locator(".sb-rail-btn").nth(6).click();
+    await page.waitForTimeout(300);
+    const kept = await page.getByRole("textbox", { name: "Seat name" }).inputValue().catch(() => "");
+    const aim = await page.getByRole("textbox", { name: "What it works toward" }).inputValue().catch(() => "");
+    if (kept !== "Seed saver" || aim !== "Seeds for every bed") throw new Error(`the seat's words were lost on a stage change ("${kept}", "${aim}")`);
+    if ((await page.locator("form.sb-card-form[data-unsaved]").count()) !== 1) throw new Error("the unsaved seat form isn't marked, so the room would move away from it");
+    await page.waitForTimeout(200);
+  },
+  "week4-quests": async (page) => {
+    await page.getByRole("button", { name: "Add a quest" }).click();
+    const quest = page.getByRole("textbox", { name: "The quest" });
+    await quest.fill("Plant the hedge");
+    // Enter moves to the human need it grows; it never tags the quest to the first one by itself.
+    await quest.press("Enter");
+    const at = await page.evaluate(() => document.activeElement?.tagName);
+    if (at !== "SELECT") throw new Error(`Enter on the quest moved focus to ${at}, not the human need select`);
+    await page.waitForTimeout(200);
+  },
+  "week4-pending": async (page) => {
+    await page.getByRole("button", { name: "Start without Week 3" }).click();
+    // Lupine Hollow has no human needs yet, so the stage opens on where to name them.
+    await page.getByText(/Name your project's human needs first/).waitFor({ timeout: 5_000 });
   },
   "week4-needs": async (page) => {
     await page.getByRole("button", { name: "Add a human need of your own" }).click();
@@ -71,10 +103,6 @@ const BEFORE = {
   },
   "week4-decide": async (page) => {
     await page.getByRole("button", { name: /Add what a circle decides: Food & Fertility/ }).click();
-    await page.waitForTimeout(200);
-  },
-  "week4-quests": async (page) => {
-    await page.getByRole("button", { name: "Add a quest" }).click();
     await page.waitForTimeout(200);
   },
   "week4-built": async (page) => {
@@ -129,8 +157,18 @@ for (const story of stories) {
     const failures = [...errors.map((e) => `page error: ${e}`), ...(await runPageChecks(page, ROOT))];
     // Keyboard focus is checked once, at desktop width.
     if (vp.name === "desktop") failures.push(...(await runFocusChecks(page, ROOT)));
-    const unique = [...new Set(failures)];
     await page.screenshot({ path: path.join(SHOTS, `${story}.${vp.name}.png`), fullPage: true });
+    // Then the controls that take themselves away, each on a fresh copy of the story.
+    if (vp.name === "desktop") {
+      failures.push(...(await runFocusReturnChecks(page, ROOT, async () => {
+        await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle" });
+        await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: 10_000, state: "attached" });
+        if (!/^(admin|alliance-admin|alliance-inquiry)/.test(story)) await page.evaluate(() => document.documentElement.classList.add("dark"));
+        await page.waitForTimeout(400);
+        if (BEFORE[story]) await BEFORE[story](page);
+      })));
+    }
+    const unique = [...new Set(failures)];
     console.log(`${unique.length ? "✗" : "✓"} ${story} (${vp.name})${unique.length ? `: ${unique.length}` : ""}`);
     for (const f of unique) console.log(`    ${f}`);
     total += unique.length;

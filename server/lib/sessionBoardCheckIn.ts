@@ -422,6 +422,8 @@ export async function checkInOnBoard(
       card,
       keys,
       earlierTile: earlier && created ? { id: earlier.id, week: earlier.week, applicationId: earlier.applicationId } : null,
+      // An earlier card one of these already carries is never linked to a second card here.
+      others: shown.filter((c) => c.id !== card.id),
     });
     if (link) {
       const next = applyBoardAction(state, { type: "carry", cardId: card.id, from: link.from, by: link.by }, Date.now());

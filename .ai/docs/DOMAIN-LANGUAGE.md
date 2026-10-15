@@ -395,7 +395,7 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Carry** (between boards, ADR-76). A project's answers coming forward from its card on an earlier week's board to its card on this week's, matched by application, by the tile someone checked in from, by the person who played for it, or by a facilitator's yes. A change today replaces last week's answer for that question; earlier boards are never written. A card found only by its name is a suggestion until the facilitator confirms it.
 
-**Card** (an answer, ADR-76). A seat in a circle, a human need of the project's own, what a circle decides, or a quest: one answer with several fields, kept in one of a person's slots for the project. Not a project's card on the board (its tile and name), and not a Village OS seat card, which a seat card becomes once it is set up there.
+**Card** (an answer, ADR-76). A seat in a circle, a human need of the project's own, the circles that meet one of the project's own human needs, what a circle decides, or a quest: one answer with several fields, kept in one of a person's slots for the project. Not a project's card on the board (its tile and name), and not a Village OS seat card, which a seat card becomes once it is set up there.
 
 **Seat** (on a board, ADR-76). One role in a circle, written so someone could say yes to it: its name, what it works toward, the human need it meets, what it answers for, who holds it (someone on the team, open as an invitation, or a being with someone speaking for it), and what it asks (hours a week or a clear contribution). Ends with the season unless said otherwise, so a short-term role is just a seat.
 

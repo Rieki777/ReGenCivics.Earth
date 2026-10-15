@@ -14,7 +14,9 @@
  *      - "tile": someone checked in from the earlier week's tile, so the card
  *        was carried from that very card;
  *      - "person": the person checking in played for a card with the same
- *        name on the earlier week (their own check-in or answers there);
+ *        name on the earlier week (their own check-in or answers there, up
+ *        to the end of that week's live session). It holds only while the
+ *        two names still match;
  *      - "facilitator": a facilitator confirmed a match found only by name.
  *   3. suggested: an earlier card with the same name and nothing else tying
  *      them. It carries nothing until a facilitator confirms it, because anyone
@@ -43,7 +45,16 @@ export type CarryMatch = "application" | "carried" | "yours" | "confirmed" | "su
 /** An earlier week's card, as the matcher needs it. Its author key never leaves the server. */
 export type EarlierCard = { id: number; week: number; name: string; applicationId: number | null; hidden?: boolean };
 
-export type CardRef = { week: number; cardId: number; name: string };
+export type CardRef = {
+  week: number;
+  cardId: number;
+  name: string;
+  /**
+   * On a suggested card only: how many answer rows it holds on its week, so a
+   * facilitator choosing between two cards with one name can tell them apart.
+   */
+  answers?: number;
+};
 
 /** What the page gets for one card on this board. */
 export type CardCarry = {
@@ -53,6 +64,12 @@ export type CardCarry = {
   from: CardRef[];
   /** A same-name card waiting for a facilitator's yes. Carries nothing until then. */
   suggested: CardRef[];
+  /**
+   * Set when this card's only suggestions were dropped because another card
+   * on this board already carries them: that card (`cardId`, `name`) and the
+   * earlier card it carries (`earlier`). The facilitator merges the two cards.
+   */
+  carriedBy?: { cardId: number; name: string; earlier: CardRef };
 };
 
 /** An earlier week's answer row; `projectId` is the earlier card. */
@@ -77,7 +94,8 @@ const refOf = (c: EarlierCard): CardRef => ({ week: c.week, cardId: c.id, name: 
 /**
  * Which earlier cards one card on this board carries from. `earlier` holds the
  * cards of every earlier week read; `link` is this card's recorded link, if
- * any. Hidden earlier cards never carry and are never suggested.
+ * any. Hidden earlier cards never carry and are never suggested, and a card
+ * tied to a different application never carries, by link or by name.
  */
 export function matchCard(
   card: { id: number; name: string; applicationId: number | null },
@@ -85,16 +103,25 @@ export function matchCard(
   link: CarryLink | undefined,
 ): Omit<CardCarry, "cardId"> {
   const shown = earlier.filter((c) => !c.hidden);
+  const otherApp = (c: EarlierCard) => card.applicationId != null && c.applicationId != null && c.applicationId !== card.applicationId;
+  const folded = foldProjectName(card.name);
+  // A "person" link stood on the two names matching. Once this card is renamed
+  // it waits for the facilitator's yes, which survives renames.
+  const renamed = (c: EarlierCard) => link?.by === "person" && foldProjectName(c.name) !== folded;
   if (card.applicationId != null) {
     const byApp = shown.filter((c) => c.applicationId === card.applicationId);
     if (byApp.length) {
-      // A card someone tapped or a facilitator confirmed comes too, even with no application of its own.
-      const linked = link && link.from > 0 ? shown.find((c) => c.id === link.from && !byApp.includes(c)) : undefined;
+      // A card someone tapped or a facilitator confirmed comes too, when it has no application of its own:
+      // one with this application is in byApp already, and one with another never comes.
+      const linked = link && link.from > 0 ? shown.find((c) => c.id === link.from && c.applicationId == null && !renamed(c)) : undefined;
       return { match: "application", from: [...byApp, ...(linked ? [linked] : [])].map(refOf), suggested: [] };
     }
   }
   if (link && link.from > 0) {
-    const linked = shown.find((c) => c.id === link.from);
+    // A link to a card tied to another application is never followed, even one
+    // recorded before a facilitator set or changed this card's application.
+    const linked = shown.find((c) => c.id === link.from && !otherApp(c));
+    if (linked && renamed(linked)) return { match: "suggested", from: [], suggested: [refOf(linked)] };
     if (linked) {
       // The linked card's own application ties the project's other weeks in too.
       const kin = linked.applicationId != null ? shown.filter((c) => c.applicationId === linked.applicationId && c.id !== linked.id) : [];
@@ -102,8 +129,7 @@ export function matchCard(
     }
   }
   if (link && link.from === 0) return { match: "declined", from: [], suggested: [] };
-  const folded = foldProjectName(card.name);
-  const named = folded ? shown.filter((c) => foldProjectName(c.name) === folded) : [];
+  const named = folded ? shown.filter((c) => foldProjectName(c.name) === folded && !otherApp(c)) : [];
   if (named.length) return { match: "suggested", from: [], suggested: named.map(refOf) };
   return { match: "none", from: [], suggested: [] };
 }
@@ -237,6 +263,13 @@ export const CARRY_COPY = {
   confirmAsk: "Is this the same project as {name} on Week {week}?",
   confirmYes: "Yes, same project",
   confirmNo: "No, a different one",
+  /** Two or more earlier cards share the name: the facilitator picks one. */
+  confirmPickAsk: "Which Week {week} card is the same project as {name}?",
+  confirmPickYes: "This one: {name}, Week {week}, {answers} answers",
+  confirmPickYesOne: "This one: {name}, Week {week}, 1 answer",
+  confirmNone: "None of these",
+  /** CardCarry.carriedBy: {other} is the card here that carries it, {name} and {week} the earlier card. */
+  carriedBy: "{other} already carries {name} from Week {week}. Merge this card into it.",
   confirmed: "Linked. Its Week {week} answers come forward.",
   declinedDone: "Noted. Nothing carries for this card.",
   undo: "Undo",

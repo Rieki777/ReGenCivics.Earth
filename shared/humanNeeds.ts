@@ -500,6 +500,9 @@ export function projectView(items: readonly AnswerRow[], projectId: number | nul
 
   const circlesFor: ProjectView["circlesFor"] = {};
   for (const id of HUMAN_NEED_IDS) {
+    // A human need taken off keeps no circles: its c- row can outlive it (a
+    // teammate's, or one carried from an earlier week).
+    if (!pickCounts.has(id)) continue;
     const c = of(`c-${id}`);
     if (c.length) circlesFor[id] = tally(c);
   }

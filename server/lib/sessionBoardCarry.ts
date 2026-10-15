@@ -4,15 +4,22 @@
  *
  * - `readCarry`: for every card on a week's board, which earlier cards it
  *   carries from, and their answer rows; plus the questions still open from
- *   the week before. Public, like the board itself: every row it returns is
- *   already on an earlier board's public read. No author key leaves here.
+ *   the week before, even before the week has a board or a card. Public,
+ *   like the board itself: every row it returns is already on an earlier
+ *   board's public read. No author key leaves here.
  * - `carryLinkOnCheckIn`: the link a check-in records, inside the check-in's
  *   own transaction (the one that locks the board row).
+ * - `assertCarryConfirmable`: what a facilitator's "same project" checks first.
  * - `earlierCardsFor`: the earlier cards one person checked in with or
  *   answered for, newest week first, for "Last week you were with X".
  *
+ * One earlier card is carried by one card here. Once a card here carries it,
+ * no check-in links it to a second card, it is no suggestion for one, and a
+ * facilitator can't confirm one: two cards for one project get merged.
+ *
  * Earlier boards are only ever read here, never written.
  */
+import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import {
   sessionBoardItems,
@@ -23,12 +30,17 @@ import {
 import {
   FIRST_BOARD_WEEK,
   anonymousKeys,
+  boardStages,
+  fillCopy,
   foldProjectName,
   normalizeBoardState,
   promptsForWeek,
+  sessionClosedAt,
+  sessionMinutes,
   type BoardState,
 } from "@shared/sessionBoard";
 import {
+  CARRY_COPY,
   matchCard,
   type CardCarry,
   type CardRef,
@@ -77,6 +89,41 @@ async function cardsOn(db: Db | Tx, boardIds: readonly number[]): Promise<CardRo
 function linksOf(board: BoardRow | undefined): Record<string, CarryLink> {
   if (!board) return {};
   return normalizeBoardState(board.state ?? null, board.week).carry;
+}
+
+/** Every week's recorded links: the earlier boards', and this week's `links`. */
+function linksByWeekOf(boards: readonly BoardRow[], week: number, links: Record<string, CarryLink>): Map<number, Record<string, CarryLink>> {
+  const out = new Map<number, Record<string, CarryLink>>(boards.map((b) => [b.week, linksOf(b)]));
+  out.set(week, links);
+  return out;
+}
+
+/** The unhidden cards on these earlier boards, as the matcher reads them. */
+async function shownEarlier(db: Db | Tx, boards: readonly BoardRow[]): Promise<EarlierCard[]> {
+  const weekOf = new Map(boards.map((b) => [b.id, b.week]));
+  return (await cardsOn(db, boards.map((b) => b.id)))
+    .filter((c) => !c.hidden)
+    .map((c) => ({ id: c.id, week: weekOf.get(c.boardId) ?? 0, name: c.name, applicationId: c.applicationId }));
+}
+
+/**
+ * Which card here carries each earlier card, by the carry read's own rules
+ * (application, recorded link, the linked card's application, back through
+ * the weeks). Earlier card id to the first card that carries it.
+ */
+function carriersOf(
+  cards: readonly { id: number; name: string; applicationId: number | null }[],
+  week: number,
+  linksByWeek: Map<number, Record<string, CarryLink>>,
+  earlier: readonly EarlierCard[],
+): Map<number, { cardId: number; name: string }> {
+  const out = new Map<number, { cardId: number; name: string }>();
+  for (const c of cards) {
+    for (const f of resolveCard(c, week, linksByWeek, earlier).from) {
+      if (!out.has(f.cardId)) out.set(f.cardId, { cardId: c.id, name: c.name });
+    }
+  }
+  return out;
 }
 
 /* ------------------------------------------------- the 15 second cache */
@@ -191,8 +238,8 @@ export async function readCarry(db: Db, season: string, week: number): Promise<C
   const fromWeeks = earlierAnswerWeeks(week);
   if (!fromWeeks.length) return { fromWeeks, cards: [], rows: [], asks: [] };
   const [board] = await boardsFor(db, season, [week]);
-  // No board yet: nothing carries, and the earlier boards are never read for it.
-  if (!board) return { fromWeeks, cards: [], rows: [], asks: [] };
+  // No board yet: no card carries, but the questions still open from the week before do.
+  if (!board) return { fromWeeks, cards: [], rows: [], asks: (await readEarlier(db, season, week)).asks };
   const hit = cache.get(`${season}|${week}`);
   const key = `${board.version ?? 0}|${hit && Date.now() - hit.at < CACHE_MS ? hit.at : "fresh"}`;
   const memo = results.get(`${season}|${week}`);
@@ -205,12 +252,28 @@ export async function readCarry(db: Db, season: string, week: number): Promise<C
 
 async function computeCarry(db: Db, season: string, week: number, board: BoardRow, fromWeeks: number[]): Promise<CarryData> {
   const cards = (await cardsOn(db, [board.id])).filter((c) => !c.hidden);
-  if (!cards.length) return { fromWeeks, cards: [], rows: [], asks: [] };
   const earlier = await readEarlier(db, season, week);
-  const linksByWeek = new Map<number, Record<string, CarryLink>>(earlier.boards.map((b) => [b.week, linksOf(b)]));
-  linksByWeek.set(week, linksOf(board));
+  // No card yet: the questions still open from the week before show all the same.
+  if (!cards.length) return { fromWeeks, cards: [], rows: [], asks: earlier.asks };
+  const linksByWeek = linksByWeekOf(earlier.boards, week, linksOf(board));
   const out: CardCarry[] = cards.map((c) => ({ cardId: c.id, ...resolveCard(c, week, linksByWeek, earlier.cards) }));
   const used = new Set(out.flatMap((c) => c.from.map((f) => f.cardId)));
+  // A suggestion another card here already carries is no suggestion: the facilitator merges the two cards.
+  const carrier = new Map<number, CardCarry>();
+  for (const c of out) for (const f of c.from) if (!carrier.has(f.cardId)) carrier.set(f.cardId, c);
+  const nameOf = new Map(cards.map((c) => [c.id, c.name]));
+  // Each suggestion's answer count, so two cards with one name can be told apart. Only the count leaves.
+  const answers = new Map<number, number>();
+  for (const r of earlier.rows) if (r.projectId != null) answers.set(r.projectId, (answers.get(r.projectId) ?? 0) + 1);
+  for (const c of out) {
+    if (c.match !== "suggested") continue;
+    const taken = c.suggested.filter((s) => carrier.has(s.cardId));
+    c.suggested = c.suggested.filter((s) => !carrier.has(s.cardId)).map((s) => ({ ...s, answers: answers.get(s.cardId) ?? 0 }));
+    if (c.suggested.length) continue;
+    const by = carrier.get(taken[0].cardId)!;
+    c.match = "none";
+    c.carriedBy = { cardId: by.cardId, name: nameOf.get(by.cardId) ?? "", earlier: taken[0] };
+  }
   return {
     fromWeeks,
     cards: out,
@@ -224,14 +287,19 @@ async function computeCarry(db: Db, season: string, week: number, board: BoardRo
  * inside the check-in's transaction, after the board row is locked.
  *
  * - From an earlier week's tile, when this check-in made the card from it:
- *   that very card ("tile"). Tapping an earlier tile that lands on a card
- *   already here records nothing by itself: anyone can add a card with any
- *   name, so a name alone stays a suggestion for the facilitator.
+ *   that very card ("tile"), when it is the only unhidden card with its name
+ *   on its week. Anyone can add a same-name card to an open earlier board and
+ *   send a ref the page never offered, so with two by that name the
+ *   facilitator picks. Tapping an earlier tile that lands on a card already
+ *   here records nothing by itself: anyone can add a card with any name, so a
+ *   name alone stays a suggestion for the facilitator.
  * - Otherwise, when the card has no application tie to an earlier card: the
  *   one earlier card with the same name ("person"), when there is exactly one
- *   such card and this person checked in with it or answered for it.
- * Two cards tied to different applications are never linked. A card that
- * already has a link keeps it.
+ *   such card and this person checked in with it or answered for it before
+ *   that week's live session ended.
+ * Two cards tied to different applications are never linked, and an earlier
+ * card another card here (`others`) already carries is never linked again. A
+ * card that already has a link keeps it.
  */
 export async function carryLinkOnCheckIn(
   tx: Tx,
@@ -243,61 +311,99 @@ export async function carryLinkOnCheckIn(
     keys: string[];
     /** The earlier card the tile pointed at, only when this check-in created the card from it. */
     earlierTile: { id: number; week: number; applicationId: number | null } | null;
+    /** This board's other unhidden cards: an earlier card one of them carries is taken. */
+    others?: readonly { id: number; name: string; applicationId: number | null }[];
   },
 ): Promise<CarryLink | null> {
-  const { season, week, state, card, keys, earlierTile } = opts;
+  const { season, week, state, card, keys, earlierTile, others = [] } = opts;
   const weeks = earlierAnswerWeeks(week);
   if (!weeks.length || state.carry[String(card.id)]) return null;
+  if (!earlierTile && !keys.length) return null;
   const otherApp = (app: number | null) => app != null && card.applicationId != null && app !== card.applicationId;
   if (earlierTile) {
     if (!weeks.includes(earlierTile.week) || otherApp(earlierTile.applicationId)) return null;
     if (card.applicationId != null && card.applicationId === earlierTile.applicationId) return null;
-    return { from: earlierTile.id, by: "tile" };
   }
-  if (!keys.length) return null;
   const boards = await boardsFor(tx, season, weeks);
-  const cards = (await cardsOn(tx, boards.map((b) => b.id))).filter((c) => !c.hidden);
-  if (card.applicationId != null && cards.some((c) => c.applicationId === card.applicationId)) return null;
+  const earlier = await shownEarlier(tx, boards);
+  const taken = carriersOf(others, week, linksByWeekOf(boards, week, state.carry), earlier);
+  if (earlierTile) {
+    const self = earlier.find((c) => c.id === earlierTile.id && c.week === earlierTile.week);
+    const folded = self ? foldProjectName(self.name) : "";
+    if (!self || !folded || taken.has(self.id)) return null;
+    if (earlier.some((c) => c.id !== self.id && c.week === self.week && foldProjectName(c.name) === folded)) return null;
+    return { from: self.id, by: "tile" };
+  }
+  if (card.applicationId != null && earlier.some((c) => c.applicationId === card.applicationId)) return null;
   const folded = foldProjectName(card.name);
-  const named = cards.filter((c) => folded && foldProjectName(c.name) === folded && !otherApp(c.applicationId));
+  const named = folded ? earlier.filter((c) => foldProjectName(c.name) === folded && !otherApp(c.applicationId)) : [];
   // Two earlier cards by this name: the facilitator picks, never the person.
-  if (named.length !== 1) return null;
-  const mine = await playedFor(tx, named.map((c) => c.id), boards.map((b) => b.id), keys);
+  // One another card here carries already: the facilitator merges the two.
+  if (named.length !== 1 || taken.has(named[0].id)) return null;
+  const mine = await playedFor(tx, [named[0].id], boards, keys);
   return mine.has(named[0].id) ? { from: named[0].id, by: "person" } : null;
 }
 
-/** Of these cards, the ones this person checked in with or answered for. */
-async function playedFor(db: Db | Tx, cardIds: readonly number[], boardIds: readonly number[], keys: readonly string[]): Promise<Set<number>> {
+/**
+ * The room keeps going after End session: Week 3's people answered for about
+ * 40 minutes after Rye pressed it (2026-10-14). Their play counts for two
+ * hours after the close.
+ */
+const PLAY_GRACE_MS = 2 * 3_600_000;
+
+/**
+ * Until when, in server ms, what someone did on an earlier board counts as
+ * playing for a card there: its live session's close plus PLAY_GRACE_MS. A
+ * session still running counts everything, and one never started counts
+ * nothing, because an earlier board stays open to anyone after its session
+ * (ADR-76).
+ */
+function playedUntil(board: BoardRow, now: number): number {
+  const s = normalizeBoardState(board.state ?? null, board.week);
+  if (!s.sessionStartedAt) return 0;
+  const closed = sessionClosedAt(s, sessionMinutes(s.plan, boardStages(board.week)) * 60_000, now);
+  return closed == null ? Infinity : closed + PLAY_GRACE_MS;
+}
+
+/** Of these cards, the ones this person checked in with or answered for during their week's live session. */
+async function playedFor(db: Db | Tx, cardIds: readonly number[], boards: readonly BoardRow[], keys: readonly string[]): Promise<Set<number>> {
   const out = new Set<number>();
+  const now = Date.now();
+  const until = new Map(boards.map((b) => [b.id, playedUntil(b, now)]));
+  const boardIds = boards.filter((b) => (until.get(b.id) ?? 0) > 0).map((b) => b.id);
   if (!cardIds.length || !keys.length || !boardIds.length) return out;
+  // Stored UTC seconds (UNIX_TIMESTAMP), never drizzle's parsed timestamp, which reads the database session's zone as UTC.
   const [votes, answers] = await Promise.all([
     db
-      .select({ target: sessionBoardVotes.target })
+      .select({ boardId: sessionBoardVotes.boardId, target: sessionBoardVotes.target, at: sql<number>`UNIX_TIMESTAMP(${sessionBoardVotes.createdAt})` })
       .from(sessionBoardVotes)
       .where(and(
-        inArray(sessionBoardVotes.boardId, [...boardIds]),
+        inArray(sessionBoardVotes.boardId, boardIds),
         inArray(sessionBoardVotes.target, cardIds.map((id) => `checkin:${id}`)),
         inArray(sessionBoardVotes.voterKey, [...keys]),
       )),
     db
-      .select({ projectId: sessionBoardItems.projectId })
+      .select({ boardId: sessionBoardItems.boardId, projectId: sessionBoardItems.projectId, at: sql<number>`MIN(UNIX_TIMESTAMP(${sessionBoardItems.createdAt}))` })
       .from(sessionBoardItems)
       .where(and(
-        inArray(sessionBoardItems.boardId, [...boardIds]),
+        inArray(sessionBoardItems.boardId, boardIds),
         inArray(sessionBoardItems.projectId, [...cardIds]),
         inArray(sessionBoardItems.authorKey, [...keys]),
       ))
-      .groupBy(sessionBoardItems.projectId),
+      .groupBy(sessionBoardItems.boardId, sessionBoardItems.projectId),
   ]);
-  for (const v of votes) out.add(Number(v.target.slice("checkin:".length)));
-  for (const a of answers) if (a.projectId != null) out.add(a.projectId);
+  const inSession = (boardId: number, at: unknown) => Number(at) * 1000 <= (until.get(boardId) ?? 0);
+  for (const v of votes) if (inSession(v.boardId, v.at)) out.add(Number(v.target.slice("checkin:".length)));
+  for (const a of answers) if (a.projectId != null && inSession(a.boardId, a.at)) out.add(a.projectId);
   return out;
 }
 
 /**
  * The earlier answer weeks' cards this person checked in with or answered
- * for, newest week first and, within a week, most recent first: what "Last
- * week you were with X" offers on a new device.
+ * for, newest week first and, within a week, the one they last checked in
+ * with or answered for first (by when each row was written, in stored UTC
+ * seconds; a tie in one second keeps card order): what "Last week you were
+ * with X" offers on a new device.
  */
 export async function earlierCardsFor(db: Db, season: string, week: number, keys: readonly string[]): Promise<CardRef[]> {
   const weeks = earlierAnswerWeeks(week);
@@ -308,20 +414,21 @@ export async function earlierCardsFor(db: Db, season: string, week: number, keys
   const boardIds = boards.map((b) => b.id);
   const [votes, answers, cards] = await Promise.all([
     db
-      .select({ target: sessionBoardVotes.target, id: sessionBoardVotes.id })
+      .select({ target: sessionBoardVotes.target, at: sql<number>`UNIX_TIMESTAMP(${sessionBoardVotes.createdAt})` })
       .from(sessionBoardVotes)
       .where(and(inArray(sessionBoardVotes.boardId, boardIds), inArray(sessionBoardVotes.voterKey, [...keys]), sql`${sessionBoardVotes.target} LIKE 'checkin:%'`)),
     db
-      .select({ projectId: sessionBoardItems.projectId, at: sql<number>`MAX(${sessionBoardItems.id})` })
+      .select({ projectId: sessionBoardItems.projectId, at: sql<number>`MAX(UNIX_TIMESTAMP(${sessionBoardItems.createdAt}))` })
       .from(sessionBoardItems)
       .where(and(inArray(sessionBoardItems.boardId, boardIds), inArray(sessionBoardItems.authorKey, [...keys])))
       .groupBy(sessionBoardItems.projectId),
     cardsOn(db, boardIds),
   ]);
+  // One clock for both: check-ins and answers come from two id sequences that can't be compared.
   const rank = new Map<number, number>();
   for (const v of votes) {
     const id = Number(v.target.slice("checkin:".length));
-    rank.set(id, Math.max(rank.get(id) ?? 0, v.id));
+    rank.set(id, Math.max(rank.get(id) ?? 0, Number(v.at)));
   }
   for (const a of answers) if (a.projectId != null) rank.set(a.projectId, Math.max(rank.get(a.projectId) ?? 0, Number(a.at)));
   return cards
@@ -329,6 +436,44 @@ export async function earlierCardsFor(db: Db, season: string, week: number, keys
     .map((c) => ({ week: weekOf.get(c.boardId) ?? 0, cardId: c.id, name: c.name, at: rank.get(c.id) ?? 0 }))
     .sort((a, b) => b.week - a.week || b.at - a.at)
     .map(({ at: _at, ...ref }) => ref);
+}
+
+export const CONFIRM_REFUSALS = {
+  notEarlier: "That card isn't on an earlier week's board.",
+  otherApplication: "That card is linked to a different application. Fix the application link first.",
+} as const;
+
+/**
+ * Before a facilitator's "same project" links a card here to an earlier card:
+ * the earlier card is an unhidden card on an earlier answer week's board, the
+ * two aren't tied to different applications (ADR-76), and no other card here
+ * already carries it (CARRY_COPY.carriedBy: merge the two cards instead).
+ * Reads the board's links and cards fresh, never the 15 second cache. Returns
+ * the earlier card.
+ */
+export async function assertCarryConfirmable(
+  db: Db,
+  opts: { season: string; week: number; boardId: number; card: { id: number; applicationId: number | null }; fromCardId: number },
+): Promise<EarlierCard> {
+  const { season, week, boardId, card, fromCardId } = opts;
+  const boards = await boardsFor(db, season, earlierAnswerWeeks(week));
+  const earlier = await shownEarlier(db, boards);
+  const from = earlier.find((c) => c.id === fromCardId);
+  if (!from) throw new TRPCError({ code: "NOT_FOUND", message: CONFIRM_REFUSALS.notEarlier });
+  if (from.applicationId != null && card.applicationId != null && from.applicationId !== card.applicationId) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: CONFIRM_REFUSALS.otherApplication });
+  }
+  const [board] = await db
+    .select({ id: sessionBoards.id, week: sessionBoards.week, state: sessionBoards.state })
+    .from(sessionBoards)
+    .where(eq(sessionBoards.id, boardId))
+    .limit(1);
+  const others = (await cardsOn(db, [boardId])).filter((c) => !c.hidden && c.id !== card.id);
+  const carrier = carriersOf(others, week, linksByWeekOf(boards, week, linksOf(board)), earlier).get(from.id);
+  if (carrier) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: fillCopy(CARRY_COPY.carriedBy, { other: carrier.name, name: from.name, week: from.week }) });
+  }
+  return from;
 }
 
 /** An earlier answer week's unhidden card, for a facilitator's confirm. Null when it isn't one. */
