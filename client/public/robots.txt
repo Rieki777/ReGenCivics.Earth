@@ -154,6 +154,7 @@ Disallow: /login
 Disallow: /signup
 Disallow: /profile/edit
 Disallow: /settings
+Disallow: /preview/
 
 # Specific allowance for AI accessibility files
 Allow: /llms.txt
