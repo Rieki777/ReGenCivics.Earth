@@ -12,7 +12,7 @@
  * admin reading any. Every decision row lives at module scope with its own
  * draft state, so typing in one field never re-renders the page.
  */
-import { useId, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useId, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
 import { Check, Circle, Clock, Download, Copy, RotateCcw } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -140,7 +140,9 @@ function DecisionEditor({ decision, state, actions, onDone, describedBy }: { dec
   const [error, setError] = useState("");
   const id = useId();
   const errorId = `${id}-error`;
-  const described = [describedBy, error ? errorId : ""].filter(Boolean).join(" ");
+  const countId = `${id}-count`;
+  const words = decision.format === "purpose" ? text.trim().split(/\s+/).filter(Boolean).length : null;
+  const described = [describedBy, words != null ? countId : "", error ? errorId : ""].filter(Boolean).join(" ");
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -153,7 +155,6 @@ function DecisionEditor({ decision, state, actions, onDone, describedBy }: { dec
     else setError(r.message);
   };
 
-  const words = decision.format === "purpose" ? text.trim().split(/\s+/).filter(Boolean).length : null;
   const invalid = error ? true : undefined;
 
   return (
@@ -164,7 +165,7 @@ function DecisionEditor({ decision, state, actions, onDone, describedBy }: { dec
       {decision.kind === "longtext" && (
         <>
           <textarea id={id} aria-label={decision.title} aria-describedby={described} aria-invalid={invalid} className={`${field} min-h-40`} value={text} maxLength={decision.max} onChange={(e) => setText(e.target.value)} />
-          {words != null && <p className={`text-sm ${soft}`}>{fill(VILLAGE_PROFILE_COPY.wordsCount, { n: words })}</p>}
+          {words != null && <p id={countId} className={`text-sm ${soft}`}>{fill(VILLAGE_PROFILE_COPY.wordsCount, { n: words })}</p>}
         </>
       )}
       {decision.kind === "choice" && (
@@ -204,7 +205,7 @@ function DecisionEditor({ decision, state, actions, onDone, describedBy }: { dec
         </fieldset>
       )}
       {error && <p id={errorId} role="alert" className={alertText}>{error}</p>}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         <button type="submit" className={primary} disabled={actions.busy === decision.key}>{VILLAGE_PROFILE_COPY.save}</button>
         <button type="button" className={quiet} onClick={onDone}>{VILLAGE_PROFILE_COPY.cancel}</button>
       </div>
@@ -218,7 +219,13 @@ function DecisionRow({ state, actions, weeks }: { state: DecisionState; actions:
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const id = useId();
+  const opener = useRef<HTMLButtonElement | null>(null);
   if (!decision) return null;
+  const closeEditor = () => {
+    setEditing(false);
+    // The button that opened the editor comes back with the row; focus returns to it.
+    requestAnimationFrame(() => opener.current?.focus());
+  };
   const headingId = `${id}-title`;
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -259,9 +266,9 @@ function DecisionRow({ state, actions, weeks }: { state: DecisionState; actions:
       )}
       {error && <p id={errorId} role="alert" className={alertText}>{error}</p>}
       {editing && !isBlock ? (
-        <DecisionEditor decision={decision} state={state} actions={actions} onDone={() => setEditing(false)} describedBy={describedBy} />
+        <DecisionEditor decision={decision} state={state} actions={actions} onDone={closeEditor} describedBy={describedBy} />
       ) : (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {state.status === "suggested" && state.keepable && (
             <button type="button" className={primary} disabled={busy} aria-describedby={headingId} onClick={() => void keep()}>{VILLAGE_PROFILE_COPY.keep}</button>
           )}
@@ -269,7 +276,7 @@ function DecisionRow({ state, actions, weeks }: { state: DecisionState; actions:
             <button type="button" className={primary} disabled={busy} aria-describedby={headingId} onClick={() => void keep()}>{VILLAGE_PROFILE_COPY.keepNew}</button>
           )}
           {!isBlock && (
-            <button type="button" className={quiet} disabled={busy} aria-describedby={headingId} onClick={() => setEditing(true)}>
+            <button ref={opener} type="button" className={quiet} disabled={busy} aria-describedby={headingId} onClick={() => setEditing(true)}>
               {state.status === "yours" ? VILLAGE_PROFILE_COPY.change : VILLAGE_PROFILE_COPY.write}
             </button>
           )}

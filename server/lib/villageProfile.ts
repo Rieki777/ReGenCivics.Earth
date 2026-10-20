@@ -396,7 +396,7 @@ export async function confirmDecision(
   const state = read.profile.decisions.find((x) => x.key === d.key);
   if (!state || state.suggestion == null) throw new TRPCError({ code: "BAD_REQUEST", message: PROFILE_REFUSALS.nothingToConfirm });
   if (state.stamp !== opts.seen) throw new TRPCError({ code: "CONFLICT", message: PROFILE_REFUSALS.moved });
-  let value = state.suggestion;
+  let value: unknown = state.suggestion;
   if (d.kind !== "block") {
     const checked = checkAnswer(d, state.suggestion);
     if (!checked.ok) throw new TRPCError({ code: "BAD_REQUEST", message: checked.message });

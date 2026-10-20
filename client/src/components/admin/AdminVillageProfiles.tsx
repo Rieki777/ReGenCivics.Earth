@@ -63,8 +63,9 @@ export function AdminVillageProfiles() {
         </Button>
         {error && <p className="text-amber-300" role="alert">{error}</p>}
         {rows && rows.length === 0 && <p className="text-white/70">{ADMIN_PROFILES_COPY.none}</p>}
+        {/* relative: the header's hidden label stays inside the scroll box, so the page never scrolls sideways. */}
         {rows && rows.length > 0 && (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse min-w-[640px]">
               <thead>
                 <tr className="text-white/70 border-b border-white/10">

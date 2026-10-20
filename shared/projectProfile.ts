@@ -323,8 +323,11 @@ export function decisionLines(d: VillageDecision, value: unknown): string[] {
       return [optionLabel(d.options, value)];
     case "multi":
       return Array.isArray(value) && value.length ? [value.map((k) => optionLabel(d.options, k)).join(", ")] : ["None"];
-    case "block":
-      return blockLines(d.key, value);
+    case "block": {
+      // A kept block can be empty (seats kept before any were written): say so, never an empty box.
+      const lines = blockLines(d.key, value);
+      return lines.length ? lines : ["None yet."];
+    }
   }
 }
 

@@ -13,6 +13,21 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-21 (Village profiles): every episode builds one village, and each project's stewards keep what goes in
+
+- **One profile per land project** (ADR-77, Rye's six calls of 2026-10-20). It is keyed by the project's Season 2 application, and gathers its application, its hosting request, its tools and every weekly board's answers. The boards are merged with Week 4's rule (the latest week wins each question), and the profile follows Week 4's carry links back through the weeks.
+- **One list of every Village OS 1.0 decision** (`shared/villageDecisions.ts`): where each lands in Village OS, the weeks that ask it, Village OS's default, and whether launch waits on it. About fifteen decisions have no default; the rest show as "Village OS default". Week 5 hands each project a purpose drafted in Village OS's five parts from its own answers.
+- **Stewards keep what goes in**, at `/apply/village` (linked from `/apply/status`). Board answers are suggestions until a steward presses Keep this or writes their own. Keep this keeps exactly what the page showed. The page says when the boards move on, and every answer passes Village OS's own checks (80 words for the purpose, the address, currency and timezone formats).
+- **Earlier cards can be claimed**: one a steward wrote, or one with the project's name that nobody owns. A guest's card waits for a facilitator. Every claim is recorded and can be given back.
+- **The 1.0 file** (`regen-civics/village@1`, with Week 4's card inside) carries only the stewards' own answers, links only inside the human needs they kept, and notes for what founders set by hand. No money figure, and payments, exchange, redemption, stays and the crowdpool view start off. Admin, Events lists every project's profile.
+- Reviewed through three lenses before shipping (security and access, the real Week 2 and 3 data, Village OS main and the copy rules); every finding fixed. Migration 0301 (two tables).
+- Source: `docs/planning/village-profile/VILLAGE_PROFILE_PLAN.md`.
+- Carryover:
+  - the Village OS importer "Start from your ReGen Civics profile" (its own session, village-os repo);
+  - later weeks' boards asking only each project's open decisions;
+  - the hosting consent line naming weekly answers (Legal session);
+  - quest progress that follows the player (proposed).
+
 ## 2026-10-20 (Season 2 Week 4): the session opens on last week's questions
 
 - **"Last week's questions"**, a new stage right after Drop in (Rye: "start it off with answering all the questions added to last week's page"). Every question added to Week 3's board, oldest first, with its project; the facilitator's Answered marks it on Week 3's own board, and every screen shows the mark within 20 seconds. The notes people asked us to cover and anything asked today sit under it, with the box for new questions.
