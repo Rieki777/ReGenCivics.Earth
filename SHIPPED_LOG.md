@@ -13,7 +13,7 @@ Add new entries to the top. Format per entry:
 
 ---
 
-## 2026-10-21 (Village profiles): every episode builds one village, and each project's stewards keep what goes in
+## 2026-10-20 (Village profiles): every episode builds one village, and each project's stewards keep what goes in
 
 - **One profile per land project** (ADR-77, Rye's six calls of 2026-10-20). It is keyed by the project's Season 2 application, and gathers its application, its hosting request, its tools and every weekly board's answers. The boards are merged with Week 4's rule (the latest week wins each question), and the profile follows Week 4's carry links back through the weeks.
 - **One list of every Village OS 1.0 decision** (`shared/villageDecisions.ts`): where each lands in Village OS, the weeks that ask it, Village OS's default, and whether launch waits on it. About fifteen decisions have no default; the rest show as "Village OS default". Week 5 hands each project a purpose drafted in Village OS's five parts from its own answers.

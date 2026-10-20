@@ -39,7 +39,7 @@ export const VILLAGE_PROFILE_COPY = {
   copied: "Copied.",
   copyFailed: "Your browser didn't let us copy. Download the file instead.",
   claimTitle: "Cards from earlier weeks that may be yours",
-  claimHint: "These cards have no application yet. One of your stewards wrote it, or it has your project's name and nobody owns it. Claim one and its answers come into this profile. A card someone else wrote waits for a facilitator to link it.",
+  claimHint: "Each card here has no application yet. One of your stewards wrote it, or it has your project's name and nobody owns it. Claim one and its answers come into this profile. A card someone else wrote waits for a facilitator to link it.",
   claim: "Claim it",
   claimed: "Claimed. Its answers are in your profile now.",
   claimedTitle: "Cards you claimed",
@@ -374,7 +374,7 @@ export function VillageProfileView({ data, actions, onClaim, onGiveBack, admin }
               {claimable.map((c) => (
                 <li key={c.cardId} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#1a472a]/20 px-3 py-2">
                   <span id={`vp-card-${c.cardId}`} className={`text-sm ${ink}`}>
-                    <b>Week {c.week}: {c.name}</b> · {c.answers} answers · {VILLAGE_PROFILE_COPY.claimWhy[c.why]}
+                    <b>Week {c.week}: {c.name}</b> · {c.answers} {c.answers === 1 ? "answer" : "answers"} · {VILLAGE_PROFILE_COPY.claimWhy[c.why]}
                   </span>
                   <button type="button" className={quiet} aria-describedby={`vp-card-${c.cardId}`} onClick={() => void onClaim(c.cardId)}>{VILLAGE_PROFILE_COPY.claim}</button>
                 </li>
