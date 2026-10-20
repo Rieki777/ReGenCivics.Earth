@@ -9,6 +9,7 @@ import type { StageProps } from "../stages";
 import { StageHead } from "./parts";
 import { AskFoot, ProjectFor, PromptBlock, StageExtras, asksForProject } from "./PromptBlock";
 import { TellUs } from "./TellUs";
+import { OpenEarlierAsks } from "../week4/AsksStage";
 
 export function PromptStage(props: StageProps) {
   const { week, stages, index } = props;
@@ -24,6 +25,7 @@ export function PromptStage(props: StageProps) {
       <div className="sb-prompts">
         {prompts.map((p) => <PromptBlock key={p.key} p={p} props={props} />)}
       </div>
+      {stage.earlierAsks ? <OpenEarlierAsks props={props} /> : null}
       <StageExtras stage={stage} part="foot" />
       {stage.feedback ? <TellUs props={props} /> : null}
       {hasAsk ? null : <AskFoot props={props} />}

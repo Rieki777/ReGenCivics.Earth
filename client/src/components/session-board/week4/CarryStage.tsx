@@ -283,7 +283,8 @@ export function CarryStage(props: StageProps) {
   const gaps = cardId != null ? cardGaps(game.view, game.cards) : [];
   const before = cardId != null ? earlierRows(carry.data, game.link, cardId) : [];
   const lastMove = newestFirst(before.filter((r) => r.block === "move"))[0]?.text ?? null;
-  const asks = carry.data?.asks ?? [];
+  // The questions Week 3 still has open; "Last week's questions" shows them all.
+  const asks = (carry.data?.asks ?? []).filter((q) => !q.chosen);
 
   let card: ReactNode;
   if (carry.loading) card = <p className="sb-empty">{CARRY_COPY.loading}</p>;

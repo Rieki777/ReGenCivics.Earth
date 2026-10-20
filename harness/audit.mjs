@@ -25,6 +25,10 @@ const VIEWPORTS = [
   { name: "mobile", width: 390, height: 844, touch: true },
 ];
 const ROOT = "[data-harness-story]";
+// How long a story may take to load. Other worktrees' typechecks can pin this
+// machine's CPU, and a 30 second load limit then failed every story with
+// nothing wrong in it (2026-10-20). AUDIT_LOAD_MS changes it.
+const LOAD_MS = Number(process.env.AUDIT_LOAD_MS ?? 120_000);
 
 const storySrc = fs.readFileSync(path.join(here, "stories.tsx"), "utf8");
 const block = storySrc.split("export const STORIES")[1] ?? "";
@@ -71,9 +75,9 @@ const BEFORE = {
     await page.getByRole("textbox", { name: "What it works toward" }).fill("Seeds for every bed");
     await page.getByRole("button", { name: "Someone on our team holds it" }).click();
     // A half-written seat survives leaving the stage and coming back (week3/drafts.ts).
-    await page.locator(".sb-rail-btn").nth(5).click();
-    await page.waitForTimeout(200);
     await page.locator(".sb-rail-btn").nth(6).click();
+    await page.waitForTimeout(200);
+    await page.locator(".sb-rail-btn").nth(7).click();
     await page.waitForTimeout(300);
     const kept = await page.getByRole("textbox", { name: "Seat name" }).inputValue().catch(() => "");
     const aim = await page.getByRole("textbox", { name: "What it works toward" }).inputValue().catch(() => "");
@@ -142,8 +146,8 @@ for (const story of stories) {
     try {
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e)));
-    await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle" });
-    await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: 10_000, state: "attached" });
+    await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle", timeout: LOAD_MS });
+    await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: LOAD_MS, state: "attached" });
     // The app runs public pages with <html class="dark"> and admin light
     // (App.tsx ThemeProvider). Miss that taught this: shared components carry
     // dark: styles, so stories measured without the class passed while the
@@ -161,8 +165,8 @@ for (const story of stories) {
     // Then the controls that take themselves away, each on a fresh copy of the story.
     if (vp.name === "desktop") {
       failures.push(...(await runFocusReturnChecks(page, ROOT, async () => {
-        await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle" });
-        await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: 10_000, state: "attached" });
+        await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle", timeout: LOAD_MS });
+        await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: LOAD_MS, state: "attached" });
         if (!/^(admin|alliance-admin|alliance-inquiry)/.test(story)) await page.evaluate(() => document.documentElement.classList.add("dark"));
         await page.waitForTimeout(400);
         if (BEFORE[story]) await BEFORE[story](page);

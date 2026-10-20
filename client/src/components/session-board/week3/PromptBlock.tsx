@@ -122,6 +122,21 @@ export function QuestionWall({ props, unansweredFirst = false }: { props: StageP
   let asks = newestFirst(board.items.filter((i) => i.kind === "ask"));
   if (unansweredFirst) asks = [...asks.filter((q) => !q.chosen), ...asks.filter((q) => q.chosen)];
   if (!asks.length) return <p className="sb-empty">Questions show up here as people ask them.</p>;
+  /** Take a question back; focus moves to the one beside it, or to what's left in its section, never to the page. */
+  const takeBackQuestion = (button: HTMLElement, id: number) => {
+    const li = button.closest("li");
+    const section = button.closest("section");
+    const next = li?.nextElementSibling?.querySelector<HTMLElement>("button") ?? li?.previousElementSibling?.querySelector<HTMLElement>("button") ?? null;
+    void actions.removeItem(id);
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(() => {
+        // The last question gone can take its whole section with it: then the box for a new question.
+        const inSection = section?.isConnected ? section.querySelector<HTMLElement>("textarea, input, button, h3[tabindex]") : null;
+        const to = next?.isConnected ? next : inSection ?? document.querySelector<HTMLElement>(".sb-ask-foot textarea, .sb-ask-foot input");
+        to?.focus();
+      });
+    }
+  };
   return (
     <ul className="sb-questions">
       {asks.map((q) => {
@@ -138,7 +153,7 @@ export function QuestionWall({ props, unansweredFirst = false }: { props: StageP
                   </button>
                 ) : q.chosen ? <span className="sb-badge">{PROMPT_COPY.answered}</span> : null}
                 {removable ? (
-                  <button type="button" className="sb-x" aria-label={`Take back "${q.text}"`} onClick={() => void actions.removeItem(q.id)}>×</button>
+                  <button type="button" className="sb-x" aria-label={`Take back "${q.text}"`} onClick={(ev) => takeBackQuestion(ev.currentTarget, q.id)}>×</button>
                 ) : null}
               </span>
             </div>

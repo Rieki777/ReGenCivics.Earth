@@ -551,8 +551,10 @@ function w4Carry() {
     ],
     rows: W4_CARRIED,
     asks: [
-      { id: 9101, week: 3, text: "How do I define short-term roles in a way that invites people to step into them?", project: "Lupine Hollow", createdAt: new Date(Date.now() - 7 * 86_400_000).toISOString() },
-      { id: 9102, week: 3, text: "How do we count contribution in a role-based economy?", project: "Toa Hermitage", createdAt: new Date(Date.now() - 7 * 86_400_000 + 60_000).toISOString() },
+      { id: 9101, week: 3, text: "How do I define short-term roles in a way that invites people to step into them?", project: "Lupine Hollow", createdAt: new Date(Date.now() - 7 * 86_400_000).toISOString(), chosen: false },
+      { id: 9102, week: 3, text: "How do we count contribution in a role-based economy?", project: "Toa Hermitage", createdAt: new Date(Date.now() - 7 * 86_400_000 + 60_000).toISOString(), chosen: false },
+      { id: 9103, week: 3, text: "Can a wallet hold the rewards for a quest?", project: "Living University Network", createdAt: new Date(Date.now() - 4 * 86_400_000).toISOString(), chosen: true },
+      { id: 9104, week: 3, text: "How do we register a rite of passage someone has already lived?", project: null, createdAt: new Date(Date.now() - 4 * 86_400_000 + 60_000).toISOString(), chosen: false },
     ],
   };
 }
@@ -1632,77 +1634,104 @@ export const STORIES: Record<string, Story> = {
   /** Week 4, Your Week 3 card: last week's card, the gaps, last week's move, and Week 3's open questions. */
   "week4-carry": {
     title: "Week 4, Your Week 3 card: carried by application, gaps, did your move happen",
-    setup: () => week4Board(3),
+    setup: () => week4Board(4),
     render: () => <Week4Page />,
   },
 
   /** The same stage for the facilitator: a card found only by its name, waiting for a yes. */
   "week4-carry-host": {
     title: "Week 4, Your Week 3 card: the facilitator confirms a name match",
-    setup: () => week4Board(3, { facilitator: true, displayName: "Rye" }),
+    setup: () => week4Board(4, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 
   /** Your human needs: carried picks and seeds, an own human need, last week's other one to add, the copy. */
   "week4-needs": {
     title: "Week 4, Your human needs: carried picks, seeds with last week's answers, your own",
-    setup: () => week4Board(4),
+    setup: () => week4Board(5),
     render: () => <Week4Page />,
   },
 
   /** Circles for each human need, with last week's players under the row. */
   "week4-circles": {
     title: "Week 4, Circles for each human need: carried human needs, circles picked",
-    setup: () => week4Board(5),
+    setup: () => week4Board(6),
     render: () => <Week4Page />,
   },
 
   /** Seats in each circle: a seat held by the team, an open one, one held by a being; the add form open. */
   "week4-seats": {
     title: "Week 4, Seats in each circle: seats per human need, the add form open",
-    setup: () => week4Board(6),
+    setup: () => week4Board(7),
     render: () => <Week4Page />,
   },
 
   /** Who decides what: what a circle decides, what everyone decides, last week's way under the row. */
   "week4-decide": {
     title: "Week 4, Who decides what: circles and what they decide",
-    setup: () => week4Board(7),
+    setup: () => week4Board(8),
     render: () => <Week4Page />,
   },
 
   /** Your first quest: one saved, the form for another. */
   "week4-quests": {
     title: "Week 4, Your first quest",
-    setup: () => week4Board(8),
+    setup: () => week4Board(9),
     render: () => <Week4Page />,
   },
 
   /** Your Game, built: every project's card with Copy for Village OS, the card's text open. */
   "week4-built": {
     title: "Week 4, Your Game, built: the cards and Copy for Village OS",
-    setup: () => week4Board(9),
+    setup: () => week4Board(10),
     render: () => <Week4Page />,
   },
 
   /** The close with Week 4's numbers. */
   "week4-close": {
     title: "Week 4, Close: projects, human needs with a circle, seats, questions",
-    setup: () => week4Board(12),
+    setup: () => week4Board(13),
+    render: () => <Week4Page />,
+  },
+
+  /** Week 4 opens on every question from Week 3's board, oldest first (Rye, 2026-10-20). */
+  "week4-asks": {
+    title: "Week 4, Last week's questions: every Week 3 question, the notes, one asked today",
+    setup: () => {
+      week4Board(3, { rows: [...W4_ROWS, { id: 1201, kind: "ask", block: "s3", text: "Where do the quests live once our village is set up?", projectId: TOA, mine: true }] });
+      (mockData["sessionBoard.get"] as { notes: unknown[] }).notes = [
+        { topic: "How to practise this in our own context, and the legal structure for roles", displayName: "Justin Taylor", projectName: "Samara's Sanctuary Studios" },
+        { topic: "Peer review?", displayName: null, projectName: "Templeofroots.com" },
+      ];
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** The same stage for the facilitator: Answered on each Week 3 question. */
+  "week4-asks-host": {
+    title: "Week 4, Last week's questions: the facilitator marks each one Answered",
+    setup: () => week4Board(3, { facilitator: true, displayName: "Rye" }),
+    render: () => <Week4Page />,
+  },
+
+  /** The closing questions stage: today's wall, then what Week 3 still has open. */
+  "week4-questions": {
+    title: "Week 4, Your questions, and Week 5: Week 3's questions still open under today's",
+    setup: () => week4Board(11, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 
   /** A card found only by its name, before the facilitator's yes: the write stages wait (2026-10-15). */
   "week4-pending": {
     title: "Week 4, Seats in each circle: a card waiting on the facilitator, Start without Week 3",
-    setup: () => week4Board(6, { project: { cardId: LUPINE, name: "Lupine Hollow" } }),
+    setup: () => week4Board(7, { project: { cardId: LUPINE, name: "Lupine Hollow" } }),
     render: () => <Week4Page />,
   },
 
   /** The facilitator on a write stage: the cards found by name, confirmed wherever the room is. */
   "week4-seats-host": {
     title: "Week 4, Seats in each circle: the facilitator's cards found by name",
-    setup: () => week4Board(6, { facilitator: true, displayName: "Rye" }),
+    setup: () => week4Board(7, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 
@@ -1710,7 +1739,7 @@ export const STORIES: Record<string, Story> = {
   "week4-carry-two-same-name": {
     title: "Week 4, Your Week 3 card: the facilitator picks between two cards with one name",
     setup: () => {
-      week4Board(3, { facilitator: true, displayName: "Rye" });
+      week4Board(4, { facilitator: true, displayName: "Rye" });
       const carry = mockData["sessionBoard.carry"] as ReturnType<typeof w4Carry>;
       const lupine = carry.cards.find((c) => c.cardId === LUPINE)!;
       lupine.suggested = [
@@ -1724,14 +1753,14 @@ export const STORIES: Record<string, Story> = {
   /** A project new today: no "did last week's move happen", and a lede for starting fresh. */
   "week4-carry-fresh": {
     title: "Week 4, Your Week 3 card: a project new today",
-    setup: () => week4Board(3, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    setup: () => week4Board(4, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
     render: () => <Week4Page />,
   },
 
   /** Your human needs for a project new today: nothing named last week. */
   "week4-needs-fresh": {
     title: "Week 4, Your human needs: a project new today",
-    setup: () => week4Board(4, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    setup: () => week4Board(5, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
     render: () => <Week4Page />,
   },
 

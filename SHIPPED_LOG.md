@@ -13,6 +13,12 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-20 (Season 2 Week 4): the session opens on last week's questions
+
+- **"Last week's questions"**, a new stage right after Drop in (Rye: "start it off with answering all the questions added to last week's page"). Every question added to Week 3's board, oldest first, with its project; the facilitator's Answered marks it on Week 3's own board, and every screen shows the mark within 20 seconds. The notes people asked us to cover and anything asked today sit under it, with the box for new questions.
+- **12 minutes**, taken from Welcome, Your Week 3 card, Your human needs, Circles, Who decides what, Your Game built and the closing questions; the session stays 120 minutes. Week 4's board had never been saved (version 0), so no planned minutes moved.
+- The role questions cue moves to the new stage, and the closing questions stage also lists whatever Week 3 still has open.
+
 ## 2026-10-15 (Season 2 Week 4, second pass): two independent reviews folded in before Wednesday
 
 - **Half-written cards are kept**: a seat, own human need, decision or quest being written survives the room moving on, the rail, and opening another form (page memory only), and the screen holds on its stage while one is unsaved. Enter moves to the next field (a phone's key reads Next); only Save, or Enter on a card's last line, saves.
