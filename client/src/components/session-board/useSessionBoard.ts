@@ -28,12 +28,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import {
   PROMPT_COPY,
   askBlock,
+  boardStages,
   promptFull,
   promptMax,
   promptsForWeek,
   type BoardOfferKey,
   type NoteItemKind,
 } from "@shared/sessionBoard";
+import type { CardRef, CarryData } from "@shared/boardCarry";
 import { NEEDS_KEYS, perNeedKeys } from "@shared/humanNeeds";
 import { SUBMISSIONS_COPY } from "@shared/boardEntries";
 import {
@@ -112,6 +114,36 @@ function dropStored(key: string) {
     /* storage blocked: nothing was kept */
   }
 }
+
+/**
+ * The project this browser checked in with on an earlier week, for "Last week
+ * you were with X. Same today?" (Week 4 on). Null when it was this week or
+ * nothing is kept.
+ */
+export function readLastProject(week: number): CardRef | null {
+  try {
+    const raw = JSON.parse(readStored(LAST_PROJECT_STORAGE) || "null") as { name?: unknown; cardId?: unknown; week?: unknown } | null;
+    if (!raw || typeof raw.name !== "string" || typeof raw.cardId !== "number" || typeof raw.week !== "number") return null;
+    if (raw.week >= week || raw.cardId <= 0) return null;
+    return { week: raw.week, cardId: raw.cardId, name: raw.name };
+  } catch {
+    return null;
+  }
+}
+
+/** What a board carries from earlier weeks (shared/boardCarry.ts), for the Week 4 stages. */
+export type BoardCarry = {
+  /** True on a week whose board reads earlier weeks' answers. */
+  on: boolean;
+  data: CarryData | null;
+  loading: boolean;
+  failed: boolean;
+  retry: () => void;
+  /** Earlier cards this person played for, newest first (from the server). */
+  earlier: CardRef[];
+  /** The earlier card this browser last checked in with, if any. */
+  last: CardRef | null;
+};
 
 /** The project this person is answering for today, or "here to learn", or not chosen yet. */
 export type MyProject = { kind: "project"; cardId: number; name: string } | { kind: "learn" } | null;
@@ -371,6 +403,35 @@ export function useSessionBoard(week: number) {
     { staleTime: Infinity, refetchOnWindowFocus: false, retry: 1 },
   );
 
+  // Week 4 on: what each card carries from earlier weeks. Read again when the
+  // board moves (a check-in or a facilitator's confirm can add a link), at
+  // most every 4 seconds.
+  const carries = useMemo(() => boardStages(week).some((s) => s.kind === "needs" && s.step === "carry"), [week]);
+  const carryQ = trpc.sessionBoard.carry.useQuery(
+    { week },
+    { enabled: carries, staleTime: Infinity, refetchOnWindowFocus: false, retry: 1 },
+  );
+  const carryRefetch = useRef(carryQ.refetch);
+  carryRefetch.current = carryQ.refetch;
+  const carrySeen = useRef<number | undefined>(undefined);
+  // Read through a ref: as a dependency, an older fetch landing would clear the
+  // timer for a newer version and the refresh would never run.
+  const carryAt = useRef(0);
+  carryAt.current = carryQ.dataUpdatedAt;
+  const boardVersionForCarry = versionQ.data?.version;
+  useEffect(() => {
+    if (!carries || boardVersionForCarry == null) return;
+    if (carrySeen.current == null) {
+      carrySeen.current = boardVersionForCarry;
+      return;
+    }
+    if (carrySeen.current === boardVersionForCarry) return;
+    carrySeen.current = boardVersionForCarry;
+    const wait = Math.max(0, 4_000 - (Date.now() - (carryAt.current || 0)));
+    const t = setTimeout(() => void carryRefetch.current(), wait);
+    return () => clearTimeout(t);
+  }, [carries, boardVersionForCarry]);
+
   const syncRef = useRef<() => void>(() => {});
   const failRef = useRef<(err: unknown, info: { latest: boolean }) => void>(() => {});
   const writer = useMemo(
@@ -441,6 +502,7 @@ export function useSessionBoard(week: number) {
     setMineState(next);
   }, []);
   const [whoCheckins, setWhoCheckins] = useState<number[]>([]);
+  const [whoEarlier, setWhoEarlier] = useState<CardRef[]>([]);
   const whoami = trpc.sessionBoard.whoami.useMutation();
   const whoamiRef = useRef(whoami.mutateAsync);
   whoamiRef.current = whoami.mutateAsync;
@@ -466,6 +528,7 @@ export function useSessionBoard(week: number) {
           checkins: new Set(r.checkins),
         }));
         setWhoCheckins(r.checkins);
+        setWhoEarlier(r.earlier ?? []);
       })
       .catch(() => {
         // The page still works; edit and take-back offers stay hidden until
@@ -486,6 +549,7 @@ export function useSessionBoard(week: number) {
   useEffect(() => {
     setMine(() => emptyMine());
     setWhoCheckins([]);
+    setWhoEarlier([]);
     refreshMine();
   }, [refreshMine, setMine]);
   // Signing in (or out) on this page changes who "mine" is: the server now
@@ -580,6 +644,7 @@ export function useSessionBoard(week: number) {
   const answerM = trpc.sessionBoard.answer.useMutation();
   const checkInM = trpc.sessionBoard.checkIn.useMutation();
   const mergeProjectM = trpc.sessionBoard.mergeProject.useMutation();
+  const confirmCarryM = trpc.sessionBoard.confirmCarry.useMutation();
 
   const name = displayName.trim() || undefined;
   const projectWrites = useRef(new Map<number, ProjectWrite>());
@@ -814,7 +879,7 @@ export function useSessionBoard(week: number) {
       },
 
       /** Words for a note prompt. A prompt with room for one replaces the line in place. */
-      answerNote: async (input: { key: string; text: string; projectId: number | null }): Promise<{ id: number } | null> => {
+      answerNote: async (input: { key: string; text: string; projectId: number | null; fresh?: boolean }): Promise<{ id: number } | null> => {
         const p = prompts.get(input.key);
         if (!p || p.mode !== "note") return null;
         const text = input.text.replace(/\s+/g, " ").trim();
@@ -823,6 +888,7 @@ export function useSessionBoard(week: number) {
         const queue = answerQueue(input.key, pid);
         const send = () => answerM.mutateAsync({
           op: "note", week, voterKey, key: input.key, projectId: pid, text, displayName: p.anonymous ? undefined : name,
+          ...(input.fresh ? { fresh: true } : {}),
         });
         const rows = myAnswers(board(), input.key, pid);
         if (promptMax(p) === 1 && rows.length > 0) {
@@ -1039,6 +1105,20 @@ export function useSessionBoard(week: number) {
           return r;
         });
       },
+      /**
+       * Facilitator: a card here is (fromCardId > 0) or isn't (0) the same
+       * project as an earlier week's card found by its name; null takes the
+       * link back. The carry read follows once the save lands.
+       */
+      confirmCarry: (cardId: number, fromCardId: number | null) => {
+        writer.fifo(`carry:${cardId}`, () => {
+          paint((b) => patchBoardAction(b, { type: "carry", cardId, from: fromCardId, by: "facilitator" }, serverNow()));
+        }, async () => {
+          const r = await confirmCarryM.mutateAsync({ week, cardId, fromCardId });
+          void utils.sessionBoard.carry.invalidate({ week });
+          return r;
+        });
+      },
       promote: (itemId: number) => {
         writer.fifo(`promote:${itemId}`, () => {}, () => promoteM.mutateAsync({ week, itemId }));
       },
@@ -1057,8 +1137,18 @@ export function useSessionBoard(week: number) {
   }, [
     week, voterKey, name, prompts, writer, paint, serverNow, utils, setMine, setMyProject,
     addItemM, removeItemM, addProjectM, updateProjectM, voteM, handM, offerM, actM, curateItemM,
-    curateProjectM, promoteM, importM, statusM, answerM, checkInM, mergeProjectM,
+    curateProjectM, promoteM, importM, statusM, answerM, checkInM, mergeProjectM, confirmCarryM,
   ]);
+
+  const carry = useMemo<BoardCarry>(() => ({
+    on: carries,
+    data: carryQ.data ?? null,
+    loading: carries && carryQ.isLoading,
+    failed: carries && carryQ.isError && !carryQ.data,
+    retry: () => void carryRefetch.current(),
+    earlier: whoEarlier,
+    last: readLastProject(week),
+  }), [carries, carryQ.data, carryQ.isLoading, carryQ.isError, whoEarlier, week]);
 
   return {
     board: boardQ.data ?? null,
@@ -1071,6 +1161,7 @@ export function useSessionBoard(week: number) {
     setDisplayName,
     myProject,
     setMyProject,
+    carry,
   };
 }
 

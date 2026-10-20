@@ -259,6 +259,42 @@ export const USEFUL_SCALE = [
   { key: "exactly", label: "Just what we needed" },
 ] as const;
 
+/* ------------------------------------------------- the Week 4 lists */
+
+/** Did last week's move happen? (Week 4, "Your Week 3 card"). */
+export const MOVED_SCALE = [
+  { key: "yes", label: "Yes" },
+  { key: "part", label: "Part of it" },
+  { key: "notyet", label: "Not yet" },
+] as const;
+
+/** What the whole project decides together, once each circle decides what's its own (Week 4). */
+export const TOGETHER_DECISIONS = [
+  { key: "join", label: "Who joins" },
+  { key: "land", label: "How the land is used" },
+  { key: "build", label: "What we build next" },
+  { key: "share", label: "How we share what we grow and receive" },
+  { key: "circles", label: "Adding or closing a circle" },
+  { key: "change", label: "How these agreements change" },
+] as const;
+
+/** What would help most with a project's seats (Week 4); it tells us what to build in Village OS next. */
+export const SEAT_HELP = [
+  { key: "cards", label: "Role cards people can read" },
+  { key: "count", label: "A way to count contribution" },
+  { key: "grow", label: "How someone grows in a seat" },
+  { key: "circle", label: "How a seat becomes a circle" },
+] as const;
+
+/** What a project wants to work on in Week 5 (Game Guides & Economic Systems). */
+export const WEEK5_PICKS = [
+  { key: "guide", label: "Writing our Game Guide" },
+  { key: "economy", label: "Our economic system" },
+  { key: "count", label: "Counting contribution" },
+  { key: "gratitude", label: "Gratitude" },
+  { key: "unsure", label: "Not sure yet" },
+] as const;
+
 /** Tap-to-fill words for the private card (slide 2's wheel). Never sent anywhere. */
 export const FEEL_WORDS = [
   "Connection", "Support", "Trust", "Safety", "Respect", "Understanding", "Ease", "Balance",
@@ -339,6 +375,19 @@ export type ProjectView = {
   circles: Record<string, number>;
   /** Circles the project named itself, newest first. */
   circlesOwn: string[];
+  /** Which circles meet each human need (`c-<need>`), as people per circle key ("own" = one of its own). */
+  circlesFor: Partial<Record<HumanNeedId, Record<string, number>>>;
+  /** The overall shape of its Game, and its one-line sketch. */
+  shape: SingleAnswer;
+  shapeLine: TextAnswer;
+  /** Week 4: did last week's move happen, and what moved. */
+  moved: SingleAnswer;
+  movedLine: TextAnswer;
+  /** Week 4: what the whole project decides together, and its first agreement. */
+  together: Record<string, number>;
+  agreement: TextAnswer;
+  /** Week 4: the first step someone takes to come in. */
+  entry: TextAnswer;
   box: Record<string, number>;
   week4: Record<string, number>;
   /** Short-text answers. */
@@ -449,6 +498,15 @@ export function projectView(items: readonly AnswerRow[], projectId: number | nul
     .map(([id, people]) => ({ id, people }))
     .sort((a, b) => b.people - a.people || order(a.id) - order(b.id));
 
+  const circlesFor: ProjectView["circlesFor"] = {};
+  for (const id of HUMAN_NEED_IDS) {
+    // A human need taken off keeps no circles: its c- row can outlive it (a
+    // teammate's, or one carried from an earlier week).
+    if (!pickCounts.has(id)) continue;
+    const c = of(`c-${id}`);
+    if (c.length) circlesFor[id] = tally(c);
+  }
+
   const perNeed: ProjectView["perNeed"] = {};
   for (const id of HUMAN_NEED_IDS) {
     const today = single(of(NEEDS_KEYS.today(id)));
@@ -474,6 +532,14 @@ export function projectView(items: readonly AnswerRow[], projectId: number | nul
     allies: tally(of("allies")),
     circles: tally(of("circles")),
     circlesOwn: [...new Set([...of("circles-own")].sort(byRecency).map((r) => r.text.trim()).filter(Boolean))],
+    circlesFor,
+    shape: single(of("shape")),
+    shapeLine: text(of("shape-line")),
+    moved: single(of("moved")),
+    movedLine: text(of("moved-line")),
+    together: tally(of("together")),
+    agreement: text(of("agreement")),
+    entry: text(of("entry")),
     box: tally(of("box")),
     week4: tally(of("week4")),
     purpose: text(of("purpose")),

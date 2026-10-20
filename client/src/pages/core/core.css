@@ -376,7 +376,9 @@
 .core-root .hero-motes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
 .core-root .hero-mote  { position: absolute; bottom: -12px; border-radius: 50%; animation: core-mote linear infinite; }
 
-.core-root .hero .kicker.core-shimmer { background: linear-gradient(100deg, #4a7c59 20%, #d4a017 40%, #7dd87d 60%, #4a7c59 80%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; animation: core-shimmer 6.5s linear infinite; }
+/* Two sweeps, then it rests: an endless background-position animation
+   restyles the page every frame on the main thread (STEERING.md section 13). */
+.core-root .hero .kicker.core-shimmer { background: linear-gradient(100deg, #4a7c59 20%, #d4a017 40%, #7dd87d 60%, #4a7c59 80%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; animation: core-shimmer 6.5s linear 2; }
 
 .core-root .core-nav { transition: box-shadow .3s ease, background .3s ease; }
 .core-root .core-nav.scrolled { box-shadow: 0 6px 22px rgba(26, 71, 42, .12); }

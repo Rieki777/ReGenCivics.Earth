@@ -129,21 +129,16 @@ interface LeafProps {
   cy: number;
   r: number;
   fill: string;
-  delay?: number;
 }
 
-function Leaf({ cx, cy, r, fill, delay = 0 }: LeafProps) {
-  return (
-    <circle cx={cx} cy={cy} r={r} fill={fill} opacity={0.8}>
-      <animate
-        attributeName="r"
-        values={`${r};${r * 1.08};${r}`}
-        dur="4s"
-        begin={`${delay}s`}
-        repeatCount="indefinite"
-      />
-    </circle>
-  );
+/**
+ * A leaf, drawn still. The leaves and flowers used to swell with SVG
+ * <animate>, which keeps the page restyling on the main thread forever
+ * (STEERING.md section 13); the whole tree breathes as one layer instead
+ * (.tree-breathe in index.css).
+ */
+function Leaf({ cx, cy, r, fill }: LeafProps) {
+  return <circle cx={cx} cy={cy} r={r} fill={fill} opacity={0.8} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -216,7 +211,7 @@ export function LivingTree({
       height={size}
       role="img"
       aria-label={`Living Tree, ${stage} stage, score ${totalScore}`}
-      className="tree-breathe"
+      className="tree-breathe decor-layer"
       style={{ transition: "width 0.4s ease, height 0.4s ease" }}
     >
       {/* ----- Defs ----- */}
@@ -279,8 +274,8 @@ export function LivingTree({
             strokeLinecap="round"
           />
           {/* Two small leaves */}
-          <Leaf cx={cx - 5} cy={groundY - 12} r={3.5} fill="#88b87a" delay={0} />
-          <Leaf cx={cx + 5} cy={groundY - 15} r={3} fill="#7db86f" delay={0.5} />
+          <Leaf cx={cx - 5} cy={groundY - 12} r={3.5} fill="#88b87a" />
+          <Leaf cx={cx + 5} cy={groundY - 15} r={3} fill="#7db86f" />
         </g>
       ) : (
         <g>
@@ -356,7 +351,6 @@ export function LivingTree({
                 cy={ly}
                 r={lr}
                 fill={shade}
-                delay={seededOffset(i + 10, 2)}
               />
             );
           })}
@@ -376,15 +370,7 @@ export function LivingTree({
                   r={2.5}
                   fill={SEASON_FLOWER[season]}
                   opacity={0.85}
-                >
-                  <animate
-                    attributeName="opacity"
-                    values="0.85;0.55;0.85"
-                    dur="5s"
-                    begin={`${seededOffset(i + 70, 3)}s`}
-                    repeatCount="indefinite"
-                  />
-                </circle>
+                />
               );
             })}
 

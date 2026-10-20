@@ -18,6 +18,9 @@ import { DictationButton } from "@/components/admin/dictation";
 import Seasons from "@/pages/Seasons";
 import VillageOs from "@/pages/VillageOs";
 import { SeasonWheel } from "@/components/SeasonWheel";
+import { LivingTreeV2 } from "@/components/LivingTreeV2";
+import { LivingTree, type CapitalScores } from "@/components/LivingTree";
+import { LivingTree as GameLivingTree } from "@/components/game/LivingTree";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import SessionBoard from "@/pages/SessionBoard";
@@ -29,6 +32,8 @@ import ToolDetail from "@/pages/ToolDetail";
 import ToolsLibrary from "@/pages/ToolsLibrary";
 import ApplyStatus from "@/pages/ApplyStatus";
 import ToolSubmit from "@/pages/ToolSubmit";
+import InteropSessions from "@/pages/InteropSessions";
+import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
 import { Router, Route } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { defaultBoardState } from "@shared/sessionBoard";
@@ -474,6 +479,163 @@ const W3_TILES = [
 const W3_AT = "2026-10-14T18:05:00.000Z";
 const W2_AT = "2026-10-07T18:40:00.000Z";
 
+/* ------------------------------------------------ Week 4 board (2026-10-21) */
+
+/**
+ * Week 4's board, mid-session. Toa Hermitage's card here (5) carries its Week
+ * 3 card (405) by application; Amora's (7) by the tile it was checked in from;
+ * Lupine Hollow's (9) waits on the facilitator, found only by its name. The
+ * Week 3 rows are what the `carry` read returns; Week 4's are this board's.
+ */
+const W4_CARDS = [
+  w3Card(5, "Toa Hermitage", "Big Island, Hawai'i", 41),
+  w3Card(7, "Amora", "Dominicalito, Costa Rica", 57),
+  w3Card(9, "Lupine Hollow", "Willamette Valley, Oregon"),
+];
+
+const SEAT_WATER = JSON.stringify({ n: "Water keeper", c: "water", d: "vitality", a: "Living water for every household on the land", f: "The spring, the catchment, the water tests", h: "team", w: "Kai", t: "4 hours a week" });
+const SEAT_RITES = JSON.stringify({ n: "Initiation guide", c: "festivals", d: "love", a: "Every newcomer welcomed through a first season and a welcome circle", f: "The welcome circle and its stories", h: "open", t: "One evening a month" });
+const SEAT_SPRING = JSON.stringify({ n: "Voice of the spring", c: "water", d: "vitality", a: "The spring has a say in how much we draw", h: "being", w: "The spring, with Leilani speaking for it", t: "Sits in on every water decision" });
+const OWN_PRACTICE = JSON.stringify({ l: "Spiritual practice", g: "thriving", b: "75" });
+const DEC_WATER = JSON.stringify({ c: "water", o: "When we draw from the spring, and how much" });
+const QUEST_SPRING = JSON.stringify({ q: "Clear the spring path with two neighbours before the rains", d: "vitality" });
+
+/** This board's rows for Toa Hermitage (mine 1xx, a teammate 2xx) and Amora (3xx). */
+const W4_ROWS: W3Row[] = [
+  { id: 1101, block: "moved", text: "part", projectId: TOA, mine: true },
+  { id: 1102, block: "c-vitality", text: "water", projectId: TOA, mine: true },
+  { id: 1103, block: "c-vitality", text: "food", projectId: TOA, mine: true },
+  { id: 1104, block: "c-love", text: "festivals", projectId: TOA, mine: true },
+  { id: 1105, block: "circles-own", text: "Kitchen: feeding everyone", projectId: TOA, mine: true },
+  { id: 1106, block: "seat-1", text: SEAT_WATER, projectId: TOA, mine: true },
+  { id: 2101, block: "seat-1", text: SEAT_RITES, projectId: TOA },
+  { id: 1107, block: "seat-2", text: SEAT_SPRING, projectId: TOA, mine: true },
+  { id: 1108, block: "own-1", text: OWN_PRACTICE, projectId: TOA, mine: true },
+  { id: 1109, block: "dec-1", text: DEC_WATER, projectId: TOA, mine: true },
+  { id: 1110, block: "together", text: "join", projectId: TOA, mine: true },
+  { id: 1111, block: "together", text: "land", projectId: TOA, mine: true },
+  { id: 1112, block: "quest-1", text: QUEST_SPRING, projectId: TOA, mine: true },
+  { id: 1113, block: "cown-1", text: JSON.stringify({ d: "custom:spiritual-practice", c: "festivals,own" }), projectId: TOA, mine: true },
+  { id: 3101, block: "needs", text: "vitality", projectId: AMORA },
+  { id: 3102, block: "top", text: "vitality", projectId: AMORA },
+  { id: 3103, block: "seat-1", text: JSON.stringify({ n: "Garden lead", c: "food", d: "vitality", a: "Food from the garden every week", h: "team", w: "Dana", t: "Two mornings a week" }), projectId: AMORA },
+];
+
+const W3_FOR_TOA = 405;
+const W3_FOR_AMORA = 407;
+
+/** Toa Hermitage's and Amora's Week 3 answers, as the carry read returns them. */
+const W4_CARRIED = [
+  ["needs", "love", W3_FOR_TOA], ["needs", "vitality", W3_FOR_TOA], ["needs", "growth", W3_FOR_TOA],
+  ["top", "love", W3_FOR_TOA], ["top", "vitality", W3_FOR_TOA],
+  ["n-love", "unmet", W3_FOR_TOA], ["g-love", "thriving", W3_FOR_TOA], ["b-love", "100", W3_FOR_TOA],
+  ["n-vitality", "alive", W3_FOR_TOA], ["g-vitality", "satisfied", W3_FOR_TOA],
+  ["whole", "50", W3_FOR_TOA], ["players", "13-30", W3_FOR_TOA], ["players-now", "6-12", W3_FOR_TOA],
+  ["circles", "water", W3_FOR_TOA], ["decide-now", "founder", W3_FOR_TOA], ["decide-aim", "consent", W3_FOR_TOA],
+  ["purpose", "twelve families living well on land we heal together", W3_FOR_TOA],
+  ["move", "Read our card with our people and change what doesn't fit", W3_FOR_TOA],
+  ["other", "spiritual practice", W3_FOR_TOA], ["other", "wisdom", W3_FOR_TOA],
+  ["needs", "love", W3_FOR_AMORA], ["whole", "25", W3_FOR_AMORA], ["players", "31-150", W3_FOR_AMORA],
+].map(([block, text, projectId], i) => ({
+  id: 9000 + i, kind: "answer", block, text, projectId, week: 3,
+  createdAt: new Date(Date.now() - 7 * 86_400_000 + i * 60_000).toISOString(),
+}));
+
+function w4Carry() {
+  return {
+    fromWeeks: [3],
+    cards: [
+      { cardId: TOA, match: "application", from: [{ week: 3, cardId: W3_FOR_TOA, name: "Toa Hermitage" }], suggested: [] },
+      { cardId: AMORA, match: "carried", from: [{ week: 3, cardId: W3_FOR_AMORA, name: "Amora" }], suggested: [] },
+      { cardId: LUPINE, match: "suggested", from: [], suggested: [{ week: 3, cardId: 409, name: "Lupine Hollow" }] },
+    ],
+    rows: W4_CARRIED,
+    asks: [
+      { id: 9101, week: 3, text: "How do I define short-term roles in a way that invites people to step into them?", project: "Lupine Hollow", createdAt: new Date(Date.now() - 7 * 86_400_000).toISOString() },
+      { id: 9102, week: 3, text: "How do we count contribution in a role-based economy?", project: "Toa Hermitage", createdAt: new Date(Date.now() - 7 * 86_400_000 + 60_000).toISOString() },
+    ],
+  };
+}
+
+/** Green Gulch Land Trust: a card new today, with nothing from Week 3 (match "none"). */
+const GULCH = 13;
+
+function week4Board(stage: number, opts: {
+  rows?: W3Row[];
+  facilitator?: boolean;
+  picked?: boolean;
+  displayName?: string;
+  /** The card this person tapped (Toa Hermitage by default). */
+  project?: { cardId: number; name: string };
+  /** Green Gulch on the board too, new today. */
+  fresh?: boolean;
+} = {}) {
+  const now = Date.now();
+  const state = defaultBoardState(4);
+  state.stage = stage;
+  state.sessionStartedAt = now - 52 * 60_000;
+  state.stageStartedAt = now - 4 * 60_000;
+  state.carry = { [String(AMORA)]: { from: W3_FOR_AMORA, by: "tile" } };
+  const rows = opts.rows ?? W4_ROWS;
+  const facilitator = !!opts.facilitator;
+  mockData["sessionBoard.get"] = {
+    week: 4, status: "open", version: 9, serverNow: now, state, canFacilitate: facilitator, notes: [],
+    hands: {}, offers: {}, answerCounts: { "pulse-a": { clear: 3, deeper: 2, fast: 0, lost: 0 }, "pulse-b": { clear: 1, deeper: 0, fast: 0, lost: 0 } },
+    checkins: { [TOA]: 2, [AMORA]: 3, [LUPINE]: 1, ...(opts.fresh ? { [GULCH]: 1 } : {}) }, offerPeople: null,
+    projects: opts.fresh ? [...W4_CARDS, w3Card(GULCH, "Green Gulch Land Trust", "Marin, California", 63)] : W4_CARDS,
+    items: rows.map((r, i) => ({
+      id: r.id, kind: r.kind ?? "answer", text: r.text, projectId: r.projectId, block: r.block, theme: null,
+      chosen: !!r.chosen, votes: 0, roomVotes: 0, fromItemId: null, hidden: false, displayName: null,
+      createdAt: new Date(now - (rows.length - i) * 60_000).toISOString(),
+    })),
+    facilitatorLists: facilitator ? { register: [], applications: [{ id: 41, projectName: "Toa Hermitage" }, { id: 57, projectName: "Amora" }] } : null,
+  };
+  mockData["sessionBoard.version"] = { version: 9, status: "open" };
+  const carry = w4Carry();
+  if (opts.fresh) carry.cards.push({ cardId: GULCH, match: "none", from: [], suggested: [] });
+  mockData["sessionBoard.carry"] = carry;
+  if (facilitator) {
+    mockData["auth.me"] = { id: 2, name: "Rye", email: "rye@example.org", role: "admin" };
+    mockData["sessionBoard.guestRows.result"] = { rows: 0 };
+  }
+  mockData["sessionBoard.whoami.result"] = {
+    itemIds: rows.filter((r) => r.mine).map((r) => r.id), projectIds: [], votes: [], hands: [], offers: [], anon: [],
+    checkins: opts.picked === false ? [] : [opts.project?.cardId ?? TOA], earlier: [{ week: 3, cardId: W3_FOR_TOA, name: "Toa Hermitage" }], canFacilitate: facilitator,
+  };
+  mockData["seasonSchedule.state"] = {
+    sessions: [
+      { week: 4, title: null, startTime: new Date(now - 52 * 60_000).toISOString(), endTime: new Date(now + 68 * 60_000).toISOString(), status: "scheduled" },
+      { week: 5, title: null, startTime: new Date(now + 7 * 86_400_000).toISOString(), endTime: new Date(now + 7 * 86_400_000 + 120 * 60_000).toISOString(), status: "scheduled" },
+    ],
+  };
+  try {
+    if (opts.picked === false) localStorage.removeItem("session-board:project:4");
+    else localStorage.setItem("session-board:project:4", JSON.stringify(opts.project ?? { cardId: TOA, name: "Toa Hermitage" }));
+    localStorage.setItem("session-board:last-project", JSON.stringify({ name: "Toa Hermitage", cardId: W3_FOR_TOA, ref: `p${W3_FOR_TOA}`, week: 3 }));
+    if (opts.displayName) localStorage.setItem("session-board:name", opts.displayName);
+  } catch {
+    /* the story still renders with no pick kept */
+  }
+}
+
+/** The page itself at /season2/week/4. */
+function Week4Page() {
+  const { hook } = memoryLocation({ path: "/season2/week/4", static: true });
+  return (
+    <Router hook={hook}>
+      <Route path="/season2/week/:week"><SessionBoard /></Route>
+    </Router>
+  );
+}
+
+const W4_TILES = [
+  { ref: "p5", name: "Toa Hermitage", place: "Big Island, Hawai'i", cardId: TOA, from: "board", fromWeek: null, here: 2 },
+  { ref: "p7", name: "Amora", place: "Dominicalito, Costa Rica", cardId: AMORA, from: "board", fromWeek: null, here: 3 },
+  { ref: "p9", name: "Lupine Hollow", place: "Willamette Valley, Oregon", cardId: LUPINE, from: "board", fromWeek: null, here: 1 },
+  { ref: "w3p411", name: "Riverbend Commons", place: null, cardId: null, from: "earlier", fromWeek: 3, here: 0 },
+  { ref: "a63", name: "Green Gulch Land Trust", place: "Marin, California", cardId: null, from: "application", fromWeek: null, here: 0 },
+];
+
 const SUBMISSION_WEEKS = [
   {
     ...weekHeading(2),
@@ -506,6 +668,40 @@ const SUBMISSION_WEEKS = [
     ],
   },
 ];
+
+/**
+ * The audit self-test's controls that go away: Cancel leaves focus on the
+ * page (bad), Take back moves it to the heading (good).
+ */
+function SelfTestGoesAway() {
+  const [bad, setBad] = useState(true);
+  const [good, setGood] = useState(true);
+  const headRef = useRef<HTMLHeadingElement>(null);
+  return (
+    <section>
+      <h3 ref={headRef} tabIndex={-1}>Controls that go away</h3>
+      {bad ? (
+        <button type="button" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]" onClick={() => setBad(false)}>Cancel</button>
+      ) : (
+        <p>Bad: Cancel went, and focus went to the page.</p>
+      )}
+      {good ? (
+        <button
+          type="button"
+          className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]"
+          onClick={() => {
+            setGood(false);
+            requestAnimationFrame(() => headRef.current?.focus());
+          }}
+        >
+          Take back
+        </button>
+      ) : (
+        <p>Good: focus moved to the heading.</p>
+      )}
+    </section>
+  );
+}
 
 /** The profile page's own ground (PlayerProfile.tsx), around the Submissions tab. */
 function ProfileGround({ children }: { children: ReactNode }) {
@@ -568,6 +764,16 @@ const EXPORT_FIXTURE = {
   ],
 };
 
+/** A player strong in living and social capital, thin in financial. */
+const TREE_SCORES: CapitalScores = {
+  intellectual: 60, social: 140, material: 45, financial: 20, living: 180,
+  cultural: 90, spiritual: 70, experiential: 110, healthVital: 95,
+};
+const GAME_TREE_VALUES: Record<string, number> = {
+  financial: 20, social: 140, cultural: 90, living: 180, intellectual: 60,
+  experiential: 110, material: 45, spiritual: 70, health: 95,
+};
+
 export const STORIES: Record<string, Story> = {
   /**
    * Meant to fail: one deliberately broken example per check, beside a good
@@ -618,6 +824,29 @@ export const STORIES: Record<string, Story> = {
           <button type="button" aria-pressed="true" className="min-h-11 rounded border-2 border-[#1a472a] px-3 font-semibold focus-visible:ring-2 focus-visible:ring-[#1a472a]">✓ Good on</button>
           <button type="button" aria-pressed="false" className="min-h-11 rounded border border-[#1a472a] px-3 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good off</button>
         </div>
+        {/* A hint under a field: the bad one isn't tied to its field, the good one is. */}
+        <div>
+          <label htmlFor="audit-hint-bad">Bad: who holds it</label>
+          <input id="audit-hint-bad" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Ana" />
+          <p id="audit-hint-bad-p">Bad: ask them first, this board is public.</p>
+        </div>
+        <div>
+          <label htmlFor="audit-hint-good">Good: who holds it</label>
+          <input id="audit-hint-good" aria-describedby="audit-hint-good-p" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Ana" />
+          <p id="audit-hint-good-p">Good: ask them first, this board is public.</p>
+        </div>
+        {/* A Save that can't say why: disabled with words in the form, beside one that stays focusable. */}
+        <form onSubmit={(e) => e.preventDefault()}>
+          <label htmlFor="audit-save-bad">Bad: seat name</label>
+          <input id="audit-save-bad" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Seed saver" />
+          <button type="submit" disabled className="min-h-11 rounded border border-[#1a472a] px-4">Bad: Save, disabled</button>
+        </form>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <label htmlFor="audit-save-good">Good: seat name</label>
+          <input id="audit-save-good" className="min-h-11 w-full rounded border border-[#1a472a] px-3" defaultValue="Seed saver" />
+          <button type="submit" aria-disabled="true" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good: Save, says why</button>
+        </form>
+        <SelfTestGoesAway />
       </div>
     ),
   },
@@ -687,6 +916,49 @@ export const STORIES: Record<string, Story> = {
         </Router>
       );
     },
+  },
+
+  "interop-paused": {
+    title: "Interoperability Circle page while the Circle is on a break",
+    setup: () => {
+      mockData["interopSessions.tally"] = {
+        slots: [
+          { slot: "tue", count: 1, names: [], members: [] },
+          { slot: "wed", count: 3, names: [], members: [] },
+          { slot: "thu", count: 1, names: [], members: [] },
+        ],
+        total: 5,
+        offered: [
+          { key: "tue", weekday: 2, hourPT: 10, label: "Tuesdays, 10:00am PT", zones: "10:00am PT · 1:00pm ET" },
+          { key: "wed", weekday: 3, hourPT: 16, label: "Wednesdays, 4:00pm PT", zones: "4:00pm PT · 7:00pm ET" },
+          { key: "thu", weekday: 4, hourPT: 18, label: "Thursdays, 6:00pm PT", zones: "6:00pm PT · 9:00pm ET" },
+        ],
+      };
+      mockData["interopSessions.schedule"] = { slot: "wed", pinned: false, paused: true, sessions: [], members: 1 };
+      mockData["interopSessions.directory"] = { entries: [], total: 0 };
+    },
+    render: () => <InteropSessions />,
+  },
+
+  "admin-interop-paused": {
+    title: "Admin > Events: Interoperability Circle panel, paused",
+    setup: () => {
+      mockData["interopSessions.adminState"] = {
+        slot: "wed", pinned: null, leader: "wed", leaderSince: null, applied: "wed",
+        counts: { mon: 0, tue: 1, wed: 3, thu: 1, fri: 0, sat: 0, sun: 0 },
+        paused: true,
+        offered: [
+          { key: "tue", weekday: 2, hourPT: 10, label: "Tuesdays, 10:00am PT", zones: "" },
+          { key: "wed", weekday: 3, hourPT: 16, label: "Wednesdays, 4:00pm PT", zones: "" },
+        ],
+        sessions: [{ id: 160, startTime: "2026-11-05T00:00:00Z", status: "cancelled", manualOverride: false, signups: 1 }],
+      };
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminInteropCircle />
+      </div>
+    ),
   },
 
   "tools-library-cards": {
@@ -1102,6 +1374,33 @@ export const STORIES: Record<string, Story> = {
   },
 
   /**
+   * The Living Tree as /quest and the profile draw it (LivingTreeV2 over its
+   * painted plate), in flower and in fruit; the drawn tree it falls back to
+   * when a plate fails; and the older game tree. All of it holds still apart
+   * from the game tree's breath, a transform the compositor runs.
+   */
+  "living-tree": {
+    title: "Living Tree: a fruiting tree in flower, its drawn fallback, and the game tree",
+    render: () => (
+      <div className="grid gap-6 md:grid-cols-3">
+        <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#f0f7f0] to-[#faf6f1] p-6">
+          <div className="w-full max-w-[320px]">
+            <LivingTreeV2 capitalScores={TREE_SCORES} seasonsCompleted={6} totalContributionScore={900} currentSeasonActions={12} />
+          </div>
+        </div>
+        <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#f0f7f0] to-[#faf6f1] p-6">
+          <div className="w-full max-w-[320px]">
+            <LivingTree capitalScores={TREE_SCORES} seasonsCompleted={6} totalContributionScore={900} currentSeasonActions={12} />
+          </div>
+        </div>
+        <div className="flex items-center justify-center rounded-2xl bg-[#0d2818] p-6">
+          <GameLivingTree capitalValues={GAME_TREE_VALUES} seasonCount={1} totalScore={5000} size={240} />
+        </div>
+      </div>
+    ),
+  },
+
+  /**
    * Week 3, stage 2 "Tap your project", as a guest on a phone: thirteen tiles
    * from this board, Week 2 and applications (so the filter shows), Toa
    * Hermitage picked. The audit taps "Change project" and opens "Add your
@@ -1318,6 +1617,122 @@ export const STORIES: Record<string, Story> = {
       week3Board(12, { rows: W3_NEEDS_ROWS });
     },
     render: () => <Week3Page />,
+  },
+
+  /** Week 4, Tap your project, nothing picked yet on this browser: "Last week you were with Toa Hermitage. Same today?" */
+  "week4-checkin-same": {
+    title: "Week 4, Tap your project: Same today?, from last week's pick",
+    setup: () => {
+      week4Board(1, { picked: false });
+      mockData["sessionBoard.checkInOptions"] = { tiles: W4_TILES };
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** Week 4, Your Week 3 card: last week's card, the gaps, last week's move, and Week 3's open questions. */
+  "week4-carry": {
+    title: "Week 4, Your Week 3 card: carried by application, gaps, did your move happen",
+    setup: () => week4Board(3),
+    render: () => <Week4Page />,
+  },
+
+  /** The same stage for the facilitator: a card found only by its name, waiting for a yes. */
+  "week4-carry-host": {
+    title: "Week 4, Your Week 3 card: the facilitator confirms a name match",
+    setup: () => week4Board(3, { facilitator: true, displayName: "Rye" }),
+    render: () => <Week4Page />,
+  },
+
+  /** Your human needs: carried picks and seeds, an own human need, last week's other one to add, the copy. */
+  "week4-needs": {
+    title: "Week 4, Your human needs: carried picks, seeds with last week's answers, your own",
+    setup: () => week4Board(4),
+    render: () => <Week4Page />,
+  },
+
+  /** Circles for each human need, with last week's players under the row. */
+  "week4-circles": {
+    title: "Week 4, Circles for each human need: carried human needs, circles picked",
+    setup: () => week4Board(5),
+    render: () => <Week4Page />,
+  },
+
+  /** Seats in each circle: a seat held by the team, an open one, one held by a being; the add form open. */
+  "week4-seats": {
+    title: "Week 4, Seats in each circle: seats per human need, the add form open",
+    setup: () => week4Board(6),
+    render: () => <Week4Page />,
+  },
+
+  /** Who decides what: what a circle decides, what everyone decides, last week's way under the row. */
+  "week4-decide": {
+    title: "Week 4, Who decides what: circles and what they decide",
+    setup: () => week4Board(7),
+    render: () => <Week4Page />,
+  },
+
+  /** Your first quest: one saved, the form for another. */
+  "week4-quests": {
+    title: "Week 4, Your first quest",
+    setup: () => week4Board(8),
+    render: () => <Week4Page />,
+  },
+
+  /** Your Game, built: every project's card with Copy for Village OS, the card's text open. */
+  "week4-built": {
+    title: "Week 4, Your Game, built: the cards and Copy for Village OS",
+    setup: () => week4Board(9),
+    render: () => <Week4Page />,
+  },
+
+  /** The close with Week 4's numbers. */
+  "week4-close": {
+    title: "Week 4, Close: projects, human needs with a circle, seats, questions",
+    setup: () => week4Board(12),
+    render: () => <Week4Page />,
+  },
+
+  /** A card found only by its name, before the facilitator's yes: the write stages wait (2026-10-15). */
+  "week4-pending": {
+    title: "Week 4, Seats in each circle: a card waiting on the facilitator, Start without Week 3",
+    setup: () => week4Board(6, { project: { cardId: LUPINE, name: "Lupine Hollow" } }),
+    render: () => <Week4Page />,
+  },
+
+  /** The facilitator on a write stage: the cards found by name, confirmed wherever the room is. */
+  "week4-seats-host": {
+    title: "Week 4, Seats in each circle: the facilitator's cards found by name",
+    setup: () => week4Board(6, { facilitator: true, displayName: "Rye" }),
+    render: () => <Week4Page />,
+  },
+
+  /** Two Week 3 cards share Lupine Hollow's name (a stray and the real one): the facilitator picks by their answers. */
+  "week4-carry-two-same-name": {
+    title: "Week 4, Your Week 3 card: the facilitator picks between two cards with one name",
+    setup: () => {
+      week4Board(3, { facilitator: true, displayName: "Rye" });
+      const carry = mockData["sessionBoard.carry"] as ReturnType<typeof w4Carry>;
+      const lupine = carry.cards.find((c) => c.cardId === LUPINE)!;
+      lupine.suggested = [
+        { week: 3, cardId: 408, name: "Lupine Hollow", answers: 1 } as never,
+        { week: 3, cardId: 409, name: "Lupine Hollow", answers: 31 } as never,
+      ];
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** A project new today: no "did last week's move happen", and a lede for starting fresh. */
+  "week4-carry-fresh": {
+    title: "Week 4, Your Week 3 card: a project new today",
+    setup: () => week4Board(3, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    render: () => <Week4Page />,
+  },
+
+  /** Your human needs for a project new today: nothing named last week. */
+  "week4-needs-fresh": {
+    title: "Week 4, Your human needs: a project new today",
+    setup: () => week4Board(4, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    render: () => <Week4Page />,
   },
 
   /** Stage 18, after the Close: get your Village OS. */

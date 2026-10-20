@@ -1,5 +1,5 @@
-import { afterAll, describe, it, expect, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { afterAll, beforeAll, describe, it, expect, vi } from "vitest";
+import { eq, inArray } from "drizzle-orm";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import * as dbHelpers from "./db";
@@ -63,9 +63,25 @@ function makeTestUser(id: number, role: "user" | "admin" = "user", name = "Test 
 }
 
 describe("Application System", () => {
-  // Use numeric IDs that match the database schema
-  const testUserId = 999999;
+  // Fixture accounts 986964 (applicant) and 986965 (workflow): no other suite
+  // writes applications for them. applications.create hands back the
+  // account's existing row (one application per account), so while this
+  // suite shared 999999 with suites that make applications for it, such as
+  // contributions.test.ts, the create test got the other file's row whenever
+  // CI ran them in parallel. Each run also clears these accounts first, so a
+  // run that died before its teardown can't leave a row the create tests
+  // would be handed back.
+  const testUserId = 986964;
+  const workflowUserId = 986965;
   const adminUserId = 999998;
+
+  async function clearSuiteApplications() {
+    if (skipIfNoDb) return;
+    const database = await dbHelpers.getDb();
+    await database!.delete(applications).where(inArray(applications.userId, [testUserId, workflowUserId]));
+  }
+  beforeAll(clearSuiteApplications);
+  afterAll(clearSuiteApplications);
 
   describe("Application Creation and Management", () => {
     it.skipIf(skipIfNoDb)("should create a new application as authenticated user", async () => {
@@ -115,11 +131,10 @@ describe("Application System", () => {
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBeGreaterThan(0);
-      // The create handler enforces one-application-per-user (returns the
-      // existing row if any). On a clean DB the new "My Project" row will
-      // win. On a re-run where the prior "Test Regenerative Farm" row from
-      // the earlier test still exists, we get that one back. Either way,
-      // myApplications must surface at least one row owned by this user.
+      // The create handler enforces one application per account and returns
+      // the existing row, so this create hands back the "Test Regenerative
+      // Farm" row the test above made. myApplications must list only rows
+      // this account owns.
       expect(result.every((app) => app.userId === testUserId)).toBe(true);
     });
   });
@@ -158,7 +173,7 @@ describe("Application System", () => {
 
   describe("Application Workflow", () => {
     it.skipIf(skipIfNoDb)("should create, update, and submit an application", async () => {
-      const ctx = createTestContext(makeTestUser(999997, "user", "Workflow Test User"));
+      const ctx = createTestContext(makeTestUser(workflowUserId, "user", "Workflow Test User"));
       const caller = appRouter.createCaller(ctx);
 
       // Create application

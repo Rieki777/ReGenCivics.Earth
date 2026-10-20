@@ -332,6 +332,9 @@ export function LivingTreeV2({
         })}
 
         {/* ── Flowers (flowering / fruiting / ancient) ─────────────────────── */}
+        {/* Drawn still. They used to twinkle with SVG <animate>, which keeps
+            the page restyling on the main thread forever, so every keystroke
+            on /quest and the profile waited behind it (STEERING.md section 13). */}
         {flowerCount > 0 && Array.from({ length: flowerCount }).map((_, i) => {
           const angle = (i / Math.max(flowerCount, 1)) * Math.PI * 2 + 0.4;
           const dist = 0.6 + seeded(i + 300, 0.35);
@@ -348,17 +351,7 @@ export function LivingTreeV2({
               fill={color}
               opacity={0.75}
               filter={!reducedMotion ? "url(#glow-flower)" : undefined}
-            >
-              {!reducedMotion && (
-                <animate
-                  attributeName="opacity"
-                  values="0.5;0.9;0.5"
-                  dur={`${3.5 + seeded(i, 2.5)}s`}
-                  begin={`${seeded(i + 50, 3)}s`}
-                  repeatCount="indefinite"
-                />
-              )}
-            </circle>
+            />
           );
         })}
 
@@ -382,26 +375,9 @@ export function LivingTreeV2({
             />
           );
         })}
-
-        {/* ── Gentle root glow pulse on mount (non-reduced-motion only) ────── */}
-        {!reducedMotion && (
-          <ellipse
-            cx={CX}
-            cy={SOIL_Y + 4}
-            rx={22}
-            ry={5}
-            fill="#ffffff"
-            opacity={0}
-          >
-            <animate
-              attributeName="opacity"
-              values="0;0.06;0"
-              dur="3s"
-              begin="0.5s"
-              repeatCount="indefinite"
-            />
-          </ellipse>
-        )}
+        {/* A faint white root glow (never above 6% opacity) pulsed here with
+            an endless SVG <animate> too. Held still it would not show, so it
+            is gone. */}
       </svg>
     </div>
   );

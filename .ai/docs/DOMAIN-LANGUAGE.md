@@ -371,7 +371,7 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Session board**. The live board for one weekly Season episode, at `/season2/week/:week` (weeks 2 to 13), linked under its week wherever the Season's schedule is listed. Shown on the facilitator's screen and open on everyone's own device at once. What lands on it stays as the week's record: the Season's memory. Defined in `shared/sessionBoard.ts`.
 
-**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, A Game we build together, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has ten of these; Week 3 has its own eighteen (check-in, prompt and needs stages, ADR-74); other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
+**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, A Game we build together, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has ten of these; Week 3 has its own eighteen (check-in, prompt and needs stages, ADR-74); Week 4 its own fourteen (ADR-76); other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
 
 **Offer** (on a board). A hand raised on the "A Game we build together" stage to coach a village or build a module, stored as a board vote (`offer:coach`, `offer:build`). Everyone sees the counts; only the facilitator sees who, by account name, with guests as a count, folded until opened since their screen is the one shown on the stream. An offer is interest, not a commitment or a contract.
 
@@ -392,6 +392,14 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Check-in** (on a board). Tapping your project at the start of a weekly session, so everything you answer after it is kept with that project's card on that week's board. The tiles come live from the board's cards, public Season 2 applications and earlier weeks' cards; "Here to learn" answers for the room.
 
 **Answer** (on a board). One reply to one prompt on a prompt or needs stage: a pick or a short line, stored as a board row of kind `answer` keyed by the prompt. Anonymous prompts show only counts. The private "I feel ___ because I need ___" card is never an answer: it is never stored.
+
+**Carry** (between boards, ADR-76). A project's answers coming forward from its card on an earlier week's board to its card on this week's, matched by application, by the tile someone checked in from, by the person who played for it, or by a facilitator's yes. A change today replaces last week's answer for that question; earlier boards are never written. A card found only by its name is a suggestion until the facilitator confirms it.
+
+**Card** (an answer, ADR-76). A seat in a circle, a human need of the project's own, the circles that meet one of the project's own human needs, what a circle decides, or a quest: one answer with several fields, kept in one of a person's slots for the project. Not a project's card on the board (its tile and name), and not a Village OS seat card, which a seat card becomes once it is set up there.
+
+**Seat** (on a board, ADR-76). One role in a circle, written so someone could say yes to it: its name, what it works toward, the human need it meets, what it answers for, who holds it (someone on the team, open as an invitation, or a being with someone speaking for it), and what it asks (hours a week or a clear contribution). Ends with the season unless said otherwise, so a short-term role is just a seat.
+
+**Copy for Village OS** (ADR-76). The button that copies a project's card, Week 3 and Week 4 together, as JSON Village OS can read: its `needs` list is the body of Village OS's needs scope write, then the whole-project figure, circles, seats with their need links, decisions and quests.
 
 **Weekly sessions** (under Submissions). The section of a signed-in person's profile, Submissions tab, that lists every board they wrote on, week by week, with their projects and answers. A guest's answers join it when they sign in on the same browser and say yes.
 

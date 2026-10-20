@@ -6934,9 +6934,10 @@ export type SessionBoardProject = typeof sessionBoardProjects.$inferSelect;
 export const sessionBoardItems = mysqlTable("session_board_items", {
   id: int("id").autoincrement().primaryKey(),
   boardId: int("boardId").notNull(),
-  /** ITEM_KINDS: arrive, leave, pain, opp, game. */
+  /** ITEM_KINDS: arrive, leave, pain, opp, game, ask, answer. */
   kind: varchar("kind", { length: 16 }).notNull(),
-  text: varchar("text", { length: 400 }).notNull(),
+  /** 1000 since migration 0300: a Week 4 card (shared/boardCards.ts) is JSON of several fields. */
+  text: varchar("text", { length: 1000 }).notNull(),
   projectId: int("projectId"),
   /** GAME_BLOCKS key, for game notes. */
   block: varchar("block", { length: 16 }),

@@ -29,9 +29,11 @@ import {
   sessionMinutes,
   shareTime,
   TOGETHER_COPY,
+  WEEK4_COPY,
   type BoardStage,
   type BoardState,
 } from "@shared/sessionBoard";
+import { cardKindOfKey } from "@shared/boardCards";
 import { shownAnswerRows } from "@shared/humanNeeds";
 import {
   AMORA_CIRCLES_EMBED_URL,
@@ -44,7 +46,7 @@ import { dictationSupported } from "@/components/admin/dictation";
 import { trpc } from "@/lib/trpc";
 import { JoinBoard } from "./JoinBoard";
 import { RaiseHand } from "./RaiseHandForm";
-import type { BoardActions, BoardItem, BoardProject, Mine, MyProject, SessionBoardData } from "./useSessionBoard";
+import type { BoardActions, BoardCarry, BoardItem, BoardProject, Mine, MyProject, SessionBoardData } from "./useSessionBoard";
 import { phaseFromSpeech } from "./spokenStage";
 import { useBoardClock } from "./useBoardClock";
 import { BoardMic, Chips, NEW_TAB, QuickAdd, SlideLine, SpokenLine, StageHead, plural, speakLabel } from "./week3/parts";
@@ -76,6 +78,8 @@ export type StageProps = {
   signedIn: boolean;
   /** Moves THIS screen only, never the room, facilitators included. */
   look: (i: number) => void;
+  /** Week 4 on: what each card carries from earlier weeks, and this person's earlier cards. */
+  carry: BoardCarry;
 };
 
 const THEME_TITLE: Record<string, string> = Object.fromEntries(OPPORTUNITY_THEMES.map((t) => [t.key, t.title]));
@@ -1116,6 +1120,19 @@ export function week3CloseStats(board: Pick<SessionBoardData, "items" | "project
   return CLOSE_COPY_WEEK3.stats.map((t, i) => [t, String(values[i] ?? 0)]);
 }
 
+/** Week 4's numbers on the Close: projects checked in, human needs with a circle, seats written, questions asked. */
+export function week4CloseStats(board: Pick<SessionBoardData, "items" | "projects"> & { checkins?: Record<number, number> }): [string, string][] {
+  const hiddenCards = board.projects.filter((p) => p.hidden).map((p) => p.id);
+  const rows = shownAnswerRows(board.items, hiddenCards).filter((i) => i.kind === "answer");
+  const answered = new Set(rows.map((r) => r.projectId).filter((id): id is number => id != null));
+  const checkedIn = board.projects.filter((p) => !p.hidden && ((board.checkins?.[p.id] ?? 0) > 0 || answered.has(p.id))).length;
+  const withCircle = new Set(rows.filter((r) => /^c-[a-z]+$/.test(r.block ?? "") && r.projectId != null).map((r) => `${r.projectId}:${r.block}`)).size;
+  const seats = rows.filter((r) => cardKindOfKey(r.block) === "seat").length;
+  const asks = board.items.filter((i) => i.kind === "ask" && !i.hidden).length;
+  const values = [checkedIn, withCircle, seats, asks];
+  return WEEK4_COPY.close.map((t, i) => [t, String(values[i] ?? 0)]);
+}
+
 export function Close({ board, week, stages, index, facilitator, canWrite, mine, actions }: StageProps) {
   const [confirm, setConfirm] = useState(false);
   // A week with a check-in stage (Week 3 on) asks prompts instead of running a
@@ -1130,7 +1147,10 @@ export function Close({ board, week, stages, index, facilitator, canWrite, mine,
   const shared = projects.filter((p) => p.shared).length;
   const top = promptWeek ? [] : opps.filter((o) => o.votes > 0).sort((a, b) => b.votes - a.votes || a.id - b.id).slice(0, 3);
   const next = SEASON2_CURRICULUM.find((e) => e.week === week + 1);
-  const stats: [string, string][] = promptWeek
+  const carries = stages.some((s) => s.kind === "needs" && s.step === "carry");
+  const stats: [string, string][] = carries
+    ? week4CloseStats(board)
+    : promptWeek
     ? week3CloseStats(board)
     : [
       ["Projects shared", projects.length ? `${shared} of ${projects.length}` : "0"],

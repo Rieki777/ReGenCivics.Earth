@@ -97,7 +97,8 @@ describe("week 3 board: what the router accepts", () => {
     const note = { op: "note" as const, week: 3, key: "purpose", projectId: 4, text: "growing food" };
     expect(answerInput.safeParse(note).success).toBe(true);
     expect(answerInput.safeParse({ ...note, text: "" }).success).toBe(false);
-    expect(answerInput.safeParse({ ...note, text: "x".repeat(1001) }).success).toBe(false);
+    // 2500, since Week 4's card answers are JSON whose quotes escape; the server cleans every answer to its own cap.
+    expect(answerInput.safeParse({ ...note, text: "x".repeat(2501) }).success).toBe(false);
   });
 
   it("a tile ref is one of the three shapes", () => {

@@ -6,8 +6,12 @@
  *
  * State -> visual:
  *   locked     -> grayscale + low opacity, dashed ring, cursor default
- *   unlocked   -> full color, gentle pulse ring, cursor pointer
+ *   unlocked   -> full color, colored ring, cursor pointer
  *   completed  -> full color, soft glow halo, checkmark badge
+ *
+ * Everything holds still. The rings used to pulse with SVG <animate>, which
+ * never leaves the main thread, so the page restyled every frame and every
+ * keystroke waited behind it (STEERING.md section 13).
  */
 import { useState } from "react";
 import { PATHS, REGEN_TREE, buildPathCurve, type MapNode, type NodeState } from "./mapData";
@@ -52,18 +56,12 @@ function Landmark({
     >
       {/* Soft halo for completed */}
       {state === "completed" && (
-        <circle cx={node.x} cy={node.y} r={half + 12} fill={color} opacity={0.15}>
-          <animate attributeName="r" values={`${half + 8};${half + 14};${half + 8}`} dur="4s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.18;0.08;0.18" dur="4s" repeatCount="indefinite" />
-        </circle>
+        <circle cx={node.x} cy={node.y} r={half + 12} fill={color} opacity={0.15} />
       )}
 
-      {/* Pulse for unlocked */}
+      {/* Ring for unlocked, at the old pulse's brightest */}
       {state === "unlocked" && (
-        <circle cx={node.x} cy={node.y} r={half + 4} fill="none" stroke={color} strokeWidth={1.5} opacity={0.55}>
-          <animate attributeName="r" values={`${half + 2};${half + 10};${half + 2}`} dur="2.5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.55;0.15;0.55" dur="2.5s" repeatCount="indefinite" />
-        </circle>
+        <circle cx={node.x} cy={node.y} r={half + 4} fill="none" stroke={color} strokeWidth={1.5} opacity={0.55} />
       )}
 
       {/* Landmark illustration */}
@@ -252,10 +250,7 @@ export function ProgressMapSVG({ progress, onNodeClick, selectedPath }: Props) {
         >
           🌳
         </text>
-        <circle cx={REGEN_TREE.x} cy={REGEN_TREE.y} r={38} fill="none" stroke="#7dd87d" strokeWidth={1} opacity={0.25}>
-          <animate attributeName="r" values="34;46;34" dur="5s" repeatCount="indefinite" />
-          <animate attributeName="opacity" values="0.25;0.06;0.25" dur="5s" repeatCount="indefinite" />
-        </circle>
+        <circle cx={REGEN_TREE.x} cy={REGEN_TREE.y} r={38} fill="none" stroke="#7dd87d" strokeWidth={1} opacity={0.25} />
       </g>
 
       {/* Landmark illustrations as interactive nodes */}

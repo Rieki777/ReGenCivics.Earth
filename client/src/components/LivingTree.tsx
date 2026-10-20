@@ -212,16 +212,11 @@ export function LivingTree({
         </>
       )}
 
-      {/* Flowers */}
+      {/* Flowers, drawn still: an endless SVG <animate> keeps the page
+          restyling on the main thread, and typing waits behind it
+          (STEERING.md section 13). */}
       {flowers.map((f, i) => (
-        <circle key={i} cx={f.cx} cy={f.cy} r={f.r} fill={f.color} opacity={0.85}>
-          <animate
-            attributeName="opacity"
-            values="0.5;1;0.5"
-            dur={`${3 + (i % 3)}s`}
-            repeatCount="indefinite"
-          />
-        </circle>
+        <circle key={i} cx={f.cx} cy={f.cy} r={f.r} fill={f.color} opacity={0.85} />
       ))}
 
       {/* Fruit at stage 5+ */}

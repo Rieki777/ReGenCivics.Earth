@@ -110,9 +110,15 @@ function StageClock({ state, view, planMin, serverNow, closedAt }: {
 
 const WIDE: StageKind[] = ["circle", "harvest", "game", "checkin", "needs"];
 
-/** A text field on the stage has focus: someone is typing there right now. */
+/**
+ * A text field on the stage has focus (someone is typing there right now),
+ * or a Week 4 card form holds words not saved yet, whatever has focus: a
+ * tapped choice or select leaves focus on a button, or on the page in iOS
+ * Safari, and the card would still be lost if the screen moved.
+ */
 function typingOnStage(root: HTMLElement | null): boolean {
   if (!root || typeof document === "undefined") return false;
+  if (root.querySelector("form.sb-card-form[data-unsaved]")) return true;
   const a = document.activeElement as HTMLElement | null;
   if (!a || !root.contains(a)) return false;
   if (a.tagName === "TEXTAREA" || a.isContentEditable) return true;
@@ -146,7 +152,7 @@ function NoBoard() {
 
 function Board({ week }: { week: number }) {
   const stages = useMemo(() => boardStages(week), [week]);
-  const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName, myProject, setMyProject } = useSessionBoard(week);
+  const { board, loading, error, serverNow, mine, actions, displayName, setDisplayName, myProject, setMyProject, carry } = useSessionBoard(week);
   const { user } = useAuth();
   const signedIn = !!user;
   const facilitator = !!board?.canFacilitate;
@@ -309,7 +315,7 @@ function Board({ week }: { week: number }) {
   const stageProps: StageProps | null = board
     ? {
       board, week, stages, index: view, facilitator, canWrite, mine, actions, serverNow, go,
-      myProject, setMyProject, displayName, setDisplayName, signedIn, look,
+      myProject, setMyProject, displayName, setDisplayName, signedIn, look, carry,
     }
     : null;
   // A week with a check-in stage (Week 3 on) keeps its Welcome under the Recap,

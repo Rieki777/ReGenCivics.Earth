@@ -15,7 +15,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Calendar, CheckCircle2, Clock, ExternalLink, Mail, UserRound, Video, Wrench } from 'lucide-react';
-import { INTEROP_SLOTS, interopSlot, isInteropSlotKey, type InteropSlot, type InteropSlotKey } from '@shared/interopCircle';
+import { INTEROP_PAUSED_NOTICE, INTEROP_SLOTS, interopSlot, isInteropSlotKey, type InteropSlot, type InteropSlotKey } from '@shared/interopCircle';
 import { repoLabel } from '@shared/interopTools';
 import { CALENDAR_FEEDS } from '@/lib/calendarLinks';
 import { SubscribeButtons } from '@/components/CalendarCta';
@@ -107,7 +107,7 @@ const NO_SESSIONS: CircleSession[] = [];
 // the name, email, repo or agent fields re-renders the page body and the
 // section holding the field, not the slot list, the sheets or the dialog.
 
-const IntroSections = memo(function IntroSections({ seasonTwoOpen }: { seasonTwoOpen: boolean }) {
+const IntroSections = memo(function IntroSections({ seasonTwoOpen, paused }: { seasonTwoOpen: boolean; paused: boolean }) {
   return (
     <>
       <BackButton />
@@ -126,6 +126,13 @@ const IntroSections = memo(function IntroSections({ seasonTwoOpen }: { seasonTwo
           </p>
         </header>
       </AnimatedSection>
+
+      {paused && (
+        <section role="status" className="bg-[#e3ac4f]/10 rounded-2xl border border-[#e3ac4f]/50 p-6 mb-8">
+          <h2 className="text-white text-xl font-bold mb-2">The Interoperability Circle is on a break</h2>
+          <p className="text-white/80">{INTEROP_PAUSED_NOTICE}</p>
+        </section>
+      )}
 
       {/* Season Two */}
       <AnimatedSection>
@@ -290,7 +297,7 @@ const SlotList = memo(function SlotList({
                     </span>
                   )}
                 </div>
-                <p className="text-white/50 text-sm tabular-nums">{slot.zones}</p>
+                <p className="text-white/65 text-sm tabular-nums">{slot.zones}</p>
               </div>
               <button
                 type="button"
@@ -333,12 +340,14 @@ const SlotList = memo(function SlotList({
 });
 
 const VoteStatus = memo(function VoteStatus({
+  paused,
   scheduledLabel,
   leaderLabel,
   movingSoon,
   pinned,
   sessions,
 }: {
+  paused: boolean;
   scheduledLabel: string | null;
   leaderLabel: string | null;
   movingSoon: boolean;
@@ -348,7 +357,9 @@ const VoteStatus = memo(function VoteStatus({
   return (
     <>
       <p className="text-white/75 mb-1">
-        {scheduledLabel
+        {paused
+          ? <>No sessions are scheduled while the Circle is on a break.</>
+          : scheduledLabel
           ? <>The Circle meets <span className="text-white font-semibold">{scheduledLabel}</span>.</>
           : leaderLabel
             ? <>Right now the vote leads for <span className="text-white font-semibold">{leaderLabel}</span>.</>
@@ -702,6 +713,7 @@ function InteropSessionsBody() {
 
   const scheduledSlot = schedule.data?.slot ? interopSlot(schedule.data.slot, tally.data?.offered) : null;
   const sessions = schedule.data?.sessions ?? NO_SESSIONS;
+  const paused = schedule.data?.paused === true;
 
   // The offered slots are a setting, so the page renders whatever the server
   // says rather than a list compiled into the bundle. The defaults only stand
@@ -777,7 +789,7 @@ function InteropSessionsBody() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#14301f] to-[#0d2818]">
       <div className="max-w-4xl mx-auto px-4 py-10 md:py-16">
-        <IntroSections seasonTwoOpen={seasonTwoOpen} />
+        <IntroSections seasonTwoOpen={seasonTwoOpen} paused={paused} />
 
         {/* Rolling time vote */}
         <AnimatedSection>
@@ -793,7 +805,7 @@ function InteropSessionsBody() {
                 maxLength={80}
                 onChange={(e) => { setName(e.target.value); writeStored(NAME_STORAGE, e.target.value); }}
                 placeholder="Name or project"
-                className="w-full sm:max-w-sm bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#e3ac4f]"
+                className="w-full sm:max-w-sm bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#e3ac4f]"
               />
             </label>
 
@@ -809,6 +821,7 @@ function InteropSessionsBody() {
 
             <div className="mt-6 pt-6 border-t border-white/10">
               <VoteStatus
+                paused={paused}
                 scheduledLabel={scheduledSlot?.label ?? null}
                 leaderLabel={leader?.label ?? null}
                 movingSoon={movingSoon}
@@ -829,7 +842,7 @@ function InteropSessionsBody() {
                           onChange={(e) => setName(e.target.value)}
                           placeholder="Your name"
                           aria-label="Your name, shown beside your tool"
-                          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                         />
                         <input
                           type="text"
@@ -838,7 +851,7 @@ function InteropSessionsBody() {
                           onChange={(e) => setAgent(e.target.value)}
                           placeholder="Your agent (optional)"
                           aria-label="The agent you build with, optional"
-                          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                         />
                       </div>
                       <div className="flex flex-col sm:flex-row gap-3">
@@ -849,7 +862,7 @@ function InteropSessionsBody() {
                           onChange={(e) => setRepoUrl(e.target.value)}
                           placeholder="Repo or hub page, e.g. github.com/you/your-tool"
                           aria-label="A link to your tool that the Circle can open"
-                          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                          className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                         />
                         <button
                           type="submit"
@@ -894,7 +907,9 @@ function InteropSessionsBody() {
             {leave.isError && (
               <p className="text-red-300 text-sm mb-4">{leave.error.message || 'That leave link is not valid any more.'}</p>
             )}
-            {join.isSuccess ? (
+            {paused ? (
+              <p className="text-white/80 mb-4">{INTEROP_PAUSED_NOTICE}</p>
+            ) : join.isSuccess ? (
               <JoinedNote alreadyMember={!!join.data?.alreadyMember} />
             ) : (
               <form onSubmit={submitJoin} className="mb-2">
@@ -908,7 +923,7 @@ function InteropSessionsBody() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
                     aria-label="Email for Circle reminders and recaps"
-                    className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                    className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                   />
                   <button
                     type="submit"
@@ -928,7 +943,7 @@ function InteropSessionsBody() {
                     onChange={(e) => setRepoUrl(e.target.value)}
                     placeholder="Your repo (optional)"
                     aria-label="The repository your tool lives in, optional"
-                    className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                    className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                   />
                   <input
                     type="text"
@@ -937,7 +952,7 @@ function InteropSessionsBody() {
                     onChange={(e) => setAgent(e.target.value)}
                     placeholder="Your agent (optional)"
                     aria-label="The agent you build with, optional"
-                    className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/40 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
+                    className="flex-1 bg-white/10 border border-white/45 rounded-xl px-4 py-2 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d] min-h-[44px]"
                   />
                 </div>
               </form>

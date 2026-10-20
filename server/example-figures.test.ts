@@ -13,7 +13,13 @@
  * exactly one scope clause, so a change to the file's shape fails here first.
  *
  * Then, read-only, every example present that is not a test fixture must
- * already meet the rule, once 0263 is recorded as applied.
+ * already meet the rule, once 0263 is recorded as applied. A fixture is a
+ * campaign whose title says test, or whose owner is a fixture id with no
+ * account behind it: other suites build example fixtures with the seed's own
+ * titles while this one runs (example-truth.test.ts must, because 0269
+ * matches examples by title). The seed's owner always has an account, so a
+ * real example is never skipped, even on a database where test inserts have
+ * pushed new account ids into the fixture band.
  *
  * DB-backed: runs against a LOCAL database only (the scratch MariaDB, or CI's
  * 127.0.0.1 MySQL), never a remote one.
@@ -24,6 +30,7 @@ import path from "path";
 import mysql from "mysql2/promise";
 import { exampleDurationDays, exampleMoneyAsk, exampleRouteFigures } from "../shared/exampleCampaignFigures";
 import { MAX_WINDOW_DAYS } from "../shared/campaignClose";
+import { FIXTURE_USER_ID_MAX, FIXTURE_USER_ID_MIN } from "./test-fixtures/ids";
 
 function isLocalDb(url: string | undefined): boolean {
   if (!url) return false;
@@ -285,8 +292,9 @@ describe.skipIf(skipIfNoDb)("0263 on fixture campaigns", () => {
               (SELECT COALESCE(SUM(pl.cachedRaised), 0) FROM campaign_partner_links pl
                 WHERE pl.campaignId = c.id AND pl.status = 'example') AS routes
          FROM campaigns c
-        WHERE c.isDemo = 1 AND LOWER(c.title) NOT LIKE '%test%' AND c.id NOT IN (?)`,
-      [all()],
+        WHERE c.isDemo = 1 AND LOWER(c.title) NOT LIKE '%test%' AND c.id NOT IN (?)
+          AND NOT (c.userId BETWEEN ? AND ? AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = c.userId))`,
+      [all(), FIXTURE_USER_ID_MIN, FIXTURE_USER_ID_MAX],
     );
     for (const r of rows as Array<{ id: number; title: string; financialTarget: number; durationDays: number; inKind: number; crypto: number; routes: number }>) {
       const label = `#${r.id} ${r.title}`;

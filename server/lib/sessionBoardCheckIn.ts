@@ -25,13 +25,16 @@ import {
   CHECKIN_APPLICATION_STATUSES,
   FIRST_BOARD_WEEK,
   PUBLIC_PLACE_STATUSES,
+  applyBoardAction,
   cleanBoardLine,
   foldProjectName,
+  normalizeBoardState,
   parseTileRef,
   tileRef,
   voteTarget,
 } from "@shared/sessionBoard";
 import { voteCounts, type Db } from "./sessionBoard";
+import { carryLinkOnCheckIn } from "./sessionBoardCarry";
 
 export type CheckInTile = {
   ref: string;
@@ -310,7 +313,11 @@ export async function checkInOnBoard(
   }
 
   return db.transaction(async (tx) => {
-    await tx.select({ id: sessionBoards.id }).from(sessionBoards).where(eq(sessionBoards.id, boardId)).for("update");
+    const [locked] = await tx
+      .select({ id: sessionBoards.id, state: sessionBoards.state })
+      .from(sessionBoards)
+      .where(eq(sessionBoards.id, boardId))
+      .for("update");
     const cards: CardLite[] = await tx
       .select({
         id: sessionBoardProjects.id,
@@ -405,7 +412,24 @@ export async function checkInOnBoard(
         .onDuplicateKeyUpdate({ set: { target: sql`target` } });
       marked = true;
     }
-    if (created || linked || marked) {
+    // Week 4 on: remember which earlier card this one carries its answers
+    // from (shared/boardCarry.ts), when the tile or the person says so.
+    const state = normalizeBoardState(locked?.state ?? null, week);
+    const link = await carryLinkOnCheckIn(tx, {
+      season,
+      week,
+      state,
+      card,
+      keys,
+      earlierTile: earlier && created ? { id: earlier.id, week: earlier.week, applicationId: earlier.applicationId } : null,
+      // An earlier card one of these already carries is never linked to a second card here.
+      others: shown.filter((c) => c.id !== card.id),
+    });
+    if (link) {
+      const next = applyBoardAction(state, { type: "carry", cardId: card.id, from: link.from, by: link.by }, Date.now());
+      await tx.update(sessionBoards).set({ state: JSON.stringify(next) }).where(eq(sessionBoards.id, boardId));
+    }
+    if (created || linked || marked || link) {
       await tx
         .update(sessionBoards)
         .set({ version: sql`${sessionBoards.version} + 1` })

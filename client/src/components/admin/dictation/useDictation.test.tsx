@@ -858,6 +858,7 @@ function arrivalProps(addItem: StageProps["actions"]["addItem"] = async () => ({
     setDisplayName: () => {},
     signedIn: false,
     look: () => {},
+    carry: { on: false, data: null, loading: false, failed: false, retry: () => {}, earlier: [], last: null },
   };
 }
 
