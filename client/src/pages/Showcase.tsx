@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "wouter";
 import { ShareButton } from "@/components/ShareButton";
-import { useState } from "react";
+import { memo, useDeferredValue, useMemo, useState } from "react";
 import {
   MapPin,
   Users,
@@ -190,88 +190,19 @@ const allianceOrganizations = [
   },
 ];
 
+type ShowcaseProject = (typeof landProjects)[number];
+type AllianceOrganization = (typeof allianceOrganizations)[number];
+
+const getMixedUseIcon = (type: string) => {
+  switch (type) {
+    case "residential": return <Home className="w-3 h-3" />;
+    case "commercial": return <Building2 className="w-3 h-3" />;
+    case "industrial": return <Factory className="w-3 h-3" />;
+    default: return null;
+  }
+};
+
 export default function Showcase() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [locationFilter, setLocationFilter] = useState("all");
-  const [focusFilter, setFocusFilter] = useState("all");
-
-  // Fetch live DB projects and merge with static data, preferring DB values for stats
-  const { data: dbProjects = [] } = trpc.community.activeLandProjects.useQuery();
-  const mergedProjects = landProjects.map((staticProject) => {
-    const match = dbProjects.find(
-      (db) =>
-        db.projectName.toLowerCase() === staticProject.name.toLowerCase() ||
-        (db.location && staticProject.location.toLowerCase().includes(db.location.toLowerCase()))
-    );
-    if (!match) return staticProject;
-    return {
-      ...staticProject,
-      name: match.projectName || staticProject.name,
-      location: match.location
-        ? match.country
-          ? `${match.location}, ${match.country}`
-          : match.location
-        : staticProject.location,
-    };
-  });
-  // Append DB projects that have no static counterpart
-  const staticNames = new Set(landProjects.map((p) => p.name.toLowerCase()));
-  const dbOnly = dbProjects
-    .filter(
-      (db) =>
-        !staticNames.has(db.projectName.toLowerCase()) &&
-        landProjects.every(
-          (s) => !db.location || !s.location.toLowerCase().includes(db.location.toLowerCase())
-        )
-    )
-    .map((db) => ({
-      id: `db-${db.id}`,
-      name: db.projectName,
-      location: db.location
-        ? db.country
-          ? `${db.location}, ${db.country}`
-          : db.location
-        : "Location TBC",
-      size: "",
-      community: "",
-      focus: [] as string[],
-      status: "active" as const,
-      description: "",
-      mixedUse: [] as string[],
-      image: "",
-    }));
-  const allProjects = [...mergedProjects, ...dbOnly];
-
-  // Get unique locations for filter
-  const locations = Array.from(new Set(allProjects.map(p => p.location.split(",")[0].trim())));
-
-  // Get unique focus areas
-  const focusAreas = Array.from(new Set(allProjects.flatMap(p => p.focus)));
-
-  // Filter projects
-  const filteredProjects = allProjects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = locationFilter === "all" || project.location.includes(locationFilter);
-    const matchesFocus = focusFilter === "all" || project.focus.includes(focusFilter);
-    return matchesSearch && matchesLocation && matchesFocus;
-  });
-
-  // Filter alliances
-  const filteredAlliances = allianceOrganizations.filter(org => {
-    return org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           org.description.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
-  const getMixedUseIcon = (type: string) => {
-    switch (type) {
-      case "residential": return <Home className="w-3 h-3" />;
-      case "commercial": return <Building2 className="w-3 h-3" />;
-      case "industrial": return <Factory className="w-3 h-3" />;
-      default: return null;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#f8f5f0]">
       <BackButton />
@@ -324,256 +255,7 @@ export default function Showcase() {
         </div>
       </section>
 
-      {/* Search and Filter Section */}
-      <section className="py-8 bg-white border-b border-[#1a472a]/10">
-        <div className="container">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1a472a]/80" />
-              <Input
-                placeholder="Search projects and organizations..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-[#1a472a]/60 focus:border-[#7dd87d]"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
-                <SelectTrigger className="w-40 border-[#1a472a]/60">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {locations.map(loc => (
-                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={focusFilter} onValueChange={setFocusFilter}>
-                <SelectTrigger className="w-40 border-[#1a472a]/60">
-                  <Leaf className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Focus Area" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Focus Areas</SelectItem>
-                  {focusAreas.map(focus => (
-                    <SelectItem key={focus} value={focus}>{focus}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Main Content */}
-      <section className="py-12">
-        <div className="container">
-          <Tabs defaultValue="projects" className="space-y-8">
-            <TabsList className="bg-white border border-[#1a472a]/10 p-1">
-              <TabsTrigger 
-                value="projects"
-                className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white"
-              >
-                <TreePine className="w-4 h-4 mr-2" />
-                Land Projects ({filteredProjects.length})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="alliances"
-                className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white"
-              >
-                <Network className="w-4 h-4 mr-2" />
-                Alliance Partners ({filteredAlliances.length})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Land Projects Tab */}
-            <TabsContent value="projects">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProjects.map((project) => (
-                  <Card 
-                    key={project.id} 
-                    className="bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 transition-all hover:shadow-lg group"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle 
-                            className="text-[#1a472a] text-xl mb-1"
-                            style={{ fontFamily: 'var(--font-display)' }}
-                          >
-                            {project.name}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-1 text-[#1a472a]/80">
-                            <MapPin className="w-4 h-4" />
-                            {project.location}
-                          </CardDescription>
-                        </div>
-                        <Badge className="bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d]/30">
-                          Active
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-[#1a472a]/75 line-clamp-3">
-                        {project.description}
-                      </p>
-                      
-                      {/* Key Metrics */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-[#f0ebe3] rounded-lg p-3 text-center">
-                          <p className="text-lg font-bold text-[#1a472a]">{project.size}</p>
-                          <p className="text-xs text-[#1a472a]/80">Project Size</p>
-                        </div>
-                        <div className="bg-[#f0ebe3] rounded-lg p-3 text-center">
-                          <p className="text-lg font-bold text-[#1a472a]">{project.community}</p>
-                          <p className="text-xs text-[#1a472a]/80">Community</p>
-                        </div>
-                      </div>
-
-                      {/* Mixed Use Tags */}
-                      <div className="flex flex-wrap gap-2">
-                        {project.mixedUse.map(use => (
-                          <Badge 
-                            key={use} 
-                            variant="outline" 
-                            className="text-xs capitalize border-[#1a472a]/20"
-                          >
-                            {getMixedUseIcon(use)}
-                            <span className="ml-1">{use}</span>
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {/* Focus Areas */}
-                      <div className="flex flex-wrap gap-1">
-                        {project.focus.map(f => (
-                          <Badge 
-                            key={f} 
-                            className="bg-[#7dd87d]/10 text-[#1a472a] text-xs border-0"
-                          >
-                            {f}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2">
-                        <Link href={`/connect?path=live&project=${project.id}`} className="flex-1">
-                          <Button
-                            variant="outline"
-                            className="w-full border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
-                          >
-                            <Heart className="w-4 h-4 mr-2" />
-                            Express Interest
-                          </Button>
-                        </Link>
-                        <ShareButton
-                          where="showcase_project_card"
-                          title={`${project.name}, a ReGen Civics land project`}
-                          text={`Check out ${project.name}. ${project.description ?? ""}`.trim()}
-                          url={`/showcase`}
-                          variant="soft"
-                          label=""
-                          className="px-3 border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {filteredProjects.length === 0 && (
-                <div className="text-center py-12">
-                  <TreePine className="w-16 h-16 mx-auto text-[#1a472a]/20 mb-4" />
-                  <h3 className="text-xl font-semibold text-[#1a472a] mb-2">No projects found</h3>
-                  <p className="text-[#1a472a]/80">Try adjusting your search or filters</p>
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Alliance Partners Tab */}
-            <TabsContent value="alliances">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredAlliances.map((org) => (
-                  <Card 
-                    key={org.id} 
-                    className="bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 transition-all hover:shadow-lg"
-                  >
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle 
-                            className="text-[#1a472a] text-xl mb-1"
-                            style={{ fontFamily: 'var(--font-display)' }}
-                          >
-                            {org.name}
-                          </CardTitle>
-                          <CardDescription className="text-[#1a472a]/80">
-                            {org.type}
-                          </CardDescription>
-                        </div>
-                        <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
-                          <Globe className="w-5 h-5 text-[#1a472a]" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm text-[#1a472a]/75">
-                        {org.description}
-                      </p>
-
-                      {/* Focus Areas */}
-                      <div className="flex flex-wrap gap-1">
-                        {org.focus.map(f => (
-                          <Badge 
-                            key={f} 
-                            className="bg-[#7dd87d]/10 text-[#1a472a] text-xs border-0"
-                          >
-                            {f}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2">
-                        <a 
-                          href={org.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex-1"
-                        >
-                          <Button 
-                            variant="outline" 
-                            className="w-full border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
-                          >
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Visit Website
-                          </Button>
-                        </a>
-                        <Link href={`/connect?path=create_with_regens&org=${org.id}`}>
-                          <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {filteredAlliances.length === 0 && (
-                <div className="text-center py-12">
-                  <Network className="w-16 h-16 mx-auto text-[#1a472a]/20 mb-4" />
-                  <h3 className="text-xl font-semibold text-[#1a472a] mb-2">No organizations found</h3>
-                  <p className="text-[#1a472a]/80">Try adjusting your search</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </section>
+      <ShowcaseDirectory />
 
       {/* CTA Section */}
       <section className="py-16 bg-[#1a472a]">
@@ -608,3 +290,397 @@ export default function Showcase() {
     </div>
   );
 }
+
+/**
+ * Search, filters and results. The typed state lives here rather than in the
+ * page, so a keystroke leaves the hero and the closing call to action alone.
+ */
+function ShowcaseDirectory() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [focusFilter, setFocusFilter] = useState("all");
+  // The field stays live; the cards follow the search at a lower priority.
+  const deferredSearch = useDeferredValue(searchTerm);
+
+  // Fetch live DB projects and merge with static data, preferring DB values for stats
+  const { data: dbProjects } = trpc.community.activeLandProjects.useQuery();
+  const allProjects = useMemo(() => {
+    const rows = dbProjects ?? [];
+    const mergedProjects = landProjects.map((staticProject) => {
+      const match = rows.find(
+        (db) =>
+          db.projectName.toLowerCase() === staticProject.name.toLowerCase() ||
+          (db.location && staticProject.location.toLowerCase().includes(db.location.toLowerCase()))
+      );
+      if (!match) return staticProject;
+      return {
+        ...staticProject,
+        name: match.projectName || staticProject.name,
+        location: match.location
+          ? match.country
+            ? `${match.location}, ${match.country}`
+            : match.location
+          : staticProject.location,
+      };
+    });
+    // Append DB projects that have no static counterpart
+    const staticNames = new Set(landProjects.map((p) => p.name.toLowerCase()));
+    const dbOnly = rows
+      .filter(
+        (db) =>
+          !staticNames.has(db.projectName.toLowerCase()) &&
+          landProjects.every(
+            (s) => !db.location || !s.location.toLowerCase().includes(db.location.toLowerCase())
+          )
+      )
+      .map((db) => ({
+        id: `db-${db.id}`,
+        name: db.projectName,
+        location: db.location
+          ? db.country
+            ? `${db.location}, ${db.country}`
+            : db.location
+          : "Location TBC",
+        size: "",
+        community: "",
+        focus: [] as string[],
+        status: "active" as const,
+        description: "",
+        mixedUse: [] as string[],
+        image: "",
+      }));
+    return [...mergedProjects, ...dbOnly];
+  }, [dbProjects]);
+
+  // Get unique locations for filter
+  const locations = useMemo(
+    () => Array.from(new Set(allProjects.map(p => p.location.split(",")[0].trim()))),
+    [allProjects],
+  );
+
+  // Get unique focus areas
+  const focusAreas = useMemo(() => Array.from(new Set(allProjects.flatMap(p => p.focus))), [allProjects]);
+
+  // Filter projects
+  const filteredProjects = useMemo(() => allProjects.filter(project => {
+    const matchesSearch = project.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+                         project.description.toLowerCase().includes(deferredSearch.toLowerCase());
+    const matchesLocation = locationFilter === "all" || project.location.includes(locationFilter);
+    const matchesFocus = focusFilter === "all" || project.focus.includes(focusFilter);
+    return matchesSearch && matchesLocation && matchesFocus;
+  }), [allProjects, deferredSearch, locationFilter, focusFilter]);
+
+  // Filter alliances
+  const filteredAlliances = useMemo(() => allianceOrganizations.filter(org => {
+    return org.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+           org.description.toLowerCase().includes(deferredSearch.toLowerCase());
+  }), [deferredSearch]);
+
+  return (
+    <>
+      {/* Search and Filter Section */}
+      <section className="py-8 bg-white border-b border-[#1a472a]/10">
+        <div className="container">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#1a472a]/80" />
+              <Input
+                placeholder="Search projects and organizations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 border-[#1a472a]/60 focus:border-[#7dd87d]"
+              />
+            </div>
+            <ShowcaseFilters
+              locations={locations}
+              focusAreas={focusAreas}
+              locationFilter={locationFilter}
+              focusFilter={focusFilter}
+              onLocationChange={setLocationFilter}
+              onFocusChange={setFocusFilter}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <ShowcaseResults filteredProjects={filteredProjects} filteredAlliances={filteredAlliances} />
+    </>
+  );
+}
+
+/** The two filter Selects. Memoised: their items never change while someone types. */
+const ShowcaseFilters = memo(function ShowcaseFilters({
+  locations,
+  focusAreas,
+  locationFilter,
+  focusFilter,
+  onLocationChange,
+  onFocusChange,
+}: {
+  locations: string[];
+  focusAreas: string[];
+  locationFilter: string;
+  focusFilter: string;
+  onLocationChange: (value: string) => void;
+  onFocusChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex gap-3">
+      <Select value={locationFilter} onValueChange={onLocationChange}>
+        <SelectTrigger className="w-40 border-[#1a472a]/60">
+          <Filter className="w-4 h-4 mr-2" />
+          <SelectValue placeholder="Location" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Locations</SelectItem>
+          {locations.map(loc => (
+            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={focusFilter} onValueChange={onFocusChange}>
+        <SelectTrigger className="w-40 border-[#1a472a]/60">
+          <Leaf className="w-4 h-4 mr-2" />
+          <SelectValue placeholder="Focus Area" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Focus Areas</SelectItem>
+          {focusAreas.map(focus => (
+            <SelectItem key={focus} value={focus}>{focus}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+});
+
+/** Tabs and cards. Memoised, so they re-render only when the filtered lists change. */
+const ShowcaseResults = memo(function ShowcaseResults({
+  filteredProjects,
+  filteredAlliances,
+}: {
+  filteredProjects: ShowcaseProject[];
+  filteredAlliances: AllianceOrganization[];
+}) {
+  return (
+    <section className="py-12">
+      <div className="container">
+        <Tabs defaultValue="projects" className="space-y-8">
+          <TabsList className="bg-white border border-[#1a472a]/10 p-1">
+            <TabsTrigger 
+              value="projects"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white"
+            >
+              <TreePine className="w-4 h-4 mr-2" />
+              Land Projects ({filteredProjects.length})
+            </TabsTrigger>
+            <TabsTrigger 
+              value="alliances"
+              className="data-[state=active]:bg-[#1a472a] data-[state=active]:text-white"
+            >
+              <Network className="w-4 h-4 mr-2" />
+              Alliance Partners ({filteredAlliances.length})
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Land Projects Tab */}
+          <TabsContent value="projects">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))}
+            </div>
+
+            {filteredProjects.length === 0 && (
+              <div className="text-center py-12">
+                <TreePine className="w-16 h-16 mx-auto text-[#1a472a]/20 mb-4" />
+                <h3 className="text-xl font-semibold text-[#1a472a] mb-2">No projects found</h3>
+                <p className="text-[#1a472a]/80">Try adjusting your search or filters</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Alliance Partners Tab */}
+          <TabsContent value="alliances">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAlliances.map((org) => (
+                <AllianceCard key={org.id} org={org} />
+              ))}
+            </div>
+
+            {filteredAlliances.length === 0 && (
+              <div className="text-center py-12">
+                <Network className="w-16 h-16 mx-auto text-[#1a472a]/20 mb-4" />
+                <h3 className="text-xl font-semibold text-[#1a472a] mb-2">No organizations found</h3>
+                <p className="text-[#1a472a]/80">Try adjusting your search</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+    </section>
+  );
+});
+
+/** One land project. Memoised: a narrower search leaves the cards that stay on screen alone. */
+const ProjectCard = memo(function ProjectCard({ project }: { project: ShowcaseProject }) {
+  return (
+    <Card 
+      className="bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 transition-all hover:shadow-lg group"
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle 
+              className="text-[#1a472a] text-xl mb-1"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              {project.name}
+            </CardTitle>
+            <CardDescription className="flex items-center gap-1 text-[#1a472a]/80">
+              <MapPin className="w-4 h-4" />
+              {project.location}
+            </CardDescription>
+          </div>
+          <Badge className="bg-[#7dd87d]/20 text-[#1a472a] border-[#7dd87d]/30">
+            Active
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-[#1a472a]/75 line-clamp-3">
+          {project.description}
+        </p>
+                      
+        {/* Key Metrics */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-[#f0ebe3] rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-[#1a472a]">{project.size}</p>
+            <p className="text-xs text-[#1a472a]/80">Project Size</p>
+          </div>
+          <div className="bg-[#f0ebe3] rounded-lg p-3 text-center">
+            <p className="text-lg font-bold text-[#1a472a]">{project.community}</p>
+            <p className="text-xs text-[#1a472a]/80">Community</p>
+          </div>
+        </div>
+
+        {/* Mixed Use Tags */}
+        <div className="flex flex-wrap gap-2">
+          {project.mixedUse.map(use => (
+            <Badge 
+              key={use} 
+              variant="outline" 
+              className="text-xs capitalize border-[#1a472a]/20"
+            >
+              {getMixedUseIcon(use)}
+              <span className="ml-1">{use}</span>
+            </Badge>
+          ))}
+        </div>
+
+        {/* Focus Areas */}
+        <div className="flex flex-wrap gap-1">
+          {project.focus.map(f => (
+            <Badge 
+              key={f} 
+              className="bg-[#7dd87d]/10 text-[#1a472a] text-xs border-0"
+            >
+              {f}
+            </Badge>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <Link href={`/connect?path=live&project=${project.id}`} className="flex-1">
+            <Button
+              variant="outline"
+              className="w-full border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Express Interest
+            </Button>
+          </Link>
+          <ShareButton
+            where="showcase_project_card"
+            title={`${project.name}, a ReGen Civics land project`}
+            text={`Check out ${project.name}. ${project.description ?? ""}`.trim()}
+            url={`/showcase`}
+            variant="soft"
+            label=""
+            className="px-3 border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+/** One alliance organization, memoised the same way. */
+const AllianceCard = memo(function AllianceCard({ org }: { org: AllianceOrganization }) {
+  return (
+    <Card 
+      className="bg-white border-2 border-[#1a472a]/10 hover:border-[#7dd87d]/50 transition-all hover:shadow-lg"
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle 
+              className="text-[#1a472a] text-xl mb-1"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              {org.name}
+            </CardTitle>
+            <CardDescription className="text-[#1a472a]/80">
+              {org.type}
+            </CardDescription>
+          </div>
+          <div className="w-10 h-10 rounded-full bg-[#7dd87d]/20 flex items-center justify-center">
+            <Globe className="w-5 h-5 text-[#1a472a]" />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-[#1a472a]/75">
+          {org.description}
+        </p>
+
+        {/* Focus Areas */}
+        <div className="flex flex-wrap gap-1">
+          {org.focus.map(f => (
+            <Badge 
+              key={f} 
+              className="bg-[#7dd87d]/10 text-[#1a472a] text-xs border-0"
+            >
+              {f}
+            </Badge>
+          ))}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
+          <a 
+            href={org.website} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex-1"
+          >
+            <Button 
+              variant="outline" 
+              className="w-full border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a] hover:text-white"
+            >
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Visit Website
+            </Button>
+          </a>
+          <Link href={`/connect?path=create_with_regens&org=${org.id}`}>
+            <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]">
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});

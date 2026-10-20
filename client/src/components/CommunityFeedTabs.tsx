@@ -6,7 +6,7 @@
  * Every ranking factor shown in the ⓘ tooltip is a real fired boost from
  * shared/forumFeed.ts — the explanation and the scorer share constants.
  */
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { Link } from 'wouter';
 import { MessageCircle, Info, Sparkles } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
@@ -35,7 +35,9 @@ function firedReasons(post: any): string[] {
   return reasons;
 }
 
-function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
+// Memoized: the feed re-renders when the next page arrives or a tab changes,
+// and rows whose post has not changed should not render again.
+const FeedRow = memo(function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
   const [whyOpen, setWhyOpen] = useState(false);
   const unread = Number(post.unreadReplies ?? 0);
   const neverRead = Number(post.whyNeverRead ?? 0) === 1;
@@ -84,7 +86,7 @@ function FeedRow({ post, showWhy }: { post: any; showWhy: boolean }) {
       )}
     </div>
   );
-}
+});
 
 export function CommunityFeedTabs() {
   const { user } = useAuth();

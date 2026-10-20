@@ -671,7 +671,7 @@ function SectionOverlayLayer({
       overlayRef.current.style.background = `linear-gradient(to bottom, ${stops.join(", ")})`;
     };
 
-    const handleScroll = () => {
+    const scheduleUpdate = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           updateOverlay();
@@ -681,15 +681,17 @@ function SectionOverlayLayer({
       }
     };
 
-    // Initial calculation after a brief delay to let sections render
+    // Section positions are measured against the container, so scrolling
+    // never changes them; only the container's size does (sections loading,
+    // a resize). Watch that instead of every scroll frame, which read every
+    // section's position and rewrote the page-long gradient as people scrolled.
     const timer = setTimeout(updateOverlay, 100);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", updateOverlay);
+    const resizeObserver = new ResizeObserver(scheduleUpdate);
+    resizeObserver.observe(containerRef.current);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", updateOverlay);
+      resizeObserver.disconnect();
     };
   }, [sectionOverlays, overlayColor, overlayOpacity, containerRef]);
 

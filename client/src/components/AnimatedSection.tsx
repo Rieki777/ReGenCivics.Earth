@@ -3,6 +3,15 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 type AnimationType = 'fade-in' | 'slide-up' | 'slide-left' | 'slide-right' | 'scale-in' | 'blur-in';
 
+// A revealed section's styles, minus the transition both states share.
+const REVEALED_STYLE = {
+  // Animation complete: clear willChange so browser releases compositor layers
+  willChange: 'auto',
+  opacity: '1',
+  transform: 'translateY(0) translateX(0) scale(1)',
+  filter: 'blur(0)',
+} as const;
+
 interface AnimatedSectionProps {
   children: ReactNode;
   animation?: AnimationType;
@@ -28,11 +37,20 @@ export function AnimatedSection({
 }: AnimatedSectionProps) {
   const skipAnim = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  // A ref, not state: the reveal writes REVEALED_STYLE onto the element, so a
+  // section scrolling into view re-renders nothing. Render reads the ref only
+  // so that a later parent re-render keeps the revealed styles.
+  const revealedRef = useRef(false);
 
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
+
+    const reveal = () => {
+      revealedRef.current = true;
+      // Reduced motion renders no inline styles, so there is nothing to reveal.
+      if (element.style.opacity === '0') Object.assign(element.style, REVEALED_STYLE);
+    };
 
     // On-mount rect check: if any part of the element is already in (or
     // above) the viewport when this effect runs, reveal immediately. This
@@ -45,15 +63,15 @@ export function AnimatedSection({
     const rect = element.getBoundingClientRect();
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
     if (rect.top < viewportHeight && rect.bottom > 0) {
-      setIsVisible(true);
+      reveal();
       return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(element);
+          reveal();
+          observer.disconnect();
         }
       },
       { threshold, rootMargin: '0px 0px -30px 0px' }
@@ -62,7 +80,7 @@ export function AnimatedSection({
     observer.observe(element);
 
     return () => {
-      observer.unobserve(element);
+      observer.disconnect();
     };
   }, [threshold]);
 
@@ -77,7 +95,7 @@ export function AnimatedSection({
       willChange: 'opacity, transform',
     };
 
-    if (!isVisible) {
+    if (!revealedRef.current) {
       switch (animation) {
         case 'fade-in':
           return { ...base, opacity: 0 };
@@ -96,14 +114,7 @@ export function AnimatedSection({
       }
     }
 
-    return {
-      // Animation complete: clear willChange so browser releases compositor layers
-      transition: `opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms, transform 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${delay}ms`,
-      willChange: 'auto',
-      opacity: 1,
-      transform: 'translateY(0) translateX(0) scale(1)',
-      filter: 'blur(0)',
-    };
+    return { transition: base.transition, ...REVEALED_STYLE };
   };
 
   return (

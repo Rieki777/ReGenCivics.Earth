@@ -12,7 +12,7 @@
  * The component renders only minimal DOM and never blocks layout.
  */
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useModalOpen } from "@/hooks/useModalOpen";
 import {
   useSeasonalTheme,
@@ -25,15 +25,22 @@ import {
 } from "@/hooks/useAnimationLayer";
 
 function ScrollProgressRing() {
-  const progress = useScrollProgress();
+  const ring = useRef<HTMLDivElement>(null);
+  const [atEdge, setAtEdge] = useState(true);
+  // The ring's fill is written straight to the element each frame; React only
+  // renders when it crosses the top or bottom edge (STEERING.md section 13).
+  useScrollProgress((progress) => {
+    ring.current?.style.setProperty("--progress", String(progress));
+    setAtEdge(progress < 0.02 || progress > 0.995);
+  });
   // Hidden while a dialog is open: at z-60 it sat over the dialog.
   const modalOpen = useModalOpen();
-  const hidden = modalOpen || progress < 0.02 || progress > 0.995;
+  const hidden = modalOpen || atEdge;
   return (
     <div
+      ref={ring}
       aria-hidden="true"
       className={`scroll-progress-ring ${hidden ? "is-hidden" : ""}`}
-      style={{ ["--progress" as string]: String(progress) }}
     />
   );
 }

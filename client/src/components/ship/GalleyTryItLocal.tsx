@@ -12,22 +12,24 @@ import { Input } from "@/components/ui/input";
 import { remixHaul, rollRemix } from "@shared/galleyRemix";
 import { GalleyTrackCards, HEALTH_NOTE, type TrackId } from "./GalleyTracks";
 import { GalleyDishCard, type Dish } from "./GalleyDishCard";
+import { LiveText, useTextStore } from "./ShipFields";
 import { Sparkles, Dice5, Plus, X, ChefHat } from "lucide-react";
 
 export function GalleyTryItLocal() {
   const [items, setItems] = useState<string[]>([]);
-  const [name, setName] = useState("");
+  // Kept out of state, so a keystroke re-renders only the add row.
+  const itemName = useTextStore();
   const [track, setTrack] = useState<TrackId>("table");
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   function add(e: React.FormEvent) {
     e.preventDefault();
-    const n = name.trim();
+    const n = itemName.get().trim();
     if (!n) return;
-    if (items.some((i) => i.toLowerCase() === n.toLowerCase())) { setName(""); return; }
+    if (items.some((i) => i.toLowerCase() === n.toLowerCase())) { itemName.set(""); return; }
     setItems((xs) => [...xs, n]);
-    setName("");
+    itemName.set("");
   }
 
   function remix() {
@@ -76,8 +78,14 @@ export function GalleyTryItLocal() {
           </div>
         )}
         <form onSubmit={add} className="flex gap-2">
-          <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="What did you gather? (watermelon, kale, avocado…)" className="text-base" />
-          <Button type="submit" disabled={!name.trim()} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]"><Plus className="w-4 h-4 mr-1" aria-hidden="true" /> Add</Button>
+          <LiveText store={itemName}>
+            {(text) => (
+              <>
+                <Input value={text} onChange={(e) => itemName.set(e.target.value)} maxLength={200} placeholder="What did you gather? (watermelon, kale, avocado…)" className="text-base" />
+                <Button type="submit" disabled={!text.trim()} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]"><Plus className="w-4 h-4 mr-1" aria-hidden="true" /> Add</Button>
+              </>
+            )}
+          </LiveText>
         </form>
       </div>
 

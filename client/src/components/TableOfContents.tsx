@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback, useRef } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useThrottledScroll } from '@/hooks/useThrottledScroll';
 import type { TocSection } from '@/components/MobileTableOfContents';
@@ -15,6 +15,15 @@ interface TableOfContentsProps {
 
 export function TableOfContents({ sections }: TableOfContentsProps) {
   const [activeSection, setActiveSection] = useState<string>('');
+  // The scroll handler runs every frame; it sets state only when the
+  // highlighted section changes, and then only the two entries involved re-render.
+  const activeRef = useRef('');
+
+  const activate = useCallback((id: string) => {
+    if (id === activeRef.current) return;
+    activeRef.current = id;
+    setActiveSection(id);
+  }, []);
 
   const handleScroll = useCallback(() => {
     // Find which section is currently in view
@@ -23,22 +32,22 @@ export function TableOfContents({ sections }: TableOfContentsProps) {
       if (element) {
         const rect = element.getBoundingClientRect();
         if (rect.top <= 200 && rect.bottom >= 200) {
-          setActiveSection(section.id);
+          activate(section.id);
           break;
         }
       }
     }
-  }, [sections]);
+  }, [sections, activate]);
 
   useThrottledScroll(handleScroll);
 
-  const scrollToSection = (id: string) => {
+  const scrollToSection = useCallback((id: string) => {
     const element = document.getElementById(id);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(id);
+      activate(id);
     }
-  };
+  }, [activate]);
 
   return (
     <div className="hidden lg:block fixed right-8 top-32 w-72 max-h-[calc(100vh-200px)] overflow-y-auto z-40">
@@ -51,22 +60,12 @@ export function TableOfContents({ sections }: TableOfContentsProps) {
 
         <nav className="space-y-2">
           {sections.map((section) => (
-            <button
+            <TocEntry
               key={section.id}
-              onClick={() => scrollToSection(section.id)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-start gap-2 group ${
-                activeSection === section.id
-                  ? 'bg-[#7dd87d]/20 text-[#7dd87d] font-semibold'
-                  : 'text-white/70 hover:text-white hover:bg-white/5'
-              }`}
-            >
-              <ChevronRight className={`w-4 h-4 mt-0.5 flex-shrink-0 transition-transform ${
-                activeSection === section.id ? 'translate-x-1' : ''
-              }`} />
-              <span className="text-xs leading-relaxed">
-                {section.title}
-              </span>
-            </button>
+              section={section}
+              active={activeSection === section.id}
+              onSelect={scrollToSection}
+            />
           ))}
         </nav>
 
@@ -80,3 +79,31 @@ export function TableOfContents({ sections }: TableOfContentsProps) {
     </div>
   );
 }
+
+const TocEntry = memo(function TocEntry({
+  section,
+  active,
+  onSelect,
+}: {
+  section: TocSection;
+  active: boolean;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <button
+      onClick={() => onSelect(section.id)}
+      className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-start gap-2 group ${
+        active
+          ? 'bg-[#7dd87d]/20 text-[#7dd87d] font-semibold'
+          : 'text-white/70 hover:text-white hover:bg-white/5'
+      }`}
+    >
+      <ChevronRight className={`w-4 h-4 mt-0.5 flex-shrink-0 transition-transform ${
+        active ? 'translate-x-1' : ''
+      }`} />
+      <span className="text-xs leading-relaxed">
+        {section.title}
+      </span>
+    </button>
+  );
+});

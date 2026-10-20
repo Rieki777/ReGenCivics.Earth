@@ -8,7 +8,7 @@
  *   Auto-detects the next upcoming event.
  */
 
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,23 @@ const attendingOptions: { value: Attending; label: string; sub: string }[] = [
   { value: "maybe", label: "Maybe",                 sub: "Depends on timing" },
   { value: "no",    label: "Watching the recording", sub: "Can't make the live call" },
 ];
+
+// Memoised field parts: with the stable change handlers below, a keystroke
+// re-renders only the field it lands in, not every label and input on the form.
+const FieldLabel = memo(Label);
+const FieldInput = memo(Input);
+const FieldTextarea = memo(Textarea);
+// Label text with markup, built once so the memoised labels can skip renders too.
+const NAME_LABEL = (
+  <>
+    Name <span className="text-[#7dd87d]/75 font-normal">(optional)</span>
+  </>
+);
+const EMAIL_LABEL = (
+  <>
+    Email <span className="text-[#7dd87d]/75 font-normal">(optional)</span>
+  </>
+);
 
 function formatEventDate(startTime: Date | string): string {
   const d = new Date(startTime);
@@ -52,6 +69,10 @@ export default function ShapeNextSession() {
   const [attending, setAttending] = useState<Attending | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  const onNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value), []);
+  const onEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value), []);
+  const onTopicChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => setTopic(e.target.value), []);
 
   // Load upcoming events, pick the first one
   const { data: events = [], isLoading: eventsLoading } = trpc.events.list.useQuery({
@@ -184,27 +205,27 @@ export default function ShapeNextSession() {
           {/* Field 1: Name + Email (optional) */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-[#a8e6a8] text-sm font-medium">
-                Name <span className="text-[#7dd87d]/75 font-normal">(optional)</span>
-              </Label>
-              <Input
+              <FieldLabel htmlFor="name" className="text-[#a8e6a8] text-sm font-medium">
+                {NAME_LABEL}
+              </FieldLabel>
+              <FieldInput
                 id="name"
                 type="text"
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={onNameChange}
                 placeholder="How you'd like to be known"
                 className="bg-[#0d2a0d] border-[#7dd87d]/60 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-[#a8e6a8] text-sm font-medium">
-                Email <span className="text-[#7dd87d]/75 font-normal">(optional)</span>
-              </Label>
-              <Input
+              <FieldLabel htmlFor="email" className="text-[#a8e6a8] text-sm font-medium">
+                {EMAIL_LABEL}
+              </FieldLabel>
+              <FieldInput
                 id="email"
                 type="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={onEmailChange}
                 placeholder="If you want a reply"
                 className="bg-[#0d2a0d] border-[#7dd87d]/60 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 h-11"
               />
@@ -213,13 +234,13 @@ export default function ShapeNextSession() {
 
           {/* Field 2: Topic */}
           <div className="space-y-2">
-            <Label htmlFor="topic" className="text-[#a8e6a8] text-sm font-medium">
+            <FieldLabel htmlFor="topic" className="text-[#a8e6a8] text-sm font-medium">
               What do you want us to cover or go deeper on?
-            </Label>
-            <Textarea
+            </FieldLabel>
+            <FieldTextarea
               id="topic"
               value={topic}
-              onChange={e => setTopic(e.target.value)}
+              onChange={onTopicChange}
               placeholder="A question, a theme, something you want to understand better, a practitioner you'd love to hear from..."
               rows={4}
               className="bg-[#0d2a0d] border-[#7dd87d]/60 text-white placeholder:text-[#4a7c59] focus:border-[#7dd87d]/60 focus:ring-0 resize-none"
@@ -231,9 +252,9 @@ export default function ShapeNextSession() {
 
           {/* Field 3: Attending */}
           <div className="space-y-3">
-            <Label className="text-[#a8e6a8] text-sm font-medium block">
+            <FieldLabel className="text-[#a8e6a8] text-sm font-medium block">
               Will you be at the next session?
-            </Label>
+            </FieldLabel>
             <div className="grid gap-2">
               {attendingOptions.map(option => (
                 <button

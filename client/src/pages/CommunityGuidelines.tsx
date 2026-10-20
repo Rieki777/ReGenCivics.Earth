@@ -45,8 +45,26 @@ export default function CommunityGuidelines() {
       proposalsQuery.refetch();
     },
   });
+  const utils = trpc.useUtils();
+  // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.agreements.toggleVote.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ agreementId }) => {
+      const listKey = { status: 'open' as const, sortBy };
+      await Promise.all([utils.agreements.list.cancel(listKey), utils.agreements.myVotes.cancel()]);
+      const prevList = utils.agreements.list.getData(listKey);
+      const prevVotes = utils.agreements.myVotes.getData();
+      const voted = prevVotes?.includes(agreementId) ?? false;
+      utils.agreements.myVotes.setData(undefined, (old) => (voted ? (old ?? []).filter((id) => id !== agreementId) : [...(old ?? []), agreementId]));
+      utils.agreements.list.setData(listKey, (old) => old?.map((p) => (p.id === agreementId ? { ...p, voteCount: Math.max(0, p.voteCount + (voted ? -1 : 1)) } : p)));
+      return { listKey, prevList, prevVotes };
+    },
+    // Rolled back here, not in onError, so main.tsx's onError (the
+    // too-many-requests toast) still runs.
+    onSettled: (_data, error, _vars, ctx) => {
+      if (error && ctx) {
+        utils.agreements.list.setData(ctx.listKey, ctx.prevList);
+        utils.agreements.myVotes.setData(undefined, ctx.prevVotes);
+      }
       proposalsQuery.refetch();
       myVotesQuery.refetch();
     },

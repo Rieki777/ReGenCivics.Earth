@@ -15,7 +15,7 @@
  * Owner/admin sees inline "+ Add gear" / "Edit" controls (server adminProcedure
  * is the real gate).
  */
-import { useMemo, useState } from "react";
+import { memo, useDeferredValue, useMemo, useState } from "react";
 import { Link, useRoute } from "wouter";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -63,6 +63,64 @@ function CardTile({ item, inside }: { item: InventoryItem; inside: number }) {
   );
 }
 
+// ── Memoized lists, so typing in a search box above them skips them ───────────
+const CardGrid = memo(function CardGrid({ items, insideCounts, className }: {
+  items: InventoryItem[];
+  insideCounts: Map<number, number>;
+  className: string;
+}) {
+  return (
+    <ul className={className}>
+      {items.map((it) => (
+        <li key={it.id}><CardTile item={it} inside={insideCounts.get(it.id) ?? 0} /></li>
+      ))}
+    </ul>
+  );
+});
+
+// A row keeps its render while the results around it change.
+const SearchResultRow = memo(function SearchResultRow({ it, byId }: {
+  it: InventoryItem;
+  byId: Map<number, InventoryItem>;
+}) {
+  const path = ancestorNames(it, byId);
+  return (
+    <li>
+      <Link href={`/ship/inventory/${it.slug}`} className="flex items-center gap-3 rounded-xl border border-border bg-card/40 p-3 hover:border-[#2f5d3a]/40">
+        <span className="shrink-0 w-10 h-10 rounded-lg bg-[#0d1f16] border border-border flex items-center justify-center overflow-hidden">
+          {it.iconUrl
+            ? <img src={it.iconUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+            : <span aria-hidden="true">{meta(it.category).glyph}</span>}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="font-semibold text-foreground">{it.name}</span>
+          {path.length > 0 && <span className="block text-xs text-muted-foreground truncate">{path.join(" ▸ ")}</span>}
+        </span>
+        {it.quantity > 1 && <span className="shrink-0 text-xs text-muted-foreground">{it.quantity}{it.unit ? ` ${it.unit}` : ""}</span>}
+        {it.isContainer && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />}
+      </Link>
+    </li>
+  );
+});
+
+const SearchResults = memo(function SearchResults({ results, byId }: {
+  results: InventoryItem[];
+  byId: Map<number, InventoryItem>;
+}) {
+  return (
+    <>
+      <p className="text-sm text-muted-foreground mb-4">{results.length} {results.length === 1 ? "match" : "matches"}.</p>
+      {results.length === 0 ? (
+        <p className="text-muted-foreground py-8 text-center">Nothing matches that search.</p>
+      ) : (
+        <ul className="space-y-2">
+          {results.map((it) => <SearchResultRow key={it.id} it={it} byId={byId} />)}
+        </ul>
+      )}
+    </>
+  );
+});
+
 function OwnerBar({ onAdd, label }: { onAdd: () => void; label: string }) {
   return (
     <button
@@ -76,11 +134,79 @@ function OwnerBar({ onAdd, label }: { onAdd: () => void; label: string }) {
 }
 
 // ── Overview: top-level cards + piercing search ───────────────────────────────
+/**
+ * The search box, the category filter and what they find. It owns the search
+ * text, so a keystroke re-renders this section, not the page. The list follows
+ * the box a beat behind (useDeferredValue), so the letter typed paints first.
+ */
+function InventorySearch({ items, byId, insideCounts, topLevel, categories, isLoading, isError }: {
+  items: InventoryItem[];
+  byId: Map<number, InventoryItem>;
+  insideCounts: Map<number, number>;
+  topLevel: InventoryItem[];
+  categories: string[];
+  isLoading: boolean;
+  isError: boolean;
+}) {
+  const [search, setSearch] = useState("");
+  const [cat, setCat] = useState("All");
+  const shownSearch = useDeferredValue(search);
+
+  const searching = shownSearch.trim().length > 0 || cat !== "All";
+  const results = useMemo(() => {
+    if (!searching) return [];
+    const q = shownSearch.trim().toLowerCase();
+    return items.filter((i) => {
+      if (cat !== "All" && groupOf(i) !== cat) return false;
+      if (!q) return true;
+      return [i.name, i.description, i.storagePlace, i.manifestCategory, i.zone]
+        .filter(Boolean).some((f) => (f as string).toLowerCase().includes(q));
+    });
+  }, [items, shownSearch, cat, searching]);
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search every item, kit, and storage place…"
+            aria-label="Search the inventory"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2f5d3a]/40"
+          />
+        </div>
+        <select
+          value={cat}
+          onChange={(e) => setCat(e.target.value)}
+          aria-label="Filter by category"
+          className="py-2 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#2f5d3a]/40"
+        >
+          {categories.map((c) => <option key={c} value={c}>{c === "All" ? "All categories" : c}</option>)}
+        </select>
+      </div>
+
+      {isLoading && <p className="text-muted-foreground py-8 text-center">Opening the bag…</p>}
+      {isError && <p className="text-muted-foreground py-8 text-center">The inventory could not be loaded right now.</p>}
+      {!isLoading && !isError && items.length === 0 && (
+        <p className="text-muted-foreground py-8 text-center">The inventory hasn&apos;t been loaded aboard yet.</p>
+      )}
+
+      {/* Piercing search results (flat, with breadcrumb path) */}
+      {searching && <SearchResults results={results} byId={byId} />}
+
+      {/* Default: the top-level hero grid */}
+      {!searching && topLevel.length > 0 && (
+        <CardGrid items={topLevel} insideCounts={insideCounts} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3" />
+      )}
+    </>
+  );
+}
+
 function InventoryOverview() {
   const { data, isLoading, isError } = trpc.ship.inventory.list.useQuery(undefined, { staleTime: 60_000 });
   const items = (data ?? []) as InventoryItem[];
-  const [search, setSearch] = useState("");
-  const [cat, setCat] = useState("All");
   const canEdit = useCanEditInventory();
   const [editorOpen, setEditorOpen] = useState(false);
 
@@ -94,18 +220,6 @@ function InventoryOverview() {
     items.forEach((i) => s.add(groupOf(i)));
     return ["All", ...Array.from(s).sort()];
   }, [items]);
-
-  const searching = search.trim().length > 0 || cat !== "All";
-  const results = useMemo(() => {
-    if (!searching) return [];
-    const q = search.trim().toLowerCase();
-    return items.filter((i) => {
-      if (cat !== "All" && groupOf(i) !== cat) return false;
-      if (!q) return true;
-      return [i.name, i.description, i.storagePlace, i.manifestCategory, i.zone]
-        .filter(Boolean).some((f) => (f as string).toLowerCase().includes(q));
-    });
-  }, [items, search, cat, searching]);
 
   return (
     <PageWrapper>
@@ -133,74 +247,15 @@ function InventoryOverview() {
       </ShipSection>
 
       <ShipSection className="py-4">
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search every item, kit, and storage place…"
-              aria-label="Search the inventory"
-              className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2f5d3a]/40"
-            />
-          </div>
-          <select
-            value={cat}
-            onChange={(e) => setCat(e.target.value)}
-            aria-label="Filter by category"
-            className="py-2 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#2f5d3a]/40"
-          >
-            {categories.map((c) => <option key={c} value={c}>{c === "All" ? "All categories" : c}</option>)}
-          </select>
-        </div>
-
-        {isLoading && <p className="text-muted-foreground py-8 text-center">Opening the bag…</p>}
-        {isError && <p className="text-muted-foreground py-8 text-center">The inventory could not be loaded right now.</p>}
-        {!isLoading && !isError && items.length === 0 && (
-          <p className="text-muted-foreground py-8 text-center">The inventory hasn&apos;t been loaded aboard yet.</p>
-        )}
-
-        {/* Piercing search results (flat, with breadcrumb path) */}
-        {searching && (
-          <>
-            <p className="text-sm text-muted-foreground mb-4">{results.length} {results.length === 1 ? "match" : "matches"}.</p>
-            {results.length === 0 ? (
-              <p className="text-muted-foreground py-8 text-center">Nothing matches that search.</p>
-            ) : (
-              <ul className="space-y-2">
-                {results.map((it) => {
-                  const path = ancestorNames(it, byId);
-                  return (
-                    <li key={it.id}>
-                      <Link href={`/ship/inventory/${it.slug}`} className="flex items-center gap-3 rounded-xl border border-border bg-card/40 p-3 hover:border-[#2f5d3a]/40">
-                        <span className="shrink-0 w-10 h-10 rounded-lg bg-[#0d1f16] border border-border flex items-center justify-center overflow-hidden">
-                          {it.iconUrl
-                            ? <img src={it.iconUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-                            : <span aria-hidden="true">{meta(it.category).glyph}</span>}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="font-semibold text-foreground">{it.name}</span>
-                          {path.length > 0 && <span className="block text-xs text-muted-foreground truncate">{path.join(" ▸ ")}</span>}
-                        </span>
-                        {it.quantity > 1 && <span className="shrink-0 text-xs text-muted-foreground">{it.quantity}{it.unit ? ` ${it.unit}` : ""}</span>}
-                        {it.isContainer && <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </>
-        )}
-
-        {/* Default: the top-level hero grid */}
-        {!searching && topLevel.length > 0 && (
-          <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            {topLevel.map((it) => (
-              <li key={it.id}><CardTile item={it} inside={insideCounts.get(it.id) ?? 0} /></li>
-            ))}
-          </ul>
-        )}
+        <InventorySearch
+          items={items}
+          byId={byId}
+          insideCounts={insideCounts}
+          topLevel={topLevel}
+          categories={categories}
+          isLoading={isLoading}
+          isError={isError}
+        />
       </ShipSection>
 
       {canEdit && (
@@ -218,6 +273,117 @@ function InventoryOverview() {
 }
 
 // ── Detail sub-page: breadcrumb + children ────────────────────────────────────
+// A row keeps its render while the search around it changes.
+const LeafRow = memo(function LeafRow({ c, canEdit, onEdit }: {
+  c: InventoryItem;
+  canEdit: boolean;
+  onEdit: (it: InventoryItem) => void;
+}) {
+  const cm = meta(c.category);
+  return (
+    <li className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-3">
+      <span className="shrink-0 w-14 h-14 rounded-lg bg-[#0d1f16] border border-border flex items-center justify-center overflow-hidden">
+        {c.iconUrl
+          ? <img src={c.iconUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
+          : <span className="text-2xl" aria-hidden="true">{cm.glyph}</span>}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <span className="font-semibold text-foreground">{c.name}</span>
+          <span className="shrink-0 flex items-center gap-1.5">
+            {c.quantity > 1 && <span className="text-xs rounded-full bg-[#2f5d3a]/10 dark:bg-[#ffd700]/10 text-[#2f5d3a] dark:text-[#ffd700] px-2 py-0.5">{c.quantity}{c.unit ? ` ${c.unit}` : ""}</span>}
+            {canEdit && (
+              <button type="button" onClick={() => onEdit(c)} aria-label={`Edit ${c.name}`} className="text-muted-foreground hover:text-foreground">
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </span>
+        </div>
+        {c.storagePlace && <p className="text-sm text-muted-foreground mt-0.5">📍 {c.storagePlace}</p>}
+        {c.description && <p className="text-sm text-foreground/70 mt-0.5">{c.description}</p>}
+        {c.itemCondition && !["good", "n/a"].includes(c.itemCondition.toLowerCase()) && (
+          <span className="inline-block mt-1.5 text-xs rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5">{c.itemCondition}</span>
+        )}
+      </div>
+    </li>
+  );
+});
+
+const LeafGroups = memo(function LeafGroups({ groups, canEdit, onEdit }: {
+  groups: Array<[string, InventoryItem[]]>;
+  canEdit: boolean;
+  onEdit: (it: InventoryItem) => void;
+}) {
+  return (
+    <>
+      {groups.map(([group, rows]) => (
+        <section key={group} className="mb-8">
+          <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">{group}</h2>
+          <ul className="grid sm:grid-cols-2 gap-3">
+            {rows.map((c) => <LeafRow key={c.id} c={c} canEdit={canEdit} onEdit={onEdit} />)}
+          </ul>
+        </section>
+      ))}
+    </>
+  );
+});
+
+/**
+ * A kit's contents and the search inside it. It owns the search text, so a
+ * keystroke re-renders this section, not the page. The rows follow the box a
+ * beat behind (useDeferredValue), so the letter typed paints first. It stays
+ * mounted while hidden, so the search text survives a kit loading, as before.
+ */
+function KitContents({ show, childContainers, leafChildren, insideCounts, canEdit, onEdit }: {
+  show: boolean;
+  childContainers: InventoryItem[];
+  leafChildren: InventoryItem[];
+  insideCounts: Map<number, number>;
+  canEdit: boolean;
+  onEdit: (it: InventoryItem) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const q = useDeferredValue(search).trim().toLowerCase();
+
+  // Group the matching leaf children by manifest category.
+  const leafGroups = useMemo(() => {
+    const matchLeaf = (c: InventoryItem) =>
+      !q || [c.name, c.description, c.storagePlace, c.manifestCategory].filter(Boolean).some((f) => (f as string).toLowerCase().includes(q));
+    const map = new Map<string, InventoryItem[]>();
+    for (const c of leafChildren.filter(matchLeaf)) {
+      const g = groupOf(c);
+      (map.get(g) ?? map.set(g, []).get(g)!).push(c);
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [leafChildren, q]);
+
+  if (!show) return null;
+  return (
+    <ShipSection className="py-4">
+      {leafChildren.length > 0 && (
+        <div className="relative max-w-sm mb-6">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search inside this kit…"
+            aria-label="Search inside this kit"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2f5d3a]/40"
+          />
+        </div>
+      )}
+
+      {/* Child containers drill further */}
+      {childContainers.length > 0 && (
+        <CardGrid items={childContainers} insideCounts={insideCounts} className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mb-8" />
+      )}
+
+      {/* Leaf children: grouped list with real photos */}
+      <LeafGroups groups={leafGroups} canEdit={canEdit} onEdit={onEdit} />
+    </ShipSection>
+  );
+}
+
 function InventoryDetail({ slug }: { slug: string }) {
   const getQ = trpc.ship.inventory.get.useQuery({ slug }, { staleTime: 60_000 });
   const listQ = trpc.ship.inventory.list.useQuery(undefined, { staleTime: 60_000 });
@@ -226,7 +392,6 @@ function InventoryDetail({ slug }: { slug: string }) {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [addParent, setAddParent] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
 
   const item = (getQ.data?.item ?? null) as InventoryItem | null;
   const children = (getQ.data?.children ?? []) as InventoryItem[];
@@ -237,21 +402,6 @@ function InventoryDetail({ slug }: { slug: string }) {
 
   const childContainers = children.filter((c) => c.isContainer);
   const leafChildren = children.filter((c) => !c.isContainer);
-
-  const q = search.trim().toLowerCase();
-  const matchLeaf = (c: InventoryItem) =>
-    !q || [c.name, c.description, c.storagePlace, c.manifestCategory].filter(Boolean).some((f) => (f as string).toLowerCase().includes(q));
-  const shownLeaves = leafChildren.filter(matchLeaf);
-
-  // Group leaf children by manifest category.
-  const leafGroups = useMemo(() => {
-    const map = new Map<string, InventoryItem[]>();
-    for (const c of shownLeaves) {
-      const g = groupOf(c);
-      (map.get(g) ?? map.set(g, []).get(g)!).push(c);
-    }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [shownLeaves]);
 
   function openEdit(it: InventoryItem) { setEditing(it); setAddParent(null); setEditorOpen(true); }
   function openAddChild() { setEditing(null); setAddParent(item?.id ?? null); setEditorOpen(true); }
@@ -325,70 +475,14 @@ function InventoryDetail({ slug }: { slug: string }) {
         )}
       </ShipSection>
 
-      {item && children.length > 0 && (
-        <ShipSection className="py-4">
-          {leafChildren.length > 0 && (
-            <div className="relative max-w-sm mb-6">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search inside this kit…"
-                aria-label="Search inside this kit"
-                className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#2f5d3a]/40"
-              />
-            </div>
-          )}
-
-          {/* Child containers drill further */}
-          {childContainers.length > 0 && (
-            <ul className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mb-8">
-              {childContainers.map((c) => (
-                <li key={c.id}><CardTile item={c} inside={insideCounts.get(c.id) ?? 0} /></li>
-              ))}
-            </ul>
-          )}
-
-          {/* Leaf children: grouped list with real photos */}
-          {leafGroups.map(([group, rows]) => (
-            <section key={group} className="mb-8">
-              <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">{group}</h2>
-              <ul className="grid sm:grid-cols-2 gap-3">
-                {rows.map((c) => {
-                  const cm = meta(c.category);
-                  return (
-                    <li key={c.id} className="flex items-start gap-3 rounded-xl border border-border bg-card/40 p-3">
-                      <span className="shrink-0 w-14 h-14 rounded-lg bg-[#0d1f16] border border-border flex items-center justify-center overflow-hidden">
-                        {c.iconUrl
-                          ? <img src={c.iconUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-                          : <span className="text-2xl" aria-hidden="true">{cm.glyph}</span>}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-2">
-                          <span className="font-semibold text-foreground">{c.name}</span>
-                          <span className="shrink-0 flex items-center gap-1.5">
-                            {c.quantity > 1 && <span className="text-xs rounded-full bg-[#2f5d3a]/10 dark:bg-[#ffd700]/10 text-[#2f5d3a] dark:text-[#ffd700] px-2 py-0.5">{c.quantity}{c.unit ? ` ${c.unit}` : ""}</span>}
-                            {canEdit && (
-                              <button type="button" onClick={() => openEdit(c)} aria-label={`Edit ${c.name}`} className="text-muted-foreground hover:text-foreground">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </span>
-                        </div>
-                        {c.storagePlace && <p className="text-sm text-muted-foreground mt-0.5">📍 {c.storagePlace}</p>}
-                        {c.description && <p className="text-sm text-foreground/70 mt-0.5">{c.description}</p>}
-                        {c.itemCondition && !["good", "n/a"].includes(c.itemCondition.toLowerCase()) && (
-                          <span className="inline-block mt-1.5 text-xs rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-2 py-0.5">{c.itemCondition}</span>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-        </ShipSection>
-      )}
+      <KitContents
+        show={Boolean(item) && children.length > 0}
+        childContainers={childContainers}
+        leafChildren={leafChildren}
+        insideCounts={insideCounts}
+        canEdit={canEdit}
+        onEdit={openEdit}
+      />
 
       {canEdit && (
         <InventoryEditorModal

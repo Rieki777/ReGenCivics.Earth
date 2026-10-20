@@ -25,9 +25,20 @@ export function FollowButton({ targetType, targetId, targetLabel, size = 'sm', c
     { targetType, targetId },
     { enabled: !!user }
   );
+  // The button flips on the tap; the server's answer settles it, and an
+  // error puts it back. The rollback lives in onSettled so the app-wide
+  // onError in main.tsx (the too-many-requests toast) still runs.
+  const key = { targetType, targetId };
   const toggle = trpc.forumFeed.follows.toggle.useMutation({
-    onSuccess: () => {
-      utils.forumFeed.follows.isFollowing.invalidate({ targetType, targetId });
+    onMutate: async () => {
+      await utils.forumFeed.follows.isFollowing.cancel(key);
+      const prev = utils.forumFeed.follows.isFollowing.getData(key);
+      utils.forumFeed.follows.isFollowing.setData(key, (old) => (old ? { ...old, following: !old.following } : old));
+      return { prev };
+    },
+    onSettled: (_data, error, _vars, context) => {
+      if (error && context?.prev) utils.forumFeed.follows.isFollowing.setData(key, context.prev);
+      utils.forumFeed.follows.isFollowing.invalidate(key);
       utils.forumFeed.feed.invalidate();
     },
   });
@@ -42,8 +53,10 @@ export function FollowButton({ targetType, targetId, targetLabel, size = 'sm', c
     <Button
       variant={following ? 'outline' : 'default'}
       size={size}
-      disabled={toggle.isPending}
-      onClick={() => toggle.mutate({ targetType, targetId })}
+      onClick={() => {
+        // The server toggles, so a second tap before the first lands would undo it.
+        if (!toggle.isPending) toggle.mutate({ targetType, targetId });
+      }}
       aria-pressed={following}
       className={
         (following

@@ -116,11 +116,18 @@ function RecordingEmailToggle() {
   const utils = trpc.useUtils();
   const { data, isLoading } = trpc.newsletter.recordingNotifyStatus.useQuery();
   const mutation = trpc.newsletter.toggleRecordingNotify.useMutation({
+    // The switch moves at once; a failure puts it back (STEERING.md section 13).
+    onMutate: ({ enabled }) => {
+      const prev = utils.newsletter.recordingNotifyStatus.getData();
+      utils.newsletter.recordingNotifyStatus.setData(undefined, (old) => (old ? { ...old, enabled } : old));
+      return { prev };
+    },
     onSuccess: (res) => {
       utils.newsletter.recordingNotifyStatus.setData(undefined, { enabled: res.enabled });
       toast.success(res.enabled ? "Recording updates enabled" : "Recording updates disabled");
     },
-    onError: (err) => {
+    onError: (err, _vars, ctx) => {
+      if (ctx?.prev) utils.newsletter.recordingNotifyStatus.setData(undefined, ctx.prev);
       toast.error("Failed to update", { description: err.message });
     },
   });

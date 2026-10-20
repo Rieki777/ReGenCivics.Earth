@@ -2,9 +2,39 @@
  * HeroPageLoader - Shows TaoSpinner with quotes while hero page loads.
  * Preloads background image(s) and waits for initial data before revealing content.
  * Used on the 5 hero pages: Home, Fund, Land, Ally, Play.
+ *
+ * The quote moment greets the first hero page someone opens in a visit. After
+ * that, going back to Home or moving between Fund, Land, Ally and Play shows
+ * the page at once: the 800ms minimum and the fade made every return trip wait
+ * well over a second (STEERING.md section 13).
  */
 import { useState, useEffect, useCallback, ReactNode } from "react";
 import { TaoSpinner } from "./TaoSpinner";
+
+const QUOTE_SEEN_KEY = "hero-quote-seen";
+
+function quoteSeenThisVisit(): boolean {
+  try {
+    return sessionStorage.getItem(QUOTE_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markQuoteSeen() {
+  try {
+    sessionStorage.setItem(QUOTE_SEEN_KEY, "1");
+  } catch {
+    /* storage blocked: the quote shows again next time, nothing else changes */
+  }
+}
+
+export function HeroPageLoader(props: HeroPageLoaderProps) {
+  // Read once per mount: a page that started with the quote keeps it until it reveals.
+  const [skipQuote] = useState(quoteSeenThisVisit);
+  if (skipQuote) return <>{props.children}</>;
+  return <HeroQuoteLoader {...props} />;
+}
 
 interface HeroPageLoaderProps {
   children: ReactNode;
@@ -16,7 +46,7 @@ interface HeroPageLoaderProps {
   minDisplayTime?: number;
 }
 
-export function HeroPageLoader({
+function HeroQuoteLoader({
   children,
   images,
   dataLoading = false,
@@ -65,6 +95,11 @@ export function HeroPageLoader({
     const timer = setTimeout(() => setMinTimeElapsed(true), minDisplayTime);
     return () => clearTimeout(timer);
   }, [minDisplayTime]);
+
+  // Once this page has revealed, later hero pages in this visit skip the quote.
+  useEffect(() => {
+    if (revealed) markQuoteSeen();
+  }, [revealed]);
 
   // Reveal when everything is ready
   useEffect(() => {

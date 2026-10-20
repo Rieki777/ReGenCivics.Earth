@@ -10,7 +10,7 @@
  * and "the draw", never "raffle" or "tickets". Free sweepstakes, not a raffle.
  * It fires only public procedures, so a logged-out visitor is never redirected.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Anchor, Copy, Check, Users, Loader2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -22,6 +22,7 @@ import { cdnImg } from "@/lib/utils";
 import { toast } from "sonner";
 import { ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import { FreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
+import { LiveText, useTextStore } from "@/components/ship/ShipFields";
 
 const HERO_SRC = cdnImg("https://assets.regencivics.earth/ship/photo_2026-07-12_13-55-09.jpg", 1600);
 
@@ -46,6 +47,42 @@ const TAG_CHOICES: Array<{ value: FunnelTag; label: string }> = [
   { value: "curious", label: "Just curious" },
 ];
 
+/**
+ * The nomination fields. They own the text being typed, so a keystroke
+ * re-renders this row, not the page. draftRef keeps the text if the row is
+ * closed and reopened, as the page-level state it replaced did.
+ */
+function NominationFields({ draftRef, pending, onSubmit }: {
+  draftRef: React.MutableRefObject<{ name: string; why: string }>;
+  pending: boolean;
+  onSubmit: (nomineeName: string, nominationText: string) => void;
+}) {
+  const [nomName, setNomName] = useState(draftRef.current.name);
+  const [nomWhy, setNomWhy] = useState(draftRef.current.why);
+  useEffect(() => { draftRef.current = { name: nomName, why: nomWhy }; }, [draftRef, nomName, nomWhy]);
+
+  return (
+    <li className="rounded-xl bg-background/60 p-3 space-y-2">
+      <Input value={nomName} onChange={(e) => setNomName(e.target.value)} placeholder="Project name" aria-label="Project name" />
+      <textarea
+        value={nomWhy}
+        onChange={(e) => setNomWhy(e.target.value)}
+        placeholder="Why should the ship visit? (a sentence or two)"
+        aria-label="Why should the ship visit"
+        rows={3}
+        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm"
+      />
+      <Button
+        size="sm"
+        disabled={pending || nomName.trim().length < 2 || nomWhy.trim().length < 10}
+        onClick={() => onSubmit(nomName.trim(), nomWhy.trim())}
+      >
+        Submit nomination
+      </Button>
+    </li>
+  );
+}
+
 export default function ShipGiveaway() {
   const params = useMemo(
     () => new URLSearchParams(typeof window !== "undefined" ? window.location.search : ""),
@@ -60,13 +97,14 @@ export default function ShipGiveaway() {
   const tag = trpc.shipGiveaway.tag.useMutation();
   const bonus = trpc.shipGiveaway.bonus.useMutation();
 
-  const [email, setEmail] = useState("");
+  // Kept out of page state, so a keystroke re-renders only the email field.
+  const email = useTextStore();
   const [phase, setPhase] = useState<"form" | "sent" | "thanks" | "verifying">(verifyToken ? "verifying" : "form");
   const [me, setMe] = useState<GiveawayMe | null>(null);
   const [copied, setCopied] = useState(false);
   const [nomOpen, setNomOpen] = useState(false);
-  const [nomName, setNomName] = useState("");
-  const [nomWhy, setNomWhy] = useState("");
+  // NominationFields owns the nomination text; this keeps it across close and reopen.
+  const nomDraft = useRef({ name: "", why: "" });
 
   // A confirmation link landed here: confirm the entry, then show the thanks state.
   useEffect(() => {
@@ -91,9 +129,9 @@ export default function ShipGiveaway() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.get().trim()) return;
     try {
-      await enter.mutateAsync({ email: email.trim(), referredBy: crewParam || undefined, src: "giveaway_page" });
+      await enter.mutateAsync({ email: email.get().trim(), referredBy: crewParam || undefined, src: "giveaway_page" });
       setPhase("sent");
     } catch (err) {
       toast.error((err as { message?: string })?.message ?? "Something went wrong. Please try again.");
@@ -119,8 +157,7 @@ export default function ShipGiveaway() {
       else toast("Noted.");
       if (kind === "nomination") {
         setNomOpen(false);
-        setNomName("");
-        setNomWhy("");
+        nomDraft.current = { name: "", why: "" };
       }
     } catch (err) {
       toast.error((err as { message?: string })?.message ?? "Could not add that. Please try again.");
@@ -177,16 +214,20 @@ export default function ShipGiveaway() {
           {phase === "form" && (
             <form onSubmit={onSubmit} className="max-w-md mx-auto">
               <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  aria-label="Your email address"
-                  disabled={!canEnter || enter.isPending}
-                  className="bg-white/95 text-[#08301c] placeholder:text-[#08301c]/50 border-white/40"
-                />
+                <LiveText store={email}>
+                  {(text) => (
+                    <Input
+                      type="email"
+                      required
+                      value={text}
+                      onChange={(e) => email.set(e.target.value)}
+                      placeholder="you@example.com"
+                      aria-label="Your email address"
+                      disabled={!canEnter || enter.isPending}
+                      className="bg-white/95 text-[#08301c] placeholder:text-[#08301c]/50 border-white/40"
+                    />
+                  )}
+                </LiveText>
                 <Button
                   type="submit"
                   size="lg"
@@ -311,24 +352,11 @@ export default function ShipGiveaway() {
                   )}
                 </li>
                 {nomOpen && me.bonus.nomination === 0 && (
-                  <li className="rounded-xl bg-background/60 p-3 space-y-2">
-                    <Input value={nomName} onChange={(e) => setNomName(e.target.value)} placeholder="Project name" aria-label="Project name" />
-                    <textarea
-                      value={nomWhy}
-                      onChange={(e) => setNomWhy(e.target.value)}
-                      placeholder="Why should the ship visit? (a sentence or two)"
-                      aria-label="Why should the ship visit"
-                      rows={3}
-                      className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base md:text-sm"
-                    />
-                    <Button
-                      size="sm"
-                      disabled={bonus.isPending || nomName.trim().length < 2 || nomWhy.trim().length < 10}
-                      onClick={() => addBonus("nomination", { nomineeName: nomName.trim(), nominationText: nomWhy.trim() })}
-                    >
-                      Submit nomination
-                    </Button>
-                  </li>
+                  <NominationFields
+                    draftRef={nomDraft}
+                    pending={bonus.isPending}
+                    onSubmit={(nomineeName, nominationText) => addBonus("nomination", { nomineeName, nominationText })}
+                  />
                 )}
                 <li className="flex items-start justify-between gap-3">
                   <span><strong>Follow on Instagram.</strong> Adds one entry.</span>

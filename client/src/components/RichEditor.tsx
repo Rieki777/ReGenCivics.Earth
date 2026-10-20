@@ -1,8 +1,8 @@
-import { useEditor, EditorContent } from '@tiptap/react'
+import { useEditor, useEditorState, EditorContent, type EditorStateSnapshot } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import React, { useEffect, forwardRef, useImperativeHandle, useState, useRef, useCallback } from 'react'
+import React, { useEffect, forwardRef, useImperativeHandle, useState, useRef, useCallback, memo } from 'react'
 import { trpc } from '@/lib/trpc'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { ForumMarkdown } from '@/components/ForumMarkdown'
@@ -149,6 +149,49 @@ function fileToBase64(file: File): Promise<string> {
 
 const stopBlur = (e: React.MouseEvent) => { e.preventDefault() }
 
+// Declared once: useEditor compares its options on every render and pushes them
+// into the editor when they differ, and a list rebuilt per render always does.
+const EXTENSIONS = [
+  StarterKit,
+  Link.configure({ openOnClick: false }),
+  Image.configure({ allowBase64: false }),
+]
+
+// What the toolbar lights up for the text at the cursor.
+type ToolbarState = {
+  bold: boolean
+  italic: boolean
+  code: boolean
+  heading2: boolean
+  heading3: boolean
+  bulletList: boolean
+  orderedList: boolean
+  blockquote: boolean
+  codeBlock: boolean
+  link: boolean
+}
+
+const NOTHING_ACTIVE: ToolbarState = {
+  bold: false, italic: false, code: false, heading2: false, heading3: false,
+  bulletList: false, orderedList: false, blockquote: false, codeBlock: false, link: false,
+}
+
+function selectToolbarState({ editor }: EditorStateSnapshot): ToolbarState {
+  if (!editor) return NOTHING_ACTIVE
+  return {
+    bold: editor.isActive('bold'),
+    italic: editor.isActive('italic'),
+    code: editor.isActive('code'),
+    heading2: editor.isActive('heading', { level: 2 }),
+    heading3: editor.isActive('heading', { level: 3 }),
+    bulletList: editor.isActive('bulletList'),
+    orderedList: editor.isActive('orderedList'),
+    blockquote: editor.isActive('blockquote'),
+    codeBlock: editor.isActive('codeBlock'),
+    link: editor.isActive('link'),
+  }
+}
+
 // Shared toolbar buttons, used in both the desktop (top) and mobile (bottom)
 // toolbars. Declared here rather than inside RichEditor so React keeps the same
 // buttons between keystrokes instead of rebuilding both toolbars every time.
@@ -179,16 +222,19 @@ function ToolbarButton({
 
 type ToolbarContentsProps = {
   editor: NonNullable<ReturnType<typeof useEditor>>
+  active: ToolbarState
   isPreview: boolean
-  setIsPreview: React.Dispatch<React.SetStateAction<boolean>>
+  onTogglePreview: () => void
   setLinkUrl: React.Dispatch<React.SetStateAction<string>>
   setLinkPanelOpen: React.Dispatch<React.SetStateAction<boolean>>
   isUploading: boolean
   handleImageFile: (file: File, editorInstance: NonNullable<ReturnType<typeof useEditor>>) => Promise<boolean>
 }
 
-function ToolbarContents({
-  editor, isPreview, setIsPreview, setLinkUrl, setLinkPanelOpen, isUploading, handleImageFile,
+// Memoized, with every prop stable between keystrokes: a toolbar re-renders
+// only when a button's lit state, the preview toggle or the upload changes.
+const ToolbarContents = memo(function ToolbarContents({
+  editor, active, isPreview, onTogglePreview, setLinkUrl, setLinkPanelOpen, isUploading, handleImageFile,
 }: ToolbarContentsProps) {
   return (
     <>
@@ -196,7 +242,7 @@ function ToolbarContents({
       <button
         type="button"
         onMouseDown={stopBlur}
-        onClick={() => setIsPreview((p) => !p)}
+        onClick={onTogglePreview}
         title={isPreview ? 'Back to editor' : 'Preview'}
         aria-label={isPreview ? 'Back to editor' : 'Preview'}
         className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium min-h-[44px] sm:min-h-[30px] transition-colors hover:bg-white/15 text-white/70"
@@ -208,21 +254,21 @@ function ToolbarContents({
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
-        isActive={editor.isActive('bold')}
+        isActive={active.bold}
         title="Bold (Ctrl+B)"
       >
         <Bold className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        isActive={editor.isActive('italic')}
+        isActive={active.italic}
         title="Italic (Ctrl+I)"
       >
         <Italic className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCode().run()}
-        isActive={editor.isActive('code')}
+        isActive={active.code}
         title="Inline code"
       >
         <Code className="w-4 h-4" />
@@ -232,14 +278,14 @@ function ToolbarContents({
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive('heading', { level: 2 })}
+        isActive={active.heading2}
         title="Heading 2"
       >
         <Heading2 className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive('heading', { level: 3 })}
+        isActive={active.heading3}
         title="Heading 3"
       >
         <Heading3 className="w-4 h-4" />
@@ -249,28 +295,28 @@ function ToolbarContents({
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={editor.isActive('bulletList')}
+        isActive={active.bulletList}
         title="Bullet list"
       >
         <List className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={editor.isActive('orderedList')}
+        isActive={active.orderedList}
         title="Numbered list"
       >
         <ListOrdered className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        isActive={editor.isActive('blockquote')}
+        isActive={active.blockquote}
         title="Blockquote"
       >
         <Quote className="w-4 h-4" />
       </ToolbarButton>
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        isActive={editor.isActive('codeBlock')}
+        isActive={active.codeBlock}
         title="Code block"
       >
         <AlignLeft className="w-4 h-4" />
@@ -292,7 +338,7 @@ function ToolbarContents({
           setLinkUrl(existing)
           setLinkPanelOpen((o) => !o)
         }}
-        isActive={editor.isActive('link')}
+        isActive={active.link}
         title="Insert link"
       >
         <Link2 className="w-4 h-4" />
@@ -319,13 +365,16 @@ function ToolbarContents({
       </label>
     </>
   )
-}
+})
 
 export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function RichEditor(
   { value, onChange, placeholder, className },
   ref
 ) {
   const [isPreview, setIsPreview] = useState(false)
+  // The markdown for the preview. A keystroke only updates the ref; state
+  // takes it when the preview opens, and on each change while it is open.
+  const previewMarkdownRef = useRef(value)
   const [previewContent, setPreviewContent] = useState(value)
   const [slashOpen, setSlashOpen] = useState(false)
   const [slashFilter, setSlashFilter] = useState('')
@@ -358,19 +407,21 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
   // The markdown onUpdate last sent through onChange, so the value syncing
   // effect below can recognise its own echo without serializing the doc again.
   const lastMarkdownRef = useRef<string | null>(null)
+  // The first value only, for the same options check as EXTENSIONS. Later
+  // values reach the doc through the syncing effect below.
+  const [initialContent] = useState(value)
 
   const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Link.configure({ openOnClick: false }),
-      Image.configure({ allowBase64: false }),
-    ],
-    content: value,
+    extensions: EXTENSIONS,
+    content: initialContent,
+    // The toolbars follow the doc through useEditorState below.
+    shouldRerenderOnTransaction: false,
     onUpdate: ({ editor }) => {
       const md = serializeToMarkdown(editor)
       lastMarkdownRef.current = md
       onChange(md)
-      setPreviewContent(md)
+      previewMarkdownRef.current = md
+      if (isPreview) setPreviewContent(md)
 
       // Slash menu detection
       const { from } = editor.state.selection
@@ -409,6 +460,15 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
       }
     },
   })
+
+  // Re-renders the editor only when a lit toolbar state flips: the cursor
+  // moving into bold text, a list toggled on.
+  const active = useEditorState({ editor, selector: selectToolbarState })
+
+  const togglePreview = useCallback(() => {
+    if (!isPreview) setPreviewContent(previewMarkdownRef.current)
+    setIsPreview(!isPreview)
+  }, [isPreview])
 
   // Replace the trailing @token before the caret with @handle and a space.
   const insertMention = useCallback((handle: string) => {
@@ -532,7 +592,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
   )
 
   const toolbarProps: ToolbarContentsProps = {
-    editor, isPreview, setIsPreview, setLinkUrl, setLinkPanelOpen, isUploading, handleImageFile,
+    editor, active, isPreview, onTogglePreview: togglePreview, setLinkUrl, setLinkPanelOpen, isUploading, handleImageFile,
   }
 
   return (
@@ -578,7 +638,7 @@ export const RichEditor = forwardRef<RichEditorHandle, RichEditorProps>(function
           >
             Apply
           </button>
-          {editor.isActive('link') && (
+          {active.link && (
             <button
               type="button"
               onClick={() => { editor.chain().focus().unsetLink().run(); setLinkPanelOpen(false) }}

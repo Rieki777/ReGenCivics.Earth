@@ -141,8 +141,10 @@ export function TaoSpinner({
 
   const opacity = phase === "fading-out" ? "opacity-0" : "opacity-100";
 
+  // data-loading lets harness/perf-live.mjs tell a page that is still loading
+  // from one that is ready.
   const content = (
-    <div className={`text-center ${className}`}>
+    <div className={`text-center ${className}`} data-loading="">
       <SeedOfLifeSpinner size={size} className="text-[#7dd87d] mx-auto mb-5" />
       {showQuote && (
         <div className="max-w-sm mx-auto px-4">

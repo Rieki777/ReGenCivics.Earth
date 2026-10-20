@@ -22,6 +22,7 @@ import { Label } from "@/components/ui/label";
 import { GalleyTrackCards, HEALTH_NOTE, type TrackId } from "./GalleyTracks";
 import { GalleyTryItLocal } from "./GalleyTryItLocal";
 import { GalleyDishCard, type Dish } from "./GalleyDishCard";
+import { LiveText, useTextStore } from "./ShipFields";
 import {
   Sparkles, ChefHat, Camera, X, Loader2, Plus, Dice5, Globe, Lock, Pencil, Check,
 } from "lucide-react";
@@ -75,14 +76,16 @@ export function GalleyRemixer() {
 
   const [activeHaulId, setActiveHaulId] = useState<number | null>(null);
   const [track, setTrack] = useState<TrackId>("table");
-  const [name, setName] = useState("");
+  // The three typed texts (item name, haul title, Yum Dealer message) live out
+  // of state, so a keystroke re-renders the field and its button, not the galley.
+  const itemName = useTextStore();
   const [category, setCategory] = useState<(typeof ITEM_CATEGORIES)[number]>("produce");
   const [source, setSource] = useState<(typeof ITEM_SOURCES)[number]>("market");
   const [itemPhoto, setItemPhoto] = useState<string | null>(null);
   const [uploadingItem, setUploadingItem] = useState(false);
   const [pending, setPending] = useState<string[]>([]); // optimistic item echoes
   const [editingTitle, setEditingTitle] = useState(false);
-  const [titleDraft, setTitleDraft] = useState("");
+  const titleDraft = useTextStore();
 
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -90,7 +93,7 @@ export function GalleyRemixer() {
   const [publishedIds, setPublishedIds] = useState<Set<number>>(new Set());
   const [loggedNames, setLoggedNames] = useState<Set<string>>(new Set());
 
-  const [cookMsg, setCookMsg] = useState("");
+  const cookMsg = useTextStore();
   const [cookTurns, setCookTurns] = useState<CookTurn[]>([]);
   const [cookPhotos, setCookPhotos] = useState<string[]>([]);
   const [cookRemixId, setCookRemixId] = useState<number | null>(null);
@@ -135,7 +138,7 @@ export function GalleyRemixer() {
 
   async function saveTitle() {
     if (!activeHaul) return;
-    const t = titleDraft.trim();
+    const t = titleDraft.get().trim();
     setEditingTitle(false);
     if (!t || t === activeHaul.title) return;
     await renameHaul.mutateAsync({ haulId: activeHaul.id, title: t });
@@ -167,13 +170,13 @@ export function GalleyRemixer() {
 
   async function submitItem(e: React.FormEvent) {
     e.preventDefault();
-    const n = name.trim();
+    const n = itemName.get().trim();
     if (!n) return;
     // Dedupe against what's already in the haul (and any in flight).
     const have = [...items.map((i) => i.name.toLowerCase()), ...pending.map((p) => p.toLowerCase())];
-    if (have.includes(n.toLowerCase())) { toast.info(`${n} is already in your haul.`); setName(""); return; }
+    if (have.includes(n.toLowerCase())) { toast.info(`${n} is already in your haul.`); itemName.set(""); return; }
     setErr(null);
-    setName("");
+    itemName.set("");
     setPending((p) => [...p, n]); // optimistic echo
     const photo = itemPhoto;
     setItemPhoto(null);
@@ -249,11 +252,11 @@ export function GalleyRemixer() {
 
   async function askCook(e: React.FormEvent) {
     e.preventDefault();
-    const m = cookMsg.trim();
+    const m = cookMsg.get().trim();
     if (m.length < 1) return;
     const sent = cookPhotos;
     setCookTurns((t) => [...t, { role: "user", content: m, photoUrls: sent }]);
-    setCookMsg("");
+    cookMsg.set("");
     setCookPhotos([]);
     setErr(null);
     try {
@@ -336,14 +339,16 @@ export function GalleyRemixer() {
         <div className="flex items-center justify-between gap-2 mb-3">
           {editingTitle && activeHaul ? (
             <span className="flex items-center gap-1.5">
-              <Input value={titleDraft} onChange={(e) => setTitleDraft(e.target.value)} maxLength={200} className="h-9 w-48" placeholder="Name this haul" />
+              <LiveText store={titleDraft}>
+                {(text) => <Input value={text} onChange={(e) => titleDraft.set(e.target.value)} maxLength={200} className="h-9 w-48" placeholder="Name this haul" />}
+              </LiveText>
               <Button type="button" size="sm" variant="ghost" onClick={() => void saveTitle()} aria-label="Save name"><Check className="w-4 h-4" aria-hidden="true" /></Button>
             </span>
           ) : (
             <h3 className="text-lg font-semibold flex items-center gap-1.5">
               {activeHaul ? haulLabel(activeHaul) : "Your pantry"}
               {activeHaul && (
-                <button type="button" onClick={() => { setTitleDraft(activeHaul.title ?? ""); setEditingTitle(true); }} className="text-muted-foreground hover:text-foreground p-2.5 -m-2 inline-flex items-center justify-center" aria-label="Rename haul">
+                <button type="button" onClick={() => { titleDraft.set(activeHaul.title ?? ""); setEditingTitle(true); }} className="text-muted-foreground hover:text-foreground p-2.5 -m-2 inline-flex items-center justify-center" aria-label="Rename haul">
                   <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
@@ -387,7 +392,9 @@ export function GalleyRemixer() {
 
         <form onSubmit={submitItem} className="space-y-3">
           <div className="flex flex-col sm:flex-row gap-2">
-            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={200} placeholder="What did you gather? (watermelon, kale, avocado…)" className="text-base" />
+            <LiveText store={itemName}>
+              {(text) => <Input value={text} onChange={(e) => itemName.set(e.target.value)} maxLength={200} placeholder="What did you gather? (watermelon, kale, avocado…)" className="text-base" />}
+            </LiveText>
             <div className="flex gap-2">
               <select value={category} onChange={(e) => setCategory(e.target.value as typeof category)} className="h-11 rounded-md border bg-background px-2 text-base md:text-sm" aria-label="Category">
                 {ITEM_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -406,9 +413,13 @@ export function GalleyRemixer() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Button type="submit" disabled={uploadingItem || !name.trim()} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]">
-              <Plus className="w-4 h-4 mr-1" aria-hidden="true" /> Add
-            </Button>
+            <LiveText store={itemName}>
+              {(text) => (
+                <Button type="submit" disabled={uploadingItem || !text.trim()} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]">
+                  <Plus className="w-4 h-4 mr-1" aria-hidden="true" /> Add
+                </Button>
+              )}
+            </LiveText>
             <input ref={itemFileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => void onItemPhoto(e.target.files)} />
             <Button type="button" variant="outline" className="min-h-11" disabled={uploadingItem} onClick={() => itemFileRef.current?.click()}>
               {uploadingItem ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Camera className="w-4 h-4" aria-hidden="true" />}
@@ -501,7 +512,9 @@ export function GalleyRemixer() {
         <form onSubmit={askCook} className="space-y-3">
           <div>
             <Label htmlFor="cook-msg" className="text-xs">What are you in the mood for?</Label>
-            <Textarea id="cook-msg" value={cookMsg} onChange={(e) => setCookMsg(e.target.value)} rows={2} maxLength={1000} placeholder="Something cool for a hot afternoon, using my melon and cucumber." className="text-base" />
+            <LiveText store={cookMsg}>
+              {(text) => <Textarea id="cook-msg" value={text} onChange={(e) => cookMsg.set(e.target.value)} rows={2} maxLength={1000} placeholder="Something cool for a hot afternoon, using my melon and cucumber." className="text-base" />}
+            </LiveText>
           </div>
           {cookPhotos.length > 0 && (
             <div className="flex gap-2 flex-wrap">
@@ -516,9 +529,13 @@ export function GalleyRemixer() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <Button type="submit" disabled={cookMut.isPending || uploadingCook || cookMsg.trim().length < 1} className="min-h-11 bg-[#b5651d] hover:bg-[#9c531a] text-white">
-              {cookMut.isPending ? "Cooking…" : "Ask the Yum Dealer"}
-            </Button>
+            <LiveText store={cookMsg}>
+              {(text) => (
+                <Button type="submit" disabled={cookMut.isPending || uploadingCook || text.trim().length < 1} className="min-h-11 bg-[#b5651d] hover:bg-[#9c531a] text-white">
+                  {cookMut.isPending ? "Cooking…" : "Ask the Yum Dealer"}
+                </Button>
+              )}
+            </LiveText>
             <input ref={cookFileRef} type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={(e) => void onCookPhoto(e.target.files)} />
             <Button type="button" variant="outline" className="min-h-11" disabled={uploadingCook || cookPhotos.length >= MAX_PHOTOS} onClick={() => cookFileRef.current?.click()}>
               {uploadingCook ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Camera className="w-4 h-4" aria-hidden="true" />}

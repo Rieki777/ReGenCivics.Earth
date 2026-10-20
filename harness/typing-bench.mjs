@@ -63,8 +63,8 @@ const rows = [];
 for (const path of paths) {
   const context = await browser.newContext(
     MOBILE
-      ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true }
-      : { viewport: { width: 1280, height: 800 } },
+      ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, serviceWorkers: "block" }
+      : { viewport: { width: 1280, height: 800 }, serviceWorkers: "block" },
   );
   if (SESSION) await context.addCookies([{ name: "app_session_id", value: SESSION, domain: new URL(BASE).hostname, path: "/", httpOnly: true }]);
   await context.addInitScript(() => {

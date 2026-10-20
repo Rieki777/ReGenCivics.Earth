@@ -7,7 +7,7 @@
  * The heavy Leaflet work lives in shipMapLayers.tsx (imperative layers); this
  * file is the page shell, the drawer, the filters, and the add flow.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -40,6 +40,7 @@ import {
 import { FirstMatePlanner, FIRST_MATE_GREETING, type Itinerary } from "./ShipFirstMate";
 import { FormCompanion } from "@/components/companion";
 import { FeaturedVoyage } from "./FeaturedVoyage";
+import { LiveText, ShipField, useTextStore } from "@/components/ship/ShipFields";
 
 const PINS_CACHE_KEY = "ship_map_pins_v1";
 
@@ -50,24 +51,37 @@ function MapReady({ onReady }: { onReady: (map: L.Map) => void }) {
   return null;
 }
 
+// Built once and reused: a new icon object on every render makes react-leaflet
+// swap each marker's icon element every time the page re-renders.
+let shipPositionIconOnce: L.DivIcon | null = null;
 function shipPositionIcon() {
-  return L.divIcon({
-    className: "ship-position",
-    html: `<div style="font-size:26px;line-height:38px;width:38px;height:38px;text-align:center;background:#fff;border:3px solid #1a472a;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.4)">⛵</div>`,
-    iconSize: [38, 38],
-    iconAnchor: [19, 19],
-  });
+  if (!shipPositionIconOnce) {
+    shipPositionIconOnce = L.divIcon({
+      className: "ship-position",
+      html: `<div style="font-size:26px;line-height:38px;width:38px;height:38px;text-align:center;background:#fff;border:3px solid #1a472a;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.4)">⛵</div>`,
+      iconSize: [38, 38],
+      iconAnchor: [19, 19],
+    });
+  }
+  return shipPositionIconOnce;
 }
+let plantingIconOnce: L.DivIcon | null = null;
 function plantingIcon() {
-  return L.divIcon({
-    className: "ship-planting",
-    html: `<div style="font-size:16px;line-height:24px;width:24px;height:24px;text-align:center">🌱</div>`,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
+  if (!plantingIconOnce) {
+    plantingIconOnce = L.divIcon({
+      className: "ship-planting",
+      html: `<div style="font-size:16px;line-height:24px;width:24px;height:24px;text-align:center">🌱</div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    });
+  }
+  return plantingIconOnce;
 }
 
 const ADD_TYPES: ShipLocationType[] = ["spring", "waterfall", "boondock", "commercial_boondock", "food_forest", "land_project", "lake", "geology", "forest", "seed_site", "event_venue"];
+
+type PinSpot = { lat: number | null; lng: number | null };
+const NO_PIN: PinSpot = { lat: null, lng: null };
 
 export default function ShipMap() {
   const { isAuthenticated } = useAuth();
@@ -152,10 +166,10 @@ export default function ShipMap() {
   // Dataset door ("Add your database to the map").
   const [datasetOpen, setDatasetOpen] = useState(false);
 
-  // Add-to-map flow.
+  // Add-to-map flow. The pin's spot lives here (the map sets it); the form's
+  // text lives in AddPinForm, so typing there doesn't re-render the map.
   const [adding, setAdding] = useState(false);
-  const [addForm, setAddForm] = useState({ name: "", type: "spring", lat: null as number | null, lng: null as number | null, description: "", accessNotes: "", imageUrl: "", maxRigLengthFt: "" });
-  const suggest = trpc.ship.map.suggest.useMutation();
+  const [pinAt, setPinAt] = useState<PinSpot>(NO_PIN);
   const confirm = trpc.ship.map.confirm.useMutation();
   const flag = trpc.ship.map.flag.useMutation();
 
@@ -205,41 +219,22 @@ export default function ShipMap() {
     if (!isAuthenticated) { toast.error("Please sign in to add to the map."); window.location.href = getLoginUrl(); return; }
     setSelectedId(null);
     setAdding(true);
-    setAddForm((f) => ({ ...f, lat: null, lng: null }));
+    setPinAt(NO_PIN);
     toast("Tap the map to drop your pin, or use your location.");
   }
   const onPick = useCallback((lat: number, lng: number) => {
-    setAddForm((f) => ({ ...f, lat: Number(lat.toFixed(5)), lng: Number(lng.toFixed(5)) }));
+    setPinAt({ lat: Number(lat.toFixed(5)), lng: Number(lng.toFixed(5)) });
   }, []);
   function useMyLocation() {
     if (!navigator.geolocation) { toast.error("Location is not available on this device."); return; }
     navigator.geolocation.getCurrentPosition(
-      (pos) => setAddForm((f) => ({ ...f, lat: Number(pos.coords.latitude.toFixed(5)), lng: Number(pos.coords.longitude.toFixed(5)) })),
+      (pos) => setPinAt({ lat: Number(pos.coords.latitude.toFixed(5)), lng: Number(pos.coords.longitude.toFixed(5)) }),
       () => toast.error("Could not get your location."),
     );
   }
-  async function submitAdd(e: React.FormEvent) {
-    e.preventDefault();
-    if (addForm.lat == null || addForm.lng == null) { toast.error("Drop a pin on the map first."); return; }
-    try {
-      await suggest.mutateAsync({
-        name: addForm.name,
-        type: addForm.type as ShipLocationType,
-        lat: addForm.lat,
-        lng: addForm.lng,
-        description: addForm.description || undefined,
-        accessNotes: addForm.accessNotes || undefined,
-        imageUrl: addForm.imageUrl || undefined,
-        maxRigLengthFt: addForm.type === "boondock" && addForm.maxRigLengthFt ? Number(addForm.maxRigLengthFt) : undefined,
-      });
-      toast.success("Thank you. Your pin is on the map and in for review.");
-      setAdding(false);
-      setAddForm({ name: "", type: "spring", lat: null, lng: null, description: "", accessNotes: "", imageUrl: "", maxRigLengthFt: "" });
-      void utils.ship.map.list.invalidate();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Could not add your pin.");
-    }
-  }
+
+  // Stable between renders, so the route layer is rebuilt only when the voyage changes.
+  const voyageStops = useMemo(() => voyage.map((v, i) => ({ lat: v.lat, lng: v.lng, day: i + 1, name: v.name })), [voyage]);
 
   const pos = position.data;
   const d = detail.data;
@@ -321,7 +316,7 @@ export default function ShipMap() {
             <CascadiaBoundary show={showBoundary} />
             <ChakraLayer show={showChakras} />
             <ClusterLayer pins={filtered} onSelect={onSelect} />
-            {voyage.length > 0 && <VoyageRoute stops={voyage.map((v, i) => ({ lat: v.lat, lng: v.lng, day: i + 1, name: v.name }))} />}
+            {voyage.length > 0 && <VoyageRoute stops={voyageStops} />}
             <CrosshairPicker active={adding} onPick={onPick} />
             {showPlantings && (plantings.data ?? []).filter((p) => p.lat != null && p.lng != null).map((p) => (
               <Marker key={`seed-${p.id}`} position={[p.lat as number, p.lng as number]} icon={plantingIcon()}>
@@ -352,7 +347,7 @@ export default function ShipMap() {
           )}
           {adding && (
             <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[500] bg-white dark:bg-neutral-900 border rounded-full px-3 py-1.5 text-sm shadow flex items-center gap-2">
-              <span>{addForm.lat != null ? "Pin dropped. Fill the form below." : "Tap the map to drop your pin"}</span>
+              <span>{pinAt.lat != null ? "Pin dropped. Fill the form below." : "Tap the map to drop your pin"}</span>
               <button onClick={useMyLocation} className="underline text-[#2f5d3a] dark:text-[#9de89d]">Use my location</button>
               <button onClick={() => setAdding(false)} className="text-muted-foreground">Cancel</button>
             </div>
@@ -439,61 +434,13 @@ export default function ShipMap() {
       {datasetOpen && <DatasetOfferDialog onClose={() => setDatasetOpen(false)} />}
 
       {/* Add form (appears while adding) */}
-      {adding && (
-        <ShipSection className="bg-[#ffd700]/8">
-          <ShipEyebrow>Add to the map</ShipEyebrow>
-          <h2 className="text-2xl font-bold mb-3">Your pin</h2>
-          <div className="max-w-2xl">
-            <FormCompanion
-              formId="map-add"
-              collected={{ name: addForm.name, type: addForm.type, description: addForm.description, accessNotes: addForm.accessNotes }}
-              onField={(key, value) => {
-                if (key === "name") setAddForm((f) => ({ ...f, name: value }));
-                else if (key === "type") { if ((ADD_TYPES as string[]).includes(value)) setAddForm((f) => ({ ...f, type: value as ShipLocationType })); }
-                else if (key === "description") setAddForm((f) => ({ ...f, description: value }));
-                else if (key === "accessNotes") setAddForm((f) => ({ ...f, accessNotes: value }));
-              }}
-            />
-          </div>
-          <form onSubmit={submitAdd} className="grid sm:grid-cols-2 gap-4 max-w-2xl">
-            <div className="sm:col-span-2 text-sm text-muted-foreground">
-              {addForm.lat != null ? <>Location: {addForm.lat}, {addForm.lng} · <button type="button" className="underline" onClick={() => setAddForm((f) => ({ ...f, lat: null, lng: null }))}>change</button></> : "Tap the map above to set the location."}
-            </div>
-            <div className="sm:col-span-2">
-              <Label htmlFor="add-name">Name</Label>
-              <Input id="add-name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} required minLength={2} maxLength={200} />
-            </div>
-            <div>
-              <Label htmlFor="add-type">Type</Label>
-              <select id="add-type" value={addForm.type} onChange={(e) => setAddForm({ ...addForm, type: e.target.value })} className="w-full h-10 rounded-md border bg-background px-3">
-                {ADD_TYPES.map((t) => (<option key={t} value={t}>{TYPE_META[t].label}</option>))}
-              </select>
-            </div>
-            {addForm.type === "boondock" && (
-              <div>
-                <Label htmlFor="add-rig">Largest rig confirmed (ft)</Label>
-                <Input id="add-rig" type="number" min={0} max={100} value={addForm.maxRigLengthFt} onChange={(e) => setAddForm({ ...addForm, maxRigLengthFt: e.target.value })} placeholder="40" />
-              </div>
-            )}
-            <div className="sm:col-span-2">
-              <Label htmlFor="add-photo">Photo URL (optional)</Label>
-              <Input id="add-photo" value={addForm.imageUrl} onChange={(e) => setAddForm({ ...addForm, imageUrl: e.target.value })} placeholder="https://…" maxLength={512} />
-            </div>
-            <div className="sm:col-span-2">
-              <Label htmlFor="add-desc">Description</Label>
-              <Textarea id="add-desc" value={addForm.description} onChange={(e) => setAddForm({ ...addForm, description: e.target.value })} maxLength={2000} rows={2} />
-            </div>
-            <div className="sm:col-span-2">
-              <Label htmlFor="add-access">Access notes (road, turnaround, cell signal, gates)</Label>
-              <Textarea id="add-access" value={addForm.accessNotes} onChange={(e) => setAddForm({ ...addForm, accessNotes: e.target.value })} maxLength={2000} rows={2} />
-            </div>
-            <div className="sm:col-span-2 flex gap-2">
-              <Button type="submit" disabled={suggest.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">{suggest.isPending ? "Sending…" : "Add this pin"}</Button>
-              <Button type="button" variant="outline" onClick={() => setAdding(false)}>Cancel</Button>
-            </div>
-          </form>
-        </ShipSection>
-      )}
+      <AddPinForm
+        show={adding}
+        pinAt={pinAt}
+        onClearPin={() => setPinAt(NO_PIN)}
+        onAdded={() => { setAdding(false); setPinAt(NO_PIN); void utils.ship.map.list.invalidate(); }}
+        onCancel={() => setAdding(false)}
+      />
 
       {/* Detail drawer */}
       {selectedId != null && d && (
@@ -530,6 +477,108 @@ export default function ShipMap() {
   );
 }
 
+// ── Add-a-pin form ────────────────────────────────────────────────────────────
+const PinTypeField = memo(function PinTypeField({ value, onValue }: { value: string; onValue: (value: string) => void }) {
+  return (
+    <div>
+      <Label htmlFor="add-type">Type</Label>
+      <select id="add-type" value={value} onChange={(e) => onValue(e.target.value)} className="w-full h-10 rounded-md border bg-background px-3">
+        {ADD_TYPES.map((t) => (<option key={t} value={t}>{TYPE_META[t].label}</option>))}
+      </select>
+    </div>
+  );
+});
+
+/**
+ * The add-a-pin form. It owns the text being typed, so a keystroke re-renders
+ * this form (and only the field typed in), not the map. The page holds the
+ * pin's spot. It stays mounted while hidden, so a cancelled draft is still
+ * there next time, as before.
+ */
+function AddPinForm({ show, pinAt, onClearPin, onAdded, onCancel }: {
+  show: boolean; pinAt: PinSpot; onClearPin: () => void; onAdded: () => void; onCancel: () => void;
+}) {
+  const suggest = trpc.ship.map.suggest.useMutation();
+  const [name, setName] = useState("");
+  const [type, setType] = useState<string>("spring");
+  const [description, setDescription] = useState("");
+  const [accessNotes, setAccessNotes] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [maxRigLengthFt, setMaxRigLengthFt] = useState("");
+
+  async function submitAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (pinAt.lat == null || pinAt.lng == null) { toast.error("Drop a pin on the map first."); return; }
+    try {
+      await suggest.mutateAsync({
+        name,
+        type: type as ShipLocationType,
+        lat: pinAt.lat,
+        lng: pinAt.lng,
+        description: description || undefined,
+        accessNotes: accessNotes || undefined,
+        imageUrl: imageUrl || undefined,
+        maxRigLengthFt: type === "boondock" && maxRigLengthFt ? Number(maxRigLengthFt) : undefined,
+      });
+      toast.success("Thank you. Your pin is on the map and in for review.");
+      onAdded();
+      setName("");
+      setType("spring");
+      setDescription("");
+      setAccessNotes("");
+      setImageUrl("");
+      setMaxRigLengthFt("");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not add your pin.");
+    }
+  }
+
+  if (!show) return null;
+  return (
+    <ShipSection className="bg-[#ffd700]/8">
+      <ShipEyebrow>Add to the map</ShipEyebrow>
+      <h2 className="text-2xl font-bold mb-3">Your pin</h2>
+      <div className="max-w-2xl">
+        <FormCompanion
+          formId="map-add"
+          collected={{ name, type, description, accessNotes }}
+          onField={(key, value) => {
+            if (key === "name") setName(value);
+            else if (key === "type") { if ((ADD_TYPES as string[]).includes(value)) setType(value as ShipLocationType); }
+            else if (key === "description") setDescription(value);
+            else if (key === "accessNotes") setAccessNotes(value);
+          }}
+        />
+      </div>
+      <form onSubmit={submitAdd} className="grid sm:grid-cols-2 gap-4 max-w-2xl">
+        <div className="sm:col-span-2 text-sm text-muted-foreground">
+          {pinAt.lat != null ? <>Location: {pinAt.lat}, {pinAt.lng} · <button type="button" className="underline" onClick={onClearPin}>change</button></> : "Tap the map above to set the location."}
+        </div>
+        <ShipField className="sm:col-span-2" id="add-name" label="Name" value={name} onValue={setName} required minLength={2} maxLength={200} />
+        <PinTypeField value={type} onValue={setType} />
+        {type === "boondock" && (
+          <ShipField className="" id="add-rig" label="Largest rig confirmed (ft)" type="number" min={0} max={100} value={maxRigLengthFt} onValue={setMaxRigLengthFt} placeholder="40" />
+        )}
+        <ShipField className="sm:col-span-2" id="add-photo" label="Photo URL (optional)" value={imageUrl} onValue={setImageUrl} placeholder="https://…" maxLength={512} />
+        <ShipField className="sm:col-span-2" id="add-desc" label="Description" value={description} onValue={setDescription} maxLength={2000} rows={2} />
+        <ShipField
+          className="sm:col-span-2"
+          id="add-access"
+          label="Access notes (road, turnaround, cell signal, gates)"
+          value={accessNotes}
+          onValue={setAccessNotes}
+          maxLength={2000}
+          rows={2}
+        />
+        <div className="sm:col-span-2 flex gap-2">
+          <Button type="submit" disabled={suggest.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">{suggest.isPending ? "Sending…" : "Add this pin"}</Button>
+          <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
+        </div>
+      </form>
+    </ShipSection>
+  );
+}
+
 // ── Detail drawer ─────────────────────────────────────────────────────────────
 type LocationDetail = {
   id: number; slug: string; name: string; type: string; lat: number; lng: number;
@@ -545,7 +594,8 @@ function DetailDrawer({ detail, onClose, inVoyage, onToggleVoyage, isAuthenticat
 }) {
   const meta = TYPE_META[detail.type] ?? { emoji: "📍", label: detail.type };
   const [flagOpen, setFlagOpen] = useState(false);
-  const [flagReason, setFlagReason] = useState("");
+  // Kept out of state, so a keystroke re-renders only the reason field.
+  const flagReason = useTextStore();
   const shareUrl = `${window.location.origin}/ship/map?pin=${encodeURIComponent(detail.slug)}`;
   return (
     <ShipSection className="bg-[#2f5d3a]/5">
@@ -589,8 +639,10 @@ function DetailDrawer({ detail, onClose, inVoyage, onToggleVoyage, isAuthenticat
         </div>
         {flagOpen && (
           <div className="mt-3 flex gap-2 items-start">
-            <Input value={flagReason} onChange={(e) => setFlagReason(e.target.value)} placeholder="What's wrong? (gate locked, spring dry, rig no longer fits…)" maxLength={500} />
-            <Button size="sm" onClick={() => { if (flagReason.trim().length >= 3) { onFlag(flagReason.trim()); setFlagReason(""); setFlagOpen(false); } }}>Send</Button>
+            <LiveText store={flagReason}>
+              {(text) => <Input value={text} onChange={(e) => flagReason.set(e.target.value)} placeholder="What's wrong? (gate locked, spring dry, rig no longer fits…)" maxLength={500} />}
+            </LiveText>
+            <Button size="sm" onClick={() => { const reason = flagReason.get().trim(); if (reason.length >= 3) { onFlag(reason); flagReason.set(""); setFlagOpen(false); } }}>Send</Button>
           </div>
         )}
       </div>

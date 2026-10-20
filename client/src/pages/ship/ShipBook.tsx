@@ -27,6 +27,7 @@ import {
 import { applyMultiWeekDiscount, multiWeekDiscountPct, nextTierNudge } from "@shared/shipPricing";
 import { FirstMateQuickCustomize } from "./ShipFirstMate";
 import { CrewListJoin } from "@/components/ship/CrewListJoin";
+import { LiveText, useTextStore } from "@/components/ship/ShipFields";
 import { SHIP_TERMS_VERSION, SHIP_DEPOSIT_USD } from "@shared/shipTerms";
 
 /** Card icons for the suggested voyages. */
@@ -105,7 +106,9 @@ export default function ShipBook() {
   // terms + cancellation) and the Voyage Covenant (diet, water, conduct).
   const [terms, setTerms] = useState(false);
   const [covenant, setCovenant] = useState(false);
-  const [notes, setNotes] = useState("");
+  // The notes text lives in a store, not state: a keystroke re-renders the box
+  // and the companion that reads it, not the page and its ~100 week cards.
+  const notes = useTextStore();
   const submitRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<HTMLDivElement | null>(null);
 
@@ -261,7 +264,7 @@ export default function ShipBook() {
       // confirmation and the First Mate both know the intent.
       const noteParts = [
         voyagePkg ? `Suggested voyage: ${voyagePkg.name} (${selected.length} ${selected.length === 1 ? "week" : "weeks"}).` : null,
-        notes || null,
+        notes.get() || null,
       ].filter(Boolean) as string[];
       await request.mutateAsync({
         startDate,
@@ -281,7 +284,7 @@ export default function ShipBook() {
       setCount(1);
       setTerms(false);
       setCovenant(false);
-      setNotes("");
+      notes.set("");
       setVoyageId(null);
       setCustomizeOpen(false);
       setFmCharted(false);
@@ -654,29 +657,33 @@ export default function ShipBook() {
             )}
 
             {startDate && (
-              <FormCompanion
-                formId="booking-request"
-                context={`${voyagePkg ? `The guest chose the suggested ${voyagePkg.name} voyage (${selected.length} ${selected.length === 1 ? "week" : "weeks"}). ` : ""}The guest has chosen the voyage boarding ${fmtDay(startDate)} through ${bioregions.join(" and ")}. Confirm those dates with them warmly, then ask how many adults and how many children are sailing (up to four aboard, or five when at least three are children), and get an explicit yes to both commitments.`}
-                collected={{
-                  guests: String(guests),
-                  // The diet + water doctrine both live in the Voyage Covenant now,
-                  // so either confirmation checks the single covenant agreement.
-                  dietCommitment: covenant ? "yes" : "",
-                  waterDoctrineCommitment: covenant ? "yes" : "",
-                  notes,
-                }}
-                onField={(key, value) => {
-                  if (key === "guests") {
-                    const n = Number(value.match(/\d+/)?.[0] ?? value);
-                    if (Number.isFinite(n) && n >= 1) setAdults(Math.max(1, Math.min(4, Math.round(n))));
-                  } else if (key === "dietCommitment" || key === "waterDoctrineCommitment") {
-                    if (companionBool(value)) setCovenant(true);
-                  } else if (key === "notes") {
-                    setNotes(value);
-                  }
-                }}
-                onReadyForReview={() => submitRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
-              />
+              <LiveText store={notes}>
+                {(notesText) => (
+                  <FormCompanion
+                    formId="booking-request"
+                    context={`${voyagePkg ? `The guest chose the suggested ${voyagePkg.name} voyage (${selected.length} ${selected.length === 1 ? "week" : "weeks"}). ` : ""}The guest has chosen the voyage boarding ${fmtDay(startDate)} through ${bioregions.join(" and ")}. Confirm those dates with them warmly, then ask how many adults and how many children are sailing (up to four aboard, or five when at least three are children), and get an explicit yes to both commitments.`}
+                    collected={{
+                      guests: String(guests),
+                      // The diet + water doctrine both live in the Voyage Covenant now,
+                      // so either confirmation checks the single covenant agreement.
+                      dietCommitment: covenant ? "yes" : "",
+                      waterDoctrineCommitment: covenant ? "yes" : "",
+                      notes: notesText,
+                    }}
+                    onField={(key, value) => {
+                      if (key === "guests") {
+                        const n = Number(value.match(/\d+/)?.[0] ?? value);
+                        if (Number.isFinite(n) && n >= 1) setAdults(Math.max(1, Math.min(4, Math.round(n))));
+                      } else if (key === "dietCommitment" || key === "waterDoctrineCommitment") {
+                        if (companionBool(value)) setCovenant(true);
+                      } else if (key === "notes") {
+                        notes.set(value);
+                      }
+                    }}
+                    onReadyForReview={() => submitRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                  />
+                )}
+              </LiveText>
             )}
 
             <div className="flex flex-wrap gap-4">
@@ -712,7 +719,9 @@ export default function ShipBook() {
             </div>
             <div>
               <Label htmlFor="notes">Anything we should know</Label>
-              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={2000} />
+              <LiveText store={notes}>
+                {(text) => <Textarea id="notes" value={text} onChange={(e) => notes.set(e.target.value)} rows={3} maxLength={2000} />}
+              </LiveText>
             </div>
             {ref && <p className="text-xs text-muted-foreground">Referred by @{ref.replace(/^@/, "")}. Thank them at the healing hole.</p>}
             <div ref={submitRef}>

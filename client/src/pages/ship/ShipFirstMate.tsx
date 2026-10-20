@@ -8,7 +8,7 @@
  * The route path stays /ship/concierge and the tRPC namespace stays
  * ship.concierge; only the persona name changed to the First Mate (2026-07-10).
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,7 +40,8 @@ export const FIRST_MATE_QUESTIONS: Array<{ id: string; label: string; textarea?:
   { id: "group", label: "Who is your crew? Tell us about your group." },
 ];
 
-export function ItineraryView({ itinerary }: { itinerary: Itinerary | null }) {
+// Memoized: typing in the refine chat below it leaves the charted days alone.
+export const ItineraryView = memo(function ItineraryView({ itinerary }: { itinerary: Itinerary | null }) {
   if (!itinerary?.days?.length) return null;
   return (
     <div className="space-y-4">
@@ -53,7 +54,29 @@ export function ItineraryView({ itinerary }: { itinerary: Itinerary | null }) {
       ))}
     </div>
   );
-}
+});
+
+/** One intake question. Memoized, so a keystroke re-renders only the question typed in. */
+const QuestionField = memo(function QuestionField({
+  q,
+  value,
+  compact,
+  onAnswer,
+}: {
+  q: (typeof FIRST_MATE_QUESTIONS)[number];
+  value: string;
+  compact: boolean;
+  onAnswer: (id: string, value: string) => void;
+}) {
+  return (
+    <div>
+      <Label htmlFor={`fm-${q.id}`} className={compact ? "text-sm" : undefined}>{q.label}</Label>
+      {q.textarea
+        ? <Textarea id={`fm-${q.id}`} value={value} onChange={(e) => onAnswer(q.id, e.target.value)} rows={2} maxLength={1000} />
+        : <Input id={`fm-${q.id}`} value={value} onChange={(e) => onAnswer(q.id, e.target.value)} maxLength={1000} />}
+    </div>
+  );
+});
 
 /**
  * The First Mate quick customization: the brief pre-booking pass used by the
@@ -216,6 +239,7 @@ export function FirstMatePlanner({
 
   const busy = start.isPending || generate.isPending;
   const submitRef = useRef<HTMLDivElement | null>(null);
+  const setAnswer = useCallback((id: string, value: string) => setAnswers((a) => ({ ...a, [id]: value })), []);
 
   async function generateItinerary(e: React.FormEvent) {
     e.preventDefault();
@@ -261,12 +285,7 @@ export function FirstMatePlanner({
       {!itinerary && (
         <form onSubmit={generateItinerary} className={compact ? "space-y-3" : "space-y-4 max-w-2xl"}>
           {FIRST_MATE_QUESTIONS.map((q) => (
-            <div key={q.id}>
-              <Label htmlFor={`fm-${q.id}`} className={compact ? "text-sm" : undefined}>{q.label}</Label>
-              {q.textarea
-                ? <Textarea id={`fm-${q.id}`} value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} rows={2} maxLength={1000} />
-                : <Input id={`fm-${q.id}`} value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} maxLength={1000} />}
-            </div>
+            <QuestionField key={q.id} q={q} value={answers[q.id] ?? ""} compact={compact} onAnswer={setAnswer} />
           ))}
           <div ref={submitRef}>
             <Button type="submit" disabled={!conciergeAboard || busy} className="bg-[#2f5d3a] hover:bg-[#264a2f]">

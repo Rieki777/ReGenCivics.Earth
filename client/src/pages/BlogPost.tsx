@@ -3,7 +3,7 @@
  * Design: Individual blog post view with full content and video support
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Link, useParams, useLocation } from 'wouter';
 import { Calendar, Clock, ArrowLeft, User, Rocket, Compass, Play, Share2, List, ChevronDown, ChevronUp, Pencil, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,100 @@ import { ShareButton } from "@/components/ShareButton";
 import { NineFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
 import { FreeVoyageLadder, ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
 import { WatchTgsCurrie, WatchTgsHamant, SteeringEmotions, ArticleQuestCTA } from "@/components/blog/PlaysArticleBlocks";
-import { ReadingProgressRing } from "@/components/blog/ReadingProgressRing";
+import { ReadingProgressRing, type ReadingProgressRingHandle } from "@/components/blog/ReadingProgressRing";
+import { useThrottledScroll } from "@/hooks/useThrottledScroll";
+
+const SPECIAL_MARKERS: Record<string, React.ReactElement> = {
+  '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
+  '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
+  '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
+  '[NINE_FORMS_OF_CAPITAL]': <NineFormsOfCapital />,
+  '[FRAUD_WARNING]': <FraudWarningCallout />,
+  '[SHIP_FREE_VOYAGE_LADDER]': <FreeVoyageLadder />,
+  '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,
+  '[SHIP_PULLQUOTE]': <ShipPullQuote />,
+  '[SHIP_CTA]': <ShipArticleCTA />,
+  '[WATCH_TGS_CURRIE]': <WatchTgsCurrie />,
+  '[WATCH_TGS_HAMANT]': <WatchTgsHamant />,
+  '[STEERING_EMOTIONS]': <SteeringEmotions />,
+  '[PLAY_QUEST_CTA]': <ArticleQuestCTA />,
+};
+
+// Module level on purpose: built inside the render, these were new component
+// types every time, so each re-render unmounted and remounted the whole article.
+const MD_COMPONENTS = {
+  ol: ({children}: {children?: React.ReactNode}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
+  ul: ({children}: {children?: React.ReactNode}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
+  li: ({children}: {children?: React.ReactNode}) => <li className="ml-2">{children}</li>,
+  h1: ({children}: {children?: React.ReactNode}) => <h1 className="text-3xl font-bold text-white mb-4 mt-8">{children}</h1>,
+  h2: ({children}: {children?: React.ReactNode}) => <h2 className="text-2xl font-bold text-white mb-4 mt-10 pb-2 border-b border-[#7dd87d]/20 scroll-mt-24">{children}</h2>,
+  h3: ({children}: {children?: React.ReactNode}) => <h3 className="text-xl font-semibold text-[#7dd87d] mb-2 mt-6 scroll-mt-24">{children}</h3>,
+  p: ({children}: {children?: React.ReactNode}) => <p className="mb-5 leading-relaxed">{children}</p>,
+  a: ({href, children}: {href?: string; children?: React.ReactNode}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
+  blockquote: ({children}: {children?: React.ReactNode}) => <blockquote className="border-l-4 border-[#7dd87d] pl-4 italic my-6 text-white/70">{children}</blockquote>,
+  strong: ({children}: {children?: React.ReactNode}) => <strong className="font-semibold text-white">{children}</strong>,
+  em: ({children}: {children?: React.ReactNode}) => <em className="italic">{children}</em>,
+  code: ({children}: {children?: React.ReactNode}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
+  pre: ({children}: {children?: React.ReactNode}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
+  img: ({src, alt}: {src?: string; alt?: string}) => <img src={src} alt={alt ?? ''} loading="lazy" className="w-full rounded-2xl my-8 shadow-lg" />,
+  table: ({children}: {children?: React.ReactNode}) => <div className="overflow-x-auto my-6"><table className="w-full text-sm border-collapse">{children}</table></div>,
+  thead: ({children}: {children?: React.ReactNode}) => <thead className="bg-[#7dd87d]/15">{children}</thead>,
+  th: ({children}: {children?: React.ReactNode}) => <th className="text-left font-semibold px-3 py-2 border-b border-[#7dd87d]/30">{children}</th>,
+  td: ({children}: {children?: React.ReactNode}) => <td className="px-3 py-2 border-b border-white/10">{children}</td>,
+};
+
+const REMARK_PLUGINS = [remarkGfm];
+
+/** The article text. Memoized on its content, because parsing the markdown is the page's most expensive render. */
+const ArticleBody = React.memo(function ArticleBody({ content }: { content: string }) {
+  const hasMarkers = Object.keys(SPECIAL_MARKERS).some(
+    marker => content.includes(marker)
+  );
+
+  if (!hasMarkers) {
+    // No special markers: render entire content as one block (preserves list numbering)
+    return (
+      <ReactMarkdown remarkPlugins={REMARK_PLUGINS} components={MD_COMPONENTS}>
+        {content}
+      </ReactMarkdown>
+    );
+  }
+
+  // Has special markers: accumulate consecutive non-marker paragraphs into
+  // a single markdown chunk so that multi-item numbered lists stay in one
+  // <ol> and increment correctly.
+  const paragraphs = content.split('\n\n');
+  const segments: Array<{ type: 'markdown'; text: string } | { type: 'component'; key: string }> = [];
+
+  for (const para of paragraphs) {
+    const trimmed = para.trim();
+    if (SPECIAL_MARKERS[trimmed] !== undefined) {
+      segments.push({ type: 'component', key: trimmed });
+    } else {
+      const last = segments[segments.length - 1];
+      if (last && last.type === 'markdown') {
+        last.text += '\n\n' + para;
+      } else {
+        segments.push({ type: 'markdown', text: para });
+      }
+    }
+  }
+
+  return (
+    <>
+      {segments.map((seg, i) => {
+        if (seg.type === 'component') {
+          return <React.Fragment key={i}>{SPECIAL_MARKERS[seg.key]}</React.Fragment>;
+        }
+        return (
+          <ReactMarkdown key={i} remarkPlugins={REMARK_PLUGINS} components={MD_COMPONENTS}>
+            {seg.text}
+          </ReactMarkdown>
+        );
+      })}
+    </>
+  );
+});
 
 export default function BlogPost() {
   const params = useParams<{ slug: string }>();
@@ -56,7 +149,8 @@ export default function BlogPost() {
     image: dbArticle.data.heroImageUrl ?? '',
     tags: Array.isArray(dbArticle.data.tags) ? (dbArticle.data.tags as string[]) : [],
   } : undefined);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  const progressRingRef = useRef<ReadingProgressRingHandle>(null);
   const [tocOpen, setTocOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editContent, setEditContent] = useState('');
@@ -101,19 +195,17 @@ export default function BlogPost() {
     return headers;
   }, [post, activeContent]);
 
-  // Track scroll progress
-  useEffect(() => {
-    const handleScroll = () => {
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
-      const scrollTop = window.scrollY;
-      const progress = (scrollTop / (documentHeight - windowHeight)) * 100;
-      setScrollProgress(Math.min(100, Math.max(0, progress)));
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+  // Track scroll progress: measured once a frame, written straight to the bar
+  // and the ring. Kept in state, every scroll event re-rendered the article.
+  const updateScrollProgress = useCallback(() => {
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.scrollY;
+    const progress = Math.min(100, Math.max(0, (scrollTop / (documentHeight - windowHeight)) * 100));
+    if (progressBarRef.current) progressBarRef.current.style.width = `${progress}%`;
+    progressRingRef.current?.setProgress(progress);
   }, []);
+  useThrottledScroll(updateScrollProgress);
 
   if (!post && dbArticle.isLoading) {
     return (
@@ -174,8 +266,9 @@ export default function BlogPost() {
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-[#1a472a]/50">
         <div
+          ref={progressBarRef}
           className="h-full bg-gradient-to-r from-[#7dd87d] to-[#4a7c59] transition-all duration-150"
-          style={{ width: `${scrollProgress}%` }}
+          style={{ width: '0%' }}
         />
       </div>
 
@@ -197,7 +290,7 @@ export default function BlogPost() {
           className="shadow-lg pointer-events-auto"
         />
         {/* Reading-progress ring — mobile only (desktop uses the TOC panel). */}
-        <ReadingProgressRing progress={scrollProgress} className="md:hidden" />
+        <ReadingProgressRing ref={progressRingRef} className="md:hidden" />
       </div>
 
       {/* Table of Contents - Collapsible. Sits below the floating Share button
@@ -414,92 +507,7 @@ export default function BlogPost() {
                 className="drop-cap text-white/80 leading-relaxed space-y-6"
                 style={{ fontFamily: 'var(--font-body)' }}
               >
-                {(() => {
-                  const SPECIAL_MARKERS: Record<string, React.ReactElement> = {
-                    '[FOOD_PRODUCTION_INFOGRAPHIC]': <FoodProductionInfographic />,
-                    '[ANIMAL_POPULATION_INFOGRAPHIC]': <AnimalPopulationInfographic />,
-                    '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
-                    '[NINE_FORMS_OF_CAPITAL]': <NineFormsOfCapital />,
-                    '[FRAUD_WARNING]': <FraudWarningCallout />,
-                    '[SHIP_FREE_VOYAGE_LADDER]': <FreeVoyageLadder />,
-                    '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,
-                    '[SHIP_PULLQUOTE]': <ShipPullQuote />,
-                    '[SHIP_CTA]': <ShipArticleCTA />,
-                    '[WATCH_TGS_CURRIE]': <WatchTgsCurrie />,
-                    '[WATCH_TGS_HAMANT]': <WatchTgsHamant />,
-                    '[STEERING_EMOTIONS]': <SteeringEmotions />,
-                    '[PLAY_QUEST_CTA]': <ArticleQuestCTA />,
-                  };
-
-                  const hasMarkers = Object.keys(SPECIAL_MARKERS).some(
-                    marker => activeContent.includes(marker)
-                  );
-
-                  const mdComponents = {
-                    ol: ({children}: {children?: React.ReactNode}) => <ol className="list-decimal ml-6 mb-4 space-y-1">{children}</ol>,
-                    ul: ({children}: {children?: React.ReactNode}) => <ul className="list-disc ml-6 mb-4 space-y-1">{children}</ul>,
-                    li: ({children}: {children?: React.ReactNode}) => <li className="ml-2">{children}</li>,
-                    h1: ({children}: {children?: React.ReactNode}) => <h1 className="text-3xl font-bold text-white mb-4 mt-8">{children}</h1>,
-                    h2: ({children}: {children?: React.ReactNode}) => <h2 className="text-2xl font-bold text-white mb-4 mt-10 pb-2 border-b border-[#7dd87d]/20 scroll-mt-24">{children}</h2>,
-                    h3: ({children}: {children?: React.ReactNode}) => <h3 className="text-xl font-semibold text-[#7dd87d] mb-2 mt-6 scroll-mt-24">{children}</h3>,
-                    p: ({children}: {children?: React.ReactNode}) => <p className="mb-5 leading-relaxed">{children}</p>,
-                    a: ({href, children}: {href?: string; children?: React.ReactNode}) => <a href={href} className="text-green-400 hover:text-green-300 underline">{children}</a>,
-                    blockquote: ({children}: {children?: React.ReactNode}) => <blockquote className="border-l-4 border-[#7dd87d] pl-4 italic my-6 text-white/70">{children}</blockquote>,
-                    strong: ({children}: {children?: React.ReactNode}) => <strong className="font-semibold text-white">{children}</strong>,
-                    em: ({children}: {children?: React.ReactNode}) => <em className="italic">{children}</em>,
-                    code: ({children}: {children?: React.ReactNode}) => <code className="bg-white/10 px-1 rounded text-sm font-mono">{children}</code>,
-                    pre: ({children}: {children?: React.ReactNode}) => <pre className="bg-white/10 p-4 rounded-lg overflow-x-auto my-4">{children}</pre>,
-                    img: ({src, alt}: {src?: string; alt?: string}) => <img src={src} alt={alt ?? ''} loading="lazy" className="w-full rounded-2xl my-8 shadow-lg" />,
-                    table: ({children}: {children?: React.ReactNode}) => <div className="overflow-x-auto my-6"><table className="w-full text-sm border-collapse">{children}</table></div>,
-                    thead: ({children}: {children?: React.ReactNode}) => <thead className="bg-[#7dd87d]/15">{children}</thead>,
-                    th: ({children}: {children?: React.ReactNode}) => <th className="text-left font-semibold px-3 py-2 border-b border-[#7dd87d]/30">{children}</th>,
-                    td: ({children}: {children?: React.ReactNode}) => <td className="px-3 py-2 border-b border-white/10">{children}</td>,
-                  };
-
-                  if (!hasMarkers) {
-                    // No special markers: render entire content as one block (preserves list numbering)
-                    return (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-                        {activeContent}
-                      </ReactMarkdown>
-                    );
-                  }
-
-                  // Has special markers: accumulate consecutive non-marker paragraphs into
-                  // a single markdown chunk so that multi-item numbered lists stay in one
-                  // <ol> and increment correctly.
-                  const paragraphs = activeContent.split('\n\n');
-                  const segments: Array<{ type: 'markdown'; text: string } | { type: 'component'; key: string }> = [];
-
-                  for (const para of paragraphs) {
-                    const trimmed = para.trim();
-                    if (SPECIAL_MARKERS[trimmed] !== undefined) {
-                      segments.push({ type: 'component', key: trimmed });
-                    } else {
-                      const last = segments[segments.length - 1];
-                      if (last && last.type === 'markdown') {
-                        last.text += '\n\n' + para;
-                      } else {
-                        segments.push({ type: 'markdown', text: para });
-                      }
-                    }
-                  }
-
-                  return (
-                    <>
-                      {segments.map((seg, i) => {
-                        if (seg.type === 'component') {
-                          return <React.Fragment key={i}>{SPECIAL_MARKERS[seg.key]}</React.Fragment>;
-                        }
-                        return (
-                          <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={mdComponents}>
-                            {seg.text}
-                          </ReactMarkdown>
-                        );
-                      })}
-                    </>
-                  );
-                })()}
+                <ArticleBody content={activeContent} />
               </div>
             </article>
           </AnimatedSection>

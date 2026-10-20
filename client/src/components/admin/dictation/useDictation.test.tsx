@@ -850,7 +850,6 @@ function arrivalProps(addItem: StageProps["actions"]["addItem"] = async () => ({
     canWrite: true,
     mine: { itemIds: new Set(), projectIds: new Set(), votes: new Set(), hands: new Set(), offers: new Set(), anon: new Map(), checkins: new Set() },
     actions: { addItem } as unknown as StageProps["actions"],
-    now: Date.now(),
     serverNow: () => Date.now(),
     go: () => {},
     myProject: null,

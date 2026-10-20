@@ -6,7 +6,7 @@
  * a booking is confirmed or active; a signed-out or crewless visitor gets a warm
  * pointer to book or sign in.
  */
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -22,6 +22,7 @@ import { AskShipwright } from "@/components/ship/AskShipwright";
 import { GearManifest } from "@/components/ship/GearManifest";
 import { GalleyStrip } from "@/components/ship/GalleyStrip";
 import { RiteOfTruthDeck } from "@/components/ship/RiteOfTruthDeck";
+import { LiveText, useTextStore } from "@/components/ship/ShipFields";
 
 const ROLES = [
   { key: "captain", label: "The Captain", desc: "The driver, head of the ship, fully responsible for her under way." },
@@ -43,19 +44,74 @@ const PRE_SAIL = [
   "Full walk-around done",
 ];
 
+/** One crew role and who holds it. Memoized, so a keystroke re-renders only the role typed in. */
+const RoleField = memo(function RoleField({ role, value, onValue }: {
+  role: (typeof ROLES)[number];
+  value: string;
+  onValue: (key: string, value: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-3">
+      <Label htmlFor={`role-${role.key}`} className="font-semibold">{role.label}</Label>
+      <p className="text-xs text-muted-foreground mb-2">{role.desc}</p>
+      <Input id={`role-${role.key}`} value={value} onChange={(e) => onValue(role.key, e.target.value)} placeholder="Name" maxLength={120} className="text-base" />
+    </div>
+  );
+});
+
+/**
+ * The crew roles form. It owns the names being typed, so a keystroke re-renders
+ * this form (and only the role typed in), not the whole book. draftRef keeps the
+ * names if the form remounts, as the page-level state it replaced did.
+ */
+function CrewRoles({ existingRoles, draftRef, onSaved }: {
+  existingRoles: Record<string, string>;
+  draftRef: React.MutableRefObject<Record<string, string>>;
+  onSaved: () => void;
+}) {
+  const setRoles = trpc.ship.voyage.setRoles.useMutation();
+  const [roles, setRolesState] = useState<Record<string, string>>(() => draftRef.current);
+  useEffect(() => { draftRef.current = roles; }, [draftRef, roles]);
+  const setRole = useCallback((key: string, value: string) => setRolesState((s) => ({ ...s, [key]: value })), []);
+  const roleValue = (k: string) => roles[k] ?? existingRoles[k] ?? "";
+
+  async function saveRoles() {
+    try {
+      await setRoles.mutateAsync({
+        captain: roleValue("captain") || undefined,
+        navigator: roleValue("navigator") || undefined,
+        quartermaster: roleValue("quartermaster") || undefined,
+        bosun: roleValue("bosun") || undefined,
+        seedKeeper: roleValue("seedKeeper") || undefined,
+      });
+      toast.success("Crew roles set for this voyage.");
+      onSaved();
+    } catch (err: any) {
+      toast.error(err?.message ?? "Could not save roles.");
+    }
+  }
+
+  return (
+    <div className="max-w-2xl space-y-3">
+      {ROLES.map((r) => <RoleField key={r.key} role={r} value={roleValue(r.key)} onValue={setRole} />)}
+      <Button onClick={saveRoles} disabled={setRoles.isPending} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]">{setRoles.isPending ? "Saving…" : "Set the crew roles"}</Button>
+    </div>
+  );
+}
+
 export default function CaptainsBook() {
   const voyage = trpc.ship.myVoyage.useQuery();
   const cases = trpc.ship.shipwright.myCases.useQuery();
-  const setRoles = trpc.ship.voyage.setRoles.useMutation();
   const logPreSail = trpc.ship.voyage.logPreSail.useMutation();
 
   const booking = voyage.data?.booking ?? null;
   const existingRoles = (booking?.crewRoles as Record<string, string> | null) ?? {};
-  const [roles, setRolesState] = useState<Record<string, string>>({});
-  const roleValue = (k: string) => roles[k] ?? existingRoles[k] ?? "";
+  // CrewRoles owns the names being typed; this keeps them if it remounts.
+  const rolesDraft = useRef<Record<string, string>>({});
 
   const [checks, setChecks] = useState<boolean[]>(() => PRE_SAIL.map(() => false));
-  const [driverName, setDriverName] = useState("");
+  // Kept out of state, so a keystroke re-renders only the driver field.
+  const driverName = useTextStore();
   const allChecked = checks.every(Boolean);
 
   // Deep link from the Saturday Rite of Truth card lands at #rite-of-truth.
@@ -68,27 +124,11 @@ export default function CaptainsBook() {
   }, []);
   const preSailRuns = useMemo(() => (Array.isArray(booking?.preSailLog) ? (booking!.preSailLog as Array<{ at: string; byName: string }>) : []), [booking]);
 
-  async function saveRoles() {
-    try {
-      await setRoles.mutateAsync({
-        captain: roleValue("captain") || undefined,
-        navigator: roleValue("navigator") || undefined,
-        quartermaster: roleValue("quartermaster") || undefined,
-        bosun: roleValue("bosun") || undefined,
-        seedKeeper: roleValue("seedKeeper") || undefined,
-      });
-      toast.success("Crew roles set for this voyage.");
-      voyage.refetch();
-    } catch (err: any) {
-      toast.error(err?.message ?? "Could not save roles.");
-    }
-  }
-
   async function completePreSail() {
     if (!allChecked) return toast.error("Walk the whole list before you roll.");
-    if (driverName.trim().length < 1) return toast.error("Who is driving? Add a name for the log.");
+    if (driverName.get().trim().length < 1) return toast.error("Who is driving? Add a name for the log.");
     try {
-      await logPreSail.mutateAsync({ byName: driverName.trim() });
+      await logPreSail.mutateAsync({ byName: driverName.get().trim() });
       toast.success("Pre-sail check logged. Fair winds, captain.");
       setChecks(PRE_SAIL.map(() => false));
       voyage.refetch();
@@ -191,16 +231,7 @@ export default function CaptainsBook() {
           <ShipSection className="pt-0">
             <h2 className="text-2xl font-bold mb-3 flex items-center gap-2"><Users className="w-6 h-6 text-[#9c8a7c]" aria-hidden="true" /> Crew roles</h2>
             <p className="text-foreground/80 max-w-2xl mb-4">Every voyage assigns roles, playfully but truly. A solo couple wears several hats. Name who holds what for this voyage.</p>
-            <div className="max-w-2xl space-y-3">
-              {ROLES.map((r) => (
-                <div key={r.key} className="rounded-xl border bg-card p-3">
-                  <Label htmlFor={`role-${r.key}`} className="font-semibold">{r.label}</Label>
-                  <p className="text-xs text-muted-foreground mb-2">{r.desc}</p>
-                  <Input id={`role-${r.key}`} value={roleValue(r.key)} onChange={(e) => setRolesState((s) => ({ ...s, [r.key]: e.target.value }))} placeholder="Name" maxLength={120} className="text-base" />
-                </div>
-              ))}
-              <Button onClick={saveRoles} disabled={setRoles.isPending} className="min-h-11 bg-[#2f5d3a] hover:bg-[#264a2f]">{setRoles.isPending ? "Saving…" : "Set the crew roles"}</Button>
-            </div>
+            <CrewRoles existingRoles={existingRoles} draftRef={rolesDraft} onSaved={() => voyage.refetch()} />
           </ShipSection>
 
           {/* 6. Pre-sail checklist */}
@@ -216,7 +247,9 @@ export default function CaptainsBook() {
               ))}
               <div className="pt-2 border-t">
                 <Label htmlFor="driver-name" className="text-sm">Who is driving?</Label>
-                <Input id="driver-name" value={driverName} onChange={(e) => setDriverName(e.target.value)} placeholder="Driver's name" maxLength={120} className="text-base max-w-xs" />
+                <LiveText store={driverName}>
+                  {(text) => <Input id="driver-name" value={text} onChange={(e) => driverName.set(e.target.value)} placeholder="Driver's name" maxLength={120} className="text-base max-w-xs" />}
+                </LiveText>
               </div>
               <Button onClick={completePreSail} disabled={logPreSail.isPending || !allChecked} className="min-h-11 bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d]">
                 {logPreSail.isPending ? "Logging…" : "She's secured, log the check"}

@@ -3001,27 +3001,48 @@ export async function getForumLikeCounts(postId: number) {
   const db = await getDb();
   if (!db) return { postLikes: 0, replyLikes: {} as Record<number, number> };
   
-  const postLikes = await db.select().from(forumLikes).where(eq(forumLikes.postId, postId));
-  const replies = await listForumReplies(postId);
+  // Grouped counts: this ran one query per reply, fetching whole rows to
+  // count them, on every thread load and after every like.
+  const [post] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(forumLikes)
+    .where(eq(forumLikes.postId, postId));
+  const replies = await db
+    .select({ id: forumReplies.id })
+    .from(forumReplies)
+    .where(and(eq(forumReplies.postId, postId), eq(forumReplies.isHidden, false)));
   const replyLikes: Record<number, number> = {};
-  
-  for (const reply of replies) {
-    const likes = await db.select().from(forumLikes).where(eq(forumLikes.replyId, reply.id));
-    replyLikes[reply.id] = likes.length;
+  for (const reply of replies) replyLikes[reply.id] = 0;
+  if (replies.length > 0) {
+    const rows = await db
+      .select({ replyId: forumLikes.replyId, count: sql<number>`count(*)` })
+      .from(forumLikes)
+      .where(inArray(forumLikes.replyId, replies.map((r) => r.id)))
+      .groupBy(forumLikes.replyId);
+    for (const row of rows) if (row.replyId != null) replyLikes[row.replyId] = Number(row.count);
   }
-  
-  return { postLikes: postLikes.length, replyLikes };
+
+  return { postLikes: Number(post?.count ?? 0), replyLikes };
 }
 
 export async function getUserForumLikes(userId: number, postId: number) {
   const db = await getDb();
   if (!db) return { likedPost: false, likedReplies: [] as number[] };
   
-  const likes = await db.select().from(forumLikes).where(eq(forumLikes.userId, userId));
-  const likedPost = likes.some(l => l.postId === postId && !l.replyId);
-  const likedReplies = likes.filter(l => l.replyId).map(l => l.replyId!);
-  
-  return { likedPost, likedReplies };
+  // Only this thread's likes; it read every like the person had ever made.
+  const [postLike] = await db
+    .select({ id: forumLikes.id })
+    .from(forumLikes)
+    .where(and(eq(forumLikes.userId, userId), eq(forumLikes.postId, postId), isNull(forumLikes.replyId)))
+    .limit(1);
+  const replyRows = await db
+    .select({ replyId: forumLikes.replyId })
+    .from(forumLikes)
+    .innerJoin(forumReplies, eq(forumLikes.replyId, forumReplies.id))
+    .where(and(eq(forumLikes.userId, userId), eq(forumReplies.postId, postId)));
+  const likedReplies = replyRows.flatMap((r) => (r.replyId != null ? [r.replyId] : []));
+
+  return { likedPost: !!postLike, likedReplies };
 }
 
 export async function getForumCategoryPostCounts() {

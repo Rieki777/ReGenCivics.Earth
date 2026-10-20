@@ -222,17 +222,20 @@ export function useGlobalMagnetic() {
 
     let rafId = 0;
     let targets: HTMLElement[] = [];
+    let refreshedAt = 0;
 
     const refresh = () => {
+      refreshedAt = performance.now();
       targets = Array.from(document.querySelectorAll<HTMLElement>("[data-magnetic]"));
       targets.forEach((t) => t.classList.add("magnetic"));
     };
     refresh();
-    // Refresh on a slow interval to catch lazily-mounted buttons
-    const interval = window.setInterval(refresh, 2000);
 
     const onMove = (ev: PointerEvent) => {
       if (rafId) return;
+      // Catch lazily mounted buttons while the pointer moves, at most every
+      // 2s; a timer scanned the whole page every 2s even with nobody there.
+      if (performance.now() - refreshedAt > 2000) refresh();
       rafId = window.requestAnimationFrame(() => {
         // Read every rect before writing any transform: a write between two
         // reads makes the browser restyle again for the next read.
@@ -256,7 +259,6 @@ export function useGlobalMagnetic() {
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => {
       window.removeEventListener("pointermove", onMove);
-      window.clearInterval(interval);
       if (rafId) window.cancelAnimationFrame(rafId);
     };
   }, []);
@@ -292,23 +294,21 @@ export function useGlobalRipple() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 25. Scroll progress ring, hook returning 0..1
+// 25. Scroll progress ring: calls back with 0..1 once per frame while scrolling
+//     The caller writes it straight to the element; holding it in React state
+//     re-rendered on every scroll frame.
 // ─────────────────────────────────────────────────────────────
 
-export function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
+export function useScrollProgress(onProgress: (progress: number) => void) {
+  const callback = useRef(onProgress);
+  callback.current = onProgress;
 
   useEffect(() => {
     const compute = () => {
       const doc = document.documentElement;
       const scrollTop = window.scrollY || doc.scrollTop;
       const height = doc.scrollHeight - doc.clientHeight;
-      if (height <= 0) {
-        setProgress(0);
-        return;
-      }
-      const p = Math.min(1, Math.max(0, scrollTop / height));
-      setProgress(p);
+      callback.current(height <= 0 ? 0 : Math.min(1, Math.max(0, scrollTop / height)));
     };
     compute();
     let raf = 0;
@@ -320,12 +320,11 @@ export function useScrollProgress() {
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", compute);
+    window.addEventListener("resize", onScroll);
     return () => {
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", compute);
+      window.removeEventListener("resize", onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
   }, []);
-  return progress;
 }

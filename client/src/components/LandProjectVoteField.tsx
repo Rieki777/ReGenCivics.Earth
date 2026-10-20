@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "wouter";
 
 export type AppliedProjectPick = {
@@ -5,6 +6,18 @@ export type AppliedProjectPick = {
   name: string;
   href: string;
 };
+
+/** Memoized: it never changes, so typing in the field above leaves it alone. */
+const ApplyLink = memo(function ApplyLink() {
+  return (
+    <Link
+      href="/apply"
+      className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-[#7dd87d] bg-[#0d2818] px-3 text-sm font-bold text-[#7dd87d] no-underline hover:bg-[#143d24] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
+    >
+      Not listed? Apply with your project
+    </Link>
+  );
+});
 
 /**
  * The land-project line on the season time vote.
@@ -55,12 +68,7 @@ export function LandProjectVoteField({
         aria-label="Your land project"
         className="min-h-11 w-full rounded-xl border border-white/45 bg-white/10 px-4 py-2 text-base text-white placeholder-white/40 focus:border-[#e3ac4f] focus:outline focus:outline-[3px] focus:outline-offset-2 focus:outline-white md:text-sm"
       />
-      <Link
-        href="/apply"
-        className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-[#7dd87d] bg-[#0d2818] px-3 text-sm font-bold text-[#7dd87d] no-underline hover:bg-[#143d24] focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-white"
-      >
-        Not listed? Apply with your project
-      </Link>
+      <ApplyLink />
     </div>
   );
 }

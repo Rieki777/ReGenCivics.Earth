@@ -19,7 +19,9 @@ import { SmartImagePicker } from "@/components/SmartImagePicker";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../../server/routers";
 import { toast } from "sonner";
 import { copyToClipboard } from "@/lib/clipboard";
 import { AnimatedSection } from "@/components/AnimatedSection";
@@ -28,7 +30,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { ForumMarkdown } from "@/components/ForumMarkdown";
 import { MarkdownToolbar } from "@/components/MarkdownToolbar";
 import { RichEditor, type RichEditorHandle } from "@/components/RichEditor";
-import { ProjectConnectionsPanel } from "@/components/ProjectConnectionsPanel";
+import { ProjectConnectionsPanel as ProjectConnectionsPanelBase } from "@/components/ProjectConnectionsPanel";
 import { BadgeRingAvatar } from "@/components/BadgeRingAvatar";
 import { CitizenshipBadge } from "@/components/game/TierBadge";
 import { EmojiReactions } from "@/components/EmojiReactions";
@@ -38,12 +40,24 @@ import { GovernanceLifecycleStrip } from "@/components/governance/GovernanceLife
 import { PerspectiveControl } from "@/components/governance/PerspectiveControl";
 import { RaiseModal } from "@/components/assembly/RaiseModal";
 import { Vote } from "lucide-react";
-import ThreadRoots from "@/components/ThreadRoots";
+import ThreadRootsBase from "@/components/ThreadRoots";
 import { LinkPreviewCard } from "@/components/LinkPreviewCard";
 import { decodeEntities } from "@/utils/sanitize";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 
-function timeAgo(date: Date | string): string {
+type ForumPostData = inferRouterOutputs<AppRouter>["forum"]["postById"];
+
+// The page hands these stable props, so a like or an open menu leaves the
+// thread tree and the related-projects panel alone.
+const ThreadRoots = memo(ThreadRootsBase);
+const ProjectConnectionsPanel = memo(ProjectConnectionsPanelBase);
+
+function scrollToReply(replyId: number) {
+  const el = document.getElementById(`reply-${replyId}`);
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function timeAgo(date: Date | string | number): string {
   const now = new Date();
   const d = new Date(date);
   const seconds = Math.floor((now.getTime() - d.getTime()) / 1000);
@@ -93,7 +107,7 @@ function ContentLinkPreview({ content }: { content: string }) {
 const STAGE_LABELS: Record<string, string> = { idea: "Idea", experiment: "Experiment", result: "Result" };
 const STAGE_ORDER = ["idea", "experiment", "result"];
 
-function ChainNav({ postId, chainId, currentStage }: { postId: number; chainId: number; currentStage: string }) {
+const ChainNav = memo(function ChainNav({ postId, chainId, currentStage }: { postId: number; chainId: number; currentStage: string }) {
   const { data: chainPosts } = trpc.forum.chainPosts.useQuery({ chainId }, { staleTime: 60_000 });
   if (!chainPosts || chainPosts.length <= 1) return null;
 
@@ -125,14 +139,14 @@ function ChainNav({ postId, chainId, currentStage }: { postId: number; chainId: 
       </div>
     </div>
   );
-}
+});
 
 /**
  * The reply box. It owns the draft so a keystroke re-renders only this box,
  * not the whole thread above it. draftRef keeps the text if the box remounts
  * (the thread reloading), as the page-level state it replaced did.
  */
-function ReplyComposer({
+const ReplyComposer = memo(function ReplyComposer({
   postId,
   replyingTo,
   onPosted,
@@ -211,33 +225,98 @@ function ReplyComposer({
       </div>
     </>
   );
-}
+});
 
-export default function CommunityPost() {
-  const { id } = useParams<{ id: string }>();
-  const postId = parseInt(id || '0');
-  const { user, isAuthenticated } = useAuth();
-  const [, navigate] = useLocation();
-  const replyDraftRef = useRef("");
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ type: 'post' | 'reply'; id: number } | null>(null);
+/** The post's edit form. It holds the edits, so typing re-renders only the form. */
+const PostEditForm = memo(function PostEditForm({ post, onClose }: { post: ForumPostData; onClose: () => void }) {
+  const utils = trpc.useUtils();
+  const [editTitle, setEditTitle] = useState(() => decodeEntities(post.title));
+  const [editContent, setEditContent] = useState(post.content);
+  const [editImageUrl, setEditImageUrl] = useState(post.generatedImageUrl || '');
+
+  const updatePostMutation = trpc.forum.updatePost.useMutation({
+    onSuccess: () => {
+      utils.forum.postById.invalidate({ id: post.id });
+      toast.success("Post updated");
+      onClose();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to update post");
+    },
+  });
+
+  return (
+    <div className="px-4 md:px-6 py-4 space-y-3">
+      <input
+        value={editTitle}
+        onChange={(e) => setEditTitle(e.target.value)}
+        className="w-full px-3 py-2 text-sm font-semibold bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] focus:outline-none focus:border-[#7dd87d]"
+        placeholder="Post title..."
+      />
+      <textarea
+        value={editContent}
+        onChange={(e) => setEditContent(e.target.value)}
+        rows={16}
+        className="w-full px-3 py-2 text-sm font-mono bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] resize-y focus:outline-none focus:border-[#7dd87d]"
+        placeholder="Post content (markdown supported)..."
+      />
+      <SmartImagePicker value={editImageUrl} onChange={setEditImageUrl} context="forum" label="Post image" theme="light" />
+      <div className="flex gap-2 justify-end">
+        <button
+          onClick={onClose}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#1a472a]/80 hover:text-[#1a472a] border border-[#1a472a]/20 rounded-lg transition-colors"
+        >
+          <X className="w-3.5 h-3.5" /> Cancel
+        </button>
+        <button
+          onClick={() => updatePostMutation.mutate({ id: post.id, title: editTitle, content: editContent, generatedImageUrl: editImageUrl || null })}
+          disabled={updatePostMutation.isPending}
+          className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-[#1a472a] text-white rounded-lg hover:bg-[#2d5a3d] transition-colors disabled:opacity-60"
+        >
+          <Save className="w-3.5 h-3.5" />
+          {updatePostMutation.isPending ? 'Saving…' : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  );
+});
+
+type PostCardProps = {
+  post: ForumPostData;
+  language: string;
+  isAuthenticated: boolean;
+  canDeletePost: boolean;
+  following: boolean;
+  effectiveStage: string | null;
+  perspectiveVoices: number;
+  likedPost: boolean;
+  postLikes: number;
+  onLikePost: () => void;
+  onDeletePost: (id: number) => void;
+};
+
+/**
+ * The original post. It keeps its own menus, edit form and translation, and
+ * takes plain values from the page, so activity in the replies below does not
+ * re-render it.
+ */
+const PostCard = memo(function PostCard({
+  post, language, isAuthenticated, canDeletePost, following, effectiveStage,
+  perspectiveVoices, likedPost, postLikes, onLikePost, onDeletePost,
+}: PostCardProps) {
+  const utils = trpc.useUtils();
   const [editingPost, setEditingPost] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editContent, setEditContent] = useState('');
-  const [editImageUrl, setEditImageUrl] = useState('');
+  const closeEdit = useCallback(() => setEditingPost(false), []);
   const [promotionOpen, setPromotionOpen] = useState(false);
   const [confirmingSensing, setConfirmingSensing] = useState(false);
-  const replyRef = useRef<RichEditorHandle>(null);
-  const replyFormRef = useRef<HTMLDivElement>(null);
-  const utils = trpc.useUtils();
-  const { language } = useLanguage();
+  const inGovernance = effectiveStage !== null;
 
   // Governance entry: "Sense the room" moves a dialogue thread into Sensing.
   const enterSensing = trpc.forum.enterSensing.useMutation({
     onSuccess: () => {
       setConfirmingSensing(false);
-      utils.forum.postById.invalidate({ id: postId });
-      utils.forum.perspectives.get.invalidate({ threadId: postId });
+      utils.forum.postById.invalidate({ id: post.id });
+      utils.forum.perspectives.get.invalidate({ threadId: post.id });
     },
     onError: (err) => {
       setConfirmingSensing(false);
@@ -245,28 +324,22 @@ export default function CommunityPost() {
     },
   });
 
-  // The decision row (when one exists) outranks the thread's stored stage:
-  // the ReGen Gov app moves decisions without writing back to forumPosts.
-  const { data: threadDecision } = trpc.governance.getDecisionStatus.useQuery(
-    { threadId: postId },
-    { staleTime: 30_000, enabled: postId > 0 }
-  );
-  
+  const setThreadSubscription = trpc.notifications.subscriptions.set.useMutation({
+    onSuccess: () => utils.notifications.subscriptions.forThread.invalidate({ postId: post.id }),
+  });
+
   // Translation state
   const [translatedPost, setTranslatedPost] = useState<string | null>(null);
   const [translatingPost, setTranslatingPost] = useState(false);
-  const [translatedReplies, setTranslatedReplies] = useState<Record<number, string>>({});
-  const [translatingReplyId, setTranslatingReplyId] = useState<number | null>(null);
-
   const translateMutation = trpc.translate.content.useMutation();
 
   const handleTranslatePost = async () => {
-    if (!post || translatingPost) return;
+    if (translatingPost) return;
     setTranslatingPost(true);
     try {
       const result = await translateMutation.mutateAsync({
         contentType: 'post' as const,
-        contentId: postId,
+        contentId: post.id,
         targetLang: language,
         sourceText: post.content,
         sourceTitle: post.title,
@@ -279,11 +352,546 @@ export default function CommunityPost() {
     }
   };
 
-  const handleTranslateReply = async (replyId: number, content: string) => {
-    if (translatingReplyId) return;
+  // Copy link state
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    copyToClipboard(window.location.href).then((ok) => {
+      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    });
+  };
+
+  // Flag dropdown state
+  const [showFlagMenu, setShowFlagMenu] = useState(false);
+
+  const submitReportMutation = trpc.moderation.submitReport.useMutation({
+    onSuccess: () => {
+      toast.success("Report submitted. Moderators will review it.");
+    },
+    onError: () => {
+      toast.error("Failed to submit report. Please try again.");
+    },
+  });
+
+  return (
+    <AnimatedSection>
+      <div className="bg-white rounded-xl border border-[#e8e4de] overflow-hidden mb-6">
+        {/* Post Header */}
+        <div className="px-4 md:px-6 pt-4 md:pt-5 flex items-start gap-3">
+          <BadgeRingAvatar
+            avatarUrl={post.authorAvatar}
+            displayName={post.authorName}
+            badges={post.authorBadges}
+            size={40}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link href={`/community/user/${post.authorId}`} className="font-semibold text-[#1a472a] text-sm hover:text-[#4a7c59] transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
+                {post.authorName}
+              </Link>
+              {(post as any).authorCitizenshipTier && (post as any).authorCitizenshipTier !== 'explorer' && (
+                <CitizenshipBadge tier={(post as any).authorCitizenshipTier} size="sm" />
+              )}
+              <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-[10px] px-1.5 py-0">
+                Author
+              </Badge>
+            </div>
+            {/* B.4: Bioregion display (requires server to include bioregion on post author data) */}
+            {(post as any).authorBioregion && <span className="block text-[10px] text-[#1a472a]/80">{(post as any).authorBioregion}</span>}
+            <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs mt-0.5" style={{ fontFamily: 'var(--font-body)' }}>
+              <span>{formatDate(post.createdAt)}</span>
+              <span className="flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {post.viewCount} views
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  // Following now: mute. Not following yet, or muted: follow.
+                  const nextMuted = following;
+                  setThreadSubscription.mutate({ postId: post.id, muted: nextMuted });
+                }}
+                className={`flex items-center gap-1 p-1 transition-colors ${
+                  following
+                    ? 'text-[#4a7c59] hover:text-[#1a472a]'
+                    : 'text-[#1a472a]/75 hover:text-[#4a7c59]'
+                }`}
+                title={following ? 'Following this thread. Tap to mute.' : 'Get notified about new replies'}
+                aria-label={following ? 'Mute this thread' : 'Follow this thread'}
+                aria-pressed={following}
+              >
+                {following
+                  ? <BellRing className="w-3.5 h-3.5" />
+                  : <BellOff className="w-3.5 h-3.5" />}
+              </button>
+            )}
+            {isAuthenticated && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowFlagMenu(!showFlagMenu)}
+                  className="flex items-center gap-1 text-[#1a472a]/75 hover:text-amber-500 p-1 transition-colors"
+                  title="Flag this content"
+                  aria-label="Flag this content"
+                >
+                  <Flag className="w-3.5 h-3.5" />
+                </button>
+                {showFlagMenu && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowFlagMenu(false)} />
+                    <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
+                      <p className="text-white/60 text-xs px-3 py-2 border-b border-white/10">Flag this content</p>
+                      <button
+                        onClick={() => {
+                          submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "soft" });
+                          setShowFlagMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                      >
+                        <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
+                        <p className="text-white/70 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
+                      </button>
+                      <button
+                        onClick={() => {
+                          submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "hard" });
+                          setShowFlagMenu(false);
+                        }}
+                        className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                      >
+                        <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
+                        <p className="text-white/70 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {canDeletePost && !editingPost && (
+              <button
+                onClick={() => setEditingPost(true)}
+                className="text-[#4a7c59] hover:text-[#1a472a] p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
+                title="Edit post"
+                aria-label="Edit post"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
+            {canDeletePost && (
+              <button
+                onClick={() => onDeletePost(post.id)}
+                className="text-red-400 hover:text-red-600 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
+                title="Delete post"
+                aria-label="Delete post"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Post Content / Edit Form */}
+        {editingPost ? (
+          <PostEditForm post={post} onClose={closeEdit} />
+        ) : (
+        <div className="px-4 md:px-6 py-4 text-[#1a472a]/80 text-sm leading-relaxed safe-prose min-w-0" style={{ fontFamily: 'var(--font-body)' }}>
+          {translatedPost ? (
+            <div>
+              <div className="mb-2 px-2 py-1 bg-[#f0f7f0] rounded text-xs text-[#4a7c59] inline-flex items-center gap-1">
+                <Languages className="w-3 h-3" />
+                Translated to {language.toUpperCase()}
+                <button
+                  onClick={() => setTranslatedPost(null)}
+                  className="ml-2 text-[#1a472a]/75 hover:text-[#1a472a] underline"
+                >
+                  Show original
+                </button>
+              </div>
+              <ForumMarkdown content={translatedPost} />
+            </div>
+          ) : (
+            <ForumMarkdown content={post.content} />
+          )}
+          <ContentLinkPreview content={post.content} />
+        </div>
+        )}
+
+        {/* Governance lifecycle — only once the thread has entered the pipeline */}
+        {inGovernance && (
+          <div className="px-4 md:px-6 pb-2 space-y-3">
+            <GovernanceLifecycleStrip
+              threadId={post.id}
+              governanceStage={effectiveStage as any}
+              sensingStartedBy={(post as any).sensingStartedBy ?? null}
+            />
+            {(effectiveStage === "sensing" || effectiveStage === "proposal") && (
+              <PerspectiveControl threadId={post.id} />
+            )}
+          </div>
+        )}
+
+        {/* Living backlink banner: shows if this thread has been promoted to a formal decision */}
+        <div className="px-4 md:px-6 pb-2">
+          <ForumThreadDecisionBanner threadId={post.id} />
+          {isAuthenticated && (
+            <div className="flex items-center justify-end gap-4 mt-1 flex-wrap">
+              {inGovernance && perspectiveVoices > 0 && (
+                <span className="text-[11px] text-[#1a472a]/75">
+                  {perspectiveVoices === 1 ? "1 person has" : `${perspectiveVoices} people have`} weighed in
+                </span>
+              )}
+              {!inGovernance && (
+                confirmingSensing ? (
+                  <span className="flex items-center gap-3 flex-wrap text-[11px]">
+                    <span className="text-[#1a472a]/80">
+                      Start sensing the room on this thread? This invites everyone to share where they stand.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => enterSensing.mutate({ threadId: post.id })}
+                      disabled={enterSensing.isPending}
+                      className="inline-flex items-center gap-1 font-bold text-[#1a472a] underline hover:text-[#4a7c59] transition-colors"
+                    >
+                      {enterSensing.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
+                      Start sensing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingSensing(false)}
+                      className="text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
+                    >
+                      Not yet
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingSensing(true)}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
+                    title="Gauge where we stand as we move to a formal proposal."
+                  >
+                    <Eye className="w-3 h-3" />
+                    Sense the room
+                  </button>
+                )
+              )}
+              <button
+                type="button"
+                onClick={() => setPromotionOpen(true)}
+                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
+                title="Raise this thread as a proposal in the Assembly, the Game's community-governed space."
+              >
+                <Vote className="w-3 h-3" />
+                Raise in Assembly
+              </button>
+            </div>
+          )}
+        </div>
+        <RaiseModal threadId={post.id} threadTitle={post.title} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
+
+        {/* Emoji Reactions + Gratitude on post */}
+        <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">
+          <EmojiReactions postId={post.id} />
+          <GratitudeButton
+            recipientHandle={(post as any).authorHandle}
+            sourceType="forum_post"
+            sourceId={post.id}
+          />
+        </div>
+
+        {/* Post Actions */}
+        <div className="px-4 md:px-6 pb-4 flex items-center gap-4 border-t border-[#e8e4de] pt-3">
+          <button
+            onClick={onLikePost}
+            className={`flex items-center gap-1.5 text-sm transition-colors ${
+              likedPost
+                ? 'text-red-500'
+                : 'text-[#1a472a]/80 hover:text-red-400'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${likedPost ? 'fill-current' : ''}`} />
+            <span>{postLikes}</span>
+          </button>
+          <span className="flex items-center gap-1.5 text-[#1a472a]/80 text-sm">
+            <MessageCircle className="w-4 h-4" />
+            {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
+          </span>
+          <button
+            onClick={handleCopyLink}
+            className="flex items-center gap-1.5 text-xs text-[#1a472a]/80 hover:text-[#1a472a]/80 transition-colors"
+            title="Copy link to post"
+          >
+            <Link2 className="w-4 h-4" />
+            {copied ? 'Copied!' : 'Copy link'}
+          </button>
+          {/* B.7: Propose as Quest */}
+          <a
+            href={`/community/quests?propose=true&title=${encodeURIComponent(post.title)}&threadId=${post.id}`}
+            className="flex items-center gap-1 text-xs text-[#1a472a]/80 hover:text-[#4a7c59] transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            Propose as Quest
+          </a>
+          {language !== 'en' && !translatedPost && (
+            <button
+              onClick={handleTranslatePost}
+              disabled={translatingPost}
+              className="flex items-center gap-1.5 text-sm text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors ml-auto"
+            >
+              {translatingPost ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Languages className="w-3.5 h-3.5" />
+              )}
+              <span>Translate</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </AnimatedSection>
+  );
+});
+
+type ReplyItemProps = {
+  index: number;
+  replyId: number;
+  content: string;
+  authorName: string;
+  authorAvatar: string | null;
+  authorBadges: string[];
+  authorHandle: string | null;
+  authorTier: string | null;
+  /** "5m ago", worked out by the parent so it stays current whenever the thread re-renders. */
+  timeAgoLabel: string;
+  isNested: boolean;
+  isOp: boolean;
+  canDelete: boolean;
+  canReply: boolean;
+  canFlag: boolean;
+  liked: boolean;
+  likeCount: number;
+  triedCount: number;
+  triedPending: boolean;
+  flagMenuOpen: boolean;
+  showTranslate: boolean;
+  translated: string | undefined;
+  translating: boolean;
+  onLike: (replyId: number) => void;
+  onTriedThis: (replyId: number) => void;
+  onReplyTo: (replyId: number) => void;
+  onDelete: (replyId: number) => void;
+  onToggleFlagMenu: (replyId: number) => void;
+  onCloseFlagMenu: () => void;
+  onReport: (replyId: number, severity: "soft" | "hard") => void;
+  onTranslate: (replyId: number, content: string) => void;
+  onShowOriginal: (replyId: number) => void;
+};
+
+/**
+ * One reply. Its props are plain values and handlers that take the reply id,
+ * so liking, translating or flagging one reply re-renders only that reply.
+ */
+const ReplyItem = memo(function ReplyItem({
+  index, replyId, content, authorName, authorAvatar, authorBadges, authorHandle, authorTier,
+  timeAgoLabel, isNested, isOp, canDelete, canReply, canFlag, liked, likeCount, triedCount,
+  triedPending, flagMenuOpen, showTranslate, translated, translating, onLike, onTriedThis,
+  onReplyTo, onDelete, onToggleFlagMenu, onCloseFlagMenu, onReport, onTranslate, onShowOriginal,
+}: ReplyItemProps) {
+  return (
+    <AnimatedSection delay={index * 0.03}>
+      <div id={`reply-${replyId}`} className={`bg-white rounded-xl border border-[#e8e4de] overflow-hidden ${isNested ? 'ml-6 md:ml-10' : ''}`}>
+        <div className="px-4 py-3 flex items-start gap-3">
+          {isNested && (
+            <CornerDownRight className="w-4 h-4 text-[#4a7c59]/30 flex-shrink-0 mt-1" />
+          )}
+          <BadgeRingAvatar
+            avatarUrl={authorAvatar}
+            displayName={authorName}
+            badges={authorBadges}
+            size={32}
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-semibold text-[#1a472a] text-xs" style={{ fontFamily: 'var(--font-display)' }}>
+                {authorName}
+              </span>
+              {authorTier && authorTier !== 'explorer' && (
+                <CitizenshipBadge tier={authorTier} size="sm" />
+              )}
+              {isOp && (
+                <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-[10px] px-1.5 py-0">
+                  OP
+                </Badge>
+              )}
+              <span className="text-[#1a472a]/75 text-[10px]">{timeAgoLabel}</span>
+            </div>
+            <div className="text-[#1a472a]/75 text-sm leading-relaxed safe-prose" style={{ fontFamily: 'var(--font-body)' }}>
+              {translated ? (
+                <div>
+                  <div className="mb-1 px-1.5 py-0.5 bg-[#f0f7f0] rounded text-[10px] text-[#4a7c59] inline-flex items-center gap-1">
+                    <Languages className="w-2.5 h-2.5" />
+                    Translated
+                    <button
+                      onClick={() => onShowOriginal(replyId)}
+                      className="ml-1 underline text-[#1a472a]/80 hover:text-[#1a472a]"
+                    >
+                      Original
+                    </button>
+                  </div>
+                  <ForumMarkdown content={translated} />
+                </div>
+              ) : (
+                <ForumMarkdown content={content} />
+              )}
+              <ContentLinkPreview content={content} />
+            </div>
+            {/* Emoji Reactions + Gratitude on reply */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <EmojiReactions replyId={replyId} />
+              <GratitudeButton
+                recipientHandle={authorHandle}
+                sourceType="forum_reply"
+                sourceId={replyId}
+              />
+            </div>
+
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <button
+                onClick={() => onLike(replyId)}
+                className={`flex items-center gap-1 text-xs transition-colors ${
+                  liked
+                    ? 'text-red-500'
+                    : 'text-[#1a472a]/75 hover:text-red-400'
+                }`}
+              >
+                <Heart className={`w-3 h-3 ${liked ? 'fill-current' : ''}`} />
+                <span>{likeCount}</span>
+              </button>
+              <button
+                onClick={() => onTriedThis(replyId)}
+                disabled={triedPending}
+                className={`flex items-center gap-1 text-xs border rounded px-2 py-0.5 transition-colors ${
+                  triedCount > 0
+                    ? 'text-green-700 border-green-300 font-semibold'
+                    : 'text-green-600 border-green-200 hover:text-green-700 hover:border-green-400'
+                }`}
+                title="Mark that you tried this"
+              >
+                <Check className="w-3 h-3" />
+                I tried this{triedCount > 0 ? ` (${triedCount})` : ''}
+              </button>
+              {canReply && (
+                <button
+                  onClick={() => {
+                    onReplyTo(replyId);
+                  }}
+                  className="text-[#1a472a]/75 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors"
+                >
+                  <CornerDownRight className="w-3 h-3" />
+                  Reply
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={() => onDelete(replyId)}
+                  className="text-[#1a472a]/20 hover:text-red-500 text-xs flex items-center gap-1 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              )}
+              {canFlag && (
+                <div className="relative">
+                  <button
+                    onClick={() => onToggleFlagMenu(replyId)}
+                    className="text-[#1a472a]/20 hover:text-amber-500 text-xs flex items-center gap-1 transition-colors"
+                    title="Flag this reply"
+                    aria-label="Flag this reply"
+                  >
+                    <Flag className="w-3 h-3" />
+                  </button>
+                  {flagMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={onCloseFlagMenu} />
+                      <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
+                        <p className="text-white/60 text-xs px-3 py-2 border-b border-white/10">Flag this reply</p>
+                        <button
+                          onClick={() => onReport(replyId, "soft")}
+                          className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                        >
+                          <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
+                          <p className="text-white/70 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
+                        </button>
+                        <button
+                          onClick={() => onReport(replyId, "hard")}
+                          className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
+                        >
+                          <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
+                          <p className="text-white/70 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+              {showTranslate && !translated && (
+                <button
+                  onClick={() => onTranslate(replyId, content)}
+                  disabled={translating}
+                  className="text-[#1a472a]/75 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors ml-auto"
+                >
+                  {translating ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Languages className="w-3 h-3" />
+                  )}
+                  Translate
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </AnimatedSection>
+  );
+});
+
+export default function CommunityPost() {
+  const { id } = useParams<{ id: string }>();
+  const postId = parseInt(id || '0');
+  const { user, isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
+  const replyDraftRef = useRef("");
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: 'post' | 'reply'; id: number } | null>(null);
+  const replyRef = useRef<RichEditorHandle>(null);
+  const replyFormRef = useRef<HTMLDivElement>(null);
+  const utils = trpc.useUtils();
+  const { language } = useLanguage();
+
+  // The decision row (when one exists) outranks the thread's stored stage:
+  // the ReGen Gov app moves decisions without writing back to forumPosts.
+  const { data: threadDecision } = trpc.governance.getDecisionStatus.useQuery(
+    { threadId: postId },
+    { staleTime: 30_000, enabled: postId > 0 }
+  );
+
+  // Translation state (the post's own lives in PostCard)
+  const [translatedReplies, setTranslatedReplies] = useState<Record<number, string>>({});
+  const [translatingReplyId, setTranslatingReplyId] = useState<number | null>(null);
+  // The one-at-a-time guard reads a ref, so the handler stays the same
+  // function and the other replies keep their props.
+  const translatingReplyRef = useRef<number | null>(null);
+
+  const translateMutation = trpc.translate.content.useMutation();
+  const translateContent = translateMutation.mutateAsync;
+
+  const handleTranslateReply = useCallback(async (replyId: number, content: string) => {
+    if (translatingReplyRef.current) return;
+    translatingReplyRef.current = replyId;
     setTranslatingReplyId(replyId);
     try {
-      const result = await translateMutation.mutateAsync({
+      const result = await translateContent({
         contentType: 'reply' as const,
         contentId: replyId,
         targetLang: language,
@@ -293,9 +901,14 @@ export default function CommunityPost() {
     } catch {
       toast.error('Translation failed. Please try again.');
     } finally {
+      translatingReplyRef.current = null;
       setTranslatingReplyId(null);
     }
-  };
+  }, [language, translateContent]);
+
+  const handleShowOriginalReply = useCallback((replyId: number) => {
+    setTranslatedReplies(prev => { const n = {...prev}; delete n[replyId]; return n; });
+  }, []);
 
   const { data: post, isLoading: postLoading } = trpc.forum.postById.useQuery(
     { id: postId },
@@ -329,9 +942,6 @@ export default function CommunityPost() {
     { postId },
     { enabled: postId > 0 && !!user }
   );
-  const setThreadSubscription = trpc.notifications.subscriptions.set.useMutation({
-    onSuccess: () => utils.notifications.subscriptions.forThread.invalidate({ postId }),
-  });
 
   // Read tracking (Phase 2): viewing the thread clears its unread state
   // everywhere. Fires once per visit, after replies settle.
@@ -358,8 +968,32 @@ export default function CommunityPost() {
     { enabled: isEntitySpace && !!entityOrgName, staleTime: 10 * 60 * 1000 }
   );
 
+  // The heart and its count change on the tap; the server's answer settles
+  // them, and an error puts them back.
+  const likesInput = { postId, userId: user?.id };
   const toggleLikeMutation = trpc.forum.toggleLike.useMutation({
-    onSuccess: () => {
+    onMutate: async (vars) => {
+      await utils.forum.likes.cancel(likesInput);
+      const prev = utils.forum.likes.getData(likesInput);
+      utils.forum.likes.setData(likesInput, (old) => {
+        if (!old) return old;
+        if (vars.replyId) {
+          const id = vars.replyId;
+          const had = old.likedReplies.includes(id);
+          return {
+            ...old,
+            likedReplies: had ? old.likedReplies.filter((r) => r !== id) : [...old.likedReplies, id],
+            replyLikes: { ...old.replyLikes, [id]: Math.max(0, (old.replyLikes[id] ?? 0) + (had ? -1 : 1)) },
+          };
+        }
+        return { ...old, likedPost: !old.likedPost, postLikes: Math.max(0, old.postLikes + (old.likedPost ? -1 : 1)) };
+      });
+      return { prev };
+    },
+    // The rollback lives here, not in onError, so the app-wide onError in
+    // main.tsx (the too-many-requests toast) still runs.
+    onSettled: (_data, error, _vars, context) => {
+      if (error && context?.prev) utils.forum.likes.setData(likesInput, context.prev);
       utils.forum.likes.invalidate({ postId });
     },
   });
@@ -386,28 +1020,7 @@ export default function CommunityPost() {
     },
   });
 
-  const updatePostMutation = trpc.forum.updatePost.useMutation({
-    onSuccess: () => {
-      utils.forum.postById.invalidate({ id: postId });
-      toast.success("Post updated");
-      setEditingPost(false);
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to update post");
-    },
-  });
-
-  // Copy link state
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyLink = () => {
-    copyToClipboard(window.location.href).then((ok) => {
-      if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
-    });
-  };
-
-  // Flag dropdown state
-  const [showFlagMenu, setShowFlagMenu] = useState(false);
+  // Reply flag dropdown state (the post's own lives in PostCard)
   const [showReplyFlagMenu, setShowReplyFlagMenu] = useState<number | null>(null);
 
   const submitReportMutation = trpc.moderation.submitReport.useMutation({
@@ -418,6 +1031,16 @@ export default function CommunityPost() {
       toast.error("Failed to submit report. Please try again.");
     },
   });
+  const submitReport = submitReportMutation.mutate;
+
+  const toggleReplyFlagMenu = useCallback((replyId: number) => {
+    setShowReplyFlagMenu(open => open === replyId ? null : replyId);
+  }, []);
+  const closeReplyFlagMenu = useCallback(() => setShowReplyFlagMenu(null), []);
+  const handleReportReply = useCallback((replyId: number, severity: "soft" | "hard") => {
+    submitReport({ replyId, reason: "inappropriate", severity });
+    setShowReplyFlagMenu(null);
+  }, [submitReport]);
 
   // "I tried this" optimistic counts: replyId -> count
   const [triedThisCounts, setTriedThisCounts] = useState<Record<number, number>>({});
@@ -430,14 +1053,15 @@ export default function CommunityPost() {
       toast.error(err.message || "Failed to record. Try again");
     },
   });
+  const incrementTriedThis = incrementTriedThisMutation.mutate;
 
-  const handleTriedThis = (replyId: number) => {
+  const handleTriedThis = useCallback((replyId: number) => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
     }
-    incrementTriedThisMutation.mutate({ replyId });
-  };
+    incrementTriedThis({ replyId });
+  }, [isAuthenticated, incrementTriedThis]);
 
   // Focus and scroll to reply editor when replying to someone
   useEffect(() => {
@@ -474,21 +1098,37 @@ export default function CommunityPost() {
     }, 150);
   }, [replies]);
 
-  const handleLikePost = () => {
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
-    toggleLikeMutation.mutate({ postId });
-  };
+  // The handlers below stay the same functions across renders (mutate is
+  // stable), so the memoized post card and reply rows can skip re-rendering.
+  const toggleLike = toggleLikeMutation.mutate;
 
-  const handleLikeReply = (replyId: number) => {
+  const handleLikePost = useCallback(() => {
     if (!isAuthenticated) {
       window.location.href = getLoginUrl();
       return;
     }
-    toggleLikeMutation.mutate({ replyId });
-  };
+    toggleLike({ postId });
+  }, [isAuthenticated, toggleLike, postId]);
+
+  const handleLikeReply = useCallback((replyId: number) => {
+    if (!isAuthenticated) {
+      window.location.href = getLoginUrl();
+      return;
+    }
+    toggleLike({ replyId });
+  }, [isAuthenticated, toggleLike]);
+
+  const handleDeletePost = useCallback((id: number) => setDeleteTarget({ type: 'post', id }), []);
+  const handleDeleteReply = useCallback((id: number) => setDeleteTarget({ type: 'reply', id }), []);
+  const handleReplyPosted = useCallback(() => setReplyingTo(null), []);
+
+  const threadRootsReplies = useMemo(() => (replies ?? []).map(r => ({
+    id: r.id,
+    authorName: r.authorName,
+    authorAvatar: r.authorAvatar ?? '',
+    parentId: r.parentReplyId ?? null,
+    depth: r.parentReplyId ? 1 : 0,
+  })), [replies]);
 
   const handleDelete = () => {
     if (!deleteTarget) return;
@@ -546,11 +1186,11 @@ export default function CommunityPost() {
     : storedStage === "sensing" || storedStage === "proposal" || storedStage === "decided"
     ? storedStage
     : null;
-  const inGovernance = effectiveStage !== null;
   const perspectiveVoices = ((threadPerspectives as any)?.tallies ?? []).reduce(
     (sum: number, t: any) => sum + Number(t.count ?? 0),
     0
   );
+  const following = !!subscription && !subscription.muted;
 
   return (
     <PageTransition>
@@ -615,312 +1255,19 @@ export default function CommunityPost() {
       {/* Main Content */}
       <section className="container px-4 max-w-4xl mx-auto py-6">
         {/* Original Post */}
-        <AnimatedSection>
-          <div className="bg-white rounded-xl border border-[#e8e4de] overflow-hidden mb-6">
-            {/* Post Header */}
-            <div className="px-4 md:px-6 pt-4 md:pt-5 flex items-start gap-3">
-              <BadgeRingAvatar
-                avatarUrl={post.authorAvatar}
-                displayName={post.authorName}
-                badges={post.authorBadges}
-                size={40}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link href={`/community/user/${post.authorId}`} className="font-semibold text-[#1a472a] text-sm hover:text-[#4a7c59] transition-colors" style={{ fontFamily: 'var(--font-display)' }}>
-                    {post.authorName}
-                  </Link>
-                  {(post as any).authorCitizenshipTier && (post as any).authorCitizenshipTier !== 'explorer' && (
-                    <CitizenshipBadge tier={(post as any).authorCitizenshipTier} size="sm" />
-                  )}
-                  <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-[10px] px-1.5 py-0">
-                    Author
-                  </Badge>
-                </div>
-                {/* B.4: Bioregion display (requires server to include bioregion on post author data) */}
-                {(post as any).authorBioregion && <span className="block text-[10px] text-[#1a472a]/80">{(post as any).authorBioregion}</span>}
-                <div className="flex items-center gap-3 text-[#1a472a]/80 text-xs mt-0.5" style={{ fontFamily: 'var(--font-body)' }}>
-                  <span>{formatDate(post.createdAt)}</span>
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-3 h-3" />
-                    {post.viewCount} views
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
-                {isAuthenticated && (
-                  <button
-                    onClick={() => {
-                      const nextMuted = subscription ? !subscription.muted : false;
-                      setThreadSubscription.mutate({ postId, muted: nextMuted });
-                    }}
-                    className={`flex items-center gap-1 p-1 transition-colors ${
-                      subscription && !subscription.muted
-                        ? 'text-[#4a7c59] hover:text-[#1a472a]'
-                        : 'text-[#1a472a]/75 hover:text-[#4a7c59]'
-                    }`}
-                    title={subscription && !subscription.muted ? 'Following this thread. Tap to mute.' : 'Get notified about new replies'}
-                    aria-label={subscription && !subscription.muted ? 'Mute this thread' : 'Follow this thread'}
-                    aria-pressed={!!subscription && !subscription.muted}
-                  >
-                    {subscription && !subscription.muted
-                      ? <BellRing className="w-3.5 h-3.5" />
-                      : <BellOff className="w-3.5 h-3.5" />}
-                  </button>
-                )}
-                {isAuthenticated && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowFlagMenu(!showFlagMenu)}
-                      className="flex items-center gap-1 text-[#1a472a]/75 hover:text-amber-500 p-1 transition-colors"
-                      title="Flag this content"
-                      aria-label="Flag this content"
-                    >
-                      <Flag className="w-3.5 h-3.5" />
-                    </button>
-                    {showFlagMenu && (
-                      <>
-                        <div className="fixed inset-0 z-10" onClick={() => setShowFlagMenu(false)} />
-                        <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
-                          <p className="text-white/60 text-xs px-3 py-2 border-b border-white/10">Flag this content</p>
-                          <button
-                            onClick={() => {
-                              submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "soft" });
-                              setShowFlagMenu(false);
-                            }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
-                          >
-                            <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
-                            <p className="text-white/70 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
-                          </button>
-                          <button
-                            onClick={() => {
-                              submitReportMutation.mutate({ postId: post.id, reason: "inappropriate", severity: "hard" });
-                              setShowFlagMenu(false);
-                            }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
-                          >
-                            <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
-                            <p className="text-white/70 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-                {canDeletePost && !editingPost && (
-                  <button
-                    onClick={() => { setEditTitle(decodeEntities(post.title)); setEditContent(post.content); setEditImageUrl(post.generatedImageUrl || ''); setEditingPost(true); }}
-                    className="text-[#4a7c59] hover:text-[#1a472a] p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
-                    title="Edit post"
-                    aria-label="Edit post"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                )}
-                {canDeletePost && (
-                  <button
-                    onClick={() => setDeleteTarget({ type: 'post', id: post.id })}
-                    className="text-red-400 hover:text-red-600 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center transition-colors"
-                    title="Delete post"
-                    aria-label="Delete post"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Post Content / Edit Form */}
-            {editingPost ? (
-              <div className="px-4 md:px-6 py-4 space-y-3">
-                <input
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-3 py-2 text-sm font-semibold bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] focus:outline-none focus:border-[#7dd87d]"
-                  placeholder="Post title..."
-                />
-                <textarea
-                  value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  rows={16}
-                  className="w-full px-3 py-2 text-sm font-mono bg-white border border-[#7dd87d]/40 rounded-lg text-[#1a472a] resize-y focus:outline-none focus:border-[#7dd87d]"
-                  placeholder="Post content (markdown supported)..."
-                />
-                <SmartImagePicker value={editImageUrl} onChange={setEditImageUrl} context="forum" label="Post image" theme="light" />
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={() => setEditingPost(false)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-[#1a472a]/80 hover:text-[#1a472a] border border-[#1a472a]/20 rounded-lg transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" /> Cancel
-                  </button>
-                  <button
-                    onClick={() => updatePostMutation.mutate({ id: post.id, title: editTitle, content: editContent, generatedImageUrl: editImageUrl || null })}
-                    disabled={updatePostMutation.isPending}
-                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-[#1a472a] text-white rounded-lg hover:bg-[#2d5a3d] transition-colors disabled:opacity-60"
-                  >
-                    <Save className="w-3.5 h-3.5" />
-                    {updatePostMutation.isPending ? 'Saving…' : 'Save Changes'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-            <div className="px-4 md:px-6 py-4 text-[#1a472a]/80 text-sm leading-relaxed safe-prose min-w-0" style={{ fontFamily: 'var(--font-body)' }}>
-              {translatedPost ? (
-                <div>
-                  <div className="mb-2 px-2 py-1 bg-[#f0f7f0] rounded text-xs text-[#4a7c59] inline-flex items-center gap-1">
-                    <Languages className="w-3 h-3" />
-                    Translated to {language.toUpperCase()}
-                    <button
-                      onClick={() => setTranslatedPost(null)}
-                      className="ml-2 text-[#1a472a]/75 hover:text-[#1a472a] underline"
-                    >
-                      Show original
-                    </button>
-                  </div>
-                  <ForumMarkdown content={translatedPost} />
-                </div>
-              ) : (
-                <ForumMarkdown content={post.content} />
-              )}
-              <ContentLinkPreview content={post.content} />
-            </div>
-            )}
-
-            {/* Governance lifecycle — only once the thread has entered the pipeline */}
-            {inGovernance && (
-              <div className="px-4 md:px-6 pb-2 space-y-3">
-                <GovernanceLifecycleStrip
-                  threadId={post.id}
-                  governanceStage={effectiveStage as any}
-                  sensingStartedBy={(post as any).sensingStartedBy ?? null}
-                />
-                {(effectiveStage === "sensing" || effectiveStage === "proposal") && (
-                  <PerspectiveControl threadId={post.id} />
-                )}
-              </div>
-            )}
-
-            {/* Living backlink banner: shows if this thread has been promoted to a formal decision */}
-            <div className="px-4 md:px-6 pb-2">
-              <ForumThreadDecisionBanner threadId={post.id} />
-              {isAuthenticated && (
-                <div className="flex items-center justify-end gap-4 mt-1 flex-wrap">
-                  {inGovernance && perspectiveVoices > 0 && (
-                    <span className="text-[11px] text-[#1a472a]/75">
-                      {perspectiveVoices === 1 ? "1 person has" : `${perspectiveVoices} people have`} weighed in
-                    </span>
-                  )}
-                  {!inGovernance && (
-                    confirmingSensing ? (
-                      <span className="flex items-center gap-3 flex-wrap text-[11px]">
-                        <span className="text-[#1a472a]/80">
-                          Start sensing the room on this thread? This invites everyone to share where they stand.
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => enterSensing.mutate({ threadId: post.id })}
-                          disabled={enterSensing.isPending}
-                          className="inline-flex items-center gap-1 font-bold text-[#1a472a] underline hover:text-[#4a7c59] transition-colors"
-                        >
-                          {enterSensing.isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-                          Start sensing
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmingSensing(false)}
-                          className="text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
-                        >
-                          Not yet
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmingSensing(true)}
-                        className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
-                        title="Gauge where we stand as we move to a formal proposal."
-                      >
-                        <Eye className="w-3 h-3" />
-                        Sense the room
-                      </button>
-                    )
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setPromotionOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-[#4a7c59] hover:text-[#1a472a] transition-colors"
-                    title="Raise this thread as a proposal in the Assembly, the Game's community-governed space."
-                  >
-                    <Vote className="w-3 h-3" />
-                    Raise in Assembly
-                  </button>
-                </div>
-              )}
-            </div>
-            <RaiseModal threadId={post.id} threadTitle={post.title} open={promotionOpen} onClose={() => setPromotionOpen(false)} />
-
-            {/* Emoji Reactions + Gratitude on post */}
-            <div className="px-4 md:px-6 pb-2 flex items-center gap-2 flex-wrap">
-              <EmojiReactions postId={post.id} />
-              <GratitudeButton
-                recipientHandle={(post as any).authorHandle}
-                sourceType="forum_post"
-                sourceId={post.id}
-              />
-            </div>
-
-            {/* Post Actions */}
-            <div className="px-4 md:px-6 pb-4 flex items-center gap-4 border-t border-[#e8e4de] pt-3">
-              <button
-                onClick={handleLikePost}
-                className={`flex items-center gap-1.5 text-sm transition-colors ${
-                  likes?.likedPost
-                    ? 'text-red-500'
-                    : 'text-[#1a472a]/80 hover:text-red-400'
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${likes?.likedPost ? 'fill-current' : ''}`} />
-                <span>{likes?.postLikes || 0}</span>
-              </button>
-              <span className="flex items-center gap-1.5 text-[#1a472a]/80 text-sm">
-                <MessageCircle className="w-4 h-4" />
-                {post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}
-              </span>
-              <button
-                onClick={handleCopyLink}
-                className="flex items-center gap-1.5 text-xs text-[#1a472a]/80 hover:text-[#1a472a]/80 transition-colors"
-                title="Copy link to post"
-              >
-                <Link2 className="w-4 h-4" />
-                {copied ? 'Copied!' : 'Copy link'}
-              </button>
-              {/* B.7: Propose as Quest */}
-              <a
-                href={`/community/quests?propose=true&title=${encodeURIComponent(post.title)}&threadId=${post.id}`}
-                className="flex items-center gap-1 text-xs text-[#1a472a]/80 hover:text-[#4a7c59] transition-colors"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Propose as Quest
-              </a>
-              {language !== 'en' && !translatedPost && (
-                <button
-                  onClick={handleTranslatePost}
-                  disabled={translatingPost}
-                  className="flex items-center gap-1.5 text-sm text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors ml-auto"
-                >
-                  {translatingPost ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Languages className="w-3.5 h-3.5" />
-                  )}
-                  <span>Translate</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </AnimatedSection>
+        <PostCard
+          post={post}
+          language={language}
+          isAuthenticated={isAuthenticated}
+          canDeletePost={!!canDeletePost}
+          following={following}
+          effectiveStage={effectiveStage}
+          perspectiveVoices={perspectiveVoices}
+          likedPost={!!likes?.likedPost}
+          postLikes={likes?.postLikes || 0}
+          onLikePost={handleLikePost}
+          onDeletePost={handleDeletePost}
+        />
 
         {/* Related Projects (C15) */}
         {postId > 0 && <ProjectConnectionsPanel postId={postId} />}
@@ -960,17 +1307,8 @@ export default function CommunityPost() {
         {replies && replies.length > 2 && (
           <div className="mb-4">
             <ThreadRoots
-              replies={replies.map(r => ({
-                id: r.id,
-                authorName: r.authorName,
-                authorAvatar: r.authorAvatar ?? '',
-                parentId: r.parentReplyId ?? null,
-                depth: r.parentReplyId ? 1 : 0,
-              }))}
-              onNodeClick={(replyId) => {
-                const el = document.getElementById(`reply-${replyId}`);
-                el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }}
+              replies={threadRootsReplies}
+              onNodeClick={scrollToReply}
             />
           </div>
         )}
@@ -1000,178 +1338,42 @@ export default function CommunityPost() {
             <h3 className="text-sm font-bold text-[#1a472a]/80 uppercase tracking-wider" style={{ fontFamily: 'var(--font-display)' }}>
               Replies ({replies.length})
             </h3>
-            {replies.map((reply, index) => {
-              const canDeleteReply = user && (user.id === reply.authorId || isAdminOrSuper);
-              const isNested = !!reply.parentReplyId;
-              
-              return (
-                <AnimatedSection key={reply.id} delay={index * 0.03}>
-                  <div id={`reply-${reply.id}`} className={`bg-white rounded-xl border border-[#e8e4de] overflow-hidden ${isNested ? 'ml-6 md:ml-10' : ''}`}>
-                    <div className="px-4 py-3 flex items-start gap-3">
-                      {isNested && (
-                        <CornerDownRight className="w-4 h-4 text-[#4a7c59]/30 flex-shrink-0 mt-1" />
-                      )}
-                      <BadgeRingAvatar
-                        avatarUrl={reply.authorAvatar}
-                        displayName={reply.authorName}
-                        badges={reply.authorBadges}
-                        size={32}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-[#1a472a] text-xs" style={{ fontFamily: 'var(--font-display)' }}>
-                            {reply.authorName}
-                          </span>
-                          {(reply as any).authorCitizenshipTier && (reply as any).authorCitizenshipTier !== 'explorer' && (
-                            <CitizenshipBadge tier={(reply as any).authorCitizenshipTier} size="sm" />
-                          )}
-                          {reply.authorId === post.authorId && (
-                            <Badge variant="secondary" className="bg-[#f0f7f0] text-[#4a7c59] border-0 text-[10px] px-1.5 py-0">
-                              OP
-                            </Badge>
-                          )}
-                          <span className="text-[#1a472a]/75 text-[10px]">{timeAgo(reply.createdAt)}</span>
-                        </div>
-                        <div className="text-[#1a472a]/75 text-sm leading-relaxed safe-prose" style={{ fontFamily: 'var(--font-body)' }}>
-                          {translatedReplies[reply.id] ? (
-                            <div>
-                              <div className="mb-1 px-1.5 py-0.5 bg-[#f0f7f0] rounded text-[10px] text-[#4a7c59] inline-flex items-center gap-1">
-                                <Languages className="w-2.5 h-2.5" />
-                                Translated
-                                <button 
-                                  onClick={() => setTranslatedReplies(prev => { const n = {...prev}; delete n[reply.id]; return n; })}
-                                  className="ml-1 underline text-[#1a472a]/80 hover:text-[#1a472a]"
-                                >
-                                  Original
-                                </button>
-                              </div>
-                              <ForumMarkdown content={translatedReplies[reply.id]} />
-                            </div>
-                          ) : (
-                            <ForumMarkdown content={reply.content} />
-                          )}
-                          <ContentLinkPreview content={reply.content} />
-                        </div>
-                        {/* Emoji Reactions + Gratitude on reply */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <EmojiReactions replyId={reply.id} />
-                          <GratitudeButton
-                            recipientHandle={(reply as any).authorHandle}
-                            sourceType="forum_reply"
-                            sourceId={reply.id}
-                          />
-                        </div>
-
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <button
-                            onClick={() => handleLikeReply(reply.id)}
-                            className={`flex items-center gap-1 text-xs transition-colors ${
-                              likes?.likedReplies?.includes(reply.id)
-                                ? 'text-red-500'
-                                : 'text-[#1a472a]/75 hover:text-red-400'
-                            }`}
-                          >
-                            <Heart className={`w-3 h-3 ${likes?.likedReplies?.includes(reply.id) ? 'fill-current' : ''}`} />
-                            <span>{likes?.replyLikes?.[reply.id] || 0}</span>
-                          </button>
-                          {(() => {
-                            const triedCount = triedThisCounts[reply.id] ?? reply.triedThis ?? 0;
-                            return (
-                              <button
-                                onClick={() => handleTriedThis(reply.id)}
-                                disabled={incrementTriedThisMutation.isPending && incrementTriedThisMutation.variables?.replyId === reply.id}
-                                className={`flex items-center gap-1 text-xs border rounded px-2 py-0.5 transition-colors ${
-                                  triedCount > 0
-                                    ? 'text-green-700 border-green-300 font-semibold'
-                                    : 'text-green-600 border-green-200 hover:text-green-700 hover:border-green-400'
-                                }`}
-                                title="Mark that you tried this"
-                              >
-                                <Check className="w-3 h-3" />
-                                I tried this{triedCount > 0 ? ` (${triedCount})` : ''}
-                              </button>
-                            );
-                          })()}
-                          {isAuthenticated && post.isLocked !== 1 && (
-                            <button
-                              onClick={() => {
-                                setReplyingTo(reply.id);
-                              }}
-                              className="text-[#1a472a]/75 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors"
-                            >
-                              <CornerDownRight className="w-3 h-3" />
-                              Reply
-                            </button>
-                          )}
-                          {canDeleteReply && (
-                            <button
-                              onClick={() => setDeleteTarget({ type: 'reply', id: reply.id })}
-                              className="text-[#1a472a]/20 hover:text-red-500 text-xs flex items-center gap-1 transition-colors"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                          {isAuthenticated && (
-                            <div className="relative">
-                              <button
-                                onClick={() => setShowReplyFlagMenu(showReplyFlagMenu === reply.id ? null : reply.id)}
-                                className="text-[#1a472a]/20 hover:text-amber-500 text-xs flex items-center gap-1 transition-colors"
-                                title="Flag this reply"
-                                aria-label="Flag this reply"
-                              >
-                                <Flag className="w-3 h-3" />
-                              </button>
-                              {showReplyFlagMenu === reply.id && (
-                                <>
-                                  <div className="fixed inset-0 z-10" onClick={() => setShowReplyFlagMenu(null)} />
-                                  <div className="absolute right-0 bottom-full mb-1 z-20 bg-[#1a472a] border border-white/20 rounded-xl shadow-xl w-52 py-1 overflow-hidden">
-                                    <p className="text-white/60 text-xs px-3 py-2 border-b border-white/10">Flag this reply</p>
-                                    <button
-                                      onClick={() => {
-                                        submitReportMutation.mutate({ replyId: reply.id, reason: "inappropriate", severity: "soft" });
-                                        setShowReplyFlagMenu(null);
-                                      }}
-                                      className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
-                                    >
-                                      <p className="text-amber-300 text-sm font-medium">🖐 Tend to</p>
-                                      <p className="text-white/70 text-xs mt-0.5">Needs attention, not urgent. Notifies mods.</p>
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        submitReportMutation.mutate({ replyId: reply.id, reason: "inappropriate", severity: "hard" });
-                                        setShowReplyFlagMenu(null);
-                                      }}
-                                      className="w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors"
-                                    >
-                                      <p className="text-red-400 text-sm font-medium">🚩 Hard Stop</p>
-                                      <p className="text-white/70 text-xs mt-0.5">Serious violation. Hides post immediately.</p>
-                                    </button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {language !== 'en' && !translatedReplies[reply.id] && (
-                            <button
-                              onClick={() => handleTranslateReply(reply.id, reply.content)}
-                              disabled={translatingReplyId === reply.id}
-                              className="text-[#1a472a]/75 hover:text-[#4a7c59] text-xs flex items-center gap-1 transition-colors ml-auto"
-                            >
-                              {translatingReplyId === reply.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Languages className="w-3 h-3" />
-                              )}
-                              Translate
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </AnimatedSection>
-              );
-            })}
+            {replies.map((reply, index) => (
+              <ReplyItem
+                key={reply.id}
+                index={index}
+                replyId={reply.id}
+                content={reply.content}
+                authorName={reply.authorName}
+                authorAvatar={reply.authorAvatar}
+                authorBadges={reply.authorBadges}
+                authorHandle={(reply as any).authorHandle}
+                authorTier={(reply as any).authorCitizenshipTier}
+                timeAgoLabel={timeAgo(reply.createdAt)}
+                isNested={!!reply.parentReplyId}
+                isOp={reply.authorId === post.authorId}
+                canDelete={!!user && (user.id === reply.authorId || isAdminOrSuper)}
+                canReply={isAuthenticated && post.isLocked !== 1}
+                canFlag={isAuthenticated}
+                liked={!!likes?.likedReplies?.includes(reply.id)}
+                likeCount={likes?.replyLikes?.[reply.id] || 0}
+                triedCount={triedThisCounts[reply.id] ?? reply.triedThis ?? 0}
+                triedPending={incrementTriedThisMutation.isPending && incrementTriedThisMutation.variables?.replyId === reply.id}
+                flagMenuOpen={showReplyFlagMenu === reply.id}
+                showTranslate={language !== 'en'}
+                translated={translatedReplies[reply.id]}
+                translating={translatingReplyId === reply.id}
+                onLike={handleLikeReply}
+                onTriedThis={handleTriedThis}
+                onReplyTo={setReplyingTo}
+                onDelete={handleDeleteReply}
+                onToggleFlagMenu={toggleReplyFlagMenu}
+                onCloseFlagMenu={closeReplyFlagMenu}
+                onReport={handleReportReply}
+                onTranslate={handleTranslateReply}
+                onShowOriginal={handleShowOriginalReply}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-8 mb-6 bg-white/5 border border-white/10 rounded-xl">
@@ -1207,7 +1409,7 @@ export default function CommunityPost() {
             <ReplyComposer
               postId={postId}
               replyingTo={replyingTo}
-              onPosted={() => setReplyingTo(null)}
+              onPosted={handleReplyPosted}
               editorRef={replyRef}
               draftRef={replyDraftRef}
             />

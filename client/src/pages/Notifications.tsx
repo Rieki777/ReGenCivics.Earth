@@ -46,8 +46,22 @@ export default function Notifications() {
     query.refetch();
     utils.notifications.unreadCount.invalidate();
   };
-  const markRead = trpc.notifications.markRead.useMutation({ onSuccess: invalidate });
-  const markAllRead = trpc.notifications.markAllRead.useMutation({ onSuccess: invalidate });
+  // Rows and the bell's count turn read at once; the server's answer settles
+  // them (STEERING.md section 13).
+  const markLocally = (isMatch: (id: number) => boolean, unreadDrop: (count: number) => number) => {
+    utils.notifications.unreadCount.setData(undefined, (n) => (n == null ? n : Math.max(0, unreadDrop(n))));
+    utils.notifications.list.setInfiniteData({ limit: 30, types }, (old) =>
+      old ? { ...old, pages: old.pages.map((p) => ({ ...p, items: p.items.map((it) => (isMatch(it.id) ? { ...it, isRead: 1 } : it)) })) } : old,
+    );
+  };
+  const markRead = trpc.notifications.markRead.useMutation({
+    onMutate: ({ id }) => markLocally((itemId) => itemId === id, (n) => n - 1),
+    onSettled: invalidate,
+  });
+  const markAllRead = trpc.notifications.markAllRead.useMutation({
+    onMutate: () => markLocally(() => true, () => 0),
+    onSettled: invalidate,
+  });
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><TaoSpinner /></div>;

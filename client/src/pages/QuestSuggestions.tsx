@@ -57,8 +57,25 @@ export default function QuestSuggestions() {
       suggestionsQuery.refetch();
     },
   });
+  const utils = trpc.useUtils();
+  // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.quests.toggleVote.useMutation({
-    onSuccess: () => {
+    onMutate: async ({ suggestionId }) => {
+      await Promise.all([utils.quests.suggestions.cancel(), utils.quests.myVotes.cancel()]);
+      const prevList = utils.quests.suggestions.getData({ sortBy });
+      const prevVotes = utils.quests.myVotes.getData();
+      const voted = prevVotes?.includes(suggestionId) ?? false;
+      utils.quests.myVotes.setData(undefined, (old) => (voted ? (old ?? []).filter((id) => id !== suggestionId) : [...(old ?? []), suggestionId]));
+      utils.quests.suggestions.setData({ sortBy }, (old) => old?.map((s) => (s.id === suggestionId ? { ...s, voteCount: Math.max(0, s.voteCount + (voted ? -1 : 1)) } : s)));
+      return { prevList, prevVotes };
+    },
+    // Rolled back here, not in onError, so main.tsx's onError (the
+    // too-many-requests toast) still runs.
+    onSettled: (_data, error, _vars, ctx) => {
+      if (error && ctx) {
+        utils.quests.suggestions.setData({ sortBy }, ctx.prevList);
+        utils.quests.myVotes.setData(undefined, ctx.prevVotes);
+      }
       suggestionsQuery.refetch();
       myVotesQuery.refetch();
     },

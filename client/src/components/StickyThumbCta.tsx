@@ -8,7 +8,8 @@
  * which sticky paths convert. Page-level usage: drop this once near the
  * bottom of the page tree; it is fixed-positioned and self-contained.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "wouter";
 import { analytics } from "@/lib/analytics";
 
@@ -37,11 +38,19 @@ export function StickyThumbCta({
 }: StickyThumbCtaProps) {
   const [visible, setVisible] = useState(false);
 
+  // Appear once the page has scrolled past `revealAfter`. A marker at that
+  // depth tells us through an IntersectionObserver, so scrolling runs no
+  // handler; reading window.scrollY in a scroll handler made the browser
+  // finish its layout work inside every scroll event.
+  const markerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > revealAfter);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const marker = markerRef.current;
+    if (!marker || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => {
+      setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    io.observe(marker);
+    return () => io.disconnect();
   }, [revealAfter]);
 
   const toneClass =
@@ -50,6 +59,11 @@ export function StickyThumbCta({
       : "bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]";
 
   return (
+    <>
+    {/* On <body>, so `top` counts from the top of the page whatever wraps this. */}
+    {typeof document !== "undefined"
+      ? createPortal(<div ref={markerRef} aria-hidden="true" className="pointer-events-none absolute left-0 h-px w-px" style={{ top: revealAfter }} />, document.body)
+      : null}
     <div
       className={`md:hidden fixed left-0 right-0 z-40 px-4 transition-all duration-300 ${
         visible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"
@@ -65,6 +79,7 @@ export function StickyThumbCta({
         {label}
       </Link>
     </div>
+    </>
   );
 }
 

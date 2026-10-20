@@ -4,7 +4,7 @@
  * across the 9 Forms of Capital framework
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { 
   Calculator, 
   Coins, 
@@ -34,7 +34,6 @@ import { Slider } from '@/components/ui/slider';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { generateContributionPDF } from '@/lib/generateContributionPDF';
@@ -340,6 +339,167 @@ const presetTemplates = [
   }
 ];
 
+/**
+ * One question: label, example tooltip and input. Memoised with a stable
+ * onChange, so a keystroke re-renders only the question being typed in.
+ * Tooltip brings its own provider (components/ui/tooltip.tsx), so the rows
+ * need no TooltipProvider of their own.
+ */
+const QuestionInput = memo(function QuestionInput({
+  question,
+  capitalId,
+  value,
+  onChange,
+}: {
+  question: CapitalQuestion;
+  capitalId: string;
+  value: number;
+  onChange: (capitalId: string, key: string, value: number) => void;
+}) {
+  if (question.type === 'slider') {
+    const max = question.max || 100;
+    return (
+      <div className="space-y-2">
+        <div className="flex justify-between text-sm">
+          <div className="flex items-center gap-1">
+            <span className="text-[#1a472a]/80">{question.label}</span>
+            {question.example && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" aria-label="More information" className="text-[#4a7c59] hover:text-[#1a472a]">
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs bg-white border border-[#7dd87d]/30 text-[#1a472a]">
+                  <p className="text-xs">{question.example}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+          <span className="font-bold text-[#1a472a]">{value}</span>
+        </div>
+        <Slider
+          value={[value]}
+          onValueChange={(v) => onChange(capitalId, question.key, v[0])}
+          max={max}
+          step={1}
+          className="w-full"
+        />
+        {question.example && (
+          <p className="text-xs text-[#1a472a]/80 italic">{question.example}</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1">
+        <label className="text-sm text-[#1a472a]/80">{question.label}</label>
+        {question.example && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" aria-label="More information" className="text-[#4a7c59] hover:text-[#1a472a]">
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs bg-white border border-[#7dd87d]/30 text-[#1a472a]">
+              <p className="text-xs">{question.example}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+      <div className="relative">
+        {question.type === 'currency' && (
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/80">$</span>
+        )}
+        <input
+          type="number"
+          min="0"
+          value={value || ''}
+          onChange={(e) => onChange(capitalId, question.key, parseFloat(e.target.value) || 0)}
+          className={`w-full px-3 py-2 rounded-lg border border-[#7dd87d]/60 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50 ${question.type === 'currency' ? 'pl-7' : ''}`}
+          placeholder="0"
+        />
+      </div>
+      {question.example && (
+        <p className="text-xs text-[#1a472a]/80 italic">{question.example}</p>
+      )}
+    </div>
+  );
+});
+
+/** The current capital's icon, name and examples. Memoised: it only changes with the step. */
+const CapitalHeader = memo(function CapitalHeader({ capital }: { capital: CapitalForm }) {
+  const Icon = capital.icon || Calculator;
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <div 
+        className={`w-10 h-10 rounded-full ${capital.bgColor} flex items-center justify-center`}
+      >
+        <Icon className="w-5 h-5" style={{ color: capital.color }} />
+      </div>
+      <div className="flex-1">
+        <h4 className="font-bold text-[#1a472a]">{capital.name}</h4>
+        <p className="text-xs text-[#1a472a]/80">{capital.description}</p>
+      </div>
+      <Tooltip>
+        <TooltipTrigger>
+          <Info className="w-5 h-5 text-[#1a472a]/80 hover:text-[#1a472a]/80" />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <p className="font-bold mb-2">Examples:</p>
+          <ul className="text-sm space-y-1">
+            {capital.examples.map((ex, i) => (
+              <li key={i}>• {ex}</li>
+            ))}
+          </ul>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+});
+
+/** Quick jump buttons. Memoised on the per-capital totals, so typing a name leaves them alone. */
+const QuickJump = memo(function QuickJump({
+  breakdown,
+  currentStep,
+  onSelect,
+}: {
+  breakdown: Array<CapitalForm & { value: number }>;
+  currentStep: number;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div className="mt-6 pt-4 border-t border-[#7dd87d]/20">
+      <p className="text-xs text-[#1a472a]/80 mb-2">Quick jump to capital type:</p>
+      <div className="flex flex-wrap gap-2">
+        {breakdown.map((capital, index) => {
+          const CapitalIcon = capital.icon;
+          const hasValue = capital.value > 0;
+          return (
+            <button
+              key={capital.id}
+              onClick={() => onSelect(index)}
+              className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs transition-all ${
+                index === currentStep
+                  ? 'bg-[#4a7c59] text-white'
+                  : hasValue
+                    ? 'bg-[#7dd87d]/30 text-[#1a472a]'
+                    : 'bg-gray-100 text-[#1a472a]/80 hover:bg-gray-200'
+              }`}
+            >
+              <CapitalIcon className="w-3 h-3" />
+              <span className="hidden sm:inline">{capital.name.replace(' Capital', '')}</span>
+              {hasValue && <Check className="w-3 h-3" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
 export function ContributionCalculator() {
   const [currentStep, setCurrentStep] = useState(0);
   const [values, setValues] = useState<CapitalValues>(() => {
@@ -364,9 +524,9 @@ export function ContributionCalculator() {
   };
 
   const currentCapital = capitalForms[currentStep];
-  const Icon = currentCapital?.icon || Calculator;
 
-  const updateValue = (capitalId: string, key: string, value: number) => {
+  // Stable, so the memoised questions skip keystrokes that are not theirs.
+  const updateValue = useCallback((capitalId: string, key: string, value: number) => {
     setValues(prev => ({
       ...prev,
       [capitalId]: {
@@ -374,7 +534,7 @@ export function ContributionCalculator() {
         [key]: value
       }
     }));
-  };
+  }, []);
 
   const calculateCapitalValue = (capitalId: string) => {
     const capital = capitalForms.find(c => c.id === capitalId);
@@ -480,86 +640,6 @@ export function ContributionCalculator() {
         description: "Please try again or manually select and copy the text.",
       });
     }
-  };
-
-  const renderInput = (question: typeof capitalForms[0]['questions'][0], capitalId: string) => {
-    const value = values[capitalId]?.[question.key] || 0;
-    
-    if (question.type === 'slider') {
-      const max = question.max || 100;
-      return (
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <div className="flex items-center gap-1">
-              <span className="text-[#1a472a]/80">{question.label}</span>
-              {question.example && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button type="button" aria-label="More information" className="text-[#4a7c59] hover:text-[#1a472a]">
-                        <Info className="w-3.5 h-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs bg-white border border-[#7dd87d]/30 text-[#1a472a]">
-                      <p className="text-xs">{question.example}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            <span className="font-bold text-[#1a472a]">{value}</span>
-          </div>
-          <Slider
-            value={[value]}
-            onValueChange={(v) => updateValue(capitalId, question.key, v[0])}
-            max={max}
-            step={1}
-            className="w-full"
-          />
-          {question.example && (
-            <p className="text-xs text-[#1a472a]/80 italic">{question.example}</p>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-1">
-        <div className="flex items-center gap-1">
-          <label className="text-sm text-[#1a472a]/80">{question.label}</label>
-          {question.example && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button type="button" aria-label="More information" className="text-[#4a7c59] hover:text-[#1a472a]">
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs bg-white border border-[#7dd87d]/30 text-[#1a472a]">
-                  <p className="text-xs">{question.example}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
-        <div className="relative">
-          {question.type === 'currency' && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1a472a]/80">$</span>
-          )}
-          <input
-            type="number"
-            min="0"
-            value={value || ''}
-            onChange={(e) => updateValue(capitalId, question.key, parseFloat(e.target.value) || 0)}
-            className={`w-full px-3 py-2 rounded-lg border border-[#7dd87d]/60 bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/50 ${question.type === 'currency' ? 'pl-7' : ''}`}
-            placeholder="0"
-          />
-        </div>
-        {question.example && (
-          <p className="text-xs text-[#1a472a]/80 italic">{question.example}</p>
-        )}
-      </div>
-    );
   };
 
   if (showResults) {
@@ -796,37 +876,17 @@ export function ContributionCalculator() {
 
       {/* Current Capital Form */}
       <div className="bg-white rounded-xl p-5 mb-6 border border-[#7dd87d]/20">
-        <div className="flex items-center gap-3 mb-4">
-          <div 
-            className={`w-10 h-10 rounded-full ${currentCapital.bgColor} flex items-center justify-center`}
-          >
-            <Icon className="w-5 h-5" style={{ color: currentCapital.color }} />
-          </div>
-          <div className="flex-1">
-            <h4 className="font-bold text-[#1a472a]">{currentCapital.name}</h4>
-            <p className="text-xs text-[#1a472a]/80">{currentCapital.description}</p>
-          </div>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-5 h-5 text-[#1a472a]/80 hover:text-[#1a472a]/80" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p className="font-bold mb-2">Examples:</p>
-                <ul className="text-sm space-y-1">
-                  {currentCapital.examples.map((ex, i) => (
-                    <li key={i}>• {ex}</li>
-                  ))}
-                </ul>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        <CapitalHeader capital={currentCapital} />
 
         <div className="space-y-4">
           {currentCapital.questions.map((question) => (
             <div key={question.key}>
-              {renderInput(question, currentCapital.id)}
+              <QuestionInput
+                question={question}
+                capitalId={currentCapital.id}
+                value={values[currentCapital.id]?.[question.key] || 0}
+                onChange={updateValue}
+              />
             </div>
           ))}
         </div>
@@ -878,32 +938,7 @@ export function ContributionCalculator() {
       </div>
 
       {/* Quick Jump */}
-      <div className="mt-6 pt-4 border-t border-[#7dd87d]/20">
-        <p className="text-xs text-[#1a472a]/80 mb-2">Quick jump to capital type:</p>
-        <div className="flex flex-wrap gap-2">
-          {capitalForms.map((capital, index) => {
-            const CapitalIcon = capital.icon;
-            const hasValue = calculateCapitalValue(capital.id) > 0;
-            return (
-              <button
-                key={capital.id}
-                onClick={() => setCurrentStep(index)}
-                className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs transition-all ${
-                  index === currentStep
-                    ? 'bg-[#4a7c59] text-white'
-                    : hasValue
-                      ? 'bg-[#7dd87d]/30 text-[#1a472a]'
-                      : 'bg-gray-100 text-[#1a472a]/80 hover:bg-gray-200'
-                }`}
-              >
-                <CapitalIcon className="w-3 h-3" />
-                <span className="hidden sm:inline">{capital.name.replace(' Capital', '')}</span>
-                {hasValue && <Check className="w-3 h-3" />}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <QuickJump breakdown={capitalBreakdown} currentStep={currentStep} onSelect={setCurrentStep} />
     </div>
   );
 }

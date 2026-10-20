@@ -11,7 +11,7 @@
  * to collapsed on mobile and expanded on desktop (via useIsMobile).
  */
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { memo, useState, useMemo, useCallback, useEffect } from "react";
 import { copyToClipboard } from "@/lib/clipboard";
 import { computeImpactSummaries } from "@/config/impactRules";
 import { Sparkline } from "@/components/simulator/Sparkline";
@@ -38,6 +38,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { useIsMobile } from "@/hooks/useMobile";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import {
@@ -268,6 +269,29 @@ function initialSimState(): SimState {
 
 const SUPER_ADMIN_EMAIL = "rieki.cordon@gmail.com";
 
+/**
+ * The filter box owns what is typed, so a keystroke re-renders the box alone;
+ * the variable list (a popover per row) re-filters once typing pauses.
+ */
+function VariableSearch({ onSearch }: { onSearch: (query: string) => void }) {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 250);
+  useEffect(() => {
+    onSearch(debouncedSearch);
+  }, [debouncedSearch, onSearch]);
+  return (
+    <div className="relative flex-1 min-w-[220px] max-w-md">
+      <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/60" />
+      <Input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Filter variables..."
+        className="pl-9 bg-white/5 border-white/45 text-white text-sm placeholder:text-white/70"
+      />
+    </div>
+  );
+}
+
 function LiveVariablesDashboard() {
   const [search, setSearch] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -353,15 +377,7 @@ function LiveVariablesDashboard() {
     <div className="space-y-6">
       {/* Search bar + admin indicator */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[220px] max-w-md">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-white/60" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter variables..."
-            className="pl-9 bg-white/5 border-white/45 text-white text-sm placeholder:text-white/70"
-          />
-        </div>
+        <VariableSearch onSearch={setSearch} />
         {canEdit && (
           <Badge className="bg-[#ffd700]/15 text-[#ffd700] border border-[#ffd700]/30 text-[11px]">
             <Pencil className="w-3 h-3 mr-1" />
@@ -1221,6 +1237,53 @@ interface MiniVar {
   describe?: (v: number) => string;
 }
 
+/** One mini-sim slider. Memoised with a stable onChange, so typing a rationale leaves the sliders alone. */
+const MiniVarRow = memo(function MiniVarRow({
+  v,
+  current,
+  onChange,
+}: {
+  v: MiniVar;
+  current: number;
+  onChange: (key: string, val: number) => void;
+}) {
+  const changed = current !== v.baseline;
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-sm text-white/85 truncate">{v.label}</span>
+          <HelpTip text={v.help} />
+        </div>
+        <span
+          className={`text-xs font-mono shrink-0 ${
+            changed ? "text-[#7dd87d] font-bold" : "text-white/60"
+          }`}
+        >
+          {changed ? (
+            <>
+              <span className="text-white/60 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
+              {current}{v.unit ?? ""}
+            </>
+          ) : (
+            <>{current}{v.unit ?? ""}</>
+          )}
+        </span>
+      </div>
+      <Slider
+        value={[current]}
+        min={v.min}
+        max={v.max}
+        step={v.step}
+        onValueChange={([val]) => onChange(v.key, val)}
+      />
+      {v.describe && (
+        <p className="text-[11px] text-white/70 mt-1">{v.describe(current)}</p>
+      )}
+    </div>
+  );
+});
+
 function MiniSectionSimulator({
   sectionTitle,
   variables,
@@ -1251,6 +1314,12 @@ function MiniSectionSimulator({
         : (Object.fromEntries(variables.map((v) => [v.key, v.baseline])) as Record<string, number>);
     });
   }, [variables, dirty]);
+
+  // Stable, so the memoised slider rows skip keystrokes in the rationale box.
+  const setVar = useCallback((key: string, val: number) => {
+    setDirty(true);
+    setState((s) => ({ ...s, [key]: val }));
+  }, []);
 
   const changedKeys = useMemo(
     () => variables.filter((v) => state[v.key] !== v.baseline),
@@ -1319,47 +1388,9 @@ function MiniSectionSimulator({
       </p>
 
       <div className="space-y-4">
-        {variables.map((v) => {
-          const current = state[v.key];
-          const changed = current !== v.baseline;
-          return (
-            <div key={v.key}>
-              <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-sm text-white/85 truncate">{v.label}</span>
-                  <HelpTip text={v.help} />
-                </div>
-                <span
-                  className={`text-xs font-mono shrink-0 ${
-                    changed ? "text-[#7dd87d] font-bold" : "text-white/60"
-                  }`}
-                >
-                  {changed ? (
-                    <>
-                      <span className="text-white/60 line-through mr-1">{v.baseline}{v.unit ?? ""}</span>
-                      {current}{v.unit ?? ""}
-                    </>
-                  ) : (
-                    <>{current}{v.unit ?? ""}</>
-                  )}
-                </span>
-              </div>
-              <Slider
-                value={[current]}
-                min={v.min}
-                max={v.max}
-                step={v.step}
-                onValueChange={([val]) => {
-                  setDirty(true);
-                  setState((s) => ({ ...s, [v.key]: val }));
-                }}
-              />
-              {v.describe && (
-                <p className="text-[11px] text-white/70 mt-1">{v.describe(current)}</p>
-              )}
-            </div>
-          );
-        })}
+        {variables.map((v) => (
+          <MiniVarRow key={v.key} v={v} current={state[v.key]} onChange={setVar} />
+        ))}
       </div>
 
       {summary && (

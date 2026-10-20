@@ -6,7 +6,7 @@
  * Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
  */
 
-import { useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Handshake, MapPin, Plus, Tag, X } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -14,24 +14,38 @@ import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { BioregionSelect } from "@/components/BioregionSelect";
 import { getLoginUrl } from "@/const";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 type BoardKind = "needs" | "offers";
 
-export default function Board() {
-  const { isAuthenticated } = useAuth();
-  const [kind, setKind] = useState<BoardKind>("needs");
-  const [filterBioregionId, setFilterBioregionId] = useState<number | null>(null);
-  const [filterTag, setFilterTag] = useState("");
-  const [showForm, setShowForm] = useState(false);
+/** A bioregion picker that sits still while the form around it is typed in. */
+const StillBioregionSelect = memo(BioregionSelect);
 
-  const listQuery = trpc.needsOffers.list.useQuery({
-    kind,
-    bioregionId: filterBioregionId ?? undefined,
-    tag: filterTag.trim() || undefined,
-  });
-  const myPostsQuery = trpc.needsOffers.myPosts.useQuery(undefined, { enabled: isAuthenticated });
+/**
+ * The tag filter keeps its own text, so a keystroke re-renders this input and
+ * not the board. The board's query follows once typing pauses.
+ */
+function TagFilter({ onChange }: { onChange: (tag: string) => void }) {
+  const [text, setText] = useState("");
+  const settled = useDebouncedValue(text, 250);
+  useEffect(() => {
+    onChange(settled);
+  }, [settled, onChange]);
+  return (
+    <input
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      placeholder="Filter by tag"
+      className="rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40 w-40"
+    />
+  );
+}
 
-  // Post form state
+/**
+ * The post form owns what is being typed, so a keystroke re-renders the form
+ * and not the board. It stays mounted while closed, so a draft survives Cancel.
+ */
+function PostForm({ open, onPosted }: { open: boolean; onPosted: () => void }) {
   const [formKind, setFormKind] = useState<"need" | "offer">("need");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -47,20 +61,12 @@ export default function Board() {
     setTimeWindow("");
     setFormMessage(null);
   };
-  const onPosted = () => {
+  const posted = () => {
     resetForm();
-    setShowForm(false);
-    listQuery.refetch();
-    myPostsQuery.refetch();
+    onPosted();
   };
-  const postNeed = trpc.needsOffers.postNeed.useMutation({ onSuccess: onPosted, onError: (e) => setFormMessage(e.message) });
-  const postOffer = trpc.needsOffers.postOffer.useMutation({ onSuccess: onPosted, onError: (e) => setFormMessage(e.message) });
-  const closeMutation = trpc.needsOffers.close.useMutation({
-    onSuccess: () => {
-      listQuery.refetch();
-      myPostsQuery.refetch();
-    },
-  });
+  const postNeed = trpc.needsOffers.postNeed.useMutation({ onSuccess: posted, onError: (e) => setFormMessage(e.message) });
+  const postOffer = trpc.needsOffers.postOffer.useMutation({ onSuccess: posted, onError: (e) => setFormMessage(e.message) });
 
   const submitPost = () => {
     setFormMessage(null);
@@ -77,6 +83,103 @@ export default function Board() {
     if (formKind === "need") postNeed.mutate(payload);
     else postOffer.mutate(payload);
   };
+
+  if (!open) return null;
+
+  return (
+    <section className="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-4">
+      <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-1 w-fit">
+        {(["need", "offer"] as const).map((k) => (
+          <button
+            key={k}
+            onClick={() => setFormKind(k)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              formKind === k ? "bg-[#d4a574] text-[#1a472a]" : "text-white/70 hover:text-white"
+            }`}
+          >
+            {k === "need" ? "I need something" : "I can offer something"}
+          </button>
+        ))}
+      </div>
+      <div>
+        <label className="block text-white/80 text-sm mb-1">Title</label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+          placeholder={formKind === "need" ? "A welder for two days in September" : "Grant writing, two hours a week"}
+          className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+        />
+      </div>
+      <div>
+        <label className="block text-white/80 text-sm mb-1">Details (optional)</label>
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value.slice(0, 5000))}
+          rows={3}
+          className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+        />
+      </div>
+      <div className="grid md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-white/80 text-sm mb-1">Tags (comma separated)</label>
+          <input
+            value={tagsText}
+            onChange={(e) => setTagsText(e.target.value)}
+            placeholder="welding, fencing, water"
+            className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+          />
+        </div>
+        <div>
+          <label className="block text-white/80 text-sm mb-1">Bioregion (optional)</label>
+          <StillBioregionSelect value={bioregionId} onChange={setBioregionId} variant="dark" />
+        </div>
+        <div>
+          <label className="block text-white/80 text-sm mb-1">Time window (optional)</label>
+          <input
+            value={timeWindow}
+            onChange={(e) => setTimeWindow(e.target.value.slice(0, 200))}
+            placeholder="September, weekends"
+            className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+          />
+        </div>
+      </div>
+      {formMessage && <p className="text-[#d4a574] text-sm">{formMessage}</p>}
+      <Button
+        onClick={submitPost}
+        disabled={postNeed.isPending || postOffer.isPending}
+        className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6"
+      >
+        {postNeed.isPending || postOffer.isPending ? "Posting…" : "Post it"}
+      </Button>
+    </section>
+  );
+}
+
+export default function Board() {
+  const { isAuthenticated } = useAuth();
+  const [kind, setKind] = useState<BoardKind>("needs");
+  const [filterBioregionId, setFilterBioregionId] = useState<number | null>(null);
+  const [filterTag, setFilterTag] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  const listQuery = trpc.needsOffers.list.useQuery({
+    kind,
+    bioregionId: filterBioregionId ?? undefined,
+    tag: filterTag.trim() || undefined,
+  });
+  const myPostsQuery = trpc.needsOffers.myPosts.useQuery(undefined, { enabled: isAuthenticated });
+
+  const onPosted = () => {
+    setShowForm(false);
+    listQuery.refetch();
+    myPostsQuery.refetch();
+  };
+  const closeMutation = trpc.needsOffers.close.useMutation({
+    onSuccess: () => {
+      listQuery.refetch();
+      myPostsQuery.refetch();
+    },
+  });
 
   const rows = listQuery.data ?? [];
 
@@ -125,12 +228,7 @@ export default function Board() {
           <div className="w-56">
             <BioregionSelect value={filterBioregionId} onChange={setFilterBioregionId} placeholder="Any bioregion" variant="dark" />
           </div>
-          <input
-            value={filterTag}
-            onChange={(e) => setFilterTag(e.target.value)}
-            placeholder="Filter by tag"
-            className="rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40 w-40"
-          />
+          <TagFilter onChange={setFilterTag} />
           {isAuthenticated ? (
             <Button
               onClick={() => setShowForm((s) => !s)}
@@ -153,73 +251,7 @@ export default function Board() {
         </div>
 
         {/* Post form */}
-        {showForm && isAuthenticated && (
-          <section className="rounded-2xl bg-white/5 border border-white/10 p-6 space-y-4">
-            <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-full p-1 w-fit">
-              {(["need", "offer"] as const).map((k) => (
-                <button
-                  key={k}
-                  onClick={() => setFormKind(k)}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    formKind === k ? "bg-[#d4a574] text-[#1a472a]" : "text-white/70 hover:text-white"
-                  }`}
-                >
-                  {k === "need" ? "I need something" : "I can offer something"}
-                </button>
-              ))}
-            </div>
-            <div>
-              <label className="block text-white/80 text-sm mb-1">Title</label>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value.slice(0, 200))}
-                placeholder={formKind === "need" ? "A welder for two days in September" : "Grant writing, two hours a week"}
-                className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
-              />
-            </div>
-            <div>
-              <label className="block text-white/80 text-sm mb-1">Details (optional)</label>
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value.slice(0, 5000))}
-                rows={3}
-                className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
-              />
-            </div>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-white/80 text-sm mb-1">Tags (comma separated)</label>
-                <input
-                  value={tagsText}
-                  onChange={(e) => setTagsText(e.target.value)}
-                  placeholder="welding, fencing, water"
-                  className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
-                />
-              </div>
-              <div>
-                <label className="block text-white/80 text-sm mb-1">Bioregion (optional)</label>
-                <BioregionSelect value={bioregionId} onChange={setBioregionId} variant="dark" />
-              </div>
-              <div>
-                <label className="block text-white/80 text-sm mb-1">Time window (optional)</label>
-                <input
-                  value={timeWindow}
-                  onChange={(e) => setTimeWindow(e.target.value.slice(0, 200))}
-                  placeholder="September, weekends"
-                  className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
-                />
-              </div>
-            </div>
-            {formMessage && <p className="text-[#d4a574] text-sm">{formMessage}</p>}
-            <Button
-              onClick={submitPost}
-              disabled={postNeed.isPending || postOffer.isPending}
-              className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6"
-            >
-              {postNeed.isPending || postOffer.isPending ? "Posting…" : "Post it"}
-            </Button>
-          </section>
-        )}
+        <PostForm open={showForm && isAuthenticated} onPosted={onPosted} />
 
         {/* My posts */}
         {isAuthenticated && myPostsQuery.data && (myPostsQuery.data.needs.length > 0 || myPostsQuery.data.offers.length > 0) && (

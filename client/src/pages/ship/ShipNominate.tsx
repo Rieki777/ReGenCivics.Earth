@@ -6,17 +6,18 @@
 import { useState } from "react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { UserPlus } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipField, ShipCheckField } from "@/components/ship/ShipFields";
 
-export default function ShipNominate() {
+/**
+ * The nomination form. It owns the answers, so a keystroke re-renders this
+ * form (and only the field typed in), not the page.
+ */
+function NominationForm() {
   const m = trpc.ship.nominate.useMutation();
 
   const [nomineeName, setNomineeName] = useState("");
@@ -56,6 +57,36 @@ export default function ShipNominate() {
   }
 
   return (
+    <form onSubmit={onSubmit} className="max-w-xl space-y-6">
+      <ShipField id="nomineeName" label="Who are you nominating?" value={nomineeName} onValue={setNomineeName} placeholder="Full name" required />
+      <ShipField
+        id="nomineeContact"
+        label="How can we reach them? (optional)"
+        value={nomineeContact}
+        onValue={setNomineeContact}
+        placeholder="Email, phone, or a link"
+      />
+      <ShipField
+        id="reason"
+        label="Why them?"
+        value={reason}
+        onValue={setReason}
+        placeholder="What would they bring to the crew and the land they tour?"
+        rows={5}
+        required
+        hint="A few sentences is plenty."
+      />
+      <ShipCheckField id="isSelfNomination" label="This is a self-nomination" checked={isSelfNomination} onChecked={setIsSelfNomination} />
+
+      <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+        {m.isPending ? "Sending..." : "Send nomination"}
+      </Button>
+    </form>
+  );
+}
+
+export default function ShipNominate() {
+  return (
     <PageWrapper>
       <SEO
         title="Nominate a crew member"
@@ -85,56 +116,7 @@ export default function ShipNominate() {
       </ShipSection>
 
       <ShipSection className="pt-0">
-        <form onSubmit={onSubmit} className="max-w-xl space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="nomineeName">Who are you nominating?</Label>
-            <Input
-              id="nomineeName"
-              value={nomineeName}
-              onChange={(e) => setNomineeName(e.target.value)}
-              placeholder="Full name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="nomineeContact">How can we reach them? (optional)</Label>
-            <Input
-              id="nomineeContact"
-              value={nomineeContact}
-              onChange={(e) => setNomineeContact(e.target.value)}
-              placeholder="Email, phone, or a link"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reason">Why them?</Label>
-            <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="What would they bring to the crew and the land they tour?"
-              rows={5}
-              required
-            />
-            <p className="text-xs text-muted-foreground">A few sentences is plenty.</p>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="isSelfNomination"
-              checked={isSelfNomination}
-              onCheckedChange={(v) => setIsSelfNomination(Boolean(v))}
-            />
-            <Label htmlFor="isSelfNomination" className="font-normal leading-snug">
-              This is a self-nomination
-            </Label>
-          </div>
-
-          <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
-            {m.isPending ? "Sending..." : "Send nomination"}
-          </Button>
-        </form>
+        <NominationForm />
       </ShipSection>
     </PageWrapper>
   );

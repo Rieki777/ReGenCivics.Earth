@@ -91,12 +91,35 @@ export default function Proposals() {
     },
   });
 
+  // A vote shows at once; the server's answer settles it (STEERING.md section 13).
+  const utils = trpc.useUtils();
+  const voteLocally = async (proposalId: number, voted: boolean) => {
+    const listKey = { category: categoryFilter || undefined, status: statusFilter || undefined, limit: 50 };
+    await Promise.all([utils.proposals.list.cancel(listKey), utils.proposals.myVotes.cancel()]);
+    const prev = { listKey, list: utils.proposals.list.getData(listKey), votes: utils.proposals.myVotes.getData() };
+    utils.proposals.myVotes.setData(undefined, (old) => (voted ? [...(old ?? []), proposalId] : (old ?? []).filter((id) => id !== proposalId)));
+    utils.proposals.list.setData(listKey, (old) => old?.map((p) => (p.id === proposalId ? { ...p, signalVoteCount: Math.max(0, (p.signalVoteCount ?? 0) + (voted ? 1 : -1)) } : p)));
+    return prev;
+  };
+  // Rolled back in onSettled, not onError, so main.tsx's onError (the
+  // too-many-requests toast) still runs.
+  const settle = (error: unknown, ctx?: Awaited<ReturnType<typeof voteLocally>>) => {
+    if (error && ctx) {
+      utils.proposals.list.setData(ctx.listKey, ctx.list);
+      utils.proposals.myVotes.setData(undefined, ctx.votes);
+    }
+    proposalsQuery.refetch();
+    myVotesQuery.refetch();
+  };
+
   const signalVoteMutation = trpc.proposals.signalVote.useMutation({
-    onSuccess: () => { proposalsQuery.refetch(); myVotesQuery.refetch(); },
+    onMutate: ({ proposalId }) => voteLocally(proposalId, true),
+    onSettled: (_data, error, _vars, ctx) => settle(error, ctx),
   });
 
   const removeVoteMutation = trpc.proposals.removeVote.useMutation({
-    onSuccess: () => { proposalsQuery.refetch(); myVotesQuery.refetch(); },
+    onMutate: ({ proposalId }) => voteLocally(proposalId, false),
+    onSettled: (_data, error, _vars, ctx) => settle(error, ctx),
   });
 
   const myVotes = useMemo(() => new Set(myVotesQuery.data || []), [myVotesQuery.data]);

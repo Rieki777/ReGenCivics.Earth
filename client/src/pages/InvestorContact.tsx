@@ -16,7 +16,7 @@
  * this same browser saved on the old /investor form, if anything.
  */
 
-import { useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,18 @@ function loadSavedContact(): { fullName: string; email: string; organization: st
 
 const FIELD_CLASS = "bg-white/5 border-white/15 text-white placeholder:text-white/60 mt-1";
 
+// Memoised field parts: with the stable change handlers below, a keystroke
+// re-renders only the field it lands in, not every label and input on the form.
+const FieldLabel = memo(Label);
+const FieldInput = memo(Input);
+const FieldTextarea = memo(Textarea);
+// Label text with markup, built once so its memoised label can skip renders too.
+const ORGANIZATION_LABEL = (
+  <>
+    Organization or project <span className="text-white/60">(optional)</span>
+  </>
+);
+
 export default function InvestorContact() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -73,6 +85,23 @@ export default function InvestorContact() {
     setEmail((prev) => prev || accountEmail || saved.email);
     setOrganization((prev) => prev || saved.organization);
   }, [user]);
+
+  // Clearing an error that is not there is a no-op, so these need not read it.
+  const onNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFullName(e.target.value);
+    setSubmitError(null);
+  }, []);
+  const onEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setSubmitError(null);
+  }, []);
+  const onOrganizationChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setOrganization(e.target.value);
+  }, []);
+  const onMessageChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    setSubmitError(null);
+  }, []);
 
   const submit = trpc.investorInquiries.submitFollowUp.useMutation({
     onSuccess: () => {
@@ -176,16 +205,13 @@ export default function InvestorContact() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="contact-name" className="text-white/80 text-sm">
+                  <FieldLabel htmlFor="contact-name" className="text-white/80 text-sm">
                     Your name
-                  </Label>
-                  <Input
+                  </FieldLabel>
+                  <FieldInput
                     id="contact-name"
                     value={fullName}
-                    onChange={(e) => {
-                      setFullName(e.target.value);
-                      if (submitError) setSubmitError(null);
-                    }}
+                    onChange={onNameChange}
                     required
                     maxLength={255}
                     autoComplete="name"
@@ -193,17 +219,14 @@ export default function InvestorContact() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="contact-email" className="text-white/80 text-sm">
+                  <FieldLabel htmlFor="contact-email" className="text-white/80 text-sm">
                     Email
-                  </Label>
-                  <Input
+                  </FieldLabel>
+                  <FieldInput
                     id="contact-email"
                     type="email"
                     value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (submitError) setSubmitError(null);
-                    }}
+                    onChange={onEmailChange}
                     required
                     autoComplete="email"
                     inputMode="email"
@@ -213,13 +236,13 @@ export default function InvestorContact() {
               </div>
 
               <div>
-                <Label htmlFor="contact-organization" className="text-white/80 text-sm">
-                  Organization or project <span className="text-white/60">(optional)</span>
-                </Label>
-                <Input
+                <FieldLabel htmlFor="contact-organization" className="text-white/80 text-sm">
+                  {ORGANIZATION_LABEL}
+                </FieldLabel>
+                <FieldInput
                   id="contact-organization"
                   value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
+                  onChange={onOrganizationChange}
                   maxLength={255}
                   autoComplete="organization"
                   className={FIELD_CLASS}
@@ -227,16 +250,13 @@ export default function InvestorContact() {
               </div>
 
               <div>
-                <Label htmlFor="contact-message" className="text-white/80 text-sm">
+                <FieldLabel htmlFor="contact-message" className="text-white/80 text-sm">
                   Your message
-                </Label>
-                <Textarea
+                </FieldLabel>
+                <FieldTextarea
                   id="contact-message"
                   value={message}
-                  onChange={(e) => {
-                    setMessage(e.target.value);
-                    if (submitError) setSubmitError(null);
-                  }}
+                  onChange={onMessageChange}
                   required
                   placeholder="Tell us about your land project, your organization or what you'd like to talk through."
                   rows={8}

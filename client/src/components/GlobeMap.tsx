@@ -16,6 +16,7 @@ import { MapPin, Leaf, Building2, ExternalLink, Globe, ChevronDown, ChevronUp, S
 import { trpc } from "@/lib/trpc";
 import { cdnImg } from "@/lib/utils";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { isTextEntry } from "@/lib/stillWhileTyping";
 import { Link } from "wouter";
 import { projectPathForApplication } from "@shared/projectKey";
 
@@ -1120,6 +1121,41 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       clearTimeout(timer);
     };
   }, [isMobile]);
+
+  // The globe draws every frame on the main thread. Hold it still while keys
+  // are being pressed in a field (it resumes 400ms after the last one, about
+  // when the debounced search applies) and while it is off screen, so typing
+  // never waits on it (STEERING.md section 13).
+  useEffect(() => {
+    const globe = globeInstanceRef.current;
+    const el = isMobile ? mobileGlobeRef.current : globeRef.current;
+    if (!globeReady || !globe || !el) return;
+    let onScreen = true;
+    let typing = false;
+    let paused = false;
+    let resumeTimer = 0;
+    const sync = () => {
+      const run = onScreen && !typing;
+      if (run && paused) { globe.resumeAnimation(); paused = false; }
+      else if (!run && !paused) { globe.pauseAnimation(); paused = true; }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (!isTextEntry(e.target)) return;
+      typing = true;
+      sync();
+      window.clearTimeout(resumeTimer);
+      resumeTimer = window.setTimeout(() => { typing = false; sync(); }, 400);
+    };
+    const io = new IntersectionObserver(([entry]) => { onScreen = entry.isIntersecting; sync(); });
+    io.observe(el);
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      io.disconnect();
+      document.removeEventListener("keydown", onKey, true);
+      window.clearTimeout(resumeTimer);
+      if (paused) globe.resumeAnimation();
+    };
+  }, [globeReady, isMobile]);
 
   // Update globe points when data changes
   useEffect(() => {

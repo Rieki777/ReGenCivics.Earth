@@ -13,7 +13,8 @@ interface PageTransitionProps {
   className?: string;
 }
 
-// Smooth fade + slide up transition, kept as framer-motion (one-time page enter)
+// Smooth fade + slide up transition, kept as framer-motion (one-time page enter).
+// 200ms: at 400ms the page sat mostly invisible for a beat after every click.
 export function PageTransition({ children, className = "" }: PageTransitionProps) {
   return (
     <motion.div
@@ -21,7 +22,7 @@ export function PageTransition({ children, className = "" }: PageTransitionProps
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{
-        duration: 0.4,
+        duration: 0.2,
         ease: [0.25, 0.46, 0.45, 0.94] // Custom easing for organic feel
       }}
       className={className}

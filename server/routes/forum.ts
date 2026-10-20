@@ -324,9 +324,13 @@ export const forumRouter = router({
   // Get like counts and user's likes for a post
   likes: publicProcedure
     .input(z.object({ postId: z.number(), userId: z.number().optional() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const counts = await db.getForumLikeCounts(input.postId);
-      const userLikes = input.userId ? await db.getUserForumLikes(input.userId, input.postId) : { likedPost: false, likedReplies: [] };
+      // Whose likes to mark comes from the session. The input's userId is
+      // kept for old clients but ignored: anyone could ask what another
+      // person had liked.
+      const userId = ctx.user?.id;
+      const userLikes = userId ? await db.getUserForumLikes(userId, input.postId) : { likedPost: false, likedReplies: [] };
       return { ...counts, ...userLikes };
     }),
 

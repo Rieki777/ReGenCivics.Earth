@@ -133,16 +133,28 @@ export function ExitIntentCapture() {
     maxScrollFractionRef.current = 0;
   }, [location]);
 
+  // How far through the page someone has scrolled. Measured at most once per
+  // frame, inside requestAnimationFrame where the browser lays out the page
+  // anyway: reading scrollHeight in the scroll event itself forced an extra
+  // layout every time.
   useEffect(() => {
-    const trackDepth = () => {
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
       const doc = document.documentElement;
       const scrollable = doc.scrollHeight - window.innerHeight;
       const frac = scrollable > 0 ? window.scrollY / scrollable : 1;
       if (frac > maxScrollFractionRef.current) maxScrollFractionRef.current = frac;
     };
+    const trackDepth = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
     trackDepth();
     window.addEventListener("scroll", trackDepth, { passive: true });
-    return () => window.removeEventListener("scroll", trackDepth);
+    return () => {
+      window.removeEventListener("scroll", trackDepth);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, [location]);
 
   // Server-side check: has the user already subscribed to the newsletter?

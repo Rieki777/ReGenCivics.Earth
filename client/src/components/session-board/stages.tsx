@@ -30,6 +30,7 @@ import {
   shareTime,
   TOGETHER_COPY,
   type BoardStage,
+  type BoardState,
 } from "@shared/sessionBoard";
 import { shownAnswerRows } from "@shared/humanNeeds";
 import {
@@ -45,6 +46,7 @@ import { JoinBoard } from "./JoinBoard";
 import { RaiseHand } from "./RaiseHandForm";
 import type { BoardActions, BoardItem, BoardProject, Mine, MyProject, SessionBoardData } from "./useSessionBoard";
 import { phaseFromSpeech } from "./spokenStage";
+import { useBoardClock } from "./useBoardClock";
 import { BoardMic, Chips, NEW_TAB, QuickAdd, SlideLine, SpokenLine, StageHead, plural, speakLabel } from "./week3/parts";
 
 export { CheckIn } from "./week3/CheckIn";
@@ -61,7 +63,7 @@ export type StageProps = {
   canWrite: boolean;
   mine: Mine;
   actions: BoardActions;
-  now: number;
+  /** Server time. A clock that ticks calls useBoardClock with it in its own component. */
   serverNow: () => number;
   /** Moves this screen, and for a facilitator the whole room. */
   go: (i: number) => void;
@@ -709,8 +711,43 @@ function AddProject({ actions, onAdded, displayName, setDisplayName }: { actions
   );
 }
 
+/**
+ * The share timer ring and, for the facilitator, its controls. It ticks on
+ * its own while the timer runs, so the project fields beside it (where people
+ * type) do not re-render twice a second.
+ */
+function ShareTimer({ sp, facilitator, actions, serverNow }: {
+  sp: BoardState["speaker"];
+  facilitator: boolean;
+  actions: BoardActions;
+  serverNow: () => number;
+}) {
+  const now = useBoardClock(serverNow, !!sp.startedAt);
+  const { used, left } = shareTime(sp, now);
+  return (
+    <div className="sb-timer">
+      <div className={`sb-ring${left < 0 ? " sb-over" : left <= 30 ? " sb-warn" : ""}`} role="timer" aria-label="Time left for this share">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" className="sb-ring-bg" />
+          <circle cx="60" cy="60" r="52" className="sb-ring-fg" transform="rotate(-90 60 60)" style={{ strokeDashoffset: 326.73 * Math.min(1, used / sp.secs) }} />
+        </svg>
+        <div className="sb-ring-num">{left >= 0 ? fmt(Math.ceil(left)) : `+${fmt(-left)}`}</div>
+      </div>
+      {facilitator ? (
+        <div className="sb-timer-ctl">
+          <button type="button" className="sb-btn sb-small" onClick={() => actions.act({ type: "timer", op: sp.startedAt ? "pause" : "start" })}>{sp.startedAt ? "Pause" : used > 0 ? "Resume" : "Start"}</button>
+          <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => actions.act({ type: "timer", op: "reset" })}>Reset</button>
+          <select className="sb-field" aria-label="Minutes per share" value={sp.secs} onChange={(e) => actions.act({ type: "shareSecs", secs: Number(e.target.value) })}>
+            {[120, 180, 240, 300].map((s) => <option key={s} value={s}>{s / 60} min</option>)}
+          </select>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function Circle(props: StageProps) {
-  const { board, stages, index, facilitator, canWrite, mine, actions, now } = props;
+  const { board, stages, index, facilitator, canWrite, mine, actions, serverNow } = props;
   const { sel, setLocalSel } = useSelected(board, facilitator);
   const next = upNext(board.projects, sel?.id ?? null);
   const [confirmHide, setConfirmHide] = useState(false);
@@ -722,7 +759,6 @@ export function Circle(props: StageProps) {
   };
   const editable = !!sel && (facilitator || (canWrite && mine.projectIds.has(sel.id)));
   const sp = board.state.speaker;
-  const { used, left } = shareTime(sp, now);
   const notesFor = (kind: string) => (sel ? board.items.filter((i) => i.kind === kind && i.projectId === sel.id) : []);
   const ready = new Set(sel?.ready ?? []);
   const phase = PROJECT_PHASES.find((p) => p.key === sel?.phase);
@@ -777,24 +813,7 @@ export function Circle(props: StageProps) {
                   {sel.url ? <a className="sb-link" href={sel.url} target="_blank" rel="noopener noreferrer">{sel.url.replace(/^https?:\/\//, "")}<span className="sr-only"> (opens in a new tab)</span></a> : null}
                 </div>
                 {sp.projectId === sel.id ? (
-                  <div className="sb-timer">
-                    <div className={`sb-ring${left < 0 ? " sb-over" : left <= 30 ? " sb-warn" : ""}`} role="timer" aria-label="Time left for this share">
-                      <svg viewBox="0 0 120 120" aria-hidden="true">
-                        <circle cx="60" cy="60" r="52" className="sb-ring-bg" />
-                        <circle cx="60" cy="60" r="52" className="sb-ring-fg" transform="rotate(-90 60 60)" style={{ strokeDashoffset: 326.73 * Math.min(1, used / sp.secs) }} />
-                      </svg>
-                      <div className="sb-ring-num">{left >= 0 ? fmt(Math.ceil(left)) : `+${fmt(-left)}`}</div>
-                    </div>
-                    {facilitator ? (
-                      <div className="sb-timer-ctl">
-                        <button type="button" className="sb-btn sb-small" onClick={() => actions.act({ type: "timer", op: sp.startedAt ? "pause" : "start" })}>{sp.startedAt ? "Pause" : used > 0 ? "Resume" : "Start"}</button>
-                        <button type="button" className="sb-btn sb-small sb-ghost" onClick={() => actions.act({ type: "timer", op: "reset" })}>Reset</button>
-                        <select className="sb-field" aria-label="Minutes per share" value={sp.secs} onChange={(e) => actions.act({ type: "shareSecs", secs: Number(e.target.value) })}>
-                          {[120, 180, 240, 300].map((s) => <option key={s} value={s}>{s / 60} min</option>)}
-                        </select>
-                      </div>
-                    ) : null}
-                  </div>
+                  <ShareTimer sp={sp} facilitator={facilitator} actions={actions} serverNow={serverNow} />
                 ) : null}
               </div>
 

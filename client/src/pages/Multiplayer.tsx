@@ -10,7 +10,7 @@
  * Spec: CLAUDE_CODE_PROMPT_2026-07-16_MULTIPLAYER_COORDINATION.md.
  */
 
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Link } from "wouter";
 import {
   Apple,
@@ -40,6 +40,136 @@ const QUEST_ICONS: Record<string, LucideIcon> = {
   Users,
 };
 
+/** A bioregion picker that sits still while the note beside it is typed. */
+const StillBioregionSelect = memo(BioregionSelect);
+
+type CrewSignupProps = {
+  quests: { questId: string; title: string }[];
+  mySignupQuestIds: Set<string>;
+  isAuthenticated: boolean;
+  selectedQuestId: string | null;
+  onSelectQuest: (questId: string | null) => void;
+  formMessage: string | null;
+  onFormMessage: (message: string | null) => void;
+  onSignedUp: () => void;
+};
+
+/**
+ * The signup form owns the note and bioregion, so typing the note re-renders
+ * the form and not the quest list. It stays mounted while hidden, so what was
+ * typed is kept.
+ */
+function CrewSignup({
+  quests,
+  mySignupQuestIds,
+  isAuthenticated,
+  selectedQuestId,
+  onSelectQuest,
+  formMessage,
+  onFormMessage,
+  onSignedUp,
+}: CrewSignupProps) {
+  const [bioregionId, setBioregionId] = useState<number | null>(null);
+  const [note, setNote] = useState("");
+
+  const signupMutation = trpc.questCrews.signup.useMutation({
+    onSuccess: () => {
+      onFormMessage("You're aboard. When enough players in your bioregion sign up, your crew forms and you'll get an email.");
+      setNote("");
+      onSelectQuest(null);
+      onSignedUp();
+    },
+    onError: (err) => onFormMessage(err.message),
+  });
+
+  const handleSignup = () => {
+    onFormMessage(null);
+    if (!selectedQuestId || !bioregionId) {
+      onFormMessage("Pick a quest and your bioregion first.");
+      return;
+    }
+    signupMutation.mutate({
+      questId: selectedQuestId,
+      bioregionId,
+      note: note.trim() ? note.trim() : undefined,
+    });
+  };
+
+  if (quests.length === 0) return null;
+
+  return (
+    <section id="crew-signup-form" className="rounded-2xl bg-white/5 border border-white/10 p-6">
+      <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
+        Sign up for a crew
+      </h2>
+      <p className="text-white/60 text-sm mb-5">
+        One signup per quest. When enough players in your bioregion pick the same quest, your crew forms
+        and you'll get an email with your crew chat.
+      </p>
+
+      {isAuthenticated ? (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-white/80 text-sm mb-1">Quest</label>
+            <select
+              value={selectedQuestId ?? ""}
+              onChange={(e) => onSelectQuest(e.target.value || null)}
+              className="w-full rounded-xl border bg-white/5 border-white/45 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+            >
+              <option value="" className="bg-[#1a472a]">
+                Pick a quest…
+              </option>
+              {quests
+                .filter((q) => !mySignupQuestIds.has(q.questId))
+                .map((q) => (
+                  <option key={q.questId} value={q.questId} className="bg-[#1a472a]">
+                    {q.title}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/80 text-sm mb-1">Your bioregion</label>
+            <StillBioregionSelect value={bioregionId} onChange={setBioregionId} variant="dark" />
+          </div>
+          <div>
+            <label className="block text-white/80 text-sm mb-1">Note for your crew (optional)</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value.slice(0, 500))}
+              rows={2}
+              placeholder="Skills, tools, or times that work for you"
+              className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
+            />
+          </div>
+          {formMessage && <p className="text-[#d4a574] text-sm">{formMessage}</p>}
+          <Button
+            onClick={handleSignup}
+            disabled={signupMutation.isPending}
+            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6 py-2"
+          >
+            {signupMutation.isPending ? "Signing up…" : "Join the crew list"}
+          </Button>
+        </div>
+      ) : (
+        <div className="rounded-xl bg-white/5 border border-white/10 p-4">
+          <p className="text-white/70 text-sm mb-3">
+            Crews need names. Sign in to join one, and your crewmates will know who's aboard.
+          </p>
+          <Button
+            onClick={() => {
+              window.location.href = getLoginUrl();
+            }}
+            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-5"
+          >
+            Sign in / Create account
+          </Button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Multiplayer() {
   const { user, isAuthenticated } = useAuth();
   const questsQuery = trpc.questCrews.quests.useQuery();
@@ -47,21 +177,9 @@ export default function Multiplayer() {
   const myCrewsQuery = trpc.questCrews.myCrews.useQuery(undefined, { enabled: isAuthenticated });
 
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null);
-  const [bioregionId, setBioregionId] = useState<number | null>(null);
-  const [note, setNote] = useState("");
   const [expandedQuestId, setExpandedQuestId] = useState<string | null>(null);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
-  const signupMutation = trpc.questCrews.signup.useMutation({
-    onSuccess: () => {
-      setFormMessage("You're aboard. When enough players in your bioregion sign up, your crew forms and you'll get an email.");
-      setNote("");
-      setSelectedQuestId(null);
-      mySignupsQuery.refetch();
-      questsQuery.refetch();
-    },
-    onError: (err) => setFormMessage(err.message),
-  });
   const cancelMutation = trpc.questCrews.cancelSignup.useMutation({
     onSuccess: () => {
       mySignupsQuery.refetch();
@@ -88,19 +206,6 @@ export default function Multiplayer() {
     () => new Set((mySignupsQuery.data ?? []).map((s) => s.questId)),
     [mySignupsQuery.data],
   );
-
-  const handleSignup = () => {
-    setFormMessage(null);
-    if (!selectedQuestId || !bioregionId) {
-      setFormMessage("Pick a quest and your bioregion first.");
-      return;
-    }
-    signupMutation.mutate({
-      questId: selectedQuestId,
-      bioregionId,
-      note: note.trim() ? note.trim() : undefined,
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
@@ -390,77 +495,19 @@ export default function Multiplayer() {
         </section>
 
         {/* Signup form */}
-        {quests.length > 0 && (
-          <section id="crew-signup-form" className="rounded-2xl bg-white/5 border border-white/10 p-6">
-            <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "var(--font-display)" }}>
-              Sign up for a crew
-            </h2>
-            <p className="text-white/60 text-sm mb-5">
-              One signup per quest. When enough players in your bioregion pick the same quest, your crew forms
-              and you'll get an email with your crew chat.
-            </p>
-
-            {isAuthenticated ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Quest</label>
-                  <select
-                    value={selectedQuestId ?? ""}
-                    onChange={(e) => setSelectedQuestId(e.target.value || null)}
-                    className="w-full rounded-xl border bg-white/5 border-white/45 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
-                  >
-                    <option value="" className="bg-[#1a472a]">
-                      Pick a quest…
-                    </option>
-                    {quests
-                      .filter((q) => !mySignupQuestIds.has(q.questId))
-                      .map((q) => (
-                        <option key={q.questId} value={q.questId} className="bg-[#1a472a]">
-                          {q.title}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Your bioregion</label>
-                  <BioregionSelect value={bioregionId} onChange={setBioregionId} variant="dark" />
-                </div>
-                <div>
-                  <label className="block text-white/80 text-sm mb-1">Note for your crew (optional)</label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value.slice(0, 500))}
-                    rows={2}
-                    placeholder="Skills, tools, or times that work for you"
-                    className="w-full rounded-xl border bg-white/5 border-white/45 text-white placeholder-white/70 px-3 py-2 text-sm focus:outline-none focus:border-[#7dd87d]/40"
-                  />
-                </div>
-                {formMessage && <p className="text-[#d4a574] text-sm">{formMessage}</p>}
-                <Button
-                  onClick={handleSignup}
-                  disabled={signupMutation.isPending}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6 py-2"
-                >
-                  {signupMutation.isPending ? "Signing up…" : "Join the crew list"}
-                </Button>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-white/5 border border-white/10 p-4">
-                <p className="text-white/70 text-sm mb-3">
-                  Crews need names. Sign in to join one, and your crewmates will know who's aboard.
-                </p>
-                <Button
-                  onClick={() => {
-                    window.location.href = getLoginUrl();
-                  }}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-5"
-                >
-                  Sign in / Create account
-                </Button>
-              </div>
-            )}
-          </section>
-        )}
+        <CrewSignup
+          quests={quests}
+          mySignupQuestIds={mySignupQuestIds}
+          isAuthenticated={isAuthenticated}
+          selectedQuestId={selectedQuestId}
+          onSelectQuest={setSelectedQuestId}
+          formMessage={formMessage}
+          onFormMessage={setFormMessage}
+          onSignedUp={() => {
+            mySignupsQuery.refetch();
+            questsQuery.refetch();
+          }}
+        />
       </div>
     </div>
   );

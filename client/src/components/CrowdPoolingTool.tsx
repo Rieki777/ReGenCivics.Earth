@@ -4,7 +4,7 @@
  * Tracks immediate contributions and future value commitments
  */
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { useLocation, useSearch } from 'wouter';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { trpc } from '@/lib/trpc';
@@ -77,6 +77,7 @@ import {
 } from '@shared/crowdpoolingTaxonomy';
 import { buildGiftRecord, standingFromRecord, type GiftDraft } from '@shared/characterSheet';
 import GiftRecord from '@/components/character/GiftRecord';
+import { usePersistFn } from '@/hooks/usePersistFn';
 
 export type GiftMapContext = {
   path: "project" | "general";
@@ -220,7 +221,7 @@ const normalizeFuture = (items: unknown): FutureContribution[] => {
 };
 
 // Compact list of pooled value across the nine forms of capital
-function CapitalSummaryList({
+const CapitalSummaryList = memo(function CapitalSummaryList({
   totals,
   symbol,
 }: {
@@ -245,7 +246,734 @@ function CapitalSummaryList({
       </div>
     </div>
   );
-}
+});
+
+// The entry form's pieces. Each is memoized on the few values it shows and
+// gets stable callbacks from the tool, so a keystroke re-renders the field
+// being typed in (and what reads its value), not every gift row, Select and
+// dialog on the sheet.
+
+type UpdateImmediate = (id: string, field: keyof ImmediateContribution, value: string | number) => void;
+type UpdateFuture = (id: string, field: keyof FutureContribution, value: string | number) => void;
+type Suggestion = { label: string; weeks: number; hoursPerWeek: number; hourlyRate: number; description: string };
+
+// Add on pointer down and skip the click that follows it; a click with no
+// pointer down first (keyboard, assistive tech) still adds.
+const addOnPress = (add: () => void) => (event: React.PointerEvent<HTMLButtonElement>) => {
+  if (event.button !== 0) return;
+  event.currentTarget.dataset.armed = "1";
+  add();
+};
+const addOnClick = (add: () => void) => (event: React.MouseEvent<HTMLButtonElement>) => {
+  if (event.currentTarget.dataset.armed === "1") {
+    delete event.currentTarget.dataset.armed;
+    return;
+  }
+  add();
+};
+
+const StillGiftRecord = memo(GiftRecord);
+const StillSuggestUpgradesSheet = memo(SuggestUpgradesSheet);
+
+const UsersBadge = memo(function UsersBadge() {
+  return (
+    <div className="w-10 h-10 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center">
+      <Users className="w-5 h-5 text-[#4a7c59]" />
+    </div>
+  );
+});
+
+const EditSetupButton = memo(function EditSetupButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onClick}
+      className="text-[#4a7c59] hover:bg-[#7dd87d]/10"
+    >
+      Edit Setup
+    </Button>
+  );
+});
+
+const SectionTabs = memo(function SectionTabs({
+  active,
+  onSelect,
+  immediateTotal,
+  futureTotal,
+  currencySymbol,
+}: {
+  active: 'immediate' | 'future';
+  onSelect: (section: 'immediate' | 'future') => void;
+  immediateTotal: number;
+  futureTotal: number;
+  currencySymbol: string;
+}) {
+  return (
+    <div className="flex gap-2 mb-6">
+      <button
+        onClick={() => onSelect('immediate')}
+        className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+          active === 'immediate'
+            ? 'bg-[#4a7c59] text-white'
+            : 'bg-white text-[#1a472a] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/10'
+        }`}
+      >
+        <Package className="w-4 h-4 inline mr-2" />
+        Immediate
+        {immediateTotal > 0 && (
+        <span className="ml-2 text-xs opacity-80">
+          {formatCurrency(immediateTotal, currencySymbol)}
+        </span>
+        )}
+      </button>
+      <button
+        onClick={() => onSelect('future')}
+        className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+          active === 'future'
+            ? 'bg-[#4a7c59] text-white'
+            : 'bg-white text-[#1a472a] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/10'
+        }`}
+      >
+        <Clock className="w-4 h-4 inline mr-2" />
+        Future Value
+        {futureTotal > 0 && (
+        <span className="ml-2 text-xs opacity-80">
+          {formatCurrency(futureTotal, currencySymbol)}
+        </span>
+        )}
+      </button>
+    </div>
+  );
+});
+
+/** An Input bound to one value; `onValue` gets the raw text. */
+const RowInput = memo(function RowInput({
+  value,
+  onValue,
+  ...props
+}: Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange'> & {
+  value: string | number;
+  onValue: (raw: string) => void;
+}) {
+  return <Input value={value} onChange={(e) => onValue(e.target.value)} {...props} />;
+});
+
+const RemoveButton = memo(function RemoveButton({ onClick, className }: { onClick: () => void; className: string }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={onClick}
+      className={className}
+      aria-label="Remove contribution"
+    >
+      <Trash2 className="w-4 h-4" />
+    </Button>
+  );
+});
+
+const CategoryIcon = memo(function CategoryIcon({ category }: { category: string }) {
+  const Icon = immediateCategories.find(c => c.id === category)?.icon || Package;
+  return (
+    <div className="hidden sm:flex w-10 h-10 rounded-lg bg-[#7dd87d]/20 items-center justify-center flex-shrink-0">
+      <Icon className="w-5 h-5 text-[#4a7c59]" />
+    </div>
+  );
+});
+
+const CategorySelect = memo(function CategorySelect({
+  labelId,
+  value,
+  onChange,
+}: {
+  labelId: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger aria-labelledby={labelId} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/60">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent className="max-h-60">
+        {immediateCategories.map((cat) => (
+          <SelectItem key={cat.id} value={cat.id}>
+            {cat.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+});
+
+const ImmediateRow = memo(function ImmediateRow({
+  contribution,
+  currencySymbol,
+  onUpdate,
+  onRemove,
+}: {
+  contribution: ImmediateContribution;
+  currencySymbol: string;
+  onUpdate: UpdateImmediate;
+  onRemove: (id: string) => void;
+}) {
+  const { id } = contribution;
+  const setCategory = useCallback((value: string) => onUpdate(id, 'category', value), [onUpdate, id]);
+  const setValue = useCallback((raw: string) => onUpdate(id, 'value', parseFloat(raw) || 0), [onUpdate, id]);
+  const setDescription = useCallback((raw: string) => onUpdate(id, 'description', raw), [onUpdate, id]);
+  const remove = useCallback(() => onRemove(id), [onRemove, id]);
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/20">
+      <div className="flex flex-col sm:flex-row items-start gap-3">
+        <CategoryIcon category={contribution.category} />
+        <div className="flex-1 w-full space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="min-w-0">
+            <label id={`imm-cat-${id}`} className="text-xs mb-1 block">Category</label>
+            <CategorySelect labelId={`imm-cat-${id}`} value={contribution.category} onChange={setCategory} />
+            </div>
+            <div className="min-w-0">
+            <label htmlFor={`imm-val-${id}`} className="text-xs mb-1 block">Value</label>
+            <div className="relative w-full">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">
+                {currencySymbol}
+              </span>
+              <RowInput
+                id={`imm-val-${id}`}
+                type="number"
+                inputMode="decimal"
+                value={contribution.value || ''}
+                onValue={setValue}
+                placeholder="Value"
+                className="pl-7 bg-white border-[#7dd87d]/60 w-full text-base"
+              />
+            </div>
+            </div>
+          </div>
+          <div>
+          <label htmlFor={`imm-desc-${id}`} className="text-xs mb-1 block">Description</label>
+          <RowInput
+            id={`imm-desc-${id}`}
+            value={contribution.description}
+            onValue={setDescription}
+            placeholder={contribution.category === 'crypto' ? 'USDC, ETH, or other tokens' : `Description (e.g., ${immediateCategories.find(c => c.id === contribution.category)?.description || 'item details'})`}
+            className="bg-white border-[#7dd87d]/60 w-full"
+          />
+          </div>
+          {contribution.category === 'crypto' && (
+            <p className="text-xs text-[#1a472a]/75">
+              {CRYPTO_PAYMENT_CONTEXT.fiatNote}
+            </p>
+          )}
+        </div>
+        <RemoveButton onClick={remove} className="text-red-500 hover:bg-red-50 flex-shrink-0 self-end sm:self-start" />
+      </div>
+    </div>
+  );
+});
+
+const ImmediateHeader = memo(function ImmediateHeader({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <h4 className="font-bold text-[#1a472a]">Immediate Contributions</h4>
+        <p className="text-xs text-[#1a472a]/80">Land, crypto, equipment, plants, and more</p>
+      </div>
+      <Button
+        onPointerDown={addOnPress(onAdd)}
+        onClick={addOnClick(onAdd)}
+        size="sm"
+        className="touch-press bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
+      >
+        <Plus className="w-4 h-4 mr-1" />
+        Add
+      </Button>
+    </div>
+  );
+});
+
+const NoGiftsYet = memo(function NoGiftsYet({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="bg-white/50 rounded-xl p-8 text-center border border-dashed border-[#7dd87d]/30">
+      <Package className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
+      <p className="text-[#1a472a]/80 mb-3">No immediate contributions yet</p>
+      <Button
+        onPointerDown={addOnPress(onAdd)}
+        onClick={addOnClick(onAdd)}
+        variant="outline"
+        className="touch-press border-[#4a7c59] text-[#4a7c59] hover:bg-[#7dd87d]/10"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Your First Contribution
+      </Button>
+    </div>
+  );
+});
+
+const ImmediateSection = memo(function ImmediateSection({
+  contributions,
+  currencySymbol,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  contributions: ImmediateContribution[];
+  currencySymbol: string;
+  onAdd: () => void;
+  onUpdate: UpdateImmediate;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <ImmediateHeader onAdd={onAdd} />
+
+      {contributions.length === 0 ? (
+        <NoGiftsYet onAdd={onAdd} />
+      ) : (
+        <div className="space-y-3">
+          {contributions.map((contribution) => (
+            <ImmediateRow
+              key={contribution.id}
+              contribution={contribution}
+              currencySymbol={currencySymbol}
+              onUpdate={onUpdate}
+              onRemove={onRemove}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+const RoleIcon = memo(function RoleIcon() {
+  return (
+    <div className="hidden sm:flex w-10 h-10 rounded-lg bg-[#7dd87d]/20 items-center justify-center flex-shrink-0">
+      <Users className="w-5 h-5 text-[#4a7c59]" />
+    </div>
+  );
+});
+
+const CapitalSelect = memo(function CapitalSelect({
+  labelId,
+  value,
+  onChange,
+}: {
+  labelId: string;
+  value: CapitalType;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger aria-labelledby={labelId} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/60">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {CAPITAL_TYPES.map((capital) => (
+          <SelectItem key={capital} value={capital}>
+            {CAPITAL_LABELS[capital].label} Capital
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+});
+
+const FutureRow = memo(function FutureRow({
+  contribution,
+  currencySymbol,
+  onUpdate,
+  onUpdateCapital,
+  onRemove,
+}: {
+  contribution: FutureContribution;
+  currencySymbol: string;
+  onUpdate: UpdateFuture;
+  onUpdateCapital: (id: string, capital: CapitalType) => void;
+  onRemove: (id: string) => void;
+}) {
+  const { id } = contribution;
+  const totalValue = contribution.weeks * contribution.hoursPerWeek * contribution.hourlyRate;
+  const setRoleName = useCallback((raw: string) => onUpdate(id, 'roleName', raw), [onUpdate, id]);
+  const setWeeks = useCallback((raw: string) => onUpdate(id, 'weeks', parseInt(raw) || 0), [onUpdate, id]);
+  const setHours = useCallback((raw: string) => onUpdate(id, 'hoursPerWeek', parseInt(raw) || 0), [onUpdate, id]);
+  const setRate = useCallback((raw: string) => onUpdate(id, 'hourlyRate', parseFloat(raw) || 0), [onUpdate, id]);
+  const setCapital = useCallback((value: string) => onUpdateCapital(id, value as CapitalType), [onUpdateCapital, id]);
+  const remove = useCallback(() => onRemove(id), [onRemove, id]);
+  return (
+    <div className="bg-white rounded-xl p-4 border border-[#7dd87d]/20">
+      <div className="flex flex-col sm:flex-row items-start gap-3">
+        <RoleIcon />
+        <div className="flex-1 w-full space-y-3">
+          <div className="flex gap-2">
+            <RowInput
+              value={contribution.roleName}
+              onValue={setRoleName}
+              placeholder="Role name (e.g., Builder, Gardener, Cook)"
+              className="bg-white border-[#7dd87d]/60 flex-1"
+            />
+            <RemoveButton onClick={remove} className="text-red-500 hover:bg-red-50 flex-shrink-0 sm:hidden" />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="min-w-0">
+              <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">Weeks</label>
+              <RowInput
+                type="number"
+                inputMode="numeric"
+                value={contribution.weeks || ''}
+                onValue={setWeeks}
+                placeholder="52"
+                className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
+              />
+            </div>
+            <div className="min-w-0">
+              <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">Hrs/Wk</label>
+              <RowInput
+                type="number"
+                inputMode="numeric"
+                value={contribution.hoursPerWeek || ''}
+                onValue={setHours}
+                placeholder="8"
+                className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
+              />
+            </div>
+            <div className="min-w-0">
+              <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">{currencySymbol}/Hr</label>
+              <RowInput
+                type="number"
+                inputMode="decimal"
+                value={contribution.hourlyRate || ''}
+                onValue={setRate}
+                placeholder="40"
+                className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+            <div className="min-w-0 flex-1">
+            <label id={`fut-cap-${id}`} className="text-xs mb-1 block">Capital</label>
+            <CapitalSelect labelId={`fut-cap-${id}`} value={contribution.capital} onChange={setCapital} />
+            </div>
+            <div className="text-right text-sm sm:pb-2">
+              <span className="text-[#1a472a]/80">Total: </span>
+              <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
+            </div>
+          </div>
+        </div>
+        <RemoveButton onClick={remove} className="text-red-500 hover:bg-red-50 flex-shrink-0 hidden sm:flex" />
+      </div>
+    </div>
+  );
+});
+
+const FutureHeader = memo(function FutureHeader({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="flex items-center justify-between">
+      <div>
+        <h4 className="font-bold text-[#1a472a]">Future Value Commitments</h4>
+        <p className="text-xs text-[#1a472a]/80">Roles and work you commit to contributing</p>
+      </div>
+      <Button
+        onClick={onAdd}
+        size="sm"
+        className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
+      >
+        <Plus className="w-4 h-4 mr-1" />
+        Add Role
+      </Button>
+    </div>
+  );
+});
+
+const RoleTemplates = memo(function RoleTemplates({
+  open,
+  onToggle,
+  onPick,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  onPick: (capital: CapitalType, role: RoleTemplate) => void;
+}) {
+  return (
+    <div className="bg-white/70 rounded-xl border border-[#7dd87d]/30">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-3"
+      >
+        <span className="text-sm font-medium text-[#1a472a] flex items-center gap-2">
+          <Users className="w-4 h-4 text-[#4a7c59]" />
+          Pick a role from the nine capitals
+        </span>
+        <ChevronDown className={`w-4 h-4 text-[#4a7c59] transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="px-3 pb-3 space-y-3">
+          {CAPITAL_TYPES.map((capital) => (
+            <div key={capital}>
+              <p className="text-xs font-bold text-[#1a472a]">{CAPITAL_LABELS[capital].label} Capital</p>
+              <p className="text-[11px] text-[#1a472a]/75 mb-1.5">{CAPITAL_LABELS[capital].blurb}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {ROLE_TEMPLATES_BY_CAPITAL[capital].map((role) => (
+                  <button
+                    key={role.title}
+                    type="button"
+                    title={role.description}
+                    onClick={() => onPick(capital, role)}
+                    className="text-xs px-2.5 py-1.5 rounded-lg bg-[#f0f7f0] border border-[#7dd87d]/30 text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors"
+                  >
+                    {role.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+/** Realistic ways to close the gap to the target, from what is still needed. */
+const RoleSuggestions = memo(function RoleSuggestions({
+  remaining,
+  currencySymbol,
+  onPick,
+}: {
+  remaining: number;
+  currencySymbol: string;
+  onPick: (suggestion: Suggestion) => void;
+}) {
+  if (remaining > 0) {
+    // Generate realistic suggestions based on remaining amount
+    const suggestions: Suggestion[] = [];
+
+    // Part-time suggestion (8 hrs/week, $25/hr)
+    const partTimeWeeks = Math.ceil(remaining / (8 * 25));
+    if (partTimeWeeks <= 104) { // Max 2 years
+      suggestions.push({
+        label: 'Part-time (8 hrs/week)',
+        weeks: Math.min(partTimeWeeks, 52),
+        hoursPerWeek: 8,
+        hourlyRate: partTimeWeeks > 52 ? Math.ceil(remaining / (52 * 8)) : 25,
+        description: 'Casual commitment'
+      });
+    }
+
+    // Half-time suggestion (20 hrs/week, $30/hr)
+    const halfTimeWeeks = Math.ceil(remaining / (20 * 30));
+    if (halfTimeWeeks <= 52) {
+      suggestions.push({
+        label: 'Half-time (20 hrs/week)',
+        weeks: halfTimeWeeks,
+        hoursPerWeek: 20,
+        hourlyRate: 30,
+        description: 'Significant commitment'
+      });
+    }
+
+    // Full-time suggestion (40 hrs/week, $35/hr)
+    const fullTimeWeeks = Math.ceil(remaining / (40 * 35));
+    if (fullTimeWeeks <= 52) {
+      suggestions.push({
+        label: 'Full-time (40 hrs/week)',
+        weeks: fullTimeWeeks,
+        hoursPerWeek: 40,
+        hourlyRate: 35,
+        description: 'Full dedication'
+      });
+    }
+
+    // Intensive short-term (40 hrs/week, $50/hr for skilled work)
+    const intensiveWeeks = Math.ceil(remaining / (40 * 50));
+    if (intensiveWeeks <= 12 && remaining >= 5000) {
+      suggestions.push({
+        label: 'Intensive Sprint',
+        weeks: intensiveWeeks,
+        hoursPerWeek: 40,
+        hourlyRate: 50,
+        description: 'Skilled professional rate'
+      });
+    }
+
+    return suggestions.length > 0 ? (
+      <div className="bg-amber-50 rounded-xl p-4 mb-4 border border-amber-200">
+        <div className="flex items-start gap-2 mb-3">
+          <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-amber-800">
+              Need {formatCurrency(remaining, currencySymbol)} more to reach your target
+            </p>
+            <p className="text-xs text-amber-700 mt-1">Here are some realistic options:</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {suggestions.slice(0, 4).map((suggestion, idx) => (
+            <button
+              key={idx}
+              onClick={() => onPick(suggestion)}
+              className="text-left p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-50 transition-colors"
+            >
+              <p className="text-sm font-medium text-[#1a472a]">{suggestion.label}</p>
+              <p className="text-xs text-[#1a472a]/80 mt-1">
+                {suggestion.weeks} weeks × {suggestion.hoursPerWeek} hrs × {currencySymbol}{suggestion.hourlyRate}/hr
+              </p>
+              <p className="text-xs font-medium text-[#1a472a] mt-1">
+                = {formatCurrency(suggestion.weeks * suggestion.hoursPerWeek * suggestion.hourlyRate, currencySymbol)}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
+  }
+  return null;
+});
+
+const NoRolesYet = memo(function NoRolesYet({ onAdd }: { onAdd: () => void }) {
+  return (
+    <div className="bg-white/50 rounded-xl p-8 text-center border border-dashed border-[#7dd87d]/30">
+      <Clock className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
+      <p className="text-[#1a472a]/80 mb-3">No future commitments yet</p>
+      <Button
+        onClick={onAdd}
+        variant="outline"
+        className="border-[#4a7c59] text-[#4a7c59] hover:bg-[#7dd87d]/10"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add Your First Role Commitment
+      </Button>
+    </div>
+  );
+});
+
+const FutureSection = memo(function FutureSection({
+  contributions,
+  currencySymbol,
+  remaining,
+  showTemplates,
+  onToggleTemplates,
+  onAdd,
+  onAddTemplate,
+  onAddSuggestion,
+  onUpdate,
+  onUpdateCapital,
+  onRemove,
+}: {
+  contributions: FutureContribution[];
+  currencySymbol: string;
+  /** The target minus everything pooled so far. */
+  remaining: number;
+  showTemplates: boolean;
+  onToggleTemplates: () => void;
+  onAdd: () => void;
+  onAddTemplate: (capital: CapitalType, role: RoleTemplate) => void;
+  onAddSuggestion: (suggestion: Suggestion) => void;
+  onUpdate: UpdateFuture;
+  onUpdateCapital: (id: string, capital: CapitalType) => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <FutureHeader onAdd={onAdd} />
+
+      {/* Role templates across the nine capitals */}
+      <RoleTemplates open={showTemplates} onToggle={onToggleTemplates} onPick={onAddTemplate} />
+
+      {/* Smart Suggestions Box */}
+      <RoleSuggestions remaining={remaining} currencySymbol={currencySymbol} onPick={onAddSuggestion} />
+
+      {contributions.length === 0 ? (
+        <NoRolesYet onAdd={onAdd} />
+      ) : (
+        <div className="space-y-3">
+          {contributions.map((contribution) => (
+            <FutureRow
+              key={contribution.id}
+              contribution={contribution}
+              currencySymbol={currencySymbol}
+              onUpdate={onUpdate}
+              onUpdateCapital={onUpdateCapital}
+              onRemove={onRemove}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+const SummaryButton = memo(function SummaryButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
+  return (
+    <Button
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
+    >
+      View Summary & Download PDF
+      <ChevronRight className="w-4 h-4 ml-2" />
+    </Button>
+  );
+});
+
+const SaveGiftMapDialog = memo(function SaveGiftMapDialog({
+  open,
+  onOpenChange,
+  name,
+  onNameChange,
+  asDefault,
+  onAsDefaultChange,
+  saving,
+  onSave,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  name: string;
+  onNameChange: (name: string) => void;
+  asDefault: boolean;
+  onAsDefaultChange: (asDefault: boolean) => void;
+  saving: boolean;
+  onSave: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-white md:max-w-md md:rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold text-[#1a472a]">Save Gift Map</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[#1a472a] mb-1" htmlFor="gift-map-name">Name</label>
+            <Input
+              id="gift-map-name"
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="My gift map"
+              className="bg-white border-[#7dd87d]/60"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="saveGiftAsDefault"
+              checked={asDefault}
+              onChange={(e) => onAsDefaultChange(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <label htmlFor="saveGiftAsDefault" className="text-sm text-[#1a472a]">Set as the default gift map</label>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-2">
+          <Button type="button" onClick={() => onOpenChange(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
+          <Button type="button" onClick={onSave} disabled={saving} className="flex-1 rounded-xl bg-[#4a7c59] text-white">
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
 
 export default function CrowdPoolingTool({
   embedded = false,
@@ -263,7 +991,7 @@ export default function CrowdPoolingTool({
   const [showSetup, setShowSetup] = useState(!embedded);
   const [isGenericMode, setIsGenericMode] = useState(false);
   const [hasNoTarget, setHasNoTarget] = useState(embedded);
-  const setPath = (next: "project" | "general") => {
+  const setPath = useCallback((next: "project" | "general") => {
     if (next === "general") {
       setIsGenericMode(true);
       setProjectName("Generic Contribution");
@@ -271,7 +999,7 @@ export default function CrowdPoolingTool({
       setIsGenericMode(false);
       setProjectName((name) => (name === "Generic Contribution" ? "" : name));
     }
-  };
+  }, []);
   
   // Contributor data
   const [contributorName, setContributorName] = useState('');
@@ -542,7 +1270,7 @@ export default function CrowdPoolingTool({
     return buildGiftRecord(drafts);
   }, [immediateContributions, futureContributions]);
 
-  const giftContext: GiftMapContext = {
+  const giftContext: GiftMapContext = useMemo(() => ({
     path: isGenericMode ? "general" : "project",
     setPath,
     snap: {
@@ -552,10 +1280,16 @@ export default function CrowdPoolingTool({
       empty: giftRecord.empty,
       currencySymbol,
     },
-  };
+  }), [isGenericMode, setPath, giftRecord, currencySymbol]);
+  // Rebuilt only when the context changes, so typing the project name leaves
+  // the caller's hero and character as they are.
+  const aboveContent = useMemo(() => aboveRecord?.(giftContext), [aboveRecord, giftContext]);
+
+  // The handlers below keep one identity across renders, so the memoized rows
+  // skip a render when some other field changes.
 
   // Add immediate contribution
-  const addImmediateContribution = () => {
+  const addImmediateContribution = usePersistFn(() => {
     setImmediateContributions([
       ...immediateContributions,
       {
@@ -566,10 +1300,10 @@ export default function CrowdPoolingTool({
         capital: 'financial',
       }
     ]);
-  };
+  });
 
   // Update immediate contribution; a category change also updates the capital
-  const updateImmediateContribution = (id: string, field: keyof ImmediateContribution, value: string | number) => {
+  const updateImmediateContribution = useCallback((id: string, field: keyof ImmediateContribution, value: string | number) => {
     setImmediateContributions(contributions =>
       contributions.map(c => {
         if (c.id !== id) return c;
@@ -580,15 +1314,15 @@ export default function CrowdPoolingTool({
         return next;
       })
     );
-  };
-  
+  }, []);
+
   // Remove immediate contribution
-  const removeImmediateContribution = (id: string) => {
+  const removeImmediateContribution = useCallback((id: string) => {
     setImmediateContributions(contributions => contributions.filter(c => c.id !== id));
-  };
-  
+  }, []);
+
   // Add future contribution
-  const addFutureContribution = () => {
+  const addFutureContribution = usePersistFn(() => {
     setFutureContributions([
       ...futureContributions,
       {
@@ -600,10 +1334,10 @@ export default function CrowdPoolingTool({
         capital: 'experiential',
       }
     ]);
-  };
+  });
 
   // Add a role commitment from a shared taxonomy template
-  const addRoleFromTemplate = (capital: CapitalType, role: RoleTemplate) => {
+  const addRoleFromTemplate = useCallback((capital: CapitalType, role: RoleTemplate) => {
     setFutureContributions(prev => [
       ...prev,
       {
@@ -616,26 +1350,62 @@ export default function CrowdPoolingTool({
       },
     ]);
     toast.success(`${role.title} added`);
-  };
+  }, []);
 
   // Update which capital a role commitment counts toward
-  const updateFutureCapital = (id: string, capital: CapitalType) => {
+  const updateFutureCapital = useCallback((id: string, capital: CapitalType) => {
     setFutureContributions(contributions =>
       contributions.map(c => (c.id === id ? { ...c, capital } : c))
     );
-  };
-  
+  }, []);
+
   // Update future contribution
-  const updateFutureContribution = (id: string, field: keyof FutureContribution, value: string | number) => {
+  const updateFutureContribution = useCallback((id: string, field: keyof FutureContribution, value: string | number) => {
     setFutureContributions(contributions =>
       contributions.map(c => c.id === id ? { ...c, [field]: value } : c)
     );
-  };
-  
+  }, []);
+
   // Remove future contribution
-  const removeFutureContribution = (id: string) => {
+  const removeFutureContribution = useCallback((id: string) => {
     setFutureContributions(contributions => contributions.filter(c => c.id !== id));
-  };
+  }, []);
+
+  // Add a suggested role that closes the gap to the target
+  const addSuggestedRole = usePersistFn((suggestion: Suggestion) => {
+    setFutureContributions([
+      ...futureContributions,
+      {
+        id: generateId(),
+        roleName: '',
+        weeks: suggestion.weeks,
+        hoursPerWeek: suggestion.hoursPerWeek,
+        hourlyRate: suggestion.hourlyRate,
+        capital: 'experiential',
+      }
+    ]);
+  });
+
+  // Add a role picked in the Suggest Upgrades sheet
+  const addUpgradeRole = useCallback((role: (typeof suggestedRoles)[number]) => {
+    setFutureContributions(prev => [
+      ...prev,
+      {
+        id: generateId(),
+        roleName: role.name,
+        weeks: role.typicalWeeks,
+        hoursPerWeek: role.typicalHours,
+        hourlyRate: role.suggestedRate,
+        capital: 'experiential',
+      }
+    ]);
+    setActiveSection('future');
+  }, []);
+
+  const toggleTemplates = usePersistFn(() => setShowTemplates(!showTemplates));
+  const openSetup = useCallback(() => setShowSetup(true), []);
+  const openResults = useCallback(() => setShowResults(true), []);
+  const saveGiftMap = usePersistFn(confirmSaveToProfile);
   
   // Generate PDF
   const generatePDF = () => {
@@ -1291,19 +2061,6 @@ export default function CrowdPoolingTool({
     );
   }
   
-  const addOnPress = (add: () => void) => (event: React.PointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0) return;
-    event.currentTarget.dataset.armed = "1";
-    add();
-  };
-  const addOnClick = (add: () => void) => (event: React.MouseEvent<HTMLButtonElement>) => {
-    if (event.currentTarget.dataset.armed === "1") {
-      delete event.currentTarget.dataset.armed;
-      return;
-    }
-    add();
-  };
-
   const entryForm = (
     <div className={embedded
       ? "sheet-gift"
@@ -1312,9 +2069,7 @@ export default function CrowdPoolingTool({
       {/* Header with progress */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#7dd87d]/20 flex items-center justify-center">
-            <Users className="w-5 h-5 text-[#4a7c59]" />
-          </div>
+          <UsersBadge />
           <div>
             <h3 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
               {projectName || "Gifts now"}
@@ -1322,18 +2077,9 @@ export default function CrowdPoolingTool({
             <p className="text-xs text-[#1a472a]/80">Crowd pooling</p>
           </div>
         </div>
-        {!embedded && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowSetup(true)}
-          className="text-[#4a7c59] hover:bg-[#7dd87d]/10"
-        >
-          Edit Setup
-        </Button>
-        )}
+        {!embedded && <EditSetupButton onClick={openSetup} />}
       </div>
-      
+
       {!hasNoTarget && (
       <div className="bg-white rounded-xl p-4 mb-6 border border-[#7dd87d]/30">
         <div className="flex justify-between text-sm mb-2">
@@ -1343,7 +2089,7 @@ export default function CrowdPoolingTool({
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-3">
-          <div 
+          <div
             className="h-3 rounded-full bg-gradient-to-r from-[#4a7c59] to-[#7dd87d] transition-all duration-500"
             style={{ width: `${progressPercentage}%` }}
           />
@@ -1355,433 +2101,42 @@ export default function CrowdPoolingTool({
       )}
 
       {/* Section tabs */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setActiveSection('immediate')}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-            activeSection === 'immediate'
-              ? 'bg-[#4a7c59] text-white'
-              : 'bg-white text-[#1a472a] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/10'
-          }`}
-        >
-          <Package className="w-4 h-4 inline mr-2" />
-          Immediate
-          {immediateTotal > 0 && (
-          <span className="ml-2 text-xs opacity-80">
-            {formatCurrency(immediateTotal, currencySymbol)}
-          </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveSection('future')}
-          className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-            activeSection === 'future'
-              ? 'bg-[#4a7c59] text-white'
-              : 'bg-white text-[#1a472a] border border-[#7dd87d]/30 hover:bg-[#7dd87d]/10'
-          }`}
-        >
-          <Clock className="w-4 h-4 inline mr-2" />
-          Future Value
-          {futureTotal > 0 && (
-          <span className="ml-2 text-xs opacity-80">
-            {formatCurrency(futureTotal, currencySymbol)}
-          </span>
-          )}
-        </button>
-      </div>
-      
+      <SectionTabs
+        active={activeSection}
+        onSelect={setActiveSection}
+        immediateTotal={immediateTotal}
+        futureTotal={futureTotal}
+        currencySymbol={currencySymbol}
+      />
+
       {/* Immediate contributions section */}
       {activeSection === 'immediate' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-bold text-[#1a472a]">Immediate Contributions</h4>
-              <p className="text-xs text-[#1a472a]/80">Land, crypto, equipment, plants, and more</p>
-            </div>
-            <Button
-              onPointerDown={addOnPress(addImmediateContribution)}
-              onClick={addOnClick(addImmediateContribution)}
-              size="sm"
-              className="touch-press bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add
-            </Button>
-          </div>
-          
-          {immediateContributions.length === 0 ? (
-            <div className="bg-white/50 rounded-xl p-8 text-center border border-dashed border-[#7dd87d]/30">
-              <Package className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
-              <p className="text-[#1a472a]/80 mb-3">No immediate contributions yet</p>
-              <Button
-                onPointerDown={addOnPress(addImmediateContribution)}
-                onClick={addOnClick(addImmediateContribution)}
-                variant="outline"
-                className="touch-press border-[#4a7c59] text-[#4a7c59] hover:bg-[#7dd87d]/10"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Contribution
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {immediateContributions.map((contribution) => {
-                const category = immediateCategories.find(c => c.id === contribution.category);
-                const Icon = category?.icon || Package;
-                return (
-                  <div key={contribution.id} className="bg-white rounded-xl p-4 border border-[#7dd87d]/20">
-                    <div className="flex flex-col sm:flex-row items-start gap-3">
-                      <div className="hidden sm:flex w-10 h-10 rounded-lg bg-[#7dd87d]/20 items-center justify-center flex-shrink-0">
-                        <Icon className="w-5 h-5 text-[#4a7c59]" />
-                      </div>
-                      <div className="flex-1 w-full space-y-3">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <div className="min-w-0">
-                          <label id={`imm-cat-${contribution.id}`} className="text-xs mb-1 block">Category</label>
-                          <Select
-                            value={contribution.category}
-                            onValueChange={(value) => updateImmediateContribution(contribution.id, 'category', value)}
-                          >
-                            <SelectTrigger aria-labelledby={`imm-cat-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/60">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-60">
-                              {immediateCategories.map((cat) => (
-                                <SelectItem key={cat.id} value={cat.id}>
-                                  {cat.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          </div>
-                          <div className="min-w-0">
-                          <label htmlFor={`imm-val-${contribution.id}`} className="text-xs mb-1 block">Value</label>
-                          <div className="relative w-full">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">
-                              {currencySymbol}
-                            </span>
-                            <Input
-                              id={`imm-val-${contribution.id}`}
-                              type="number"
-                              inputMode="decimal"
-                              value={contribution.value || ''}
-                              onChange={(e) => updateImmediateContribution(contribution.id, 'value', parseFloat(e.target.value) || 0)}
-                              placeholder="Value"
-                              className="pl-7 bg-white border-[#7dd87d]/60 w-full text-base"
-                            />
-                          </div>
-                          </div>
-                        </div>
-                        <div>
-                        <label htmlFor={`imm-desc-${contribution.id}`} className="text-xs mb-1 block">Description</label>
-                        <Input
-                          id={`imm-desc-${contribution.id}`}
-                          value={contribution.description}
-                          onChange={(e) => updateImmediateContribution(contribution.id, 'description', e.target.value)}
-                          placeholder={contribution.category === 'crypto' ? 'USDC, ETH, or other tokens' : `Description (e.g., ${immediateCategories.find(c => c.id === contribution.category)?.description || 'item details'})`}
-                          className="bg-white border-[#7dd87d]/60 w-full"
-                        />
-                        </div>
-                        {contribution.category === 'crypto' && (
-                          <p className="text-xs text-[#1a472a]/75">
-                            {CRYPTO_PAYMENT_CONTEXT.fiatNote}
-                          </p>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeImmediateContribution(contribution.id)}
-                        className="text-red-500 hover:bg-red-50 flex-shrink-0 self-end sm:self-start"
-                        aria-label="Remove contribution"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <ImmediateSection
+          contributions={immediateContributions}
+          currencySymbol={currencySymbol}
+          onAdd={addImmediateContribution}
+          onUpdate={updateImmediateContribution}
+          onRemove={removeImmediateContribution}
+        />
       )}
-      
+
       {/* Future contributions section */}
       {activeSection === 'future' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-bold text-[#1a472a]">Future Value Commitments</h4>
-              <p className="text-xs text-[#1a472a]/80">Roles and work you commit to contributing</p>
-            </div>
-            <Button
-              onClick={addFutureContribution}
-              size="sm"
-              className="bg-[#4a7c59] hover:bg-[#1a472a] text-white rounded-lg"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Add Role
-            </Button>
-          </div>
-
-          {/* Role templates across the nine capitals */}
-          <div className="bg-white/70 rounded-xl border border-[#7dd87d]/30">
-            <button
-              type="button"
-              onClick={() => setShowTemplates(!showTemplates)}
-              className="w-full flex items-center justify-between p-3"
-            >
-              <span className="text-sm font-medium text-[#1a472a] flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#4a7c59]" />
-                Pick a role from the nine capitals
-              </span>
-              <ChevronDown className={`w-4 h-4 text-[#4a7c59] transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
-            </button>
-            {showTemplates && (
-              <div className="px-3 pb-3 space-y-3">
-                {CAPITAL_TYPES.map((capital) => (
-                  <div key={capital}>
-                    <p className="text-xs font-bold text-[#1a472a]">{CAPITAL_LABELS[capital].label} Capital</p>
-                    <p className="text-[11px] text-[#1a472a]/75 mb-1.5">{CAPITAL_LABELS[capital].blurb}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {ROLE_TEMPLATES_BY_CAPITAL[capital].map((role) => (
-                        <button
-                          key={role.title}
-                          type="button"
-                          title={role.description}
-                          onClick={() => addRoleFromTemplate(capital, role)}
-                          className="text-xs px-2.5 py-1.5 rounded-lg bg-[#f0f7f0] border border-[#7dd87d]/30 text-[#1a472a] hover:bg-[#7dd87d]/20 transition-colors"
-                        >
-                          {role.title}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Smart Suggestions Box */}
-          {(() => {
-            const remaining = targetAmount - grandTotal;
-            if (remaining > 0) {
-              // Generate realistic suggestions based on remaining amount
-              const suggestions = [];
-              
-              // Part-time suggestion (8 hrs/week, $25/hr)
-              const partTimeWeeks = Math.ceil(remaining / (8 * 25));
-              if (partTimeWeeks <= 104) { // Max 2 years
-                suggestions.push({
-                  label: 'Part-time (8 hrs/week)',
-                  weeks: Math.min(partTimeWeeks, 52),
-                  hoursPerWeek: 8,
-                  hourlyRate: partTimeWeeks > 52 ? Math.ceil(remaining / (52 * 8)) : 25,
-                  description: 'Casual commitment'
-                });
-              }
-              
-              // Half-time suggestion (20 hrs/week, $30/hr)
-              const halfTimeWeeks = Math.ceil(remaining / (20 * 30));
-              if (halfTimeWeeks <= 52) {
-                suggestions.push({
-                  label: 'Half-time (20 hrs/week)',
-                  weeks: halfTimeWeeks,
-                  hoursPerWeek: 20,
-                  hourlyRate: 30,
-                  description: 'Significant commitment'
-                });
-              }
-              
-              // Full-time suggestion (40 hrs/week, $35/hr)
-              const fullTimeWeeks = Math.ceil(remaining / (40 * 35));
-              if (fullTimeWeeks <= 52) {
-                suggestions.push({
-                  label: 'Full-time (40 hrs/week)',
-                  weeks: fullTimeWeeks,
-                  hoursPerWeek: 40,
-                  hourlyRate: 35,
-                  description: 'Full dedication'
-                });
-              }
-              
-              // Intensive short-term (40 hrs/week, $50/hr for skilled work)
-              const intensiveWeeks = Math.ceil(remaining / (40 * 50));
-              if (intensiveWeeks <= 12 && remaining >= 5000) {
-                suggestions.push({
-                  label: 'Intensive Sprint',
-                  weeks: intensiveWeeks,
-                  hoursPerWeek: 40,
-                  hourlyRate: 50,
-                  description: 'Skilled professional rate'
-                });
-              }
-              
-              return suggestions.length > 0 ? (
-                <div className="bg-amber-50 rounded-xl p-4 mb-4 border border-amber-200">
-                  <div className="flex items-start gap-2 mb-3">
-                    <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-800">
-                        Need {formatCurrency(remaining, currencySymbol)} more to reach your target
-                      </p>
-                      <p className="text-xs text-amber-700 mt-1">Here are some realistic options:</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {suggestions.slice(0, 4).map((suggestion, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setFutureContributions([
-                            ...futureContributions,
-                            {
-                              id: generateId(),
-                              roleName: '',
-                              weeks: suggestion.weeks,
-                              hoursPerWeek: suggestion.hoursPerWeek,
-                              hourlyRate: suggestion.hourlyRate,
-                              capital: 'experiential',
-                            }
-                          ]);
-                        }}
-                        className="text-left p-3 bg-white rounded-lg border border-amber-200 hover:border-amber-400 hover:bg-amber-50 transition-colors"
-                      >
-                        <p className="text-sm font-medium text-[#1a472a]">{suggestion.label}</p>
-                        <p className="text-xs text-[#1a472a]/80 mt-1">
-                          {suggestion.weeks} weeks × {suggestion.hoursPerWeek} hrs × {currencySymbol}{suggestion.hourlyRate}/hr
-                        </p>
-                        <p className="text-xs font-medium text-[#1a472a] mt-1">
-                          = {formatCurrency(suggestion.weeks * suggestion.hoursPerWeek * suggestion.hourlyRate, currencySymbol)}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null;
-            }
-            return null;
-          })()}
-          
-          {futureContributions.length === 0 ? (
-            <div className="bg-white/50 rounded-xl p-8 text-center border border-dashed border-[#7dd87d]/30">
-              <Clock className="w-10 h-10 mx-auto mb-3 text-[#1a472a]/75" />
-              <p className="text-[#1a472a]/80 mb-3">No future commitments yet</p>
-              <Button
-                onClick={addFutureContribution}
-                variant="outline"
-                className="border-[#4a7c59] text-[#4a7c59] hover:bg-[#7dd87d]/10"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Your First Role Commitment
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {futureContributions.map((contribution) => {
-                const totalValue = contribution.weeks * contribution.hoursPerWeek * contribution.hourlyRate;
-                return (
-                  <div key={contribution.id} className="bg-white rounded-xl p-4 border border-[#7dd87d]/20">
-                    <div className="flex flex-col sm:flex-row items-start gap-3">
-                      <div className="hidden sm:flex w-10 h-10 rounded-lg bg-[#7dd87d]/20 items-center justify-center flex-shrink-0">
-                        <Users className="w-5 h-5 text-[#4a7c59]" />
-                      </div>
-                      <div className="flex-1 w-full space-y-3">
-                        <div className="flex gap-2">
-                          <Input
-                            value={contribution.roleName}
-                            onChange={(e) => updateFutureContribution(contribution.id, 'roleName', e.target.value)}
-                            placeholder="Role name (e.g., Builder, Gardener, Cook)"
-                            className="bg-white border-[#7dd87d]/60 flex-1"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeFutureContribution(contribution.id)}
-                            className="text-red-500 hover:bg-red-50 flex-shrink-0 sm:hidden"
-                            aria-label="Remove contribution"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="min-w-0">
-                            <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">Weeks</label>
-                            <Input
-                              type="number"
-                              inputMode="numeric"
-                              value={contribution.weeks || ''}
-                              onChange={(e) => updateFutureContribution(contribution.id, 'weeks', parseInt(e.target.value) || 0)}
-                              placeholder="52"
-                              className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">Hrs/Wk</label>
-                            <Input
-                              type="number"
-                              inputMode="numeric"
-                              value={contribution.hoursPerWeek || ''}
-                              onChange={(e) => updateFutureContribution(contribution.id, 'hoursPerWeek', parseInt(e.target.value) || 0)}
-                              placeholder="8"
-                              className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <label className="text-xs text-[#1a472a]/80 mb-1 block truncate">{currencySymbol}/Hr</label>
-                            <Input
-                              type="number"
-                              inputMode="decimal"
-                              value={contribution.hourlyRate || ''}
-                              onChange={(e) => updateFutureContribution(contribution.id, 'hourlyRate', parseFloat(e.target.value) || 0)}
-                              placeholder="40"
-                              className="bg-white border-[#7dd87d]/60 w-full text-base px-2"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                          <label id={`fut-cap-${contribution.id}`} className="text-xs mb-1 block">Capital</label>
-                          <Select
-                            value={contribution.capital}
-                            onValueChange={(value) => updateFutureCapital(contribution.id, value as CapitalType)}
-                          >
-                            <SelectTrigger aria-labelledby={`fut-cap-${contribution.id}`} className="w-full min-h-11 h-auto whitespace-normal bg-white border-[#7dd87d]/60">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {CAPITAL_TYPES.map((capital) => (
-                                <SelectItem key={capital} value={capital}>
-                                  {CAPITAL_LABELS[capital].label} Capital
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          </div>
-                          <div className="text-right text-sm sm:pb-2">
-                            <span className="text-[#1a472a]/80">Total: </span>
-                            <span className="font-bold text-[#1a472a]">{formatCurrency(totalValue, currencySymbol)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeFutureContribution(contribution.id)}
-                        className="text-red-500 hover:bg-red-50 flex-shrink-0 hidden sm:flex"
-                        aria-label="Remove contribution"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <FutureSection
+          contributions={futureContributions}
+          currencySymbol={currencySymbol}
+          remaining={targetAmount - grandTotal}
+          showTemplates={showTemplates}
+          onToggleTemplates={toggleTemplates}
+          onAdd={addFutureContribution}
+          onAddTemplate={addRoleFromTemplate}
+          onAddSuggestion={addSuggestedRole}
+          onUpdate={updateFutureContribution}
+          onUpdateCapital={updateFutureCapital}
+          onRemove={removeFutureContribution}
+        />
       )}
-      
+
       {/* Pooled value across the nine capitals */}
       {grandTotal > 0 && (
         <div className="mt-6">
@@ -1791,35 +2146,13 @@ export default function CrowdPoolingTool({
 
       {!embedded && (
       <div className="mt-6 pt-4 border-t border-[#7dd87d]/20">
-        <Button
-          onClick={() => setShowResults(true)}
-          disabled={grandTotal === 0}
-          className="w-full rounded-xl bg-[#4a7c59] hover:bg-[#1a472a] text-white"
-        >
-          View Summary & Download PDF
-          <ChevronRight className="w-4 h-4 ml-2" />
-        </Button>
+        <SummaryButton disabled={grandTotal === 0} onClick={openResults} />
       </div>
       )}
 
       {!embedded && (
       <div className="mt-4 pt-4 border-t border-[#7dd87d]/20 text-center">
-        <SuggestUpgradesSheet 
-          onSelectRole={(role) => {
-            setFutureContributions(prev => [
-              ...prev,
-              {
-                id: generateId(),
-                roleName: role.name,
-                weeks: role.typicalWeeks,
-                hoursPerWeek: role.typicalHours,
-                hourlyRate: role.suggestedRate,
-                capital: 'experiential',
-              }
-            ]);
-            setActiveSection('future');
-          }}
-        />
+        <StillSuggestUpgradesSheet onSelectRole={addUpgradeRole} />
       </div>
       )}
     </div>
@@ -1829,8 +2162,8 @@ export default function CrowdPoolingTool({
 
   return (
     <div>
-      {aboveRecord?.(giftContext)}
-      <GiftRecord
+      {aboveContent}
+      <StillGiftRecord
         lines={giftContext.snap.lines}
         quietLine={giftContext.snap.quietLine}
         empty={giftContext.snap.empty}
@@ -1857,41 +2190,16 @@ export default function CrowdPoolingTool({
         </div>
       )}
       <div className="sheet-section">{entryForm}</div>
-      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-        <DialogContent className="bg-white md:max-w-md md:rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-[#1a472a]">Save Gift Map</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-[#1a472a] mb-1" htmlFor="gift-map-name">Name</label>
-              <Input
-                id="gift-map-name"
-                value={saveName}
-                onChange={(e) => setSaveName(e.target.value)}
-                placeholder="My gift map"
-                className="bg-white border-[#7dd87d]/60"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="saveGiftAsDefault"
-                checked={saveAsDefault}
-                onChange={(e) => setSaveAsDefault(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <label htmlFor="saveGiftAsDefault" className="text-sm text-[#1a472a]">Set as the default gift map</label>
-            </div>
-          </div>
-          <div className="flex gap-2 mt-2">
-            <Button type="button" onClick={() => setShowSaveDialog(false)} variant="outline" className="flex-1 rounded-xl">Cancel</Button>
-            <Button type="button" onClick={confirmSaveToProfile} disabled={createSavedContribution.isPending} className="flex-1 rounded-xl bg-[#4a7c59] text-white">
-              {createSavedContribution.isPending ? "Saving..." : "Save"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <SaveGiftMapDialog
+        open={showSaveDialog}
+        onOpenChange={setShowSaveDialog}
+        name={saveName}
+        onNameChange={setSaveName}
+        asDefault={saveAsDefault}
+        onAsDefaultChange={setSaveAsDefault}
+        saving={createSavedContribution.isPending}
+        onSave={saveGiftMap}
+      />
       {belowForm}
     </div>
   );

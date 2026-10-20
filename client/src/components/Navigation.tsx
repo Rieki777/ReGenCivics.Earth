@@ -65,6 +65,11 @@ const prefetch = (path: string) => {
 export default function Navigation() {
   const [location] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // The drawer mounts the first time someone opens it. vaul adds a scroll
+  // listener per mounted drawer that reads window.scrollY, which made the
+  // browser finish its layout work inside every scroll event, on every page,
+  // for a menu most visits never open (STEERING.md section 13).
+  const [drawerMounted, setDrawerMounted] = useState(false);
   const [mobile4PathsOpen, setMobile4PathsOpen] = useState(false);
   const [mobilePlayGameOpen, setMobilePlayGameOpen] = useState(false);
   const [mobileSeasonsOpen, setMobileSeasonsOpen] = useState(false);
@@ -159,8 +164,11 @@ export default function Navigation() {
               1280px header at 1440 and 1536. */}
           <div className="hidden lg:flex items-center gap-0.5 min-[1680px]:gap-1">
 
+            {/* The nav menus are not modal: a modal menu disables pointer events on
+                <body> and marks the rest of the page aria-hidden, so opening one
+                restyled every element on the page first (STEERING.md section 13). */}
             {/* 4 Paths Dropdown - NEW */}
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -213,7 +221,7 @@ export default function Navigation() {
             </DropdownMenu>
 
             {/* Play the Game Dropdown - ghost variant of the gold Participate CTA */}
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
@@ -337,7 +345,7 @@ export default function Navigation() {
 
             {/* Seasons + Schedule. Folded into Explore below 1440 so the bar fits. */}
             <div className="hidden min-[1440px]:block">
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
@@ -422,7 +430,7 @@ export default function Navigation() {
             </Link>
 
             {/* Explore + Connect Dropdown */}
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button 
                   variant="ghost" 
@@ -599,7 +607,7 @@ export default function Navigation() {
             {loading ? (
               <div className="w-8 h-8 rounded-full bg-[#7dd87d]/20 animate-pulse" />
             ) : isAuthenticated && user ? (
-              <DropdownMenu>
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
@@ -727,7 +735,7 @@ export default function Navigation() {
           {/* Mobile Menu Button */}
           <button
             className="lg:hidden shrink-0 text-white p-2 min-h-[44px] min-w-[44px] flex items-center justify-center"
-            onClick={() => setMobileMenuOpen(true)}
+            onClick={() => { setDrawerMounted(true); setMobileMenuOpen(true); }}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav-drawer"
@@ -738,6 +746,7 @@ export default function Navigation() {
       </div>
 
       {/* Mobile Drawer  -  slides in from right */}
+      {drawerMounted && (
       <Drawer.Root open={mobileMenuOpen} onOpenChange={setMobileMenuOpen} direction="right">
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/50 z-[60] lg:hidden" />
@@ -1356,6 +1365,7 @@ export default function Navigation() {
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
+      )}
 
       <AuthDialog
         open={authDialogOpen}

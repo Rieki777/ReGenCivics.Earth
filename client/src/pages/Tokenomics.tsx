@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
+import { useAnimationLoop } from "@/hooks/useAnimationLoop";
 import {
   ArrowRight,
   Coins,
@@ -237,21 +238,42 @@ function AnimatedTokenFlow() {
   );
 }
 
-// ─── Animated counter hook ───────────────────────────────────────────────────
-function useCountUp(target: number, duration = 2000, start = false) {
-  const [value, setValue] = useState(0);
+// ─── Animated counter ────────────────────────────────────────────────────────
+// Counts from 0 up to `target` once `start` turns true, writing each frame's
+// number straight to the DOM. As page state, every tick re-rendered the page.
+function CountUp({
+  target,
+  duration = 2000,
+  start = false,
+  className,
+  style,
+}: {
+  target: number;
+  duration?: number;
+  start?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const ref = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    if (!start) return;
+    const element = ref.current;
+    if (!start || !element) return;
+    let frame = 0;
     let startTime: number | null = null;
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      setValue(Math.floor(progress * target));
-      if (progress < 1) requestAnimationFrame(step);
+      element.textContent = `${Math.floor(progress * target)}`;
+      if (progress < 1) frame = requestAnimationFrame(step);
     };
-    requestAnimationFrame(step);
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
   }, [target, duration, start]);
-  return value;
+  return (
+    <p ref={ref} className={className} style={style}>
+      0
+    </p>
+  );
 }
 
 // ─── Intersection observer hook ──────────────────────────────────────────────
@@ -260,7 +282,12 @@ function useInView(threshold = 0.3) {
   const [inView, setInView] = useState(false);
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true); },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
       { threshold }
     );
     if (ref.current) observer.observe(ref.current);
@@ -269,23 +296,53 @@ function useInView(threshold = 0.3) {
   return { ref, inView };
 }
 
+// ─── Program facts ────────────────────────────────────────────────────────────
+// Program design facts, never traction counts.
+const PROGRAM_FACTS = [
+  { value: 13, duration: 2000, label: "Land projects per season cohort", color: "#7dd87d" },
+  { value: 9, duration: 1500, label: "Forms of capital we recognize", color: "#d4a574" },
+  { value: 4, duration: 1000, label: "Seasons in the ReGen Civics Year", color: "#4a9f9f" },
+];
+
+function ProgramFacts() {
+  const { ref, inView } = useInView(0.3);
+  return (
+    <div ref={ref} className="container">
+      <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
+        {PROGRAM_FACTS.map((stat, i) => (
+          <div key={i} className="text-center p-4 bg-[#1a472a]/40 rounded-2xl border border-white/10">
+            <CountUp
+              target={stat.value}
+              duration={stat.duration}
+              start={inView}
+              className="text-2xl md:text-3xl font-bold mb-1"
+              style={{ color: stat.color, fontFamily: "var(--font-display)" }}
+            />
+            <p className="text-white/70 text-xs">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Flowing particles animation ─────────────────────────────────────────────
+type Particle = { x: number; y: number; vx: number; vy: number; size: number; alpha: number; color: string };
+
 function FlowingParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animRef = useRef<number>(0);
+  const particlesRef = useRef<Particle[] | null>(null);
 
-  useEffect(() => {
+  // Draws only while the hero is on screen and nobody is typing.
+  useAnimationLoop(canvasRef, () => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-
-    const particles: { x: number; y: number; vx: number; vy: number; size: number; alpha: number; color: string }[] = [];
-    const colors = ["#7dd87d", "#d4a574", "#4a9f9f", "#ffd700"];
-
-    for (let i = 0; i < 40; i++) {
-      particles.push({
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+    if (!particlesRef.current) {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+      const colors = ["#7dd87d", "#d4a574", "#4a9f9f", "#ffd700"];
+      particlesRef.current = Array.from({ length: 40 }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         vx: (Math.random() - 0.5) * 0.8,
@@ -293,28 +350,22 @@ function FlowingParticles() {
         size: Math.random() * 3 + 1,
         alpha: Math.random() * 0.5 + 0.2,
         color: colors[Math.floor(Math.random() * colors.length)],
-      });
+      }));
     }
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p) => {
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color + Math.floor(p.alpha * 255).toString(16).padStart(2, "0");
-        ctx.fill();
-      });
-      animRef.current = requestAnimationFrame(animate);
-    };
-    animate();
-    return () => cancelAnimationFrame(animRef.current);
-  }, []);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particlesRef.current.forEach((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color + Math.floor(p.alpha * 255).toString(16).padStart(2, "0");
+      ctx.fill();
+    });
+  });
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 }
@@ -422,12 +473,6 @@ function FundDesignTokens() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function Tokenomics() {
-  const { ref: statsRef, inView: statsInView } = useInView(0.3);
-  // Program design facts, never traction counts.
-  const projectCount = useCountUp(13, 2000, statsInView);
-  const capitalCount = useCountUp(9, 1500, statsInView);
-  const seasonCount = useCountUp(4, 1000, statsInView);
-
   return (
     <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818]">
@@ -501,25 +546,7 @@ export default function Tokenomics() {
 
       {/* ── Program facts (design, not traction) ── */}
       <section data-reveal className="py-12 px-4 bg-[#0d2818]/50">
-        <div ref={statsRef} className="container">
-          <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-            {[
-              { value: `${projectCount}`, label: "Land projects per season cohort", color: "#7dd87d" },
-              { value: `${capitalCount}`, label: "Forms of capital we recognize", color: "#d4a574" },
-              { value: `${seasonCount}`, label: "Seasons in the ReGen Civics Year", color: "#4a9f9f" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-4 bg-[#1a472a]/40 rounded-2xl border border-white/10">
-                <p
-                  className="text-2xl md:text-3xl font-bold mb-1"
-                  style={{ color: stat.color, fontFamily: "var(--font-display)" }}
-                >
-                  {stat.value}
-                </p>
-                <p className="text-white/70 text-xs">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ProgramFacts />
       </section>
 
       {/* ── The Game's two tokens ── */}

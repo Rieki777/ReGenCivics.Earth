@@ -5,15 +5,12 @@
 import { useState } from "react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { PageWrapper } from "@/components/PageWrapper";
-import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Sparkles, ClipboardCheck, Wrench, Coins } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipField, ShipNeedsOffers } from "@/components/ship/ShipFields";
 
 const DUTIES = [
   { icon: Sparkles, title: "Clean and turn over", body: "Between voyages you clean the ship top to bottom and get her ready for the next crew: linens, galley, baths, tanks, and a full reset." },
@@ -22,7 +19,11 @@ const DUTIES = [
   { icon: Coins, title: "Flat pay", body: "Two hundred dollars flat per turnover. Clear and simple, paid for the work each time you do it." },
 ];
 
-export default function ShipKeeper() {
+/**
+ * The Ship Keeper application. It owns the answers, so a keystroke re-renders
+ * this form (and only the field typed in), not the page.
+ */
+function KeeperApplication() {
   const m = trpc.ship.applyKeeper.useMutation();
 
   const [name, setName] = useState("");
@@ -70,6 +71,44 @@ export default function ShipKeeper() {
     }
   }
 
+  return (
+    <form onSubmit={onSubmit} className="max-w-xl space-y-6">
+      <ShipField id="name" label="Your name" value={name} onValue={setName} placeholder="Full name" required />
+      <ShipField id="email" label="Email" type="email" value={email} onValue={setEmail} placeholder="you@example.com" required />
+      <ShipField id="location" label="Where are you based? (optional)" value={location} onValue={setLocation} placeholder="City, region" />
+      <ShipField
+        id="experience"
+        label="Relevant experience (optional)"
+        value={experience}
+        onValue={setExperience}
+        placeholder="Cleaning, hospitality, RV systems, hosting, anything that fits."
+        rows={4}
+      />
+      <ShipField
+        id="availability"
+        label="Your availability (optional)"
+        value={availability}
+        onValue={setAvailability}
+        placeholder="Which days work, how much notice you need, how far you can travel."
+        rows={4}
+      />
+
+      <ShipNeedsOffers
+        needsText={needsText}
+        offersText={offersText}
+        onNeedsChange={setNeedsText}
+        onOffersChange={setOffersText}
+        variant="dark"
+      />
+
+      <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+        {m.isPending ? "Sending..." : "Apply to keep the ship"}
+      </Button>
+    </form>
+  );
+}
+
+export default function ShipKeeper() {
   return (
     <PageWrapper>
       <SEO
@@ -123,68 +162,7 @@ export default function ShipKeeper() {
       <ShipSection>
         <ShipEyebrow>Apply</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">Tell us about you</h2>
-        <form onSubmit={onSubmit} className="max-w-xl space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Your name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" required />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Where are you based? (optional)</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="City, region"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="experience">Relevant experience (optional)</Label>
-            <Textarea
-              id="experience"
-              value={experience}
-              onChange={(e) => setExperience(e.target.value)}
-              placeholder="Cleaning, hospitality, RV systems, hosting, anything that fits."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="availability">Your availability (optional)</Label>
-            <Textarea
-              id="availability"
-              value={availability}
-              onChange={(e) => setAvailability(e.target.value)}
-              placeholder="Which days work, how much notice you need, how far you can travel."
-              rows={4}
-            />
-          </div>
-
-          <NeedsOffersFields
-            needsText={needsText}
-            offersText={offersText}
-            onNeedsChange={setNeedsText}
-            onOffersChange={setOffersText}
-            variant="dark"
-          />
-
-          <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
-            {m.isPending ? "Sending..." : "Apply to keep the ship"}
-          </Button>
-        </form>
+        <KeeperApplication />
       </ShipSection>
     </PageWrapper>
   );

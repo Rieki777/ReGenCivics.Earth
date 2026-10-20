@@ -13,7 +13,7 @@
  * customGameApplications router. No account required: this is a sales intake,
  * like the waitlist form beside it.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -501,6 +501,121 @@ function buildBlueprintDraft(f: FormData): BlueprintDraft {
   return draft;
 }
 
+// ── Fields ────────────────────────────────────────────────────────────────────
+
+/**
+ * One field of the declarative layout. Memoised, with a stable onChange, so a
+ * keystroke re-renders only the field being typed in rather than every
+ * section, label and Select on the page.
+ */
+const ApplyField = memo(function ApplyField({
+  field,
+  value,
+  onChange,
+}: {
+  field: FieldDef;
+  value: FormData[keyof FormData];
+  onChange: (key: keyof FormData, value: any) => void;
+}) {
+  if (field.kind === "checkbox") {
+    return (
+      <label className="flex items-start gap-3 cursor-pointer rounded-lg border border-[#1a472a]/15 bg-[#f8f5f0] p-4">
+        <input
+          type="checkbox"
+          checked={Boolean(value)}
+          onChange={(e) => onChange(field.key, e.target.checked)}
+          className="mt-0.5 w-4 h-4 accent-[#4a7c59]"
+        />
+        <span className="text-sm text-[#1a472a] leading-relaxed">
+          {field.label} {field.required && "*"}
+        </span>
+      </label>
+    );
+  }
+  if (field.kind === "select") {
+    return (
+      <div>
+        <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
+        <Select
+          value={String(value ?? "")}
+          onValueChange={(v) => onChange(field.key, v)}
+        >
+          <SelectTrigger id={field.key} className="mt-1">
+            <SelectValue placeholder="Select" />
+          </SelectTrigger>
+          <SelectContent>
+            {(field.options ?? []).map((o) => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {(field.hint || field.hintLink) && (
+          <p className="text-xs text-[#1a472a]/75 mt-1">
+            {field.hint}
+            {field.hintLink && (
+              <>
+                {" "}
+                <Link href={field.hintLink.href} className="font-semibold text-[#1a472a] underline underline-offset-2">
+                  {field.hintLink.text}
+                </Link>
+              </>
+            )}
+          </p>
+        )}
+      </div>
+    );
+  }
+  if (field.kind === "number") {
+    return (
+      <div>
+        <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
+        <Input
+          id={field.key}
+          type="number"
+          min="0"
+          value={typeof value === "number" ? value : ""}
+          onChange={(e) => onChange(field.key, e.target.value ? parseFloat(e.target.value) : null)}
+          placeholder={field.placeholder}
+          className="mt-1"
+        />
+        {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
+      </div>
+    );
+  }
+  if (field.kind === "longtext") {
+    return (
+      <div>
+        <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
+        <Textarea
+          id={field.key}
+          value={String(value ?? "")}
+          onChange={(e) => onChange(field.key, e.target.value)}
+          placeholder={field.placeholder}
+          rows={4}
+          className="mt-1"
+        />
+        {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
+      </div>
+    );
+  }
+  return (
+    <div>
+      <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
+      <Input
+        id={field.key}
+        value={String(value ?? "")}
+        onChange={(e) => onChange(field.key, e.target.value)}
+        placeholder={field.placeholder}
+        className="mt-1"
+      />
+      {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
+    </div>
+  );
+});
+
+/** Same memo for the shared needs and offers block: its props only change when its own text does. */
+const MemoNeedsOffersFields = memo(NeedsOffersFields);
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 /**
@@ -552,6 +667,16 @@ function prefillFromQuery(): Partial<FormData> {
 }
 
 export default function CustomGamesApply() {
+  // The form state lives one level down, so a keystroke never re-renders the
+  // page chrome (breadcrumbs, reading bar) around it.
+  return (
+    <PageWrapper>
+      <CustomGamesApplyContent />
+    </PageWrapper>
+  );
+}
+
+function CustomGamesApplyContent() {
   // Deck answers win over a stale local draft: someone arriving on a prefilled
   // link means the link to be what they see.
   const [prefill] = useState(prefillFromQuery);
@@ -579,9 +704,12 @@ export default function CustomGamesApply() {
 
   const submitMutation = trpc.customGameApplications.submit.useMutation();
 
-  const updateField = (field: keyof FormData, value: any) => {
+  // Stable, so the memoised fields below skip every keystroke but their own.
+  const updateField = useCallback((field: keyof FormData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
+  const updateNeedsText = useCallback((v: string) => updateField("needsText", v), [updateField]);
+  const updateOffersText = useCallback((v: string) => updateField("offersText", v), [updateField]);
 
   // Autosave to localStorage (debounced 800ms), same pattern as /apply.
   const lsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -662,7 +790,7 @@ export default function CustomGamesApply() {
         if ((SYLVA_FIELD_KEYS as string[]).includes(key)) updateField(key as keyof FormData, v);
       }
     }
-  }, []);
+  }, [updateField]);
 
   const goToReview = useCallback((viaSylva: boolean) => {
     setFromSylva(viaSylva);
@@ -708,7 +836,7 @@ export default function CustomGamesApply() {
   // ── Success state ───────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <PageWrapper>
+      <>
         <SEO
           title="Application Received: Custom Games"
           description="Your custom game application is in. We review, set an intro call, and send your Blueprint doc."
@@ -747,14 +875,14 @@ export default function CustomGamesApply() {
             </Card>
           </div>
         </div>
-      </PageWrapper>
+      </>
     );
   }
 
   const isLoading = submitMutation.isPending;
 
   return (
-    <PageWrapper>
+    <>
       <SEO
         title="Design Your Game: Custom Games Application"
         description="Talk your land project's coordination game into being with Sylva, ReGen's Game Guide. About 20 minutes, voice or chat."
@@ -908,103 +1036,9 @@ export default function CustomGamesApply() {
                       <p className="text-sm text-[#1a472a]/75 mb-4">{section.intro}</p>
                     )}
                     <div className="space-y-5 mt-4">
-                      {section.fields.map((field) => {
-                        const value = formData[field.key];
-                        if (field.kind === "checkbox") {
-                          return (
-                            <label key={field.key} className="flex items-start gap-3 cursor-pointer rounded-lg border border-[#1a472a]/15 bg-[#f8f5f0] p-4">
-                              <input
-                                type="checkbox"
-                                checked={Boolean(value)}
-                                onChange={(e) => updateField(field.key, e.target.checked)}
-                                className="mt-0.5 w-4 h-4 accent-[#4a7c59]"
-                              />
-                              <span className="text-sm text-[#1a472a] leading-relaxed">
-                                {field.label} {field.required && "*"}
-                              </span>
-                            </label>
-                          );
-                        }
-                        if (field.kind === "select") {
-                          return (
-                            <div key={field.key}>
-                              <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
-                              <Select
-                                value={String(value ?? "")}
-                                onValueChange={(v) => updateField(field.key, v)}
-                              >
-                                <SelectTrigger id={field.key} className="mt-1">
-                                  <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(field.options ?? []).map((o) => (
-                                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              {(field.hint || field.hintLink) && (
-                                <p className="text-xs text-[#1a472a]/75 mt-1">
-                                  {field.hint}
-                                  {field.hintLink && (
-                                    <>
-                                      {" "}
-                                      <Link href={field.hintLink.href} className="font-semibold text-[#1a472a] underline underline-offset-2">
-                                        {field.hintLink.text}
-                                      </Link>
-                                    </>
-                                  )}
-                                </p>
-                              )}
-                            </div>
-                          );
-                        }
-                        if (field.kind === "number") {
-                          return (
-                            <div key={field.key}>
-                              <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
-                              <Input
-                                id={field.key}
-                                type="number"
-                                min="0"
-                                value={typeof value === "number" ? value : ""}
-                                onChange={(e) => updateField(field.key, e.target.value ? parseFloat(e.target.value) : null)}
-                                placeholder={field.placeholder}
-                                className="mt-1"
-                              />
-                              {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
-                            </div>
-                          );
-                        }
-                        if (field.kind === "longtext") {
-                          return (
-                            <div key={field.key}>
-                              <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
-                              <Textarea
-                                id={field.key}
-                                value={String(value ?? "")}
-                                onChange={(e) => updateField(field.key, e.target.value)}
-                                placeholder={field.placeholder}
-                                rows={4}
-                                className="mt-1"
-                              />
-                              {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
-                            </div>
-                          );
-                        }
-                        return (
-                          <div key={field.key}>
-                            <Label htmlFor={field.key}>{field.label}{field.required ? " *" : ""}</Label>
-                            <Input
-                              id={field.key}
-                              value={String(value ?? "")}
-                              onChange={(e) => updateField(field.key, e.target.value)}
-                              placeholder={field.placeholder}
-                              className="mt-1"
-                            />
-                            {field.hint && <p className="text-xs text-[#1a472a]/75 mt-1">{field.hint}</p>}
-                          </div>
-                        );
-                      })}
+                      {section.fields.map((field) => (
+                        <ApplyField key={field.key} field={field} value={formData[field.key]} onChange={updateField} />
+                      ))}
                     </div>
                   </section>
                 ))}
@@ -1013,11 +1047,11 @@ export default function CustomGamesApply() {
               <div className="mt-10">
                 {/* Village-scoped wording: on this form the person is answering
                     for a whole land project, not for themselves. */}
-                <NeedsOffersFields
+                <MemoNeedsOffersFields
                   needsText={formData.needsText}
                   offersText={formData.offersText}
-                  onNeedsChange={(v) => updateField("needsText", v)}
-                  onOffersChange={(v) => updateField("offersText", v)}
+                  onNeedsChange={updateNeedsText}
+                  onOffersChange={updateOffersText}
                   variant="light"
                   needsLabel="What does your village need? (optional)"
                   offersLabel="What can your village offer? (optional)"
@@ -1057,6 +1091,6 @@ export default function CustomGamesApply() {
           )}
         </div>
       </div>
-    </PageWrapper>
+    </>
   );
 }

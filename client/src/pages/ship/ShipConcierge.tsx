@@ -20,15 +20,17 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage, useShipFlags } from "./shipShared";
 import { FirstMatePlanner, FIRST_MATE_INTRO } from "./ShipFirstMate";
+import { LiveText, useTextStore } from "@/components/ship/ShipFields";
 
 const SPECIES = ["Chestnut", "Oak / acorn", "Apple", "Pear", "Plum", "Walnut", "Hazelnut", "Elderberry", "Other saved fruit seed"];
 
 function SeedLogMode() {
   const log = trpc.ship.seeds.log.useMutation();
   const [species, setSpecies] = useState(SPECIES[0]);
-  const [notes, setNotes] = useState("");
+  // Typed text kept out of state, so a keystroke re-renders only its field.
+  const notes = useTextStore();
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [photoUrl, setPhotoUrl] = useState("");
+  const photoUrl = useTextStore();
 
   function getLocation() {
     if (!navigator.geolocation) return toast.error("Location is not available on this device.");
@@ -45,11 +47,11 @@ function SeedLogMode() {
         species,
         lat: coords?.lat,
         lng: coords?.lng,
-        photoUrl: photoUrl || undefined,
-        notes: notes || undefined,
+        photoUrl: photoUrl.get() || undefined,
+        notes: notes.get() || undefined,
       });
       toast.success("Planting logged. It joins the map once verified.");
-      setNotes(""); setPhotoUrl("");
+      notes.set(""); photoUrl.set("");
     } catch (err: any) {
       toast.error(err?.message ?? "Please sign in to log a planting.");
     }
@@ -76,11 +78,15 @@ function SeedLogMode() {
         </div>
         <div>
           <Label htmlFor="photo">Photo URL (optional)</Label>
-          <Input id="photo" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://…" />
+          <LiveText store={photoUrl}>
+            {(text) => <Input id="photo" value={text} onChange={(e) => photoUrl.set(e.target.value)} placeholder="https://…" />}
+          </LiveText>
         </div>
         <div>
           <Label htmlFor="pnotes">Notes (optional)</Label>
-          <Textarea id="pnotes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={1000} />
+          <LiveText store={notes}>
+            {(text) => <Textarea id="pnotes" value={text} onChange={(e) => notes.set(e.target.value)} rows={2} maxLength={1000} />}
+          </LiveText>
         </div>
         <Button type="submit" disabled={log.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">{log.isPending ? "Logging…" : "Log this planting"}</Button>
       </form>

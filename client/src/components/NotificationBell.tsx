@@ -83,9 +83,29 @@ export function NotificationBell() {
     refetch();
     utils.notifications.unreadCount.invalidate();
   };
-  const markReadMutation = trpc.notifications.markRead.useMutation({ onSuccess: invalidate });
-  const markThreadReadMutation = trpc.notifications.markThreadRead.useMutation({ onSuccess: invalidate });
-  const markAllReadMutation = trpc.notifications.markAllRead.useMutation({ onSuccess: invalidate });
+  // The badge and the list change on the tap; the server's answer settles
+  // them (onSettled), so a miscount here lasts one round trip at most.
+  const markLocally = (isMatch: (item: BellItem) => boolean, unreadDrop: (count: number) => number) => {
+    utils.notifications.unreadCount.setData(undefined, (n) => (n == null ? n : Math.max(0, unreadDrop(n))));
+    utils.notifications.list.setData({ limit: 12 }, (old) =>
+      old ? { ...old, items: old.items.map((it) => (isMatch(it as BellItem) ? { ...it, isRead: 1 } : it)) } : old,
+    );
+  };
+  const markReadMutation = trpc.notifications.markRead.useMutation({
+    onMutate: ({ id }) => markLocally((it) => it.id === id, (n) => n - 1),
+    onSettled: invalidate,
+  });
+  const markThreadReadMutation = trpc.notifications.markThreadRead.useMutation({
+    onMutate: ({ postId }) => {
+      const unread = items.filter((it) => it.postId === postId && !it.isRead).reduce((a, it) => a + Math.max(1, it.groupCount), 0);
+      markLocally((it) => it.postId === postId, (n) => n - unread);
+    },
+    onSettled: invalidate,
+  });
+  const markAllReadMutation = trpc.notifications.markAllRead.useMutation({
+    onMutate: () => markLocally(() => true, () => 0),
+    onSettled: invalidate,
+  });
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

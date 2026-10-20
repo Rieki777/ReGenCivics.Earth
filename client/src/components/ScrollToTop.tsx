@@ -2,7 +2,7 @@
  * ScrollToTop - Scrolls to top of page on route change
  * Also provides a floating "back to top" button on long pages
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { ArrowUp } from "lucide-react";
 
@@ -37,13 +37,19 @@ export function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
 
-  // Show/hide floating button based on scroll position
+  // Show the button once the page has scrolled past 500px. A marker at that
+  // depth tells us through an IntersectionObserver, so scrolling runs no
+  // handler at all; reading window.scrollY in a scroll handler made the
+  // browser finish its layout work inside every scroll event.
+  const markerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const handleScroll = () => {
-      setShowButton(window.scrollY > 500);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    const marker = markerRef.current;
+    if (!marker || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => {
+      setShowButton(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+    });
+    io.observe(marker);
+    return () => io.disconnect();
   }, []);
 
   const scrollToTop = () => {
@@ -51,6 +57,8 @@ export function ScrollToTop() {
   };
 
   return (
+    <>
+    <div ref={markerRef} aria-hidden="true" className="pointer-events-none absolute left-0 top-[500px] h-px w-px" />
     <button
       onClick={scrollToTop}
       style={{ left: "calc(env(safe-area-inset-left, 0px) + 1rem)" }}
@@ -64,5 +72,6 @@ export function ScrollToTop() {
     >
       <ArrowUp className="w-5 h-5" />
     </button>
+    </>
   );
 }

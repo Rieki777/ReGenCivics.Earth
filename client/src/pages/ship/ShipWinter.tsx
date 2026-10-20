@@ -6,18 +6,18 @@
 import { useState } from "react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { PageWrapper } from "@/components/PageWrapper";
-import { NeedsOffersFields } from "@/components/NeedsOffersFields";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Snowflake, Home, HandCoins, AlertTriangle } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
+import { ShipField, ShipCheckField, ShipNeedsOffers } from "@/components/ship/ShipFields";
 
-export default function ShipWinter() {
+/**
+ * The winter host application. It owns the answers, so a keystroke re-renders
+ * this form (and only the field typed in), not the page.
+ */
+function WinterHostForm() {
   const m = trpc.ship.applyWinterHost.useMutation();
 
   const [projectName, setProjectName] = useState("");
@@ -78,6 +78,47 @@ export default function ShipWinter() {
     }
   }
 
+  return (
+    <form onSubmit={onSubmit} className="max-w-xl space-y-6">
+      <ShipField id="projectName" label="Land project name" value={projectName} onValue={setProjectName} placeholder="The name of your project" required />
+      <ShipField id="contactName" label="Contact name" value={contactName} onValue={setContactName} placeholder="Your name" required />
+      <ShipField id="email" label="Email" type="email" value={email} onValue={setEmail} placeholder="you@example.com" required />
+      <ShipField id="location" label="Where is the site? (optional)" value={location} onValue={setLocation} placeholder="City, region" />
+      <ShipCheckField id="powerHookup" label="We can provide a power hookup" checked={powerHookup} onChecked={setPowerHookup} />
+      <ShipField
+        id="freezeProtectionPlan"
+        label="Your freeze-protection plan (optional)"
+        value={freezeProtectionPlan}
+        onValue={setFreezeProtectionPlan}
+        placeholder="How you keep the wet bay, plumbing, and tanks above freezing, and what happens if the power fails."
+        rows={4}
+      />
+      <ShipField
+        id="siteDescription"
+        label="Describe the site (optional)"
+        value={siteDescription}
+        onValue={setSiteDescription}
+        placeholder="The parking spot, shelter, access, and who might live aboard."
+        rows={4}
+      />
+      <ShipField id="proposedShare" label="Proposed income share (optional)" value={proposedShare} onValue={setProposedShare} placeholder="e.g. 25%" />
+
+      <ShipNeedsOffers
+        needsText={needsText}
+        offersText={offersText}
+        onNeedsChange={setNeedsText}
+        onOffersChange={setOffersText}
+        variant="dark"
+      />
+
+      <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+        {m.isPending ? "Sending..." : "Apply to host"}
+      </Button>
+    </form>
+  );
+}
+
+export default function ShipWinter() {
   return (
     <PageWrapper>
       <SEO
@@ -164,106 +205,7 @@ export default function ShipWinter() {
       <ShipSection>
         <ShipEyebrow>Host the ship</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-6">Apply to be a winter host</h2>
-        <form onSubmit={onSubmit} className="max-w-xl space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="projectName">Land project name</Label>
-            <Input
-              id="projectName"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              placeholder="The name of your project"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="contactName">Contact name</Label>
-            <Input
-              id="contactName"
-              value={contactName}
-              onChange={(e) => setContactName(e.target.value)}
-              placeholder="Your name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Where is the site? (optional)</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="City, region"
-            />
-          </div>
-
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="powerHookup"
-              checked={powerHookup}
-              onCheckedChange={(v) => setPowerHookup(Boolean(v))}
-            />
-            <Label htmlFor="powerHookup" className="font-normal leading-snug">
-              We can provide a power hookup
-            </Label>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="freezeProtectionPlan">Your freeze-protection plan (optional)</Label>
-            <Textarea
-              id="freezeProtectionPlan"
-              value={freezeProtectionPlan}
-              onChange={(e) => setFreezeProtectionPlan(e.target.value)}
-              placeholder="How you keep the wet bay, plumbing, and tanks above freezing, and what happens if the power fails."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="siteDescription">Describe the site (optional)</Label>
-            <Textarea
-              id="siteDescription"
-              value={siteDescription}
-              onChange={(e) => setSiteDescription(e.target.value)}
-              placeholder="The parking spot, shelter, access, and who might live aboard."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="proposedShare">Proposed income share (optional)</Label>
-            <Input
-              id="proposedShare"
-              value={proposedShare}
-              onChange={(e) => setProposedShare(e.target.value)}
-              placeholder="e.g. 25%"
-            />
-          </div>
-
-          <NeedsOffersFields
-            needsText={needsText}
-            offersText={offersText}
-            onNeedsChange={setNeedsText}
-            onOffersChange={setOffersText}
-            variant="dark"
-          />
-
-          <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
-            {m.isPending ? "Sending..." : "Apply to host"}
-          </Button>
-        </form>
+        <WinterHostForm />
       </ShipSection>
     </PageWrapper>
   );

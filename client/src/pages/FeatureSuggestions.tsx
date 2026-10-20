@@ -37,8 +37,28 @@ export default function FeatureSuggestions() {
   const createMutation = trpc.features.create.useMutation({
     onSuccess: () => { setTitle(""); setDescription(""); setCategory(""); setShowForm(false); suggestionsQuery.refetch(); },
   });
+  const utils = trpc.useUtils();
+  // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.features.toggleVote.useMutation({
-    onSuccess: () => { suggestionsQuery.refetch(); myVotesQuery.refetch(); },
+    onMutate: async ({ suggestionId }) => {
+      await Promise.all([utils.features.list.cancel(), utils.features.myVotes.cancel()]);
+      const prevList = utils.features.list.getData({ sortBy });
+      const prevVotes = utils.features.myVotes.getData();
+      const voted = prevVotes?.includes(suggestionId) ?? false;
+      utils.features.myVotes.setData(undefined, (old) => (voted ? (old ?? []).filter((id) => id !== suggestionId) : [...(old ?? []), suggestionId]));
+      utils.features.list.setData({ sortBy }, (old) => old?.map((s) => (s.id === suggestionId ? { ...s, voteCount: Math.max(0, s.voteCount + (voted ? -1 : 1)) } : s)));
+      return { prevList, prevVotes };
+    },
+    // Rolled back here, not in onError, so main.tsx's onError (the
+    // too-many-requests toast) still runs.
+    onSettled: (_data, error, _vars, ctx) => {
+      if (error && ctx) {
+        utils.features.list.setData({ sortBy }, ctx.prevList);
+        utils.features.myVotes.setData(undefined, ctx.prevVotes);
+      }
+      suggestionsQuery.refetch();
+      myVotesQuery.refetch();
+    },
   });
 
   const myVotes = useMemo(() => new Set(myVotesQuery.data || []), [myVotesQuery.data]);

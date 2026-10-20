@@ -21,7 +21,20 @@ export function AdminAutomationsPanel() {
   const invalidate = () => utils.adminAutomations.list.invalidate();
 
   const create = trpc.adminAutomations.create.useMutation({ onSuccess: invalidate });
-  const toggle = trpc.adminAutomations.toggle.useMutation({ onSuccess: invalidate });
+  // The switch flips at once; a failure puts it back (STEERING.md section 13).
+  // The rollback lives in onSettled so main.tsx's onError still runs.
+  const toggle = trpc.adminAutomations.toggle.useMutation({
+    onMutate: async ({ id, enabled }) => {
+      await utils.adminAutomations.list.cancel();
+      const prev = utils.adminAutomations.list.getData();
+      utils.adminAutomations.list.setData(undefined, (old) => old?.map((a) => (a.id === id ? { ...a, enabled } : a)));
+      return { prev };
+    },
+    onSettled: (_data, error, _vars, ctx) => {
+      if (error && ctx?.prev) utils.adminAutomations.list.setData(undefined, ctx.prev);
+      void invalidate();
+    },
+  });
   const remove = trpc.adminAutomations.remove.useMutation({ onSuccess: invalidate });
   const runNow = trpc.adminAutomations.runNow.useMutation({ onSuccess: invalidate });
 

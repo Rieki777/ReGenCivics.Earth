@@ -18,7 +18,9 @@ import { BioregionSelect } from "@/components/BioregionSelect";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useSyncExternalStore, memo } from "react";
+import type { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "../../../server/routers";
 import { ForumMarkdown } from "@/components/ForumMarkdown";
 import { MarkdownToolbar, useMarkdownShortcuts } from "@/components/MarkdownToolbar";
 import { RichEditor } from "@/components/RichEditor";
@@ -60,6 +62,131 @@ What we would do differently:
 
 Resources and links:`;
 
+/**
+ * The thread body lives in this small store. The Content card reads the text
+ * and the page reads only whether it is long enough, so a keystroke re-renders
+ * the card and leaves the topic list and labels alone.
+ */
+function createTextStore() {
+  let value = "";
+  const listeners = new Set<() => void>();
+  return {
+    get: () => value,
+    set: (next: string) => {
+      if (next === value) return;
+      value = next;
+      listeners.forEach((listener) => listener());
+    },
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => { listeners.delete(listener); };
+    },
+  };
+}
+
+type TextStore = ReturnType<typeof createTextStore>;
+type ForumCategories = inferRouterOutputs<AppRouter>["forum"]["categories"];
+
+// Memoized so typing a title or ticking a tag does not re-render every topic
+// in the list.
+const TopicField = memo(function TopicField({
+  categoryId, onCategoryChange, categories, catsLoading,
+}: {
+  categoryId: string;
+  onCategoryChange: (value: string) => void;
+  categories: ForumCategories | undefined;
+  catsLoading: boolean;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+      <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
+        Topic
+      </Label>
+      <Select value={categoryId} onValueChange={onCategoryChange}>
+        <SelectTrigger className="border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]">
+          <SelectValue placeholder="Choose a topic for your thread" />
+        </SelectTrigger>
+        <SelectContent className="bg-white">
+          {catsLoading ? (
+            <SelectItem value="loading" disabled className="text-[#1a472a]/75">Loading topics...</SelectItem>
+          ) : categories?.map(cat => (
+            <SelectItem key={cat.id} value={String(cat.id)} className="text-[#1a472a] focus:bg-[#7dd87d]/15 focus:text-[#1a472a]">
+              <span className="flex items-center gap-2">
+                <span
+                  className="w-2 h-2 rounded-full inline-block"
+                  style={{ backgroundColor: cat.color || '#4a7c59' }}
+                />
+                <span className="text-[#1a472a] font-medium">{cat.name}</span>
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+});
+
+const ContentField = memo(function ContentField({
+  contentStore, placeholder,
+}: {
+  contentStore: TextStore;
+  placeholder: string;
+}) {
+  const content = useSyncExternalStore(contentStore.subscribe, contentStore.get);
+  const [showPreview, setShowPreview] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const handleMarkdownShortcuts = useMarkdownShortcuts(contentRef, content, contentStore.set);
+  const { preview: linkPreview, isLoading: linkPreviewLoading, url: linkPreviewUrl } = useLinkPreview(content);
+
+  return (
+    <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+      <div className="flex items-center justify-between mb-2">
+        <Label className="text-[#1a472a] font-bold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
+          Content
+        </Label>
+        <button
+          type="button"
+          onClick={() => setShowPreview(!showPreview)}
+          className="text-[#4a7c59] text-xs flex items-center gap-1 hover:text-[#7dd87d] transition-colors"
+        >
+          {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+          {showPreview ? 'Edit' : 'Preview'}
+        </button>
+      </div>
+
+      {showPreview ? (
+        <div className="min-h-[200px] p-3 bg-[#f8f5f0] rounded-lg text-[#1a472a] text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
+          {content ? (
+            <ForumMarkdown content={content} />
+          ) : (
+            <p className="text-[#1a472a]/85 italic">Nothing to preview yet...</p>
+          )}
+        </div>
+      ) : (
+        <RichEditor
+          value={content}
+          onChange={contentStore.set}
+          placeholder={placeholder}
+          className="min-h-[200px] text-[#1a472a]"
+        />
+      )}
+      <div className="flex justify-end mt-1">
+        <p className="text-[10px] text-[#1a472a]/85">{content.length}/10,000</p>
+      </div>
+      {linkPreviewUrl && (
+        <LinkPreviewCard
+          url={linkPreviewUrl}
+          title={linkPreview?.title}
+          description={linkPreview?.description}
+          image={linkPreview?.image}
+          siteName={linkPreview?.siteName}
+          loading={linkPreviewLoading}
+        />
+      )}
+    </div>
+  );
+});
+
 export default function CommunityNewPost() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
@@ -68,9 +195,13 @@ export default function CommunityNewPost() {
   const preselectedCategory = searchParams.get('category');
 
   const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [contentStore] = useState(createTextStore);
+  // Re-renders the page only when the body crosses the 10-character minimum.
+  const contentLongEnough = useSyncExternalStore(
+    contentStore.subscribe,
+    () => contentStore.get().trim().length >= 10,
+  );
   const [categoryId, setCategoryId] = useState<string>(preselectedCategory || "");
-  const [showPreview, setShowPreview] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   const [selectedTags, setSelectedTags] = useState<PostTag[]>([]);
   const [postType, setPostType] = useState<PostType>("discussion");
@@ -78,11 +209,8 @@ export default function CommunityNewPost() {
   const [threadStage, setThreadStage] = useState<ThreadStage>("idea");
   const [chainId, setChainId] = useState<string>("");
   const [bioregionId, setBioregionId] = useState<number | null>(null);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-  const handleMarkdownShortcuts = useMarkdownShortcuts(contentRef, content, setContent);
 
   const { data: categories, isLoading: catsLoading } = trpc.forum.categories.useQuery();
-  const { preview: linkPreview, isLoading: linkPreviewLoading, url: linkPreviewUrl } = useLinkPreview(content);
 
   const createPostMutation = trpc.forum.createPost.useMutation({
     onSuccess: (data) => {
@@ -96,16 +224,17 @@ export default function CommunityNewPost() {
 
   function handlePostTypeChange(newType: PostType) {
     setPostType(newType);
+    const content = contentStore.get();
     if (newType === "seeking_team" && content === "") {
-      setContent(SEEKING_TEAM_TEMPLATE);
+      contentStore.set(SEEKING_TEAM_TEMPLATE);
     } else if (newType === "case_study" && content === "") {
-      setContent(CASE_STUDY_TEMPLATE);
+      contentStore.set(CASE_STUDY_TEMPLATE);
     } else if (newType === "seeking_team" && (content === CASE_STUDY_TEMPLATE)) {
-      setContent(SEEKING_TEAM_TEMPLATE);
+      contentStore.set(SEEKING_TEAM_TEMPLATE);
     } else if (newType === "case_study" && (content === SEEKING_TEAM_TEMPLATE)) {
-      setContent(CASE_STUDY_TEMPLATE);
+      contentStore.set(CASE_STUDY_TEMPLATE);
     } else if (newType === "discussion" && (content === SEEKING_TEAM_TEMPLATE || content === CASE_STUDY_TEMPLATE)) {
-      setContent("");
+      contentStore.set("");
     }
   }
 
@@ -124,6 +253,7 @@ export default function CommunityNewPost() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const content = contentStore.get();
     if (!title.trim() || !content.trim() || !categoryId) {
       toast.error("Please fill in all fields");
       return;
@@ -142,7 +272,7 @@ export default function CommunityNewPost() {
     // Attachments: uploadedFiles will be displayed in the post
   };
 
-  const isValid = title.trim().length >= 3 && content.trim().length >= 10 && categoryId;
+  const isValid = title.trim().length >= 3 && contentLongEnough && categoryId;
 
   // Per-topic placeholder + helper line. Matches against the selected
   // category name (case-insensitive substring) so this works for the
@@ -197,11 +327,6 @@ export default function CommunityNewPost() {
       contentPlaceholder: "Write your post here...",
     };
   })();
-  
-  // Format attachments display in content
-  const contentWithAttachments = uploadedFiles.length > 0 
-    ? content + '\n\n**Attachments:**\n' + uploadedFiles.map(f => `- [${f.name}](${f.url})`).join('\n')
-    : content;
 
   if (authLoading) {
     return (
@@ -248,31 +373,12 @@ export default function CommunityNewPost() {
       <section className="container px-4 max-w-3xl mx-auto py-6">
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category Selection */}
-          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
-            <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
-              Topic
-            </Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger className="border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]">
-                <SelectValue placeholder="Choose a topic for your thread" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {catsLoading ? (
-                  <SelectItem value="loading" disabled className="text-[#1a472a]/75">Loading topics...</SelectItem>
-                ) : categories?.map(cat => (
-                  <SelectItem key={cat.id} value={String(cat.id)} className="text-[#1a472a] focus:bg-[#7dd87d]/15 focus:text-[#1a472a]">
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="w-2 h-2 rounded-full inline-block"
-                        style={{ backgroundColor: cat.color || '#4a7c59' }}
-                      />
-                      <span className="text-[#1a472a] font-medium">{cat.name}</span>
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <TopicField
+            categoryId={categoryId}
+            onCategoryChange={setCategoryId}
+            categories={categories}
+            catsLoading={catsLoading}
+          />
 
           {/* Post Type */}
           <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
@@ -402,51 +508,7 @@ export default function CommunityNewPost() {
           </div>
 
           {/* Content */}
-          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
-            <div className="flex items-center justify-between mb-2">
-              <Label className="text-[#1a472a] font-bold text-sm" style={{ fontFamily: 'var(--font-display)' }}>
-                Content
-              </Label>
-              <button
-                type="button"
-                onClick={() => setShowPreview(!showPreview)}
-                className="text-[#4a7c59] text-xs flex items-center gap-1 hover:text-[#7dd87d] transition-colors"
-              >
-                {showPreview ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                {showPreview ? 'Edit' : 'Preview'}
-              </button>
-            </div>
-            
-            {showPreview ? (
-              <div className="min-h-[200px] p-3 bg-[#f8f5f0] rounded-lg text-[#1a472a] text-sm leading-relaxed" style={{ fontFamily: 'var(--font-body)' }}>
-                {content ? (
-                  <ForumMarkdown content={content} />
-                ) : (
-                  <p className="text-[#1a472a]/85 italic">Nothing to preview yet...</p>
-                )}
-              </div>
-            ) : (
-              <RichEditor
-                value={content}
-                onChange={setContent}
-                placeholder={topicGuidance.contentPlaceholder}
-                className="min-h-[200px] text-[#1a472a]"
-              />
-            )}
-            <div className="flex justify-end mt-1">
-              <p className="text-[10px] text-[#1a472a]/85">{content.length}/10,000</p>
-            </div>
-            {linkPreviewUrl && (
-              <LinkPreviewCard
-                url={linkPreviewUrl}
-                title={linkPreview?.title}
-                description={linkPreview?.description}
-                image={linkPreview?.image}
-                siteName={linkPreview?.siteName}
-                loading={linkPreviewLoading}
-              />
-            )}
-          </div>
+          <ContentField contentStore={contentStore} placeholder={topicGuidance.contentPlaceholder} />
 
           {/* Tags */}
           <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">

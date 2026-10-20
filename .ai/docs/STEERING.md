@@ -226,17 +226,26 @@ iPhone Safari is the primary platform. Every user-facing surface (main site, Shi
 
 ---
 
-## 13. Typing stays instant
+## 13. Typing, clicks and scrolling stay instant
 
-Adopted 2026-10-14 after people reported typing lag across the site. With the CPU slowed to a mid-range phone's speed, keystrokes took 50 to 100ms, the first one on any page about 350ms while Google Translate loaded, and about 330ms each in a forum reply box under 40 replies. Nothing in the JavaScript was slow on its own; the main thread was busy with work nobody could see. Five rules keep it fast:
+Adopted 2026-10-14 after people reported typing lag across the site, and widened 2026-10-15 to every interaction. With the CPU slowed to a mid-range phone's speed, keystrokes took 50 to 100ms, the first one on any page about 350ms while Google Translate loaded, and about 330ms each in a forum reply box under 40 replies; opening a nav menu took over a second; some forms re-rendered 400 to 500 components per keystroke. Nothing in the JavaScript was slow on its own; the main thread was busy with work nobody could see. These rules keep it fast:
 
 - **No endless animation the compositor cannot run.** Only `transform`, `opacity` and `filter` on an ordinary element animate off the main thread. Never animate a shape inside an SVG, and never animate `background-position`, `box-shadow`, colours or sizes forever: slide a pseudo-element with a transform, or pulse the opacity of a layer that holds a fixed shadow. One such animation anywhere on the page makes the browser restyle every frame, and every keystroke waits behind it. `pnpm ui:audit` fails them ("main thread").
 - **Decorative motion holds still while someone types.** Put purely decorative animation (particles, ambient backgrounds) inside a `.decor-layer`; it pauses while a text field has focus (`client/src/lib/stillWhileTyping.ts`), and a canvas loop checks `isTyping()` and stops when off screen. Even a compositor animation is restyled on the main thread whenever a keystroke forces a style update: the home page's 46 leaves and stars doubled each key's delay.
 - **Third-party scripts load on intent, not on first interaction.** Google Translate loads when the language menu opens. Loading it on everyone's first keypress froze that keystroke for about 300ms and left Google's spinner animating forever.
 - **A field's state lives in the smallest component that needs it.** Typing in a reply box must not re-render the thread, the message list or the page. Move the draft into a composer child, memoize markdown rendering, and never declare components inside render.
 - **Debounce whatever a keystroke triggers beyond the field**: a server query, a storage write, a link preview, a map or list rebuild. Use `useDebouncedValue` (`client/src/hooks/useDebouncedValue.ts`) and keep previous results while the next ones load.
+- **Lists render rows as memoized components with stable props.** Liking one reply, opening one menu or a query resolving must re-render that row, not all forty. Pass primitives and `useCallback` handlers keyed by id.
+- **A ticking clock lives in its own small component.** A countdown or timer at a page's root re-renders everything under it on every tick; the session board re-rendered the stage people typed on twice a second until its clocks moved into leaf components (`client/src/components/session-board/useBoardClock.ts`). An end time gets one timer for that moment, not polling.
+- **Scrolling runs no layout reads and no React state per frame.** Reading `scrollY`, `scrollHeight` or a rect in a scroll handler makes the browser finish its layout inside every scroll event. Use an IntersectionObserver, read once per frame inside `requestAnimationFrame`, and write progress straight to the element.
+- **Menus that do not need to block the page are not modal.** A Radix `DropdownMenu` is modal by default, which disables pointer events on `<body>` and marks the rest of the page `aria-hidden`: every element restyles before the menu shows. Nav menus use `modal={false}`.
+- **Small toggles answer on the tap.** Likes, follows and mark-as-read update the cache in `onMutate`, roll back in `onError` and settle in `onSettled`, so nobody waits a round trip to see their own click.
+- **Splash moments greet once per visit.** The hero quote loader shows on the first hero page of a visit only; a forced wait on every return trip is lag.
 
-Measure, do not guess: `pnpm perf:typing` types into real fields with the CPU slowed to a mid-range phone's speed and reports each keystroke's delay (`harness/typing-bench.mjs`). Under 50ms per key is the bar.
+Measure, do not guess:
+- `pnpm perf:renders` counts React component renders per interaction on every page (idle, scroll, per keystroke, toggle clicks) through the DevTools commit hook. Counts do not wobble with machine load, so it finds waste reliably (`harness/perf-renders.mjs`; run against `pnpm dev` for readable names).
+- `pnpm perf:live` times clicks, keystrokes, scroll frames and page-to-page navigation with the CPU slowed 4x (`harness/perf-live.mjs`).
+- `pnpm perf:typing` measures keystroke delay on chosen fields (`harness/typing-bench.mjs`). Under 50ms per key is the bar.
 
 ---
 

@@ -9,7 +9,7 @@
  * Voice + framing (Galley spec section 0): careful and invitational, abundance not
  * restriction. No em-dashes, no contrast framing, no medical claims.
  */
-import { useMemo, useState } from "react";
+import { memo, useDeferredValue, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { SEO } from "@/components/SEO";
 import { PageWrapper } from "@/components/PageWrapper";
@@ -59,11 +59,12 @@ function cardMatches(card: GalleyCard, track: TrackId | "all", query: string): b
   return hay.includes(q);
 }
 
-function CardTile({ card, onOpen }: { card: GalleyCard; onOpen: () => void }) {
+// Memoized: a tile that stays in the filtered cookbook skips re-rendering.
+const CardTile = memo(function CardTile({ card, onOpen }: { card: GalleyCard; onOpen: (card: GalleyCard) => void }) {
   return (
     <button
       type="button"
-      onClick={onOpen}
+      onClick={() => onOpen(card)}
       className="text-left rounded-2xl border bg-card p-4 min-h-11 hover:border-[#4a7c59] hover:-translate-y-0.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700]"
     >
       <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -74,7 +75,7 @@ function CardTile({ card, onOpen }: { card: GalleyCard; onOpen: () => void }) {
       <p className="text-xs text-muted-foreground mt-2">Tap to build your own</p>
     </button>
   );
-}
+});
 
 function CardDetail({ card, onClose }: { card: GalleyCard | null; onClose: () => void }) {
   const rows: Array<[string, string[]]> = card
@@ -112,16 +113,72 @@ function CardDetail({ card, onClose }: { card: GalleyCard | null; onClose: () =>
   );
 }
 
-export default function Galley() {
+type CardGroup = { cat: GalleyCategory; cards: GalleyCard[] };
+
+/**
+ * The cookbook's filters and cards. It owns the track and the search text, so a
+ * keystroke re-renders this section, not the whole Galley. The cards follow the
+ * search a beat behind (useDeferredValue), so the letter typed paints first.
+ */
+function Cookbook({ onOpen }: { onOpen: (card: GalleyCard) => void }) {
   const [track, setTrack] = useState<TrackId | "all">("all");
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState<GalleyCard | null>(null);
-  const crews = trpc.ship.galley.publicFeed.useQuery(undefined, { staleTime: 60_000 });
+  const shownQuery = useDeferredValue(query);
 
   const grouped = useMemo(() => {
-    const filtered = GALLEY_CARDS.filter((c) => cardMatches(c, track, query));
+    const filtered = GALLEY_CARDS.filter((c) => cardMatches(c, track, shownQuery));
     return CATEGORY_ORDER.map((cat) => ({ cat, cards: filtered.filter((c) => c.category === cat) })).filter((g) => g.cards.length);
-  }, [track, query]);
+  }, [track, shownQuery]);
+
+  return (
+    <>
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="inline-flex rounded-full border p-1 bg-card self-start">
+          {(["all", "table", "reset"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTrack(t)}
+              aria-pressed={track === t}
+              className={`px-4 py-2 min-h-11 sm:min-h-0 rounded-full text-sm font-medium transition-colors ${track === t ? "bg-[#2f5d3a] text-white" : "text-foreground/70 hover:text-foreground"}`}
+            >
+              {t === "all" ? "All" : t === "table" ? "Ship's Table" : "Deeper Reset"}
+            </button>
+          ))}
+        </div>
+        <div className="relative flex-1 max-w-xs">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by ingredient" className="pl-9" aria-label="Search the cookbook by ingredient" />
+        </div>
+      </div>
+
+      <CookbookCards grouped={grouped} onOpen={onOpen} />
+    </>
+  );
+}
+
+const CookbookCards = memo(function CookbookCards({ grouped, onOpen }: { grouped: CardGroup[]; onOpen: (card: GalleyCard) => void }) {
+  return grouped.length === 0 ? (
+    <p className="text-muted-foreground">No cards match that yet. Try another ingredient.</p>
+  ) : (
+    <div className="space-y-8">
+      {grouped.map(({ cat, cards }) => (
+        <div key={cat}>
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <Utensils className="w-4 h-4 text-[#4a7c59]" aria-hidden="true" /> {CATEGORY_LABELS[cat]}
+          </h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {cards.map((c) => <CardTile key={c.slug} card={c} onOpen={onOpen} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+export default function Galley() {
+  const [open, setOpen] = useState<GalleyCard | null>(null);
+  const crews = trpc.ship.galley.publicFeed.useQuery(undefined, { staleTime: 60_000 });
 
   return (
     <PageWrapper>
@@ -259,42 +316,7 @@ export default function Galley() {
         <h2 className="text-3xl font-bold mb-2">Build your own</h2>
         <p className="text-foreground/80 max-w-2xl mb-6">Every card is a formula, not a rule. Filter by track, search by an ingredient you have, and tap a card to build it.</p>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="inline-flex rounded-full border p-1 bg-card self-start">
-            {(["all", "table", "reset"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTrack(t)}
-                aria-pressed={track === t}
-                className={`px-4 py-2 min-h-11 sm:min-h-0 rounded-full text-sm font-medium transition-colors ${track === t ? "bg-[#2f5d3a] text-white" : "text-foreground/70 hover:text-foreground"}`}
-              >
-                {t === "all" ? "All" : t === "table" ? "Ship's Table" : "Deeper Reset"}
-              </button>
-            ))}
-          </div>
-          <div className="relative flex-1 max-w-xs">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by ingredient" className="pl-9" aria-label="Search the cookbook by ingredient" />
-          </div>
-        </div>
-
-        {grouped.length === 0 ? (
-          <p className="text-muted-foreground">No cards match that yet. Try another ingredient.</p>
-        ) : (
-          <div className="space-y-8">
-            {grouped.map(({ cat, cards }) => (
-              <div key={cat}>
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Utensils className="w-4 h-4 text-[#4a7c59]" aria-hidden="true" /> {CATEGORY_LABELS[cat]}
-                </h3>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {cards.map((c) => <CardTile key={c.slug} card={c} onOpen={() => setOpen(c)} />)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <Cookbook onOpen={setOpen} />
       </ShipSection>
 
       {/* Eat with the valley */}

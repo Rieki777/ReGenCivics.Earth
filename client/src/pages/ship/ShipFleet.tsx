@@ -12,19 +12,21 @@
 import { useState } from "react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Anchor, Coins, Flag, Sprout, Tent, HandCoins } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import FormCompanion from "@/components/companion/FormCompanion";
+import { ShipField } from "@/components/ship/ShipFields";
 
 type Turn = { role: "user" | "assistant"; content: string };
 
-export default function ShipFleet() {
+/**
+ * The Flagkeeper and the raise-your-flag form. It owns the answers, so a
+ * keystroke re-renders this form (and only the field typed in), not the page.
+ */
+function FleetApplication() {
   const m = trpc.ship.applyFleet.useMutation();
 
   const [ownerName, setOwnerName] = useState("");
@@ -93,6 +95,87 @@ export default function ShipFleet() {
     }
   }
 
+  return (
+    <>
+      <FormCompanion
+        formId="fleet-application"
+        className="max-w-xl"
+        collected={{
+          ownerName,
+          email,
+          rvYearMakeModel,
+          location,
+          whyRegeneration,
+          fleetVision,
+          offersText,
+          needsText,
+          message,
+        }}
+        onField={(key, value) => setters[key]?.(value)}
+        onTranscript={setTranscript}
+      />
+
+      <form onSubmit={onSubmit} className="max-w-xl space-y-6">
+        <ShipField id="ownerName" label="Your name" value={ownerName} onValue={setOwnerName} placeholder="Full name" required />
+        <ShipField id="email" label="Email" type="email" value={email} onValue={setEmail} placeholder="you@example.com" required />
+        <ShipField
+          id="rvYearMakeModel"
+          label="Your RV, year, make, and model (optional)"
+          value={rvYearMakeModel}
+          onValue={setRvYearMakeModel}
+          placeholder="2006 Fleetwood Revolution LE"
+        />
+        <ShipField id="location" label="Where are you based? (optional)" value={location} onValue={setLocation} placeholder="City, region" />
+        <ShipField
+          id="whyRegeneration"
+          label="Why does the regeneration movement matter to you?"
+          value={whyRegeneration}
+          onValue={setWhyRegeneration}
+          placeholder="What first pulled you toward this work?"
+          rows={4}
+        />
+        <ShipField
+          id="fleetVision"
+          label="What do you see yourself and your ship doing with the fleet?"
+          value={fleetVision}
+          onValue={setFleetVision}
+          placeholder="Paint us the picture: the places, the work, the life aboard."
+          rows={4}
+        />
+        <ShipField
+          id="offersText"
+          label="What would you want to give? (optional)"
+          value={offersText}
+          onValue={setOffersText}
+          placeholder="Skills, builds, hosting, teaching, the ship herself."
+          rows={3}
+        />
+        <ShipField
+          id="needsText"
+          label="What do you hope to receive? (optional)"
+          value={needsText}
+          onValue={setNeedsText}
+          placeholder="Community, purpose, income from voyages. Honest answers help us place you well."
+          rows={3}
+        />
+        <ShipField
+          id="message"
+          label="Anything else? (optional)"
+          value={message}
+          onValue={setMessage}
+          placeholder="Tell us what draws you to the fleet."
+          rows={4}
+        />
+
+        <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
+          {m.isPending ? "Raising..." : "Raise your flag"}
+        </Button>
+      </form>
+    </>
+  );
+}
+
+export default function ShipFleet() {
   return (
     <PageWrapper>
       <SEO
@@ -214,127 +297,7 @@ export default function ShipFleet() {
           form below, and we'll be in touch.
         </p>
 
-        <FormCompanion
-          formId="fleet-application"
-          className="max-w-xl"
-          collected={{
-            ownerName,
-            email,
-            rvYearMakeModel,
-            location,
-            whyRegeneration,
-            fleetVision,
-            offersText,
-            needsText,
-            message,
-          }}
-          onField={(key, value) => setters[key]?.(value)}
-          onTranscript={setTranscript}
-        />
-
-        <form onSubmit={onSubmit} className="max-w-xl space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="ownerName">Your name</Label>
-            <Input
-              id="ownerName"
-              value={ownerName}
-              onChange={(e) => setOwnerName(e.target.value)}
-              placeholder="Full name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="rvYearMakeModel">Your RV, year, make, and model (optional)</Label>
-            <Input
-              id="rvYearMakeModel"
-              value={rvYearMakeModel}
-              onChange={(e) => setRvYearMakeModel(e.target.value)}
-              placeholder="2006 Fleetwood Revolution LE"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="location">Where are you based? (optional)</Label>
-            <Input
-              id="location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="City, region"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="whyRegeneration">Why does the regeneration movement matter to you?</Label>
-            <Textarea
-              id="whyRegeneration"
-              value={whyRegeneration}
-              onChange={(e) => setWhyRegeneration(e.target.value)}
-              placeholder="What first pulled you toward this work?"
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="fleetVision">What do you see yourself and your ship doing with the fleet?</Label>
-            <Textarea
-              id="fleetVision"
-              value={fleetVision}
-              onChange={(e) => setFleetVision(e.target.value)}
-              placeholder="Paint us the picture: the places, the work, the life aboard."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="offersText">What would you want to give? (optional)</Label>
-            <Textarea
-              id="offersText"
-              value={offersText}
-              onChange={(e) => setOffersText(e.target.value)}
-              placeholder="Skills, builds, hosting, teaching, the ship herself."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="needsText">What do you hope to receive? (optional)</Label>
-            <Textarea
-              id="needsText"
-              value={needsText}
-              onChange={(e) => setNeedsText(e.target.value)}
-              placeholder="Community, purpose, income from voyages. Honest answers help us place you well."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="message">Anything else? (optional)</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Tell us what draws you to the fleet."
-              rows={4}
-            />
-          </div>
-
-          <Button type="submit" disabled={m.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f]">
-            {m.isPending ? "Raising..." : "Raise your flag"}
-          </Button>
-        </form>
+        <FleetApplication />
       </ShipSection>
     </PageWrapper>
   );

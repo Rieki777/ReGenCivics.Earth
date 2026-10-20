@@ -26,8 +26,10 @@ import {
   sessionClosedAt,
   sessionElapsedMs,
   sessionMinutes,
+  type BoardState,
   type StageKind,
 } from "@shared/sessionBoard";
+import { useBoardClock, useServerTimePassed } from "@/components/session-board/useBoardClock";
 import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
 import { episodeByWeek } from "@shared/season2Curriculum";
 import { useSessionBoard } from "@/components/session-board/useSessionBoard";
@@ -65,6 +67,46 @@ const fmtClock = (ms: number) => {
   const s = t % 60;
   return (h ? `${h}:${String(m).padStart(2, "0")}` : String(m)) + ":" + String(s).padStart(2, "0");
 };
+
+/** The header clock: session time against the plan, ticking on its own. */
+function SessionClock({ state, plannedMs, total, serverNow, closedAt }: {
+  state: BoardState | undefined;
+  plannedMs: number;
+  total: number;
+  serverNow: () => number;
+  closedAt: number | null;
+}) {
+  const now = useBoardClock(serverNow, !!state?.sessionStartedAt && closedAt == null);
+  const elapsed = state ? sessionElapsedMs(state, plannedMs, closedAt ?? now) : null;
+  return (
+    <span className="sb-clock" title="Session time">
+      {elapsed != null ? `${fmtClock(elapsed)} of ${total} min` : `${total} min planned`}
+    </span>
+  );
+}
+
+/** The footer clock: time on the stage on screen, when it is the live one. */
+function StageClock({ state, view, planMin, serverNow, closedAt }: {
+  state: BoardState | undefined;
+  view: number;
+  planMin: number;
+  serverNow: () => number;
+  closedAt: number | null;
+}) {
+  const startedAt = state && view === state.stage ? state.stageStartedAt : null;
+  const now = useBoardClock(serverNow, !!startedAt && closedAt == null);
+  const stageElapsed = startedAt ? (closedAt ?? now) - startedAt : null;
+  const planMs = planMin * 60_000;
+  const stageOver = stageElapsed != null && stageElapsed > planMs;
+  const label = stageElapsed == null
+    ? `${planMin} min`
+    : stageOver && !closedAt
+      ? `over by ${fmtClock(stageElapsed - planMs)}`
+      : stageOver
+        ? `${planMin} min`
+        : `${fmtClock(stageElapsed)} of ${planMin} min`;
+  return <span className={`sb-foot-time${stageOver && !closedAt ? " sb-over" : ""}`}>{label}</span>;
+}
 
 const WIDE: StageKind[] = ["circle", "harvest", "game", "checkin", "needs"];
 
@@ -171,13 +213,6 @@ function Board({ week }: { week: number }) {
     setView(live);
   }, [live]);
 
-  // One clock for the page, in server time.
-  const [now, setNow] = useState(() => serverNow());
-  useEffect(() => {
-    const t = setInterval(() => setNow(serverNow()), 500);
-    return () => clearInterval(t);
-  }, [serverNow]);
-
   const [cuesOpen, setCuesOpen] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const railRef = useRef<HTMLOListElement>(null);
@@ -234,7 +269,13 @@ function Board({ week }: { week: number }) {
   const total = sessionMinutes(state?.plan ?? stages.map((s) => s.min), stages);
   const planFor = (i: number) => state?.plan[i] ?? stages[i].min;
   const plannedMs = total * 60_000;
-  const closedAt = state ? sessionClosedAt(state, plannedMs, now) : null;
+  // A running session also ends on its own once the planned length has
+  // passed: one timer for that moment. The clocks tick in their own
+  // components (SessionClock, StageClock, the share timer), so the board and
+  // the stage people type on no longer re-render twice a second.
+  const plannedEnd = state?.sessionStartedAt && !state.endedAt ? state.sessionStartedAt + Math.max(0, plannedMs) : null;
+  const pastPlannedEnd = useServerTimePassed(serverNow, plannedEnd);
+  const closedAt = state ? sessionClosedAt(state, plannedMs, pastPlannedEnd && plannedEnd != null ? plannedEnd : serverNow()) : null;
   useEffect(() => {
     if (!keepsFollowingRoom({
       boardLoaded: !!board,
@@ -251,7 +292,6 @@ function Board({ week }: { week: number }) {
     // view is read, never a trigger: a follower's own tap is handled by go().
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board, closedAt, facilitator, looking, following, live]);
-  const sessionElapsed = state ? sessionElapsedMs(state, plannedMs, now) : null;
   const schedule = useSeasonSchedule();
   const nextSession = useMemo(() => {
     if (!closedAt || !schedule.ready) return null;
@@ -259,17 +299,7 @@ function Board({ week }: { week: number }) {
       .filter((s) => s.status !== "cancelled" && s.status !== "completed" && s.start.getTime() > closedAt)
       .sort((a, b) => a.start.getTime() - b.start.getTime())[0] ?? null;
   }, [closedAt, schedule.ready, schedule.sessions]);
-  const stageElapsed = state && view === state.stage && state.stageStartedAt ? (closedAt ?? now) - state.stageStartedAt : null;
   const planMin = planFor(view);
-  const planMs = planMin * 60_000;
-  const stageOver = stageElapsed != null && stageElapsed > planMs;
-  const stageLabel = stageElapsed == null
-    ? `${planMin} min`
-    : stageOver && !closedAt
-      ? `over by ${fmtClock(stageElapsed - planMs)}`
-      : stageOver
-        ? `${planMin} min`
-        : `${fmtClock(stageElapsed)} of ${planMin} min`;
   const endedDate = closedAt ? boardDate(state?.sessionStartedAt ?? closedAt) : null;
   const sessionEnded = closedAt != null || !open;
   const showRecap = showSessionRecap(view, sessionEnded && !!board);
@@ -278,7 +308,7 @@ function Board({ week }: { week: number }) {
 
   const stageProps: StageProps | null = board
     ? {
-      board, week, stages, index: view, facilitator, canWrite, mine, actions, now, serverNow, go,
+      board, week, stages, index: view, facilitator, canWrite, mine, actions, serverNow, go,
       myProject, setMyProject, displayName, setDisplayName, signedIn, look,
     }
     : null;
@@ -318,9 +348,7 @@ function Board({ week }: { week: number }) {
           {facilitator && open && state?.sessionStartedAt && !closedAt ? (
             <button type="button" className="sb-btn sb-small" onClick={() => actions.act({ type: "endSession" })}>End session</button>
           ) : null}
-          <span className="sb-clock" title="Session time">
-            {sessionElapsed != null ? `${fmtClock(sessionElapsed)} of ${total} min` : `${total} min planned`}
-          </span>
+          <SessionClock state={state} plannedMs={plannedMs} total={total} serverNow={serverNow} closedAt={closedAt} />
           <span className={`sb-pill${!open || closedAt ? "" : facilitator ? " sb-host" : " sb-on"}`}>
             <span className="sb-pill-dot" />
             {!open ? "The week's record" : endedDate ? `Ended ${endedDate}` : facilitator ? "You're facilitating" : "Live"}
@@ -383,9 +411,7 @@ function Board({ week }: { week: number }) {
         <button type="button" className="sb-btn" disabled={view === 0} onClick={() => go(view - 1)}>← {view > 0 ? stageShort(view - 1) : "Back"}</button>
         <div className="sb-foot-mid">
           <span className="sb-foot-stage">{view + 1}. {stageName(view)}</span>
-          <span className={`sb-foot-time${stageOver && !closedAt ? " sb-over" : ""}`}>
-            {stageLabel}
-          </span>
+          <StageClock state={state} view={view} planMin={planMin} serverNow={serverNow} closedAt={closedAt} />
         </div>
         <button type="button" className="sb-btn sb-primary" disabled={view === stages.length - 1} onClick={() => go(view + 1)}>{view < stages.length - 1 ? stageShort(view + 1) : "Done"} →</button>
         <div className="sb-foot-tools">
