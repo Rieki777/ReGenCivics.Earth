@@ -11,7 +11,7 @@ Every page a land project fills in, and every answer it gives on a weekly board,
 3. **The week map** below.
 4. **When a 1.0 opens.** A project's 1.0 opens once its launch decisions are answered, from Week 13 on, with the March equinox as the shared moment.
 5. **One file.** Hosted and self-run villages read the same 1.0 file.
-6. **No invented money.** The file carries no money figure the project didn't type, and exchange, redemption and payments start off.
+6. **No invented money.** The file carries no money figure the project didn't type. Payments, exchange, redemption, stays and the crowdpool view start off.
 
 ## How it fits together
 
@@ -21,7 +21,7 @@ Every page a land project fills in, and every answer it gives on a weekly board,
 | The profile, pure: suggestions from every source, the stewards' answers, launch readiness, the purpose draft | `shared/projectProfile.ts` |
 | The 1.0 file, `regen-civics/village@1`, with Week 4's card inside | `shared/villageFile.ts` |
 | Reading a project's sources, the claim rules, the stewards' answers | `server/lib/villageProfile.ts`, `server/routes/villageProfile.ts` |
-| The stewards' own word, one row per decision | `village_profile_answers`, `drizzle/0301_village_profile_answers.sql` |
+| The stewards' own word, one row per decision, and every claimed card | `village_profile_answers`, `village_profile_claims`, `drizzle/0301_village_profile_answers.sql` |
 | The page | `/apply/village` (`client/src/pages/VillageProfile.tsx`), linked from `/apply/status` |
 | Admin overview | Admin, Events, "Village profiles" (`client/src/components/admin/AdminVillageProfiles.tsx`) |
 

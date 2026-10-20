@@ -32,6 +32,7 @@ import {
   confirmDecision,
   listVillageProfiles,
   readVillageProfile,
+  unclaimCard,
 } from "../lib/villageProfile";
 import type { Db } from "../lib/sessionBoard";
 
@@ -91,7 +92,7 @@ export const villageProfileRouter = router({
     .query(async ({ ctx, input }) => {
       await assertSteward(ctx.user, input.applicationId);
       const db = await database();
-      const read = await readVillageProfile(db, { season: SESSION_BOARD_SEASON, applicationId: input.applicationId, userId: ctx.user.id });
+      const read = await readVillageProfile(db, { season: SESSION_BOARD_SEASON, applicationId: input.applicationId });
       if (!read) throw new TRPCError({ code: "NOT_FOUND", message: PROFILE_COPY.notFound });
       return { ...read, file: toVillageFile(read.profile) };
     }),
@@ -107,14 +108,14 @@ export const villageProfileRouter = router({
       return { ok: true as const };
     }),
 
-  /** Stewards: keep what the pages and boards suggest as the project's own. */
+  /** Stewards: keep what the pages and boards suggest, exactly as the page showed it (`seen` is its stamp). */
   confirm: protectedProcedure
     .use(rateLimited(WRITE_LIMIT))
-    .input(z.object({ applicationId: idInput, key: keyInput }))
+    .input(z.object({ applicationId: idInput, key: keyInput, seen: z.string().max(40) }))
     .mutation(async ({ ctx, input }) => {
       await assertSteward(ctx.user, input.applicationId);
       const db = await database();
-      await confirmDecision(db, { season: SESSION_BOARD_SEASON, applicationId: input.applicationId, key: input.key, userId: ctx.user.id });
+      await confirmDecision(db, { season: SESSION_BOARD_SEASON, applicationId: input.applicationId, key: input.key, seen: input.seen, userId: ctx.user.id });
       return { ok: true as const };
     }),
 
@@ -138,6 +139,17 @@ export const villageProfileRouter = router({
       const db = await database();
       const r = await claimCard(db, { season: SESSION_BOARD_SEASON, applicationId: input.applicationId, cardId: input.cardId, userId: ctx.user.id });
       return { ok: true as const, week: r.week };
+    }),
+
+  /** Stewards: give back a card this project claimed from its profile. */
+  unclaimCard: protectedProcedure
+    .use(rateLimited(CLAIM_LIMIT))
+    .input(z.object({ applicationId: idInput, cardId: idInput }))
+    .mutation(async ({ ctx, input }) => {
+      await assertSteward(ctx.user, input.applicationId);
+      const db = await database();
+      await unclaimCard(db, { applicationId: input.applicationId, cardId: input.cardId });
+      return { ok: true as const };
     }),
 
   /** Admin: every Season 2 project's profile at a glance. */

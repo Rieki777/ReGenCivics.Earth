@@ -238,9 +238,9 @@ export default function ApplyStatus({ now }: { now?: Date } = {}) {
               <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
                 <h3 className="font-semibold text-[#1a472a] mb-2">Your Village OS 1.0</h3>
                 <p className="text-sm text-[#1a472a]/80 mb-3">
-                  Everything your project has said, on this application and on every weekly board, gathered into the decisions your Village OS launches with. Keep what's right, write what's missing, and download your 1.0 file.
+                  Everything your project has said, on this application and on every weekly board, gathered into the decisions your Village OS launches with. Keep what fits, write what's missing, and download your 1.0 file.
                 </p>
-                <Link href="/apply/village" className="inline-flex min-h-11 items-center rounded-full bg-[#1a472a] px-5 text-sm font-semibold text-white hover:bg-[#2d5a3d]">
+                <Link href={`/apply/village?a=${application.id}`} className="inline-flex min-h-11 items-center rounded-full bg-[#1a472a] px-5 text-sm font-semibold text-white hover:bg-[#2d5a3d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a472a]">
                   Open your Village OS 1.0
                 </Link>
               </div>

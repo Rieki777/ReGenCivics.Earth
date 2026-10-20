@@ -7027,3 +7027,15 @@ export const villageProfileAnswers = mysqlTable("village_profile_answers", {
   index("village_profile_answers_app_idx").on(table.applicationId),
 ]));
 export type VillageProfileAnswer = typeof villageProfileAnswers.$inferSelect;
+
+/** Earlier board cards a project's stewards claimed from its Village profile (ADR-77, migration 0301). */
+export const villageProfileClaims = mysqlTable("village_profile_claims", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  cardId: int("cardId").notNull(),
+  claimedBy: int("claimedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ([
+  uniqueIndex("village_profile_claims_card_idx").on(table.cardId),
+  index("village_profile_claims_app_idx").on(table.applicationId),
+]));

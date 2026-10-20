@@ -790,7 +790,7 @@ const GAME_TREE_VALUES: Record<string, number> = {
 const PROFILE_ROW = (id: number, block: string, text: string, projectId: number, createdAt = "2026-10-14T17:30:00Z") => ({ id, kind: "answer", block, text, projectId, createdAt });
 const PROFILE_SOURCES: ProfileSources = {
   application: { id: 63, projectName: "Green Gulch Land Trust", location: "Marin, California", country: "United States", vision: "A land trust for twelve families", latitude: 37.9, intendedPeopleCount: 40, status: "approved" },
-  request: { villageName: "Green Gulch", tagline: null, memberWord: "Gulcher", currencyName: "Acorns", timeZone: "America/Los_Angeles", preferredAddress: "green-gulch" },
+  request: { villageName: "Green Gulch", tagline: null, memberWord: "Gulcher", timeZone: "America/Los_Angeles", preferredAddress: "green-gulch" },
   tools: ["Hypha", "Hylo"],
   weeks: [
     { week: 2, cards: [{ id: 21, name: "Green Gulch Land Trust" }], rows: [], pains: ["Nobody owns the water schedule, so it slips every dry season"], opps: ["A seed library with the two farms down the road"], phase: "root", whereNow: "Land in sight, six of us living nearby, a lease being drafted.", nextMove: null },
@@ -811,9 +811,9 @@ const PROFILE_SOURCES: ProfileSources = {
     ], pains: [], opps: [], phase: null, whereNow: null, nextMove: null },
   ],
   stored: {
-    "identity.name": { value: "Green Gulch", how: "answered", updatedAt: "2026-10-21T19:00:00Z", updatedBy: 1 },
-    "seats.cards": { value: { seats: [] }, how: "confirmed", updatedAt: "2026-10-21T19:00:00Z", updatedBy: 1 },
-    "economy.issuanceCap": { value: "none", how: "answered", updatedAt: "2026-10-21T19:00:00Z", updatedBy: 1 },
+    "identity.name": { value: "Green Gulch", how: "answered", updatedAt: "2026-10-21T19:00:00Z" },
+    "seats.cards": { value: { seats: [] }, how: "confirmed", updatedAt: "2026-10-21T19:00:00Z" },
+    "economy.issuanceCap": { value: "declined", how: "answered", updatedAt: "2026-10-21T19:00:00Z" },
   },
 };
 const PROFILE_FIXTURE = (() => {
@@ -821,6 +821,7 @@ const PROFILE_FIXTURE = (() => {
   return {
     profile,
     claimable: [{ cardId: 88, week: 2, name: "Green Gulch", answers: 4, why: "yours" as const }],
+    claimed: [{ cardId: 21, week: 2, name: "Green Gulch Land Trust" }],
     applicationStatus: "approved",
     file: toVillageFile(profile, { now: new Date("2026-10-21T20:00:00Z") }),
   };

@@ -85,7 +85,7 @@ export function AdminVillageProfiles() {
                     <td className="py-1.5 pr-3 text-white/80 tabular-nums">{r.suggested}</td>
                     <td className="py-1.5 pr-3 text-white/80">{r.weeks.length ? r.weeks.join(", ") : "None yet"}</td>
                     <td className="py-1.5">
-                      <a href={`/apply/village?a=${r.applicationId}`} className="inline-flex min-h-11 items-center text-[#7dd87d] underline">{ADMIN_PROFILES_COPY.open}</a>
+                      <a href={`/apply/village?a=${r.applicationId}`} aria-label={`${ADMIN_PROFILES_COPY.open} ${r.projectName}`} className="inline-flex min-h-11 items-center text-[#7dd87d] underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7dd87d]">{ADMIN_PROFILES_COPY.open}</a>
                     </td>
                   </tr>
                 ))}

@@ -1,7 +1,8 @@
 /**
  * Village profiles on the server (ADR-77): who may open and change one, how
  * a project's cards are found across the weeks, the stewards' own answers,
- * and claiming an earlier card.
+ * keeping exactly what was seen, and claiming (and giving back) an earlier
+ * card.
  *
  * The router's gates are checked first. The database half runs on a made-up
  * board season ("Profile Test 2031") and application season (9032), passed to
@@ -20,6 +21,7 @@ import {
   sessionBoardVotes,
   sessionBoards,
   villageProfileAnswers,
+  villageProfileClaims,
 } from "../drizzle/schema";
 import { ensureBoard, type Db } from "./lib/sessionBoard";
 import {
@@ -30,6 +32,7 @@ import {
   listVillageProfiles,
   projectCardIds,
   readVillageProfile,
+  unclaimCard,
 } from "./lib/villageProfile";
 import { cardText } from "@shared/boardCards";
 import { voteTarget } from "@shared/sessionBoard";
@@ -56,13 +59,15 @@ describe("village profiles: what the router lets through", () => {
     await expect(caller.villageProfile.mine()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.villageProfile.get({ applicationId: 1 })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.villageProfile.answer({ applicationId: 1, key: "identity.name", value: "x" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.villageProfile.unclaimCard({ applicationId: 1, cardId: 1 })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.villageProfile.adminList()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("refuses a key that isn't a decision's shape before anything else", async () => {
+  it("refuses a key that isn't a decision's shape, or a confirm with no stamp, before anything else", async () => {
     const caller = appRouter.createCaller(makeCtx({ id: 987660001, role: "user" } as unknown as TrpcContext["user"], "198.51.100.72"));
     await expect(caller.villageProfile.answer({ applicationId: 1, key: "DROP TABLE", value: "x" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect(caller.villageProfile.confirm({ applicationId: 1, key: "a".repeat(60) })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.villageProfile.confirm({ applicationId: 1, key: "a".repeat(60), seen: "x" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect((caller.villageProfile.confirm as (i: unknown) => Promise<unknown>)({ applicationId: 1, key: "identity.name" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("a signed-in member is not an admin", async () => {
@@ -88,8 +93,10 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
   let otherApp = 0;
   let w3card = 0;
   let w4card = 0;
-  let stray = 0;
-  let mineByCheckin = 0;
+  let unowned = 0;
+  let stewardWrote = 0;
+  let guestWrote = 0;
+  let checkedIn = 0;
   let othersCard = 0;
 
   const insertId = (res: unknown) => Number((res as [{ insertId: number }])[0]?.insertId ?? (res as { insertId: number }).insertId);
@@ -120,8 +127,8 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
     appIds.push(id);
     return id;
   };
-  const read = (userId: number | null = STEWARD, id = appId) =>
-    readVillageProfile(db, { season: SEASON, applicationId: id, userId, appSeason: APP_SEASON });
+  const read = (id = appId) => readVillageProfile(db, { season: SEASON, applicationId: id, appSeason: APP_SEASON });
+  const stampOf = async (key: string) => (await read())!.profile.decisions.find((d) => d.key === key)!.stamp!;
 
   beforeAll(async () => {
     db = (await getDb())!;
@@ -141,12 +148,13 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
     w4card = await card(b4, { name: "Profile Spring Farm", applicationId: appId });
     await answer(b4, w4card, "seat-1", cardText("seat", { name: "Fire keeper", circle: "festivals", need: "love", aim: "Every gathering has a fire", answersFor: "The fire circle", heldBy: "team", who: "Ana", contribution: "3 hours a week" }));
     await answer(b4, w4card, "whole", "50");
-    // Week 2: a stray card with the project's name and no application, with a pain point.
-    stray = await card(b2, { name: "Profile Spring  Farm", authorKey: "k:someoneelse0001" });
-    await db.insert(sessionBoardItems).values({ boardId: b2, kind: "pain", text: "Water runs off the hill", projectId: stray, authorKey: "k:someoneelse0001" });
-    // Week 2: a card the steward checked in with, under a different name.
-    mineByCheckin = await card(b2, { name: "Spring Farm Hamlet" });
-    await db.insert(sessionBoardVotes).values({ boardId: b2, target: voteTarget.checkin(mineByCheckin), voterKey: `u:${STEWARD}` });
+    // Week 2: four cards with no application.
+    unowned = await card(b2, { name: "Profile Spring  Farm", whereNow: "Six of us nearby." });
+    await db.insert(sessionBoardItems).values({ boardId: b2, kind: "pain", text: "Water runs off the hill", projectId: unowned, authorKey: "k:someoneelse0001" });
+    stewardWrote = await card(b2, { name: "Spring Farm Hamlet", authorKey: `u:${STEWARD}` });
+    guestWrote = await card(b2, { name: "Profile Spring Farm", authorKey: "k:someoneelse0001" });
+    checkedIn = await card(b2, { name: "A Different Farm" });
+    await db.insert(sessionBoardVotes).values({ boardId: b2, target: voteTarget.checkin(checkedIn), voterKey: `u:${STEWARD}` });
     // Another project's card, which never belongs to this profile.
     othersCard = await card(b3, { name: "Another Place", applicationId: otherApp });
     await answer(b3, othersCard, "needs", "growth");
@@ -154,7 +162,10 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
 
   afterAll(async () => {
     if (!db) return;
-    if (appIds.length) await db.delete(villageProfileAnswers).where(inArray(villageProfileAnswers.applicationId, appIds));
+    if (appIds.length) {
+      await db.delete(villageProfileAnswers).where(inArray(villageProfileAnswers.applicationId, appIds));
+      await db.delete(villageProfileClaims).where(inArray(villageProfileClaims.applicationId, appIds));
+    }
     if (boardIds.length) {
       await db.delete(sessionBoardVotes).where(inArray(sessionBoardVotes.boardId, boardIds));
       await db.delete(sessionBoardItems).where(inArray(sessionBoardItems.boardId, boardIds));
@@ -176,106 +187,126 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
     expect((by.get("seats.cards")!.suggestion as { seats: { name: string }[] }).seats.map((s) => s.name)).toEqual(["Fire keeper"]);
     expect(by.get("identity.hemisphere")?.suggestion).toBe("south");
     expect(JSON.stringify(r!.profile)).not.toMatch(/growth/);
+    // Which steward saved an answer never leaves the server.
+    expect(JSON.stringify(r)).not.toMatch(/updatedBy/);
   });
 
-  it("projectCardIds follows the application and carries, and stops at another application", () => {
+  it("projectCardIds follows the application and carries until nothing changes, and stops at another application", () => {
+    const c = (id: number, applicationId: number | null, hidden = 0) => ({ id, boardId: 1, week: 3, name: "A", applicationId, hidden, authorKey: null, phase: null, whereNow: null, nextMove: null });
+    const carry = (cardId: number, from: number[]) => ({ cardId, match: "carried" as const, from: from.map((f) => ({ week: 3, cardId: f, name: "A" })), suggested: [] });
     const ids = projectCardIds(
       {
-        cards: [
-          { id: 1, boardId: 1, week: 3, name: "A", applicationId: 7, hidden: 0, authorKey: null, phase: null, whereNow: null, nextMove: null },
-          { id: 2, boardId: 2, week: 4, name: "A", applicationId: null, hidden: 0, authorKey: null, phase: null, whereNow: null, nextMove: null },
-          { id: 3, boardId: 2, week: 4, name: "B", applicationId: 8, hidden: 0, authorKey: null, phase: null, whereNow: null, nextMove: null },
-          { id: 4, boardId: 1, week: 3, name: "C", applicationId: null, hidden: 1, authorKey: null, phase: null, whereNow: null, nextMove: null },
-        ],
-        carries: [
-          { cardId: 2, match: "carried", from: [{ week: 3, cardId: 1, name: "A" }], suggested: [] },
-          { cardId: 3, match: "confirmed", from: [{ week: 3, cardId: 1, name: "A" }], suggested: [] },
-          { cardId: 2, match: "carried", from: [{ week: 3, cardId: 4, name: "C" }], suggested: [] },
-        ],
+        cards: [c(1, 7), c(2, null), c(3, 8), c(4, null, 1), c(5, null), c(6, null), c(7, null)],
+        // A zigzag: 2 carries from 1, 5 from 2, 6 carries 5... listed so one pass can't close it.
+        carries: [carry(7, [6]), carry(6, [5]), carry(5, [2]), carry(2, [1]), carry(3, [1]), carry(2, [4])],
       },
       7,
     );
-    expect([...ids].sort()).toEqual([1, 2]);
+    expect([...ids].sort()).toEqual([1, 2, 5, 6, 7]);
   });
 
-  it("offers earlier cards by name or by the steward's own check-in, and claiming one brings its answers in", async () => {
-    const before = await read();
-    const offered = before!.claimable.map((c) => [c.cardId, c.why]);
-    expect(offered).toEqual(expect.arrayContaining([[stray, "name"], [mineByCheckin, "yours"]]));
-    expect(before!.claimable.some((c) => c.cardId === othersCard)).toBe(false);
-    // A stranger sees the name match, never the steward's own check-in.
-    const theirs = await read(STRANGER);
-    expect(theirs!.claimable.map((c) => c.cardId)).toEqual([stray]);
+  it("offers a card a steward wrote, or one nobody owns with the project's name, and nothing else", async () => {
+    const r = await read();
+    const offered = new Map(r!.claimable.map((c) => [c.cardId, c.why]));
+    expect(offered.get(unowned)).toBe("name");
+    expect(offered.get(stewardWrote)).toBe("yours");
+    // A guest's card with the same name, a card the steward only checked in with, and another project's card wait for a facilitator.
+    expect(offered.has(guestWrote)).toBe(false);
+    expect(offered.has(checkedIn)).toBe(false);
+    expect(offered.has(othersCard)).toBe(false);
+  });
 
-    await claimCard(db, { season: SEASON, applicationId: appId, cardId: stray, userId: STEWARD, appSeason: APP_SEASON });
-    const [row] = await db.select({ applicationId: sessionBoardProjects.applicationId }).from(sessionBoardProjects).where(eq(sessionBoardProjects.id, stray));
+  it("a claim brings the card's answers in, is recorded, and can be given back", async () => {
+    await claimCard(db, { season: SEASON, applicationId: appId, cardId: unowned, userId: STEWARD, appSeason: APP_SEASON });
+    const [row] = await db.select({ applicationId: sessionBoardProjects.applicationId }).from(sessionBoardProjects).where(eq(sessionBoardProjects.id, unowned));
     expect(row.applicationId).toBe(appId);
-    const after = await read();
-    expect(after!.profile.start?.pains).toEqual(["Water runs off the hill"]);
-    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: stray, userId: STEWARD, appSeason: APP_SEASON }))
-      .rejects.toMatchObject({ code: "BAD_REQUEST" });
-    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: othersCard, userId: STEWARD, appSeason: APP_SEASON }))
-      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+    let r = await read();
+    expect(r!.profile.start?.pains).toEqual(["Water runs off the hill"]);
+    expect(r!.claimed.map((c) => c.cardId)).toEqual([unowned]);
+    const [claim] = await db.select().from(villageProfileClaims).where(eq(villageProfileClaims.cardId, unowned));
+    expect(claim).toMatchObject({ applicationId: appId, claimedBy: STEWARD });
+    // Twice is refused; another project's card is refused.
+    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: unowned, userId: STEWARD, appSeason: APP_SEASON })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: othersCard, userId: STEWARD, appSeason: APP_SEASON })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: guestWrote, userId: STEWARD, appSeason: APP_SEASON })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    // Given back: the card is unlinked and its answers leave the profile.
+    await unclaimCard(db, { applicationId: appId, cardId: unowned });
+    const [after] = await db.select({ applicationId: sessionBoardProjects.applicationId }).from(sessionBoardProjects).where(eq(sessionBoardProjects.id, unowned));
+    expect(after.applicationId).toBeNull();
+    r = await read();
+    expect(r!.profile.start).toBeNull();
+    expect(r!.claimed).toEqual([]);
+    await expect(unclaimCard(db, { applicationId: appId, cardId: w3card })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("stores the stewards' own answers, refuses wrong ones, and keeps a confirmed snapshot", async () => {
-    await answerDecision(db, { applicationId: appId, key: "identity.name", value: "  Spring Farm  ", userId: STEWARD });
-    await expect(answerDecision(db, { applicationId: appId, key: "economy.issuanceCap", value: "lots", userId: STEWARD }))
-      .rejects.toThrow("Give a whole number.");
-    await expect(answerDecision(db, { applicationId: appId, key: "seats.cards", value: "x", userId: STEWARD }))
-      .rejects.toThrow("This part comes from the weekly boards.");
-    await expect(answerDecision(db, { applicationId: appId, key: "identity.nope", value: "x", userId: STEWARD }))
-      .rejects.toMatchObject({ code: "NOT_FOUND" });
-    await confirmDecision(db, { season: SEASON, applicationId: appId, key: "seats.cards", userId: STEWARD, appSeason: APP_SEASON });
-    await expect(confirmDecision(db, { season: SEASON, applicationId: appId, key: "legal.exitPolicy", userId: STEWARD, appSeason: APP_SEASON }))
-      .rejects.toThrow("There's nothing here to confirm yet.");
-
-    let r = await read();
-    let by = new Map(r!.profile.decisions.map((d) => [d.key, d]));
-    expect(by.get("identity.name")).toMatchObject({ status: "yours", value: "Spring Farm" });
-    expect(by.get("seats.cards")).toMatchObject({ status: "yours", changed: false });
-
-    // The boards move on after the confirm: the page says so, and the file keeps what was confirmed.
+  it("keeps exactly what the steward saw, and refuses when the boards changed in between", async () => {
+    const seen = await stampOf("seats.cards");
+    // Someone adds a seat while the steward reads: the old stamp is refused.
     await answer(b4, w4card, "seat-2", cardText("seat", { name: "Water carrier", circle: "water", need: "play", aim: "Water for every gathering", answersFor: "The barrels", heldBy: "open", who: "", contribution: "" }));
+    await expect(confirmDecision(db, { season: SEASON, applicationId: appId, key: "seats.cards", seen, userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toMatchObject({ code: "CONFLICT", message: "The boards changed while you were reading. Look again, then keep it." });
+    await confirmDecision(db, { season: SEASON, applicationId: appId, key: "seats.cards", seen: await stampOf("seats.cards"), userId: STEWARD, appSeason: APP_SEASON });
+    let r = await read();
+    expect(r!.profile.decisions.find((d) => d.key === "seats.cards")).toMatchObject({ status: "yours", changed: false });
+    // The boards move on after the keep: the page says so, and the file keeps what was kept.
+    await answer(b4, w4card, "seat-3", cardText("seat", { name: "Seed saver", circle: "food", need: "love", aim: "Seeds for every bed", answersFor: "The seed library", heldBy: "team", who: "Ana", contribution: "" }));
     r = await read();
-    by = new Map(r!.profile.decisions.map((d) => [d.key, d]));
-    expect(by.get("seats.cards")!.changed).toBe(true);
+    expect(r!.profile.decisions.find((d) => d.key === "seats.cards")!.changed).toBe(true);
+    expect(toVillageFile(r!.profile).card.seats.map((s) => s.name)).toEqual(["Fire keeper", "Water carrier"]);
+    // A suggestion that fails its own check can't be kept as it stands.
+    await expect(confirmDecision(db, { season: SEASON, applicationId: appId, key: "purpose.statement", seen: await stampOf("purpose.statement"), userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(confirmDecision(db, { season: SEASON, applicationId: appId, key: "legal.exitPolicy", seen: "x", userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toThrow("There's nothing here to keep yet.");
+  });
+
+  it("stores the stewards' own answers, refuses wrong ones in words, and takes them back", async () => {
+    await answerDecision(db, { applicationId: appId, key: "identity.name", value: "  Spring Farm  ", userId: STEWARD, appSeason: APP_SEASON });
+    await expect(answerDecision(db, { applicationId: appId, key: "economy.issuanceCap", value: "lots", userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toThrow("Give a whole number.");
+    await expect(answerDecision(db, { applicationId: appId, key: "seats.cards", value: "x", userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toThrow("This part comes from the weekly boards.");
+    await expect(answerDecision(db, { applicationId: appId, key: "identity.nope", value: "x", userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toMatchObject({ code: "NOT_FOUND" });
+    let r = await read();
+    expect(r!.profile.decisions.find((d) => d.key === "identity.name")).toMatchObject({ status: "yours", value: "Spring Farm" });
     const file = toVillageFile(r!.profile);
-    expect(file.card.seats.map((s) => s.name)).toEqual(["Fire keeper"]);
     expect(file.identity.name).toBe("Spring Farm");
     expect(file.identity.location).toBeNull();
-
-    await clearDecision(db, { applicationId: appId, key: "identity.name" });
+    await clearDecision(db, { applicationId: appId, key: "identity.name", appSeason: APP_SEASON });
     r = await read();
     expect(r!.profile.decisions.find((d) => d.key === "identity.name")!.status).toBe("suggested");
   });
 
-  it("only Season 2 projects that applied have a profile", async () => {
-    expect(await readVillageProfile(db, { season: SEASON, applicationId: appId, userId: STEWARD, appSeason: 2 })).toBeNull();
+  it("only Season 2 projects that applied have a profile, and only they take answers", async () => {
+    expect(await readVillageProfile(db, { season: SEASON, applicationId: appId, appSeason: 2 })).toBeNull();
     const draft = await app("Draft Farm", STEWARD);
     await db.update(applications).set({ status: "draft" }).where(eq(applications.id, draft));
-    expect(await read(STEWARD, draft)).toBeNull();
+    expect(await read(draft)).toBeNull();
+    await expect(answerDecision(db, { applicationId: draft, key: "identity.name", value: "Draft", userId: STEWARD, appSeason: APP_SEASON }))
+      .rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(clearDecision(db, { applicationId: draft, key: "identity.name", appSeason: APP_SEASON })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("lists every project's profile for admins", async () => {
+  it("lists every project's profile for admins, reading the season once", async () => {
     const list = await listVillageProfiles(db, SEASON, APP_SEASON);
     const mine = list.find((p) => p.applicationId === appId);
     expect(mine).toMatchObject({ projectName: "Profile Spring Farm", status: "submitted" });
-    expect(mine!.launch.total).toBeGreaterThan(0);
+    expect(mine!.launch.total).toBe(6);
     expect(list.some((p) => p.applicationId === otherApp)).toBe(true);
   });
 
-  it("the router refuses a stranger and lets the steward in", async () => {
-    // These go through the real gates, which read the application by id.
+  it("the router refuses a stranger, and lets the steward in only to a Season 2 project", async () => {
     const stranger = appRouter.createCaller(makeCtx({ id: STRANGER, role: "user" } as unknown as TrpcContext["user"], "198.51.100.74"));
     await expect(stranger.villageProfile.get({ applicationId: appId })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(stranger.villageProfile.answer({ applicationId: appId, key: "identity.name", value: "Mine now" })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    await expect(stranger.villageProfile.claimCard({ applicationId: appId, cardId: mineByCheckin })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(stranger.villageProfile.claimCard({ applicationId: appId, cardId: stewardWrote })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(stranger.villageProfile.unclaimCard({ applicationId: appId, cardId: stewardWrote })).rejects.toMatchObject({ code: "FORBIDDEN" });
     const steward = appRouter.createCaller(makeCtx({ id: STEWARD, role: "user" } as unknown as TrpcContext["user"], "198.51.100.75"));
-    // The router reads Season 2 applications; this test season's application isn't one, so the steward gets "no profile".
+    // The router reads Season 2; this test season's application isn't one, so its profile is "none" and nothing is written.
     await expect(steward.villageProfile.get({ applicationId: appId })).rejects.toMatchObject({ code: "NOT_FOUND" });
-    await steward.villageProfile.answer({ applicationId: appId, key: "identity.tagline", value: "Healing land together" });
-    const [row] = await db.select().from(villageProfileAnswers).where(eq(villageProfileAnswers.decisionKey, "identity.tagline"));
-    expect(row).toMatchObject({ applicationId: appId, how: "answered", updatedBy: STEWARD });
+    await expect(steward.villageProfile.answer({ applicationId: appId, key: "identity.tagline", value: "Healing land together" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    const rows = await db.select().from(villageProfileAnswers).where(eq(villageProfileAnswers.decisionKey, "identity.tagline"));
+    expect(rows.filter((r) => r.applicationId === appId)).toEqual([]);
   });
 });
