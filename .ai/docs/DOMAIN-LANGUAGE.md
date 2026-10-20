@@ -401,6 +401,8 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Copy for Village OS** (ADR-76). The button that copies a project's card, Week 3 and Week 4 together, as JSON Village OS can read: its `needs` list is the body of Village OS's needs scope write, then the whole-project figure, circles, seats with their need links, decisions and quests.
 
+**Village profile** (ADR-77). One land project's Village OS 1.0 taking shape: everything it said on its application, its hosting request and every weekly board, gathered into the decisions its Village OS launches with (shared/villageDecisions.ts). Keyed by the project's Season 2 application. Board answers are suggestions until one of its stewards keeps them or writes their own; only those go into its **1.0 file** ("regen-civics/village@1"), which Village OS loads as a draft for the founders. Stewards open it at /apply/village. Not the person's player profile.
+
 **Weekly sessions** (under Submissions). The section of a signed-in person's profile, Submissions tab, that lists every board they wrote on, week by week, with their projects and answers. A guest's answers join it when they sign in on the same browser and say yes.
 
 ### Get your Village OS (ADR-69)

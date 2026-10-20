@@ -42,6 +42,11 @@ import { needsSummary, projectCardLines, projectView } from "@shared/humanNeeds"
 import { SessionSubmissions } from "@/components/profile/SessionSubmissions";
 import { SessionBoardExport } from "@/components/admin/SessionBoardExport";
 import { Toaster } from "@/components/ui/sonner";
+import VillageProfile from "@/pages/VillageProfile";
+import { AdminVillageProfiles } from "@/components/admin/AdminVillageProfiles";
+import { buildProfile, type ProfileSources } from "@shared/projectProfile";
+import { toVillageFile } from "@shared/villageFile";
+import { cardText } from "@shared/boardCards";
 
 export type Story = {
   title: string;
@@ -774,6 +779,56 @@ const TREE_SCORES: CapitalScores = {
 const GAME_TREE_VALUES: Record<string, number> = {
   financial: 20, social: 140, cultural: 90, living: 180, intellectual: 60,
   experiential: 110, material: 45, spiritual: 70, health: 95,
+};
+
+/**
+ * A Village profile in every state a steward meets (ADR-77): suggestions from
+ * the application and the boards, a name the stewards wrote, a confirmed
+ * block the boards have moved past, Village OS defaults, open launch
+ * decisions, and an earlier card to claim.
+ */
+const PROFILE_ROW = (id: number, block: string, text: string, projectId: number, createdAt = "2026-10-14T17:30:00Z") => ({ id, kind: "answer", block, text, projectId, createdAt });
+const PROFILE_SOURCES: ProfileSources = {
+  application: { id: 63, projectName: "Green Gulch Land Trust", location: "Marin, California", country: "United States", vision: "A land trust for twelve families", latitude: 37.9, intendedPeopleCount: 40, status: "approved" },
+  request: { villageName: "Green Gulch", tagline: null, memberWord: "Gulcher", currencyName: "Acorns", timeZone: "America/Los_Angeles", preferredAddress: "green-gulch" },
+  tools: ["Hypha", "Hylo"],
+  weeks: [
+    { week: 2, cards: [{ id: 21, name: "Green Gulch Land Trust" }], rows: [], pains: ["Nobody owns the water schedule, so it slips every dry season"], opps: ["A seed library with the two farms down the road"], phase: "root", whereNow: "Land in sight, six of us living nearby, a lease being drafted.", nextMove: null },
+    { week: 3, cards: [{ id: 31, name: "Green Gulch Land Trust" }], rows: [
+      PROFILE_ROW(1, "needs", "vitality", 31), PROFILE_ROW(2, "needs", "love", 31), PROFILE_ROW(3, "needs", "growth", 31),
+      PROFILE_ROW(4, "top", "vitality", 31), PROFILE_ROW(5, "top", "love", 31),
+      PROFILE_ROW(6, "n-vitality", "unmet", 31), PROFILE_ROW(7, "g-vitality", "thriving", 31), PROFILE_ROW(8, "b-vitality", "100", 31),
+      PROFILE_ROW(9, "n-love", "alive", 31), PROFILE_ROW(10, "g-love", "satisfied", 31), PROFILE_ROW(11, "b-love", "75", 31),
+      PROFILE_ROW(12, "whole", "50", 31), PROFILE_ROW(13, "purpose", "twelve families living well on land we heal together", 31),
+      PROFILE_ROW(14, "rite", "A first season in a role, then a welcome circle", 31), PROFILE_ROW(15, "circles", "food", 31), PROFILE_ROW(16, "circles", "water", 31),
+    ], pains: [], opps: [], phase: null, whereNow: null, nextMove: null },
+    { week: 4, cards: [{ id: 41, name: "Green Gulch Land Trust" }], rows: [
+      PROFILE_ROW(17, "seat-1", cardText("seat", { name: "Water keeper", circle: "water", need: "vitality", aim: "Living water for every household", answersFor: "The spring, the catchment and the water schedule", heldBy: "open", who: "", contribution: "4 hours a week" }), 41, "2026-10-21T18:00:00Z"),
+      PROFILE_ROW(18, "seat-2", cardText("seat", { name: "Seed saver", circle: "food", need: "vitality", aim: "Seeds for every bed", answersFor: "The seed library", heldBy: "team", who: "Ana", contribution: "Two mornings a week" }), 41, "2026-10-21T18:05:00Z"),
+      PROFILE_ROW(19, "dec-1", cardText("decide", { circle: "water", decidesOn: "How the spring is shared in a dry year", how: "consent" }), 41, "2026-10-21T18:10:00Z"),
+      PROFILE_ROW(20, "quest-1", cardText("quest", { quest: "Map every seep and spring on the land with two neighbours", need: "vitality" }), 41, "2026-10-21T18:20:00Z"),
+      PROFILE_ROW(21, "entry", "Come to a work day, then a welcome circle", 41, "2026-10-21T18:25:00Z"),
+    ], pains: [], opps: [], phase: null, whereNow: null, nextMove: null },
+  ],
+  stored: {
+    "identity.name": { value: "Green Gulch", how: "answered", updatedAt: "2026-10-21T19:00:00Z", updatedBy: 1 },
+    "seats.cards": { value: { seats: [] }, how: "confirmed", updatedAt: "2026-10-21T19:00:00Z", updatedBy: 1 },
+    "economy.issuanceCap": { value: "none", how: "answered", updatedAt: "2026-10-21T19:00:00Z", updatedBy: 1 },
+  },
+};
+const PROFILE_FIXTURE = (() => {
+  const profile = buildProfile(PROFILE_SOURCES);
+  return {
+    profile,
+    claimable: [{ cardId: 88, week: 2, name: "Green Gulch", answers: 4, why: "yours" as const }],
+    applicationStatus: "approved",
+    file: toVillageFile(profile, { now: new Date("2026-10-21T20:00:00Z") }),
+  };
+})();
+const PROFILE_SETUP = () => {
+  mockData["auth.me"] = SIGNED_IN;
+  mockData["villageProfile.mine"] = { projects: [{ applicationId: 63, projectName: "Green Gulch Land Trust", status: "approved" }] };
+  mockData["villageProfile.get"] = PROFILE_FIXTURE;
 };
 
 export const STORIES: Record<string, Story> = {
@@ -1817,6 +1872,38 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="bg-[#f0ebe3] p-4">
         <SessionBoardExport />
+      </div>
+    ),
+  },
+  /** Your Village OS 1.0 (ADR-77): every decision's state, the file, a card to claim. Public, dark html. */
+  "village-profile": {
+    title: "Your Village OS 1.0: a steward's profile, every state",
+    setup: PROFILE_SETUP,
+    render: () => <VillageProfile />,
+  },
+
+  /** The same page with a steward writing their own answer. */
+  "village-profile-editing": {
+    title: "Your Village OS 1.0: writing your own answer",
+    setup: PROFILE_SETUP,
+    render: () => <VillageProfile />,
+  },
+
+  /** Admin > Events: every project's profile at a glance, after "See every project's profile". Light theme. */
+  "admin-village-profiles": {
+    title: "Admin > Events: Village profiles",
+    setup: () => {
+      mockData["villageProfile.adminList"] = {
+        profiles: [
+          { applicationId: 63, projectName: "Green Gulch Land Trust", status: "approved", weeks: [2, 3, 4], launch: { total: 9, ready: 3 }, yours: 3, suggested: 12 },
+          { applicationId: 64, projectName: "Casa Semilla", status: "under_review", weeks: [3], launch: { total: 9, ready: 1 }, yours: 0, suggested: 6 },
+          { applicationId: 68, projectName: "Hill Farm", status: "submitted", weeks: [], launch: { total: 9, ready: 1 }, yours: 0, suggested: 3 },
+        ],
+      };
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminVillageProfiles />
       </div>
     ),
   },

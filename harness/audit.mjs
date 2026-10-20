@@ -109,6 +109,17 @@ const BEFORE = {
     await page.getByRole("button", { name: /Add what a circle decides: Food & Fertility/ }).click();
     await page.waitForTimeout(200);
   },
+  // Village profile (ADR-77): a steward writing their own words, and the purpose with its word count.
+  "village-profile-editing": async (page) => {
+    await page.getByRole("listitem").filter({ hasText: "Its tagline" }).getByRole("button", { name: "Write your own" }).click();
+    await page.getByRole("textbox", { name: "Its tagline" }).fill("Twelve families living well on healed land");
+    await page.getByRole("listitem").filter({ hasText: "Your governing purpose" }).getByRole("button", { name: "Write your own" }).click();
+    await page.waitForTimeout(200);
+  },
+  "admin-village-profiles": async (page) => {
+    await page.getByRole("button", { name: "See every project's profile" }).click();
+    await page.getByRole("table").waitFor({ timeout: 5_000 });
+  },
   "week4-built": async (page) => {
     await page.getByText("Show what's in it").first().click();
     await page.waitForTimeout(200);

@@ -7006,3 +7006,24 @@ export const villageOsRequests = mysqlTable("village_os_requests", {
   index("village_os_requests_status_idx").on(table.status),
 ]));
 export type VillageOsRequest = typeof villageOsRequests.$inferSelect;
+
+/**
+ * A land project's Village profile (ADR-77, migration 0301): its stewards'
+ * own word on each Village OS 1.0 decision (shared/villageDecisions.ts). Every
+ * other answer is read live from where it was given.
+ */
+export const villageProfileAnswers = mysqlTable("village_profile_answers", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  decisionKey: varchar("decisionKey", { length: 48 }).notNull(),
+  /** JSON text. */
+  value: mediumtext("value").notNull(),
+  how: mysqlEnum("how", ["confirmed", "answered"]).notNull(),
+  updatedBy: int("updatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ([
+  uniqueIndex("village_profile_answers_app_key_idx").on(table.applicationId, table.decisionKey),
+  index("village_profile_answers_app_idx").on(table.applicationId),
+]));
+export type VillageProfileAnswer = typeof villageProfileAnswers.$inferSelect;
