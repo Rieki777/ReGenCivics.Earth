@@ -16,6 +16,7 @@ import type { TrpcContext } from "./_core/context";
 import { getDb } from "./db";
 import {
   applications,
+  roleHolders,
   sessionBoardItems,
   sessionBoardProjects,
   sessionBoardVotes,
@@ -81,6 +82,8 @@ const SEASON = "Profile Test 2031";
 const APP_SEASON = 9032;
 const STEWARD = 987660101;
 const STRANGER = 987660102;
+/** A season facilitator who is also this project's named steward. */
+const FAC = 987660103;
 
 describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
   let db: Db;
@@ -98,6 +101,10 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
   let guestWrote = 0;
   let checkedIn = 0;
   let othersCard = 0;
+  let facOthers = 0;
+  let facOurs = 0;
+  let stewardNamedOther = 0;
+  let facRole = 0;
 
   const insertId = (res: unknown) => Number((res as [{ insertId: number }])[0]?.insertId ?? (res as { insertId: number }).insertId);
   const card = async (boardId: number, values: Partial<typeof sessionBoardProjects.$inferInsert> & { name: string }) =>
@@ -158,6 +165,13 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
     // Another project's card, which never belongs to this profile.
     othersCard = await card(b3, { name: "Another Place", applicationId: otherApp });
     await answer(b3, othersCard, "needs", "growth");
+    // A facilitator who is also this project's steward made two cards on Week 2 (as importRegister does),
+    // and the plain steward made one named for the other project.
+    await db.update(applications).set({ stewardUserId: FAC }).where(eq(applications.id, appId));
+    facRole = insertId(await db.insert(roleHolders).values({ roleSlug: "season-facilitator", roleTitle: "Season Facilitator", userId: FAC, isActive: 1 }));
+    facOthers = await card(b2, { name: "Another Place", authorKey: `u:${FAC}` });
+    facOurs = await card(b2, { name: "Profile Spring Farm", authorKey: `u:${FAC}` });
+    stewardNamedOther = await card(b2, { name: "Another  Place", authorKey: `u:${STEWARD}` });
   });
 
   afterAll(async () => {
@@ -173,6 +187,7 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
       await db.delete(sessionBoards).where(inArray(sessionBoards.id, boardIds));
     }
     if (appIds.length) await db.delete(applications).where(inArray(applications.id, appIds));
+    if (facRole) await db.delete(roleHolders).where(eq(roleHolders.id, facRole));
   });
 
   it("finds the project's cards on every week, and never another project's", async () => {
@@ -214,6 +229,23 @@ describe.skipIf(skipIfNoDb)("village profiles: the database layer", () => {
     expect(offered.has(guestWrote)).toBe(false);
     expect(offered.has(checkedIn)).toBe(false);
     expect(offered.has(othersCard)).toBe(false);
+  });
+
+  it("a card a facilitator wrote is nobody's: claimable by name only, even when that facilitator is a steward here", async () => {
+    const ours = new Map((await read())!.claimable.map((c) => [c.cardId, c.why]));
+    expect(ours.get(facOurs)).toBe("name");
+    expect(ours.has(facOthers)).toBe(false);
+    // A steward's own card named for another project that applied is that project's, not "yours".
+    expect(ours.has(stewardNamedOther)).toBe(false);
+    expect(ours.get(stewardWrote)).toBe("yours");
+    const theirs = new Map((await read(otherApp))!.claimable.map((c) => [c.cardId, c.why]));
+    expect(theirs.get(facOthers)).toBe("name");
+    expect(theirs.has(stewardNamedOther)).toBe(false);
+    // The server refuses the claim too, not only the page.
+    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: facOthers, userId: FAC, appSeason: APP_SEASON })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(claimCard(db, { season: SEASON, applicationId: appId, cardId: stewardNamedOther, userId: STEWARD, appSeason: APP_SEASON })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    const [still] = await db.select({ applicationId: sessionBoardProjects.applicationId }).from(sessionBoardProjects).where(eq(sessionBoardProjects.id, facOthers));
+    expect(still.applicationId).toBeNull();
   });
 
   it("a claim brings the card's answers in, is recorded, and can be given back", async () => {

@@ -13,12 +13,15 @@
  *
  * CLAIMING AN EARLIER CARD. A card with no application can be claimed from the
  * profile page by the project's stewards when one of them wrote it, or when it
- * has the project's name and nobody owns it (an imported or facilitator-made
- * card). A card a guest wrote, or one that sits in another project's group of
- * cards, is never claimable: a facilitator links those from the board. This
- * is the same ownership rule check-in's auto-link keeps (mayAutoLink), so
- * anyone who makes an application can't take another project's cards. Every
- * claim is recorded (village_profile_claims) and can be given back.
+ * has the project's name and nobody owns it. A card a facilitator or an admin
+ * wrote counts as nobody's (importRegister and a facilitator's addProject make
+ * cards for other projects under the facilitator's own key), so it is
+ * claimable by name only, even when that facilitator is also a steward here.
+ * A steward's own card named for another project that applied is that
+ * project's. A card a guest wrote, or one that sits in another project's
+ * group of cards, is never claimable: a facilitator links those from the
+ * board (curateProject). Every claim is recorded (village_profile_claims) and
+ * can be given back.
  */
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -26,14 +29,16 @@ import {
   applications,
   regenToolProjectUsage,
   regenTools,
+  roleHolders,
   sessionBoardItems,
   sessionBoardProjects,
   sessionBoards,
+  users,
   villageOsRequests,
   villageProfileAnswers,
   villageProfileClaims,
 } from "../../drizzle/schema";
-import { CHECKIN_APPLICATION_STATUSES, anonymousKeys, foldProjectName } from "@shared/sessionBoard";
+import { BOARD_FACILITATOR_ROLE_SLUGS, CHECKIN_APPLICATION_STATUSES, anonymousKeys, foldProjectName } from "@shared/sessionBoard";
 import type { CardCarry } from "@shared/boardCarry";
 import type { AnswerRow } from "@shared/humanNeeds";
 import {
@@ -259,6 +264,32 @@ function othersGroups(read: SeasonRead, applicationId: number): Set<number> {
   return out;
 }
 
+/**
+ * The author keys of everyone who can run a board: site admins and active
+ * holders of the facilitating roles (canFacilitate's set). Their cards are
+ * made for other projects (importRegister, a facilitator's addProject), so a
+ * card one of them wrote belongs to nobody here.
+ */
+export async function readFacilitatorKeys(db: Db): Promise<Set<string>> {
+  const [admins, holders] = await Promise.all([
+    db.select({ id: users.id }).from(users).where(inArray(users.role, ["admin", "superadmin"])),
+    db
+      .select({ userId: roleHolders.userId })
+      .from(roleHolders)
+      .where(and(eq(roleHolders.isActive, 1), inArray(roleHolders.roleSlug, [...BOARD_FACILITATOR_ROLE_SLUGS]))),
+  ]);
+  return new Set([...admins.map((a) => a.id), ...holders.map((h) => h.userId)].filter((id): id is number => id != null).map((id) => `u:${id}`));
+}
+
+/** Every other project that has a profile this season, by the name it applied with. */
+async function readOtherProjectNames(db: Db, applicationId: number, appSeason: number): Promise<string[]> {
+  const rows = await db
+    .select({ id: applications.id, projectName: applications.projectName })
+    .from(applications)
+    .where(and(eq(applications.season, appSeason), inArray(applications.status, [...PROFILE_STATUSES])));
+  return rows.filter((r) => r.id !== applicationId).map((r) => r.projectName ?? "").filter(Boolean);
+}
+
 /** The cards with no application this project's stewards may claim (see the file's comment). */
 export function claimableCards(
   read: SeasonRead,
@@ -267,15 +298,22 @@ export function claimableCards(
   names: readonly string[],
   stewardIds: readonly number[],
   answers: ReadonlyMap<number, number>,
+  facilitatorKeys: ReadonlySet<string> = new Set(),
+  otherNames: readonly string[] = [],
 ): ClaimableCard[] {
   const folded = new Set(names.map((n) => foldProjectName(n)).filter(Boolean));
-  const stewardKeys = new Set(stewardIds.map((id) => `u:${id}`));
+  const othersFolded = new Set(otherNames.map((n) => foldProjectName(n)).filter((n) => n && !folded.has(n)));
+  const stewardKeys = new Set(stewardIds.map((id) => `u:${id}`).filter((k) => !facilitatorKeys.has(k)));
   const taken = othersGroups(read, applicationId);
   const out: ClaimableCard[] = [];
   for (const c of read.cards) {
     if (c.hidden || c.applicationId != null || ids.has(c.id) || taken.has(c.id)) continue;
-    const yours = !!c.authorKey && stewardKeys.has(c.authorKey);
-    const byName = c.authorKey == null && folded.has(foldProjectName(c.name));
+    const name = foldProjectName(c.name);
+    // A facilitator's card is nobody's, so it is claimable by name only.
+    const nobody = c.authorKey == null || facilitatorKeys.has(c.authorKey);
+    // A steward's card named for another project that applied is that project's.
+    const yours = !nobody && stewardKeys.has(c.authorKey!) && !othersFolded.has(name);
+    const byName = nobody && folded.has(name);
     if (!yours && !byName) continue;
     out.push({ cardId: c.id, week: c.week, name: c.name, answers: answers.get(c.id) ?? 0, why: yours ? "yours" : "name" });
   }
@@ -332,9 +370,13 @@ export async function readVillageProfile(
   let claimable: ClaimableCard[] = [];
   let claimed: ClaimedCard[] = [];
   if (opts.withClaims !== false) {
-    const stewardIds = await getApplicationStewardIds(app.id);
+    const [stewardIds, facilitatorKeys, otherNames] = await Promise.all([
+      getApplicationStewardIds(app.id),
+      readFacilitatorKeys(db),
+      readOtherProjectNames(db, app.id, opts.appSeason ?? PROFILE_APPLICATION_SEASON),
+    ]);
     const names = [app.projectName, request?.villageName ?? ""].filter(Boolean);
-    const candidates = claimableCards(read, app.id, ids, names, stewardIds, new Map());
+    const candidates = claimableCards(read, app.id, ids, names, stewardIds, new Map(), facilitatorKeys, otherNames);
     const counts = await answerCounts(db, candidates.map((c) => c.cardId));
     claimable = candidates.map((c) => ({ ...c, answers: counts.get(c.cardId) ?? 0 }));
     claimed = await readClaimed(db, read, app.id);

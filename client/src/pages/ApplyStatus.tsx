@@ -22,7 +22,7 @@ import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 import { defaultCrowdpoolOpening } from "@shared/crowdpoolCalendar";
 import { formatCloseDate } from "@shared/campaignProgress";
 import { projectPathForApplication } from "@shared/projectKey";
-import { isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { HOSTING_SEASON, isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import { SeasonVoteNudge } from "@/components/CallTimeVoteNudge";
 import { ProjectToolsPicker } from "@/components/ProjectToolsPicker";
 import { CHECKIN_APPLICATION_STATUSES } from "@shared/sessionBoard";
@@ -234,7 +234,7 @@ export default function ApplyStatus({ now }: { now?: Date } = {}) {
             </div>
 
             {/* The project's Village OS 1.0, gathered from every page and weekly board (ADR-77). */}
-            {VILLAGE_PROFILE_STATUSES.includes(application.status) && (
+            {application.season === HOSTING_SEASON && VILLAGE_PROFILE_STATUSES.includes(application.status) && (
               <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
                 <h3 className="font-semibold text-[#1a472a] mb-2">Your Village OS 1.0</h3>
                 <p className="text-sm text-[#1a472a]/80 mb-3">

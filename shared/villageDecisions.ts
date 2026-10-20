@@ -191,7 +191,7 @@ export const VILLAGE_DECISIONS: readonly VillageDecision[] = [
   // Quests and contribution
   { key: "quests.first", module: "quests", title: "Your first quests", hint: "Each tied to the human need it grows.", kind: "block", villageOs: "quests, need_links", lands: "editor", weeks: [4, 5], default: null, blocksLaunch: false },
   { key: "quests.contribution", module: "quests", title: "What counts as contribution here", kind: "longtext", max: 2000, villageOs: "gratitude, mint rules", lands: "note", weeks: [5], default: null, blocksLaunch: false },
-  { key: "quests.tokenName", module: "quests", title: "The name of your recognition token", hint: "The thanks people send each other. It's a signal, never a price.", kind: "text", max: 40, villageOs: "tokens", lands: "editor", weeks: [5], default: null, blocksLaunch: false },
+  { key: "quests.tokenName", module: "quests", title: "The name of your recognition token", hint: "The thanks people send each other. It carries no price and no peg.", kind: "text", max: 40, villageOs: "tokens", lands: "editor", weeks: [5], default: null, blocksLaunch: false },
 
   // Seasons
   { key: "seasons.year", module: "seasons", title: "Your village's seasons", hint: "Their names and the day each one starts.", kind: "longtext", max: 1000, villageOs: "calendar.seasons", lands: "note", weeks: [5], default: "Spring, summer, autumn and winter, by your hemisphere", blocksLaunch: false },
