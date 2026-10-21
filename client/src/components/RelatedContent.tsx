@@ -118,7 +118,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   },
   land: {
     pages: [
-      { href: "/fund", title: "The Cooperative", description: "A member-owned cooperative for land, now in design." },
+      { href: "/fund", title: "The Cooperative Treasury", description: "Where land projects pool resources and co-own each other, in formation." },
       { href: "/game", title: "Play the Game", description: "Earn tokens and complete quests to support land projects." },
       { href: "/showcase", title: "Project Showcase", description: "See approved projects and their regenerative impact." },
     ],

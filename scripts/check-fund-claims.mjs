@@ -87,6 +87,9 @@ export const RETIRED = [
   "Cooperative is in design",
   "cooperative we are designing",
   "Help design the cooperative",
+  "Cooperative, in design",
+  "cooperative for land, now in design",
+  "now in design.",
 ];
 
 // ── 2. G5 language ───────────────────────────────────────────────────────────

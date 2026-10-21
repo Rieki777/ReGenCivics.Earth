@@ -786,6 +786,12 @@ export default function LOI() {
   const [path, setPath] = useState<Path>(initialPath);
   const [done, setDone] = useState<Done | null>(null);
 
+  // The thank-you replaces a long form; without this it opened scrolled to
+  // the footer, with the confirmation off screen (found in the 2026-10-21 run).
+  useEffect(() => {
+    if (done) window.scrollTo({ top: 0 });
+  }, [done]);
+
   if (done) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#1a472a] to-[#0d2818] py-16 px-4">

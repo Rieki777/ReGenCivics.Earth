@@ -59,7 +59,7 @@ export const schemas = {
   // named after a fund that does not exist under a name nothing else used, and
   // described as open to accredited investors, to every search engine and AI
   // crawler that loaded /fund. Since 2026-09-27 /fund describes a cooperative
-  // in design that is not a legal entity, so there is no financial product to
+  // in formation that is not a legal entity, so there is no financial product to
   // describe, and it gets no schema. Facts live in shared/fund.ts (COOP).
 
   faqPage: (faqs: Array<{ question: string; answer: string }>) => ({

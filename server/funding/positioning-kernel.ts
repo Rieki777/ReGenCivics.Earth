@@ -38,7 +38,7 @@ No positioning kernel has been saved in the admin yet, so you have only the fund
 
 ## What ReGen Civics is (public description)
 
-ReGen Civics helps regenerative land projects design structures that hold together, and connects them into a network. It runs an in-real-life game and builds free, open tools that a project's own agents can use. A member-owned cooperative network, in which land projects and people buy and steward land together, is in design; it is not a legal entity and accepts no money. Church of the Regenerative Earth is a separate entity.
+ReGen Civics helps regenerative land projects design structures that hold together, and connects them into a network. It runs an in-real-life game and builds free, open tools that a project's own agents can use. A member-owned cooperative treasury, through which land projects and people pool their resources and co-own each other's projects, is in formation; it is not a legal entity and accepts no money. Church of the Regenerative Earth is a separate entity.
 
 ## Rules
 

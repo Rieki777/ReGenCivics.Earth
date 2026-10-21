@@ -826,7 +826,7 @@ export default function Bionomics() {
                       </h3>
                     </div>
                     <ul className="space-y-2 text-white/80 text-sm md:text-base">
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> The cooperative, in design</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> The cooperative treasury, in formation</li>
                       <li className="flex gap-2"><span className="text-[#d4a574]">•</span> $RCivics and RCVoice, under review with counsel</li>
                       <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Tokens as records of contribution</li>
                       <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Law, land and membership in the current systems</li>

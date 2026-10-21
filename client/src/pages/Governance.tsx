@@ -2,7 +2,7 @@
  * Governance Page - ReGen Civics
  *
  * Two spaces: the Game, governed today by RGVoice on Hypha, and the ReGen
- * Network Cooperative, in design, meant to vote one member, one vote.
+ * Network Cooperative, in formation, meant to vote one member, one vote.
  *
  * Rewritten 2026-09-27 (Phase 0, FUNDING_ENGINE_PLAN v1.2). The fund side of
  * this page described a weighted voice split with an investor seat, success
@@ -416,7 +416,7 @@ export default function Governance() {
                     },
                     {
                       dimension: 'Where It Stands',
-                      coop: 'In design. Not yet a legal entity, and it accepts no money.',
+                      coop: 'In formation. Not yet a legal entity, and it accepts no money.',
                       game: 'Running today, with binding votes on Hypha DHO (on-chain)',
                       coopColor: 'text-[#d4a574]',
                       gameColor: 'text-purple-300',

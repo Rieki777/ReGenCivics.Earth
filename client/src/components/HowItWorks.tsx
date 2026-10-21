@@ -36,8 +36,8 @@ const steps = [
     borderColor: "border-violet-400/30",
   },
   {
-    title: "Designing the Cooperative",
-    summary: "A member-owned cooperative for land projects and people, now in design.",
+    title: "The Cooperative Treasury",
+    summary: "Where land projects and people pool resources and co-own each other's projects, in formation.",
     detail: COOP.statement,
     icon: Users,
     color: "text-amber-400",

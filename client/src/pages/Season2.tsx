@@ -625,7 +625,7 @@ export default function Season2() {
     <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
       <SEO
         title="Season Two: Show Us Your Play in the Infinite Game"
-        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort, with every community project that's ready, into one shared crowdpooling campaign. The cohort is the start of a cooperative network of land projects for the ReGenerative Renaissance, now in design."
+        description="Season Two selects thirteen regenerative land projects across every stage, scale, and approach. We build your models together, then launch the whole cohort, with every community project that's ready, into one shared crowdpooling campaign. The cohort is the start of a cooperative network of land projects for the ReGenerative Renaissance."
         image="/og/season2.jpg"
       />
 
@@ -667,7 +667,8 @@ export default function Season2() {
               that's ready, into one shared crowdpooling campaign where the world
               decides what to pool into. The cohort is the start of a
               cooperative network of land projects for the ReGenerative
-              Renaissance, now in design.
+              Renaissance, pooling resources in a cooperative treasury now in
+              formation.
             </p>
           </ReadableScrim>
 
@@ -1552,7 +1553,7 @@ export default function Season2() {
                 variant="outline"
                 className="rounded-xl px-6 border-[#7dd87d]/40 text-[#7dd87d] hover:text-white hover:border-[#7dd87d] bg-transparent"
               >
-                How the cooperative is being designed
+                How the cooperative treasury works
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </Link>
@@ -1984,7 +1985,7 @@ export default function Season2() {
               The cohort is the start of a cooperative network of land projects.{" "}
               {COOP.statement}{" "}
               <Link href="/fund" className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">
-                See how the cooperative is being designed
+                See how the cooperative treasury works
               </Link>
               .
             </FaqItem>

@@ -684,7 +684,7 @@ export default function Team() {
               >
                 {COOP.name}
               </button>{' '}
-              is being designed so land projects and people can buy and steward land together. It is in design today, it is not yet a legal entity, and it accepts no money. Each side has its own roles and its own rhythm. They hand things to each other across the middle.
+              is being formed so land projects and people can pool their resources and co-own each other's projects. It is in formation today, it is not yet a legal entity, and it accepts no money. Each side has its own roles and its own rhythm. They hand things to each other across the middle.
             </p>
 
             <p>

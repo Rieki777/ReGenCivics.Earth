@@ -6,7 +6,7 @@
  * Until 2026-09-27 this chart showed the earlier fund design's weighted voice
  * split (a council at 40%, investors, land projects and alliance partners at
  * 20% each), read from governanceSlices and drawn over an image with those
- * labels baked in. The fund is now the ReGen Network Cooperative, in design,
+ * labels baked in. The fund is now the ReGen Network Cooperative, in formation,
  * and its design principle is one member, one vote (COOP.designPrinciples), so
  * there are no slices to draw and no investor seat. Every seat is the same size.
  *
