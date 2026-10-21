@@ -917,6 +917,32 @@ export const STORIES: Record<string, Story> = {
           <span aria-hidden="true" className="animate-pulse inline-block h-3 w-3 rounded-full bg-[#1a472a]" />
           Good: an opacity pulse on an ordinary element
         </p>
+        {/* What is behind words: a backdrop laid beside them (as the season
+            wheel's skies are), the part of a gradient they sit on, and a
+            glow drawn over a plain fill. */}
+        <div className="relative rounded px-3 py-2">
+          <div aria-hidden="true" className="absolute inset-0 rounded bg-[#0d2818]" />
+          <p className="relative text-white">Good: light words on the dark layer behind them</p>
+          <p className="relative text-[#2d5a3d]">Bad: dark words on the dark layer behind them</p>
+        </div>
+        <div className="rounded bg-gradient-to-b from-[#0d2818] to-[#f0ebe3] px-3 py-2">
+          <p className="text-white">Good: light words on the gradient's dark top</p>
+          <p className="mt-16 text-white">Bad: light words on its pale bottom</p>
+        </div>
+        <div
+          className="flex justify-between rounded bg-[#0d2818] px-3 py-2"
+          style={{ backgroundImage: "radial-gradient(circle at 0 0, rgba(255,255,255,0.95), transparent 160px)" }}
+        >
+          <p className="w-32 text-white">Bad: in the glow</p>
+          <p className="w-32 text-right text-white">Good: far from it</p>
+        </div>
+        {/* An emoji paints in its own colours, so its CSS colour is never
+            measured; words beside it still are. */}
+        <div className="flex flex-wrap items-center gap-3 rounded bg-[#e8e4de] px-3 py-2">
+          <span className="text-[#e8e4de]">🌕</span>
+          <span>Good: the moon beside me is not measured</span>
+          <span className="text-[#e8e4de]">Bad: words the colour of their bar</span>
+        </div>
         <button type="button" className="audit-no-focus min-h-11 rounded border border-[#1a472a] px-4">Bad: no focus style</button>
         <button type="button" className="audit-faint-focus min-h-11 rounded border border-[#1a472a] px-4">Bad: faint focus ring</button>
         <button type="button" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good: clear focus ring</button>
@@ -1477,6 +1503,29 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="-m-6">
         <SeasonWheel now={new Date("2027-01-20T18:00:00Z")} />
+      </div>
+    ),
+  },
+
+  /**
+   * Summer's sky is the lightest behind the dimmed FALL corner label, so this
+   * is where that label is closest to 4.5:1 (2026-10-20).
+   */
+  "season-wheel-summer": {
+    title: "Season wheel on 2027-05-05 (summer, Season 2)",
+    render: () => (
+      <div className="-m-6">
+        <SeasonWheel now={new Date("2027-05-05T18:00:00Z")} />
+      </div>
+    ),
+  },
+
+  /** Fall chosen: the ember color on its own sky, in the panel and the moves below. */
+  "season-wheel-fall": {
+    title: "Season wheel on 2027-08-05 (fall, Season 2)",
+    render: () => (
+      <div className="-m-6">
+        <SeasonWheel now={new Date("2027-08-05T18:00:00Z")} />
       </div>
     ),
   },
