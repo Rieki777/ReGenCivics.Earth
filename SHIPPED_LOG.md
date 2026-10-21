@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-20 (typing lag, part 3): a key in the campaign details re-renders only its own field
+
+- **Campaign details**: inside the card, each field is memoized with a stable change handler, and the template and import dialogs, the currency picker and the land status select are their own memoized pieces. Each field reads a dialog context and runs the IME composition hook when it renders, so before this all fourteen ran on every key.
+- **Measured** on local builds against the scratch database, before and after interleaved, CPU slowed 4x: script per key in the details field fell from 17.5 to 6ms (65% less) and main-thread work from 46 to 33ms. `perf:typing` on the details field went from 24 to 18ms median and 38 to 28ms at the 95th percentile. Today the GPU build of Chromium stalled about one keystroke in twenty for 250 to 400ms on every build here, the October 15 one included, so those two figures come from the software shell; the stall belongs to this machine.
+- **The older game tree** (`components/game/LivingTree.tsx` and its `tree-breathe` CSS), imported nowhere, is deleted.
+- The Campaign Details card is pixel-identical before and after, and the end-to-end run (Create, the coach's opening draft, template, import, the payload) and a currency and land status check pass on both builds.
+
 ## 2026-10-15 (Season 2 Week 4, second pass): two independent reviews folded in before Wednesday
 
 - **Half-written cards are kept**: a seat, own human need, decision or quest being written survives the room moving on, the rail, and opening another form (page memory only), and the screen holds on its stage while one is unsaved. Enter moves to the next field (a phone's key reads Next); only Save, or Enter on a card's last line, saves.

@@ -20,7 +20,6 @@ import VillageOs from "@/pages/VillageOs";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { LivingTreeV2 } from "@/components/LivingTreeV2";
 import { LivingTree, type CapitalScores } from "@/components/LivingTree";
-import { LivingTree as GameLivingTree } from "@/components/game/LivingTree";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import SessionBoard from "@/pages/SessionBoard";
@@ -769,10 +768,6 @@ const TREE_SCORES: CapitalScores = {
   intellectual: 60, social: 140, material: 45, financial: 20, living: 180,
   cultural: 90, spiritual: 70, experiential: 110, healthVital: 95,
 };
-const GAME_TREE_VALUES: Record<string, number> = {
-  financial: 20, social: 140, cultural: 90, living: 180, intellectual: 60,
-  experiential: 110, material: 45, spiritual: 70, health: 95,
-};
 
 export const STORIES: Record<string, Story> = {
   /**
@@ -1375,14 +1370,13 @@ export const STORIES: Record<string, Story> = {
 
   /**
    * The Living Tree as /quest and the profile draw it (LivingTreeV2 over its
-   * painted plate), in flower and in fruit; the drawn tree it falls back to
-   * when a plate fails; and the older game tree. All of it holds still apart
-   * from the game tree's breath, a transform the compositor runs.
+   * painted plate), in flower and in fruit, and the drawn tree it falls back
+   * to when a plate fails. Both hold still: no endless SVG animation.
    */
   "living-tree": {
-    title: "Living Tree: a fruiting tree in flower, its drawn fallback, and the game tree",
+    title: "Living Tree: a fruiting tree in flower, and its drawn fallback",
     render: () => (
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         <div className="flex items-center justify-center rounded-2xl bg-gradient-to-br from-[#f0f7f0] to-[#faf6f1] p-6">
           <div className="w-full max-w-[320px]">
             <LivingTreeV2 capitalScores={TREE_SCORES} seasonsCompleted={6} totalContributionScore={900} currentSeasonActions={12} />
@@ -1392,9 +1386,6 @@ export const STORIES: Record<string, Story> = {
           <div className="w-full max-w-[320px]">
             <LivingTree capitalScores={TREE_SCORES} seasonsCompleted={6} totalContributionScore={900} currentSeasonActions={12} />
           </div>
-        </div>
-        <div className="flex items-center justify-center rounded-2xl bg-[#0d2818] p-6">
-          <GameLivingTree capitalValues={GAME_TREE_VALUES} seasonCount={1} totalScore={5000} size={240} />
         </div>
       </div>
     ),
