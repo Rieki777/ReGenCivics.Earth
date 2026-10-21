@@ -663,7 +663,7 @@ const MEET_PROMPTS: BoardPrompt[] = HUMAN_NEEDS.map((n): BoardPrompt => ({
  */
 export const WHERE_GOING = {
   bridge: "Where this is all going: a bridge from the world we have to the one our projects are growing. Every week of this season builds a piece of it.",
-  pieces: "The pieces we're putting in place together: the ReGen Game framework, your organisation, legal structures, the cooperative in design, crowdpooling and the accelerator.",
+  pieces: "The pieces we're putting in place together: the ReGen Game framework, your organisation, legal structures, the cooperative treasury, crowdpooling and the accelerator.",
   together: "One aim of all this design: your project's economy becomes clear enough to network with other projects, and for supporters and funders to understand it and back it. We're building that path together, one piece each week.",
 } as const;
 
@@ -984,7 +984,7 @@ const WEEK_3: BoardStage[] = [
       "Share the wall. Answer the top questions and tap \"Answered\" on each.",
       "Slide 36: today was step 2 of the box, patterns of co-creation. Next week is step 4: membranes, circles, roles and quests, in Village OS.",
       "Legal is Weeks 10 and 11. Crowd pooling is Week 13, in one line.",
-      "Close on the big picture: the Clarity + Resources picture, then Bridging Worlds. One aim of all this design is that each project can network with others and that supporters and funders can understand it and back it. We build that path together, one piece each week. The cooperative is in design: not yet a legal entity, and it accepts no money.",
+      "Close on the big picture: the Clarity + Resources picture, then Bridging Worlds. One aim of all this design is that each project can network with others and that supporters and funders can understand it and back it. We build that path together, one piece each week. The cooperative treasury is in formation: not yet a legal entity, and it accepts no money.",
       "Each project names one move. Read the \"set up next week\" picks: that's Week 4's agenda.",
     ],
   },

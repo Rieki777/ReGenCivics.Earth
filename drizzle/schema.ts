@@ -1861,7 +1861,9 @@ export type InsertUserNotification = typeof userNotifications.$inferInsert;
 
 /**
  * Letter of Intent (LOI) table
- * Stores investor LOI pledges before fund activation
+ * Non-binding letters of intent to commit financial capital to the cooperative
+ * treasury (ADR-78). Retired 2026-09-27, back 2026-10-21 with no minimum.
+ * No money moves; the treasury launches at $20 million signed (shared/fund.ts).
  */
 export const letterOfIntent = mysqlTable("letter_of_intent", {
   id: int("id").autoincrement().primaryKey(),
@@ -1890,9 +1892,15 @@ export const letterOfIntent = mysqlTable("letter_of_intent", {
     "foundation",
     "impact_fund",
     "institutional",
-    "other"
+    "other",
+    "land_project" // 0302: land projects pool their resources too
   ]).notNull(),
-  
+
+  // 0302 (ADR-78): what forming the treasury for its funders needs to know.
+  country: varchar("country", { length: 120 }),
+  accreditedStatus: mysqlEnum("accreditedStatus", ["yes", "no", "not_sure", "not_us"]),
+  capitalForms: text("capitalForms"), // JSON array of CapitalType
+
   // Timeline & Preferences
   investmentTimeline: mysqlEnum("investmentTimeline", [
     "immediate",

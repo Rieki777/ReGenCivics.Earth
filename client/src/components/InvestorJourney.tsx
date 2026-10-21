@@ -33,8 +33,8 @@ type JourneyStep = {
 const journeySteps: JourneyStep[] = [
   {
     id: "read",
-    title: "Read the design",
-    description: "See how the cooperative is being designed to work.",
+    title: "Read the full picture",
+    description: "See how land projects pool resources in the treasury and co-own each other.",
     action: "Read it",
     href: "/opportunity",
     icon: BookOpen,
@@ -51,9 +51,9 @@ const journeySteps: JourneyStep[] = [
   },
   {
     id: "interest",
-    title: "Tell us you're interested",
-    description: "Fill in the short interest form. No money, no commitment.",
-    action: "Open the form",
+    title: "Sign a letter of intent",
+    description: "Name an amount. It's not binding and no money moves.",
+    action: "Open the letter",
     href: "/loi",
     icon: PenLine,
     color: "#d4a574",

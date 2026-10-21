@@ -1,6 +1,6 @@
 # Context: The Two Games, Cooperative and Game
 
-*A reference note for the ReGen Civics team and for Claude when working on any content, copy, or code related to this project. Rewritten 2026-09-27: the old-Game anchor is now a member-owned cooperative in design (ADR-62). Every public sentence about it comes from `COOP` in `shared/fund.ts`.*
+*A reference note for the ReGen Civics team and for Claude when working on any content, copy, or code related to this project. Rewritten 2026-09-27: the old-Game anchor is now a member-owned cooperative (ADR-62). Updated 2026-10-21: it is a cooperative treasury in formation, launching at $20 million in signed letters of intent (ADR-78). Every public sentence about it comes from `COOP` in `shared/fund.ts`.*
 
 ---
 
@@ -20,14 +20,15 @@ ReGen Civics anchors into both, and builds the bridge between them.
 
 ### 1. The Cooperative (Old Game Side)
 
-The **ReGen Network Cooperative** is anchored in the Dominant Game by design, and it is in design today.
+The **ReGen Network Cooperative** is anchored in the Dominant Game by design, and it is in formation today.
 
-It uses one of the oldest coordination structures the old Game has produced: **a member-owned cooperative**. Law, lenders and neighbors understand a cooperative, and it puts ownership with the people who use it. Land projects and people join to buy and steward land together, for use, and they govern it one member, one vote. Rye calls it "a cooperative regenerative society".
+It uses one of the oldest coordination structures the old Game has produced: **a member-owned cooperative**. Law, lenders and neighbors understand a cooperative, and it puts ownership with its members. It holds a cooperative treasury (the network treasury): the way land projects and people pool their resources into the network of land projects and co-own each other's projects, governed one member, one vote. Rye's 2026-10-21 ruling keeps the old fund's structure (the alliance, the 60/30/10 split, how projects are chosen, the $20M letter-of-intent threshold) with the cooperative as its legal entity, and no return promises.
 
 What is true today:
 - It is not a legal entity, and it accepts no money. Nothing on the site is an offer of anything.
-- Its legal form, bylaws and terms are being designed with land projects, future members and counsel.
-- Its design principles: owned by its members; every form of capital counts (nine forms); a membership can't be sold or traded; no managing partners; land held for the long term (the community land trust pattern is the leading design); built for use.
+- People sign non-binding letters of intent to commit financial capital, for any amount (`/loi`). No money moves.
+- It launches when $20 million in letters of intent are signed, and it will be formed to meet the legal and regulatory needs of the funders: the signers, land projects and counsel choose the legal form at the founding gathering.
+- Its design principles: owned by its members; one pooled treasury; land projects co-own each other; every form of capital counts (nine forms); no managing partners; held for the long term.
 
 **Tokens from the earlier fund design:** RCVoice and $RCivics. Their role, if any, in the cooperative is under review with counsel. The cooperative votes one member, one vote, and $RCivics is a live token with a public claim bridge, so neither is tied to cooperative capital or votes. See `COOP.coopTokens`.
 
@@ -57,7 +58,7 @@ Tokens in ReGen Civics record contributions and carry governance weight in the G
 
 Think of it as two anchors on either side of a chasm.
 
-The cooperative is planted in the old Game: it uses a legal form the mainstream understands, and it gives land projects and people a shared way to hold land for the long term. The Game is planted in the emerging new Games: it can experiment freely, reward contribution, and co-create systems that don't have to make sense to Wall Street.
+The cooperative is planted in the old Game: it uses a legal form the mainstream understands, and it gives land projects and people a shared treasury to pool their resources and hold land for the long term. The Game is planted in the emerging new Games: it can experiment freely, reward contribution, and co-create systems that don't have to make sense to Wall Street.
 
 Together they form a bridge.
 
@@ -70,11 +71,11 @@ The bridge is what ReGen Civics is building. Part of the Game's purpose is to ma
 | | **The Cooperative** | **The Game** |
 |---|---|---|
 | Anchored in | Old Game (Dominant Game) | New Games (emergent) |
-| Structure | Member-owned cooperative (in design) | Community game + DAO |
+| Structure | Member-owned cooperative treasury (in formation) | Community game + DAO |
 | Governance | One member, one vote | RGVoice |
 | Economic token | Under review with counsel | $ReGen |
-| Legal structure | Being designed with counsel; not an entity yet | Hypha DAO on-chain |
-| Who takes part | Land projects and people who use shared land | Community participants |
+| Legal structure | Chosen with counsel at $20M in letters of intent, to fit the funders; not an entity yet | Hypha DAO on-chain |
+| Who takes part | Land projects and people pooling resources | Community participants |
 
 ---
 
@@ -82,7 +83,7 @@ The bridge is what ReGen Civics is building. Part of the Game's purpose is to ma
 
 When writing about **the cooperative**:
 - Use `COOP` in `shared/fund.ts` verbatim for status, definition and design principles.
-- Emphasize: member ownership, one member one vote, nine forms of capital, land held for use and long-term stewardship, and that it is in design and accepts no money.
+- Emphasize: the cooperative treasury, land projects co-owning each other, member ownership, one member one vote, nine forms of capital, long-term stewardship, and that it is in formation and accepts no money until it forms. A letter of intent is not binding.
 <!-- fund-claims-allow: this line names the banned terms so writers know what to avoid -->
 - Never write about financial upside of any kind (gate G5): no returns, yield, IRR, appreciation, distributions, listings, secondary markets, "index fund", "portfolio", "invest in land projects through us", accredited investors, or fund terms. `scripts/check-fund-claims.mjs` fails CI on them.
 - Never call it "the Fund".

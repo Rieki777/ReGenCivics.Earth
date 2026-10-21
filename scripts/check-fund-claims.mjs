@@ -78,6 +78,15 @@ export const RETIRED = [
   "ReGen Civics Fund",
   "fund is in formation",
   "fund in formation",
+  // 2026-10-21 (ADR-78): the cooperative is a cooperative treasury in
+  // formation, launching at $20M in signed letters of intent. "In design"
+  // was its status for three weeks; a surface still saying so contradicts
+  // every page that reads COOP.statusLabel.
+  "cooperative in design",
+  "cooperative is in design",
+  "Cooperative is in design",
+  "cooperative we are designing",
+  "Help design the cooperative",
 ];
 
 // ── 2. G5 language ───────────────────────────────────────────────────────────

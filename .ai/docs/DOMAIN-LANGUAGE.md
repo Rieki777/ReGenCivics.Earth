@@ -2,13 +2,13 @@
 
 Canonical names + one-line definitions for every load-bearing term in ReGen Civics. Reach for this when a term feels ambiguous OR when you're about to redefine something inline.
 
-Last reviewed: 2026-09-28 (ReGen Civics Labs named as the company; 2026-09-27: the Fund became the cooperative in design, funding engine terms added).
+Last reviewed: 2026-10-21 (ADR-78: the cooperative is a cooperative treasury in formation, letters of intent are back; 2026-09-28: ReGen Civics Labs named as the company; 2026-09-27: the Fund became the cooperative, funding engine terms added).
 
 ---
 
 ## The two anchors
 
-**Cooperative** (the ReGen Network Cooperative; formerly "the Fund"). In design: a member-owned purchasing cooperative in which land projects and people buy and steward land together, governed one member, one vote, anchored in the Dominant Game through one of its oldest legal tools. Not a legal entity; accepts no money. Every public sentence about it comes from `COOP` in `shared/fund.ts` (ADR-62). Rye's phrase: "a cooperative regenerative society". Audience: land projects, people who want to use and steward shared land, allies, and funders who support land projects directly. Until 2026-09-27 this anchor was "the ReGen Civics Fund", a venture-style fund; that name, and every return, yield, IRR, carry, distribution, listing or accredited-investor term that came with it, is retired from public copy (gate G5).
+**Cooperative** (the ReGen Network Cooperative; formerly "the Fund"). In formation since 2026-10-21 (ADR-78): a member-owned cooperative treasury through which land projects and people pool their resources into the network of land projects and co-own each other's projects, governed one member, one vote, anchored in the Dominant Game through one of its oldest legal tools. It keeps the old fund's structure with a cooperative as its legal entity. Not a legal entity yet; accepts no money; launches when $20 million in letters of intent are signed, formed to meet the legal and regulatory needs of the funders. Every public sentence about it comes from `COOP` in `shared/fund.ts` (ADR-62, ADR-78). Rye's phrase: "a cooperative treasury" (2026-10-21; before that "a cooperative regenerative society"). Audience: land projects, people who want to use and steward shared land, allies, and funders who support land projects directly. Until 2026-09-27 this anchor was "the ReGen Civics Fund", a venture-style fund; that name, and every return, yield, IRR, carry, distribution, listing or accredited-investor term that came with it, is retired from public copy (gate G5).
 
 **Game** (capital G). The Infinite Game / new Games / Regenerative Renaissance Game. Quests, seasons, citizenship, contribution scores. Anchored in the new Games (movement, bioregional, regenerative). The Game's tokens are RGVoice (governance) and $ReGen (economic). Audience: players, land projects, alliance partners.
 
@@ -481,6 +481,10 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Metrics** (canonical numbers). The `metrics` table: the one place every number ReGen Civics states about itself lives, with a definition, a source and an as-of date. Live counts recompute from the database (`server/funding/metrics.ts`); others are entered by hand. Nothing reaches a public page until Rye confirms it and marks it public. Never type a traction number into a page.
 
-**Cooperative interest**. A "tell us you're interested" record (`coop_interest`) from the /loi form: who someone is, what forms of capital they might bring, and consent to be contacted. No amounts, no pledges. It is never a membership and never a contribution (two records, two acts).
+**Cooperative interest**. A "tell us you're interested" record (`coop_interest`) from the /loi?path=interest form: who someone is, what forms of capital they might bring, and consent to be contacted. No amounts, no pledges. It is never a membership and never a contribution (two records, two acts).
+
+**Cooperative treasury** / **network treasury** (ADR-78). The pool the cooperative holds: how land projects and people pool their resources into the network of land projects. The treasury holds a shared stake in member land projects, so each project co-owns a piece of the others. The home page says "cooperative treasury" (`COOP.treasuryLabel`); the long-form page says "network treasury" (`COOP.treasuryName`). Both name the same pool. In formation; holds nothing today.
+
+**Letter of intent** (LOI; ADR-78, table `letter_of_intent`). A non-binding letter, signed at /loi, naming an amount of financial capital someone would commit to the cooperative treasury. No minimum, no money moves, nothing is binding. It also records who signs (person, land project, family office, foundation, impact fund, institution, other), a country, an optional US-accredited answer that shapes the legal form and never gates anyone, and other forms of capital. The treasury launches when $20 million is signed; signers then meet at the **founding gathering** to choose the legal form with counsel, adopt the bylaws and terms, and each decides whether to commit. Retired 2026-09-27 (ADR-62), back 2026-10-21 without the old $250,000 minimum or investor-form gate.
 
 **Positioning kernel**. The private grounding the application engine reads before a funder row. Lives only in the `funding_prompts` table (versioned, edited in /admin/funding), never in the repo.

@@ -1,7 +1,7 @@
 /**
  * WhoHoldsVoteChart
  *
- * Shows how the cooperative in design is meant to vote: one member, one vote.
+ * Shows how the cooperative in formation is meant to vote: one member, one vote.
  *
  * Until 2026-09-27 this chart showed the earlier fund design's weighted voice
  * split (a council at 40%, investors, land projects and alliance partners at

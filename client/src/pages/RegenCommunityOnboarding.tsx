@@ -42,11 +42,11 @@ const ENTRY_PATHS = [
   },
   {
     icon: Trees,
-    title: "The Cooperative",
-    who: "People and organizations who want to buy and steward land together.",
+    title: "The Cooperative Treasury",
+    who: "People and organizations who want to pool resources with land projects.",
     blurb: COOP.statementShort,
     href: "/loi",
-    cta: "Tell us you're interested",
+    cta: "Sign a letter of intent",
   },
   {
     icon: Handshake,

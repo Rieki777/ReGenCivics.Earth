@@ -204,7 +204,7 @@ describe('investor emails: the cooperative, and nothing that prices upside', () 
   it('describes the cooperative in the COOP sentences, with the disclaimer', () => {
     const html = emailTemplates.investorWelcome('Testname', '').html;
     expect(html).toContain(escapeHtml(COOP.statement));
-    expect(html).toContain(escapeHtml(COOP.interestPromise));
+    expect(html).toContain(escapeHtml(COOP.loiPromise));
     expect(html).toContain(escapeHtml(COOP.notAnOffer));
     expect(html).toContain('/loi');
   });
@@ -214,7 +214,11 @@ describe('investor emails: the cooperative, and nothing that prices upside', () 
     expect(html).not.toContain('$250,000');
     expect(html).not.toContain('cloudfront.net');
     expect(html.toLowerCase()).not.toContain('deck');
-    expect(html.toLowerCase()).not.toContain('letter of intent');
+    // ADR-78 brought letters of intent back (no minimum, no money moves), so
+    // the note may offer one, but only alongside the sentence that says so.
+    if (html.toLowerCase().includes('letter of intent')) {
+      expect(html).toContain(escapeHtml(COOP.loiPromise));
+    }
   });
 
   it('escapes the name a stranger typed into the public form', () => {

@@ -11,6 +11,52 @@ import { notifyOwner } from "../_core/notification";
 import { notifyIfEnabled } from "../notify-with-prefs";
 import { generalInquirySubmitInput, submitGeneralInquiry } from "../lib/generalInquiry";
 import { isReminderNote } from "@shared/contactReminders";
+import { CAPITAL_TYPES } from "@shared/capitals";
+import { COOP } from "@shared/fund";
+import { escapeHtml } from "@shared/htmlText";
+import {
+  LOI_ACCREDITED_STATUSES,
+  LOI_INVESTOR_TYPES,
+  LOI_INVESTOR_TYPE_LABELS,
+  LOI_MAX_PLEDGE_USD,
+  LOI_TIMELINES,
+} from "@shared/loiFields";
+
+/** The letter of intent form (ADR-78). Exported for tests. */
+export const loiSubmitInput = z.object({
+  fullName: z.string().trim().min(1).max(160),
+  email: z.string().trim().email().max(320),
+  phone: z.string().trim().max(50).optional(),
+  organization: z.string().trim().max(200).optional(),
+  country: z.string().trim().max(120).optional(),
+  pledgeAmount: z.number().int().min(1).max(LOI_MAX_PLEDGE_USD),
+  investorType: z.enum(LOI_INVESTOR_TYPES),
+  investmentTimeline: z.enum(LOI_TIMELINES).default("flexible"),
+  accreditedStatus: z.enum(LOI_ACCREDITED_STATUSES).optional(),
+  capitalForms: z.array(z.enum(CAPITAL_TYPES)).max(CAPITAL_TYPES.length).default([]),
+  motivations: z.string().trim().max(4000).optional(),
+  questionsForTeam: z.string().trim().max(4000).optional(),
+  referralSource: z.string().trim().max(255).optional(),
+  consent: z.literal(true),
+});
+
+function emptyToNull(value: string | undefined): string | null {
+  const s = (value ?? "").trim();
+  return s ? s : null;
+}
+
+/** The letter of intent confirmation. COOP's sentences only. Exposed for tests. */
+export function loiConfirmationHtml(name: string, pledgeAmount: number): string {
+  const amount = `$${pledgeAmount.toLocaleString("en-US")}`;
+  return [
+    `<p>Hi ${escapeHtml(name)},</p>`,
+    `<p>Thank you for signing a letter of intent for ${amount} to the ${escapeHtml(COOP.treasuryName)} of the ${escapeHtml(COOP.name)}.</p>`,
+    `<p>${escapeHtml(COOP.loiPromise)}</p>`,
+    `<p>${escapeHtml(COOP.launch)}</p>`,
+    `<p>We'll write within a few days to set up a call. To talk sooner, <a href="https://calendly.com/rieki-cordon/30min">book a time with Rieki</a>.</p>`,
+    `<p style="font-size:12px;color:#5b6b5f">${escapeHtml(COOP.notAnOffer)}</p>`,
+  ].join("\n");
+}
 
 export const investorInquiriesRouter = router({
   // Submit a new investor inquiry (public - no login required)
@@ -413,20 +459,75 @@ export const loiRouter = router({
     return rows[0] ?? null;
   }),
 
-  // Retired 2026-09-27 (ADR-62). This took a pledge amount against a proposed
-  // minimum for a fund that no longer exists. The cooperative in design takes no
-  // pledges; interest goes through coop.submitInterest (server/routes/coop.ts).
-  // Kept as a stub so an old client gets a plain message instead of a 404, and
-  // so nothing can store a pledge again.
+  /**
+   * Public: a non-binding letter of intent to commit financial capital to the
+   * cooperative treasury (ADR-78). Retired 2026-09-27 under ADR-62 and brought
+   * back 2026-10-21 with no minimum and no investor-form gate: the treasury
+   * launches when $20 million is signed, and what people sign tells us how to
+   * form it for them. No money moves and nothing here is binding.
+   *
+   * Security posture (BUILD-PLAYBOOK: a public procedure):
+   *  - CSRF-protected like every publicProcedure, rate limited per IP.
+   *  - Every field is bounded server-side; enums come from shared/loiFields.ts;
+   *    capitalForms is an allowlist of CAPITAL_TYPES; consent must be true.
+   *  - The confirmation email escapes the submitted name.
+   */
   submit: publicProcedure
-    .input(z.object({}).passthrough())
-    .mutation(async ({ ctx }) => {
+    .input(loiSubmitInput)
+    .mutation(async ({ ctx, input }) => {
       await checkRateLimit(ctx, "letter_of_intent");
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message:
-          "The letter of intent form is retired. To tell us you're interested in the cooperative, use the form at /loi.",
+
+      const capitalForms = Array.from(new Set(input.capitalForms));
+      const loiId = await db.createLetterOfIntent({
+        fullName: input.fullName,
+        email: input.email.toLowerCase(),
+        phone: emptyToNull(input.phone),
+        organization: emptyToNull(input.organization),
+        country: emptyToNull(input.country),
+        pledgeAmount: input.pledgeAmount,
+        investorType: input.investorType,
+        investmentTimeline: input.investmentTimeline,
+        accreditedStatus: input.accreditedStatus ?? null,
+        capitalForms: capitalForms.length ? JSON.stringify(capitalForms) : null,
+        motivations: emptyToNull(input.motivations),
+        questionsForTeam: emptyToNull(input.questionsForTeam),
+        referralSource: emptyToNull(input.referralSource),
+        status: "pending",
+        userId: ctx.user?.id ?? null,
       });
+
+      // Best effort: the letter is what matters, so a mail or notification
+      // failure never fails the submission.
+      try {
+        const { sendEmail } = await import("../_core/email");
+        await sendEmail({
+          to: input.email,
+          subject: "Your letter of intent for the cooperative treasury",
+          html: loiConfirmationHtml(input.fullName, input.pledgeAmount),
+          template: "loi_confirmation",
+          inquiryType: "letter_of_intent",
+          inquiryId: loiId ?? undefined,
+          recipientName: input.fullName,
+        });
+      } catch (e) {
+        console.warn("[loi] confirmation email failed:", e);
+      }
+      try {
+        await notifyIfEnabled("loiSubmissions", {
+          title: "New letter of intent",
+          content:
+            `${input.fullName} (${input.email}) signed a letter of intent for ` +
+            `$${input.pledgeAmount.toLocaleString("en-US")} as ` +
+            `${LOI_INVESTOR_TYPE_LABELS[input.investorType] ?? input.investorType}` +
+            `${input.country ? `, ${input.country}` : ""}.`,
+        });
+      } catch (e) {
+        console.warn("[loi] owner notification failed:", e);
+      }
+
+      // No row id in the answer: ids are sequential, so returning one would
+      // tell anyone how many letters have been signed.
+      return { ok: true as const };
     }),
 
   // Get all LOIs (admin only)

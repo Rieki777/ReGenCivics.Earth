@@ -159,7 +159,7 @@ export const startACommunityOnYourLand: LearnArticle = {
       label: "Read about the cooperative",
       href: "/fund",
       blurb:
-        "Where the member-owned cooperative we are designing with land projects, future members and counsel stands today.",
+        "The cooperative treasury in formation: how land projects pool resources and co-own each other's projects, and where it stands today.",
     },
   ],
   related: [

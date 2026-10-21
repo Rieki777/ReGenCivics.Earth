@@ -143,8 +143,8 @@ const siteNavigationSchema = {
 // entity, and a feesAndCommissionsSpecification for fees nobody has agreed.
 // JsonLD.tsx carried a second, differently named schema for the same thing.
 //
-// Since 2026-09-27 the fund is a cooperative in design, and it is not a legal
-// entity. There is nothing to describe as a financial product. The
+// Since 2026-09-27 the fund is a cooperative, and since 2026-10-21 (ADR-78) a
+// cooperative treasury in formation. It is not a legal entity. There is nothing to describe as a financial product. The
 // Organization schema for ReGen Civics above stays: that one is true. Facts
 // about the cooperative live in shared/fund.ts (COOP).
 
@@ -166,7 +166,7 @@ const faqSchema = {
       "name": `What is the ${COOP.name}?`,
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": `${COOP.statement} You can tell us you're interested at regencivics.earth/loi. ${COOP.interestPromise}`
+        "text": `${COOP.statement} You can sign a letter of intent at regencivics.earth/loi. ${COOP.loiPromise}`
       }
     },
     {

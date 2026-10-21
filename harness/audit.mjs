@@ -38,6 +38,17 @@ const stories = wanted.length ? keys.filter((k) => wanted.includes(k)) : keys.fi
 
 /** Story-specific steps before measuring (e.g. try to send so the errors show). */
 const BEFORE = {
+  // The letter of intent (ADR-78), filled in: typed text in every kind of
+  // field, a chosen signer and accreditation answer, and a ticked capital.
+  "loi-letter": async (page) => {
+    await page.getByRole("textbox", { name: /Your name/ }).fill("Ana Ribeiro");
+    await page.getByRole("textbox", { name: /Email/ }).fill("ana@seedcommons.org");
+    await page.getByRole("radio", { name: "A land project" }).check();
+    await page.getByRole("textbox", { name: /Amount you'd commit/ }).fill("50000");
+    await page.getByRole("radio", { name: "Not sure" }).check();
+    await page.getByRole("checkbox", { name: "Living" }).check();
+    await page.waitForTimeout(200);
+  },
   "alliance-apply-tools": async (page) => {
     await page.getByRole("button", { name: /Send my application/ }).click();
     await page.waitForTimeout(200);

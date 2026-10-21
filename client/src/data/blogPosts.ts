@@ -1053,8 +1053,8 @@ See you in the game!
     id: '11',
     slug: 'getting-investment-through-regen-civics',
     title: 'How Land Projects Get Support Through ReGen Civics',
-    excerpt: 'Seasons, the Game, crowdpooling, and the alliance: how ReGen Civics supports land projects today, and where the cooperative we are designing fits.',
-    content: `ReGen Civics supports land projects in four ways today: seasons, the Game, crowdpooling, and the alliance. A fifth, the cooperative, is in design. Here is how each one works.
+    excerpt: 'Seasons, the Game, crowdpooling, and the alliance: how ReGen Civics supports land projects today, and where the cooperative treasury in formation fits.',
+    content: `ReGen Civics supports land projects in four ways today: seasons, the Game, crowdpooling, and the alliance. A fifth, the cooperative treasury, is in formation. Here is how each one works.
 
 ## Seasons
 
@@ -1078,11 +1078,11 @@ Projects that graduate a season launch their campaigns together, so each project
 
 Alliance partners bring what land projects keep needing: legal structuring, regenerative design, governance frameworks, technology, and more. Projects get matched with partners based on what they need. [Meet the alliance](/ally).
 
-## The cooperative, in design
+## The cooperative treasury, in formation
 
 ${COOP.statement}
 
-[See how the cooperative is being designed](/fund).
+[See how land projects pool resources and co-own each other](/opportunity).
 
 ${COOP.notAnOffer}
 
@@ -1090,7 +1090,7 @@ ${COOP.notAnOffer}
 
 **Land projects**: [Apply for the next season](/apply) and bring your play.
 
-**Everyone else**: [Tell us you're interested in the cooperative](/loi), or [start a quest](/quest).`,
+**Everyone else**: [Sign a letter of intent to the cooperative treasury](/loi), or [start a quest](/quest).`,
     author: 'ReGen Civics Team',
     date: 'Sep 27, 2026',
     readTime: '4 min read',

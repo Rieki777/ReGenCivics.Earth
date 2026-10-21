@@ -34,7 +34,7 @@ export interface GameRole {
    * Which side of the bridge this role serves.
    *  - "game" (default): coordinates the Infinite Game; role awards paid in $ReGen.
    *  - "fund": a cooperative role. Carries the design work for the ReGen Network
-   *    Cooperative, which is in design (shared/fund.ts COOP). The value stays
+   *    Cooperative, which is in formation (shared/fund.ts COOP). The value stays
    *    "fund" because the roles table enum and roleHolders key on it. How these
    *    roles are rewarded will be set with counsel.
    */
@@ -890,7 +890,7 @@ export const gameRoles: GameRole[] = [
   /* ═══════════════════════════════════════════════════════════════
      COOPERATIVE ROLES (kind: "fund")
      7 roles that carry the design work for the ReGen Network
-     Cooperative, which is in design, holds nothing, and accepts no
+     Cooperative, which is in formation, holds nothing, and accepts no
      money (shared/fund.ts COOP).
      Titles are unchanged on purpose: seed-roles.ts and
      coordinationFlywheel.ts derive each slug from its title, and live
@@ -1201,7 +1201,7 @@ export const gameRoles: GameRole[] = [
     characterImage: "/images/roles/structure-keeper-card.webp",
     sceneImage: "/images/roles/structure-keeper-scene.webp",
     purpose:
-      "Keep the cooperative's legal design and documents with counsel: the choice of legal form, the draft bylaws, the land-holding design, and the bridge between Hypha proposals and legal action. The cooperative is in design and is not yet a legal entity, so this role works with counsel on what the founding members will adopt.",
+      "Keep the cooperative's legal design and documents with counsel: the choice of legal form, the draft bylaws, the land-holding design, and the bridge between Hypha proposals and legal action. The cooperative treasury is in formation and is not yet a legal entity. Its legal form will be chosen to meet the legal and regulatory needs of the funders, so this role works with counsel on what the founding members will adopt.",
     circle: "Structure Circle",
     powers: [
       "Draft the cooperative's legal documents with counsel for the community to review",

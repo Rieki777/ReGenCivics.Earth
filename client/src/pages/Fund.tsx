@@ -8,12 +8,18 @@
  * co-op, a cooperative regenerative society". The old page is in git tag
  * archive/fund-pages-2026-09-27.
  *
+ * 2026-10-21 (ADR-78): the cooperative is a cooperative treasury in formation
+ * that launches at $20 million in signed letters of intent, so the calls to
+ * action point to the letter of intent and the copy names the pooling and the
+ * co-ownership. The long form lives on /opportunity.
+ *
  * Every sentence that describes the cooperative comes from COOP in
  * shared/fund.ts, verbatim. The few sentences written here (audience cards,
  * FAQ answers, the capital intro) stay in the conditional tense, because the
  * cooperative is not yet a legal entity (COOP.hasLegalEntity) and no surface
  * may speak of its members, land or votes in the present tense until it is.
- * No numbers on this page: no counts, no amounts, no percentages.
+ * No numbers on this page beyond COOP's launch threshold: no counts, no
+ * percentages.
  */
 
 import { Link } from "wouter";
@@ -22,17 +28,17 @@ import {
   ArrowRight,
   BookOpen,
   Calendar,
+  Coins,
   HeartHandshake,
-  KeyRound,
   Landmark,
   Layers,
   Leaf,
+  Network,
   PenLine,
   Sprout,
   Trees,
   Users,
   Vote,
-  Wrench,
 } from "lucide-react";
 import PageBackground from "@/components/PageBackground";
 import { COOP } from "@shared/fund";
@@ -56,7 +62,7 @@ const COOP_SECTIONS: TocSection[] = [
   { id: "coop-who", title: "Who it's for" },
   { id: "coop-take-part", title: "How to take part" },
   { id: "coop-where", title: "Where it stands" },
-  { id: "coop-cta", title: "Tell us you're interested" },
+  { id: "coop-cta", title: "Sign a letter of intent" },
 ];
 
 /**
@@ -65,20 +71,20 @@ const COOP_SECTIONS: TocSection[] = [
  */
 const PRINCIPLE_ICONS: Record<string, React.ElementType> = {
   "Owned by its members": Users,
+  "One pooled treasury": Coins,
+  "Land projects co-own each other": Network,
   "Every form of capital counts": Layers,
-  "Membership stays with the member": KeyRound,
   "No managing partners": Vote,
-  "Land held for the long term": Trees,
-  "Built for use": Wrench,
+  "Held for the long term": Trees,
 };
 
 /**
  * Blurbs come from the shared capital taxonomy. Its financial line is written
  * for crowdpooling (crypto, recommended funders), which is the wrong context
- * for a cooperative that accepts no money, so this page says less.
+ * for a cooperative treasury that accepts no money yet, so this page says less.
  */
 function capitalBlurb(capital: CapitalType): string {
-  if (capital === "financial") return "Money, the most familiar of the nine.";
+  if (capital === "financial") return "Money, the most familiar of the nine, and what a letter of intent commits.";
   return CAPITAL_LABELS[capital].blurb;
 }
 
@@ -98,15 +104,15 @@ const AUDIENCES: {
 }[] = [
   {
     title: "Land projects",
-    body: "Projects would buy and steward land together, for use, and govern the cooperative as members.",
+    body: "Projects would pool their resources in the treasury, co-own each other's projects, and govern the cooperative as members.",
     cta: "The land project path",
     href: "/land",
     icon: Sprout,
   },
   {
     title: "People",
-    body: "Anyone who wants to live on, work on or care for shared land would join alongside the projects.",
-    cta: "Tell us you're interested",
+    body: "Anyone who wants to back regenerative land, live on it or care for it would join alongside the projects, one member, one vote.",
+    cta: "Sign a letter of intent",
     href: "/loi",
     icon: Users,
   },
@@ -119,7 +125,7 @@ const AUDIENCES: {
   },
   {
     title: "Funders and foundations",
-    body: "If you support regenerative land work, talk with us about the design as it takes shape.",
+    body: "Sign a letter of intent for any amount, or talk with us first. The treasury will be formed to meet the legal and regulatory needs of the funders.",
     cta: "Talk with us",
     href: "/investor/contact",
     icon: Landmark,
@@ -173,7 +179,7 @@ export default function Fund() {
         {
           question: "Who is the cooperative for?",
           answer:
-            "It is being designed for land projects and the people who work with them. They would own it together and govern it one member, one vote.",
+            "For land projects and the people who back and work with them. They would pool their resources in one treasury, co-own each other's projects, and govern it one member, one vote.",
         },
         {
           question: "How would the cooperative be governed?",
@@ -183,8 +189,8 @@ export default function Fund() {
           question: "What are the nine forms of capital?",
           answer: `${listCapitals()}. The cooperative is being designed to recognize contributions in all nine.`,
         },
-        { question: "Does the cooperative accept money?", answer: `No. ${COOP.notAnOffer}` },
-        { question: "How can I take part?", answer: `Fill in the short interest form on this site. ${COOP.interestPromise}` },
+        { question: "Does the cooperative accept money?", answer: `Not yet. ${COOP.launch} ${COOP.notAnOffer}` },
+        { question: "How can I take part?", answer: `Sign a letter of intent on this site, for any amount. ${COOP.loiPromise}` },
         { question: "Is the cooperative part of the church?", answer: COOP.entities },
       ])} />
 
@@ -192,7 +198,7 @@ export default function Fund() {
         sections={COOP_SECTIONS}
         fallbackTitle="Cooperative"
         actions={[
-          { label: "Tell us you're interested", href: "/loi", icon: PenLine },
+          { label: "Sign a letter of intent", href: "/loi", icon: PenLine },
           { label: "Book a call", href: "https://calendly.com/rieki-cordon/30min", icon: Calendar, external: true },
         ]}
       />
@@ -239,13 +245,13 @@ export default function Fund() {
               <Button asChild className={PRIMARY_CTA_CLASS} style={ACCENT_STYLE}>
                 <Link href="/loi">
                   <PenLine className="w-5 h-5 mr-2" aria-hidden="true" />
-                  Tell us you're interested
+                  Sign a letter of intent
                 </Link>
               </Button>
               <Button asChild className={SECONDARY_CTA_CLASS} style={ACCENT_STYLE}>
                 <Link href="/opportunity">
                   <BookOpen className="w-5 h-5 mr-2" aria-hidden="true" />
-                  Read the full design
+                  Read the full picture
                 </Link>
               </Button>
             </div>
@@ -399,6 +405,9 @@ export default function Fund() {
                 Where it <span className="text-amber-400">stands</span>
               </h2>
               <p className="text-white/80 text-base md:text-lg leading-relaxed safe-prose" style={BODY_STYLE}>
+                {COOP.launch}
+              </p>
+              <p className="text-white/80 text-base md:text-lg leading-relaxed mt-3 safe-prose" style={BODY_STYLE}>
                 {COOP.whereItStands}
               </p>
             </div>
@@ -423,20 +432,20 @@ export default function Fund() {
             <div className="glass-panel p-8 md:p-12 border-amber-400/20">
               <SeedOfLifeIcon className="w-12 h-12 text-amber-400/40 mx-auto mb-6" />
               <h2 className="text-2xl md:text-4xl font-bold text-white mb-4" style={HEADING_STYLE}>
-                Help shape the <span className="text-amber-400">cooperative</span>
+                Sign a <span className="text-amber-400">letter of intent</span>
               </h2>
               <p className="text-white/75 text-base md:text-lg mb-8 max-w-xl mx-auto safe-prose" style={BODY_STYLE}>
-                {COOP.interestPromise}
+                {COOP.loiPromise}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button asChild className={PRIMARY_CTA_CLASS} style={ACCENT_STYLE}>
                   <Link href="/loi">
-                    Tell us you're interested
+                    Sign a letter of intent
                     <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
                   </Link>
                 </Button>
                 <Button asChild className={SECONDARY_CTA_CLASS} style={ACCENT_STYLE}>
-                  <Link href="/opportunity">Read the full design</Link>
+                  <Link href="/opportunity">Read the full picture</Link>
                 </Button>
               </div>
               <p className="text-white/60 text-xs md:text-sm leading-relaxed mt-8 max-w-xl mx-auto safe-prose">
@@ -451,7 +460,7 @@ export default function Fund() {
       <RelatedContent pages={relatedContentMap.fund.pages} blog={relatedContentMap.fund.blog} />
       <StickyThumbCta
         href="/loi"
-        label="Tell us you're interested"
+        label="Sign a letter of intent"
         where="fund_sticky_cta"
         page="/fund"
         tone="amber"

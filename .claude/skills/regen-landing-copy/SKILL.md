@@ -221,11 +221,13 @@ A trust-builder section. Pattern:
 >   piece is polished.
 > - The Game's tokens add cognitive load. We explain each one where it
 >   appears, and none of them makes a claim about financial value.
-> - The cooperative is in design. It is not yet a legal entity, it accepts
->   no money, and its terms will be set with counsel and the founding
->   members.
+> - The cooperative treasury is in formation. It is not yet a legal entity,
+>   it accepts no money, and it launches when $20 million in letters of
+>   intent are signed, formed to meet the legal and regulatory needs of
+>   the funders.
 > - You're committing to participation: quests, forum, seasons. Membership
->   is for the land projects and people who use the cooperative.
+>   is for the land projects and people who pool their resources in the
+>   cooperative.
 
 If you're doing it right, this section grows the conversion rate by
 filtering for the right people earlier.

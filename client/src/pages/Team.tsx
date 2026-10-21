@@ -667,7 +667,7 @@ export default function Team() {
             </h2>
           </div>
 
-          {/* The Narrative Story, always visible, explains how the Game and the cooperative in design weave together */}
+          {/* The Narrative Story, always visible, explains how the Game and the cooperative treasury weave together */}
           <div className="max-w-4xl mx-auto mb-10 space-y-5 text-white/85 leading-relaxed safe-prose">
             <p>
               ReGen Civics runs on two sides of one bridge. The{' '}

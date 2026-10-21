@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-21 (cooperative treasury): /opportunity brings back the fund's structure with a cooperative as its entity, and letters of intent return
+
+- **Rye's ruling (ADR-78)**: the cooperative is a cooperative treasury in formation, the way land projects and people pool their resources into the network of land projects and co-own each other's projects. It launches when $20 million in letters of intent are signed and will be formed to meet the legal and regulatory needs of the funders. He chose "structure, no return promises", so gate G5 stands.
+- **/opportunity**: rebuilt section by section from the archived memorandum (`archive/fund-pages-2026-09-27`): status, lineage, the alliance, a proposed snapshot at `#terms`, how land projects co-own each other, the opportunity, why now, the 60/30/10 split, design principles, impact, how projects are chosen, risks, team, comparison, the nine capitals, who it fits, the process through the founding gathering, 20 questions, the 2040 vision. No return, carry, payout, listing, token-value or minimum lines.
+- **/loi**: a non-binding letter of intent with an amount and no minimum (signer type including land projects, country, timeline, an optional US-accredited answer, other forms of capital), saved by `loi.submit` (rate limited, consent required, no row id in the answer) with a COOP-only confirmation email. The interest form stays at `/loi?path=interest`. Migration 0302 adds three columns and a signer type to `letter_of_intent`.
+- **Home**: the card and the Two Spaces panel call it the Cooperative Treasury and say Rye's two points (`COOP.why`), with his launch sentence and a Sign a letter of intent button. /fund, governance, disclaimers, the AI guides, crawler prose, llms files, index.html, the investor email and Season 2 board text all moved to the new status; "cooperative in design" is a retired claim in the fund-claims gate.
+- **Audit**: stories `opportunity-page`, `loi-letter` (filled in by a BEFORE step), `loi-interest`, `fund-page`. Fixed what they found: form outlines (2.35:1 to 4.5:1), the privacy link's target, a phone placeholder cut off, and the desktop table of contents' active entry (4.1:1 on every page that uses it). The audit now lets running fades finish before measuring; it had read /fund's hero buttons mid-fade.
+- Carryover: the change goes to the counsel review list and the "Legal and crowdpooling" register; the market figures on /opportunity are the archived page's and were not re-verified.
+
 ## 2026-10-21 (typing lag, pickers): a bioregion picker opens with about 100 renders, down from 730, and reads on phones
 
 - **Bioregion pickers** (the board, multiplayer, a new post, the new-profile form, and the multi-choice picker in profile settings): the list inside is now `client/src/components/BioregionListbox.tsx`, plain rows in place of a cmdk list that made each of the 87 bioregions a component. Opening one renders about 100 components, down from 726 on /board and /multiplayer and 730 on /profile; nearly all of the 100 are the popover itself.

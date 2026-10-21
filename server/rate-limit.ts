@@ -59,6 +59,9 @@ const ACTION_LIMITS: Record<string, number> = {
   // person is the norm; a few retries cover typos without letting a script
   // fill the table.
   coop_interest: 5,
+  // Letter of intent to the cooperative treasury (ADR-78). Same shape as the
+  // interest form: one letter per person, a few retries for typos.
+  letter_of_intent: 5,
 
   // Offer status links (build spec 2026-09-27, section 10.2). Anyone holding
   // a link can open it, so reads get room for a few reloads across devices

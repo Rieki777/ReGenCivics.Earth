@@ -11,7 +11,7 @@
  * belong here; the verifier would start flagging correct copy.
  *
  * 2026-09-27 (Phase 0): the fund facts are gone. The "fund" is now a
- * member-owned cooperative in design (shared/fund.ts COOP), and every
+ * member-owned cooperative treasury in formation (shared/fund.ts COOP), and every
  * sentence about it is read from there, so a draft that claims a fund, a
  * return, a stake, a minimum or a formed cooperative contradicts canon and is
  * blocked.

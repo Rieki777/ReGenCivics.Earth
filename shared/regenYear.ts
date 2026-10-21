@@ -160,7 +160,7 @@ export const REGEN_SEASONS: Record<RegenSeasonKey, RegenSeason> = {
     play: [
       { who: "Everyone", what: "Fill a need on a land project's campaign: time, tools, skills, or money.", href: "/campaigns", label: "See the campaigns" },
       { who: "Land projects", what: "Join the crowdpooling round with the cohort once your project is ready.", href: READINESS_HREF, label: "What ready means" },
-      { who: "Funders and future members", what: "Tell us you're interested in the cooperative taking shape. No money and no commitment.", href: "/loi", label: "Tell us you're interested" },
+      { who: "Funders and future members", what: "Sign a letter of intent to the cooperative treasury, for any amount. It's not binding and no money moves.", href: "/loi", label: "Sign a letter of intent" },
     ],
     cta: { label: "How crowdpooling works", href: "/crowd-pooling" },
   },

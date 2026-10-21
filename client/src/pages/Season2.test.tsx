@@ -7,7 +7,7 @@
  *  - the graduation gate sits at the END of the season, >= 9 of 13
  *  - crowdpooling is the second filter, decided by the public
  *  - the cohort is the start of a cooperative network of land projects
- *    (2026-09-27: the fund became the cooperative in design, ADR-62)
+ *    (2026-09-27: the fund became the cooperative, ADR-62)
  *  - a land project standing alone is one organ (organ framing, no fund)
  *  - 13 weeks, and not every project graduates
  */

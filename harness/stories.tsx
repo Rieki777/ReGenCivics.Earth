@@ -53,6 +53,9 @@ import { cardText } from "@shared/boardCards";
 import { BioregionSelect } from "@/components/BioregionSelect";
 import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import Opportunity from "@/pages/Opportunity";
+import LOI from "@/pages/LOI";
+import Fund from "@/pages/Fund";
 
 export type Story = {
   title: string;
@@ -2128,6 +2131,51 @@ export const STORIES: Record<string, Story> = {
           <BioregionMultiDemo />
         </div>
       </ProfileGround>
+    ),
+  },
+
+  /** /opportunity: the cooperative treasury, long form (ADR-78). */
+  "opportunity-page": {
+    title: "/opportunity: the cooperative treasury",
+    render: () => (
+      <div className="-m-6">
+        <Opportunity />
+      </div>
+    ),
+  },
+
+  /** /loi: the letter of intent, filled in by the BEFORE step in audit.mjs. */
+  "loi-letter": {
+    title: "/loi: sign a letter of intent, mid-fill",
+    render: () => (
+      <div className="-m-6">
+        <LOI />
+      </div>
+    ),
+  },
+
+  /** /loi?path=interest: the second path, for land, skills and time. */
+  "loi-interest": {
+    title: "/loi?path=interest: tell us you're interested",
+    setup: () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("path", "interest");
+      window.history.replaceState(null, "", url);
+    },
+    render: () => (
+      <div className="-m-6">
+        <LOI />
+      </div>
+    ),
+  },
+
+  /** /fund: the cooperative treasury overview. */
+  "fund-page": {
+    title: "/fund: the cooperative treasury overview",
+    render: () => (
+      <div className="-m-6">
+        <Fund />
+      </div>
     ),
   },
 };

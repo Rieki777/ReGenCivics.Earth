@@ -4,7 +4,7 @@
 >
 > ReGen Civics builds the tools and runs the in-real-life game that regenerative land projects use today: a quest game that is live now, a seasonal incubator, and crowdpooling. Governance tools and a global network for the ReGenerative Renaissance.
 >
-> The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. It is not yet a legal entity and it accepts no money. We are designing it now with land projects, future members and counsel.
+> The ReGen Network Cooperative is a cooperative treasury in formation. It is being formed so land projects and people can pool their resources into the network of land projects and co-own each other's projects, governed one member, one vote. It will launch when $20 million in letters of intent are signed, and it will be formed to meet the legal and regulatory needs of the funders. Until then it is not a legal entity and it accepts no money.
 
 ## Organization Overview
 
@@ -12,7 +12,7 @@ ReGen Civics works with ecovillages, regenerative farms, and sustainable communi
 
 Healthier lands lead to healthier people. We build the governance tools, games, and community infrastructure that regenerative land projects need to thrive.
 
-Church of the Regenerative Earth (CORE) is the church and operating entity. ReGen Civics is the platform and alliance; it is not the church. The ReGen Network Cooperative is in design; it is not part of CORE and is not yet an entity.
+Church of the Regenerative Earth (CORE) is the church and operating entity. ReGen Civics is the platform and alliance; it is not the church. The ReGen Network Cooperative is in formation; it is not part of CORE and is not yet an entity.
 
 ## Four Primary Participation Paths
 
@@ -42,23 +42,25 @@ Players earn tokens for completed work.
 
 ## The ReGen Network Cooperative
 
-A cooperative regenerative society. Status: in design.
+A cooperative treasury for our network of land projects. Status: in formation.
 
-The ReGen Network Cooperative is being designed as a member-owned cooperative in which land projects and people buy and steward land together, governed democratically by the network itself. It is not yet a legal entity and it accepts no money. We are designing it now with land projects, future members and counsel.
+The ReGen Network Cooperative is a cooperative treasury in formation. It is being formed so land projects and people can pool their resources into the network of land projects and co-own each other's projects, governed one member, one vote. It will launch when $20 million in letters of intent are signed, and it will be formed to meet the legal and regulatory needs of the funders. Until then it is not a legal entity and it accepts no money.
 
-These are the design principles we are working from. The legal form, bylaws and terms will be set with counsel and adopted by the founding members.
+A member-owned cooperative treasury in which land projects and people pool their resources into the network of land projects and co-own each other's projects, governed democratically by the network itself.
+
+These are the design principles we are working from. The legal form, bylaws and terms will be set with counsel to meet the legal and regulatory needs of the funders, and adopted by the founding members.
 - Owned by its members: Land projects and the people who work with them own the cooperative together and govern it one member, one vote.
+- One pooled treasury: Members pool their resources in one network treasury and decide together which land projects it backs.
+- Land projects co-own each other: The treasury holds a shared stake in member land projects, so every project in the network co-owns a piece of the others and has a reason to help them thrive.
 - Every form of capital counts: Members' contributions are recognized across all nine forms of capital, from money to time, skills, tools and relationships.
-- Membership stays with the member: A membership can't be sold or traded. There is no market for it.
 - No managing partners: Members elect a small board that rotates. The network hires the people who run the day-to-day work.
-- Land held for the long term: The leading design is the one community land trusts use: the cooperative holds land and leases it long term to member projects. Counsel will confirm the structure.
-- Built for use: People join to use and care for shared land, tools and services. Membership is for the land projects and people who use the cooperative.
+- Held for the long term: The treasury is built to hold land and its stakes in land projects for generations, with no deadline that forces a sale.
 
-We are designing the cooperative now with land projects, future members and counsel. Its legal form, bylaws and terms are not set. When they are, the founding members will adopt them together.
+The network treasury is in formation. It will launch when $20 million in letters of intent are signed, and it will be formed to meet the legal and regulatory needs of the funders. The network treasury is in formation. When $20 million in letters of intent are signed, the signers, land projects and counsel meet to choose its legal form, set to meet the legal and regulatory needs of the funders, and the founding members adopt its bylaws and terms together.
 
-Land projects, people, organizations and funders can tell us they're interested at https://regencivics.earth/loi. Telling us you're interested is not a commitment and involves no money. We'll keep you posted as the cooperative takes shape and invite you into the design conversations.
+Anyone can sign a letter of intent to commit financial capital to the network treasury, for any amount, at https://regencivics.earth/loi. A letter of intent is not binding and no money moves when you sign it. When $20 million is signed, we'll invite every signer to the founding gathering to set the legal form and terms together, and you decide then whether to commit. People bringing land, skills or time can tell us they're interested at https://regencivics.earth/loi?path=interest.
 
-Nothing on this site is an offer to sell, or a request to buy, securities, memberships or any other financial product. The cooperative is not formed and accepts no money.
+Nothing on this site is an offer to sell, or a request to buy, securities, memberships or any other financial product. The cooperative is not formed and accepts no money. A letter of intent is not binding and moves no money.
 
 ## Core Philosophical Concepts
 
@@ -149,9 +151,9 @@ Dynamic representation of the entire regenerative network showing connections be
 ## Key Pages and Resources
 
 - [Home](https://regencivics.earth/)
-- [The ReGen Network Cooperative](https://regencivics.earth/fund) - What the cooperative is being designed to be, and where it stands. It is not yet a legal entity and accepts no money.
-- [Help Design the Cooperative](https://regencivics.earth/opportunity) - How the cooperative is being designed, and where it comes from
-- [Tell Us You're Interested](https://regencivics.earth/loi) - The interest form for land projects, people, organizations and funders
+- [The ReGen Network Cooperative](https://regencivics.earth/fund) - The cooperative treasury and where it stands. It is not yet a legal entity and accepts no money.
+- [The Cooperative Treasury](https://regencivics.earth/opportunity) - How land projects pool resources and co-own each other, how projects are chosen, the risks, and how the treasury forms
+- [Sign a Letter of Intent](https://regencivics.earth/loi) - Non-binding letters of intent to commit financial capital, any amount; and the interest form for land, skills and time
 - [Apply](https://regencivics.earth/apply) - How to join as a land project or participant
 - [Quests](https://regencivics.earth/quest) - Browse available regenerative action opportunities
 - [Bounties](https://regencivics.earth/bounties) - Claim rewards for specific tasks

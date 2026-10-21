@@ -5,6 +5,32 @@
 
 export const EMPTY_LOI_ANSWER = "—";
 
+/**
+ * The values the letter of intent accepts (ADR-78, drizzle/0302). One list for
+ * the form, the server's zod schema and the admin labels below, so a new value
+ * cannot reach one without the others.
+ */
+export const LOI_INVESTOR_TYPES = [
+  "individual",
+  "family_office",
+  "foundation",
+  "impact_fund",
+  "institutional",
+  "land_project",
+  "other",
+] as const;
+export type LoiInvestorType = (typeof LOI_INVESTOR_TYPES)[number];
+
+export const LOI_TIMELINES = ["immediate", "3_months", "6_months", "1_year", "flexible"] as const;
+export type LoiTimeline = (typeof LOI_TIMELINES)[number];
+
+/** Optional and never a gate: it tells us which legal forms fit the signers. */
+export const LOI_ACCREDITED_STATUSES = ["yes", "no", "not_sure", "not_us"] as const;
+export type LoiAccreditedStatus = (typeof LOI_ACCREDITED_STATUSES)[number];
+
+/** Upper bound on one pledge, in whole US dollars. Fits the INT column. */
+export const LOI_MAX_PLEDGE_USD = 1_000_000_000;
+
 export type LoiFieldType = "text" | "longtext" | "enum" | "currency" | "string_array";
 
 export type LoiFieldDef = {
@@ -21,8 +47,9 @@ export const LOI_INVESTOR_TYPE_LABELS: Record<string, string> = {
   foundation: "Foundation",
   impact_fund: "Impact Fund",
   institutional: "Institutional",
+  land_project: "Land project",
   other: "Other",
-};
+} satisfies Record<LoiInvestorType, string>;
 
 export const LOI_TIMELINE_LABELS: Record<string, string> = {
   immediate: "Immediate",
@@ -30,7 +57,14 @@ export const LOI_TIMELINE_LABELS: Record<string, string> = {
   "6_months": "Within 6 months",
   "1_year": "Within 1 year",
   flexible: "Flexible",
-};
+} satisfies Record<LoiTimeline, string>;
+
+export const LOI_ACCREDITED_LABELS: Record<string, string> = {
+  yes: "Yes, US accredited",
+  no: "No",
+  not_sure: "Not sure",
+  not_us: "Not in the US",
+} satisfies Record<LoiAccreditedStatus, string>;
 
 export const LOI_SECTIONS = [
   "Contact",
@@ -45,8 +79,23 @@ export const LOI_FIELDS: LoiFieldDef[] = [
   { key: "phone", label: "Phone", type: "text", section: "Contact" },
   { key: "organization", label: "Organization", type: "text", section: "Contact" },
   { key: "role", label: "Role", type: "text", section: "Contact" },
+  { key: "country", label: "Country", type: "text", section: "Contact" },
 
   { key: "pledgeAmount", label: "Pledge amount", type: "currency", section: "Investment details" },
+  {
+    key: "accreditedStatus",
+    // fund-claims-allow: admin label for an optional answer, never a gate (ADR-78)
+    label: "US accredited investor",
+    type: "enum",
+    section: "Investment details",
+    valueLabels: LOI_ACCREDITED_LABELS,
+  },
+  {
+    key: "capitalForms",
+    label: "Other forms of capital",
+    type: "string_array",
+    section: "Investment details",
+  },
   {
     key: "investorType",
     label: "Investor type",

@@ -20,7 +20,7 @@ const CROWDPOOLING =
 
 const DISCLAIMERS_DESCRIPTION = 'Legal disclaimers for the ReGen Civics website and platform.';
 const DISCLAIMERS_KEYWORDS = 'legal disclaimers, legal notice, not financial advice';
-const INTEREST_KEYWORDS = 'ReGen Network Cooperative, cooperative interest, member-owned cooperative, regenerative land';
+const INTEREST_KEYWORDS = 'ReGen Network Cooperative, letter of intent, cooperative treasury, member-owned cooperative, regenerative land';
 
 interface SEOProps {
   title: string;
@@ -197,9 +197,9 @@ export const pageSEO = {
     url: '/team'
   },
   opportunity: {
-    title: `Help design the ${COOP.name}`,
+    title: `The ${COOP.treasuryLabel}: ${COOP.name}`,
     description: COOP.statementShort,
-    keywords: 'ReGen Network Cooperative, member-owned cooperative, community land trust, regenerative land projects, land stewardship',
+    keywords: 'ReGen Network Cooperative, cooperative treasury, letter of intent, land project co-ownership, member-owned cooperative, regenerative land projects, land stewardship',
     image: '/og/opportunity.jpg',
     url: '/opportunity'
   },
@@ -218,8 +218,8 @@ export const pageSEO = {
     url: '/apply'
   },
   loi: {
-    title: 'Tell Us You\'re Interested | ReGen Civics',
-    description: COOP.interestPromise,
+    title: 'Sign a Letter of Intent | ReGen Civics',
+    description: COOP.loiPromise,
     keywords: INTEREST_KEYWORDS,
     image: '/og/opportunity.jpg',
     url: '/loi'
@@ -241,7 +241,7 @@ export const pageSEO = {
   fund: {
     title: `${COOP.name}: ${COOP.statusLabel}`,
     description: COOP.statementShort,
-    keywords: 'ReGen Network Cooperative, member-owned cooperative, community land trust, regenerative land, land stewardship, nine forms of capital',
+    keywords: 'ReGen Network Cooperative, cooperative treasury, member-owned cooperative, regenerative land, land stewardship, nine forms of capital',
     image: 'https://regencivics.earth/og/fund.jpg',
     url: '/fund'
   },
@@ -292,8 +292,8 @@ export const pageSEO = {
   // Rendered by the page at /investor, which now redirects to /loi (Phase 0),
   // so it carries the interest form's meta and canonical.
   investorForm: {
-    title: 'Tell Us You\'re Interested | ReGen Civics',
-    description: COOP.interestPromise,
+    title: 'Sign a Letter of Intent | ReGen Civics',
+    description: COOP.loiPromise,
     keywords: INTEREST_KEYWORDS,
     image: '/og/opportunity.jpg',
     url: '/loi'

@@ -683,6 +683,21 @@ export async function revealAll(page) {
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(800);
+  // Let fades still running finish, so text is measured as it rests. Endless
+  // animations are left alone (the main-thread check reads those). Miss that
+  // taught this: /fund's hero waits on its background images, then fades its
+  // buttons in after 600ms; under load the audit read them mid-fade at 2.15:1
+  // and then 4.02:1, on buttons that rest at 6.3:1 (2026-10-21).
+  await page.evaluate(async () => {
+    const finite = (document.getAnimations ? document.getAnimations() : []).filter((a) => {
+      const end = a.effect?.getComputedTiming?.().endTime;
+      return typeof end === "number" && Number.isFinite(end);
+    });
+    await Promise.race([
+      Promise.all(finite.map((a) => a.finished.catch(() => {}))),
+      new Promise((r) => setTimeout(r, 3000)),
+    ]);
+  });
 }
 
 /**

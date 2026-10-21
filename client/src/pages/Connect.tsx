@@ -65,9 +65,9 @@ const paths = [
     // The id stays "finance" (database enum); the path now leads to the
     // cooperative interest form (2026-09-27, FUNDING_ENGINE_PLAN v1.2).
     id: "finance" as PathType,
-    title: "The Cooperative",
-    subtitle: "Tell us you're interested",
-    description: `I, or an organization I represent, want to help design the ${COOP.name}`,
+    title: "The Cooperative Treasury",
+    subtitle: "Sign a letter of intent",
+    description: `I, or an organization I represent, want to pool resources with land projects through the ${COOP.name}`,
     icon: TreePine,
     color: "from-[#d4a574] to-[#ffd700]",
     iconBg: "bg-[#ffd700]",

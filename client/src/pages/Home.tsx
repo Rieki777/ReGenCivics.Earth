@@ -81,10 +81,10 @@ const pathCards = [
   {
     // The id stays "fund": it keys the card art and the /fund route.
     id: "fund",
-    title: "The Cooperative",
+    title: `The ${COOP.treasuryLabel}`,
     tagline: COOP.statusLabel,
-    description: COOP.statementShort,
-    cta: "Explore the Cooperative",
+    description: COOP.why,
+    cta: "Explore the Treasury",
     href: "/fund",
     icon: Network,
     borderColor: "border-amber-400/40",
@@ -796,14 +796,17 @@ export default function Home() {
                 className="text-white/80 text-base md:text-lg max-w-2xl mx-auto text-shadow-subtle safe-prose"
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                Two connected spaces: the Game you can play today, and the cooperative we are designing now.
+                Two connected spaces: the Game you can play today, and the cooperative treasury we're forming now.
               </p>
             </AnimatedSection>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-              {/* The Cooperative - Collapsible. Every sentence comes from COOP
-                  (shared/fund.ts), and the principles are introduced by
-                  designPrinciplesNote, as that module requires. */}
+              {/* The Cooperative Treasury - Collapsible. Every sentence comes
+                  from COOP (shared/fund.ts), and the principles are introduced
+                  by designPrinciplesNote, as that module requires. Rye,
+                  2026-10-21: call it a cooperative treasury here, and say it is
+                  how we pool our resources into the network of land projects
+                  and how our land projects co-own each other's (COOP.why). */}
               <AnimatedSection animation="slide-up" delay={100}>
                 <Collapsible open={coopOpen} onOpenChange={setCoopOpen}>
                   <div className="glass-panel p-6 md:p-8 h-full group border-amber-400/20">
@@ -813,13 +816,13 @@ export default function Home() {
                       </div>
                       <div>
                         <span className="text-amber-400 text-sm font-semibold uppercase tracking-wider">
-                          {COOP.tagline}
+                          {COOP.name}
                         </span>
                         <h3
                           className="text-2xl md:text-3xl font-bold text-white"
                           style={{ fontFamily: "var(--font-display)" }}
                         >
-                          The Cooperative
+                          The {COOP.treasuryLabel}
                         </h3>
                       </div>
                     </div>
@@ -827,7 +830,7 @@ export default function Home() {
                     <CollapsibleTrigger asChild>
                       <button className="w-full text-left mb-4">
                         <p className="text-white/80 text-base md:text-lg leading-relaxed flex items-center justify-between">
-                          <span>{COOP.statementShort}</span>
+                          <span>{COOP.why}</span>
                           <ChevronDown
                             className={`w-5 h-5 text-amber-400 flex-shrink-0 ml-2 transition-transform ${
                               coopOpen ? "rotate-180" : ""
@@ -836,6 +839,10 @@ export default function Home() {
                         </p>
                       </button>
                     </CollapsibleTrigger>
+
+                    <p className="text-amber-100 text-sm md:text-base mb-4 leading-relaxed border-l-2 border-amber-400/60 pl-3">
+                      {COOP.launch}
+                    </p>
 
                     <CollapsibleContent>
                       <p className="text-white/70 text-sm mb-4 leading-relaxed">
@@ -857,10 +864,16 @@ export default function Home() {
                       </ul>
                     </CollapsibleContent>
 
-                    <Link href="/fund">
+                    <Link href="/opportunity">
                       <Button className="w-full rounded-xl breathing-cta bg-gradient-to-r from-[#7dd87d] to-[#9de89d] text-[#1a472a] text-base py-3 h-auto font-bold">
-                        Explore the Cooperative <ArrowRight className="ml-2 w-5 h-5" />
+                        See How the Treasury Works <ArrowRight className="ml-2 w-5 h-5" />
                       </Button>
+                    </Link>
+                    <Link
+                      href="/loi"
+                      className="mt-3 flex items-center justify-center gap-2 min-h-[44px] rounded-xl border-2 border-amber-400/60 text-amber-200 hover:bg-amber-400/10 font-semibold text-base transition-colors"
+                    >
+                      Sign a letter of intent
                     </Link>
                   </div>
                 </Collapsible>

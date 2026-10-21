@@ -32,7 +32,7 @@ describe('ProgressMapMini', () => {
     expect(screen.getByText('Land')).toBeDefined();
     expect(screen.getByText('Ally')).toBeDefined();
     expect(screen.getByText('Play')).toBeDefined();
-    // The fourth path became the cooperative in design (ADR-62, 2026-09-27).
+    // The fourth path became the cooperative (ADR-62, 2026-09-27).
     expect(screen.getByText('Co-op')).toBeDefined();
   });
 
