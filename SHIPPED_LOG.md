@@ -26,7 +26,7 @@ Add new entries to the top. Format per entry:
 - Carryover:
   - the Village OS importer "Start from your ReGen Civics profile" (its own session, village-os repo);
   - later weeks' boards asking only each project's open decisions;
-  - the hosting consent line naming weekly answers (Legal session);
+  - consent line for weekly answers travelling into a hosted village draft: for the Legal session to word before the hosting team drafts from a profile;
   - quest progress that follows the player (proposed).
 
 ## 2026-10-20 (Season 2 Week 4): the session opens on last week's questions
