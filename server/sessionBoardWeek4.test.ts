@@ -237,9 +237,9 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     const mine = data.rows.filter((x) => x.projectId === w3);
     expect(mine.map((x) => x.block).sort()).toEqual(["needs", "whole"]);
     expect(data.rows.some((x) => x.block === "pulse-a")).toBe(false);
-    expect(data.asks.map((a) => a.text)).toContain("How do seats start?");
-    expect(data.asks.map((a) => a.text)).not.toContain("Answered already");
-    expect(data.asks.find((a) => a.text === "How do seats start?")?.project).toBe("Carry Tile Grove");
+    // Every Week 3 question comes, with its Answered, for "Last week's questions".
+    expect(data.asks.find((a) => a.text === "How do seats start?")).toMatchObject({ project: "Carry Tile Grove", chosen: false });
+    expect(data.asks.find((a) => a.text === "Answered already")).toMatchObject({ chosen: true });
   });
 
   it("Week 3's open questions show before Week 4 has a board, and while it has no shown card", async () => {
@@ -250,7 +250,7 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     await db.insert(sessionBoardItems).values({ boardId: w3Board, kind: "ask", block: "s3", text: "Settled already", authorKey: "k:w4asker00000001", chosen: 1 });
     const asks = async () => {
       clearCarryCache();
-      return (await readCarry(db, season, 4)).asks.map((a) => a.text);
+      return (await readCarry(db, season, 4)).asks.filter((a) => !a.chosen).map((a) => a.text);
     };
     // No Week 4 board at all yet (a rehearsal, or someone reading ahead).
     expect(await asks()).toEqual(["Who holds the keys?"]);

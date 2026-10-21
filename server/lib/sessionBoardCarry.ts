@@ -3,8 +3,8 @@
  * database side of shared/boardCarry.ts.
  *
  * - `readCarry`: for every card on a week's board, which earlier cards it
- *   carries from, and their answer rows; plus the questions still open from
- *   the week before, even before the week has a board or a card. Public,
+ *   carries from, and their answer rows; plus every question from the week
+ *   before, with its Answered, even before the week has a board or a card. Public,
  *   like the board itself: every row it returns is already on an earlier
  *   board's public read. No author key leaves here.
  * - `carryLinkOnCheckIn`: the link a check-in records, inside the check-in's
@@ -194,8 +194,9 @@ async function readEarlier(db: Db, season: string, week: number): Promise<Earlie
       // Anonymous answers never leave their board as rows, and room answers belong to nobody.
       if (i.projectId == null || !i.block || anonymousKeys(w).has(i.block)) continue;
       rows.push({ id: i.id, kind: "answer", block: i.block, text: i.text, projectId: i.projectId, createdAt: i.createdAt, week: w });
-    } else if (i.kind === "ask" && !i.chosen && w === newest) {
-      asks.push({ id: i.id, week: w, text: i.text, project: i.projectId != null ? nameOf.get(i.projectId) ?? null : null, createdAt: i.createdAt });
+    } else if (i.kind === "ask" && w === newest) {
+      // Answered ones too, so "Last week's questions" can show each one and its Answered.
+      asks.push({ id: i.id, week: w, text: i.text, project: i.projectId != null ? nameOf.get(i.projectId) ?? null : null, createdAt: i.createdAt, chosen: !!i.chosen });
     }
   }
   const fresh: EarlierRead = { at: Date.now(), boards, cards, rows, asks };
@@ -238,7 +239,7 @@ export async function readCarry(db: Db, season: string, week: number): Promise<C
   const fromWeeks = earlierAnswerWeeks(week);
   if (!fromWeeks.length) return { fromWeeks, cards: [], rows: [], asks: [] };
   const [board] = await boardsFor(db, season, [week]);
-  // No board yet: no card carries, but the questions still open from the week before do.
+  // No board yet: no card carries, but the questions from the week before still show.
   if (!board) return { fromWeeks, cards: [], rows: [], asks: (await readEarlier(db, season, week)).asks };
   const hit = cache.get(`${season}|${week}`);
   const key = `${board.version ?? 0}|${hit && Date.now() - hit.at < CACHE_MS ? hit.at : "fresh"}`;
@@ -253,7 +254,7 @@ export async function readCarry(db: Db, season: string, week: number): Promise<C
 async function computeCarry(db: Db, season: string, week: number, board: BoardRow, fromWeeks: number[]): Promise<CarryData> {
   const cards = (await cardsOn(db, [board.id])).filter((c) => !c.hidden);
   const earlier = await readEarlier(db, season, week);
-  // No card yet: the questions still open from the week before show all the same.
+  // No card yet: the questions from the week before show all the same.
   if (!cards.length) return { fromWeeks, cards: [], rows: [], asks: earlier.asks };
   const linksByWeek = linksByWeekOf(earlier.boards, week, linksOf(board));
   const out: CardCarry[] = cards.map((c) => ({ cardId: c.id, ...resolveCard(c, week, linksByWeek, earlier.cards) }));

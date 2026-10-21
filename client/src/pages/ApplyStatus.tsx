@@ -22,9 +22,10 @@ import { READINESS_HREF } from "@shared/crowdpoolReadiness";
 import { defaultCrowdpoolOpening } from "@shared/crowdpoolCalendar";
 import { formatCloseDate } from "@shared/campaignProgress";
 import { projectPathForApplication } from "@shared/projectKey";
-import { isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
+import { HOSTING_SEASON, isAcceptedForHosting, VILLAGE_OS_OFFER, VILLAGE_OS_PATH } from "@shared/villageOsOffer";
 import { SeasonVoteNudge } from "@/components/CallTimeVoteNudge";
 import { ProjectToolsPicker } from "@/components/ProjectToolsPicker";
+import { CHECKIN_APPLICATION_STATUSES } from "@shared/sessionBoard";
 
 /** Where Sign in brings the person back to. */
 export const APPLY_STATUS_SIGN_IN_HREF = `/sign-in?returnTo=${encodeURIComponent("/apply/status")}`;
@@ -55,6 +56,9 @@ export function timelinePosition(status: string): { done: number; current: strin
     default: return { done: 0, current: null };
   }
 }
+
+/** Statuses whose project has a Village profile: the ones check-in tiles show (server/lib/villageProfile.ts). */
+const VILLAGE_PROFILE_STATUSES: readonly string[] = CHECKIN_APPLICATION_STATUSES;
 
 /** Statuses whose card links the founder's next steps. */
 const ACCEPTED_STATUSES = ["approved", "active"];
@@ -228,6 +232,19 @@ export default function ApplyStatus({ now }: { now?: Date } = {}) {
                 </div>
               )}
             </div>
+
+            {/* The project's Village OS 1.0, gathered from every page and weekly board (ADR-77). */}
+            {application.season === HOSTING_SEASON && VILLAGE_PROFILE_STATUSES.includes(application.status) && (
+              <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">
+                <h3 className="font-semibold text-[#1a472a] mb-2">Your Village OS 1.0</h3>
+                <p className="text-sm text-[#1a472a]/80 mb-3">
+                  Everything your project has said, on this application and on every weekly board, gathered into the decisions your Village OS launches with. Keep what fits, write what's missing, and download your 1.0 file.
+                </p>
+                <Link href={`/apply/village?a=${application.id}`} className="inline-flex min-h-11 items-center rounded-full bg-[#1a472a] px-5 text-sm font-semibold text-white hover:bg-[#2d5a3d] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1a472a]">
+                  Open your Village OS 1.0
+                </Link>
+              </div>
+            )}
 
             {/* The library tools the project uses (ADR-73). Open after acceptance, when /apply is locked. */}
             <div className="bg-white rounded-2xl p-6 border border-[#1a472a]/10">

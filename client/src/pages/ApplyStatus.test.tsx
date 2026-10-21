@@ -100,6 +100,19 @@ describe("/apply/status", () => {
     expect(screen.queryByRole("link", { name: /Get your Village OS/ })).toBeNull();
   });
 
+  it("links the Village OS 1.0 profile for a Season 2 project that applied, and not for another season", () => {
+    h.apps = [app({ status: "submitted", season: 2 })];
+    const { unmount } = render(<ApplyStatus now={BEFORE_OPENING} />);
+    expect(hrefOf("Open your Village OS 1.0")).toBe("/apply/village?a=7");
+    unmount();
+    for (const other of [app({ status: "approved", season: 1 }), app({ status: "submitted", season: 3 })]) {
+      h.apps = [other];
+      const view = render(<ApplyStatus now={BEFORE_OPENING} />);
+      expect(screen.queryByRole("link", { name: "Open your Village OS 1.0" })).toBeNull();
+      view.unmount();
+    }
+  });
+
   it("names the accepted and taking-part steps for what they mean", () => {
     h.apps = [app({ status: "active" })];
     render(<ApplyStatus now={BEFORE_OPENING} />);

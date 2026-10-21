@@ -218,13 +218,15 @@ export type BoardStage = {
    * `carry` (last week's card), `confirm` (check and add human needs, seeds,
    * depth), `seats`, `decide` and `quests`.
    */
-  step?: "pick" | "depth" | "meet" | "circles" | "room" | "carry" | "confirm" | "seats" | "decide" | "quests";
+  step?: "pick" | "depth" | "meet" | "circles" | "room" | "carry" | "confirm" | "seats" | "decide" | "quests" | "asks";
   /** A quote panel. */
   quote?: string;
   /** Plain lines shown with the stage (a bridge line, a footer). */
   notes?: readonly string[];
   /** Show the Season feedback box (topic for next week, facilitation feedback). */
   feedback?: boolean;
+  /** A board that carries an earlier week: also list the earlier week's questions still open, to answer here. */
+  earlierAsks?: boolean;
 };
 
 /**
@@ -1051,6 +1053,14 @@ export const WEEK4_COPY = {
   circlesCarried: "Last week's circles are on the card now. Take one back with × to add \"{text}\".",
   /** The circles for a human need of the project's own. */
   ownNeedCircles: "Which circles meet it?",
+  /** "Last week's questions" (Rye, 2026-10-20: start Week 4 by answering every question added to Week 3's board). */
+  asksTitle: "Last week's questions",
+  asksFrom: "From Week {week}",
+  asksNone: "No questions were added to Week {week}'s board.",
+  asksToday: "Asked today",
+  asksCover: "You asked us to cover",
+  asksOpenLater: "Still open from Week {week}",
+  answeredCount: "{answered} of {total} answered",
   ownNeedCirclesSaved: "Circles for {need}: {circles}.",
 } as const;
 
@@ -1063,18 +1073,21 @@ export const WEEK4_COPY = {
  * someone on the team, open as an invitation, or a being; hours a week or a
  * clear contribution); who decides what; and a first quest. The whole Season
  * ends in launching each project's Village OS from what the episodes uncover,
- * so the board makes a card ready to paste. 14 stages, 120 minutes.
+ * so the board makes a card ready to paste. Rye, 2026-10-20: the session
+ * opens on every question added to Week 3's board, answered first. 15
+ * stages, 120 minutes.
  *
  * Stage positions are fixed from the first save of Week 4's board (planned
- * minutes are kept by position), so this list never gets a stage inserted.
+ * minutes are kept by position), so this list never gets a stage inserted
+ * after that. "Last week's questions" went in on 2026-10-20, while the board
+ * was still at version 0, never saved.
  */
 const WEEK_4: BoardStage[] = [
   {
-    kind: "welcome", name: "Welcome", short: "Welcome", min: 4, line: "Part 2 of 2: build it in Village OS",
+    kind: "welcome", name: "Welcome", short: "Welcome", min: 3, line: "Part 2 of 2: build it in Village OS",
     cues: [
       "Greet people by name. \"Open the board on your own screen and tap your project while we gather.\" Point to the QR.",
       "Say it plainly: this is Part 2 of 2, the practical half. Last week each project named the human needs it is here to meet. Today we build its Game around them, and every project leaves with a card ready for its Village OS.",
-      "Read the \"You asked us to cover\" notes in one breath: practising in your own context, and peer review.",
       "When you go live, press Start session at the top. Moving between stages never starts the clock.",
     ],
   },
@@ -1095,7 +1108,18 @@ const WEEK_4: BoardStage[] = [
     ],
   },
   {
-    kind: "needs", step: "carry", name: WEEK4_COPY.carryTitle, short: "Week 3 card", min: 10, line: "What you said last week, and what's still open",
+    // Added 2026-10-20 while Week 4's board was still at version 0 (never saved), so no planned minutes moved.
+    kind: "needs", step: "asks", name: WEEK4_COPY.asksTitle, short: "Last week", min: 12, line: "Every question from Week 3, answered first",
+    lede: "We start with your questions. Every question added to Week 3's board is here, oldest first, and we answer each one before we build.",
+    cues: [
+      "Read each question aloud with its project, answer it, and tap Answered. The prep sheet has a suggested answer for each.",
+      "Answer the role questions together: inviting people into roles, counting contribution, what a role is worth. Today's seats stage is the long answer.",
+      "Then the notes people asked us to cover: practising in your own context, and peer review.",
+      "A new question comes up? It goes in the box below, and we answer it at the end.",
+    ],
+  },
+  {
+    kind: "needs", step: "carry", name: WEEK4_COPY.carryTitle, short: "Week 3 card", min: 7, line: "What you said last week, and what's still open",
     lede: "Here's what your project said last week. Read it with your people. Anything you change today replaces last week's answer, and anything you leave comes with you.",
     prompts: [
       { key: "moved", title: "Did your move from last week happen?", mode: "pick", scope: "project", options: opts(MOVED_SCALE), max: 1 },
@@ -1109,12 +1133,11 @@ const WEEK_4: BoardStage[] = [
     cues: [
       "Read one project's card aloud as the example, then give everyone three minutes with their own.",
       "Point at \"Not answered yet\": each gap gets answered on today's stages.",
-      "Answer the role questions still open from Week 3 first: inviting people into roles, counting contribution, what a role is worth. Today's seats stage is the long answer.",
       "Ask each project: did your move happen?",
     ],
   },
   {
-    kind: "needs", step: "confirm", name: WEEK4_COPY.needsTitle, short: "Human needs", min: 12, line: "Check them, plant your seeds, add your own",
+    kind: "needs", step: "confirm", name: WEEK4_COPY.needsTitle, short: "Human needs", min: 11, line: "Check them, plant your seeds, add your own",
     lede: "Human needs first. These are the human needs your project named last week. Change anything that's no longer true, plant three seeds at its heart, and add any human need of your own. Then, for each seed, how deep and for how many.",
     prompts: [
       { key: "needs", title: "The human needs your project is here to meet", mode: "pick", scope: "project", options: NEED_OPTIONS, max: 10 },
@@ -1135,7 +1158,7 @@ const WEEK_4: BoardStage[] = [
     ],
   },
   {
-    kind: "needs", step: "circles", name: "Circles for each human need", short: "Circles", min: 12, line: "The circles that meet each human need",
+    kind: "needs", step: "circles", name: "Circles for each human need", short: "Circles", min: 11, line: "The circles that meet each human need",
     lede: "An economy is people coming together to meet each other's human needs. For each human need on your card, seeds first, tap the circles that meet it. Then name your own circles, the ones you start with, and how many players it takes.",
     prompts: [
       ...CIRCLE_PROMPTS,
@@ -1192,7 +1215,7 @@ const WEEK_4: BoardStage[] = [
     ],
   },
   {
-    kind: "needs", step: "decide", name: WEEK4_COPY.decideTitle, short: "Decides", min: 12, line: "What each circle decides, and what you decide together",
+    kind: "needs", step: "decide", name: WEEK4_COPY.decideTitle, short: "Decides", min: 10, line: "What each circle decides, and what you decide together",
     lede: "Last week you said how you decide today and how you want to. Now split it up: each circle decides what's its own, and a few things the whole project decides together.",
     prompts: [
       ...cardPrompts("decide", "What a circle decides"),
@@ -1222,7 +1245,7 @@ const WEEK_4: BoardStage[] = [
     ],
   },
   {
-    kind: "needs", step: "room", name: WEEK4_COPY.builtTitle, short: "Built", min: 9, line: "Each project reads its Game, and gets its card",
+    kind: "needs", step: "room", name: WEEK4_COPY.builtTitle, short: "Built", min: 7, line: "Each project reads its Game, and gets its card",
     lede: "Each project reads its Game in about a minute. The next project reflects back one thing it would play. Then copy your card for Village OS.",
     prompts: [
       {
@@ -1241,7 +1264,8 @@ const WEEK_4: BoardStage[] = [
     ],
   },
   {
-    kind: "prompt", name: "Your questions, and Week 5", short: "Questions", min: 8, line: "Questions answered, and one move before Week 5",
+    kind: "prompt", name: "Your questions, and Week 5", short: "Questions", min: 6, line: "Questions answered, and one move before Week 5",
+    earlierAsks: true,
     lede: "Let's take your questions. Then each project names one move before Week 5, when we write your Game Guide and start your economic system.",
     prompts: [
       { key: "ask", title: "Your questions on circles, seats and Village OS", placeholder: PROMPT_COPY.askPlaceholder, mode: "ask", scope: "project" },
@@ -1255,7 +1279,7 @@ const WEEK_4: BoardStage[] = [
     ],
     notes: ["Legal structures come in Weeks 10 and 11. Pooling what everyone brings comes in Week 13."],
     cues: [
-      "Share the wall. Answer the top questions and tap \"Answered\" on each.",
+      "Share the wall. Answer today's questions, then any from Week 3 still open, and tap \"Answered\" on each.",
       "Each project names one move. Read the Week 5 picks: that's Week 5's agenda.",
       "Running behind: 5 minutes.",
     ],
