@@ -10,12 +10,17 @@
  * (campaigns.updateDraft) while it is a draft, in review or sent back, and
  * send it for review again, a legacy 'rejected' one included. A save made
  * from a sheet opened before someone else's save gets CONFLICT (seenUpdatedAt).
+ * A save the database rolls back to end a deadlock runs again, and a save
+ * takes its needs' locks lowest id first.
  *
  * Run against the SCRATCH database, never production. Fixture titles stay
- * clear of the words the global teardown sweeps.
+ * clear of the words the global teardown sweeps. CI runs every DB suite at
+ * once on one database, so this suite touches only its own rows: its
+ * teardown deletes needs by primary key, and no image lands after its test.
  */
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq, inArray } from "drizzle-orm";
+import mysql from "mysql2/promise";
 
 const { inserted, stale } = vi.hoisted(() => ({
   inserted: [] as Array<{ userId: number; type: string; title: string; body?: string; link?: string | null }>,
@@ -74,6 +79,10 @@ const createdCampaignIds: number[] = [];
 beforeEach(() => {
   inserted.length = 0;
   stale.clear();
+  // A test that stopped before its campaign was made leaves no image waiting
+  // to land on the next test's campaign.
+  vi.mocked(generateImage).mockReset();
+  vi.mocked(generateImage).mockRejectedValue(new Error("image generation off in tests"));
 });
 
 afterAll(async () => {
@@ -83,7 +92,11 @@ afterAll(async () => {
     await database!.delete(campaignContributions).where(inArray(campaignContributions.campaignId, createdCampaignIds));
     await database!.delete(campaignNeedMarkers).where(inArray(campaignNeedMarkers.campaignId, createdCampaignIds));
     await database!.delete(campaignArrivalNotes).where(inArray(campaignArrivalNotes.campaignId, createdCampaignIds));
-    await database!.delete(campaignItems).where(inArray(campaignItems.campaignId, createdCampaignIds));
+    // campaign_items has no campaignId index, so a DELETE by campaign scans
+    // and locks every suite's needs. This suite's needs go by primary key.
+    const needIds = (await database!.select({ id: campaignItems.id }).from(campaignItems)
+      .where(inArray(campaignItems.campaignId, createdCampaignIds))).map((r) => r.id);
+    if (needIds.length) await database!.delete(campaignItems).where(inArray(campaignItems.id, needIds));
     await database!.delete(campaigns).where(inArray(campaigns.id, createdCampaignIds));
   }
   await cleanupFixtureApplications();
@@ -138,6 +151,21 @@ const edit = async (c: Awaited<ReturnType<typeof inReview>>, over: Record<string
   items: Object.values(asSent(c)),
   ...over,
 });
+
+/** A connection of the test's own, outside the app's pool, to hold locks with. */
+async function ownConnection() {
+  const conn = await mysql.createConnection({ uri: process.env.DATABASE_URL! });
+  // A lock the test never gets fails the test in seconds, not after 50.
+  await conn.query("SET SESSION innodb_lock_wait_timeout = 10");
+  return conn;
+}
+
+/** Which of these rows another transaction holds a lock on. SKIP LOCKED passes over a held row instead of waiting. */
+async function heldIds(probe: mysql.Connection, table: "campaigns" | "campaign_items", ids: number[]): Promise<number[]> {
+  const [rows] = await probe.query(`SELECT id FROM \`${table}\` WHERE id IN (?) FOR UPDATE SKIP LOCKED`, [ids]);
+  const free = new Set((rows as Array<{ id: number }>).map((r) => Number(r.id)));
+  return ids.filter((id) => !free.has(id));
+}
 
 describe("Send back for changes (admin)", () => {
   it.skipIf(skipIfNoDb)("moves a campaign in review to draft, keeps the note for the stewards and tells them", async () => {
@@ -336,15 +364,23 @@ describe("Stewards edit before it goes live, and send it again", () => {
 
   it.skipIf(skipIfNoDb)("a generated image landing later keeps updatedAt, so an open sheet still saves", async () => {
     const url = "https://assets.regencivics.earth/b1-lane-picture.png";
+    // The image lands when this test lands it, so it never writes during
+    // another test.
+    let land: (() => void) | undefined;
     vi.mocked(generateImage).mockImplementationOnce(
-      () => new Promise((resolve) => setTimeout(() => resolve({ url } as Awaited<ReturnType<typeof generateImage>>), 1300)),
+      () => new Promise((resolve) => { land = () => resolve({ url } as Awaited<ReturnType<typeof generateImage>>); }),
     );
     const c = await inReview("Picture");
     const opened = (await row(c.id)).updatedAt;
+    // updatedAt is stored to the second, so the image lands more than a
+    // second later: a write that moved updatedAt would show.
+    await new Promise((r) => setTimeout(r, 1300));
+    expect(land).toBeDefined();
+    land!();
     await vi.waitFor(async () => expect((await row(c.id)).generatedImageUrl).toBe(url), { timeout: 8000, interval: 200 });
     expect((await row(c.id)).updatedAt.getTime()).toBe(opened.getTime());
     expect(await stewardCaller(STEWARD).campaigns.updateDraft({ ...(await edit(c)), seenUpdatedAt: opened })).toEqual({ success: true });
-  });
+  }, 20_000);
 
   it.skipIf(skipIfNoDb)("text longer than its column is refused as input, and a title that grows when made safe still fits", async () => {
     const c = await inReview("Lengths");
@@ -384,4 +420,77 @@ describe("Stewards edit before it goes live, and send it again", () => {
     const [still] = await database!.select({ status: campaigns.status }).from(campaigns).where(and(eq(campaigns.id, d.id)));
     expect(still.status).toBe("active");
   });
+
+  // CI run 38711957492: a save died with ER_LOCK_DEADLOCK while a suite
+  // running beside it held one of its needs.
+  it.skipIf(skipIfNoDb)("a save the database rolls back to end a deadlock runs again and goes through", async () => {
+    const c = await inReview("Deadlock");
+    const input = await edit(c, { title: "Send-back Deadlock, saved" });
+    const database = await dbHelpers.getDb();
+    const transactions = vi.spyOn(database!, "transaction");
+    const blocker = await ownConnection();
+    const probe = await ownConnection();
+    let save: Promise<unknown> | undefined;
+    try {
+      // The blocker changes the pump, the campaign's lowest need, again and
+      // again: it holds the pump's row, and it has written far more than the
+      // save will have, so InnoDB rolls the save back when the two deadlock.
+      // Its own rollback puts the pump back.
+      await blocker.query("START TRANSACTION");
+      for (let i = 0; i < 40; i++) {
+        await blocker.query("UPDATE campaign_items SET estimatedValue = estimatedValue + 1 WHERE id = ?", [c.pump.id]);
+      }
+      save = stewardCaller(STEWARD).campaigns.updateDraft(input);
+      // Its result is checked below; a rejection before then is not unhandled.
+      save.catch(() => {});
+      // The save holds the campaign row and waits for the pump.
+      await vi.waitFor(async () => expect(await heldIds(probe, "campaigns", [c.id])).toEqual([c.id]), { timeout: 8000, interval: 50 });
+      // The blocker asks for the campaign row, so each waits for the other.
+      // It gets the row only because InnoDB rolled the save back.
+      await blocker.query("SELECT id FROM campaigns WHERE id = ? FOR UPDATE", [c.id]);
+      await blocker.query("ROLLBACK");
+      await expect(save).resolves.toEqual({ success: true });
+      expect(transactions).toHaveBeenCalledTimes(2);
+    } finally {
+      transactions.mockRestore();
+      await blocker.end();
+      await probe.end();
+      await save?.catch(() => {});
+    }
+    expect(await row(c.id)).toMatchObject({ title: "Send-back Deadlock, saved", totalValue: 6150 });
+    expect((await dbHelpers.getCampaignItems(c.id)).find((i) => i.id === c.pump.id)?.estimatedValue).toBe(2000);
+  }, 30_000);
+
+  it.skipIf(skipIfNoDb)("a save waiting for one of its needs holds none of the others", async () => {
+    const c = await inReview("Lock order");
+    const sent = asSent(c);
+    // The sheet lists the needs by category, as the page does: the pump, the
+    // lowest id, comes last.
+    const input = await edit(c, { items: [sent.barrow, sent.lead, sent.pump] });
+    const blocker = await ownConnection();
+    const probe = await ownConnection();
+    let save: Promise<unknown> | undefined;
+    try {
+      // The blocker holds the pump, as a scan of campaign_items going up by
+      // id would on its way to the wheelbarrow and the role.
+      await blocker.query("START TRANSACTION");
+      await blocker.query("SELECT id FROM campaign_items WHERE id = ? FOR UPDATE", [c.pump.id]);
+      save = stewardCaller(STEWARD).campaigns.updateDraft(input);
+      save.catch(() => {});
+      await vi.waitFor(async () => expect(await heldIds(probe, "campaigns", [c.id])).toEqual([c.id]), { timeout: 8000, interval: 50 });
+      // For as long as the save waits for the pump, the scan's next rows stay
+      // free. A save that changed them first would hold them, and the scan
+      // and the save would each wait for the other.
+      for (let i = 0; i < 20; i++) {
+        expect(await heldIds(probe, "campaign_items", [c.barrow.id, c.lead.id]), "needs the save holds while it waits for the pump").toEqual([]);
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      await blocker.query("ROLLBACK");
+      await expect(save).resolves.toEqual({ success: true });
+    } finally {
+      await blocker.end();
+      await probe.end();
+      await save?.catch(() => {});
+    }
+  }, 30_000);
 });

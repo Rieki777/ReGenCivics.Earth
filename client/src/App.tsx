@@ -150,6 +150,7 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Apply = lazy(() => import("./pages/Apply"));
 const ApplySuccess = lazy(() => import("./pages/ApplySuccess"));
 const ApplyStatus = lazy(() => import("./pages/ApplyStatus"));
+const VillageProfile = lazy(() => import("./pages/VillageProfile"));
 const AllianceApply = lazy(() => import("./pages/AllianceApply"));
 const AllianceApplyStatus = lazy(() => import("./pages/AllianceApplyStatus"));
 const MyApplications = lazy(() => import("./pages/MyApplications"));
@@ -373,6 +374,7 @@ function Router() {
       <Route path={"/apply"}><EB><Apply /></EB></Route>
       <Route path={"/apply/success"}><EB><ApplySuccess /></EB></Route>
       <Route path={"/apply/status"}><EB><ApplyStatus /></EB></Route>
+      <Route path={"/apply/village"}><EB><VillageProfile /></EB></Route>
       <Route path={"/apply/alliance"}><EB><AllianceApply /></EB></Route>
       <Route path={"/apply/alliance/status"}><EB><AllianceApplyStatus /></EB></Route>
       <Route path={"/my-applications"}><EB><MyApplications /></EB></Route>

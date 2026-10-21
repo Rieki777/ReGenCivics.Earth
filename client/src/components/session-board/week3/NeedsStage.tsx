@@ -43,6 +43,7 @@ import type { StageProps } from "../stages";
 import { cardName, myAnswerRows, myCardId, oldestFirst, shownRows, stageIndexOf } from "./answers";
 import { StageHead, plural } from "./parts";
 import { AskFoot, PickBlock, ProjectFor, PromptBlock, StageExtras, type ShownPrompt } from "./PromptBlock";
+import { AsksStage } from "../week4/AsksStage";
 import { CarryPending, CarryStage, CarryWait, startedFresh } from "../week4/CarryStage";
 import { NeedsConfirm } from "../week4/NeedsConfirm";
 import { SeatsStage } from "../week4/SeatsStage";
@@ -79,6 +80,8 @@ export function NeedsStage(props: StageProps) {
   const [, setFresh] = useState(0);
   if (props.carry?.on) {
     if (step === "carry") return <CarryStage {...props} />;
+    // Last week's questions writes nothing for a project; it shows its own wait while they load.
+    if (step === "asks") return <AsksStage {...props} />;
     // Nothing here writes until last week's answers are in: a tap made before
     // they load would replace them for everyone (a change replaces last week's).
     if (props.carry.loading || props.carry.failed || !props.carry.data) return <CarryWait {...props} />;

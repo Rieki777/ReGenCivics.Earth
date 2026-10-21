@@ -32,6 +32,7 @@ import { interopSheetsRouter } from "./routes/interopSheets";
 import { seasonScheduleRouter } from "./routes/seasonSchedule";
 import { sessionBoardRouter } from "./routes/sessionBoard";
 import { villageOsRouter } from "./routes/villageOs";
+import { villageProfileRouter } from "./routes/villageProfile";
 import { agreementsRouter } from "./routes/agreements";
 import { gratitudeRouter } from "./routes/gratitude";
 import { hyphaBridgeRouter } from "./routes/hyphaBridge";
@@ -207,6 +208,9 @@ export const appRouter = router({
 
   // Get your Village OS: the offer's switches, hosting requests and the admin queue (ADR-69)
   villageOs: villageOsRouter,
+
+  // Village profiles: each land project's Village OS 1.0, gathered from every page and board (ADR-77)
+  villageProfile: villageProfileRouter,
 
   // Events + per-event reminders
   events: eventsRouter,

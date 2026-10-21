@@ -1341,6 +1341,21 @@ html[data-typing] .decor-layer * {
   image-rendering: auto;
 }
 
+/* The progress map's landmarks are SVG groups (ProgressMapSVG). Safari paints
+   no outline or box-shadow on a shape inside an SVG, and Chrome outlines the
+   group's whole box, its invisible hit disc too. So the site's focus ring is
+   switched off here and the landmark draws its own (.pm-focus). */
+.pm-landmark:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.pm-focus {
+  display: none;
+}
+.pm-landmark:focus-visible .pm-focus {
+  display: inline;
+}
+
 /* Global focus-visible ring for keyboard navigation */
 :focus-visible {
   outline: 2px solid #7dd87d;

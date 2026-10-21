@@ -18,7 +18,7 @@ import {
 import { checkOfferLimit, checkRateLimit } from "../rate-limit";
 import { isAdminUser, pickPublic } from "../lib/public-projection";
 import type { TrpcContext } from "../_core/context";
-import type { Campaign, CampaignContribution } from "../../drizzle/schema";
+import type { Campaign, CampaignContribution, CampaignItem } from "../../drizzle/schema";
 import { sanitizeInput, sanitizeRichText } from "../_core/security";
 import { designCompanionTurn } from "../lib/crowdpool-coach";
 import { getGameVariable, recordCrowdpoolScoreOnce, logActivityEvent } from "../game";
@@ -72,6 +72,7 @@ import {
 import { needWindowPassed, shiftHasStarted } from "../../shared/needWindow";
 import { decodeBasicEntities } from "../../shared/htmlText";
 import { asStoredNeed, assertNeedRules, needInsertValues, needUpdateValues } from "../lib/need-rules";
+import { withDeadlockRetry } from "../lib/deadlock-retry";
 import { CAMPAIGN_DESCRIPTION_MAX, MAX_DRAFT_NEEDS, NEED_TEXT_MAX } from "../../shared/needRules";
 import { isCurrentReadinessKey, isReadinessKey } from "../../shared/crowdpoolReadiness";
 import {
@@ -2624,10 +2625,12 @@ export const campaignsRouter = router({
   // (sent back or not), in review, or sent back under the old Reject. Title,
   // description, the money ask, the days it runs once approved, and its
   // needs. One transaction: the campaign row is locked first (by its primary
-  // key, so no other campaign waits), the save goes ahead only while the
-  // campaign is as the sheet saw it (its status and updatedAt), and the value
-  // totals are recomputed from the needs without locking any other campaign's
-  // needs (review 2026-10-09). No notice goes out.
+  // key, so no other campaign waits), then its needs in id order, the save
+  // goes ahead only while the campaign is as the sheet saw it (its status and
+  // updatedAt), and the value totals are recomputed from the needs without
+  // locking any other campaign's needs (review 2026-10-09). A transaction the
+  // database rolls back to end a deadlock runs again (withDeadlockRetry). No
+  // notice goes out.
   //
   // seenUpdatedAt is the campaign's updatedAt when the steward opened the
   // sheet. A co-steward's save in between moves it on, so a sheet opened
@@ -2662,7 +2665,11 @@ export const campaignsRouter = router({
 
       const changed = () => new TRPCError({ code: 'CONFLICT', message: 'Someone just changed this campaign. Refresh and try again.' });
       const database = await requireDb();
-      await database.transaction(async (tx) => {
+      // A deadlock rolls the whole save back, so it runs again, three runs at
+      // most (CI run 38711957492 lost one to a suite running beside it). Each
+      // run reads and checks everything again under its own locks, so a
+      // co-steward's save that got in first still answers CONFLICT.
+      await withDeadlockRetry('campaigns.updateDraft', () => database.transaction(async (tx) => {
         // Lock this campaign's row before anything else changes. It is found
         // by its primary key, so only this row is locked: campaign_items has
         // no index on campaignId, and locking its rows by campaign would
@@ -2684,8 +2691,20 @@ export const campaignsRouter = router({
         ) {
           throw changed();
         }
-        const existing = await tx.select().from(campaignItemsTable)
-          .where(eq(campaignItemsTable.campaignId, campaign.id));
+        // Then its needs, each locked by primary key, lowest id first, before
+        // any of them changes. Anything that locks needs by campaign (the
+        // close, a cancel, the example window, recomputeCampaignValueTotals, a
+        // DELETE by campaignId) scans all of campaign_items in id order, so a
+        // save holding a higher need while it asks for a lower one can
+        // deadlock with such a scan. CI run 38711957492 did: the save changed
+        // its needs in category order and deadlocked asking for the pump, the
+        // lowest id. The ids come from a read that takes no locks.
+        const needIds = (await tx.select({ id: campaignItemsTable.id }).from(campaignItemsTable)
+          .where(eq(campaignItemsTable.campaignId, campaign.id))).map((row) => row.id);
+        const existing: CampaignItem[] = needIds.length === 0 ? [] : await tx.select().from(campaignItemsTable)
+          .where(and(inArray(campaignItemsTable.id, needIds), eq(campaignItemsTable.campaignId, campaign.id)))
+          .orderBy(campaignItemsTable.id)
+          .for('update');
         const byId = new Map(existing.map((row) => [row.id, row]));
         for (const id of ids) {
           if (!byId.has(id)) throw new TRPCError({ code: 'BAD_REQUEST', message: "A need isn't part of this campaign. Refresh and try again." });
@@ -2773,7 +2792,7 @@ export const campaignsRouter = router({
             eq(campaignsTable.isDemo, 0),
           )));
         if (updated === 0) throw changed();
-      });
+      }));
       return { success: true };
     }),
 

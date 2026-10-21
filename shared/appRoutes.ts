@@ -42,6 +42,7 @@ export const APP_ROUTE_PATTERNS: readonly string[] = [
   "/apply/alliance/status",
   "/apply/status",
   "/apply/success",
+  "/apply/village",
   "/assembly",
   "/bionomics",
   "/bionomics/edit",

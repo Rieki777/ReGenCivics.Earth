@@ -2,8 +2,12 @@
  * ProgressMap - Full-screen interactive map overlay.
  * Desktop: illustrated SVG map + sidebar with path details.
  * Mobile: scrollable map + bottom sheet with path switcher.
+ *
+ * Opening a landmark moves focus to its card, so a screen reader reads it and
+ * Tab goes straight to "Go there"; closing the card puts focus back on the
+ * landmark, where it would otherwise drop to the page behind the map.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { X, ChevronRight, ExternalLink } from "lucide-react";
@@ -24,6 +28,19 @@ export default function ProgressMap({ onClose }: Props) {
   const [selectedNode, setSelectedNode] = useState<MapNode | null>(null);
   useBodyScrollLock(true);
   const trapRef = useFocusTrap(true);
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Counts openings, so opening the landmark whose card is already up still moves focus.
+  const [openings, setOpenings] = useState(0);
+
+  useEffect(() => {
+    if (selectedNode) cardRef.current?.focus({ preventScroll: true });
+  }, [selectedNode, openings]);
+
+  const closeCard = () => {
+    const landmark = selectedNode && trapRef.current?.querySelector<SVGGElement>(`[data-node-id="${selectedNode.id}"]`);
+    setSelectedNode(null);
+    landmark?.focus({ preventScroll: true });
+  };
 
   const activePath = selectedPath
     ? PATHS.find(p => p.id === selectedPath)
@@ -127,12 +144,21 @@ export default function ProgressMap({ onClose }: Props) {
           <ProgressMapSVG
             progress={progress}
             selectedPath={selectedPath}
-            onNodeClick={(node) => setSelectedNode(node)}
+            onNodeClick={(node) => {
+              setSelectedNode(node);
+              setOpenings((n) => n + 1);
+            }}
           />
 
           {/* Node detail card */}
           {selectedNode && (
-            <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-[#0d2818]/95 backdrop-blur-sm border border-white/20 rounded-2xl p-4 z-10">
+            <div
+              ref={cardRef}
+              tabIndex={-1}
+              role="group"
+              aria-label={`${selectedNode.landmark}: ${selectedNode.label}`}
+              className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-[#0d2818]/95 backdrop-blur-sm border border-white/20 rounded-2xl p-4 z-10"
+            >
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <p className="text-white font-bold text-sm" style={{ fontFamily: "var(--font-display)" }}>
@@ -141,7 +167,7 @@ export default function ProgressMap({ onClose }: Props) {
                   <p className="text-white/70 text-xs">{selectedNode.label}</p>
                 </div>
                 <button
-                  onClick={() => setSelectedNode(null)}
+                  onClick={closeCard}
                   className="p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 inline-flex items-center justify-center hover:bg-white/10 rounded-lg text-white/60"
                   aria-label="Close detail"
                 >
