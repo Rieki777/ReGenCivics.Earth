@@ -35,8 +35,15 @@ type QuestDraft = { title: string; description: string; category: string };
  * The quest idea form keeps its own text, so a keystroke re-renders the form
  * and not the ranked list below it (STEERING.md section 13). The page holds
  * the draft in a ref, so closing and reopening the form keeps what was typed.
+ * The page owns the submit (pending and success),
+ * so a form closed and reopened mid-submit still shows it sending.
  */
-function QuestIdeaForm({ draft, onCreated, onCancel }: { draft: MutableRefObject<QuestDraft>; onCreated: () => void; onCancel: () => void }) {
+function QuestIdeaForm({ draft, pending, onSubmit, onCancel }: {
+  draft: MutableRefObject<QuestDraft>;
+  pending: boolean;
+  onSubmit: (values: { title: string; description: string; category?: string }) => void;
+  onCancel: () => void;
+}) {
   const { t } = useLanguage();
   const [title, setTitle] = useState(draft.current.title);
   const [description, setDescription] = useState(draft.current.description);
@@ -45,19 +52,9 @@ function QuestIdeaForm({ draft, onCreated, onCancel }: { draft: MutableRefObject
     draft.current = { title, description, category };
   }, [draft, title, description, category]);
 
-  const createMutation = trpc.quests.create.useMutation({
-    onSuccess: () => {
-      draft.current = { title: '', description: '', category: '' };
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      onCreated();
-    },
-  });
-
   const handleSubmit = () => {
     if (!title.trim() || !description.trim()) return;
-    createMutation.mutate({ title: title.trim(), description: description.trim(), category: category || undefined });
+    onSubmit({ title: title.trim(), description: description.trim(), category: category || undefined });
   };
 
   return (
@@ -120,11 +117,11 @@ function QuestIdeaForm({ draft, onCreated, onCancel }: { draft: MutableRefObject
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!title.trim() || !description.trim() || createMutation.isPending}
+            disabled={!title.trim() || !description.trim() || pending}
             className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
           >
             <Send className="w-4 h-4 mr-2" />
-            {createMutation.isPending ? t('common.loading') : t('quest.submitSuggestion')}
+            {pending ? t('common.loading') : t('quest.submitSuggestion')}
           </Button>
         </div>
       </div>
@@ -151,10 +148,13 @@ export default function QuestSuggestions() {
 
   const suggestionsQuery = trpc.quests.suggestions.useQuery({ sortBy });
   const myVotesQuery = trpc.quests.myVotes.useQuery(undefined, { enabled: isAuthenticated });
-  const onCreated = () => {
-    setShowForm(false);
-    suggestionsQuery.refetch();
-  };
+  const createMutation = trpc.quests.create.useMutation({
+    onSuccess: () => {
+      draft.current = { title: '', description: '', category: '' };
+      setShowForm(false);
+      suggestionsQuery.refetch();
+    },
+  });
   const onCancel = () => setShowForm(false);
   const utils = trpc.useUtils();
   // The vote shows at once; the server's answer settles it (STEERING.md section 13).
@@ -242,7 +242,7 @@ export default function QuestSuggestions() {
       {/* Submission Form */}
       {showForm && (
           <section className="px-4 pb-8 overflow-hidden">
-            <QuestIdeaForm draft={draft} onCreated={onCreated} onCancel={onCancel} />
+            <QuestIdeaForm draft={draft} pending={createMutation.isPending} onSubmit={createMutation.mutate} onCancel={onCancel} />
           </section>
       )}
 

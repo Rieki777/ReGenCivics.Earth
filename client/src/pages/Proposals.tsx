@@ -68,9 +68,15 @@ const EMPTY_DRAFT: ProposalDraft = { title: "", description: "", category: "", t
  * The proposal form keeps its own text, so a keystroke re-renders the form
  * and not the page and its list of proposals behind the dialog (STEERING.md
  * section 13). The page holds the draft in a ref, so closing and reopening
- * the dialog keeps what was typed.
+ * the dialog keeps what was typed. The page owns the submit (pending, error
+ * and success), so a dialog closed and reopened mid-submit still shows it.
  */
-function ProposalForm({ draft, onCreated }: { draft: MutableRefObject<ProposalDraft>; onCreated: () => void }) {
+function ProposalForm({ draft, pending, errorMessage, onSubmit }: {
+  draft: MutableRefObject<ProposalDraft>;
+  pending: boolean;
+  errorMessage: string | null;
+  onSubmit: (values: { title: string; description: string; category: any; templateType?: string }) => void;
+}) {
   const [title, setTitle] = useState(draft.current.title);
   const [description, setDescription] = useState(draft.current.description);
   const [category, setCategory] = useState<string>(draft.current.category);
@@ -79,20 +85,9 @@ function ProposalForm({ draft, onCreated }: { draft: MutableRefObject<ProposalDr
     draft.current = { title, description, category, templateType };
   }, [draft, title, description, category, templateType]);
 
-  const createMutation = trpc.proposals.create.useMutation({
-    onSuccess: () => {
-      draft.current = EMPTY_DRAFT;
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      setTemplateType("");
-      onCreated();
-    },
-  });
-
   function handleSubmit() {
     if (!title.trim() || !description.trim() || !category) return;
-    createMutation.mutate({
+    onSubmit({
       title: title.trim(),
       description: description.trim(),
       category: category as any,
@@ -137,14 +132,14 @@ function ProposalForm({ draft, onCreated }: { draft: MutableRefObject<ProposalDr
       </select>
       <Button
         onClick={handleSubmit}
-        disabled={!title.trim() || !description.trim() || !category || createMutation.isPending}
+        disabled={!title.trim() || !description.trim() || !category || pending}
         className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6 w-full"
       >
         <Send className="w-4 h-4 mr-2" />
-        {createMutation.isPending ? "Submitting..." : "Submit Proposal"}
+        {pending ? "Submitting..." : "Submit Proposal"}
       </Button>
-      {createMutation.isError && (
-        <p className="text-red-400 text-sm">{createMutation.error?.message || "Something went wrong."}</p>
+      {errorMessage !== null && (
+        <p className="text-red-400 text-sm">{errorMessage}</p>
       )}
     </div>
   );
@@ -165,10 +160,13 @@ export default function Proposals() {
   });
   const myVotesQuery = trpc.proposals.myVotes.useQuery(undefined, { enabled: isAuthenticated });
 
-  const onCreated = () => {
-    setDialogOpen(false);
-    proposalsQuery.refetch();
-  };
+  const createMutation = trpc.proposals.create.useMutation({
+    onSuccess: () => {
+      draft.current = EMPTY_DRAFT;
+      setDialogOpen(false);
+      proposalsQuery.refetch();
+    },
+  });
 
   // A vote shows at once; the server's answer settles it (STEERING.md section 13).
   const utils = trpc.useUtils();
@@ -282,7 +280,12 @@ export default function Proposals() {
                       </div>
                     </div>
                   ) : (
-                  <ProposalForm draft={draft} onCreated={onCreated} />
+                  <ProposalForm
+                    draft={draft}
+                    pending={createMutation.isPending}
+                    errorMessage={createMutation.isError ? createMutation.error?.message || "Something went wrong." : null}
+                    onSubmit={createMutation.mutate}
+                  />
                   )}
                 </DialogContent>
               </Dialog>

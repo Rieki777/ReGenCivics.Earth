@@ -29,9 +29,14 @@ const EMPTY_DRAFT: FeatureDraft = { formType: "feature", title: "", description:
  * The suggestion form keeps its own text, so a keystroke re-renders the form
  * and not the list of suggestions below it (STEERING.md section 13). The
  * page holds the draft in a ref, so closing and reopening the form keeps
- * what was typed.
+ * what was typed. The page owns the submit (pending and success),
+ * so a form closed and reopened mid-submit still shows it sending.
  */
-function SuggestFeatureForm({ draft, onCreated }: { draft: MutableRefObject<FeatureDraft>; onCreated: () => void }) {
+function SuggestFeatureForm({ draft, pending, onSubmit }: {
+  draft: MutableRefObject<FeatureDraft>;
+  pending: boolean;
+  onSubmit: (values: { title: string; description: string; category?: string }) => void;
+}) {
   const [formType, setFormType] = useState<"feature" | "bug">(draft.current.formType);
   const [title, setTitle] = useState(draft.current.title);
   const [description, setDescription] = useState(draft.current.description);
@@ -39,16 +44,6 @@ function SuggestFeatureForm({ draft, onCreated }: { draft: MutableRefObject<Feat
   useEffect(() => {
     draft.current = { formType, title, description, category };
   }, [draft, formType, title, description, category]);
-
-  const createMutation = trpc.features.create.useMutation({
-    onSuccess: () => {
-      draft.current = { ...EMPTY_DRAFT, formType };
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      onCreated();
-    },
-  });
 
   return (
     <div className="bg-white/10 border border-white/20 rounded-2xl p-6 space-y-4">
@@ -64,8 +59,8 @@ function SuggestFeatureForm({ draft, onCreated }: { draft: MutableRefObject<Feat
         <option value="" className="bg-[#1a472a]">Category (optional)</option>
         {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a472a]">{c}</option>)}
       </select>
-      <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6">
-        <Send className="w-4 h-4 mr-2" /> {createMutation.isPending ? "Submitting..." : "Submit"}
+      <Button onClick={() => { if (title.trim() && description.trim()) onSubmit({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || pending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6">
+        <Send className="w-4 h-4 mr-2" /> {pending ? "Submitting..." : "Submit"}
       </Button>
     </div>
   );
@@ -80,7 +75,14 @@ export default function FeatureSuggestions() {
   const suggestionsQuery = trpc.features.list.useQuery({ sortBy });
   const myVotesQuery = trpc.features.myVotes.useQuery(undefined, { enabled: isAuthenticated });
 
-  const onCreated = () => { setShowForm(false); suggestionsQuery.refetch(); };
+  const createMutation = trpc.features.create.useMutation({
+    onSuccess: () => {
+      // A new suggestion clears the text and keeps the chosen kind (bug or feature).
+      draft.current = { ...EMPTY_DRAFT, formType: draft.current.formType };
+      setShowForm(false);
+      suggestionsQuery.refetch();
+    },
+  });
   const utils = trpc.useUtils();
   // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.features.toggleVote.useMutation({
@@ -152,7 +154,7 @@ export default function FeatureSuggestions() {
 
       {showForm && (
         <section className="max-w-2xl mx-auto px-4 mb-8">
-          <SuggestFeatureForm draft={draft} onCreated={onCreated} />
+          <SuggestFeatureForm draft={draft} pending={createMutation.isPending} onSubmit={createMutation.mutate} />
         </section>
       )}
 

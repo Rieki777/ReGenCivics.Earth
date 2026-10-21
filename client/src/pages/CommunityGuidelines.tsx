@@ -31,9 +31,14 @@ const EMPTY_DRAFT: AgreementDraft = { title: '', description: '', category: '' }
  * The proposal form keeps its own text, so a keystroke re-renders the form
  * and not the agreements and proposals below it (STEERING.md section 13).
  * The page holds the draft in a ref, so closing and reopening the form keeps
- * what was typed.
+ * what was typed. The page owns the submit (pending and success),
+ * so a form closed and reopened mid-submit still shows it sending.
  */
-function ProposeAgreementForm({ draft, onCreated }: { draft: MutableRefObject<AgreementDraft>; onCreated: () => void }) {
+function ProposeAgreementForm({ draft, pending, onSubmit }: {
+  draft: MutableRefObject<AgreementDraft>;
+  pending: boolean;
+  onSubmit: (values: { title: string; description: string; category?: string }) => void;
+}) {
   const [title, setTitle] = useState(draft.current.title);
   const [description, setDescription] = useState(draft.current.description);
   const [category, setCategory] = useState(draft.current.category);
@@ -41,19 +46,9 @@ function ProposeAgreementForm({ draft, onCreated }: { draft: MutableRefObject<Ag
     draft.current = { title, description, category };
   }, [draft, title, description, category]);
 
-  const createMutation = trpc.agreements.create.useMutation({
-    onSuccess: () => {
-      draft.current = EMPTY_DRAFT;
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      onCreated();
-    },
-  });
-
   const handleSubmit = () => {
     if (!title.trim() || !description.trim()) return;
-    createMutation.mutate({
+    onSubmit({
       title: title.trim(),
       description: description.trim(),
       category: category || undefined,
@@ -92,11 +87,11 @@ function ProposeAgreementForm({ draft, onCreated }: { draft: MutableRefObject<Ag
       <div className="flex items-center gap-3">
         <Button
           onClick={handleSubmit}
-          disabled={!title.trim() || !description.trim() || createMutation.isPending}
+          disabled={!title.trim() || !description.trim() || pending}
           className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6"
         >
           <Send className="w-4 h-4 mr-2" />
-          {createMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
+          {pending ? 'Submitting...' : 'Submit Proposal'}
         </Button>
         <span className="text-white/60 text-xs">A forum thread will be created for discussion.</span>
       </div>
@@ -114,10 +109,13 @@ export default function CommunityGuidelines() {
   const proposalsQuery = trpc.agreements.list.useQuery({ status: 'open', sortBy });
   const myVotesQuery = trpc.agreements.myVotes.useQuery(undefined, { enabled: isAuthenticated });
 
-  const onCreated = () => {
-    setShowForm(false);
-    proposalsQuery.refetch();
-  };
+  const createMutation = trpc.agreements.create.useMutation({
+    onSuccess: () => {
+      draft.current = EMPTY_DRAFT;
+      setShowForm(false);
+      proposalsQuery.refetch();
+    },
+  });
   const utils = trpc.useUtils();
   // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.agreements.toggleVote.useMutation({
@@ -211,7 +209,7 @@ export default function CommunityGuidelines() {
       {showForm && (
         <section className="max-w-2xl mx-auto px-4 mb-8">
           <AnimatedSection animation="slide-up">
-            <ProposeAgreementForm draft={draft} onCreated={onCreated} />
+            <ProposeAgreementForm draft={draft} pending={createMutation.isPending} onSubmit={createMutation.mutate} />
           </AnimatedSection>
         </section>
       )}

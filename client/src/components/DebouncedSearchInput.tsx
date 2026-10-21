@@ -37,6 +37,9 @@ export function DebouncedSearchInput({ value, onChange, delay = 200, as: Field =
   useImperativeHandle(handle, () => ({
     reset: (next = "") => {
       sent.current = next;
+      // Also the ref the unmount send reads, so a box that unmounts in the
+      // same render as a reset cannot send the cleared text back up.
+      textRef.current = next;
       setText(next);
     },
   }), []);

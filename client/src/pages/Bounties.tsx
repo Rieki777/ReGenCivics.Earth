@@ -29,26 +29,17 @@ const inputCls = "w-full rounded-md bg-[#0f2417] border border-white/15 text-whi
  * and not the dialog around it (STEERING.md section 13). The dialog holds the
  * draft in a ref, so closing and reopening it keeps what was typed.
  */
-function ProposeBountyForm({ draft, onProposed }: { draft: MutableRefObject<BountyDraft>; onProposed: () => void }) {
-  const utils = trpc.useUtils();
+function ProposeBountyForm({ draft, pending, onSubmit }: {
+  draft: MutableRefObject<BountyDraft>;
+  pending: boolean;
+  onSubmit: (values: { sourceType: "call_task"; title: string; body: string; tier: BountyDraft["tier"] }) => void;
+}) {
   const [title, setTitle] = useState(draft.current.title);
   const [body, setBody] = useState(draft.current.body);
   const [tier, setTier] = useState<BountyDraft["tier"]>(draft.current.tier);
   useEffect(() => {
     draft.current = { title, body, tier };
   }, [draft, title, body, tier]);
-
-  const propose = trpc.bounties.propose.useMutation({
-    onSuccess: () => {
-      toast.success("Proposed. A maintainer will review and open it.");
-      utils.bounties.listBoard.invalidate();
-      onProposed();
-      // A proposal clears the title and details and keeps the chosen size.
-      draft.current = { ...draft.current, title: "", body: "" };
-      setTitle(""); setBody("");
-    },
-    onError: (e) => toast.error(e.message),
-  });
 
   return (
     <>
@@ -74,11 +65,11 @@ function ProposeBountyForm({ draft, onProposed }: { draft: MutableRefObject<Boun
       </div>
       <DialogFooter>
         <Button
-          onClick={() => propose.mutate({ sourceType: "call_task", title, body, tier })}
-          disabled={!title.trim() || !body.trim() || propose.isPending}
+          onClick={() => onSubmit({ sourceType: "call_task", title, body, tier })}
+          disabled={!title.trim() || !body.trim() || pending}
           className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
         >
-          {propose.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Submit
+          {pending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Submit
         </Button>
       </DialogFooter>
     </>
@@ -88,7 +79,18 @@ function ProposeBountyForm({ draft, onProposed }: { draft: MutableRefObject<Boun
 function ProposeBountyDialog() {
   const [open, setOpen] = useState(false);
   const draft = useRef<BountyDraft>({ title: "", body: "", tier: "small" });
-  const onProposed = () => setOpen(false);
+  // The dialog owns the submit, so one reopened mid-submit still shows it sending.
+  const utils = trpc.useUtils();
+  const propose = trpc.bounties.propose.useMutation({
+    onSuccess: () => {
+      toast.success("Proposed. A maintainer will review and open it.");
+      utils.bounties.listBoard.invalidate();
+      setOpen(false);
+      // A proposal clears the title and details and keeps the chosen size.
+      draft.current = { ...draft.current, title: "", body: "" };
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -97,7 +99,7 @@ function ProposeBountyDialog() {
       </DialogTrigger>
       <DialogContent className="bg-[#0d2818] border-[#7dd87d]/25 text-white">
         <DialogHeader><DialogTitle style={{ fontFamily: "var(--font-display)" }}>Propose a bounty</DialogTitle></DialogHeader>
-        <ProposeBountyForm draft={draft} onProposed={onProposed} />
+        <ProposeBountyForm draft={draft} pending={propose.isPending} onSubmit={propose.mutate} />
       </DialogContent>
     </Dialog>
   );
