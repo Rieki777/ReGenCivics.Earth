@@ -92,7 +92,7 @@ import {
   removeItemOnBoard,
 } from "../lib/sessionBoardAnswers";
 import { checkInOnBoard, checkInOptions } from "../lib/sessionBoardCheckIn";
-import { assertCarryConfirmable, earlierAnswerWeeks, earlierCardsFor, readCarry } from "../lib/sessionBoardCarry";
+import { assertCarryConfirmable, clearCarryCache, earlierAnswerWeeks, earlierCardsFor, readCarry } from "../lib/sessionBoardCarry";
 import { buildBoardExport, submissionsFor } from "../lib/sessionBoardExport";
 import { seasonPublicNotes } from "../lib/seasonSchedule";
 import { signUpOnBoard } from "../lib/boardSignup";
@@ -906,6 +906,8 @@ export const sessionBoardRouter = router({
       }
       if (Object.keys(set).length === 0) return { ok: true as const };
       await db.update(sessionBoardItems).set(set).where(eq(sessionBoardItems.id, item.id));
+      // A question answered on an earlier week shows on the next week's "Last week's questions" at once.
+      if (item.kind === "ask") clearCarryCache();
       await bumpVersion(db, board.id);
       return { ok: true as const };
     }),

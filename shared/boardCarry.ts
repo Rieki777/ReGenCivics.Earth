@@ -76,7 +76,8 @@ export type CardCarry = {
 export type CarriedRow = AnswerRow & { week: number };
 
 /** A question from an earlier week still not marked Answered. */
-export type CarriedAsk = { id: number; week: number; text: string; project: string | null; createdAt: Date | string | number };
+/** A question from the week before; `chosen` is its facilitator's Answered, on that week's board. */
+export type CarriedAsk = { id: number; week: number; text: string; project: string | null; createdAt: Date | string | number; chosen: boolean };
 
 /** Everything the `carry` read returns for a board. */
 export type CarryData = {

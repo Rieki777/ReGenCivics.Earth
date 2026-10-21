@@ -27,6 +27,7 @@ import { AdminEventReminderCronHealth } from "@/components/admin/AdminEventRemin
 import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
 import { AdminSeasonSchedule } from "@/components/admin/AdminSeasonSchedule";
 import { SessionBoardExport } from "@/components/admin/SessionBoardExport";
+import { AdminVillageProfiles } from "@/components/admin/AdminVillageProfiles";
 import { AfterSessionChecklist } from "@/components/admin/AfterSessionChecklist";
 import { LiveSessionRunbook } from "@/components/admin/LiveSessionRunbook";
 import {
@@ -937,6 +938,7 @@ export function AdminEventsTab() {
       </div>
       <AdminSeasonSchedule />
       <SessionBoardExport />
+      <AdminVillageProfiles />
       <AdminInteropCircle />
       <Card className="bg-[#0a1f14] border-yellow-800/30 mt-4">
         <CardHeader className="pb-2">
