@@ -21,6 +21,10 @@ import { SeasonWheel } from "@/components/SeasonWheel";
 import { LivingTreeV2 } from "@/components/LivingTreeV2";
 import { LivingTree, type CapitalScores } from "@/components/LivingTree";
 import { LivingTree as GameLivingTree } from "@/components/game/LivingTree";
+import { ProgressMapSVG } from "@/components/ProgressMap/ProgressMapSVG";
+import { useProgressMap } from "@/components/ProgressMap/useProgressMap";
+import type { MapNode } from "@/components/ProgressMap/mapData";
+import ProgressMapOverlay from "@/components/ProgressMap/ProgressMap";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import SessionBoard from "@/pages/SessionBoard";
@@ -774,6 +778,30 @@ const GAME_TREE_VALUES: Record<string, number> = {
   experiential: 110, material: 45, spiritual: 70, health: 95,
 };
 
+/**
+ * A player two steps into Land, one into Play and three into the Co-op,
+ * stored the way useProgressMap reads it ("regen-progress-map"), so the
+ * hook's own rules apply: the session joined on the Co-op path counts on
+ * Land and Ally too.
+ */
+const MAP_PROGRESS = { completedNodes: ["land-1", "land-2", "play-1", "fund-1", "fund-2", "fund-3"], visitedPages: [] as string[] };
+
+/** The map, and a line under it naming what was opened (the full map shows a card). */
+function ProgressMapStory() {
+  const progress = useProgressMap();
+  const [opened, setOpened] = useState<MapNode | null>(null);
+  return (
+    <div className="-m-6">
+      <div className="relative w-full aspect-[3/2]">
+        <ProgressMapSVG progress={progress} onNodeClick={setOpened} />
+      </div>
+      <p data-testid="map-opened" className="px-6 py-3 text-sm text-[#1a472a]">
+        {opened ? `Opened: ${opened.landmark}, ${opened.label}` : "Tap a landmark, or press Enter on it, to open it."}
+      </p>
+    </div>
+  );
+}
+
 export const STORIES: Record<string, Story> = {
   /**
    * Meant to fail: one deliberately broken example per check, beside a good
@@ -794,7 +822,29 @@ export const STORIES: Record<string, Story> = {
           .audit-bg-slide { background: linear-gradient(90deg, #ffffff, #c8ecc8); background-size: 200% 100%; animation: audit-bg-slide 4s linear infinite; }
           @keyframes audit-blur-pulse { from { filter: blur(0); } to { filter: blur(2px); } }
           .audit-blur-pulse { animation: audit-blur-pulse 3s ease-in-out infinite alternate; }
+          .audit-svg-ring { display: none; }
+          .audit-svg-btn:focus-visible { outline: none; box-shadow: none; }
+          .audit-svg-btn:focus-visible .audit-svg-ring { display: inline; }
         `}</style>
+        {/* SVG buttons: Tab must reach them, and focus must show in what they
+            draw, since Safari paints no outline or box-shadow on a shape
+            inside an SVG. The second one leaves focus to the site's ring. */}
+        <svg width="240" height="60" viewBox="0 0 240 60" role="group" aria-label="SVG buttons" style={{ background: "#0a1a10" }}>
+          <g role="button" aria-label="Bad: an SVG button Tab never reaches">
+            <circle cx="30" cy="30" r="26" fill="#7dd87d" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Bad: SVG focus left to the outline">
+            <circle cx="90" cy="30" r="26" fill="#7dd87d" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Bad: a faint drawn ring" className="audit-svg-btn">
+            <circle cx="150" cy="30" r="22" fill="#7dd87d" />
+            <circle className="audit-svg-ring" cx="150" cy="30" r="27" fill="none" stroke="#1c2e22" strokeWidth="3" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Good: a drawn ring" className="audit-svg-btn">
+            <circle cx="210" cy="30" r="22" fill="#7dd87d" />
+            <circle className="audit-svg-ring" cx="210" cy="30" r="27" fill="none" stroke="#ffffff" strokeWidth="3" />
+          </g>
+        </svg>
         {/* Endless motion: the two bad ones run on the main thread, the good
             one (opacity on an ordinary element) runs on the compositor. */}
         <svg width="40" height="20" aria-hidden="true">
@@ -1398,6 +1448,33 @@ export const STORIES: Record<string, Story> = {
         </div>
       </div>
     ),
+  },
+
+  /**
+   * The progress map CommandPanel opens full screen (ProgressMapSVG), with
+   * landmarks done, open and locked on every path. The audit tabs to each
+   * open landmark and, on a phone, where the map is 390px wide and a
+   * landmark 23px, measures the hit disc each one carries.
+   */
+  "progress-map": {
+    title: "Progress map: landmarks done, open and locked on all four paths",
+    setup: () => {
+      localStorage.setItem("regen-progress-map", JSON.stringify(MAP_PROGRESS));
+    },
+    render: () => <ProgressMapStory />,
+  },
+
+  /**
+   * The same progress, full screen as CommandPanel opens it (ProgressMap),
+   * with The Great Terrace opened from the keyboard: its card takes focus,
+   * and "Close detail" hands focus back to the landmark.
+   */
+  "progress-map-open": {
+    title: "Progress map, full screen: The Great Terrace opened with Enter",
+    setup: () => {
+      localStorage.setItem("regen-progress-map", JSON.stringify(MAP_PROGRESS));
+    },
+    render: () => <ProgressMapOverlay onClose={() => {}} />,
   },
 
   /**

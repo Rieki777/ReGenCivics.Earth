@@ -121,6 +121,38 @@ const BEFORE = {
   "profile-guest-claim": async (page) => {
     await page.locator("[data-sonner-toast]").first().waitFor({ timeout: 5_000 });
   },
+  // The progress map (2026-10-20): Enter and Space open a landmark, and a tap
+  // beside one, inside its 44px disc, opens it too. On a phone the Trailhead
+  // is drawn 23px wide, so 16px left of its centre is off the picture.
+  "progress-map": async (page) => {
+    const opened = page.getByTestId("map-opened");
+    await page.getByRole("button", { name: /^Seed Vault/ }).focus();
+    await page.keyboard.press("Enter");
+    if (!/Seed Vault/.test(await opened.innerText())) throw new Error("Enter on a landmark didn't open it");
+    await page.getByRole("button", { name: /^Gathering Grove/ }).focus();
+    await page.keyboard.press(" ");
+    if (!/Gathering Grove/.test(await opened.innerText())) throw new Error("Space on a landmark didn't open it");
+    const map = page.locator("[data-harness-story] svg").first();
+    await map.scrollIntoViewIfNeeded();
+    const box = await map.boundingBox();
+    const s = Math.min(box.width / 1200, box.height / 800);
+    const x = box.x + (box.width - 1200 * s) / 2 + 150 * s - 16;
+    const y = box.y + (box.height - 800 * s) / 2 + 650 * s;
+    if (await page.evaluate(() => matchMedia("(pointer: coarse)").matches)) await page.touchscreen.tap(x, y);
+    else await page.mouse.click(x, y);
+    if (!/Trailhead/.test(await opened.innerText())) throw new Error("a tap 16px beside the Trailhead, inside its disc, didn't open it");
+    await page.waitForTimeout(200);
+  },
+  "progress-map-open": async (page) => {
+    await page.getByRole("button", { name: /^The Great Terrace/ }).focus();
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(200);
+    const at = await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName);
+    if (!/^The Great Terrace/.test(at ?? "")) throw new Error(`Enter on a landmark left focus on ${at}, not its card`);
+    await page.keyboard.press("Tab");
+    const next = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
+    if (next !== "Close detail") throw new Error(`Tab from the card went to ${next}, not its Close`);
+  },
   "admin-session-export": async (page) => {
     await page.getByRole("button", { name: /See each week's summary/ }).click();
     await page.getByTestId("export-week").first().waitFor({ timeout: 5_000 });

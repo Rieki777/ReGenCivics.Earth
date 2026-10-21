@@ -11,9 +11,12 @@
  *   typed text    what people type, against the field's fill
  *   field edge    text fields' outline or fill, 3:1 (WCAG 1.4.11)
  *   target        44px touch targets; links inside a sentence exempt
+ *   keyboard      a role=button (link, checkbox...) that Tab can reach
+ *                 (WCAG 2.1.1)
  *   overflow      sideways scroll
  *   focus         every control shows a visible change on keyboard focus
- *                 (WCAG 2.4.7), and a ring is not faint (under 3:1)
+ *                 (WCAG 2.4.7), and a ring is not faint (under 3:1); a shape
+ *                 inside an SVG shows it in what it draws
  *   colour only   links in running text need a cue besides colour, and a
  *                 chosen toggle, tab or chip must differ from its siblings by
  *                 more than colour (WCAG 1.4.1)
@@ -216,6 +219,19 @@ export function installAuditLib() {
       else if (r.height < MIN && !el.matches("textarea")) failures.push(`target height ${Math.round(r.height)}: "${label(el)}"`);
     }
 
+    // Reachable by keyboard (WCAG 2.1.1). A div, span or SVG shape given
+    // role=button (or link, checkbox...) takes focus only with a tabindex;
+    // without one Tab skips it and Enter or Space never presses it. Items a
+    // composite widget parks at tabindex=-1 count as reachable. Miss that
+    // taught this: the progress map's landmarks were <g role="button"> with a
+    // click handler alone, and the focus walk below only visits what can take
+    // focus, so it never saw them (2026-10-20).
+    for (const el of root.querySelectorAll("[role=button], [role=link], [role=checkbox], [role=radio], [role=switch], [role=tab]")) {
+      if (el.matches("a[href], button, input, select, textarea, summary") || el.hasAttribute("tabindex") || el.isContentEditable) continue;
+      if (!visible(el) || opacityOf(el) < 0.05 || el.getAttribute("aria-disabled") === "true" || el.closest("[aria-hidden='true'], [inert]")) continue;
+      failures.push(`keyboard: ${el.getAttribute("role")} "${label(el)}" has no tabindex, so Tab never reaches it`);
+    }
+
     // Colour only (WCAG 1.4.1), part 1: a link inside a sentence needs a cue
     // besides colour (underline, weight or a bottom border).
     for (const el of root.querySelectorAll("a[href]")) {
@@ -360,9 +376,25 @@ export function installAuditLib() {
     return [outlineOn ? cs.outlineStyle : "none", outlineOn ? cs.outlineWidth : "0", outlineOn ? cs.outlineColor : "-", cs.boxShadow,
       cs.borderTopColor, cs.borderBottomColor, cs.borderTopWidth, cs.backgroundColor, cs.color, cs.textDecorationLine].join("|");
   };
+  // A shape inside an SVG (a <g role="button">, an SVG link) shows focus only
+  // in what it draws: Safari paints no outline or box-shadow on it, and Chrome
+  // paints the outline around its whole box. So for these only the shapes
+  // inside count: one that appears, or whose fill or stroke changes. Miss that
+  // taught this: the site's focus ring, an outline plus a box-shadow ring,
+  // measured as strong on the progress map's landmarks while Safari drew
+  // nothing (2026-10-20).
+  const inSvg = (el) => el instanceof SVGElement && !!el.ownerSVGElement;
+  const paintOf = (el) => [el, ...el.querySelectorAll("*")].map((n) => {
+    let shown = true;
+    for (let m = n; m && m !== el.parentElement; m = m.parentElement) {
+      if (getComputedStyle(m).display === "none") { shown = false; break; }
+    }
+    const cs = getComputedStyle(n);
+    return [shown && cs.visibility !== "hidden", cs.opacity, cs.fill, cs.fillOpacity, cs.stroke, cs.strokeWidth, cs.strokeOpacity].join("|");
+  });
   // An element's focus can show on itself, its parent (focus-within), or the
   // next sibling (peer-focus-visible, as the sr-only TickBox does).
-  const trio = (el) => [looks(el), looks(el.parentElement), looks(el.nextElementSibling)];
+  const trio = (el) => (inSvg(el) ? paintOf(el) : [looks(el), looks(el.parentElement), looks(el.nextElementSibling)]);
   const base = new Map();
 
   function snapFocusables(rootSel) {
@@ -385,8 +417,28 @@ export function installAuditLib() {
     if (idx == null || !base.has(idx)) return { idx: null };
     const before = base.get(idx);
     const now = trio(el);
-    const changed = now.some((s, k) => s !== before[k]);
+    const same = now.length === before.length;
+    const changed = !same || now.some((s, k) => s !== before[k]);
     if (!changed) return { idx, fail: `focus: no visible focus on "${label(el)}"` };
+    if (inSvg(el)) {
+      // The strongest paint among the shapes that appeared or changed, against
+      // what is behind the drawing.
+      const around = bgOf(el.ownerSVGElement);
+      let best = null;
+      [el, ...el.querySelectorAll("*")].forEach((n, k) => {
+        if ((same && now[k] === before[k]) || !now[k].startsWith("true|")) return;
+        const cs = getComputedStyle(n);
+        const o = opacityOf(n);
+        for (const [paint, alpha, width] of [[cs.stroke, cs.strokeOpacity, parseFloat(cs.strokeWidth)], [cs.fill, cs.fillOpacity, 1]]) {
+          const c = parse(paint);
+          if (!c || !(width > 0)) continue;
+          const r = ratio(blend({ ...c, a: c.a * Number(alpha) * o }, around), around);
+          best = best == null ? r : Math.max(best, r);
+        }
+      });
+      if (best != null && best < 3) return { idx, fail: `focus: ring ${best.toFixed(2)} < 3 on "${label(el)}"` };
+      return { idx };
+    }
     // A ring that changed: is it strong enough to see? Outline first, then a
     // box-shadow ring, each against what is around the control.
     const cs = getComputedStyle(el);
@@ -434,9 +486,11 @@ export async function revealAll(page) {
  * fresh copy of the page (`reset` reloads and replays the story's steps).
  * Miss that taught this: on Week 4's seats stage, Cancel, Take back and
  * "Another project" all left focus on <body>, so a screen reader user lost
- * their place in a long stage (2026-10-15).
+ * their place in a long stage (2026-10-15). The progress map's "Close detail"
+ * did the same, and inside its focus trap the next Tab then left the map for
+ * the page behind it (2026-10-20).
  */
-const GOES_AWAY = [/^Cancel$/, /^Take back/, /^Another project$/];
+const GOES_AWAY = [/^Cancel$/, /^Take back/, /^Another project$/, /^Close detail$/];
 
 export async function runFocusReturnChecks(page, rootSel, reset) {
   const out = [];
