@@ -1633,9 +1633,18 @@ function companionTextFrom(details: CampaignDetailsValues): CompanionText {
   return { projectName: details.campaignName, location: details.projectLocation, vision: details.projectVision };
 }
 
+type FieldChange = React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
+
+// The card's fields. Each one reads a dialog context and runs the IME
+// composition hook when it renders, so a field whose value did not change
+// skips rendering (its handler is stable).
+const MemoInput = memo(Input);
+const MemoTextarea = memo(Textarea);
+
 /**
  * The Campaign Details card. It owns its fields, so a key typed here
- * re-renders this card and nothing else on the page (STEERING.md section 13).
+ * re-renders this card and nothing else on the page, and inside the card only
+ * the field that changed (STEERING.md section 13).
  * The page reads the values when it sends (valuesRef), hears when the three
  * required fields fill or empty (onCompleteChange), and gets the name, place
  * and vision the design companion reads once typing pauses (onCompanionText).
@@ -1660,11 +1669,34 @@ const CampaignDetails = memo(function CampaignDetails({
   onTemplate: (template: CampaignTemplate) => void;
 }) {
   const [values, setValues] = useState(initial);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
-  const set = <K extends keyof CampaignDetailsValues>(key: K, value: CampaignDetailsValues[K]) =>
-    setValues((v) => ({ ...v, [key]: value }));
+  const set = useCallback(<K extends keyof CampaignDetailsValues>(key: K, value: CampaignDetailsValues[K]) =>
+    setValues((v) => ({ ...v, [key]: value })), []);
+  // One stable handler per field. With them the memoized fields, the dialogs,
+  // the currency picker and the select skip rendering while someone types in
+  // another field, so a key re-renders only its own field.
+  const on = useMemo(() => ({
+    campaignName: (e: FieldChange) => set('campaignName', e.target.value),
+    campaignDescription: (e: FieldChange) => set('campaignDescription', e.target.value),
+    daoLink: (e: FieldChange) => set('daoLink', e.target.value),
+    projectLocation: (e: FieldChange) => set('projectLocation', e.target.value),
+    landStatus: (value: string) => set('landStatus', value),
+    projectSizeHectares: (e: FieldChange) => set('projectSizeHectares', parseFloat(e.target.value) || null),
+    teamSize: (e: FieldChange) => set('teamSize', parseInt(e.target.value) || null),
+    projectVision: (e: FieldChange) => set('projectVision', e.target.value),
+    teamDescription: (e: FieldChange) => set('teamDescription', e.target.value),
+    regenerativePractices: (e: FieldChange) => set('regenerativePractices', e.target.value),
+    governanceApproach: (e: FieldChange) => set('governanceApproach', e.target.value),
+    communityEngagement: (e: FieldChange) => set('communityEngagement', e.target.value),
+    websiteUrl: (e: FieldChange) => set('websiteUrl', e.target.value),
+    videoUrl: (e: FieldChange) => set('videoUrl', e.target.value),
+  }), [set]);
+  const applyTemplate = useCallback((template: CampaignTemplate) => {
+    setValues((v) => ({ ...v, campaignName: template.name, campaignDescription: template.description }));
+    onTemplate(template);
+  }, [onTemplate]);
+  const applyImport = useCallback((app: any) => {
+    setValues((v) => detailsFromApplication(app, v.daoLink));
+  }, []);
 
   useEffect(() => {
     valuesRef.current = values;
@@ -1688,159 +1720,27 @@ const CampaignDetails = memo(function CampaignDetails({
         <h2 className="text-lg font-bold text-[#1a472a]" style={{ fontFamily: 'var(--font-display)' }}>
           Campaign Details
         </h2>
-        <div className="flex gap-2">
-        {/* Template Selector */}
-        <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="border-[#d4a017] text-[#d4a017] text-sm">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Use Template
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Choose a Campaign Template</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3 mt-4">
-              <p className="text-sm text-[#1a472a]/75">
-                Start with a pre-filled template for common project types:
-              </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                {CAMPAIGN_TEMPLATES.map((template) => {
-                  const IconComponent = template.icon === 'home' ? Home : template.icon === 'tree' ? TreePine : Wheat;
-                  return (
-                    <button
-                      key={template.id}
-                      onClick={() => {
-                        // Load template data: the name and description here,
-                        // the needs on the page.
-                        setValues((v) => ({ ...v, campaignName: template.name, campaignDescription: template.description }));
-                        onTemplate(template);
-                        setShowTemplateDialog(false);
-                        toast.success(`${template.name} template loaded! Customize as needed.`);
-                      }}
-                      className="flex flex-col items-start gap-3 p-4 bg-gradient-to-br from-[#f0f7f0] to-white rounded-xl border-2 border-[#7dd87d]/30 hover:border-[#d4a017] transition-all text-left group"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#d4a017]/20 transition-colors">
-                        <IconComponent className="w-6 h-6 text-[#4a7c59] group-hover:text-[#d4a017]" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-[#1a472a] mb-1">{template.name}</h3>
-                        <p className="text-xs text-[#1a472a]/80 leading-relaxed">{template.description}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
-                          {template.equipment.length} equipment items
-                        </span>
-                        <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
-                          {template.roles.length} roles
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-        {importableApps && importableApps.length > 0 && (
-          <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="border-[#7dd87d] text-[#4a7c59] text-sm">
-                <FileText className="w-4 h-4 mr-2" />
-                Import from Application
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Import from Application</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 mt-4">
-                <p className="text-sm text-[#1a472a]/75">
-                  Select an application to pre-fill your campaign details:
-                </p>
-                {importableApps.map((app: any) => (
-                  <button
-                    key={app.id}
-                    onClick={() => {
-                      // Import application data
-                      setValues((v) => detailsFromApplication(app, v.daoLink));
-                      setShowImportDialog(false);
-                      toast.success('Application data imported!');
-                    }}
-                    className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/30 transition-colors"
-                  >
-                    <div className="font-medium text-[#1a472a]">{app.projectName}</div>
-                    <div className="text-xs text-[#1a472a]/80">
-                      {app.location} - {app.status}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
-        </div>
+        <DetailsActions importableApps={importableApps} onTemplate={applyTemplate} onImport={applyImport} />
       </div>
       <div className="grid md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-[#1a472a] mb-1">Campaign Name</label>
-          <Input
+          <MemoInput
             value={values.campaignName}
-            onChange={(e) => set('campaignName', e.target.value)}
+            onChange={on.campaignName}
             placeholder="e.g., Terra Nova Regenerative Farm"
             className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-[#1a472a] mb-1">Currency</label>
-          <Popover open={currencyOpen} onOpenChange={setCurrencyOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={currencyOpen}
-                className="w-full justify-between bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-left font-normal"
-              >
-                {(() => {
-                  const c = currencies.find(c => c.code === currency);
-                  return c ? `${c.symbol} ${c.name} (${c.code})` : 'Select currency...';
-                })()}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[320px] p-0" align="start">
-              <Command>
-                <CommandInput placeholder="Search currency..." />
-                <CommandList>
-                  <CommandEmpty>No currency found.</CommandEmpty>
-                  <CommandGroup className="max-h-[300px] overflow-auto">
-                    {currencies.map(c => (
-                      <CommandItem
-                        key={c.code}
-                        value={`${c.code} ${c.name} ${c.symbol}`}
-                        onSelect={() => {
-                          onCurrencyChange(c.code);
-                          setCurrencyOpen(false);
-                        }}
-                      >
-                        <Check className={`mr-2 h-4 w-4 ${currency === c.code ? 'opacity-100' : 'opacity-0'}`} />
-                        <span className="font-medium mr-2">{c.symbol}</span>
-                        <span>{c.name}</span>
-                        <span className="ml-auto text-xs text-muted-foreground">{c.code}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <CurrencyPicker currency={currency} onCurrencyChange={onCurrencyChange} />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-[#1a472a] mb-1">Description</label>
-          <Textarea
+          <MemoTextarea
             value={values.campaignDescription}
-            onChange={(e) => set('campaignDescription', e.target.value)}
+            onChange={on.campaignDescription}
             placeholder="Describe your project vision and goals..."
             className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[100px]"
           />
@@ -1849,9 +1749,9 @@ const CampaignDetails = memo(function CampaignDetails({
           <label className="block text-sm font-medium text-[#1a472a] mb-1">
             DAO Link for Proposals <span className="text-red-500">*</span>
           </label>
-          <Input
+          <MemoInput
             value={values.daoLink}
-            onChange={(e) => set('daoLink', e.target.value)}
+            onChange={on.daoLink}
             placeholder="https://app.hypha.earth/en/dho/your-project/agreements/create/propose-contribution"
             className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
           />
@@ -1871,43 +1771,33 @@ const CampaignDetails = memo(function CampaignDetails({
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-1">Location</label>
-                  <Input
+                  <MemoInput
                     value={values.projectLocation}
-                    onChange={(e) => set('projectLocation', e.target.value)}
+                    onChange={on.projectLocation}
                     placeholder="e.g., Costa Rica, Guanacaste Province"
                     className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-1">Land Status</label>
-                  <Select value={values.landStatus} onValueChange={(v) => set('landStatus', v)}>
-                    <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="owned">Owned</SelectItem>
-                      <SelectItem value="leased">Leased</SelectItem>
-                      <SelectItem value="committed">Committed</SelectItem>
-                      <SelectItem value="seeking">Seeking Land</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <LandStatusSelect value={values.landStatus} onChange={on.landStatus} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-1">Project Size (hectares)</label>
-                  <Input
+                  <MemoInput
                     type="number"
                     value={values.projectSizeHectares || ''}
-                    onChange={(e) => set('projectSizeHectares', parseFloat(e.target.value) || null)}
+                    onChange={on.projectSizeHectares}
                     placeholder="e.g., 150"
                     className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-1">Team Size</label>
-                  <Input
+                  <MemoInput
                     type="number"
                     value={values.teamSize || ''}
-                    onChange={(e) => set('teamSize', parseInt(e.target.value) || null)}
+                    onChange={on.teamSize}
                     placeholder="e.g., 12"
                     className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                   />
@@ -1915,45 +1805,45 @@ const CampaignDetails = memo(function CampaignDetails({
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Project Vision</label>
-                <Textarea
+                <MemoTextarea
                   value={values.projectVision}
-                  onChange={(e) => set('projectVision', e.target.value)}
+                  onChange={on.projectVision}
                   placeholder="Describe your project's long-term vision..."
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Team Description</label>
-                <Textarea
+                <MemoTextarea
                   value={values.teamDescription}
-                  onChange={(e) => set('teamDescription', e.target.value)}
+                  onChange={on.teamDescription}
                   placeholder="Describe your team's background and expertise..."
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Regenerative Practices</label>
-                <Textarea
+                <MemoTextarea
                   value={values.regenerativePractices}
-                  onChange={(e) => set('regenerativePractices', e.target.value)}
+                  onChange={on.regenerativePractices}
                   placeholder="What regenerative practices will you implement?"
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Governance Approach</label>
-                <Textarea
+                <MemoTextarea
                   value={values.governanceApproach}
-                  onChange={(e) => set('governanceApproach', e.target.value)}
+                  onChange={on.governanceApproach}
                   placeholder="How will decisions be made in your community?"
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#1a472a] mb-1">Community Engagement</label>
-                <Textarea
+                <MemoTextarea
                   value={values.communityEngagement}
-                  onChange={(e) => set('communityEngagement', e.target.value)}
+                  onChange={on.communityEngagement}
                   placeholder="How do you engage with the broader community?"
                   className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60 min-h-[80px]"
                 />
@@ -1961,18 +1851,18 @@ const CampaignDetails = memo(function CampaignDetails({
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-1">Website URL</label>
-                  <Input
+                  <MemoInput
                     value={values.websiteUrl}
-                    onChange={(e) => set('websiteUrl', e.target.value)}
+                    onChange={on.websiteUrl}
                     placeholder="https://yourproject.com"
                     className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#1a472a] mb-1">Video URL</label>
-                  <Input
+                  <MemoInput
                     value={values.videoUrl}
-                    onChange={(e) => set('videoUrl', e.target.value)}
+                    onChange={on.videoUrl}
                     placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
                     className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60"
                   />
@@ -1984,6 +1874,191 @@ const CampaignDetails = memo(function CampaignDetails({
         </div>
       </div>
     </div>
+  );
+});
+
+/** The card's Use Template and Import from Application buttons and their dialogs. */
+const DetailsActions = memo(function DetailsActions({
+  importableApps,
+  onTemplate,
+  onImport,
+}: {
+  importableApps: any[] | undefined;
+  onTemplate: (template: CampaignTemplate) => void;
+  onImport: (app: any) => void;
+}) {
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  return (
+    <div className="flex gap-2">
+      {/* Template Selector */}
+      <Dialog open={showTemplateDialog} onOpenChange={setShowTemplateDialog}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="border-[#d4a017] text-[#d4a017] text-sm">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Use Template
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Choose a Campaign Template</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            <p className="text-sm text-[#1a472a]/75">
+              Start with a pre-filled template for common project types:
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              {CAMPAIGN_TEMPLATES.map((template) => {
+                const IconComponent = template.icon === 'home' ? Home : template.icon === 'tree' ? TreePine : Wheat;
+                return (
+                  <button
+                    key={template.id}
+                    onClick={() => {
+                      // Load template data: the name and description in the
+                      // card, the needs on the page.
+                      onTemplate(template);
+                      setShowTemplateDialog(false);
+                      toast.success(`${template.name} template loaded! Customize as needed.`);
+                    }}
+                    className="flex flex-col items-start gap-3 p-4 bg-gradient-to-br from-[#f0f7f0] to-white rounded-xl border-2 border-[#7dd87d]/30 hover:border-[#d4a017] transition-all text-left group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#7dd87d]/20 flex items-center justify-center group-hover:bg-[#d4a017]/20 transition-colors">
+                      <IconComponent className="w-6 h-6 text-[#4a7c59] group-hover:text-[#d4a017]" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-[#1a472a] mb-1">{template.name}</h3>
+                      <p className="text-xs text-[#1a472a]/80 leading-relaxed">{template.description}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
+                        {template.equipment.length} equipment items
+                      </span>
+                      <span className="px-2 py-1 bg-[#f0f7f0] text-[#4a7c59] rounded-full">
+                        {template.roles.length} roles
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {importableApps && importableApps.length > 0 && (
+        <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="border-[#7dd87d] text-[#4a7c59] text-sm">
+              <FileText className="w-4 h-4 mr-2" />
+              Import from Application
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Import from Application</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-4">
+              <p className="text-sm text-[#1a472a]/75">
+                Select an application to pre-fill your campaign details:
+              </p>
+              {importableApps.map((app: any) => (
+                <button
+                  key={app.id}
+                  onClick={() => {
+                    // Import application data
+                    onImport(app);
+                    setShowImportDialog(false);
+                    toast.success('Application data imported!');
+                  }}
+                  className="w-full p-3 text-left bg-[#f0f7f0] hover:bg-[#f0f7f0] rounded-lg border border-[#7dd87d]/30 transition-colors"
+                >
+                  <div className="font-medium text-[#1a472a]">{app.projectName}</div>
+                  <div className="text-xs text-[#1a472a]/80">
+                    {app.location} - {app.status}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
+  );
+});
+
+/** The currency picker. Its list renders only while it is open. */
+const CurrencyPicker = memo(function CurrencyPicker({
+  currency,
+  onCurrencyChange,
+}: {
+  currency: string;
+  onCurrencyChange: (code: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/30 text-left font-normal"
+        >
+          {(() => {
+            const c = currencies.find(c => c.code === currency);
+            return c ? `${c.symbol} ${c.name} (${c.code})` : 'Select currency...';
+          })()}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search currency..." />
+          <CommandList>
+            <CommandEmpty>No currency found.</CommandEmpty>
+            <CommandGroup className="max-h-[300px] overflow-auto">
+              {currencies.map(c => (
+                <CommandItem
+                  key={c.code}
+                  value={`${c.code} ${c.name} ${c.symbol}`}
+                  onSelect={() => {
+                    onCurrencyChange(c.code);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={`mr-2 h-4 w-4 ${currency === c.code ? 'opacity-100' : 'opacity-0'}`} />
+                  <span className="font-medium mr-2">{c.symbol}</span>
+                  <span>{c.name}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">{c.code}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+});
+
+/** The land status select. */
+const LandStatusSelect = memo(function LandStatusSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="bg-white dark:bg-white text-[#14331f] placeholder:text-[#4a7c59] border-[#7dd87d]/60">
+        <SelectValue placeholder="Select status" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="owned">Owned</SelectItem>
+        <SelectItem value="leased">Leased</SelectItem>
+        <SelectItem value="committed">Committed</SelectItem>
+        <SelectItem value="seeking">Seeking Land</SelectItem>
+      </SelectContent>
+    </Select>
   );
 });
 

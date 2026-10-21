@@ -2566,19 +2566,6 @@ body {
   height: 32px;
 }
 
-/* 29. LIVING TREE BREATHE, a gentle scale loop under a still glow. The glow
-   used to breathe too, but a drop-shadow that moves keeps the animation on
-   the main thread, so it holds its resting size (STEERING.md section 13). */
-@keyframes tree-breathe {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.018); }
-}
-.tree-breathe {
-  filter: drop-shadow(0 0 8px rgba(125, 216, 125, 0.18));
-  animation: tree-breathe 7s ease-in-out infinite;
-  transform-origin: bottom center;
-}
-
 /* 12. LEAF DRIFT, three ambient leaves drifting subtly across
    the body. Sparse and slow so it never distracts. */
 @keyframes leaf-drift-1 {
