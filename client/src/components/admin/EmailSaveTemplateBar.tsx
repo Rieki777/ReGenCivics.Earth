@@ -2,12 +2,13 @@
  * Save the current markdown letter as a reusable template, or download it as PDF.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
+import { usePersistFn } from "@/hooks/usePersistFn";
 import { toast } from "sonner";
 import { Download, Loader2, Save } from "lucide-react";
 import {
@@ -39,6 +40,107 @@ interface Props {
   onSaved: (key: string) => void;
   kind?: "application" | "newsletter";
 }
+
+// The bar sits under a letter composer and takes the subject and body as
+// props, so it renders on every keystroke there. The parts below do not
+// depend on the letter: memoized with stable props, they skip those renders
+// (a closed Radix Select still renders every item; STEERING.md section 13).
+
+const TemplateToReplaceSelect = memo(function TemplateToReplaceSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: Array<{ key: string; label: string }>;
+  onChange: (key: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-[#1a472a]">Template to replace</Label>
+      <Select
+        value={value}
+        onValueChange={onChange}
+      >
+        <SelectTrigger className={EMAIL_FIELD_CLASS}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt.key} value={opt.key}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+});
+
+const NewTemplateNameField = memo(function NewTemplateNameField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (label: string) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label htmlFor="new-letter-name" className="text-[#1a472a]">New template name</Label>
+      <Input
+        id="new-letter-name"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Season 2 next steps"
+        className={EMAIL_FIELD_CLASS}
+      />
+    </div>
+  );
+});
+
+// The buttons take booleans and stable handlers, so a keystroke in the letter
+// re-renders them and their icons only when a button turns on or off.
+const SaveBarActions = memo(function SaveBarActions({
+  saveDisabled,
+  savePending,
+  pdfDisabled,
+  pdfPending,
+  onSave,
+  onPdf,
+}: {
+  saveDisabled: boolean;
+  savePending: boolean;
+  pdfDisabled: boolean;
+  pdfPending: boolean;
+  onSave: () => Promise<void>;
+  onPdf: () => Promise<void>;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        type="button"
+        size="sm"
+        onClick={() => void onSave()}
+        disabled={saveDisabled}
+        className="bg-[#4a7c59] hover:bg-[#3d6849] text-white"
+      >
+        {savePending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
+        Save template
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => void onPdf()}
+        disabled={pdfDisabled}
+        className="border-[#1a472a]/30 text-[#1a472a]"
+      >
+        {pdfPending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1" />}
+        Download PDF
+      </Button>
+    </div>
+  );
+});
 
 export function EmailSaveTemplateBar({
   subject,
@@ -91,7 +193,10 @@ export function EmailSaveTemplateBar({
     return options;
   }, [builtinTemplates, savedLetters]);
 
-  const handleSave = async () => {
+  // Stable for the memoized buttons, and every call runs the closure of the
+  // bar's newest render. The bar re-renders whenever the subject or body
+  // changes, so a click saves (or prints) exactly the letter on screen.
+  const handleSave = usePersistFn(async () => {
     if (!subject.trim() || !body.trim()) {
       toast.error("Write a subject and body before saving a template.");
       return;
@@ -147,9 +252,9 @@ export function EmailSaveTemplateBar({
       const message = error instanceof Error ? error.message : "Could not save the template.";
       toast.error(message);
     }
-  };
+  });
 
-  const handlePdf = async () => {
+  const handlePdf = usePersistFn(async () => {
     if (!body.trim()) {
       toast.error("Write a body before downloading a PDF.");
       return;
@@ -170,7 +275,7 @@ export function EmailSaveTemplateBar({
       const message = error instanceof Error ? error.message : "Could not build the PDF.";
       toast.error(message);
     }
-  };
+  });
 
   return (
     <div className="space-y-2 rounded-md border border-[#4a7c59]/20 bg-[#f8faf8] p-3 apply-form-dark">
@@ -203,59 +308,18 @@ export function EmailSaveTemplateBar({
         </button>
       </div>
       {mode === "existing" ? (
-        <div className="space-y-1">
-          <Label className="text-[#1a472a]">Template to replace</Label>
-          <Select
-            value={targetKey}
-            onValueChange={setTargetKey}
-          >
-            <SelectTrigger className={EMAIL_FIELD_CLASS}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {existingOptions.map((opt) => (
-                <SelectItem key={opt.key} value={opt.key}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <TemplateToReplaceSelect value={targetKey} options={existingOptions} onChange={setTargetKey} />
       ) : (
-        <div className="space-y-1">
-          <Label htmlFor="new-letter-name" className="text-[#1a472a]">New template name</Label>
-          <Input
-            id="new-letter-name"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="Season 2 next steps"
-            className={EMAIL_FIELD_CLASS}
-          />
-        </div>
+        <NewTemplateNameField value={newLabel} onChange={setNewLabel} />
       )}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          onClick={() => void handleSave()}
-          disabled={save.isPending || !subject.trim() || !body.trim()}
-          className="bg-[#4a7c59] hover:bg-[#3d6849] text-white"
-        >
-          {save.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Save className="w-3.5 h-3.5 mr-1" />}
-          Save template
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => void handlePdf()}
-          disabled={pdf.isPending || !body.trim()}
-          className="border-[#1a472a]/30 text-[#1a472a]"
-        >
-          {pdf.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Download className="w-3.5 h-3.5 mr-1" />}
-          Download PDF
-        </Button>
-      </div>
+      <SaveBarActions
+        saveDisabled={save.isPending || !subject.trim() || !body.trim()}
+        savePending={save.isPending}
+        pdfDisabled={pdf.isPending || !body.trim()}
+        pdfPending={pdf.isPending}
+        onSave={handleSave}
+        onPdf={handlePdf}
+      />
     </div>
   );
 }

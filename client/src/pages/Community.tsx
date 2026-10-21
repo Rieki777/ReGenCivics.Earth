@@ -29,7 +29,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { resolveAssetUrl } from "@/lib/utils";
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, memo } from "react";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SeedOfLifeIcon } from "@/components/SeedOfLifeIcon";
 import { SocialLinks } from "@/components/SocialLinks";
@@ -44,7 +44,7 @@ import { VineDivider } from "@/components/dividers/VineDivider";
 import { Pullquote } from "@/components/Pullquote";
 import { ForYouLabel } from "@/components/ForYouLabel";
 import { decodeEntities } from "@/utils/sanitize";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+import { DebouncedSearchInput, type DebouncedSearchHandle } from "@/components/DebouncedSearchInput";
 
 // Icon mapping for categories
 const iconMap: Record<string, React.ReactNode> = {
@@ -107,44 +107,52 @@ const REMOVED_PROJECTS = new Set([
 const COMMUNITY_BREADCRUMBS = [{ name: "Home", url: "/" }, { name: "Community", url: "/community" }];
 
 /**
- * The search box and its post results. It owns the text being typed, so a
- * keystroke re-renders this section only, not the whole page. The page hears
- * the query once typing pauses, for the topic filter in the General panel.
+ * The search box and its post results. The box keeps the text being typed,
+ * so a keystroke re-renders the box alone, not these results or the page
+ * (STEERING.md section 13). The page holds the query once typing pauses
+ * (300ms): it drives the results here and the topic filter in the General
+ * panel.
  */
-function CommunitySearch({ onQueryChange }: { onQueryChange: (query: string) => void }) {
-  const [searchQuery, setSearchQuery] = useState("");
-  // Debounce search query for post full-text search (300ms)
-  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300);
-  useEffect(() => {
-    onQueryChange(debouncedSearchQuery);
-  }, [debouncedSearchQuery, onQueryChange]);
+const CommunitySearch = memo(function CommunitySearch({ query, onQueryChange }: { query: string; onQueryChange: (query: string) => void }) {
+  // Whether the box holds any text, for the clear button. It changes on the
+  // first key and when the box empties, not on every key.
+  const [hasText, setHasText] = useState(false);
+  // Clearing empties the box at once, even while a pause is still pending.
+  const searchBox = useRef<DebouncedSearchHandle>(null);
 
-  // Full-text post search (only when debounced query is >= 2 chars)
-  const isSearching = debouncedSearchQuery.length >= 2;
+  // Full-text post search (only when the query is >= 2 chars)
+  const isSearching = query.length >= 2;
   const { data: searchResults, isFetching: isSearchFetching } = trpc.forum.search.useQuery(
-    { q: debouncedSearchQuery },
+    { q: query },
     { enabled: isSearching, staleTime: 30 * 1000 }
   );
+
+  const clearSearch = () => {
+    setHasText(false);
+    searchBox.current?.reset();
+    // Clearing resets the topic filter at once; only typing waits.
+    onQueryChange("");
+  };
 
   return (
     <section className="container px-4 max-w-4xl mx-auto mt-4 mb-6 relative z-20">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#4a7c59]/50" />
-        <Input
+        <DebouncedSearchInput
+          as={Input}
+          handle={searchBox}
           placeholder="Search posts and topics..."
           aria-label="Search posts and topics"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={query}
+          onChange={onQueryChange}
+          delay={300}
+          onInput={(e) => setHasText(e.currentTarget.value !== "")}
           className="pl-10 bg-white border-[#4a7c59]/20 rounded-xl focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
           style={{ fontFamily: 'var(--font-body)' }}
         />
-        {searchQuery && (
+        {hasText && (
           <button
-            onClick={() => {
-              setSearchQuery("");
-              // Clearing resets the topic filter at once; only typing waits.
-              onQueryChange("");
-            }}
+            onClick={clearSearch}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1a472a]/75 hover:text-[#4a7c59] transition-colors"
             aria-label="Clear search"
           >
@@ -163,7 +171,7 @@ function CommunitySearch({ onQueryChange }: { onQueryChange: (query: string) => 
             </div>
           ) : !searchResults || searchResults.length === 0 ? (
             <div className="px-4 py-4 text-sm text-[#1a472a]/80 text-center">
-              No results found for &ldquo;{debouncedSearchQuery}&rdquo;
+              No results found for &ldquo;{query}&rdquo;
             </div>
           ) : (
             <ul>
@@ -172,7 +180,7 @@ function CommunitySearch({ onQueryChange }: { onQueryChange: (query: string) => 
                   <Link
                     href={`/community/post/${post.id}`}
                     className="flex items-start gap-3 px-4 py-3 hover:bg-[#f0f7f0] transition-colors border-b border-[#e8e4de] last:border-0"
-                    onClick={() => setSearchQuery("")}
+                    onClick={clearSearch}
                   >
                     <MessageCircle className="w-4 h-4 text-[#7dd87d] flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
@@ -191,12 +199,12 @@ function CommunitySearch({ onQueryChange }: { onQueryChange: (query: string) => 
       )}
     </section>
   );
-}
+});
 
 export default function Community() {
   const { user, isAuthenticated } = useAuth();
   const [, navigate] = useLocation();
-  // The search text once typing pauses (CommunitySearch owns the live input).
+  // The search text once typing pauses (the search box keeps the live text).
   const [searchQuery, setSearchQuery] = useState("");
   const [alreadySubscribed] = useState(() => isNewsletterSubscribed());
   // Remember which element (General/Earth/Water/Fire/Air) the player last
@@ -459,7 +467,7 @@ export default function Community() {
       </section>
 
       {/* Search Bar */}
-      <CommunitySearch onQueryChange={setSearchQuery} />
+      <CommunitySearch query={searchQuery} onQueryChange={setSearchQuery} />
 
       {/* Community Pulse Strip. White text used because the bg-[#7dd87d]/25
           tint over the dark gradient renders as mid-green, so dark green

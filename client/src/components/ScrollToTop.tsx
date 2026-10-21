@@ -37,16 +37,19 @@ export function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
 
-  // Show the button once the page has scrolled past 500px. A marker at that
-  // depth tells us through an IntersectionObserver, so scrolling runs no
-  // handler at all; reading window.scrollY in a scroll handler made the
-  // browser finish its layout work inside every scroll event.
+  // Show the button once the page has scrolled past 500px. A marker covering
+  // the top 500px of the page tells us through an IntersectionObserver, so
+  // scrolling runs no handler at all; reading window.scrollY in a scroll
+  // handler made the browser finish its layout work inside every scroll event.
+  // The marker spans the whole distance, so a jump across it (a link to an
+  // anchor, the scroll to top on a new page) always flips it, even on a
+  // screen shorter than 500px.
   const markerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const marker = markerRef.current;
     if (!marker || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(([entry]) => {
-      setShowButton(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      setShowButton(!entry.isIntersecting);
     });
     io.observe(marker);
     return () => io.disconnect();
@@ -58,7 +61,7 @@ export function ScrollToTop() {
 
   return (
     <>
-    <div ref={markerRef} aria-hidden="true" className="pointer-events-none absolute left-0 top-[500px] h-px w-px" />
+    <div ref={markerRef} aria-hidden="true" className="pointer-events-none absolute left-0 top-0 h-[500px] w-px" />
     <button
       onClick={scrollToTop}
       style={{ left: "calc(env(safe-area-inset-left, 0px) + 1rem)" }}

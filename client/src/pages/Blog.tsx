@@ -4,7 +4,7 @@
  * Features: How-To's section at top, community video suggestion voting
  */
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { Link } from 'wouter';
 import { Calendar, Clock, ArrowRight, BookOpen, Home as HomeIcon, Play, Video, ThumbsUp, Plus, ChevronDown, ChevronUp, Lightbulb, Send, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -89,11 +89,34 @@ function VideoSuggestionCard({
   );
 }
 
+type VideoCategory = "how_to_play" | "how_to_participate" | "how_to_invest" | "how_to_apply" | "how_to_contribute" | "other";
+
+// A closed Radix Select still renders every item, so it is memoized: typing in
+// the text fields beside it re-renders the fields, not the picker (STEERING.md
+// section 13).
+const VideoCategorySelect = memo(function VideoCategorySelect({ value, onChange }: { value: VideoCategory; onChange: (value: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="bg-white/10 border-white/45 text-white">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {howToCategories.map((cat) => (
+          <SelectItem key={cat.id} value={cat.id}>
+            {cat.icon} {cat.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+});
+
 // Suggest Video Form Component
 function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<"how_to_play" | "how_to_participate" | "how_to_invest" | "how_to_apply" | "how_to_contribute" | "other">('other');
+  const [category, setCategory] = useState<VideoCategory>('other');
+  const onCategoryChange = useCallback((v: string) => setCategory(v as VideoCategory), []);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   
@@ -140,18 +163,7 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
       
       <div>
         <label className="text-white/80 text-sm mb-1 block">Category</label>
-        <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
-          <SelectTrigger className="bg-white/10 border-white/45 text-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {howToCategories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {cat.icon} {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <VideoCategorySelect value={category} onChange={onCategoryChange} />
       </div>
       
       <div>
@@ -204,6 +216,73 @@ function SuggestVideoForm({ onSuccess }: { onSuccess: () => void }) {
   );
 }
 
+/**
+ * The vote dialog keeps its own email, so typing in it re-renders the dialog
+ * and not the whole blog index behind it (STEERING.md section 13).
+ */
+function VoteDialog({ suggestionId, open, onOpenChange, onVoted }: {
+  suggestionId: number | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onVoted: () => void;
+}) {
+  const [voteEmail, setVoteEmail] = useState('');
+
+  const voteMutation = trpc.videoSuggestions.vote.useMutation({
+    onSuccess: () => {
+      toast.success('Vote recorded! Thank you for your input.');
+      onVoted();
+      onOpenChange(false);
+      setVoteEmail('');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to vote');
+    },
+  });
+
+  const handleVoteSubmit = () => {
+    if (!voteEmail.trim()) {
+      toast.error('Please enter your email to vote');
+      return;
+    }
+    if (suggestionId) {
+      voteMutation.mutate({ id: suggestionId, email: voteEmail.trim() });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-[#1a472a] border-[#7dd87d]/30 max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <ThumbsUp className="w-5 h-5 text-[#7dd87d]" />
+            Vote for this suggestion
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-white/70 text-sm">
+            Enter your email to vote. This helps us prevent duplicate votes.
+          </p>
+          <Input
+            type="email"
+            value={voteEmail}
+            onChange={(e) => setVoteEmail(e.target.value)}
+            placeholder="your@email.com"
+            className="bg-white/10 border-white/45 text-white placeholder:text-white/60"
+          />
+          <Button
+            onClick={handleVoteSubmit}
+            className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
+            disabled={voteMutation.isPending}
+          >
+            {voteMutation.isPending ? 'Voting...' : 'Submit Vote'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Blog() {
   const featuredPost = getFeaturedPost();
   const howToPosts = blogPosts.filter(post => post.tags.includes('How-To') || post.tags.includes('Tutorial') || post.tags.includes('Foundation'));
@@ -235,39 +314,17 @@ export default function Blog() {
   
   const [howToExpanded, setHowToExpanded] = useState(true);
   const [votingExpanded, setVotingExpanded] = useState(true);
-  const [voteEmail, setVoteEmail] = useState('');
   const [showVoteDialog, setShowVoteDialog] = useState(false);
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<number | null>(null);
   
   // Fetch video suggestions
   const { data: suggestions, refetch: refetchSuggestions } = trpc.videoSuggestions.list.useQuery();
   
-  const voteMutation = trpc.videoSuggestions.vote.useMutation({
-    onSuccess: () => {
-      toast.success('Vote recorded! Thank you for your input.');
-      refetchSuggestions();
-      setShowVoteDialog(false);
-      setVoteEmail('');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to vote');
-    },
-  });
-  
   const handleVoteClick = (id: number) => {
     setSelectedSuggestionId(id);
     setShowVoteDialog(true);
   };
   
-  const handleVoteSubmit = () => {
-    if (!voteEmail.trim()) {
-      toast.error('Please enter your email to vote');
-      return;
-    }
-    if (selectedSuggestionId) {
-      voteMutation.mutate({ id: selectedSuggestionId, email: voteEmail.trim() });
-    }
-  };
 
   return (
     <PageWrapper>
@@ -489,35 +546,12 @@ export default function Blog() {
       </section>
 
       {/* Vote Dialog */}
-      <Dialog open={showVoteDialog} onOpenChange={setShowVoteDialog}>
-        <DialogContent className="bg-[#1a472a] border-[#7dd87d]/30 max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <ThumbsUp className="w-5 h-5 text-[#7dd87d]" />
-              Vote for this suggestion
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-white/70 text-sm">
-              Enter your email to vote. This helps us prevent duplicate votes.
-            </p>
-            <Input
-              type="email"
-              value={voteEmail}
-              onChange={(e) => setVoteEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="bg-white/10 border-white/45 text-white placeholder:text-white/60"
-            />
-            <Button 
-              onClick={handleVoteSubmit}
-              className="w-full bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
-              disabled={voteMutation.isPending}
-            >
-              {voteMutation.isPending ? 'Voting...' : 'Submit Vote'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <VoteDialog
+        suggestionId={selectedSuggestionId}
+        open={showVoteDialog}
+        onOpenChange={setShowVoteDialog}
+        onVoted={refetchSuggestions}
+      />
 
       {/* Featured Post */}
       {featuredPost && (

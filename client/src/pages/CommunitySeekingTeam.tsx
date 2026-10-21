@@ -2,7 +2,8 @@
  * Community Forum - Seeking Team feed
  * All posts with postType "seeking_team" across the forum.
  */
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { useEffect } from "react";
 import { MessageCircle, Clock, Eye, ChevronRight, Users } from "lucide-react";
 import { TaoSpinner } from "@/components/TaoSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -29,13 +30,17 @@ function timeAgo(date: Date | string): string {
 }
 
 export default function CommunitySeekingTeam() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const [, navigate] = useLocation();
+  // Wait for the sign-in check before sending anyone away: redirecting while
+  // it was still running bounced members to /community, with a full page
+  // load, every time they opened this page fresh.
+  useEffect(() => {
+    if (!loading && !isAuthenticated) navigate("/community", { replace: true });
+  }, [loading, isAuthenticated, navigate]);
   const { data: posts, isLoading } = trpc.forum.postsByType.useQuery({ postType: "seeking_team", limit: 50 });
 
-  if (!isAuthenticated) {
-    window.location.href = "/community";
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <PageTransition>

@@ -2,7 +2,7 @@
  * Features & Bug Reports - Community-driven propose-and-vote for features
  * and bug reports. The form branches on formType ("feature" | "bug").
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, type MutableRefObject } from "react";
 import { ChevronUp, MessageCircle, Plus, X, Send, Lightbulb, CheckCircle2, Hammer, Rocket, Download } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -22,21 +22,65 @@ const STATUS_BADGES: Record<string, { label: string; color: string; icon: typeof
   shipped: { label: "Shipped", color: "bg-[#7dd87d]/10 text-[#7dd87d] border-[#7dd87d]/20", icon: Rocket },
 };
 
+type FeatureDraft = { formType: "feature" | "bug"; title: string; description: string; category: string };
+const EMPTY_DRAFT: FeatureDraft = { formType: "feature", title: "", description: "", category: "" };
+
+/**
+ * The suggestion form keeps its own text, so a keystroke re-renders the form
+ * and not the list of suggestions below it (STEERING.md section 13). The
+ * page holds the draft in a ref, so closing and reopening the form keeps
+ * what was typed.
+ */
+function SuggestFeatureForm({ draft, onCreated }: { draft: MutableRefObject<FeatureDraft>; onCreated: () => void }) {
+  const [formType, setFormType] = useState<"feature" | "bug">(draft.current.formType);
+  const [title, setTitle] = useState(draft.current.title);
+  const [description, setDescription] = useState(draft.current.description);
+  const [category, setCategory] = useState(draft.current.category);
+  useEffect(() => {
+    draft.current = { formType, title, description, category };
+  }, [draft, formType, title, description, category]);
+
+  const createMutation = trpc.features.create.useMutation({
+    onSuccess: () => {
+      draft.current = { ...EMPTY_DRAFT, formType };
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      onCreated();
+    },
+  });
+
+  return (
+    <div className="bg-white/10 border border-white/20 rounded-2xl p-6 space-y-4">
+      {/* Bug / Feature toggle */}
+      <div className="flex gap-2 bg-white/5 rounded-lg p-0.5 border border-white/10 w-fit">
+        <button onClick={() => setFormType("feature")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "feature" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/70"}`}>Feature Request</button>
+        <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/70"}`}>Report a Bug</button>
+      </div>
+
+      <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
+      <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
+      <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-base md:text-sm outline-none">
+        <option value="" className="bg-[#1a472a]">Category (optional)</option>
+        {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a472a]">{c}</option>)}
+      </select>
+      <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6">
+        <Send className="w-4 h-4 mr-2" /> {createMutation.isPending ? "Submitting..." : "Submit"}
+      </Button>
+    </div>
+  );
+}
+
 export default function FeatureSuggestions() {
   const { isAuthenticated } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [sortBy, setSortBy] = useState<"votes" | "newest">("votes");
-  const [formType, setFormType] = useState<"feature" | "bug">("feature");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
+  const draft = useRef<FeatureDraft>(EMPTY_DRAFT);
 
   const suggestionsQuery = trpc.features.list.useQuery({ sortBy });
   const myVotesQuery = trpc.features.myVotes.useQuery(undefined, { enabled: isAuthenticated });
 
-  const createMutation = trpc.features.create.useMutation({
-    onSuccess: () => { setTitle(""); setDescription(""); setCategory(""); setShowForm(false); suggestionsQuery.refetch(); },
-  });
+  const onCreated = () => { setShowForm(false); suggestionsQuery.refetch(); };
   const utils = trpc.useUtils();
   // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.features.toggleVote.useMutation({
@@ -108,23 +152,7 @@ export default function FeatureSuggestions() {
 
       {showForm && (
         <section className="max-w-2xl mx-auto px-4 mb-8">
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 space-y-4">
-            {/* Bug / Feature toggle */}
-            <div className="flex gap-2 bg-white/5 rounded-lg p-0.5 border border-white/10 w-fit">
-              <button onClick={() => setFormType("feature")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "feature" ? "bg-[#7dd87d]/20 text-[#7dd87d]" : "text-white/70"}`}>Feature Request</button>
-              <button onClick={() => setFormType("bug")} className={`px-4 py-1.5 rounded-md text-xs font-medium transition-colors ${formType === "bug" ? "bg-red-500/20 text-red-400" : "text-white/70"}`}>Report a Bug</button>
-            </div>
-
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder={formType === "bug" ? "What's broken?" : "Feature title"} className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50" maxLength={300} />
-            <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={formType === "bug" ? "What happened? What did you expect? Steps to reproduce if possible." : "Describe what you'd like to see and why it matters."} className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-base md:text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[100px] resize-y" maxLength={5000} />
-            <select value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-base md:text-sm outline-none">
-              <option value="" className="bg-[#1a472a]">Category (optional)</option>
-              {CATEGORIES.map(c => <option key={c} value={c} className="bg-[#1a472a]">{c}</option>)}
-            </select>
-            <Button onClick={() => { if (title.trim() && description.trim()) createMutation.mutate({ title: `[${formType === "bug" ? "Bug" : "Feature"}] ${title.trim()}`, description: description.trim(), category: category || undefined }); }} disabled={!title.trim() || !description.trim() || createMutation.isPending} className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6">
-              <Send className="w-4 h-4 mr-2" /> {createMutation.isPending ? "Submitting..." : "Submit"}
-            </Button>
-          </div>
+          <SuggestFeatureForm draft={draft} onCreated={onCreated} />
         </section>
       )}
 

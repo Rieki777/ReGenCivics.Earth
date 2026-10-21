@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { memo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,8 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
+import { usePersistFn } from "@/hooks/usePersistFn";
+import { DebouncedSearchInput, type DebouncedSearchHandle } from "@/components/DebouncedSearchInput";
 import {
   adminListPageToApiPage,
   formatClaimFiledBy,
@@ -318,6 +320,392 @@ function exportToCSV(data: any[], filename: string) {
   downloadCSV([csvRow(headers), ...rows].join("\n"), filename);
 }
 
+const truncateWallet = (wallet: string) => {
+  if (!wallet) return "-";
+  return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
+};
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case "pending":
+      return "bg-blue-50 border-blue-200 text-blue-800";
+    case "approved":
+      return "bg-green-50 border-green-200 text-green-800";
+    case "denied":
+      return "bg-red-50 border-red-200 text-red-800";
+    case "flagged":
+      return "bg-amber-50 border-amber-200 text-amber-800";
+    default:
+      return "bg-gray-50 border-gray-200 text-gray-800";
+  }
+};
+
+// Shown until the stats load. One object, so the memoized grid skips while
+// the tab re-renders during loading.
+const EMPTY_STATS = {
+  total: 0,
+  pending: 0,
+  approved: 0,
+  denied: 0,
+  flagged: 0,
+  disputes: 0,
+  totalRegenCommitted: "0",
+};
+
+// The parts of the tab below are memoized with stable props (STEERING.md
+// section 13). When the search settles, a filter changes or a row opens, the
+// tab re-renders and each of them skips unless its own data changed. A closed
+// Radix Select still renders every item, so the status filter sits here too.
+
+const ClaimStatsGrid = memo(function ClaimStatsGrid({
+  stats,
+}: {
+  stats: { totalRegenCommitted: unknown };
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card className="bg-gradient-to-br from-[#1a472a]/5 to-transparent border-[#1a472a]/10">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-[#1a472a]/75">
+            Total Claims
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-[#1a472a]">{(stats as any).totalClaims ?? (stats as any).total ?? 0}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-blue-50 to-transparent border-blue-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-blue-700">Pending</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-800">{(stats as any).pendingCount ?? 0}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-green-50 to-transparent border-green-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-green-700">Approved</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-800">{(stats as any).approvedCount ?? 0}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-amber-50 to-transparent border-amber-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-amber-700">
+            Disputes
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-amber-800">{(stats as any).disputeCount ?? 0}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-red-50 to-transparent border-red-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-red-700">Denied</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-red-800">{(stats as any).deniedCount ?? 0}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-amber-50/50 to-transparent border-amber-200">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-amber-700">Flagged</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-amber-800">{(stats as any).flaggedCount ?? 0}</div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-[#7dd87d]/10 to-transparent border-[#7dd87d]/20 sm:col-span-2">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-[#4a7c59]">
+            Total $ReGen Committed
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-[#1a472a]">
+            ${parseFloat(String(stats.totalRegenCommitted)).toLocaleString("en-US", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+});
+
+const ClaimFilterControls = memo(function ClaimFilterControls({
+  statusFilter,
+  onStatusChange,
+  showDisputes,
+  onDisputesChange,
+}: {
+  statusFilter: string;
+  onStatusChange: (value: string) => void;
+  showDisputes: boolean;
+  onDisputesChange: (checked: boolean | "indeterminate") => void;
+}) {
+  return (
+    <>
+      <Select value={statusFilter} onValueChange={onStatusChange}>
+        <SelectTrigger className="sm:w-44 h-9 text-sm">
+          <Filter className="w-3 h-3 mr-1" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Statuses</SelectItem>
+          <SelectItem value="pending">Pending</SelectItem>
+          <SelectItem value="approved">Approved</SelectItem>
+          <SelectItem value="denied">Denied</SelectItem>
+          <SelectItem value="flagged">Flagged</SelectItem>
+        </SelectContent>
+      </Select>
+      <label className="flex items-center gap-2 px-3 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white hover:bg-[#f0ebe3]/30 cursor-pointer">
+        <Checkbox
+          checked={showDisputes}
+          onCheckedChange={onDisputesChange}
+        />
+        <span className="text-[#1a472a]">Disputes only</span>
+      </label>
+    </>
+  );
+});
+
+// One claim in the list. Opening a row re-renders that row and the one that
+// closes, not all of them.
+const ClaimListRow = memo(function ClaimListRow({
+  claim,
+  expanded,
+  onToggle,
+  onAction,
+}: {
+  claim: SeedsClaimRow;
+  expanded: boolean;
+  onToggle: (claimId: number) => void;
+  onAction: (claim: SeedsClaimRow, action: "approve" | "deny" | "flag") => void;
+}) {
+  return (
+    <div>
+      <div
+        className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer"
+        onClick={() => onToggle(claim.id)}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 text-sm">
+            <div>
+              <div className="text-[#1a472a]/75 text-xs font-medium">Filed by</div>
+              {(() => {
+                const filed = formatClaimFiledBy(claim);
+                return (
+                  <div className="min-w-0">
+                    <div className="text-[#1a472a] font-medium text-sm truncate" title={filed.line}>
+                      {filed.name}
+                    </div>
+                    {filed.name !== filed.email && (
+                      <div className="text-[#1a472a]/75 text-xs truncate">{filed.email}</div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+            <div>
+              <div className="text-[#1a472a]/75 text-xs font-medium">SEEDS Account</div>
+              <div className="text-[#1a472a] font-medium text-sm truncate">
+                {claim.seedsAccount || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#1a472a]/75 text-xs font-medium">Original USD</div>
+              <div className="text-[#1a472a] font-medium">
+                ${formatClaimUsd(claim.originalUsdTotal)}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#1a472a]/75 text-xs font-medium">Claimed USD</div>
+              <div className="text-[#1a472a] font-medium">
+                ${formatClaimUsd(claim.claimedUsdAmount)}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#1a472a]/75 text-xs font-medium">$ReGen</div>
+              <div className="text-[#1a472a] font-medium">
+                {formatClaimTokens(claim.regenAmount)}
+              </div>
+            </div>
+            <div className="hidden lg:block">
+              <div className="text-[#1a472a]/75 text-xs font-medium">Wallet</div>
+              <div className="text-[#1a472a] font-mono text-xs">
+                {truncateWallet(claim.baseWalletAddress)}
+              </div>
+            </div>
+            <div>
+              <div className="text-[#1a472a]/75 text-xs font-medium">Status</div>
+              <Badge variant="outline" className={`text-xs ${getStatusColor(claim.status)}`}>
+                {formatClaimStatus(claim.status)}
+              </Badge>
+            </div>
+          </div>
+          {expanded ? (
+            <ChevronUp className="w-5 h-5 text-[#1a472a]/80" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-[#1a472a]/80" />
+          )}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#1a472a]/75">
+          <span>Submitted {formatClaimDate(claim.createdAt)}</span>
+          {claim.reviewedAt ? (
+            <span>Reviewed {formatClaimDate(claim.reviewedAt)}</span>
+          ) : (
+            <span>Not reviewed yet</span>
+          )}
+        </div>
+      </div>
+
+      {expanded && (
+        <SeedsClaimDetail claim={claim} onAction={onAction} />
+      )}
+    </div>
+  );
+});
+
+/**
+ * The admin notes box. It holds the text it shows, so a keystroke re-renders
+ * this box alone, not the dialog around it. Each change is also written to
+ * notesRef in the same event, before any click can run.
+ */
+function AdminNotesField({ notesRef }: { notesRef: { current: string } }) {
+  const [adminNotes, setAdminNotes] = useState<string>(() => notesRef.current);
+
+  return (
+    <textarea
+      id="adminNotes"
+      value={adminNotes}
+      onChange={(e) => {
+        notesRef.current = e.target.value;
+        setAdminNotes(e.target.value);
+      }}
+      rows={3}
+      className="w-full mt-2 p-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] resize-none"
+      placeholder="Add any notes about this decision..."
+    />
+  );
+}
+
+/**
+ * The approve, deny or flag dialog, with the review mutation. Memoized, so
+ * the tab's re-renders skip it. The notes live in adminNotesRef: this
+ * component stays mounted while the dialog is closed (its content does not),
+ * so notes typed before a Cancel are still there when it opens again, as
+ * before, and they clear only after a review succeeds. AdminNotesField writes
+ * every keystroke into the ref as it happens, so the confirm click sends
+ * exactly the notes on screen.
+ */
+const ClaimActionDialog = memo(function ClaimActionDialog({
+  open,
+  onOpenChange,
+  selectedClaimForAction,
+  actionType,
+  onReviewed,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedClaimForAction: any | null;
+  actionType: "approve" | "deny" | "flag" | null;
+  onReviewed: () => void;
+}) {
+  const adminNotesRef = useRef<string>("");
+  const reviewMutation = trpc.seedsClaims.adminReview.useMutation();
+
+  const executeAction = async () => {
+    if (!selectedClaimForAction || !actionType) return;
+
+    try {
+      await reviewMutation.mutateAsync({
+        claimId: selectedClaimForAction.id,
+        status: actionType === "approve" ? "approved" : actionType === "deny" ? "denied" : "flagged",
+        adminNotes: adminNotesRef.current || undefined,
+      });
+
+      toast.success(
+        `Claim ${actionType === "approve" ? "approved" : actionType === "deny" ? "denied" : "flagged"}`
+      );
+      onOpenChange(false);
+      adminNotesRef.current = "";
+      onReviewed();
+    } catch (error) {
+      toast.error("Failed to update claim");
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {actionType === "approve"
+              ? "Approve Claim"
+              : actionType === "deny"
+                ? "Deny Claim"
+                : "Flag Claim"}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {selectedClaimForAction && (
+              <div className="space-y-3 mt-4 text-left">
+                <div>
+                  <span className="text-[#1a472a]/75 text-sm">SEEDS Account:</span>
+                  <div className="font-medium text-[#1a472a]">
+                    {selectedClaimForAction.seedsAccount}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[#1a472a]/75 text-sm">Claimed Amount:</span>
+                  <div className="font-medium text-[#1a472a]">
+                    ${selectedClaimForAction.claimedUsdAmount.toLocaleString()}
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="adminNotes" className="text-sm text-[#1a472a]/75">
+                    Admin Notes (Optional)
+                  </Label>
+                  <AdminNotesField notesRef={adminNotesRef} />
+                </div>
+              </div>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={executeAction}
+            className={
+              actionType === "approve"
+                ? "bg-green-600 hover:bg-green-700"
+                : actionType === "deny"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-amber-600 hover:bg-amber-700"
+            }
+            disabled={reviewMutation.isPending}
+          >
+            {reviewMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {actionType === "approve"
+              ? "Approve"
+              : actionType === "deny"
+                ? "Deny"
+                : "Flag"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+});
+
 interface Props {
   // Stats will be fetched via TRPC
 }
@@ -325,13 +713,13 @@ interface Props {
 export function AdminSeedsClaimsTab({}: Props) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const searchBox = useRef<DebouncedSearchHandle>(null);
   const [showDisputes, setShowDisputes] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
   const [expandedClaimId, setExpandedClaimId] = useState<number | null>(null);
   const [selectedClaimForAction, setSelectedClaimForAction] = useState<any | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState<boolean>(false);
   const [actionType, setActionType] = useState<"approve" | "deny" | "flag" | null>(null);
-  const [adminNotes, setAdminNotes] = useState<string>("");
   const [exportLoading, setExportLoading] = useState<boolean>(false);
 
   const PAGE_SIZE = 20;
@@ -351,56 +739,44 @@ export function AdminSeedsClaimsTab({}: Props) {
     { enabled: true }
   );
 
-  // Mutations
-  const reviewMutation = trpc.seedsClaims.adminReview.useMutation();
+  // Export (the review mutation lives in ClaimActionDialog, with the notes)
   const exportQuery = trpc.seedsClaims.adminExport.useQuery(
     undefined,
     { enabled: false }
   );
 
-  const stats = statsQuery.data || {
-    total: 0,
-    pending: 0,
-    approved: 0,
-    denied: 0,
-    flagged: 0,
-    disputes: 0,
-    totalRegenCommitted: "0",
-  };
+  const stats = statsQuery.data || EMPTY_STATS;
 
   const claims = (claimsQuery.data?.claims || []) as SeedsClaimRow[];
   const totalClaims = claimsQuery.data?.total || 0;
   const totalPages = Math.ceil(totalClaims / PAGE_SIZE);
 
-  const handleAction = async (claim: any, action: "approve" | "deny" | "flag") => {
+  // Stable handlers for the memoized rows, filters and dialog. Each call runs
+  // the closure of the tab's newest render, so a click never acts on old state.
+  const handleAction = usePersistFn(async (claim: any, action: "approve" | "deny" | "flag") => {
     setSelectedClaimForAction(claim);
     setActionType(action);
     setActionDialogOpen(true);
-  };
+  });
 
-  const executeAction = async () => {
-    if (!selectedClaimForAction || !actionType) return;
+  const toggleClaim = usePersistFn((claimId: number) =>
+    setExpandedClaimId(expandedClaimId === claimId ? null : claimId)
+  );
 
-    try {
-      await reviewMutation.mutateAsync({
-        claimId: selectedClaimForAction.id,
-        status: actionType === "approve" ? "approved" : actionType === "deny" ? "denied" : "flagged",
-        adminNotes: adminNotes || undefined,
-      });
+  const onStatusChange = usePersistFn((v: string) => { setStatusFilter(v); setPage(1); });
 
-      toast.success(
-        `Claim ${actionType === "approve" ? "approved" : actionType === "deny" ? "denied" : "flagged"}`
-      );
-      setActionDialogOpen(false);
-      setAdminNotes("");
-      setSelectedClaimForAction(null);
-      setActionType(null);
-      claimsQuery.refetch();
-      statsQuery.refetch();
-    } catch (error) {
-      toast.error("Failed to update claim");
-    }
-  };
+  const onDisputesChange = usePersistFn((checked: boolean | "indeterminate") => {
+    setShowDisputes(checked as boolean);
+    setPage(1);
+  });
+
+  // After a review succeeds: clear the selection, reload the list and counts.
+  const onReviewed = usePersistFn(() => {
+    setSelectedClaimForAction(null);
+    setActionType(null);
+    claimsQuery.refetch();
+    statsQuery.refetch();
+  });
 
   const handleExport = async () => {
     setExportLoading(true);
@@ -427,104 +803,10 @@ export function AdminSeedsClaimsTab({}: Props) {
     }
   };
 
-  const truncateWallet = (wallet: string) => {
-    if (!wallet) return "-";
-    return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-blue-50 border-blue-200 text-blue-800";
-      case "approved":
-        return "bg-green-50 border-green-200 text-green-800";
-      case "denied":
-        return "bg-red-50 border-red-200 text-red-800";
-      case "flagged":
-        return "bg-amber-50 border-amber-200 text-amber-800";
-      default:
-        return "bg-gray-50 border-gray-200 text-gray-800";
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Stats Dashboard */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-[#1a472a]/5 to-transparent border-[#1a472a]/10">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#1a472a]/75">
-              Total Claims
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1a472a]">{(stats as any).totalClaims ?? (stats as any).total ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-50 to-transparent border-blue-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-blue-700">Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-800">{(stats as any).pendingCount ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-50 to-transparent border-green-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-700">Approved</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-800">{(stats as any).approvedCount ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-50 to-transparent border-amber-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-amber-700">
-              Disputes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-800">{(stats as any).disputeCount ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-red-50 to-transparent border-red-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-red-700">Denied</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-800">{(stats as any).deniedCount ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-50/50 to-transparent border-amber-200">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-amber-700">Flagged</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-amber-800">{(stats as any).flaggedCount ?? 0}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-[#7dd87d]/10 to-transparent border-[#7dd87d]/20 sm:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-[#4a7c59]">
-              Total $ReGen Committed
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#1a472a]">
-              ${parseFloat(String(stats.totalRegenCommitted)).toLocaleString("en-US", {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ClaimStatsGrid stats={stats} />
 
       {/* Main Table Card */}
       <Card className="bg-white border-2 border-[#1a472a]/10">
@@ -559,40 +841,26 @@ export function AdminSeedsClaimsTab({}: Props) {
           <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
-              <input
+              {/* Keeps its own text and tells the tab once typing pauses, so
+                  a keystroke re-renders the box and not the claim list. */}
+              <DebouncedSearchInput
+                handle={searchBox}
                 type="text"
                 placeholder="Search by SEEDS account or email..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
+                onChange={(value) => {
+                  setSearchTerm(value);
                   setPage(1);
                 }}
                 className="w-full pl-9 pr-4 py-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-              <SelectTrigger className="sm:w-44 h-9 text-sm">
-                <Filter className="w-3 h-3 mr-1" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="denied">Denied</SelectItem>
-                <SelectItem value="flagged">Flagged</SelectItem>
-              </SelectContent>
-            </Select>
-            <label className="flex items-center gap-2 px-3 py-2 text-sm border border-[#1a472a]/20 rounded-lg bg-white hover:bg-[#f0ebe3]/30 cursor-pointer">
-              <Checkbox
-                checked={showDisputes}
-                onCheckedChange={(checked) => {
-                  setShowDisputes(checked as boolean);
-                  setPage(1);
-                }}
-              />
-              <span className="text-[#1a472a]">Disputes only</span>
-            </label>
+            <ClaimFilterControls
+              statusFilter={statusFilter}
+              onStatusChange={onStatusChange}
+              showDisputes={showDisputes}
+              onDisputesChange={onDisputesChange}
+            />
           </div>
 
           {claims.length !== totalClaims && (
@@ -611,90 +879,13 @@ export function AdminSeedsClaimsTab({}: Props) {
           ) : claims.length > 0 ? (
             <div className="divide-y divide-[#1a472a]/10">
               {claims.map((claim) => (
-                <div key={claim.id}>
-                  <div
-                    className="p-4 hover:bg-[#f0ebe3]/50 cursor-pointer"
-                    onClick={() =>
-                      setExpandedClaimId(
-                        expandedClaimId === claim.id ? null : claim.id
-                      )
-                    }
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 text-sm">
-                        <div>
-                          <div className="text-[#1a472a]/75 text-xs font-medium">Filed by</div>
-                          {(() => {
-                            const filed = formatClaimFiledBy(claim);
-                            return (
-                              <div className="min-w-0">
-                                <div className="text-[#1a472a] font-medium text-sm truncate" title={filed.line}>
-                                  {filed.name}
-                                </div>
-                                {filed.name !== filed.email && (
-                                  <div className="text-[#1a472a]/75 text-xs truncate">{filed.email}</div>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                        <div>
-                          <div className="text-[#1a472a]/75 text-xs font-medium">SEEDS Account</div>
-                          <div className="text-[#1a472a] font-medium text-sm truncate">
-                            {claim.seedsAccount || "-"}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[#1a472a]/75 text-xs font-medium">Original USD</div>
-                          <div className="text-[#1a472a] font-medium">
-                            ${formatClaimUsd(claim.originalUsdTotal)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[#1a472a]/75 text-xs font-medium">Claimed USD</div>
-                          <div className="text-[#1a472a] font-medium">
-                            ${formatClaimUsd(claim.claimedUsdAmount)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[#1a472a]/75 text-xs font-medium">$ReGen</div>
-                          <div className="text-[#1a472a] font-medium">
-                            {formatClaimTokens(claim.regenAmount)}
-                          </div>
-                        </div>
-                        <div className="hidden lg:block">
-                          <div className="text-[#1a472a]/75 text-xs font-medium">Wallet</div>
-                          <div className="text-[#1a472a] font-mono text-xs">
-                            {truncateWallet(claim.baseWalletAddress)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-[#1a472a]/75 text-xs font-medium">Status</div>
-                          <Badge variant="outline" className={`text-xs ${getStatusColor(claim.status)}`}>
-                            {formatClaimStatus(claim.status)}
-                          </Badge>
-                        </div>
-                      </div>
-                      {expandedClaimId === claim.id ? (
-                        <ChevronUp className="w-5 h-5 text-[#1a472a]/80" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-[#1a472a]/80" />
-                      )}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-[#1a472a]/75">
-                      <span>Submitted {formatClaimDate(claim.createdAt)}</span>
-                      {claim.reviewedAt ? (
-                        <span>Reviewed {formatClaimDate(claim.reviewedAt)}</span>
-                      ) : (
-                        <span>Not reviewed yet</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {expandedClaimId === claim.id && (
-                    <SeedsClaimDetail claim={claim} onAction={handleAction} />
-                  )}
-                </div>
+                <ClaimListRow
+                  key={claim.id}
+                  claim={claim}
+                  expanded={expandedClaimId === claim.id}
+                  onToggle={toggleClaim}
+                  onAction={handleAction}
+                />
               ))}
             </div>
           ) : (
@@ -703,6 +894,7 @@ export function AdminSeedsClaimsTab({}: Props) {
               <p>No claims match your search</p>
               <button
                 onClick={() => {
+                  searchBox.current?.reset();
                   setSearchTerm("");
                   setStatusFilter("all");
                   setShowDisputes(false);
@@ -745,71 +937,13 @@ export function AdminSeedsClaimsTab({}: Props) {
       </Card>
 
       {/* Action Dialog */}
-      <AlertDialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {actionType === "approve"
-                ? "Approve Claim"
-                : actionType === "deny"
-                  ? "Deny Claim"
-                  : "Flag Claim"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {selectedClaimForAction && (
-                <div className="space-y-3 mt-4 text-left">
-                  <div>
-                    <span className="text-[#1a472a]/75 text-sm">SEEDS Account:</span>
-                    <div className="font-medium text-[#1a472a]">
-                      {selectedClaimForAction.seedsAccount}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[#1a472a]/75 text-sm">Claimed Amount:</span>
-                    <div className="font-medium text-[#1a472a]">
-                      ${selectedClaimForAction.claimedUsdAmount.toLocaleString()}
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="adminNotes" className="text-sm text-[#1a472a]/75">
-                      Admin Notes (Optional)
-                    </Label>
-                    <textarea
-                      id="adminNotes"
-                      value={adminNotes}
-                      onChange={(e) => setAdminNotes(e.target.value)}
-                      rows={3}
-                      className="w-full mt-2 p-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] resize-none"
-                      placeholder="Add any notes about this decision..."
-                    />
-                  </div>
-                </div>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={executeAction}
-              className={
-                actionType === "approve"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : actionType === "deny"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-amber-600 hover:bg-amber-700"
-              }
-              disabled={reviewMutation.isPending}
-            >
-              {reviewMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {actionType === "approve"
-                ? "Approve"
-                : actionType === "deny"
-                  ? "Deny"
-                  : "Flag"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ClaimActionDialog
+        open={actionDialogOpen}
+        onOpenChange={setActionDialogOpen}
+        selectedClaimForAction={selectedClaimForAction}
+        actionType={actionType}
+        onReviewed={onReviewed}
+      />
     </div>
   );
 }

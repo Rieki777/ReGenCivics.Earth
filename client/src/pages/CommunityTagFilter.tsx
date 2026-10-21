@@ -3,7 +3,8 @@
  * Displays all posts across categories that share a given tag.
  * Tags: lesson | seeking-support | offering-support
  */
-import { Link, useParams } from "wouter";
+import { Link, useLocation, useParams } from "wouter";
+import { useEffect } from "react";
 import {
   MessageCircle, ArrowLeft, Clock, Eye, ChevronRight, Pin, BookOpen, Heart, Users
 } from "lucide-react";
@@ -75,7 +76,14 @@ function PostTagBadge({ tag }: { tag: string }) {
 
 export default function CommunityTagFilter() {
   const { tag } = useParams<{ tag: string }>();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
+  const [, navigate] = useLocation();
+  // Wait for the sign-in check before sending anyone away: redirecting while
+  // it was still running bounced members to /community, with a full page
+  // load, every time they opened this page fresh.
+  useEffect(() => {
+    if (!loading && !isAuthenticated) navigate("/community", { replace: true });
+  }, [loading, isAuthenticated, navigate]);
 
   const validTag = (["lesson", "seeking-support", "offering-support"] as ValidTag[]).includes(tag as ValidTag)
     ? (tag as ValidTag)
@@ -86,10 +94,7 @@ export default function CommunityTagFilter() {
     { enabled: !!validTag }
   );
 
-  if (!isAuthenticated) {
-    window.location.href = "/community";
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   if (!validTag) {
     return (

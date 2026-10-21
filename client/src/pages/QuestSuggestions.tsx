@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
 import { getLoginUrl } from "@/const";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, type MutableRefObject } from "react";
 import {
   ArrowUp, Sparkles, Trophy, Flame, Clock,
   ChevronUp, MessageCircle, Plus, X, Send,
@@ -29,6 +29,109 @@ const QUEST_CATEGORIES = [
   { value: 'other', label: 'Other', icon: '✨' },
 ];
 
+type QuestDraft = { title: string; description: string; category: string };
+
+/**
+ * The quest idea form keeps its own text, so a keystroke re-renders the form
+ * and not the ranked list below it (STEERING.md section 13). The page holds
+ * the draft in a ref, so closing and reopening the form keeps what was typed.
+ */
+function QuestIdeaForm({ draft, onCreated, onCancel }: { draft: MutableRefObject<QuestDraft>; onCreated: () => void; onCancel: () => void }) {
+  const { t } = useLanguage();
+  const [title, setTitle] = useState(draft.current.title);
+  const [description, setDescription] = useState(draft.current.description);
+  const [category, setCategory] = useState(draft.current.category);
+  useEffect(() => {
+    draft.current = { title, description, category };
+  }, [draft, title, description, category]);
+
+  const createMutation = trpc.quests.create.useMutation({
+    onSuccess: () => {
+      draft.current = { title: '', description: '', category: '' };
+      setTitle('');
+      setDescription('');
+      setCategory('');
+      onCreated();
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!title.trim() || !description.trim()) return;
+    createMutation.mutate({ title: title.trim(), description: description.trim(), category: category || undefined });
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white/5 backdrop-blur-sm border border-[#7dd87d]/30 rounded-2xl p-6">
+      <h3 className="text-lg font-bold text-[#7dd87d] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+        Share Your Quest Idea
+      </h3>
+
+      <div className="space-y-4">
+        <div>
+          <label className="text-white/80 text-sm mb-1 block">{t('quest.questName')}</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Regenerative Agriculture Challenge"
+            className="w-full bg-white/10 border border-white/45 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/50 transition-colors"
+            maxLength={300}
+          />
+        </div>
+
+        <div>
+          <label className="text-white/80 text-sm mb-1 block">Category</label>
+          <div className="flex flex-wrap gap-2">
+            {QUEST_CATEGORIES.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setCategory(category === cat.value ? '' : cat.value)}
+                className={`px-3 py-1.5 rounded-full text-sm transition-all ${
+                  category === cat.value
+                    ? 'bg-[#7dd87d] text-[#1a472a] font-semibold'
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                {cat.icon} {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-white/80 text-sm mb-1 block">{t('quest.questDescription')}</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe the quest, its goals, and why it matters to the regenerative movement..."
+            rows={4}
+            className="w-full bg-white/10 border border-white/45 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/50 transition-colors resize-none"
+            maxLength={5000}
+          />
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            className="border-white/20 text-white/70 hover:bg-white/10"
+          >
+            {t('forum.cancel')}
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!title.trim() || !description.trim() || createMutation.isPending}
+            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            {createMutation.isPending ? t('common.loading') : t('quest.submitSuggestion')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function QuestSuggestions() {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
@@ -40,23 +143,19 @@ export default function QuestSuggestions() {
 
   const [showForm, setShowForm] = useState(proposeMode);
   const [sortBy, setSortBy] = useState<'votes' | 'newest'>('votes');
-  const [title, setTitle] = useState(prefillTitle);
-  const [description, setDescription] = useState(
-    prefillThreadId ? `Inspired by forum thread: /community/post/${prefillThreadId}` : ''
-  );
-  const [category, setCategory] = useState('');
+  const draft = useRef<QuestDraft>({
+    title: prefillTitle,
+    description: prefillThreadId ? `Inspired by forum thread: /community/post/${prefillThreadId}` : '',
+    category: '',
+  });
 
   const suggestionsQuery = trpc.quests.suggestions.useQuery({ sortBy });
   const myVotesQuery = trpc.quests.myVotes.useQuery(undefined, { enabled: isAuthenticated });
-  const createMutation = trpc.quests.create.useMutation({
-    onSuccess: () => {
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setShowForm(false);
-      suggestionsQuery.refetch();
-    },
-  });
+  const onCreated = () => {
+    setShowForm(false);
+    suggestionsQuery.refetch();
+  };
+  const onCancel = () => setShowForm(false);
   const utils = trpc.useUtils();
   // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.quests.toggleVote.useMutation({
@@ -82,11 +181,6 @@ export default function QuestSuggestions() {
   });
 
   const myVotes = useMemo(() => new Set(myVotesQuery.data || []), [myVotesQuery.data]);
-
-  const handleSubmit = () => {
-    if (!title.trim() || !description.trim()) return;
-    createMutation.mutate({ title: title.trim(), description: description.trim(), category: category || undefined });
-  };
 
   const handleVote = (suggestionId: number) => {
     if (!isAuthenticated) {
@@ -148,74 +242,7 @@ export default function QuestSuggestions() {
       {/* Submission Form */}
       {showForm && (
           <section className="px-4 pb-8 overflow-hidden">
-            <div className="max-w-2xl mx-auto bg-white/5 backdrop-blur-sm border border-[#7dd87d]/30 rounded-2xl p-6">
-              <h3 className="text-lg font-bold text-[#7dd87d] mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Share Your Quest Idea
-              </h3>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-white/80 text-sm mb-1 block">{t('quest.questName')}</label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Regenerative Agriculture Challenge"
-                    className="w-full bg-white/10 border border-white/45 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/50 transition-colors"
-                    maxLength={300}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-white/80 text-sm mb-1 block">Category</label>
-                  <div className="flex flex-wrap gap-2">
-                    {QUEST_CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.value}
-                        onClick={() => setCategory(category === cat.value ? '' : cat.value)}
-                        className={`px-3 py-1.5 rounded-full text-sm transition-all ${
-                          category === cat.value
-                            ? 'bg-[#7dd87d] text-[#1a472a] font-semibold'
-                            : 'bg-white/10 text-white/70 hover:bg-white/20'
-                        }`}
-                      >
-                        {cat.icon} {cat.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-white/80 text-sm mb-1 block">{t('quest.questDescription')}</label>
-                  <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe the quest, its goals, and why it matters to the regenerative movement..."
-                    rows={4}
-                    className="w-full bg-white/10 border border-white/45 rounded-lg px-4 py-3 text-white placeholder-white/60 focus:outline-none focus:border-[#7dd87d]/50 transition-colors resize-none"
-                    maxLength={5000}
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowForm(false)}
-                    className="border-white/20 text-white/70 hover:bg-white/10"
-                  >
-                    {t('forum.cancel')}
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!title.trim() || !description.trim() || createMutation.isPending}
-                    className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold"
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    {createMutation.isPending ? t('common.loading') : t('quest.submitSuggestion')}
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <QuestIdeaForm draft={draft} onCreated={onCreated} onCancel={onCancel} />
           </section>
       )}
 

@@ -1,10 +1,11 @@
 /**
  * Outbound Write: newsletter composer, audience, preview confirm, send.
  */
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { CalendarClock, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { usePersistFn } from "@/hooks/usePersistFn";
 import { EmailMarkdownComposer } from "@/components/admin/EmailMarkdownComposer";
 import { EmailDraftAgent } from "@/components/admin/EmailDraftAgent";
 import { EmailSaveTemplateBar } from "@/components/admin/EmailSaveTemplateBar";
@@ -59,6 +60,77 @@ export type OutboundWritePrefill = {
   /** An email list (campaign followers, all campaigns, a waitlist). Replaces `source` when set. */
   list?: OutboundAudienceList | null;
 };
+
+// Both pickers are memoized with stable handlers: a closed Radix Select still
+// renders every item, and these hold dozens, so typing the subject or body
+// skips them (STEERING.md section 13).
+const AudienceSelect = memo(function AudienceSelect({
+  value,
+  listGroups,
+  onChange,
+}: {
+  value: string;
+  listGroups: ReturnType<typeof listAudienceGroups>;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select
+      value={value}
+      onValueChange={onChange}
+    >
+      <SelectTrigger className="bg-white min-w-[12rem] max-w-full border-[#1a472a]/60" aria-label="Audience">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Newsletter</SelectLabel>
+          <SelectItem value="nl:all">All active subscribers</SelectItem>
+          {NEWSLETTER_SOURCES.map((s) => (
+            <SelectItem key={s} value={`nl:${s}`}>{newsletterSourceLabel(s)}</SelectItem>
+          ))}
+        </SelectGroup>
+        {listGroups.map((g) => (
+          <SelectGroup key={g.label}>
+            <SelectLabel>{g.label}</SelectLabel>
+            {g.options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}{o.count !== null ? ` (${o.count})` : ""}
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+});
+
+const SavedLetterSelect = memo(function SavedLetterSelect({
+  value,
+  savedLetters,
+  onChange,
+}: {
+  value: string;
+  savedLetters: { templateKey: string; label?: string | null }[];
+  onChange: (key: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/60">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {NEWSLETTER_BUILTINS.map((t) => (
+          <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+        ))}
+        {savedLetters.map((row) => (
+          <SelectItem key={row.templateKey} value={row.templateKey}>
+            {row.label || row.templateKey}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+});
 
 function choiceFromPrefill(prefill?: OutboundWritePrefill | null): AudienceChoice {
   if (prefill?.list) return { kind: "list", list: prefill.list };
@@ -159,6 +231,12 @@ export function AdminOutboundWrite({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const onAudienceChange = usePersistFn((v: string) => {
+    // A season digest keeps the checkbox as it was (on by default).
+    const next = parseAudienceChoiceValue(v, { excludeOffered: excludeOfferedOf(choice) });
+    if (next) { setChoice(next); setPreview(null); }
+  });
+
   const loadTemplate = (key: string) => {
     setTemplateKey(key);
     const saved = savedLetters.find((row) => row.templateKey === key);
@@ -168,6 +246,8 @@ export function AdminOutboundWrite({
       setLayout(isLetterLayout(saved.layout) ? saved.layout : "announcement");
     }
   };
+
+  const onTemplateChange = usePersistFn(loadTemplate);
 
   const persistDraft = async () => {
     const saved = await saveDraft.mutateAsync({
@@ -258,55 +338,11 @@ export function AdminOutboundWrite({
             {/* max-w-full: a long list name (a season digest, a long campaign title) stays inside the card on a phone. */}
             <div className="space-y-1 min-w-0 max-w-full">
               <Label className="text-[#1a472a] text-xs">Audience</Label>
-              <Select
-                value={audienceChoiceValue(choice)}
-                onValueChange={(v) => {
-                  // A season digest keeps the checkbox as it was (on by default).
-                  const next = parseAudienceChoiceValue(v, { excludeOffered: excludeOfferedOf(choice) });
-                  if (next) { setChoice(next); setPreview(null); }
-                }}
-              >
-                <SelectTrigger className="bg-white min-w-[12rem] max-w-full border-[#1a472a]/60" aria-label="Audience">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectLabel>Newsletter</SelectLabel>
-                    <SelectItem value="nl:all">All active subscribers</SelectItem>
-                    {NEWSLETTER_SOURCES.map((s) => (
-                      <SelectItem key={s} value={`nl:${s}`}>{newsletterSourceLabel(s)}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                  {listGroups.map((g) => (
-                    <SelectGroup key={g.label}>
-                      <SelectLabel>{g.label}</SelectLabel>
-                      {g.options.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}{o.count !== null ? ` (${o.count})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  ))}
-                </SelectContent>
-              </Select>
+              <AudienceSelect value={audienceChoiceValue(choice)} listGroups={listGroups} onChange={onAudienceChange} />
             </div>
             <div className="space-y-1">
               <Label className="text-[#1a472a] text-xs">Saved letter</Label>
-              <Select value={templateKey} onValueChange={loadTemplate}>
-                <SelectTrigger className="bg-white min-w-[12rem] border-[#1a472a]/60">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {NEWSLETTER_BUILTINS.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                  ))}
-                  {savedLetters.map((row) => (
-                    <SelectItem key={row.templateKey} value={row.templateKey}>
-                      {row.label || row.templateKey}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SavedLetterSelect value={templateKey} savedLetters={savedLetters} onChange={onTemplateChange} />
             </div>
             <p className="self-end text-sm text-[#1a472a]/80 pb-2">
               {audienceCount} {audienceCount === 1 ? countNoun : countNounPlural}

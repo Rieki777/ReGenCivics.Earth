@@ -2,7 +2,7 @@
  * Community Proposals page.
  * Signal-based governance: submit proposals, vote, filter by category and status.
  */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, type MutableRefObject } from "react";
 import { ChevronUp, Plus, X, Send, Filter } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -61,17 +61,102 @@ function formatDate(dateStr: string) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+type ProposalDraft = { title: string; description: string; category: string; templateType: string };
+const EMPTY_DRAFT: ProposalDraft = { title: "", description: "", category: "", templateType: "" };
+
+/**
+ * The proposal form keeps its own text, so a keystroke re-renders the form
+ * and not the page and its list of proposals behind the dialog (STEERING.md
+ * section 13). The page holds the draft in a ref, so closing and reopening
+ * the dialog keeps what was typed.
+ */
+function ProposalForm({ draft, onCreated }: { draft: MutableRefObject<ProposalDraft>; onCreated: () => void }) {
+  const [title, setTitle] = useState(draft.current.title);
+  const [description, setDescription] = useState(draft.current.description);
+  const [category, setCategory] = useState<string>(draft.current.category);
+  const [templateType, setTemplateType] = useState<string>(draft.current.templateType);
+  useEffect(() => {
+    draft.current = { title, description, category, templateType };
+  }, [draft, title, description, category, templateType]);
+
+  const createMutation = trpc.proposals.create.useMutation({
+    onSuccess: () => {
+      draft.current = EMPTY_DRAFT;
+      setTitle("");
+      setDescription("");
+      setCategory("");
+      setTemplateType("");
+      onCreated();
+    },
+  });
+
+  function handleSubmit() {
+    if (!title.trim() || !description.trim() || !category) return;
+    createMutation.mutate({
+      title: title.trim(),
+      description: description.trim(),
+      category: category as any,
+      templateType: templateType || undefined,
+    });
+  }
+
+  return (
+    <div className="space-y-4 mt-2">
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Proposal title"
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+        maxLength={200}
+      />
+      <textarea
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+        placeholder="Describe your proposal. What should change and why?"
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
+      />
+      <select
+        value={category}
+        onChange={e => setCategory(e.target.value)}
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
+      >
+        <option value="" className="bg-[#1a472a]">Select category</option>
+        {CATEGORIES.map(c => (
+          <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.label}</option>
+        ))}
+      </select>
+      <select
+        value={templateType}
+        onChange={e => setTemplateType(e.target.value)}
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
+      >
+        <option value="" className="bg-[#1a472a]">Template type (optional)</option>
+        {TEMPLATE_TYPES.map(t => (
+          <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>
+        ))}
+      </select>
+      <Button
+        onClick={handleSubmit}
+        disabled={!title.trim() || !description.trim() || !category || createMutation.isPending}
+        className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6 w-full"
+      >
+        <Send className="w-4 h-4 mr-2" />
+        {createMutation.isPending ? "Submitting..." : "Submit Proposal"}
+      </Button>
+      {createMutation.isError && (
+        <p className="text-red-400 text-sm">{createMutation.error?.message || "Something went wrong."}</p>
+      )}
+    </div>
+  );
+}
+
 export default function Proposals() {
   const { user, isAuthenticated } = useAuth();
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Form state
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<string>("");
-  const [templateType, setTemplateType] = useState<string>("");
+  const draft = useRef<ProposalDraft>(EMPTY_DRAFT);
 
   const proposalsQuery = trpc.proposals.list.useQuery({
     category: categoryFilter || undefined,
@@ -80,16 +165,10 @@ export default function Proposals() {
   });
   const myVotesQuery = trpc.proposals.myVotes.useQuery(undefined, { enabled: isAuthenticated });
 
-  const createMutation = trpc.proposals.create.useMutation({
-    onSuccess: () => {
-      setTitle("");
-      setDescription("");
-      setCategory("");
-      setTemplateType("");
-      setDialogOpen(false);
-      proposalsQuery.refetch();
-    },
-  });
+  const onCreated = () => {
+    setDialogOpen(false);
+    proposalsQuery.refetch();
+  };
 
   // A vote shows at once; the server's answer settles it (STEERING.md section 13).
   const utils = trpc.useUtils();
@@ -97,8 +176,11 @@ export default function Proposals() {
     const listKey = { category: categoryFilter || undefined, status: statusFilter || undefined, limit: 50 };
     await Promise.all([utils.proposals.list.cancel(listKey), utils.proposals.myVotes.cancel()]);
     const prev = { listKey, list: utils.proposals.list.getData(listKey), votes: utils.proposals.myVotes.getData() };
-    utils.proposals.myVotes.setData(undefined, (old) => (voted ? [...(old ?? []), proposalId] : (old ?? []).filter((id) => id !== proposalId)));
-    utils.proposals.list.setData(listKey, (old) => old?.map((p) => (p.id === proposalId ? { ...p, signalVoteCount: Math.max(0, (p.signalVoteCount ?? 0) + (voted ? 1 : -1)) } : p)));
+    // Both queries come back from raw SQL typed as any, so the shapes are spelled out here.
+    utils.proposals.myVotes.setData(undefined, (old: number[] | undefined) => (voted ? [...(old ?? []), proposalId] : (old ?? []).filter((id: number) => id !== proposalId)));
+    utils.proposals.list.setData(listKey, (old: Array<{ id: number; signalVoteCount?: number | null }> | undefined) =>
+      old?.map((p) => (p.id === proposalId ? { ...p, signalVoteCount: Math.max(0, (p.signalVoteCount ?? 0) + (voted ? 1 : -1)) } : p)),
+    );
     return prev;
   };
   // Rolled back in onSettled, not onError, so main.tsx's onError (the
@@ -138,16 +220,6 @@ export default function Proposals() {
     } else {
       signalVoteMutation.mutate({ proposalId });
     }
-  }
-
-  function handleSubmit() {
-    if (!title.trim() || !description.trim() || !category) return;
-    createMutation.mutate({
-      title: title.trim(),
-      description: description.trim(),
-      category: category as any,
-      templateType: templateType || undefined,
-    });
   }
 
   return (
@@ -210,52 +282,7 @@ export default function Proposals() {
                       </div>
                     </div>
                   ) : (
-                  <div className="space-y-4 mt-2">
-                    <input
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
-                      placeholder="Proposal title"
-                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
-                      maxLength={200}
-                    />
-                    <textarea
-                      value={description}
-                      onChange={e => setDescription(e.target.value)}
-                      placeholder="Describe your proposal. What should change and why?"
-                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
-                    />
-                    <select
-                      value={category}
-                      onChange={e => setCategory(e.target.value)}
-                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
-                    >
-                      <option value="" className="bg-[#1a472a]">Select category</option>
-                      {CATEGORIES.map(c => (
-                        <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.label}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={templateType}
-                      onChange={e => setTemplateType(e.target.value)}
-                      className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
-                    >
-                      <option value="" className="bg-[#1a472a]">Template type (optional)</option>
-                      {TEMPLATE_TYPES.map(t => (
-                        <option key={t.value} value={t.value} className="bg-[#1a472a]">{t.label}</option>
-                      ))}
-                    </select>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={!title.trim() || !description.trim() || !category || createMutation.isPending}
-                      className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6 w-full"
-                    >
-                      <Send className="w-4 h-4 mr-2" />
-                      {createMutation.isPending ? "Submitting..." : "Submit Proposal"}
-                    </Button>
-                    {createMutation.isError && (
-                      <p className="text-red-400 text-sm">{createMutation.error?.message || "Something went wrong."}</p>
-                    )}
-                  </div>
+                  <ProposalForm draft={draft} onCreated={onCreated} />
                   )}
                 </DialogContent>
               </Dialog>

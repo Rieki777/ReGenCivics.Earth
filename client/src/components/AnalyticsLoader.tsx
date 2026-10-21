@@ -7,6 +7,7 @@
 
 import { useEffect } from "react";
 import { useCookieConsent } from "./CookieConsent";
+import { onCLS, onINP, onLCP, onFCP, onTTFB } from "web-vitals";
 
 const ANALYTICS_SCRIPT_ID = "umami-analytics";
 
@@ -54,14 +55,11 @@ export default function AnalyticsLoader() {
         (window as any).umami.track('web-vital', { metric: name, value: Math.round(name === 'CLS' ? value * 1000 : value) });
       }
     };
-    // Loaded only once someone consents: no one else downloads or parses it.
-    void import("web-vitals").then(({ onCLS, onINP, onLCP, onFCP, onTTFB }) => {
-      onCLS(m => report('CLS', m.value));
-      onINP(m => report('INP', m.value));
-      onLCP(m => report('LCP', m.value));
-      onFCP(m => report('FCP', m.value));
-      onTTFB(m => report('TTFB', m.value));
-    });
+    onCLS(m => report('CLS', m.value));
+    onINP(m => report('INP', m.value));
+    onLCP(m => report('LCP', m.value));
+    onFCP(m => report('FCP', m.value));
+    onTTFB(m => report('TTFB', m.value));
   }, [hasConsented]);
 
   return null; // This is a side-effect-only component

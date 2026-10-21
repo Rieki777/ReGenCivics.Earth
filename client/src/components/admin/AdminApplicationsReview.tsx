@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +10,7 @@ import { ApplicantStatusEmailDialog } from "@/components/admin/ApplicantStatusEm
 import { AdminApplicationReviewForm } from "@/components/admin/AdminApplicationReviewForm";
 import { ApplicationAnswersPanel } from "@/components/admin/ApplicationAnswersPanel";
 import { cn } from "@/lib/utils";
+import { DebouncedSearchInput } from "@/components/DebouncedSearchInput";
 
 const STATUS_CONFIG = {
   submitted: {
@@ -60,6 +61,70 @@ function statusFromSearch(): keyof typeof STATUS_CONFIG | null {
   }
   return null;
 }
+
+// At module scope: defined inside the review it was a new component on every
+// render, so each keystroke in the search unmounted and remounted every card.
+const ApplicationCard = memo(function ApplicationCard({ app, onOpen }: {
+  app: { id: number; projectName: string; location: string; projectType: string; submittedAt?: string | Date | null; vision?: string | null; status: string };
+  onOpen?: (id: number | null) => void;
+}) {
+  const statusConfig = STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG];
+  if (!statusConfig) return null;
+
+  const StatusIcon = statusConfig.icon;
+
+  return (
+    <Card
+      className="p-4 md:p-6 bg-white hover:shadow-lg transition-shadow cursor-pointer"
+      onClick={() => onOpen?.(app.id)}
+    >
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+            <h3 className="text-lg md:text-xl font-bold text-[#1a472a]">{app.projectName}</h3>
+            <span
+              className={`inline-flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
+            >
+              <StatusIcon className="w-3 h-3 md:w-4 md:h-4" />
+              {statusConfig.label}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-[#1a472a]/75 mb-3">
+            <span>{app.location}</span>
+            <span className="hidden md:inline">•</span>
+            <span className="capitalize">{app.projectType.replace("_", " ")}</span>
+            {app.submittedAt && (
+              <>
+                <span className="hidden md:inline">•</span>
+                <span className="text-xs">
+                  Submitted {new Date(app.submittedAt).toLocaleDateString()}
+                </span>
+              </>
+            )}
+          </div>
+
+          {app.vision && (
+            <p className="text-[#1a472a]/80 line-clamp-2 text-sm md:text-base">{app.vision}</p>
+          )}
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-[#7dd87d] text-[#4a7c59] w-full md:w-auto md:ml-4 min-h-11"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen?.(app.id);
+          }}
+        >
+          <Eye className="w-4 h-4 mr-2" />
+          Review
+        </Button>
+      </div>
+    </Card>
+  );
+});
 
 export function AdminApplicationsReview({
   openId,
@@ -127,65 +192,6 @@ export function AdminApplicationsReview({
     );
   }
 
-  const ApplicationCard = ({ app }: { app: { id: number; projectName: string; location: string; projectType: string; submittedAt?: string | Date | null; vision?: string | null; status: string } }) => {
-    const statusConfig = STATUS_CONFIG[app.status as keyof typeof STATUS_CONFIG];
-    if (!statusConfig) return null;
-
-    const StatusIcon = statusConfig.icon;
-
-    return (
-      <Card
-        className="p-4 md:p-6 bg-white hover:shadow-lg transition-shadow cursor-pointer"
-        onClick={() => onOpenIdChange?.(app.id)}
-      >
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
-              <h3 className="text-lg md:text-xl font-bold text-[#1a472a]">{app.projectName}</h3>
-              <span
-                className={`inline-flex items-center gap-1 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-medium ${statusConfig.bgColor} ${statusConfig.color}`}
-              >
-                <StatusIcon className="w-3 h-3 md:w-4 md:h-4" />
-                {statusConfig.label}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-[#1a472a]/75 mb-3">
-              <span>{app.location}</span>
-              <span className="hidden md:inline">•</span>
-              <span className="capitalize">{app.projectType.replace("_", " ")}</span>
-              {app.submittedAt && (
-                <>
-                  <span className="hidden md:inline">•</span>
-                  <span className="text-xs">
-                    Submitted {new Date(app.submittedAt).toLocaleDateString()}
-                  </span>
-                </>
-              )}
-            </div>
-
-            {app.vision && (
-              <p className="text-[#1a472a]/80 line-clamp-2 text-sm md:text-base">{app.vision}</p>
-            )}
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-[#7dd87d] text-[#4a7c59] w-full md:w-auto md:ml-4 min-h-11"
-            onClick={(e) => {
-              e.stopPropagation();
-              onOpenIdChange?.(app.id);
-            }}
-          >
-            <Eye className="w-4 h-4 mr-2" />
-            Review
-          </Button>
-        </div>
-      </Card>
-    );
-  };
-
   return (
     <div>
       <Tabs
@@ -237,10 +243,10 @@ export function AdminApplicationsReview({
 
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75 pointer-events-none" />
-          <input
+          <DebouncedSearchInput
             type="search"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={setSearch}
             placeholder="Search by project, location, or vision"
             aria-label="Search applications"
             className="w-full min-h-11 pl-9 pr-4 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
@@ -275,7 +281,7 @@ export function AdminApplicationsReview({
                 </p>
               </Card>
             ) : (
-              filterByStatus(status).map((app) => <ApplicationCard key={app.id} app={app} />)
+              filterByStatus(status).map((app) => <ApplicationCard key={app.id} app={app} onOpen={onOpenIdChange} />)
             )}
           </TabsContent>
         ))}

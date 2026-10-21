@@ -9,7 +9,7 @@
  * newsletter composers can discover what announcement layout actually renders.
  */
 
-import { useRef, useState, type ReactNode } from "react";
+import { memo, useMemo, useRef, useState, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -44,6 +44,7 @@ import { SmartImagePicker } from "@/components/SmartImagePicker";
 import { DictationButton } from "@/components/admin/dictation";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePersistFn } from "@/hooks/usePersistFn";
 
 export const EMAIL_FIELD_CLASS =
   "bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] placeholder:text-[#1a472a]/55 dark:placeholder:text-[#1a472a]/55 border-[#4a7c59]/30";
@@ -142,6 +143,192 @@ function ToolbarTip({
   );
 }
 
+/**
+ * The formatting toolbar: a dozen tooltips, memoized with stable handlers so
+ * typing in the subject or body skips it (STEERING.md section 13).
+ */
+const ComposerToolbar = memo(function ComposerToolbar({
+  variant,
+  featuresOpen,
+  onFeaturesOpenChange,
+  wrap,
+  prefix,
+  link,
+  block,
+  callout,
+  openCta,
+  openImage,
+}: {
+  variant: "application" | "newsletter";
+  featuresOpen: boolean;
+  onFeaturesOpenChange: (open: boolean) => void;
+  wrap: (before: string, after: string, placeholder: string) => void;
+  prefix: (prefix: string) => void;
+  link: () => void;
+  block: (block: string) => void;
+  callout: () => void;
+  openCta: () => void;
+  openImage: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-1" role="toolbar" aria-label="Markdown formatting">
+      <ToolbarTip label="Bold" tip="Wrap selection as **bold**.">
+        <button type="button" className={TOOLBAR_BTN} title="Bold — **text**" onClick={() => wrap("**", "**", "bold")} aria-label="Bold">
+          <Bold className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Italic" tip="Wrap selection as *italic*.">
+        <button type="button" className={TOOLBAR_BTN} title="Italic — *text*" onClick={() => wrap("*", "*", "italic")} aria-label="Italic">
+          <Italic className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Heading" tip="Prefix the line with ## .">
+        <button type="button" className={TOOLBAR_BTN} title="Heading — ## title" onClick={() => prefix("## ")} aria-label="Heading">
+          <Heading2 className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Bullet list" tip="Prefix the line with - .">
+        <button type="button" className={TOOLBAR_BTN} title="Bullet list — - item" onClick={() => prefix("- ")} aria-label="Bullet list">
+          <List className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Nested bullet" tip="Indented - for a nested list item.">
+        <button type="button" className={TOOLBAR_BTN} title="Nested bullet — indented - item" onClick={() => prefix("  - ")} aria-label="Nested bullet">
+          <CornerDownRight className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Numbered list" tip="Prefix the line with 1. .">
+        <button type="button" className={TOOLBAR_BTN} title="Numbered list — 1. item" onClick={() => prefix("1. ")} aria-label="Numbered list">
+          <ListOrdered className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Link" tip="Insert [text](url). Alone on a line in announcement → button.">
+        <button type="button" className={TOOLBAR_BTN} title="Link — [text](url); alone on a line becomes a button in announcement" onClick={link} aria-label="Link">
+          <Link className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Quote" tip="Prefix with > . Announcement turns quotes into callouts.">
+        <button type="button" className={TOOLBAR_BTN} title="Quote — > text (callout in announcement)" onClick={() => prefix("> ")} aria-label="Quote">
+          <Quote className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Horizontal rule" tip="Insert --- as a divider.">
+        <button type="button" className={TOOLBAR_BTN} title="Horizontal rule — ---" onClick={() => block("---")} aria-label="Horizontal rule">
+          <Minus className="w-3.5 h-3.5" />
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Callout" tip='Inserts > Important: … — styled as a callout in announcement/one-pager.'>
+        <button
+          type="button"
+          className={TOOLBAR_BTN}
+          title="Callout — > Important: your note here"
+          onClick={callout}
+          aria-label="Insert callout"
+          data-testid="composer-insert-callout"
+        >
+          <MessageSquareWarning className="w-3.5 h-3.5" />
+          <span className="ml-1 hidden sm:inline">Callout</span>
+        </button>
+      </ToolbarTip>
+      <ToolbarTip label="Button (CTA)" tip="Insert a standalone link that announcement/one-pager render as a forest button.">
+        <button
+          type="button"
+          className={TOOLBAR_BTN}
+          title="Insert button — standalone [Label](url) becomes a CTA in announcement"
+          onClick={openCta}
+          aria-label="Insert button"
+          data-testid="composer-insert-button"
+        >
+          <RectangleHorizontal className="w-3.5 h-3.5" />
+          <span className="ml-1 hidden sm:inline">Button</span>
+        </button>
+      </ToolbarTip>
+      {variant === "newsletter" && (
+        <ToolbarTip label="Image" tip="Insert ![alt](https://assets.regencivics.earth/…). Newsletter toolbar only.">
+          <button
+            type="button"
+            className={TOOLBAR_BTN}
+            title="Insert image — assets.regencivics.earth hosts only"
+            onClick={openImage}
+            aria-label="Insert image"
+            data-testid="composer-insert-image"
+          >
+            <ImagePlus className="w-3.5 h-3.5" />
+            <span className="ml-1 hidden sm:inline">Image</span>
+          </button>
+        </ToolbarTip>
+      )}
+      <Popover open={featuresOpen} onOpenChange={onFeaturesOpenChange}>
+        <ToolbarTip label="Features" tip="See every formatting, CTA, layout, and Write-with-me tip.">
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={TOOLBAR_BTN}
+              title="All composer features"
+              aria-label="Composer features"
+              aria-expanded={featuresOpen}
+              data-testid="composer-features"
+            >
+              <CircleHelp className="w-3.5 h-3.5" />
+              <span className="ml-1 hidden sm:inline">Features</span>
+            </button>
+          </PopoverTrigger>
+        </ToolbarTip>
+        <PopoverContent
+          align="end"
+          className="w-[min(100vw-2rem,22rem)] max-h-[min(70vh,28rem)] overflow-y-auto bg-white text-[#1a472a] border-[#4a7c59]/30 p-3"
+          data-testid="composer-features-popover"
+        >
+          <p className="text-sm font-semibold mb-2">What you can add</p>
+          <ul className="space-y-2.5 text-xs">
+            {FEATURE_CATALOG.map((item) => (
+              <li key={item.name} className="border-b border-[#4a7c59]/15 pb-2 last:border-0 last:pb-0">
+                <p className="font-medium text-[#1a472a]">{item.name}</p>
+                <p className="text-[#1a472a]/80 mt-0.5">{item.help}</p>
+                {item.note ? <p className="text-[#1a472a]/60 mt-0.5 italic">{item.note}</p> : null}
+              </li>
+            ))}
+          </ul>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+});
+
+/** The letter layout picker, memoized like the toolbar. */
+const LayoutPicker = memo(function LayoutPicker({
+  bodyId,
+  layout,
+  onChange,
+}: {
+  bodyId: string;
+  layout: LetterLayout;
+  onChange: (layout: LetterLayout) => void;
+}) {
+  return (
+    <div className="space-y-1">
+      <Label htmlFor={`${bodyId}-layout`} className="text-[#1a472a]">Letter layout</Label>
+      <Select value={layout} onValueChange={(v) => onChange(v as LetterLayout)}>
+        <SelectTrigger id={`${bodyId}-layout`} data-testid={`${bodyId}-layout`} className={EMAIL_FIELD_CLASS}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="plain">Plain letter</SelectItem>
+          <SelectItem value="announcement">Announcement (header, buttons, callouts)</SelectItem>
+          <SelectItem value="one_pager">One-pager (PDF page)</SelectItem>
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-[#1a472a]/70">
+        {layout === "plain"
+          ? "Text links stay in the sentence. The send path adds the usual forest header."
+          : layout === "announcement"
+            ? "A forest header, logo, and footer. A link on its own line becomes a button. Quotes become callouts."
+            : "Same announcement chrome with tighter margins; PDF can still paginate if the letter is long."}
+      </p>
+    </div>
+  );
+});
+
 export function EmailMarkdownComposer({
   subject,
   body,
@@ -167,7 +354,9 @@ export function EmailMarkdownComposer({
   const [imageAlt, setImageAlt] = useState("");
   const [featuresOpen, setFeaturesOpen] = useState(false);
 
-  const applyWrap = (before: string, after: string, placeholder: string) => {
+  // Stable across renders (they read the textarea and call the latest props),
+  // so the memoized toolbar and layout picker skip every keystroke.
+  const applyWrap = usePersistFn((before: string, after: string, placeholder: string) => {
     const el = textareaRef.current;
     if (!el) {
       onBodyChange(before + placeholder + after);
@@ -186,9 +375,9 @@ export function EmailMarkdownComposer({
       el.focus();
       el.setSelectionRange(result.selectionStart, result.selectionEnd);
     });
-  };
+  });
 
-  const applyPrefix = (prefix: string) => {
+  const applyPrefix = usePersistFn((prefix: string) => {
     const el = textareaRef.current;
     if (!el) {
       onBodyChange(prefix + body);
@@ -200,15 +389,15 @@ export function EmailMarkdownComposer({
       el.focus();
       el.setSelectionRange(result.selectionStart, result.selectionEnd);
     });
-  };
+  });
 
-  const insertLink = () => {
+  const insertLink = usePersistFn(() => {
     const href = window.prompt("Link URL", "https://");
     if (!href) return;
     applyWrap("[", `](${href.trim()})`, "link text");
-  };
+  });
 
-  const insertBlock = (block: string) => {
+  const insertBlock = usePersistFn((block: string) => {
     const el = textareaRef.current;
     if (!el) {
       onBodyChange(body ? `${body}\n\n${block}` : block);
@@ -220,11 +409,14 @@ export function EmailMarkdownComposer({
       el.focus();
       el.setSelectionRange(result.selectionStart, result.selectionEnd);
     });
-  };
+  });
 
-  const insertCallout = () => {
+  const insertCallout = usePersistFn(() => {
     insertBlock("> Important: your note here");
-  };
+  });
+  const openCta = usePersistFn(() => setCtaOpen(true));
+  const openImage = usePersistFn(() => setImageOpen(true));
+  const onLayoutPicked = usePersistFn((value: LetterLayout) => onLayoutChange?.(value));
 
   const confirmCta = () => {
     const href = ctaHref.trim();
@@ -244,12 +436,20 @@ export function EmailMarkdownComposer({
     setImageAlt("");
   };
 
-  const previewHtml = markdownLetterDocument(
-    body || "_Nothing to preview yet._",
-    layout,
-    variant === "newsletter"
-      ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/email-preferences", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
-      : undefined,
+  // Built only while the Preview tab is open: turning the whole body into a
+  // finished email on every keystroke was the heaviest part of typing here.
+  const previewHtml = useMemo(
+    () =>
+      tab === "preview"
+        ? markdownLetterDocument(
+            body || "_Nothing to preview yet._",
+            layout,
+            variant === "newsletter"
+              ? { unsubscribeUrl: unsubscribeUrl || "https://regencivics.earth/email-preferences", postalAddress: NEWSLETTER_POSTAL_ADDRESS }
+              : undefined,
+          )
+        : "",
+    [tab, body, layout, variant, unsubscribeUrl],
   );
 
   return (
@@ -268,26 +468,7 @@ export function EmailMarkdownComposer({
       )}
 
       {showLayout && onLayoutChange && (
-        <div className="space-y-1">
-          <Label htmlFor={`${bodyId}-layout`} className="text-[#1a472a]">Letter layout</Label>
-          <Select value={layout} onValueChange={(v) => onLayoutChange(v as LetterLayout)}>
-            <SelectTrigger id={`${bodyId}-layout`} data-testid={`${bodyId}-layout`} className={EMAIL_FIELD_CLASS}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="plain">Plain letter</SelectItem>
-              <SelectItem value="announcement">Announcement (header, buttons, callouts)</SelectItem>
-              <SelectItem value="one_pager">One-pager (PDF page)</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-[#1a472a]/70">
-            {layout === "plain"
-              ? "Text links stay in the sentence. The send path adds the usual forest header."
-              : layout === "announcement"
-                ? "A forest header, logo, and footer. A link on its own line becomes a button. Quotes become callouts."
-                : "Same announcement chrome with tighter margins; PDF can still paginate if the letter is long."}
-          </p>
-        </div>
+        <LayoutPicker bodyId={bodyId} layout={layout} onChange={onLayoutPicked} />
       )}
 
       <div className="space-y-1">
@@ -311,127 +492,18 @@ export function EmailMarkdownComposer({
                   label="Dictate body"
                   errorAlign="end"
                 />
-                <div className="flex flex-wrap gap-1" role="toolbar" aria-label="Markdown formatting">
-                  <ToolbarTip label="Bold" tip="Wrap selection as **bold**.">
-                    <button type="button" className={TOOLBAR_BTN} title="Bold — **text**" onClick={() => applyWrap("**", "**", "bold")} aria-label="Bold">
-                      <Bold className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Italic" tip="Wrap selection as *italic*.">
-                    <button type="button" className={TOOLBAR_BTN} title="Italic — *text*" onClick={() => applyWrap("*", "*", "italic")} aria-label="Italic">
-                      <Italic className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Heading" tip="Prefix the line with ## .">
-                    <button type="button" className={TOOLBAR_BTN} title="Heading — ## title" onClick={() => applyPrefix("## ")} aria-label="Heading">
-                      <Heading2 className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Bullet list" tip="Prefix the line with - .">
-                    <button type="button" className={TOOLBAR_BTN} title="Bullet list — - item" onClick={() => applyPrefix("- ")} aria-label="Bullet list">
-                      <List className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Nested bullet" tip="Indented - for a nested list item.">
-                    <button type="button" className={TOOLBAR_BTN} title="Nested bullet — indented - item" onClick={() => applyPrefix("  - ")} aria-label="Nested bullet">
-                      <CornerDownRight className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Numbered list" tip="Prefix the line with 1. .">
-                    <button type="button" className={TOOLBAR_BTN} title="Numbered list — 1. item" onClick={() => applyPrefix("1. ")} aria-label="Numbered list">
-                      <ListOrdered className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Link" tip="Insert [text](url). Alone on a line in announcement → button.">
-                    <button type="button" className={TOOLBAR_BTN} title="Link — [text](url); alone on a line becomes a button in announcement" onClick={insertLink} aria-label="Link">
-                      <Link className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Quote" tip="Prefix with > . Announcement turns quotes into callouts.">
-                    <button type="button" className={TOOLBAR_BTN} title="Quote — > text (callout in announcement)" onClick={() => applyPrefix("> ")} aria-label="Quote">
-                      <Quote className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Horizontal rule" tip="Insert --- as a divider.">
-                    <button type="button" className={TOOLBAR_BTN} title="Horizontal rule — ---" onClick={() => insertBlock("---")} aria-label="Horizontal rule">
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Callout" tip='Inserts > Important: … — styled as a callout in announcement/one-pager.'>
-                    <button
-                      type="button"
-                      className={TOOLBAR_BTN}
-                      title="Callout — > Important: your note here"
-                      onClick={insertCallout}
-                      aria-label="Insert callout"
-                      data-testid="composer-insert-callout"
-                    >
-                      <MessageSquareWarning className="w-3.5 h-3.5" />
-                      <span className="ml-1 hidden sm:inline">Callout</span>
-                    </button>
-                  </ToolbarTip>
-                  <ToolbarTip label="Button (CTA)" tip="Insert a standalone link that announcement/one-pager render as a forest button.">
-                    <button
-                      type="button"
-                      className={TOOLBAR_BTN}
-                      title="Insert button — standalone [Label](url) becomes a CTA in announcement"
-                      onClick={() => setCtaOpen(true)}
-                      aria-label="Insert button"
-                      data-testid="composer-insert-button"
-                    >
-                      <RectangleHorizontal className="w-3.5 h-3.5" />
-                      <span className="ml-1 hidden sm:inline">Button</span>
-                    </button>
-                  </ToolbarTip>
-                  {variant === "newsletter" && (
-                    <ToolbarTip label="Image" tip="Insert ![alt](https://assets.regencivics.earth/…). Newsletter toolbar only.">
-                      <button
-                        type="button"
-                        className={TOOLBAR_BTN}
-                        title="Insert image — assets.regencivics.earth hosts only"
-                        onClick={() => setImageOpen(true)}
-                        aria-label="Insert image"
-                        data-testid="composer-insert-image"
-                      >
-                        <ImagePlus className="w-3.5 h-3.5" />
-                        <span className="ml-1 hidden sm:inline">Image</span>
-                      </button>
-                    </ToolbarTip>
-                  )}
-                  <Popover open={featuresOpen} onOpenChange={setFeaturesOpen}>
-                    <ToolbarTip label="Features" tip="See every formatting, CTA, layout, and Write-with-me tip.">
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className={TOOLBAR_BTN}
-                          title="All composer features"
-                          aria-label="Composer features"
-                          aria-expanded={featuresOpen}
-                          data-testid="composer-features"
-                        >
-                          <CircleHelp className="w-3.5 h-3.5" />
-                          <span className="ml-1 hidden sm:inline">Features</span>
-                        </button>
-                      </PopoverTrigger>
-                    </ToolbarTip>
-                    <PopoverContent
-                      align="end"
-                      className="w-[min(100vw-2rem,22rem)] max-h-[min(70vh,28rem)] overflow-y-auto bg-white text-[#1a472a] border-[#4a7c59]/30 p-3"
-                      data-testid="composer-features-popover"
-                    >
-                      <p className="text-sm font-semibold mb-2">What you can add</p>
-                      <ul className="space-y-2.5 text-xs">
-                        {FEATURE_CATALOG.map((item) => (
-                          <li key={item.name} className="border-b border-[#4a7c59]/15 pb-2 last:border-0 last:pb-0">
-                            <p className="font-medium text-[#1a472a]">{item.name}</p>
-                            <p className="text-[#1a472a]/80 mt-0.5">{item.help}</p>
-                            {item.note ? <p className="text-[#1a472a]/60 mt-0.5 italic">{item.note}</p> : null}
-                          </li>
-                        ))}
-                      </ul>
-                    </PopoverContent>
-                  </Popover>
-                </div>
+                <ComposerToolbar
+                  variant={variant}
+                  featuresOpen={featuresOpen}
+                  onFeaturesOpenChange={setFeaturesOpen}
+                  wrap={applyWrap}
+                  prefix={applyPrefix}
+                  link={insertLink}
+                  block={insertBlock}
+                  callout={insertCallout}
+                  openCta={openCta}
+                  openImage={openImage}
+                />
               </div>
             )}
           </div>

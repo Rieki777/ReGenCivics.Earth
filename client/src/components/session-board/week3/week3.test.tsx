@@ -59,7 +59,7 @@ function fakeProps(over: { index: number; items?: Row[]; mineIds?: number[]; myP
   };
   return {
     board, week: 3, stages: boardStages(3), index: over.index, facilitator: false, canWrite: true, mine, actions,
-    now: Date.now(), serverNow: () => Date.now(), go: vi.fn(),
+    serverNow: () => Date.now(), go: vi.fn(),
     myProject: over.myProject === undefined ? { kind: "project", cardId: 5, name: "Toa Hermitage" } : over.myProject,
     setMyProject: vi.fn(), displayName: "", setDisplayName: vi.fn(), signedIn: false, look: vi.fn(),
   } as unknown as StageProps;

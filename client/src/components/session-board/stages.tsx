@@ -287,6 +287,11 @@ export function Breath({ board, stages, index, facilitator, canWrite, mine, acti
   const breath = board.state.breath;
   const pattern = BREATH_PATTERNS[breath.pattern] ?? BREATH_PATTERNS.settle;
   const reduced = useMemo(() => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches, []);
+  // The board has no page clock any more, so the draw loop re-renders this
+  // stage the moment a breath ends (or starts again): the Stop button below
+  // is worked out from the time at render.
+  const [, setDoneSeen] = useState(false);
+  const doneSeen = useRef(false);
 
   useEffect(() => {
     let raf = 0;
@@ -294,6 +299,11 @@ export function Breath({ board, stages, index, facilitator, canWrite, mine, acti
     const draw = () => {
       if (!alive) return;
       const m = breathAt(breath, serverNow());
+      const isDone = "done" in m;
+      if (isDone !== doneSeen.current) {
+        doneSeen.current = isDone;
+        setDoneSeen(isDone);
+      }
       let sc = 0.72;
       let cueText = "Ready when you are";
       const power = breath.pattern === "power";

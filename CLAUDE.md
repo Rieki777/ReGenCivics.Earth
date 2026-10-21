@@ -146,7 +146,7 @@ pnpm ui:audit <story> [<story> ...]   # no names: every story (the audit-selftes
 pnpm ui:audit audit-selftest          # must FAIL, once per check: proves each check still bites
 pnpm ui:audit:live --base http://localhost:3202 --as user|admin [--only /path]   # the running app, route by route
 pnpm perf:typing --base http://localhost:3202 [--signed-in]   # each keystroke's delay with the CPU slowed 4x
-pnpm perf:renders --base http://localhost:3000 [--as user|admin]   # React renders per idle, scroll, keystroke, click
+pnpm perf:renders --base http://localhost:3000 [--as user|admin] [--forms]   # React renders per idle, scroll, keystroke, click; --forms types into every field
 pnpm perf:live --base http://localhost:3202 [--as user|admin] [--nav]   # click, key, scroll and navigation timings
 ```
 

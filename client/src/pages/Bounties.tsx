@@ -4,7 +4,7 @@
  * today, so the recruiting empty state is the first thing most people see;
  * it is written to be warm and clear.
  */
-import { useState } from "react";
+import { useState, useRef, useEffect, type MutableRefObject } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -20,24 +20,75 @@ import { Button } from "@/components/ui/button";
 import { BountyBoard } from "@/components/bounty/BountyBoard";
 import { RecentlyCompleted } from "@/components/bounty/RecentlyCompleted";
 
-function ProposeBountyDialog() {
+type BountyDraft = { title: string; body: string; tier: "trivial" | "small" | "medium" | "large" };
+
+const inputCls = "w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-3 py-2 focus:outline-none focus:border-[#7dd87d]/50";
+
+/**
+ * The proposal form keeps its own text, so a keystroke re-renders the form
+ * and not the dialog around it (STEERING.md section 13). The dialog holds the
+ * draft in a ref, so closing and reopening it keeps what was typed.
+ */
+function ProposeBountyForm({ draft, onProposed }: { draft: MutableRefObject<BountyDraft>; onProposed: () => void }) {
   const utils = trpc.useUtils();
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [tier, setTier] = useState<"trivial" | "small" | "medium" | "large">("small");
+  const [title, setTitle] = useState(draft.current.title);
+  const [body, setBody] = useState(draft.current.body);
+  const [tier, setTier] = useState<BountyDraft["tier"]>(draft.current.tier);
+  useEffect(() => {
+    draft.current = { title, body, tier };
+  }, [draft, title, body, tier]);
 
   const propose = trpc.bounties.propose.useMutation({
     onSuccess: () => {
       toast.success("Proposed. A maintainer will review and open it.");
       utils.bounties.listBoard.invalidate();
-      setOpen(false);
+      onProposed();
+      // A proposal clears the title and details and keeps the chosen size.
+      draft.current = { ...draft.current, title: "", body: "" };
       setTitle(""); setBody("");
     },
     onError: (e) => toast.error(e.message),
   });
 
-  const inputCls = "w-full rounded-md bg-[#0f2417] border border-white/15 text-white text-sm px-3 py-2 focus:outline-none focus:border-[#7dd87d]/50";
+  return (
+    <>
+      <div className="space-y-3">
+        <div>
+          <label className="text-xs text-white/60">Title</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={255} className={inputCls} placeholder="What needs doing?" />
+        </div>
+        <div>
+          <label className="text-xs text-white/60">Details</label>
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} className={`${inputCls} resize-none`} placeholder="The outcome, and why it matters." />
+        </div>
+        <div>
+          <label className="text-xs text-white/60">Size</label>
+          <select value={tier} onChange={(e) => setTier(e.target.value as typeof tier)} className={inputCls}>
+            <option value="trivial">Trivial, a quick favor</option>
+            <option value="small">Small, one clear deliverable</option>
+            <option value="medium">Medium, a real piece of work</option>
+            <option value="large">Large, a substantial build</option>
+          </select>
+        </div>
+        <p className="text-[11px] text-white/60">A maintainer confirms the size and impact, and the engine sets a transparent reward before it opens for claiming.</p>
+      </div>
+      <DialogFooter>
+        <Button
+          onClick={() => propose.mutate({ sourceType: "call_task", title, body, tier })}
+          disabled={!title.trim() || !body.trim() || propose.isPending}
+          className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
+        >
+          {propose.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Submit
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+function ProposeBountyDialog() {
+  const [open, setOpen] = useState(false);
+  const draft = useRef<BountyDraft>({ title: "", body: "", tier: "small" });
+  const onProposed = () => setOpen(false);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -46,35 +97,7 @@ function ProposeBountyDialog() {
       </DialogTrigger>
       <DialogContent className="bg-[#0d2818] border-[#7dd87d]/25 text-white">
         <DialogHeader><DialogTitle style={{ fontFamily: "var(--font-display)" }}>Propose a bounty</DialogTitle></DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="text-xs text-white/60">Title</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={255} className={inputCls} placeholder="What needs doing?" />
-          </div>
-          <div>
-            <label className="text-xs text-white/60">Details</label>
-            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={4} className={`${inputCls} resize-none`} placeholder="The outcome, and why it matters." />
-          </div>
-          <div>
-            <label className="text-xs text-white/60">Size</label>
-            <select value={tier} onChange={(e) => setTier(e.target.value as typeof tier)} className={inputCls}>
-              <option value="trivial">Trivial, a quick favor</option>
-              <option value="small">Small, one clear deliverable</option>
-              <option value="medium">Medium, a real piece of work</option>
-              <option value="large">Large, a substantial build</option>
-            </select>
-          </div>
-          <p className="text-[11px] text-white/60">A maintainer confirms the size and impact, and the engine sets a transparent reward before it opens for claiming.</p>
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={() => propose.mutate({ sourceType: "call_task", title, body, tier })}
-            disabled={!title.trim() || !body.trim() || propose.isPending}
-            className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d]"
-          >
-            {propose.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null} Submit
-          </Button>
-        </DialogFooter>
+        <ProposeBountyForm draft={draft} onProposed={onProposed} />
       </DialogContent>
     </Dialog>
   );

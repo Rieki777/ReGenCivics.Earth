@@ -4,7 +4,7 @@
  * Players can create profiles and link their Hypha/Base accounts
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { LIGHT_CARD_FIELD } from "@/lib/fieldStyles";
 import { Link, useSearch } from 'wouter';
 import { projectPathForApplication, projectPathForCampaignFocus } from '@shared/projectKey';
@@ -193,6 +193,11 @@ function ProfileTransitionAnimation() {
   );
 }
 
+// The bioregion search is the heaviest part of the form (a popover and its
+// list). Memoized with a stable onChange, so typing in the text fields beside
+// it no longer re-renders it on every key (STEERING.md section 13).
+const StillBioregionSelect = memo(BioregionSelect);
+
 function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
   const [step, setStep] = useState(1);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -207,6 +212,10 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
     return saved ? Number(saved) : null;
   });
   const [baseAccountName, setBaseAccountName] = useState(() => sessionStorage.getItem('playerProfileDraft_baseAccountName') ?? '');
+  const onBioregionChange = useCallback((id: number | null) => {
+    setBioregionId(id);
+    sessionStorage.setItem('playerProfileDraft_bioregionId', id != null ? String(id) : '');
+  }, []);
 
   // Keep the draft in sessionStorage once typing pauses (500ms), not on every
   // key. A write still waiting when the form unmounts or the page is hidden
@@ -301,12 +310,9 @@ function CreateProfileForm({ onSuccess }: { onSuccess: () => void }) {
           </div>
           <div>
             <label className="text-sm font-semibold text-[#1a472a] mb-1 block">What bioregion(s) do you call home? <span className="text-[#1a472a]/80 font-normal">(optional)</span></label>
-            <BioregionSelect
+            <StillBioregionSelect
               value={bioregionId}
-              onChange={(id) => {
-                setBioregionId(id);
-                sessionStorage.setItem('playerProfileDraft_bioregionId', id != null ? String(id) : '');
-              }}
+              onChange={onBioregionChange}
               placeholder="Search bioregions…"
               variant="light"
             />

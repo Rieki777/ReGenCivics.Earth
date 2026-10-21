@@ -3,7 +3,8 @@
  * Admin interface for editing site banners with markdown support
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { memo, useState, useEffect, lazy, Suspense } from 'react';
+import type { inferRouterOutputs } from '@trpc/server';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,26 +12,35 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import type { AppRouter } from '../../../server/routers';
 
 const MarkdownRenderer = lazy(() => import('@/components/MarkdownRenderer'));
+
+type BannerRow = inferRouterOutputs<AppRouter>['banners']['getByKey'];
 
 interface BannerEditorProps {
   bannerKey: string;
   title: string;
 }
 
-export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
+/**
+ * Both tab panels and the draft they share. The draft lives here, under the
+ * Tabs root, so a keystroke in the content box re-renders these panels and
+ * not the tabs, the tab list and the card around them (STEERING.md section
+ * 13). This component stays mounted on either tab, so switching to Preview
+ * and back keeps the draft, and Save sends the content on screen.
+ */
+const BannerEditorPanels = memo(function BannerEditorPanels({
+  bannerKey,
+  title,
+  banner,
+}: BannerEditorProps & { banner: BannerRow | undefined }) {
   const [content, setContent] = useState('');
   const [displayStartDate, setDisplayStartDate] = useState('');
   const [displayEndDate, setDisplayEndDate] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
-  const { data: banner, isLoading } = trpc.banners.getByKey.useQuery(
-    { key: bannerKey },
-    { enabled: true }
-  );
 
   const upsertMutation = trpc.banners.upsert.useMutation({
     onSuccess: () => {
@@ -70,6 +80,110 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
     }
   };
 
+  return (
+    <>
+      <TabsContent value="edit" className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">Banner Content (Markdown)</label>
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Enter banner content with markdown support..."
+            className="min-h-[150px] font-mono text-sm"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Supports markdown: **bold**, *italic*, [links](url), etc.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Start Date</label>
+            <Input
+              type="date"
+              value={displayStartDate}
+              onChange={(e) => setDisplayStartDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">End Date</label>
+            <Input
+              type="date"
+              value={displayEndDate}
+              onChange={(e) => setDisplayEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id={`active-${bannerKey}`}
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-500"
+          />
+          <label htmlFor={`active-${bannerKey}`} className="text-sm font-medium">
+            Active
+          </label>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save Banner'
+            )}
+          </Button>
+
+          {saveStatus === 'success' && (
+            <div className="flex items-center gap-1 text-green-600">
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="text-sm">Saved</span>
+            </div>
+          )}
+
+          {saveStatus === 'error' && (
+            <div className="flex items-center gap-1 text-red-600">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">Error saving</span>
+            </div>
+          )}
+        </div>
+      </TabsContent>
+
+      <TabsContent value="preview" className="space-y-4">
+        <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-6 px-4 rounded-lg">
+          <div className="text-sm sm:text-base font-semibold">
+            <Suspense fallback={<span>...</span>}>
+              <MarkdownRenderer>{content}</MarkdownRenderer>
+            </Suspense>
+          </div>
+          {displayEndDate && (
+            <p className="text-xs text-[#1a472a]/75 mt-3">
+              Active until {new Date(displayEndDate).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      </TabsContent>
+    </>
+  );
+});
+
+export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
+  const { data: banner, isLoading } = trpc.banners.getByKey.useQuery(
+    { key: bannerKey },
+    { enabled: true }
+  );
+
   if (isLoading) {
     return (
       <Card>
@@ -102,98 +216,7 @@ export function AdminBannerEditor({ bannerKey, title }: BannerEditorProps) {
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="edit" className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Banner Content (Markdown)</label>
-              <Textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Enter banner content with markdown support..."
-                className="min-h-[150px] font-mono text-sm"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Supports markdown: **bold**, *italic*, [links](url), etc.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Start Date</label>
-                <Input
-                  type="date"
-                  value={displayStartDate}
-                  onChange={(e) => setDisplayStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">End Date</label>
-                <Input
-                  type="date"
-                  value={displayEndDate}
-                  onChange={(e) => setDisplayEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id={`active-${bannerKey}`}
-                checked={isActive}
-                onChange={(e) => setIsActive(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-500"
-              />
-              <label htmlFor={`active-${bannerKey}`} className="text-sm font-medium">
-                Active
-              </label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a]"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Banner'
-                )}
-              </Button>
-
-              {saveStatus === 'success' && (
-                <div className="flex items-center gap-1 text-green-600">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-sm">Saved</span>
-                </div>
-              )}
-
-              {saveStatus === 'error' && (
-                <div className="flex items-center gap-1 text-red-600">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm">Error saving</span>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="preview" className="space-y-4">
-            <div className="bg-gradient-to-r from-[#7dd87d] via-[#4a7c59] to-[#7dd87d] text-[#1a472a] py-6 px-4 rounded-lg">
-              <div className="text-sm sm:text-base font-semibold">
-                <Suspense fallback={<span>...</span>}>
-                  <MarkdownRenderer>{content}</MarkdownRenderer>
-                </Suspense>
-              </div>
-              {displayEndDate && (
-                <p className="text-xs text-[#1a472a]/75 mt-3">
-                  Active until {new Date(displayEndDate).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          </TabsContent>
+          <BannerEditorPanels bannerKey={bannerKey} title={title} banner={banner} />
         </Tabs>
       </CardContent>
     </Card>

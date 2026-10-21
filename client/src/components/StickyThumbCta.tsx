@@ -38,16 +38,18 @@ export function StickyThumbCta({
 }: StickyThumbCtaProps) {
   const [visible, setVisible] = useState(false);
 
-  // Appear once the page has scrolled past `revealAfter`. A marker at that
-  // depth tells us through an IntersectionObserver, so scrolling runs no
-  // handler; reading window.scrollY in a scroll handler made the browser
-  // finish its layout work inside every scroll event.
+  // Appear once the page has scrolled past `revealAfter`. A marker covering
+  // the page down to that depth tells us through an IntersectionObserver, so
+  // scrolling runs no handler; reading window.scrollY in a scroll handler made
+  // the browser finish its layout work inside every scroll event. Spanning
+  // the whole distance means a jump across it always flips it, even on a
+  // screen shorter than `revealAfter`.
   const markerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const marker = markerRef.current;
     if (!marker || typeof IntersectionObserver === "undefined") return;
     const io = new IntersectionObserver(([entry]) => {
-      setVisible(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      setVisible(!entry.isIntersecting);
     });
     io.observe(marker);
     return () => io.disconnect();
@@ -62,7 +64,7 @@ export function StickyThumbCta({
     <>
     {/* On <body>, so `top` counts from the top of the page whatever wraps this. */}
     {typeof document !== "undefined"
-      ? createPortal(<div ref={markerRef} aria-hidden="true" className="pointer-events-none absolute left-0 h-px w-px" style={{ top: revealAfter }} />, document.body)
+      ? createPortal(<div ref={markerRef} aria-hidden="true" className="pointer-events-none absolute left-0 top-0 w-px" style={{ height: revealAfter }} />, document.body)
       : null}
     <div
       className={`md:hidden fixed left-0 right-0 z-40 px-4 transition-all duration-300 ${

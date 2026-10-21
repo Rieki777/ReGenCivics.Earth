@@ -2,7 +2,7 @@
  * Admin Citizenship Tiers Panel
  * 4-column comparison grid, override buttons, grace period dashboard, run nightly job.
  */
-import { useState } from "react";
+import { memo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,10 +21,67 @@ const TIERS = [
   { key: "sage", label: "Sage", emoji: "✨", color: amber.gold },
 ];
 
-export function AdminCitizenshipTiers() {
+// The tier picker sits beside the User ID field. A closed Radix Select still
+// renders every item, so it is memoized with a stable handler and skips the
+// field's keystrokes (STEERING.md section 13).
+const OverrideTierSelect = memo(function OverrideTierSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (tier: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-40 bg-white/5 border-white/45 text-white">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {TIERS.map((t) => (
+          <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+});
+
+// The override row owns its two fields and its mutation, so typing a User ID
+// re-renders this row and not the tier grid, the job history and the grace
+// list above it. The Override button re-renders with every keystroke, so its
+// click reads the ID and tier on screen.
+const ManualTierOverrideForm = memo(function ManualTierOverrideForm() {
   const [overrideUserId, setOverrideUserId] = useState("");
   const [overrideTier, setOverrideTier] = useState<string>("explorer");
 
+  const overrideMutation = trpc.batchJobs.overrideTier.useMutation({
+    onSuccess: () => {
+      toast.success("Tier overridden");
+      setOverrideUserId("");
+    },
+    onError: (err) => toast.error("Override failed", { description: err.message }),
+  });
+
+  return (
+    <div className="flex gap-3">
+      <Input
+        value={overrideUserId}
+        onChange={(e) => setOverrideUserId(e.target.value)}
+        placeholder="User ID"
+        className="w-32 bg-white/5 border-white/45 text-white"
+      />
+      <OverrideTierSelect value={overrideTier} onChange={setOverrideTier} />
+      <Button
+        onClick={() => overrideMutation.mutate({ userId: parseInt(overrideUserId), tier: overrideTier as any })}
+        disabled={!overrideUserId || overrideMutation.isPending}
+        className="bg-amber-500 text-white hover:bg-amber-600"
+      >
+        Override
+      </Button>
+    </div>
+  );
+});
+
+export function AdminCitizenshipTiers() {
   const { data: graceList = [] } = trpc.batchJobs.getGracePeriodPlayers.useQuery();
   const { data: jobHistory = [] } = trpc.batchJobs.getJobHistory.useQuery({ limit: 5 });
 
@@ -33,14 +90,6 @@ export function AdminCitizenshipTiers() {
       toast.success(`Nightly job completed: ${result.playersProcessed} players, ${result.promotions} promotions, ${result.demotions} demotions`);
     },
     onError: (err) => toast.error("Job failed", { description: err.message }),
-  });
-
-  const overrideMutation = trpc.batchJobs.overrideTier.useMutation({
-    onSuccess: () => {
-      toast.success("Tier overridden");
-      setOverrideUserId("");
-    },
-    onError: (err) => toast.error("Override failed", { description: err.message }),
   });
 
   return (
@@ -147,31 +196,7 @@ export function AdminCitizenshipTiers() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3">
-            <Input
-              value={overrideUserId}
-              onChange={(e) => setOverrideUserId(e.target.value)}
-              placeholder="User ID"
-              className="w-32 bg-white/5 border-white/45 text-white"
-            />
-            <Select value={overrideTier} onValueChange={setOverrideTier}>
-              <SelectTrigger className="w-40 bg-white/5 border-white/45 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIERS.map((t) => (
-                  <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={() => overrideMutation.mutate({ userId: parseInt(overrideUserId), tier: overrideTier as any })}
-              disabled={!overrideUserId || overrideMutation.isPending}
-              className="bg-amber-500 text-white hover:bg-amber-600"
-            >
-              Override
-            </Button>
-          </div>
+          <ManualTierOverrideForm />
         </CardContent>
       </Card>
     </div>

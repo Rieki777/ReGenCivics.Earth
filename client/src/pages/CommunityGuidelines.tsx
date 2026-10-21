@@ -4,7 +4,7 @@
  * Two sections: ratified agreements + open proposals.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect, type MutableRefObject } from "react";
 import { Link } from "wouter";
 import { ArrowLeft, ChevronUp, MessageCircle, Plus, X, Send, Shield, CheckCircle2, Clock } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -24,27 +24,100 @@ const AGREEMENT_CATEGORIES = [
   { value: 'Events', label: 'Events', icon: '📅' },
 ];
 
+type AgreementDraft = { title: string; description: string; category: string };
+const EMPTY_DRAFT: AgreementDraft = { title: '', description: '', category: '' };
+
+/**
+ * The proposal form keeps its own text, so a keystroke re-renders the form
+ * and not the agreements and proposals below it (STEERING.md section 13).
+ * The page holds the draft in a ref, so closing and reopening the form keeps
+ * what was typed.
+ */
+function ProposeAgreementForm({ draft, onCreated }: { draft: MutableRefObject<AgreementDraft>; onCreated: () => void }) {
+  const [title, setTitle] = useState(draft.current.title);
+  const [description, setDescription] = useState(draft.current.description);
+  const [category, setCategory] = useState(draft.current.category);
+  useEffect(() => {
+    draft.current = { title, description, category };
+  }, [draft, title, description, category]);
+
+  const createMutation = trpc.agreements.create.useMutation({
+    onSuccess: () => {
+      draft.current = EMPTY_DRAFT;
+      setTitle('');
+      setDescription('');
+      setCategory('');
+      onCreated();
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!title.trim() || !description.trim()) return;
+    createMutation.mutate({
+      title: title.trim(),
+      description: description.trim(),
+      category: category || undefined,
+    });
+  };
+
+  return (
+    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 space-y-4">
+      <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
+        Propose a New Agreement
+      </h3>
+      <input
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Agreement title (e.g. 'Give credit when sharing others' work')"
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
+        maxLength={300}
+      />
+      <textarea
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+        placeholder="Describe what this agreement means in practice. Why does it matter? How should it be applied?"
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
+        maxLength={5000}
+      />
+      <select
+        value={category}
+        onChange={e => setCategory(e.target.value)}
+        className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
+      >
+        <option value="" className="bg-[#1a472a]">Category (optional)</option>
+        {AGREEMENT_CATEGORIES.map(c => (
+          <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.icon} {c.label}</option>
+        ))}
+      </select>
+      <div className="flex items-center gap-3">
+        <Button
+          onClick={handleSubmit}
+          disabled={!title.trim() || !description.trim() || createMutation.isPending}
+          className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6"
+        >
+          <Send className="w-4 h-4 mr-2" />
+          {createMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
+        </Button>
+        <span className="text-white/60 text-xs">A forum thread will be created for discussion.</span>
+      </div>
+    </div>
+  );
+}
+
 export default function CommunityGuidelines() {
   const { isAuthenticated } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [sortBy, setSortBy] = useState<'votes' | 'newest'>('votes');
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const draft = useRef<AgreementDraft>(EMPTY_DRAFT);
 
   const ratifiedQuery = trpc.agreements.list.useQuery({ status: 'ratified', sortBy: 'newest' });
   const proposalsQuery = trpc.agreements.list.useQuery({ status: 'open', sortBy });
   const myVotesQuery = trpc.agreements.myVotes.useQuery(undefined, { enabled: isAuthenticated });
 
-  const createMutation = trpc.agreements.create.useMutation({
-    onSuccess: () => {
-      setTitle('');
-      setDescription('');
-      setCategory('');
-      setShowForm(false);
-      proposalsQuery.refetch();
-    },
-  });
+  const onCreated = () => {
+    setShowForm(false);
+    proposalsQuery.refetch();
+  };
   const utils = trpc.useUtils();
   // The vote shows at once; the server's answer settles it (STEERING.md section 13).
   const voteMutation = trpc.agreements.toggleVote.useMutation({
@@ -71,15 +144,6 @@ export default function CommunityGuidelines() {
   });
 
   const myVotes = useMemo(() => new Set(myVotesQuery.data || []), [myVotesQuery.data]);
-
-  const handleSubmit = () => {
-    if (!title.trim() || !description.trim()) return;
-    createMutation.mutate({
-      title: title.trim(),
-      description: description.trim(),
-      category: category || undefined,
-    });
-  };
 
   const handleVote = (agreementId: number) => {
     if (!isAuthenticated) {
@@ -147,46 +211,7 @@ export default function CommunityGuidelines() {
       {showForm && (
         <section className="max-w-2xl mx-auto px-4 mb-8">
           <AnimatedSection animation="slide-up">
-            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-6 space-y-4">
-              <h3 className="text-white font-bold text-lg" style={{ fontFamily: 'var(--font-display)' }}>
-                Propose a New Agreement
-              </h3>
-              <input
-                value={title}
-                onChange={e => setTitle(e.target.value)}
-                placeholder="Agreement title (e.g. 'Give credit when sharing others' work')"
-                className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50"
-                maxLength={300}
-              />
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                placeholder="Describe what this agreement means in practice. Why does it matter? How should it be applied?"
-                className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm placeholder:text-white/70 outline-none focus:ring-1 focus:ring-[#7dd87d]/50 min-h-[120px] resize-y"
-                maxLength={5000}
-              />
-              <select
-                value={category}
-                onChange={e => setCategory(e.target.value)}
-                className="w-full bg-white/10 border border-white/45 text-white rounded-xl px-4 py-3 text-sm outline-none"
-              >
-                <option value="" className="bg-[#1a472a]">Category (optional)</option>
-                {AGREEMENT_CATEGORIES.map(c => (
-                  <option key={c.value} value={c.value} className="bg-[#1a472a]">{c.icon} {c.label}</option>
-                ))}
-              </select>
-              <div className="flex items-center gap-3">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={!title.trim() || !description.trim() || createMutation.isPending}
-                  className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold rounded-full px-6"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  {createMutation.isPending ? 'Submitting...' : 'Submit Proposal'}
-                </Button>
-                <span className="text-white/60 text-xs">A forum thread will be created for discussion.</span>
-              </div>
-            </div>
+            <ProposeAgreementForm draft={draft} onCreated={onCreated} />
           </AnimatedSection>
         </section>
       )}

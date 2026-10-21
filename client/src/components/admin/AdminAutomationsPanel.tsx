@@ -27,7 +27,8 @@ export function AdminAutomationsPanel() {
     onMutate: async ({ id, enabled }) => {
       await utils.adminAutomations.list.cancel();
       const prev = utils.adminAutomations.list.getData();
-      utils.adminAutomations.list.setData(undefined, (old) => old?.map((a) => (a.id === id ? { ...a, enabled } : a)));
+      // The list stores the flag as a 0/1 column.
+      utils.adminAutomations.list.setData(undefined, (old) => old?.map((a) => (a.id === id ? { ...a, enabled: enabled ? 1 : 0 } : a)));
       return { prev };
     },
     onSettled: (_data, error, _vars, ctx) => {

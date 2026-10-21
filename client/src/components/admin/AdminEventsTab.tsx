@@ -1,43 +1,461 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState, useSyncExternalStore, type ComponentProps } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Edit,
   Loader2,
   Plus,
-  Trash2,
-  Send,
   Clock,
   Bell,
-  CheckCheck,
-  AlertTriangle,
-  Users,
 } from "lucide-react";
-import { siteJoinUrl } from '@/lib/calendarLinks';
 import { trpc } from "@/lib/trpc";
-import { AdminEventAutoReminders } from "@/components/admin/AdminEventAutoReminders";
+import { usePersistFn } from "@/hooks/usePersistFn";
 import { AdminEventReminderCronHealth } from "@/components/admin/AdminEventReminderCronHealth";
 import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
 import { AdminSeasonSchedule } from "@/components/admin/AdminSeasonSchedule";
 import { SessionBoardExport } from "@/components/admin/SessionBoardExport";
-import { AfterSessionChecklist } from "@/components/admin/AfterSessionChecklist";
-import { LiveSessionRunbook } from "@/components/admin/LiveSessionRunbook";
+import { EventCard, type AdminEvent, type EventCardActions, type ReminderDraft } from "@/components/admin/AdminEventCard";
 import {
   adminEventStatusLabel,
   deriveEventTemporalPhase,
-  eventHasWatchPath,
   isEventPastForAdmin,
   partitionEventsByTemporal,
-  resolveEventStart,
-  toMs,
 } from "@/lib/eventTemporal";
+
+const defaultForm = {
+  title: '', description: '', type: 'open' as const, startTime: '', endTime: '',
+  timezone: 'EDT', zoomUrl: '', riversideRoomUrl: '', youtubeUrl: '',
+  season: '', episodeNumber: '', maxAttendees: '',
+  guestSpeakerName: '', guestSpeakerBio: '', guestSpeakerTopic: '',
+};
+
+type EventFormData = typeof defaultForm;
+
+/**
+ * The create / edit form's values, kept outside React state the way
+ * ShipFields' useTextStore keeps one field's text. The page writes it where it
+ * used to call setFormData (Add Event, Edit, Cancel, after a create) and reads
+ * it on save, without re-rendering; each field subscribes to its own value, so
+ * a keystroke re-renders that one field and not the event list (STEERING.md
+ * section 13).
+ */
+type EventFormStore = {
+  get: () => EventFormData;
+  set: (next: EventFormData | ((prev: EventFormData) => EventFormData)) => void;
+  subscribe: (onChange: () => void) => () => void;
+};
+
+function createEventFormStore(initial: EventFormData): EventFormStore {
+  let value = initial;
+  const listeners = new Set<() => void>();
+  return {
+    get: () => value,
+    set: (next) => {
+      const resolved = typeof next === "function" ? next(value) : next;
+      if (resolved === value) return;
+      value = resolved;
+      listeners.forEach((listener) => listener());
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+}
+
+/** One value out of the form. The caller re-renders only when that value changes. */
+function useEventFormValue<T>(store: EventFormStore, select: (data: EventFormData) => T): T {
+  return useSyncExternalStore(store.subscribe, () => select(store.get()));
+}
+
+type EventFormTextField = Exclude<keyof EventFormData, "type">;
+
+// The store prop is called `store`, not `form`: <input> and <textarea> have
+// an HTML `form` attribute, and the two props would merge into one type.
+
+/** An Input bound to one field of the form. */
+const EventFormInput = memo(function EventFormInput({
+  store,
+  field,
+  ...props
+}: { store: EventFormStore; field: EventFormTextField } & Omit<ComponentProps<"input">, "value" | "onChange">) {
+  const value = useEventFormValue(store, (f) => f[field]);
+  return <Input value={value} onChange={e => store.set(f => ({ ...f, [field]: e.target.value }))} {...props} />;
+});
+
+/** A Textarea bound to one field of the form. */
+const EventFormTextarea = memo(function EventFormTextarea({
+  store,
+  field,
+  ...props
+}: { store: EventFormStore; field: EventFormTextField } & Omit<ComponentProps<"textarea">, "value" | "onChange">) {
+  const value = useEventFormValue(store, (f) => f[field]);
+  return <Textarea value={value} onChange={e => store.set(f => ({ ...f, [field]: e.target.value }))} {...props} />;
+});
+
+/** The Type select, out of the typing path: a closed Radix Select still renders every item. */
+const EventTypeSelect = memo(function EventTypeSelect({ store }: { store: EventFormStore }) {
+  const type = useEventFormValue(store, (f) => f.type);
+  return (
+    <Select value={type} onValueChange={v => store.set(f => ({ ...f, type: v as any }))}>
+      <SelectTrigger className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="open">Open Session</SelectItem>
+        <SelectItem value="episode">Incubator Episode</SelectItem>
+        <SelectItem value="special">Special Event</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+});
+
+/** Save / Create. Re-renders when the title or start time turns empty or filled, not per keystroke. */
+const EventFormSaveButton = memo(function EventFormSaveButton({
+  store,
+  isEditing,
+  savePending,
+  onSave,
+}: {
+  store: EventFormStore;
+  isEditing: boolean;
+  savePending: boolean;
+  onSave: () => void;
+}) {
+  const missingRequired = useEventFormValue(store, (f) => !f.title || !f.startTime);
+  return (
+    <Button onClick={onSave} disabled={missingRequired || savePending}
+      className="bg-green-600 hover:bg-green-700 text-white min-h-11">
+      {savePending ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+      {isEditing ? 'Save Changes' : 'Create Event'}
+    </Button>
+  );
+});
+
+/**
+ * The create / edit sheet. Its fields read the form store themselves, so the
+ * sheet re-renders only when it opens or closes, switches between New and
+ * Edit, or starts or stops saving.
+ */
+const EventFormSheet = memo(function EventFormSheet({
+  open,
+  isEditing,
+  savePending,
+  store,
+  onOpenChange,
+  onSave,
+  onCancel,
+}: {
+  open: boolean;
+  isEditing: boolean;
+  savePending: boolean;
+  store: EventFormStore;
+  onOpenChange: (open: boolean) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0 bg-[#0d2818] border-green-800/40 text-white">
+        <SheetHeader className="p-4 border-b border-white/10 text-left">
+          <SheetTitle className="text-white text-base">{isEditing ? "Edit Event" : "New Event"}</SheetTitle>
+        </SheetHeader>
+        <div className="p-4 space-y-3">
+          <div className="grid grid-cols-1 gap-3">
+            <div className="md:col-span-2">
+              <Label className="text-white/70 text-xs">Title *</Label>
+              <EventFormInput store={store} field="title"
+                placeholder="Week 1: Selection Day" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-white/70 text-xs">Description</Label>
+              <EventFormTextarea store={store} field="description"
+                rows={3} placeholder="What will this session cover?" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1 resize-none" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Type</Label>
+              <EventTypeSelect store={store} />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Timezone display (e.g., EDT)</Label>
+              <EventFormInput store={store} field="timezone"
+                placeholder="EDT" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Start Time (local, stored as UTC)</Label>
+              <EventFormInput type="datetime-local" store={store} field="startTime"
+                className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">End Time (optional)</Label>
+              <EventFormInput type="datetime-local" store={store} field="endTime"
+                className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Season (e.g., Season 2)</Label>
+              <EventFormInput store={store} field="season"
+                placeholder="Season 2" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Episode Number</Label>
+              <EventFormInput type="number" store={store} field="episodeNumber"
+                placeholder="1" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/70 font-normal">(leave blank for unlimited)</span></Label>
+              <EventFormInput type="number" store={store} field="maxAttendees"
+                placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Video room URL <span className="text-purple-400 font-normal">(where /join sends people for this event)</span></Label>
+              <EventFormInput store={store} field="riversideRoomUrl"
+                placeholder="https://…" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Backup meeting URL <span className="text-white/70 font-normal">(used if the video room URL is empty)</span></Label>
+              <EventFormInput store={store} field="zoomUrl"
+                placeholder="https://…" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>
+              <EventFormInput store={store} field="youtubeUrl"
+                placeholder="https://youtube.com/live/..." className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            {/* #25. Guest Speaker Fields */}
+            <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
+              <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Speaker Name</Label>
+              <EventFormInput store={store} field="guestSpeakerName"
+                placeholder="Jane Doe" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div>
+              <Label className="text-white/70 text-xs">Speaker Topic</Label>
+              <EventFormInput store={store} field="guestSpeakerTopic"
+                placeholder="Regenerative land economics" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
+            </div>
+            <div className="md:col-span-2">
+              <Label className="text-white/70 text-xs">Speaker Bio</Label>
+              <EventFormTextarea store={store} field="guestSpeakerBio"
+                rows={2} placeholder="Brief bio for the introduction email" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1 resize-none" />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <EventFormSaveButton store={store} isEditing={isEditing} savePending={savePending} onSave={onSave} />
+            <Button variant="ghost" onClick={onCancel}
+              className="text-white/60 hover:text-white min-h-11">Cancel</Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+});
+
+type SendRollup = ReturnType<typeof trpc.events.sendSeasonRollup.useMutation>["mutate"];
+
+/** The season name box keeps its own text, so a keystroke re-renders the box and its button only. */
+const SeasonRollupForm = memo(function SeasonRollupForm({ sendRollup, rollupPending }: { sendRollup: SendRollup; rollupPending: boolean }) {
+  const [rollupSeason, setRollupSeason] = useState('');
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        value={rollupSeason}
+        onChange={e => setRollupSeason(e.target.value)}
+        placeholder="Season name (e.g. Season 2)"
+        className="flex-1 bg-white/5 border border-white/45 rounded-lg px-3 py-1.5 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
+      />
+      <button
+        onClick={() => {
+          if (!rollupSeason.trim()) return;
+          if (window.confirm(`Send season rollup email for "${rollupSeason}" to all signups + newsletter subscribers?`)) {
+            sendRollup({ season: rollupSeason.trim() });
+          }
+        }}
+        disabled={rollupPending || !rollupSeason.trim()}
+        className="bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
+      >
+        {rollupPending ? 'Sending...' : 'Send Rollup'}
+      </button>
+    </div>
+  );
+});
+
+/** The season rollup card. Its mutation lives here: nothing else on the tab shows it. */
+const SeasonRollupCard = memo(function SeasonRollupCard() {
+  const rollupMutation = trpc.events.sendSeasonRollup.useMutation();
+  return (
+    <Card className="bg-[#0a1f14] border-[#7dd87d]/20 mt-4">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-[#7dd87d] text-sm flex items-center gap-2"><Bell size={14} /> Season Rollup Email</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-xs text-white/80">Sends a "here's what we built together" digest to all event signups + newsletter subscribers for a completed season.</p>
+        <SeasonRollupForm sendRollup={rollupMutation.mutate} rollupPending={rollupMutation.isPending} />
+        {rollupMutation.isSuccess && (
+          <p className="text-[#7dd87d] text-xs">Sent to {(rollupMutation.data as any)?.sent ?? 0} recipients.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
+type MarkAttendance = ReturnType<typeof trpc.events.markAttendance.useMutation>["mutate"];
+
+/**
+ * The attendee box keeps its own text, so a keystroke re-renders the box and
+ * its button, not the attendance list. The card keys it by event, so picking
+ * another event starts it empty (what setAttendanceInput('') did).
+ */
+const AttendanceAdder = memo(function AttendanceAdder({
+  attendanceEventId,
+  markAttendance,
+  markPending,
+}: {
+  attendanceEventId: number;
+  markAttendance: MarkAttendance;
+  markPending: boolean;
+}) {
+  const [attendanceInput, setAttendanceInput] = useState('');
+  return (
+    <>
+      <label className="text-white/60 text-xs">Add attendees (one email per line, or paste a comma-separated list):</label>
+      <textarea
+        value={attendanceInput}
+        onChange={e => setAttendanceInput(e.target.value)}
+        placeholder="jane@example.com&#10;alex@example.com"
+        rows={4}
+        className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/45 placeholder:text-white/70 font-mono"
+      />
+      <button
+        onClick={() => {
+          const emails = attendanceInput
+            .split(/[\n,;]+/)
+            .map(e => e.trim())
+            .filter(e => e.includes('@'));
+          if (emails.length === 0) return;
+          if (window.confirm(`Mark ${emails.length} attendee(s) for this event? Each will earn 33 $ReGen tokens.`)) {
+            markAttendance({
+              eventId: attendanceEventId,
+              attendees: emails.map(email => ({ email })),
+            });
+            setAttendanceInput('');
+          }
+        }}
+        disabled={markPending || !attendanceInput.trim()}
+        className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-sm px-4 py-2 rounded font-medium"
+      >
+        {markPending ? 'Marking...' : 'Mark Attendance + Award Tokens'}
+      </button>
+    </>
+  );
+});
+
+/** Attendance + token awards. Its state, queries and mutations live here: nothing else on the tab uses them. */
+const EventAttendanceCard = memo(function EventAttendanceCard({ allEvents }: { allEvents: AdminEvent[] }) {
+  const markAttendanceMutation = trpc.events.markAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
+  const removeAttendanceMutation = trpc.events.removeAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
+  const [attendanceEventId, setAttendanceEventId] = useState<number | null>(null);
+
+  const { data: attendanceList = [], refetch: refetchAttendance } = trpc.events.listAttendance.useQuery(
+    { eventId: attendanceEventId! },
+    { enabled: attendanceEventId !== null }
+  );
+  const { data: tokenLeaderboard = [] } = trpc.events.tokenLeaderboard.useQuery({ limit: 10 });
+
+  return (
+    <Card className="bg-white/5 border border-white/10">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-amber-400 text-sm flex items-center gap-2">
+          ✦ Event Attendance + $ReGen Token Awards
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-white/70 text-xs">
+          Mark who actually attended a completed event. Each person earns 33 $ReGen tokens, recorded in the contribution ledger.
+        </p>
+
+        {/* Event selector */}
+        <div className="flex gap-2">
+          <select
+            value={attendanceEventId ?? ''}
+            onChange={e => { setAttendanceEventId(e.target.value ? Number(e.target.value) : null); }}
+            className="flex-1 bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/45"
+          >
+            <option value="">Select an event...</option>
+            {allEvents.filter(e => e.status === 'completed' || e.status === 'live').map(e => (
+              <option key={e.id} value={e.id}>{e.title} ({e.season ?? 'no season'})</option>
+            ))}
+          </select>
+        </div>
+
+        {attendanceEventId && (
+          <div className="space-y-3">
+            {/* Current attendance list */}
+            {attendanceList.length > 0 && (
+              <div className="bg-white/5 rounded-lg p-3 space-y-2">
+                <p className="text-amber-400 text-xs font-medium">{attendanceList.length} confirmed attendees · {attendanceList.reduce((sum, a: any) => sum + (a.tokensAwarded ?? 0), 0)} $ReGen awarded</p>
+                {attendanceList.map((a: any) => (
+                  <div key={a.id} className="flex items-center justify-between gap-2">
+                    <div>
+                      <span className="text-white text-sm">{a.name || a.email}</span>
+                      {a.name && <span className="text-white/60 text-xs ml-2">{a.email}</span>}
+                      <span className="text-amber-400 text-xs ml-2">+{a.tokensAwarded} $ReGen</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Remove attendance for ${a.email}? This will also remove their ${a.tokensAwarded} $ReGen tokens.`)) {
+                          removeAttendanceMutation.mutate({ eventId: attendanceEventId, email: a.email });
+                        }
+                      }}
+                      className="text-white/70 hover:text-red-400 text-xs px-2 py-1 rounded"
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add attendees input */}
+            <div className="space-y-2">
+              <AttendanceAdder
+                key={attendanceEventId}
+                attendanceEventId={attendanceEventId}
+                markAttendance={markAttendanceMutation.mutate}
+                markPending={markAttendanceMutation.isPending}
+              />
+              {markAttendanceMutation.isSuccess && (
+                <p className="text-amber-400 text-xs">
+                  Marked {(markAttendanceMutation.data as any)?.newlyMarked ?? 0} new attendees. {(markAttendanceMutation.data as any)?.tokensAwarded ?? 0} $ReGen awarded.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* $ReGen Leaderboard */}
+        {tokenLeaderboard.length > 0 && (
+          <div className="border-t border-white/10 pt-3">
+            <p className="text-white/60 text-xs mb-2">$ReGen Leaderboard (top earners)</p>
+            <div className="space-y-1">
+              {tokenLeaderboard.map((entry: any, i: number) => (
+                <div key={entry.email} className="flex items-center justify-between text-xs">
+                  <span className="text-white/70">#{i + 1} {entry.email}</span>
+                  <span className="text-amber-400 font-medium">{entry.total} $ReGen</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
 
 export function AdminEventsTab() {
   const { data: allEvents = [], refetch, isLoading } = trpc.events.adminList.useQuery();
@@ -68,34 +486,23 @@ export function AdminEventsTab() {
     }
     return map;
   }, [letterStatuses]);
-  const createMutation = trpc.events.create.useMutation({ onSuccess: () => { refetch(); setShowCreate(false); setFormData(defaultForm); } });
+  const createMutation = trpc.events.create.useMutation({ onSuccess: () => { refetch(); setShowCreate(false); eventForm.set(defaultForm); } });
   const updateMutation = trpc.events.update.useMutation({ onSuccess: () => { refetch(); setEditingId(null); } });
   const deleteMutation = trpc.events.delete.useMutation({ onSuccess: () => refetch() });
   const reminderMutation = trpc.events.sendReminders.useMutation();
   const agendaUpdateMutation = trpc.events.updateAgendaSuggestion.useMutation({ onSuccess: () => { refetch(); } });
-  const rollupMutation = trpc.events.sendSeasonRollup.useMutation();
   const followupMutation = trpc.events.sendFollowup.useMutation();
-  const markAttendanceMutation = trpc.events.markAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
-  const removeAttendanceMutation = trpc.events.removeAttendance.useMutation({ onSuccess: () => { refetchAttendance(); } });
   const speakerIntroMutation = trpc.events.sendSpeakerIntro.useMutation();
   const [followupSuccess, setFollowupSuccess] = useState<number | null>(null);
   const [speakerIntroSuccess, setSpeakerIntroSuccess] = useState<number | null>(null);
-  const [scheduleFor, setScheduleFor] = useState('');
   const [scheduleSuccess, setScheduleSuccess] = useState<number | null>(null);
-
-  const defaultForm = {
-    title: '', description: '', type: 'open' as const, startTime: '', endTime: '',
-    timezone: 'EDT', zoomUrl: '', riversideRoomUrl: '', youtubeUrl: '',
-    season: '', episodeNumber: '', maxAttendees: '',
-    guestSpeakerName: '', guestSpeakerBio: '', guestSpeakerTopic: '',
-  };
 
   const [showCreate, setShowCreate] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [attendanceEventId, setAttendanceEventId] = useState<number | null>(null);
   const [rosterEventId, setRosterEventId] = useState<number | null>(null);
-  const [attendanceInput, setAttendanceInput] = useState('');
-  const [formData, setFormData] = useState(defaultForm);
+  // The form's values live in a small store, not in this component's state:
+  // a keystroke in the sheet re-renders that one field, not the event list.
+  const [eventForm] = useState(() => createEventFormStore(defaultForm));
   const [reminderSuccess, setReminderSuccess] = useState<number | null>(null);
   const [eventsFilter, setEventsFilter] = useState<"upcoming" | "past" | "all">(() => {
     try {
@@ -113,18 +520,12 @@ export function AdminEventsTab() {
   });
   const [reminderEditorOpen, setReminderEditorOpen] = useState<number | null>(null);
   const [autoReminderOpen, setAutoReminderOpen] = useState<number | null>(null);
-  const [customSubject, setCustomSubject] = useState('');
-  const [customBody, setCustomBody] = useState('');
-  const [rollupSeason, setRollupSeason] = useState('');
+  // The reminder editor keeps its subject, body and send time in its own
+  // state; this holds them while it is closed (see ReminderDraft).
+  const reminderDraft = useRef<ReminderDraft>({ customSubject: '', customBody: '', scheduleFor: '' });
   const [showAgendaFor, setShowAgendaFor] = useState<number | null>(null);
   const [preflightEventId, setPreflightEventId] = useState<number | null>(null);
   const [preflightConfirmed, setPreflightConfirmed] = useState(false);
-
-  const { data: attendanceList = [], refetch: refetchAttendance } = trpc.events.listAttendance.useQuery(
-    { eventId: attendanceEventId! },
-    { enabled: attendanceEventId !== null }
-  );
-  const { data: tokenLeaderboard = [] } = trpc.events.tokenLeaderboard.useQuery({ limit: 10 });
 
   const { data: roster, isLoading: rosterLoading } = trpc.events.projectRoster.useQuery(
     { eventId: rosterEventId! },
@@ -135,9 +536,9 @@ export function AdminEventsTab() {
   const { upcoming: upcomingEvents, past: pastEvents } = partitionEventsByTemporal(allEvents);
 
 
-  function startEdit(ev: any) {
+  const startEdit = useCallback((ev: any) => {
     setEditingId(ev.id);
-    setFormData({
+    eventForm.set({
       title: ev.title ?? '',
       description: ev.description ?? '',
       type: ev.type ?? 'open',
@@ -154,9 +555,12 @@ export function AdminEventsTab() {
       guestSpeakerBio: ev.guestSpeakerBio ?? '',
       guestSpeakerTopic: ev.guestSpeakerTopic ?? '',
     });
-  }
+  }, [eventForm]);
 
-  function handleSave() {
+  // Reads editingId and the form at the moment Save is pressed (usePersistFn
+  // always calls the latest version), while the sheet gets a stable handler.
+  const handleSave = usePersistFn(() => {
+    const formData = eventForm.get();
     const payload = {
       title: formData.title,
       description: formData.description || undefined,
@@ -179,19 +583,36 @@ export function AdminEventsTab() {
     } else {
       createMutation.mutate(payload as any);
     }
-  }
+  });
 
-  const typeColors: Record<string, string> = {
-    open: 'bg-blue-500/20 text-blue-300',
-    episode: 'bg-green-500/20 text-green-300',
-    special: 'bg-purple-500/20 text-purple-300',
-  };
-  const statusColors: Record<string, string> = {
-    upcoming: 'bg-yellow-500/20 text-yellow-300',
-    live: 'bg-red-500/20 text-red-300 animate-pulse',
-    completed: 'bg-emerald-500/25 text-[#7dd87d] border border-[#7dd87d]/40',
-    cancelled: 'bg-[#3d4a3d] text-[#f8f5f0]',
-  };
+  const onSheetOpenChange = useCallback((open: boolean) => {
+    if (!open) { setShowCreate(false); setEditingId(null); }
+  }, []);
+  const cancelForm = useCallback(() => {
+    setShowCreate(false); setEditingId(null); eventForm.set(defaultForm);
+  }, [eventForm]);
+
+  // Every member is a setter, the draft ref, or a function React Query keeps
+  // the same across renders (mutate, mutateAsync, refetch), so this object is
+  // stable and the memoized cards re-render only when their own values change.
+  const cardActions = useMemo<EventCardActions>(() => ({
+    startEdit,
+    setRosterEventId,
+    setReminderEditorOpen,
+    setAutoReminderOpen,
+    setReminderSuccess,
+    setFollowupSuccess,
+    setSpeakerIntroSuccess,
+    setScheduleSuccess,
+    setPreflightEventId,
+    setPreflightConfirmed,
+    sendFollowup: followupMutation.mutate,
+    sendSpeakerIntro: speakerIntroMutation.mutate,
+    deleteEvent: deleteMutation.mutate,
+    sendReminder: reminderMutation.mutateAsync,
+    refetch,
+    reminderDraft,
+  }), [startEdit, followupMutation.mutate, speakerIntroMutation.mutate, deleteMutation.mutate, reminderMutation.mutateAsync, refetch]);
 
   return (
     <div className="space-y-4">
@@ -200,642 +621,58 @@ export function AdminEventsTab() {
           <h2 className="text-xl font-bold text-[#1a472a]">Events</h2>
           <p className="text-sm text-[#1a472a]/80">Manage schedule events. Events appear on the Schedule page automatically.</p>
         </div>
-        <Button onClick={() => { setShowCreate(true); setEditingId(null); setFormData(defaultForm); }}
+        <Button onClick={() => { setShowCreate(true); setEditingId(null); eventForm.set(defaultForm); }}
           className="bg-green-600 hover:bg-green-700 text-white">
           <Plus size={14} className="mr-1" /> Add Event
         </Button>
       </div>
 
       {/* Create / Edit Form: one-column sheet attached to Add Event */}
-      <Sheet open={showCreate || editingId !== null} onOpenChange={(open) => {
-        if (!open) { setShowCreate(false); setEditingId(null); }
-      }}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto p-0 bg-[#0d2818] border-green-800/40 text-white">
-          <SheetHeader className="p-4 border-b border-white/10 text-left">
-            <SheetTitle className="text-white text-base">{editingId !== null ? "Edit Event" : "New Event"}</SheetTitle>
-          </SheetHeader>
-          <div className="p-4 space-y-3">
-            <div className="grid grid-cols-1 gap-3">
-              <div className="md:col-span-2">
-                <Label className="text-white/70 text-xs">Title *</Label>
-                <Input value={formData.title} onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
-                  placeholder="Week 1: Selection Day" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-white/70 text-xs">Description</Label>
-                <Textarea value={formData.description} onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-                  rows={3} placeholder="What will this session cover?" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1 resize-none" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Type</Label>
-                <Select value={formData.type} onValueChange={v => setFormData(f => ({ ...f, type: v as any }))}>
-                  <SelectTrigger className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="open">Open Session</SelectItem>
-                    <SelectItem value="episode">Incubator Episode</SelectItem>
-                    <SelectItem value="special">Special Event</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Timezone display (e.g., EDT)</Label>
-                <Input value={formData.timezone} onChange={e => setFormData(f => ({ ...f, timezone: e.target.value }))}
-                  placeholder="EDT" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Start Time (local, stored as UTC)</Label>
-                <Input type="datetime-local" value={formData.startTime} onChange={e => setFormData(f => ({ ...f, startTime: e.target.value }))}
-                  className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">End Time (optional)</Label>
-                <Input type="datetime-local" value={formData.endTime} onChange={e => setFormData(f => ({ ...f, endTime: e.target.value }))}
-                  className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Season (e.g., Season 2)</Label>
-                <Input value={formData.season} onChange={e => setFormData(f => ({ ...f, season: e.target.value }))}
-                  placeholder="Season 2" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Episode Number</Label>
-                <Input type="number" value={formData.episodeNumber} onChange={e => setFormData(f => ({ ...f, episodeNumber: e.target.value }))}
-                  placeholder="1" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Max Attendees <span className="text-white/70 font-normal">(leave blank for unlimited)</span></Label>
-                <Input type="number" value={formData.maxAttendees} onChange={e => setFormData(f => ({ ...f, maxAttendees: e.target.value }))}
-                  placeholder="e.g. 50 (triggers waitlist when full)" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Video room URL <span className="text-purple-400 font-normal">(where /join sends people for this event)</span></Label>
-                <Input value={formData.riversideRoomUrl} onChange={e => setFormData(f => ({ ...f, riversideRoomUrl: e.target.value }))}
-                  placeholder="https://…" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Backup meeting URL <span className="text-white/70 font-normal">(used if the video room URL is empty)</span></Label>
-                <Input value={formData.zoomUrl} onChange={e => setFormData(f => ({ ...f, zoomUrl: e.target.value }))}
-                  placeholder="https://…" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-white/70 text-xs">YouTube URL (livestream or premiere)</Label>
-                <Input value={formData.youtubeUrl} onChange={e => setFormData(f => ({ ...f, youtubeUrl: e.target.value }))}
-                  placeholder="https://youtube.com/live/..." className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              {/* #25. Guest Speaker Fields */}
-              <div className="md:col-span-2 border-t border-white/10 pt-3 mt-1">
-                <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-2">Guest Speaker (optional)</p>
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Speaker Name</Label>
-                <Input value={formData.guestSpeakerName} onChange={e => setFormData(f => ({ ...f, guestSpeakerName: e.target.value }))}
-                  placeholder="Jane Doe" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div>
-                <Label className="text-white/70 text-xs">Speaker Topic</Label>
-                <Input value={formData.guestSpeakerTopic} onChange={e => setFormData(f => ({ ...f, guestSpeakerTopic: e.target.value }))}
-                  placeholder="Regenerative land economics" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1" />
-              </div>
-              <div className="md:col-span-2">
-                <Label className="text-white/70 text-xs">Speaker Bio</Label>
-                <Textarea value={formData.guestSpeakerBio} onChange={e => setFormData(f => ({ ...f, guestSpeakerBio: e.target.value }))}
-                  rows={2} placeholder="Brief bio for the introduction email" className="bg-white/10 border-white/45 text-white placeholder:text-white/70 mt-1 resize-none" />
-              </div>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Button onClick={handleSave} disabled={!formData.title || !formData.startTime || createMutation.isPending || updateMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white min-h-11">
-                {(createMutation.isPending || updateMutation.isPending) ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                {editingId !== null ? 'Save Changes' : 'Create Event'}
-              </Button>
-              <Button variant="ghost" onClick={() => { setShowCreate(false); setEditingId(null); setFormData(defaultForm); }}
-                className="text-white/60 hover:text-white min-h-11">Cancel</Button>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <EventFormSheet
+        open={showCreate || editingId !== null}
+        isEditing={editingId !== null}
+        savePending={createMutation.isPending || updateMutation.isPending}
+        store={eventForm}
+        onOpenChange={onSheetOpenChange}
+        onSave={handleSave}
+        onCancel={cancelForm}
+      />
 
       {/* Events List */}
       {isLoading && <div className="text-center py-8 text-[#1a472a]/70"><Loader2 size={24} className="animate-spin mx-auto" /></div>}
 
       {(() => {
-        const renderEventCard = (ev: (typeof allEvents)[number]) => {
-          const signupCount = Number(countMap[ev.id] ?? 0);
-          // Prefer adminList.startTime; resolveEventStart also accepts snake_case / number.
-          // Display via toMs so MySQL/epoch shapes match temporal grouping.
-          const startRaw = resolveEventStart(ev as any);
-          const startMs = toMs(startRaw as any);
-          const startDate = startMs != null ? new Date(startMs) : null;
-          const dateStr = startDate
-            ? startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-            : '-';
-          // timeZoneName, not ev.timezone. Formatting in the viewer's zone and
-          // labelling it with a stored string showed "10:00 AM EDT" for a
-          // 17:00Z event to a reader in California. Same bug as EventDetail.
-          const timeStr = startDate
-            ? startDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short" })
-            : '';
-          const temporalPhase = deriveEventTemporalPhase(ev as any);
-          const isPast = isEventPastForAdmin(ev as any);
-          const displayStatus = adminEventStatusLabel(ev as any);
-          return (
-            <Card key={ev.id} className={`bg-[#0a1f14] border-white/10 ${ev.status === 'cancelled' ? 'opacity-50' : ''}`} data-testid={isPast ? "admin-event-past" : "admin-event-upcoming"}>
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColors[ev.type] ?? ''}`}>{ev.type}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[displayStatus] ?? ''}`}>{displayStatus}</span>
-                      {ev.season && <span className="text-xs text-white/60">{ev.season}{ev.episodeNumber ? ` · Ep ${ev.episodeNumber}` : ''}</span>}
-                    </div>
-                    <p className="font-medium text-white text-sm truncate">{ev.title}</p>
-                    <p className="text-xs text-white/70 mt-0.5">{dateStr} {timeStr}</p>
-                    <div className="flex flex-wrap gap-3 mt-1.5 text-xs text-white/60">
-                      <span><Bell size={11} className="inline mr-1" />{signupCount} reminder signup{signupCount !== 1 ? 's' : ''}</span>
-                      {!isPast && autoReminderMap[ev.id]?.enabled && (
-                        <span className="text-blue-300">Auto-remind on</span>
-                      )}
-                      {(ev.riversideRoomUrl || ev.zoomUrl) && <a href={siteJoinUrl(ev.id)} target="_blank" rel="noreferrer" className="text-green-400 hover:underline">Join link ↗</a>}
-                      {ev.youtubeUrl && <a href={ev.youtubeUrl} target="_blank" rel="noreferrer" className="text-red-400 hover:underline">YouTube ↗</a>}
-                      {ev.recordingId && <span className="text-purple-400">Recording #{ev.recordingId}</span>}
-                      {isPast && !eventHasWatchPath(ev as any) && (
-                        <span
-                          className="text-amber-400/90"
-                          data-testid="admin-event-no-recording"
-                          title="Past session with no recordingId and no youtubeUrl — Historical cannot show Watch"
-                        >
-                          No recording linked
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 sm:flex-col sm:items-end">
-                    <Button size="sm" variant="ghost" onClick={() => startEdit(ev)}
-                      className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
-                      <Edit size={11} className="mr-1" /> Edit
-                    </Button>
-                    <Button size="sm" variant="ghost"
-                      onClick={() => setRosterEventId(rosterEventId === ev.id ? null : ev.id)}
-                      className="text-white/60 hover:text-white hover:bg-white/10 h-7 px-2 text-xs">
-                      <Users size={11} className="mr-1" /> {rosterEventId === ev.id ? 'Hide' : "Who's coming"}
-                    </Button>
-                    {!isPast && (reminderSuccess === ev.id
-                      ? <Button size="sm" variant="ghost" disabled className="text-yellow-400 h-7 px-2 text-xs">
-                          <CheckCheck size={11} className="mr-1" /> Sent!
-                        </Button>
-                      : <Button size="sm" variant="ghost"
-                          onClick={() => {
-                            setReminderEditorOpen(reminderEditorOpen === ev.id ? null : ev.id);
-                            if (reminderEditorOpen !== ev.id) {
-                              setCustomSubject(`Reminder: ${ev.title} is tomorrow`);
-                              setCustomBody(ev.description ?? '');
-                              if (ev.startTime) {
-                                const dayBefore = new Date(ev.startTime);
-                                dayBefore.setDate(dayBefore.getDate() - 1);
-                                dayBefore.setHours(9, 0, 0, 0);
-                                setScheduleFor(dayBefore.toISOString().slice(0, 16));
-                              }
-                            }
-                          }}
-                          className="text-white/60 hover:text-yellow-300 hover:bg-yellow-500/10 h-7 px-2 text-xs">
-                          <Bell size={11} className="mr-1" />
-                          {reminderEditorOpen === ev.id ? 'Cancel' : 'Send Reminders'}
-                        </Button>)}
-                    {!isPast && (
-                    <Button size="sm" variant="ghost"
-                      onClick={() => setAutoReminderOpen(autoReminderOpen === ev.id ? null : ev.id)}
-                      className="text-white/60 hover:text-blue-300 hover:bg-blue-500/10 h-7 px-2 text-xs">
-                      <Clock size={11} className="mr-1" />
-                      {autoReminderOpen === ev.id
-                        ? "Close auto-remind"
-                        : autoReminderMap[ev.id]?.enabled ? "Auto-remind on" : "Auto-remind"}
-                    </Button>
-                    )}
-                    {isPast && autoReminderMap[ev.id]?.enabled && (
-                      <span className="text-[11px] text-white/50 h-7 px-2 inline-flex items-center" title="Auto-remind was on; past events no longer send">
-                        <Clock size={11} className="mr-1" /> Auto-remind was on
-                      </span>
-                    )}
-                    {/* #17. Send Follow-up for completed events */}
-                    {(isPast || ev.status === 'completed') && (
-                      followupSuccess === ev.id
-                        ? <Button size="sm" variant="ghost" disabled className="text-green-400 h-7 px-2 text-xs">
-                            <CheckCheck size={11} className="mr-1" /> Follow-up Sent!
-                          </Button>
-                        : <Button size="sm" variant="ghost"
-                            onClick={() => {
-                              if (confirm(`Send "How was it?" follow-up email to everyone who signed up for "${ev.title}"?`)) {
-                                followupMutation.mutate({ eventId: ev.id }, {
-                                  onSuccess: () => {
-                                    setFollowupSuccess(ev.id);
-                                    setTimeout(() => setFollowupSuccess(null), 4000);
-                                  },
-                                });
-                              }
-                            }}
-                            disabled={followupMutation.isPending}
-                            className="text-white/60 hover:text-green-300 hover:bg-green-500/10 h-7 px-2 text-xs whitespace-nowrap">
-                            <Send size={11} className="mr-1" />
-                            {followupMutation.isPending ? 'Sending...' : 'Send Follow-up'}
-                          </Button>
-                    )}
-                    {/* #25. Send Speaker Intro (only if event has a guest speaker) */}
-                    {(ev as any).guestSpeakerName && (
-                      speakerIntroSuccess === ev.id
-                        ? <Button size="sm" variant="ghost" disabled className="text-purple-400 h-7 px-2 text-xs">
-                            <CheckCheck size={11} className="mr-1" /> Speaker Intro Sent!
-                          </Button>
-                        : <Button size="sm" variant="ghost"
-                            onClick={() => {
-                              if (confirm(`Send speaker introduction email for "${(ev as any).guestSpeakerName}" to all signups?`)) {
-                                speakerIntroMutation.mutate({ eventId: ev.id }, {
-                                  onSuccess: () => {
-                                    setSpeakerIntroSuccess(ev.id);
-                                    setTimeout(() => setSpeakerIntroSuccess(null), 4000);
-                                  },
-                                });
-                              }
-                            }}
-                            disabled={speakerIntroMutation.isPending}
-                            className="text-white/60 hover:text-purple-300 hover:bg-purple-500/10 h-7 px-2 text-xs">
-                            <Users size={11} className="mr-1" />
-                            {speakerIntroMutation.isPending ? 'Sending...' : 'Send Speaker Intro'}
-                          </Button>
-                    )}
-                    <Button size="sm" variant="ghost"
-                      onClick={() => { if (confirm(`Delete "${ev.title}"?`)) deleteMutation.mutate({ id: ev.id }); }}
-                      className="text-white/60 hover:text-red-400 hover:bg-red-500/10 h-7 px-2 text-xs">
-                      <Trash2 size={11} className="mr-1" /> Delete
-                    </Button>
-                  </div>
-                </div>
-
-                {!isPast && (temporalPhase === "live" || (ev as any).status === "live") && (
-                  <LiveSessionRunbook
-                    eventId={ev.id}
-                    eventTitle={ev.title}
-                    startTime={ev.startTime}
-                    timeZone={ev.timezone}
-                  />
-                )}
-
-                {isPast && (
-                  <AfterSessionChecklist
-                    event={ev as any}
-                    recording={
-                      ev.recordingId != null
-                        ? (recordingById.get(ev.recordingId) as any) ?? { id: ev.recordingId }
-                        : null
-                    }
-                    letter={
-                      ev.recordingId != null
-                        ? letterByRecordingId.get(ev.recordingId) ?? null
-                        : null
-                    }
-                    isPast={isPast}
-                    onMarkedCompleted={() => { void refetch(); }}
-                  />
-                )}
-
-                {/* Guest speaker info display */}
-                {(ev as any).guestSpeakerName && (
-                  <div className="border-t border-white/10 px-4 py-2">
-                    <span className="text-xs text-purple-400">Guest: {(ev as any).guestSpeakerName}{(ev as any).guestSpeakerTopic ? `, ${(ev as any).guestSpeakerTopic}` : ''}</span>
-                  </div>
-                )}
-
-                <div className="border-t border-white/10 px-4 py-2">
-                  <span className="text-xs text-white/60">Personal check-in links go out in the follow-up email.</span>
-                </div>
-
-                {/* Inline email editor */}
-                {!isPast && reminderEditorOpen === ev.id && (
-                  <div className="border-t border-white/10 px-4 pb-4 pt-3 space-y-3">
-                    <p className="text-xs text-white/70 font-medium uppercase tracking-wide">Preview &amp; Edit Reminder Email</p>
-                    <div>
-                      <Label className="text-white/60 text-xs">Subject line</Label>
-                      <Input
-                        value={customSubject}
-                        onChange={e => setCustomSubject(e.target.value)}
-                        className="bg-white/10 border-white/45 text-white placeholder:text-white/70 text-sm mt-1"
-                        placeholder={`Reminder: ${ev.title} is tomorrow`}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-white/60 text-xs">Body paragraph (shown below the date)</Label>
-                      <Textarea
-                        value={customBody}
-                        onChange={e => setCustomBody(e.target.value)}
-                        rows={4}
-                        className="bg-white/10 border-white/45 text-white placeholder:text-white/70 text-sm mt-1 resize-none"
-                        placeholder="What do you want people to know before they join? Leave blank to use the event description."
-                      />
-                    </div>
-
-                    {/* Live email preview */}
-                    <div className="rounded-xl overflow-hidden border border-white/10 text-sm">
-                      <div className="bg-gradient-to-r from-[#1a472a] to-[#2d5a3d] px-5 py-4 text-center">
-                        <p className="text-[#7dd87d] font-bold text-base m-0">ReGen Civics</p>
-                        <p className="text-[#a8e6a8] text-xs mt-1 m-0">Event reminder</p>
-                      </div>
-                      <div className="bg-white px-5 py-5 space-y-2">
-                        <p className="text-gray-300 text-xs m-0">Starting in ~24 hours</p>
-                        <p className="text-[#1a472a] font-bold text-base m-0">{ev.title}</p>
-                        <p className="text-white/80 text-sm m-0">
-                          {ev.startTime ? new Date(ev.startTime).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : ''}
-                          {ev.startTime ? ` at ${new Date(ev.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} ${ev.timezone ?? ''}` : ''}
-                        </p>
-                        {(customBody || ev.description) && (
-                          <p className="text-white/85 text-sm leading-relaxed m-0">{customBody || ev.description}</p>
-                        )}
-                        <div className="flex gap-2 pt-1 flex-wrap">
-                          <span className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Join the call</span>
-                          <span className="border-2 border-[#1a472a] text-[#1a472a] px-4 py-2 rounded-lg text-xs font-bold">View Schedule</span>
-                        </div>
-                      </div>
-                      <div className="bg-[#f0f7f0] px-5 py-3 text-center">
-                        <p className="text-gray-300 text-xs m-0">Manage email preferences · View all events</p>
-                      </div>
-                    </div>
-
-                    <p className="text-xs text-white/60">Subject: <span className="text-white/70">{customSubject || `Reminder: ${ev.title} is tomorrow`}</span></p>
-                    <p className="text-xs text-white/60">Sending to <span className="text-white/70">{Number(countMap[ev.id] ?? 0)} people</span> who signed up for this event.</p>
-
-                    <div className="flex flex-wrap items-end gap-2">
-                      <Button
-                        disabled={reminderMutation.isPending || Number(countMap[ev.id] ?? 0) === 0}
-                        onClick={() => { setPreflightEventId(ev.id); setPreflightConfirmed(false); }}
-                        className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs h-8 px-4"
-                      >
-                        {Number(countMap[ev.id] ?? 0) === 0
-                          ? 'No signups yet'
-                          : `Review & Send to ${Number(countMap[ev.id] ?? 0)} ${Number(countMap[ev.id] ?? 0) === 1 ? 'person' : 'people'}`}
-                      </Button>
-
-                      {/* #24. Schedule for later */}
-                      <div className="flex items-end gap-1.5">
-                        <div>
-                          <Label className="text-white/60 text-xs">Schedule for...</Label>
-                          <Input
-                            type="datetime-local"
-                            value={scheduleFor}
-                            onChange={e => setScheduleFor(e.target.value)}
-                            className="bg-white/10 border-white/45 text-white placeholder:text-white/70 text-xs h-8 mt-0.5 w-48"
-                          />
-                        </div>
-                        <Button
-                          disabled={!scheduleFor || reminderMutation.isPending || Number(countMap[ev.id] ?? 0) === 0}
-                          onClick={async () => {
-                            const result = await reminderMutation.mutateAsync({
-                              id: ev.id,
-                              customSubject: customSubject || undefined,
-                              customBody: customBody || undefined,
-                              scheduledFor: new Date(scheduleFor).toISOString(),
-                            });
-                            setScheduleSuccess(ev.id);
-                            setReminderEditorOpen(null);
-                            setScheduleFor('');
-                            setTimeout(() => setScheduleSuccess(null), 6000);
-                          }}
-                          className="bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 px-3"
-                        >
-                          <Clock size={11} className="mr-1" /> Schedule
-                        </Button>
-                      </div>
-                    </div>
-                    {scheduleSuccess === ev.id && (
-                      <p className="text-xs text-blue-400">Reminder scheduled. It will send at the selected time (lost if server restarts).</p>
-                    )}
-
-                    {/* #22 Preflight checklist dialog */}
-                    {preflightEventId === ev.id && (() => {
-                      const signupCount = Number(countMap[ev.id] ?? 0);
-                      const hasJoinLink = !!(ev.riversideRoomUrl || ev.zoomUrl);
-                      const isUpcoming = !isPast;
-                      const alreadySent = !!(ev as any).reminderSent;
-
-                      return (
-                        <Dialog open onOpenChange={(open) => { if (!open) setPreflightEventId(null); }}>
-                          <DialogContent className="bg-[#0a1f14] border-white/20 text-white max-w-md">
-                            <DialogHeader>
-                              <DialogTitle className="text-white text-base">Preflight Check: Send Reminders</DialogTitle>
-                              <DialogDescription className="text-white/70 text-sm">{ev.title}</DialogDescription>
-                            </DialogHeader>
-
-                            <div className="space-y-3 py-2">
-                              {/* Join link check */}
-                              <div className="flex items-center gap-2 text-sm">
-                                {hasJoinLink
-                                  ? <CheckCheck size={14} className="text-green-400 flex-shrink-0" />
-                                  : <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />}
-                                <span className={hasJoinLink ? 'text-white/70' : 'text-red-300'}>
-                                  {hasJoinLink ? 'Join link is set' : 'No join link set (video room or backup URL missing)'}
-                                </span>
-                              </div>
-
-                              {/* Upcoming check */}
-                              <div className="flex items-center gap-2 text-sm">
-                                {isUpcoming
-                                  ? <CheckCheck size={14} className="text-green-400 flex-shrink-0" />
-                                  : <AlertTriangle size={14} className="text-red-400 flex-shrink-0" />}
-                                <span className={isUpcoming ? 'text-white/70' : 'text-red-300'}>
-                                  {isUpcoming ? 'Event is still upcoming' : 'Event start time has already passed'}
-                                </span>
-                              </div>
-
-                              {/* Recipient count */}
-                              <div className="flex items-center gap-2 text-sm">
-                                <Users size={14} className="text-blue-400 flex-shrink-0" />
-                                <span className="text-white/70">
-                                  {signupCount} {signupCount === 1 ? 'person' : 'people'} will receive this email
-                                </span>
-                              </div>
-
-                              {/* Already sent warning */}
-                              {alreadySent && (
-                                <div className="flex items-start gap-2 text-sm bg-yellow-900/30 border border-yellow-700/40 rounded-lg p-3">
-                                  <AlertTriangle size={14} className="text-yellow-400 flex-shrink-0 mt-0.5" />
-                                  <span className="text-yellow-300">
-                                    Reminders were already sent for this event. Sending again will send duplicate emails.
-                                  </span>
-                                </div>
-                              )}
-
-                              {/* Confirmation checkbox */}
-                              <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                                <Checkbox
-                                  id={`preflight-confirm-${ev.id}`}
-                                  checked={preflightConfirmed}
-                                  onCheckedChange={(val) => setPreflightConfirmed(!!val)}
-                                  className="border-white/30 data-[state=checked]:bg-[#7dd87d] data-[state=checked]:border-[#7dd87d]"
-                                />
-                                <Label htmlFor={`preflight-confirm-${ev.id}`} className="text-sm text-white/70 cursor-pointer">
-                                  I've reviewed and confirm sending to {signupCount} {signupCount === 1 ? 'person' : 'people'}
-                                </Label>
-                              </div>
-                            </div>
-
-                            <DialogFooter className="gap-2">
-                              <Button
-                                variant="ghost"
-                                onClick={() => setPreflightEventId(null)}
-                                className="text-white/70 hover:text-white text-xs"
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                disabled={!preflightConfirmed || reminderMutation.isPending}
-                                onClick={async () => {
-                                  await reminderMutation.mutateAsync({
-                                    id: ev.id,
-                                    customSubject: customSubject || undefined,
-                                    customBody: customBody || undefined,
-                                  });
-                                  setPreflightEventId(null);
-                                  setReminderSuccess(ev.id);
-                                  setReminderEditorOpen(null);
-                                  refetch();
-                                  setTimeout(() => setReminderSuccess(null), 4000);
-                                }}
-                                className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs h-8 px-4"
-                              >
-                                {reminderMutation.isPending
-                                  ? <><Loader2 size={12} className="animate-spin mr-1" /> Sending...</>
-                                  : `Send Reminders`}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      );
-                    })()}
-                  </div>
-                )}
-
-                {!isPast && autoReminderOpen === ev.id && (
-                  <AdminEventAutoReminders
-                    event={ev}
-                    saved={autoReminderMap[ev.id]}
-                  />
-                )}
-
-                {/* Who's coming, of the projects that applied. Rye's ask, 2026-08-28.
-                    Four groups and all of them visible: an inner join would answer
-                    the question by hiding the people it could not match. */}
-                {rosterEventId === ev.id && (
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    {rosterLoading && <p className="text-xs text-white/50">Reading signups and applications...</p>}
-                    {!rosterLoading && roster && (
-                      <>
-                        <p className="text-xs text-white/70 mb-3">
-                          <span className="text-white font-medium">{roster.counts.responded} of {roster.counts.appliedTotal}</span> applied projects responded
-                          {' · '}<span className="text-green-400">{roster.counts.coming} coming</span>
-                          {' · '}<span className="text-white/60">{roster.counts.cancelled} cancelled</span>
-                          {' · '}<span className="text-yellow-400">{roster.counts.unmatched} signup{roster.counts.unmatched === 1 ? '' : 's'} not matched to an application</span>
-                          {roster.counts.ambiguous > 0 && <>{' · '}<span className="text-orange-400">{roster.counts.ambiguous} ambiguous</span></>}
-                        </p>
-
-                        {roster.counts.sharedAccountApplications > 0 && (
-                          <p className="text-xs text-orange-300/80 mb-3">
-                            Heads up: <span className="font-medium">{roster.counts.sharedAccountApplications} of {roster.counts.appliedTotal}</span> applications
-                            share an account with another application. An email match cannot say which of those projects is
-                            coming, only that the account holder signed up, so they are reported as ambiguous rather than
-                            counted as attending. To answer this properly those founders need their own accounts, or an
-                            application needs its own contact email.
-                          </p>
-                        )}
-
-                        {roster.counts.appliedTotal > 0 && roster.counts.responded === 0 && (
-                          <p className="text-xs text-white/50 mb-3">
-                            Nobody has answered yet. The event page offers &ldquo;Get Reminder&rdquo; and says no commitment
-                            is required, so there is currently nothing on it that records an intention to attend.
-                          </p>
-                        )}
-
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <div>
-                            <p className="text-xs font-medium text-green-400 mb-1.5">Applied and coming ({roster.coming.length})</p>
-                            {roster.coming.length === 0
-                              ? <p className="text-xs text-white/40">None yet.</p>
-                              : roster.coming.map((r: any) => (
-                                  <div key={r.signupId} className="text-xs text-white/70 mb-1">
-                                    <span className="text-white">{r.projectName}</span>
-                                    <span className="text-white/50"> · {r.location} · {r.status}</span>
-                                    <br />
-                                    <span className="text-white/50">signed up as {r.signedUpName || r.accountName || 'no name given'} ({r.signedUpEmail})</span>
-                                  </div>
-                                ))}
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium text-white/70 mb-1.5">Applied, no response yet ({roster.awaiting.length})</p>
-                            {roster.awaiting.length === 0
-                              ? <p className="text-xs text-white/40">Everybody has answered.</p>
-                              : roster.awaiting.map((r: any) => (
-                                  <div key={r.applicationId} className="text-xs text-white/70 mb-1">
-                                    <span className="text-white">{r.projectName}</span>
-                                    <span className="text-white/50"> · {r.location} · {r.status}</span>
-                                    {r.accountEmail && <span className="text-white/40"> · {r.accountEmail}</span>}
-                                  </div>
-                                ))}
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium text-yellow-400 mb-1.5">Coming, but not matched to an application ({roster.unmatched.length})</p>
-                            {roster.unmatched.length === 0
-                              ? <p className="text-xs text-white/40">None.</p>
-                              : <>
-                                  <p className="text-xs text-white/40 mb-1">
-                                    Matched by email, so a founder who signed up with a different address than the one on
-                                    their account lands here rather than beside their project.
-                                  </p>
-                                  {roster.unmatched.map((r: any) => (
-                                    <div key={r.signupId} className="text-xs text-white/70 mb-1">
-                                      <span className="text-white">{r.name || 'no name given'}</span>
-                                      <span className="text-white/50"> · {r.email}</span>
-                                      {r.cancelledAt && <span className="text-white/40"> · cancelled</span>}
-                                    </div>
-                                  ))}
-                                </>}
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium text-orange-400 mb-1.5">Ambiguous ({roster.ambiguous.length})</p>
-                            {roster.ambiguous.length === 0
-                              ? <p className="text-xs text-white/40">None.</p>
-                              : roster.ambiguous.map((r: any) => (
-                                  <div key={r.signupId} className="text-xs text-white/70 mb-1.5">
-                                    <span className="text-white">{r.signedUpName || 'no name given'}</span>
-                                    <span className="text-white/50"> · {r.signedUpEmail}</span>
-                                    <br />
-                                    <span className="text-white/40">
-                                      that address is on {r.candidateCount} applications: {r.candidates.map((c: any) => c.projectName).join(', ')}
-                                    </span>
-                                  </div>
-                                ))}
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-medium text-white/50 mb-1.5">Cancelled ({roster.cancelled.length})</p>
-                            {roster.cancelled.length === 0
-                              ? <p className="text-xs text-white/40">None.</p>
-                              : roster.cancelled.map((r: any) => (
-                                  <div key={r.signupId} className="text-xs text-white/60 mb-1">
-                                    <span className="text-white/80">{r.projectName}</span>
-                                    <span className="text-white/40"> · changed their mind, not unanswered</span>
-                                  </div>
-                                ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        };
+        // Each card is memoized (AdminEventCard.tsx). The clock-based values
+        // are worked out here, on every render of the tab as before, so a
+        // card's badge and grouping never disagree.
+        const renderEventCard = (ev: (typeof allEvents)[number]) => (
+          <EventCard
+            key={ev.id}
+            ev={ev}
+            temporalPhase={deriveEventTemporalPhase(ev as any)}
+            isPast={isEventPastForAdmin(ev as any)}
+            displayStatus={adminEventStatusLabel(ev as any)}
+            signupCount={Number(countMap[ev.id] ?? 0)}
+            autoReminder={autoReminderMap[ev.id]}
+            recordingById={recordingById}
+            letterByRecordingId={letterByRecordingId}
+            rosterOpen={rosterEventId === ev.id}
+            roster={rosterEventId === ev.id ? roster : undefined}
+            rosterLoading={rosterEventId === ev.id && rosterLoading}
+            reminderEditorOpen={reminderEditorOpen === ev.id}
+            autoReminderOpen={autoReminderOpen === ev.id}
+            justSentReminders={reminderSuccess === ev.id}
+            justSentFollowup={followupSuccess === ev.id}
+            justSentSpeakerIntro={speakerIntroSuccess === ev.id}
+            justScheduled={scheduleSuccess === ev.id}
+            preflightOpen={preflightEventId === ev.id}
+            preflightConfirmed={preflightEventId === ev.id && preflightConfirmed}
+            followupPending={followupMutation.isPending}
+            speakerIntroPending={speakerIntroMutation.isPending}
+            reminderPending={reminderEditorOpen === ev.id && reminderMutation.isPending}
+            actions={cardActions}
+          />
+        );
 
         const showUpcoming = eventsFilter === "upcoming" || eventsFilter === "all";
         const showPastSection = eventsFilter === "past" || eventsFilter === "all"
@@ -955,37 +792,7 @@ export function AdminEventsTab() {
       </Card>
 
       {/* #10. Season Rollup Email */}
-      <Card className="bg-[#0a1f14] border-[#7dd87d]/20 mt-4">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-[#7dd87d] text-sm flex items-center gap-2"><Bell size={14} /> Season Rollup Email</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-xs text-white/80">Sends a "here's what we built together" digest to all event signups + newsletter subscribers for a completed season.</p>
-          <div className="flex items-center gap-2">
-            <input
-              value={rollupSeason}
-              onChange={e => setRollupSeason(e.target.value)}
-              placeholder="Season name (e.g. Season 2)"
-              className="flex-1 bg-white/5 border border-white/45 rounded-lg px-3 py-1.5 text-white text-sm placeholder:text-white/70 focus:outline-none focus:border-[#7dd87d]/50"
-            />
-            <button
-              onClick={() => {
-                if (!rollupSeason.trim()) return;
-                if (window.confirm(`Send season rollup email for "${rollupSeason}" to all signups + newsletter subscribers?`)) {
-                  rollupMutation.mutate({ season: rollupSeason.trim() });
-                }
-              }}
-              disabled={rollupMutation.isPending || !rollupSeason.trim()}
-              className="bg-[#7dd87d] hover:bg-[#9de89d] disabled:opacity-50 text-[#1a472a] px-4 py-1.5 rounded-lg font-medium text-sm transition-colors whitespace-nowrap"
-            >
-              {rollupMutation.isPending ? 'Sending...' : 'Send Rollup'}
-            </button>
-          </div>
-          {rollupMutation.isSuccess && (
-            <p className="text-[#7dd87d] text-xs">Sent to {(rollupMutation.data as any)?.sent ?? 0} recipients.</p>
-          )}
-        </CardContent>
-      </Card>
+      <SeasonRollupCard />
 
       {/* #9. Agenda Suggestions from Community */}
       {agendaSuggestions.length > 0 && (
@@ -1023,112 +830,7 @@ export function AdminEventsTab() {
       )}
 
       {/* #8 revised. Attendance Tracking + $ReGen Token Awards */}
-      <Card className="bg-white/5 border border-white/10">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-amber-400 text-sm flex items-center gap-2">
-            ✦ Event Attendance + $ReGen Token Awards
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-white/70 text-xs">
-            Mark who actually attended a completed event. Each person earns 33 $ReGen tokens, recorded in the contribution ledger.
-          </p>
-
-          {/* Event selector */}
-          <div className="flex gap-2">
-            <select
-              value={attendanceEventId ?? ''}
-              onChange={e => { setAttendanceEventId(e.target.value ? Number(e.target.value) : null); setAttendanceInput(''); }}
-              className="flex-1 bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/45"
-            >
-              <option value="">Select an event...</option>
-              {allEvents.filter(e => e.status === 'completed' || e.status === 'live').map(e => (
-                <option key={e.id} value={e.id}>{e.title} ({e.season ?? 'no season'})</option>
-              ))}
-            </select>
-          </div>
-
-          {attendanceEventId && (
-            <div className="space-y-3">
-              {/* Current attendance list */}
-              {attendanceList.length > 0 && (
-                <div className="bg-white/5 rounded-lg p-3 space-y-2">
-                  <p className="text-amber-400 text-xs font-medium">{attendanceList.length} confirmed attendees · {attendanceList.reduce((sum, a: any) => sum + (a.tokensAwarded ?? 0), 0)} $ReGen awarded</p>
-                  {attendanceList.map((a: any) => (
-                    <div key={a.id} className="flex items-center justify-between gap-2">
-                      <div>
-                        <span className="text-white text-sm">{a.name || a.email}</span>
-                        {a.name && <span className="text-white/60 text-xs ml-2">{a.email}</span>}
-                        <span className="text-amber-400 text-xs ml-2">+{a.tokensAwarded} $ReGen</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Remove attendance for ${a.email}? This will also remove their ${a.tokensAwarded} $ReGen tokens.`)) {
-                            removeAttendanceMutation.mutate({ eventId: attendanceEventId, email: a.email });
-                          }
-                        }}
-                        className="text-white/70 hover:text-red-400 text-xs px-2 py-1 rounded"
-                      >✕</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add attendees input */}
-              <div className="space-y-2">
-                <label className="text-white/60 text-xs">Add attendees (one email per line, or paste a comma-separated list):</label>
-                <textarea
-                  value={attendanceInput}
-                  onChange={e => setAttendanceInput(e.target.value)}
-                  placeholder="jane@example.com&#10;alex@example.com"
-                  rows={4}
-                  className="w-full bg-white/10 text-white text-sm rounded px-3 py-2 border border-white/45 placeholder:text-white/70 font-mono"
-                />
-                <button
-                  onClick={() => {
-                    const emails = attendanceInput
-                      .split(/[\n,;]+/)
-                      .map(e => e.trim())
-                      .filter(e => e.includes('@'));
-                    if (emails.length === 0) return;
-                    if (window.confirm(`Mark ${emails.length} attendee(s) for this event? Each will earn 33 $ReGen tokens.`)) {
-                      markAttendanceMutation.mutate({
-                        eventId: attendanceEventId,
-                        attendees: emails.map(email => ({ email })),
-                      });
-                      setAttendanceInput('');
-                    }
-                  }}
-                  disabled={markAttendanceMutation.isPending || !attendanceInput.trim()}
-                  className="bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-sm px-4 py-2 rounded font-medium"
-                >
-                  {markAttendanceMutation.isPending ? 'Marking...' : 'Mark Attendance + Award Tokens'}
-                </button>
-                {markAttendanceMutation.isSuccess && (
-                  <p className="text-amber-400 text-xs">
-                    Marked {(markAttendanceMutation.data as any)?.newlyMarked ?? 0} new attendees. {(markAttendanceMutation.data as any)?.tokensAwarded ?? 0} $ReGen awarded.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* $ReGen Leaderboard */}
-          {tokenLeaderboard.length > 0 && (
-            <div className="border-t border-white/10 pt-3">
-              <p className="text-white/60 text-xs mb-2">$ReGen Leaderboard (top earners)</p>
-              <div className="space-y-1">
-                {tokenLeaderboard.map((entry: any, i: number) => (
-                  <div key={entry.email} className="flex items-center justify-between text-xs">
-                    <span className="text-white/70">#{i + 1} {entry.email}</span>
-                    <span className="text-amber-400 font-medium">{entry.total} $ReGen</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <EventAttendanceCard allEvents={allEvents} />
     </div>
   );
 }

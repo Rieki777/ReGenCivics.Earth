@@ -1,10 +1,11 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { TrendingUp, Download, Search, Filter, DollarSign, Clock, ChevronRight, CheckCheck, Loader2 } from "lucide-react";
+import { DebouncedSearchInput, type DebouncedSearchHandle } from "@/components/DebouncedSearchInput";
 import { toast } from "sonner";
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
 import { adminStatusChipClass } from "@/lib/adminContrast";
@@ -70,6 +71,7 @@ export function AdminInvestorsTab({
   onOpenIdChange,
 }: Props) {
   const [openRecord, setOpenRecord] = useState<number | null>(openId);
+  const searchBox = useRef<DebouncedSearchHandle>(null);
   useEffect(() => { setOpenRecord(openId ?? null); }, [openId]);
   const setSheet = (id: number | null) => {
     setOpenRecord(id);
@@ -130,12 +132,15 @@ export function AdminInvestorsTab({
         <div className="flex flex-col sm:flex-row gap-2 pt-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#1a472a]/75" />
-            <input
+            {/* Keeps its own text: the search state lives in Admin, so a
+                keystroke used to re-render the whole admin page. */}
+            <DebouncedSearchInput
+              handle={searchBox}
               type="text"
               data-search-input
               placeholder="Search by name, email, range, or org..."
               value={investorSearch}
-              onChange={(e) => setInvestorSearch(e.target.value)}
+              onChange={setInvestorSearch}
               className="w-full min-h-11 pl-9 pr-4 py-2 text-sm border border-[#1a472a]/60 rounded-lg bg-white text-[#1a472a] placeholder:text-[#1a472a]/75 focus:outline-none focus:ring-2 focus:ring-[#7dd87d]/30"
             />
           </div>
@@ -175,14 +180,14 @@ export function AdminInvestorsTab({
               <p className="text-sm mt-1 max-w-md mx-auto">{investorTriageEmptyCopy(investorStatusFilter).hint}</p>
               <button
                 type="button"
-                onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('needs_action'); }}
+                onClick={() => { searchBox.current?.reset(); setInvestorSearch(''); setInvestorStatusFilter('needs_action'); }}
                 className="text-[#4a7c59] text-sm mt-3 hover:underline min-h-11"
               >
                 Back to needs action
               </button>
               <button
                 type="button"
-                onClick={() => { setInvestorSearch(''); setInvestorStatusFilter('all'); }}
+                onClick={() => { searchBox.current?.reset(); setInvestorSearch(''); setInvestorStatusFilter('all'); }}
                 className="block mx-auto text-[#1a472a]/75 text-xs mt-1 hover:underline min-h-11"
               >
                 Show all investors

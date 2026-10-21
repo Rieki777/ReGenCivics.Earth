@@ -22,6 +22,8 @@
  * worst first, and exits non-zero when any page is over a bar.
  * Built 2026-10-15 (STEERING.md section 13).
  */
+import http from "node:http";
+import https from "node:https";
 import { chromium } from "playwright";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -232,6 +234,28 @@ async function measure(browser, route) {
   }
   await ctx.close();
   return row;
+}
+
+// A signed-in sweep with a dead session measures the signed-out pages and
+// still reports green, so check the session first (it happened 2026-10-20).
+// node:http with no keep-alive: exiting while fetch's socket is still
+// closing trips a libuv assertion on Windows and loses the exit code.
+if (AS !== "anon") {
+  const me = await new Promise((resolve) => {
+    const url = `${BASE}/api/trpc/auth.me?batch=1&input=%7B%7D`;
+    (url.startsWith("https:") ? https : http)
+      .get(url, { headers: { cookie: `app_session_id=${SESSION}` }, agent: false }, (res) => {
+        let body = "";
+        res.on("data", (chunk) => (body += chunk));
+        res.on("end", () => { try { resolve(JSON.parse(body)); } catch { resolve(null); } });
+      })
+      .on("error", () => resolve(null));
+  });
+  const user = me?.[0]?.result?.data?.json;
+  if (!user || (AS === "admin" && !["admin", "super_admin"].includes(user.role))) {
+    console.error(`PERF_SESSION does not sign in as ${AS} on ${BASE}; mint a fresh session and run again.`);
+    process.exit(2);
+  }
 }
 
 const browser = await chromium.launch({ headless: true });

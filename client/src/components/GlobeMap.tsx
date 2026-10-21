@@ -1119,6 +1119,15 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
     return () => {
       mounted = false;
       clearTimeout(timer);
+      // Tear the globe down. It was never destroyed, so after a visit to the
+      // map its WebGL loop kept drawing every frame on every later page until
+      // a reload (STEERING.md section 13).
+      const g = globeInstanceRef.current;
+      if (g) {
+        globeInstanceRef.current = null;
+        setGlobeReady(false);
+        try { g._destructor?.(); } catch { /* already gone */ }
+      }
     };
   }, [isMobile]);
 
@@ -1153,7 +1162,9 @@ export default function GlobeMap({ fullPage = false }: { fullPage?: boolean }) {
       io.disconnect();
       document.removeEventListener("keydown", onKey, true);
       window.clearTimeout(resumeTimer);
-      if (paused) globe.resumeAnimation();
+      // Only a globe still in use comes back to life; resuming one the
+      // effect above has destroyed would restart its render loop.
+      if (paused && globeInstanceRef.current === globe) globe.resumeAnimation();
     };
   }, [globeReady, isMobile]);
 

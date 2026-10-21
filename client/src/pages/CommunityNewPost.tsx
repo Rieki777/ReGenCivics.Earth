@@ -126,6 +126,33 @@ const TopicField = memo(function TopicField({
   );
 });
 
+// The title lives in a store too: held in the page, every key re-rendered the
+// whole form, about 55 components (STEERING.md section 13).
+const TitleField = memo(function TitleField({
+  titleStore, placeholder,
+}: {
+  titleStore: TextStore;
+  placeholder: string;
+}) {
+  const title = useSyncExternalStore(titleStore.subscribe, titleStore.get);
+  return (
+    <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
+      <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
+        Title
+      </Label>
+      <Input
+        value={title}
+        onChange={(e) => titleStore.set(e.target.value)}
+        placeholder={placeholder}
+        maxLength={300}
+        className="border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
+        style={{ fontFamily: 'var(--font-body)' }}
+      />
+      <p className="text-[10px] text-[#1a472a]/85 mt-1 text-right">{title.length}/300</p>
+    </div>
+  );
+});
+
 const ContentField = memo(function ContentField({
   contentStore, placeholder,
 }: {
@@ -194,7 +221,12 @@ export default function CommunityNewPost() {
   const searchParams = new URLSearchParams(searchString);
   const preselectedCategory = searchParams.get('category');
 
-  const [title, setTitle] = useState("");
+  const [titleStore] = useState(createTextStore);
+  // Re-renders the page only when the title crosses the 3-character minimum.
+  const titleLongEnough = useSyncExternalStore(
+    titleStore.subscribe,
+    () => titleStore.get().trim().length >= 3,
+  );
   const [contentStore] = useState(createTextStore);
   // Re-renders the page only when the body crosses the 10-character minimum.
   const contentLongEnough = useSyncExternalStore(
@@ -254,6 +286,7 @@ export default function CommunityNewPost() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const content = contentStore.get();
+    const title = titleStore.get();
     if (!title.trim() || !content.trim() || !categoryId) {
       toast.error("Please fill in all fields");
       return;
@@ -272,7 +305,7 @@ export default function CommunityNewPost() {
     // Attachments: uploadedFiles will be displayed in the post
   };
 
-  const isValid = title.trim().length >= 3 && contentLongEnough && categoryId;
+  const isValid = titleLongEnough && contentLongEnough && categoryId;
 
   // Per-topic placeholder + helper line. Matches against the selected
   // category name (case-insensitive substring) so this works for the
@@ -480,20 +513,7 @@ export default function CommunityNewPost() {
           )}
 
           {/* Title */}
-          <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
-            <Label className="text-[#1a472a] font-bold text-sm mb-2 block" style={{ fontFamily: 'var(--font-display)' }}>
-              Title
-            </Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={topicGuidance.titlePlaceholder}
-              maxLength={300}
-              className="border-[#e8e4de] focus:border-[#7dd87d] focus:ring-[#7dd87d]/20 text-[#1a472a]"
-              style={{ fontFamily: 'var(--font-body)' }}
-            />
-            <p className="text-[10px] text-[#1a472a]/85 mt-1 text-right">{title.length}/300</p>
-          </div>
+          <TitleField titleStore={titleStore} placeholder={topicGuidance.titlePlaceholder} />
 
           {/* File Upload */}
           <div className="bg-white rounded-xl border border-[#e8e4de] p-4 md:p-5">
