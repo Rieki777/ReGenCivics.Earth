@@ -8,17 +8,10 @@
  *   variant  , "light" (cream bg) | "dark" (glass bg)
  */
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { X, MapPin, ChevronsUpDown, Check, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { BioregionListbox } from "@/components/BioregionListbox";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +31,7 @@ export function BioregionMultiSelect({
   maxVisible = 5,
 }: BioregionMultiSelectProps) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchValue, setSearchValue] = useState("");
   const [suggestPending, setSuggestPending] = useState(false);
   const [suggestDone, setSuggestDone] = useState(false);
@@ -94,8 +88,13 @@ export function BioregionMultiSelect({
     }
   };
 
-  const handleRemove = (e: React.MouseEvent, id: number) => {
+  const handleRemove = (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
     e.stopPropagation();
+    // The chip goes away; focus moves to the next chip's remove button, or the
+    // one before, or the picker, never to the page.
+    const chip = e.currentTarget.parentElement;
+    const next = chip?.nextElementSibling?.querySelector("button") ?? chip?.previousElementSibling?.querySelector("button");
+    (next ?? triggerRef.current)?.focus();
     onChange(values.filter((v) => v !== id));
   };
 
@@ -121,7 +120,7 @@ export function BioregionMultiSelect({
                 type="button"
                 aria-label={`Remove ${b.name}`}
                 onClick={(e) => handleRemove(e, b.id)}
-                className="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
+                className="-my-1 -mr-1.5 inline-flex size-6 items-center justify-center rounded-full opacity-60 hover:opacity-100 transition-opacity pointer-coarse:min-h-11 pointer-coarse:min-w-11"
               >
                 <X className="w-2.5 h-2.5" />
               </button>
@@ -141,7 +140,7 @@ export function BioregionMultiSelect({
           disabled={geoDetecting}
           className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors disabled:opacity-50 ${
             variant === "dark"
-              ? "border-[#7dd87d]/30 text-[#7dd87d]/70 hover:text-[#7dd87d] hover:border-[#7dd87d]/60"
+              ? "border-[#7dd87d]/30 text-[#7dd87d] hover:border-[#7dd87d]/60"
               : "border-[#1a472a]/20 text-[#1a472a]/80 hover:text-[#1a472a] hover:border-[#1a472a]/40"
           }`}
           aria-label="Detect my bioregion from location"
@@ -183,10 +182,10 @@ export function BioregionMultiSelect({
       {/* Search input / trigger */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button type="button" className={triggerBase} aria-expanded={open}>
+          <button ref={triggerRef} type="button" className={triggerBase} aria-expanded={open}>
             <span className="flex items-center gap-1.5">
               <MapPin className="shrink-0 w-3.5 h-3.5 opacity-60" />
-              <span className={variant === "dark" ? "text-white/60" : "text-[#1a472a]/80"}>
+              <span className={variant === "dark" ? "text-white/80" : "text-[#1a472a]/80"}>
                 {isLoading ? "Loading…" : placeholder}
               </span>
             </span>
@@ -195,14 +194,17 @@ export function BioregionMultiSelect({
         </PopoverTrigger>
 
         <PopoverContent className="p-0 w-[320px]" align="start" style={{ zIndex: 9999 }}>
-          <Command>
-            <CommandInput
-              placeholder="Search bioregions…"
-              value={searchValue}
-              onValueChange={(v) => { setSearchValue(v); setSuggestDone(false); }}
-            />
-            <CommandList>
-              <CommandEmpty>
+          {/* A light list: opening it no longer mounts a component per
+              bioregion (STEERING.md section 13). The search text stays here,
+              so it survives closing and reopening. */}
+          <BioregionListbox
+            bioregions={bioregions}
+            isChosen={(id) => values.includes(id)}
+            chosenCheckClassName="opacity-100 text-[#7dd87d]"
+            onPick={handleToggle}
+            search={searchValue}
+            onSearchChange={(v) => { setSearchValue(v); setSuggestDone(false); }}
+            renderEmpty={() => (
                 <div className="px-3 py-3 space-y-2 text-center">
                   <p className="text-sm text-muted-foreground">No bioregion found.</p>
                   {searchValue.length >= 2 && (
@@ -216,7 +218,7 @@ export function BioregionMultiSelect({
                           setSuggestPending(true);
                           suggestMut.mutate({ name: searchValue });
                         }}
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-[#1a472a]/10 border border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a]/20 transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-[#1a472a]/10 border border-[#1a472a]/20 text-[#1a472a] hover:bg-[#1a472a]/20 dark:bg-[#7dd87d]/10 dark:border-[#7dd87d]/40 dark:text-[#7dd87d] dark:hover:bg-[#7dd87d]/20 transition-colors disabled:opacity-50"
                       >
                         <Plus className="w-3 h-3" />
                         Suggest "{searchValue}"
@@ -224,35 +226,8 @@ export function BioregionMultiSelect({
                     )
                   )}
                 </div>
-              </CommandEmpty>
-              <CommandGroup>
-                {bioregions.map((b) => {
-                  const isSelected = values.includes(b.id);
-                  return (
-                    <CommandItem
-                      key={b.id}
-                      value={b.name}
-                      onSelect={() => handleToggle(b.id)}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4 shrink-0",
-                          isSelected ? "opacity-100 text-[#7dd87d]" : "opacity-0"
-                        )}
-                      />
-                      <span className="flex-1 truncate">{b.name}</span>
-                      {(b.realm || b.subrealm) && (
-                        <span className="ml-2 text-xs text-muted-foreground truncate max-w-[120px]">
-                          {[b.subrealm, b.realm].filter(Boolean).join(" · ")}
-                        </span>
-                      )}
-                    </CommandItem>
-                  );
-                })}
-              </CommandGroup>
-            </CommandList>
-          </Command>
+            )}
+          />
         </PopoverContent>
       </Popover>
     </div>

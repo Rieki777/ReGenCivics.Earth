@@ -50,6 +50,9 @@ import { AdminVillageProfiles } from "@/components/admin/AdminVillageProfiles";
 import { buildProfile, type ProfileSources } from "@shared/projectProfile";
 import { toVillageFile } from "@shared/villageFile";
 import { cardText } from "@shared/boardCards";
+import { BioregionSelect } from "@/components/BioregionSelect";
+import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 export type Story = {
   title: string;
@@ -713,6 +716,39 @@ function SelfTestGoesAway() {
   );
 }
 
+/* ------------------------------------------------ bioregion pickers */
+
+const BIOREGIONS = [
+  { id: 15, name: "Alaska & Yukon Interior", realm: "Nearctic", subrealm: "Northern North America" },
+  { id: 21, name: "Amazon River Basin", realm: "Neotropical", subrealm: "South American Rainforests" },
+  { id: 31, name: "Andes Cloud Forests", realm: "Neotropical", subrealm: "Northern South America" },
+  { id: 22, name: "Atlantic Forest Brazil", realm: "Neotropical", subrealm: "South American Rainforests" },
+  { id: 41, name: "Baltic Sea & Eastern Baltic", realm: "Palearctic", subrealm: "Northern Europe" },
+  { id: 4, name: "California Coastal Sage & Chaparral", realm: "Nearctic", subrealm: "Southwestern North America" },
+  { id: 46, name: "Central Asian Steppes & Deserts", realm: "Palearctic", subrealm: "Central Asia" },
+  { id: 50, name: "Mesopotamia & Zagros", realm: "Palearctic", subrealm: "Middle East" },
+  { id: 81, name: "New Zealand Archipelago", realm: "Australasian", subrealm: "New Zealand" },
+  { id: 27, name: "Patagonian Steppe & Andes", realm: "Neotropical", subrealm: "Southern Cone" },
+  { id: 53, name: "Yellow Sea & Bohai Sea Coast", realm: "Palearctic", subrealm: "East Asia" },
+];
+
+/** A chosen picker (the audit opens it) above an empty one, as on the board. */
+function BioregionPickerDemo() {
+  const [value, setValue] = useState<number | null>(22);
+  const [filter, setFilter] = useState<number | null>(null);
+  return (
+    <div className="space-y-3">
+      <BioregionSelect value={value} onChange={setValue} variant="dark" />
+      <BioregionSelect value={filter} onChange={setFilter} placeholder="Any bioregion" variant="dark" />
+    </div>
+  );
+}
+
+function BioregionMultiDemo() {
+  const [values, setValues] = useState<number[]>([21, 31]);
+  return <BioregionMultiSelect values={values} onChange={setValues} placeholder="Add a bioregion…" variant="dark" />;
+}
+
 /** The profile page's own ground (PlayerProfile.tsx), around the Submissions tab. */
 function ProfileGround({ children }: { children: ReactNode }) {
   return (
@@ -953,6 +989,13 @@ export const STORIES: Record<string, Story> = {
           <button type="button" aria-pressed="true" className="min-h-11 rounded border-2 border-[#1a472a] px-3 font-semibold focus-visible:ring-2 focus-visible:ring-[#1a472a]">✓ Good on</button>
           <button type="button" aria-pressed="false" className="min-h-11 rounded border border-[#1a472a] px-3 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good off</button>
         </div>
+        {/* A search box drawn by its row: the row's line is its edge. */}
+        <div className="flex items-center gap-2 border-b border-[#e8e4de] px-2">
+          <input aria-label="Bad: a search row with a faint line" placeholder="Search" className="h-11 flex-1 bg-transparent outline-none placeholder:text-[#1a472a]/80" />
+        </div>
+        <div className="flex items-center gap-2 border-b border-[#1a472a] px-2">
+          <input aria-label="Good: a search row with a clear line" placeholder="Search" className="h-11 flex-1 bg-transparent outline-none placeholder:text-[#1a472a]/80" />
+        </div>
         {/* A hint under a field: the bad one isn't tied to its field, the good one is. */}
         <div>
           <label htmlFor="audit-hint-bad">Bad: who holds it</label>
@@ -976,6 +1019,23 @@ export const STORIES: Record<string, Story> = {
           <button type="submit" aria-disabled="true" className="min-h-11 rounded border border-[#1a472a] px-4 focus-visible:ring-2 focus-visible:ring-[#1a472a]">Good: Save, says why</button>
         </form>
         <SelfTestGoesAway />
+        {/* Rows in a list are tap targets like any button. */}
+        <div role="listbox" aria-label="Rows">
+          <div role="option" aria-selected="false" className="flex h-5 items-center px-2 text-sm">Bad: a 20px row</div>
+          <div role="option" aria-selected="false" className="flex min-h-11 items-center px-2 text-sm">Good: a 44px row</div>
+        </div>
+        {/* A layer portaled out of the story (a popover, a Select list, a
+            dialog) is measured too. On the dark popover fill, the dark words
+            fail and the light green ones pass. */}
+        <Popover open>
+          <PopoverAnchor asChild>
+            <span className="inline-block" />
+          </PopoverAnchor>
+          <PopoverContent align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+            <p className="text-[#1a472a]">Bad: dark words in a popover outside the story</p>
+            <p className="text-[#7dd87d]">Good: light green words in it</p>
+          </PopoverContent>
+        </Popover>
       </div>
     ),
   },
@@ -2023,6 +2083,51 @@ export const STORIES: Record<string, Story> = {
       <div className="bg-[#f0ebe3] p-4">
         <AdminVillageProfiles />
       </div>
+    ),
+  },
+
+  /** The bioregion picker (the board, multiplayer, a new post, the new-profile form), open: one chosen, another highlighted. Dark html. */
+  "bioregion-picker": {
+    title: "Bioregion picker: the open list, one bioregion chosen and another highlighted",
+    setup: () => {
+      mockData["bioregions.list"] = BIOREGIONS;
+    },
+    render: () => (
+      <ProfileGround>
+        <div className="max-w-sm">
+          <BioregionPickerDemo />
+        </div>
+      </ProfileGround>
+    ),
+  },
+
+  /** Profile settings: the several-choice picker, open with two chosen. */
+  "bioregion-multi-picker": {
+    title: "Profile settings: the bioregion picker for several, open with two chosen",
+    setup: () => {
+      mockData["bioregions.list"] = BIOREGIONS;
+    },
+    render: () => (
+      <ProfileGround>
+        <div className="max-w-sm">
+          <BioregionMultiDemo />
+        </div>
+      </ProfileGround>
+    ),
+  },
+
+  /** The same picker when nothing matches: Suggest the name typed. */
+  "bioregion-multi-empty": {
+    title: "Profile settings: no bioregion matches, Suggest it",
+    setup: () => {
+      mockData["bioregions.list"] = BIOREGIONS;
+    },
+    render: () => (
+      <ProfileGround>
+        <div className="max-w-sm">
+          <BioregionMultiDemo />
+        </div>
+      </ProfileGround>
     ),
   },
 };

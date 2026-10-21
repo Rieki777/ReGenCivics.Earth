@@ -5,12 +5,17 @@
  * gate". Each check's comment says what it guards and, where it came from a
  * miss, what slipped through first.
  *
+ * Page checks also measure every open popover, list, menu or dialog that
+ * portals out of a story into <body>.
+ *
  * Checks:
  *   contrast      text against the real background it sits on (WCAG 1.4.3)
  *   placeholder   placeholder text, 4.5:1
  *   typed text    what people type, against the field's fill
- *   field edge    text fields' outline or fill, 3:1 (WCAG 1.4.11)
- *   target        44px touch targets; links inside a sentence exempt
+ *   field edge    text fields' outline or fill (or the row line a bare search
+ *                 box sits on), 3:1 (WCAG 1.4.11)
+ *   target        44px touch targets, 24px for a mouse, list and menu rows
+ *                 included; links inside a sentence exempt
  *   keyboard      a role=button (link, checkbox...) that Tab can reach
  *                 (WCAG 2.1.1)
  *   overflow      sideways scroll
@@ -267,9 +272,25 @@ export function installAuditLib() {
     return [...el.parentElement.childNodes].some((n) => n !== el && n.nodeType === 3 && n.textContent.trim().length > 1);
   };
 
-  /** Every page-side check. Returns failure strings. */
+  // Layers that portal into <body>: popovers, menus and Select lists (Radix
+  // popper wrappers and item-aligned Select lists) and dialogs.
+  const PORTALED = "[data-radix-popper-content-wrapper], [role=listbox], [role=menu], [role=dialog], [role=alertdialog]";
+
+  /**
+   * Every page-side check, on the root and on each open layer portaled out of
+   * it. Returns failure strings. Miss that taught this (2026-10-21): an open
+   * popover renders into <body>, outside a story's root, so no story ever
+   * measured one; the bioregion picker's list hid a 1.8:1 Suggest button and
+   * 2:1 realm notes on its highlighted row.
+   */
   function auditPage(rootSel) {
     const root = document.querySelector(rootSel) || document.body;
+    const layers = [...document.querySelectorAll(PORTALED)].filter((el) => !root.contains(el) && visible(el));
+    const outermost = layers.filter((el) => !layers.some((other) => other !== el && other.contains(el)));
+    return [root, ...outermost].flatMap(auditRoot);
+  }
+
+  function auditRoot(root) {
     const failures = [];
     const seen = new Set();
 
@@ -346,7 +367,18 @@ export function installAuditLib() {
       const around = el.parentElement ? bgOf(el.parentElement) : WHITE;
       const fieldFill = fill && fill.a > 0 ? blend(fill, around) : around;
       const edge = width >= 1 && border ? blend(border, around) : fieldFill;
-      const r = Math.max(ratio(edge, around), ratio(fieldFill, around));
+      let r = Math.max(ratio(edge, around), ratio(fieldFill, around));
+      // A box with no edge or fill of its own, drawn by the row it sits in (a
+      // search box over a list: cmdk's input, the bioregion pickers): the
+      // row's bottom line is its edge, and it still needs 3:1 (2026-10-21).
+      if (r < 3 && !(width >= 1) && !(fill && fill.a > 0) && el.parentElement) {
+        const row = getComputedStyle(el.parentElement);
+        const line = parse(row.borderBottomColor);
+        if (parseFloat(row.borderBottomWidth) >= 1 && line) {
+          const outside = el.parentElement.parentElement ? bgOf(el.parentElement.parentElement) : WHITE;
+          r = Math.max(r, ratio(blend(line, outside), outside));
+        }
+      }
       if (r < 3) failures.push(`field edge ${r.toFixed(2)} < 3: "${label(el)}"`);
       if (el.value) {
         const ink = parse(cs.color);
@@ -364,7 +396,9 @@ export function installAuditLib() {
     const MIN = matchMedia("(pointer: coarse)").matches ? 44 : 24;
     // A <summary> is a control too: the admin export's "Each project's card"
     // disclosures were 16px tall and nothing here looked at them (2026-10-14).
-    for (const el of root.querySelectorAll("button, a[href], summary, input:not([type=hidden]), select, textarea, [role=radio], [role=checkbox], [role=button], [role=tab], [role=switch]")) {
+    // So is a row in a list or menu: the bioregion picker's rows were 32px on
+    // phones and nothing measured an option (2026-10-21).
+    for (const el of root.querySelectorAll("button, a[href], summary, input:not([type=hidden]), select, textarea, [role=radio], [role=checkbox], [role=button], [role=tab], [role=switch], [role=option], [role=menuitem], [role=menuitemcheckbox], [role=menuitemradio]")) {
       if (!visible(el) || opacityOf(el) < 0.05) continue;
       // The clickable area is the element plus everything inside it: a tap on
       // a child lands on the parent link. Miss that taught this: the site's
@@ -660,9 +694,10 @@ export async function revealAll(page) {
  * "Another project" all left focus on <body>, so a screen reader user lost
  * their place in a long stage (2026-10-15). The progress map's "Close detail"
  * did the same, and inside its focus trap the next Tab then left the map for
- * the page behind it (2026-10-20).
+ * the page behind it (2026-10-20). The bioregion picker's Clear became a real
+ * button (2026-10-21) and goes away with the value it clears.
  */
-const GOES_AWAY = [/^Cancel$/, /^Take back/, /^Another project$/, /^Close detail$/];
+const GOES_AWAY = [/^Cancel$/, /^Take back/, /^Another project$/, /^Close detail$/, /^Clear bioregion$/];
 
 export async function runFocusReturnChecks(page, rootSel, reset) {
   const out = [];

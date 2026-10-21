@@ -13,6 +13,16 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-21 (typing lag, pickers): a bioregion picker opens with about 100 renders, down from 730, and reads on phones
+
+- **Bioregion pickers** (the board, multiplayer, a new post, the new-profile form, and the multi-choice picker in profile settings): the list inside is now `client/src/components/BioregionListbox.tsx`, plain rows in place of a cmdk list that made each of the 87 bioregions a component. Opening one renders about 100 components, down from 726 on /board and /multiplayer and 730 on /profile; nearly all of the 100 are the popover itself.
+- **Same behaviour**: it ranks with cmdk's own scoring, and while typing forward tied rows keep the order the previous keystroke left them, as cmdk did; five searches typed a letter at a time on the old build and this one listed the same rows in the same order. Keys, hover and tap highlight, the check on chosen rows, the first match scrolled into view and focus going back to the search box are kept. Differences on purpose: after a backspace or a cleared search the rows are best match first (cmdk left returning rows wherever React put them), the search box and list have names, and Enter reaches the multi picker's Suggest button when nothing matches (cmdk swallowed it).
+- **Readable and tappable**: the realm note on the highlighted row went from 2.1:1 to 5.1:1, the Suggest button on the dark popover from 1.7:1 to about 9:1, and the location button and placeholders pass 4.5:1. Rows and the search box are 44px tall on phones, the line under the search box reaches 3:1, Clear is a real button beside the trigger that Tab reaches, a chip's remove button is 24px, and focus stays on the picker after either takes itself away.
+- **The audit sees popovers**: `pnpm ui:audit` now measures every open popover, list, menu or dialog a story portals into the page, sizes list and menu rows as targets, and counts the row line a bare search box sits on as its edge; the self-test proves each. Stories: `bioregion-picker`, `bioregion-multi-picker`, `bioregion-multi-empty`.
+- **The forum topic picker stays a Radix Select**: production has 22 topics, so opening it renders about 210 components; the scratch database's 111 test topics made it 1,012. Rebuilding Select's typeahead, focus and positioning would risk more than those renders cost.
+- **Guard**: STEERING.md section 13 gains the rule for long pickers.
+- Carryover (from Oct 20, still open): forum category pages and admin tab switches still mount long lists at once.
+
 ## 2026-10-20 (typing lag, every surface): forms, threads, menus, clocks and admin answer at once
 
 - **Why it still lagged after Oct 14**: keystrokes no longer waited behind background motion, but many pages still redid all their work on every keystroke, scroll tick or clock tick. A new post re-rendered 383 components per key, a forum thread 1,893 every three seconds at rest, the admin email writer 760 per key, the admin events editor 641.

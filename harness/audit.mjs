@@ -174,6 +174,27 @@ const BEFORE = {
     await page.evaluate(() => document.querySelectorAll("details").forEach((d) => { d.open = true; }));
     await page.waitForTimeout(200);
   },
+  // Bioregion pickers (2026-10-21): their lists open in a popover outside the
+  // story, which the page checks now measure too.
+  "bioregion-picker": async (page) => {
+    await page.locator("[data-harness-story] button[aria-expanded]").first().click();
+    const search = page.getByRole("combobox", { name: "Search bioregions" });
+    await search.waitFor({ timeout: 5_000 });
+    // The second row highlighted, with its realm note, and the chosen row checked.
+    await search.press("ArrowDown");
+    await page.waitForTimeout(200);
+  },
+  "bioregion-multi-picker": async (page) => {
+    await page.getByRole("button", { name: /Add a bioregion/ }).click();
+    await page.getByRole("combobox", { name: "Search bioregions" }).waitFor({ timeout: 5_000 });
+    await page.waitForTimeout(200);
+  },
+  "bioregion-multi-empty": async (page) => {
+    await page.getByRole("button", { name: /Add a bioregion/ }).click();
+    await page.getByRole("combobox", { name: "Search bioregions" }).fill("Hill Country");
+    await page.getByRole("button", { name: /Suggest "Hill Country"/ }).waitFor({ timeout: 5_000 });
+    await page.waitForTimeout(200);
+  },
 };
 
 fs.mkdirSync(SHOTS, { recursive: true });
