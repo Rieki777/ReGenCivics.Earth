@@ -20,6 +20,10 @@ import VillageOs from "@/pages/VillageOs";
 import { SeasonWheel } from "@/components/SeasonWheel";
 import { LivingTreeV2 } from "@/components/LivingTreeV2";
 import { LivingTree, type CapitalScores } from "@/components/LivingTree";
+import { ProgressMapSVG } from "@/components/ProgressMap/ProgressMapSVG";
+import { useProgressMap } from "@/components/ProgressMap/useProgressMap";
+import type { MapNode } from "@/components/ProgressMap/mapData";
+import ProgressMapOverlay from "@/components/ProgressMap/ProgressMap";
 import { SeasonalRhythmSection } from "@/components/SeasonalRhythmSection";
 import { CrowdpoolReadiness } from "@/components/CrowdpoolReadiness";
 import SessionBoard from "@/pages/SessionBoard";
@@ -41,6 +45,11 @@ import { needsSummary, projectCardLines, projectView } from "@shared/humanNeeds"
 import { SessionSubmissions } from "@/components/profile/SessionSubmissions";
 import { SessionBoardExport } from "@/components/admin/SessionBoardExport";
 import { Toaster } from "@/components/ui/sonner";
+import VillageProfile from "@/pages/VillageProfile";
+import { AdminVillageProfiles } from "@/components/admin/AdminVillageProfiles";
+import { buildProfile, type ProfileSources } from "@shared/projectProfile";
+import { toVillageFile } from "@shared/villageFile";
+import { cardText } from "@shared/boardCards";
 
 export type Story = {
   title: string;
@@ -550,8 +559,10 @@ function w4Carry() {
     ],
     rows: W4_CARRIED,
     asks: [
-      { id: 9101, week: 3, text: "How do I define short-term roles in a way that invites people to step into them?", project: "Lupine Hollow", createdAt: new Date(Date.now() - 7 * 86_400_000).toISOString() },
-      { id: 9102, week: 3, text: "How do we count contribution in a role-based economy?", project: "Toa Hermitage", createdAt: new Date(Date.now() - 7 * 86_400_000 + 60_000).toISOString() },
+      { id: 9101, week: 3, text: "How do I define short-term roles in a way that invites people to step into them?", project: "Lupine Hollow", createdAt: new Date(Date.now() - 7 * 86_400_000).toISOString(), chosen: false },
+      { id: 9102, week: 3, text: "How do we count contribution in a role-based economy?", project: "Toa Hermitage", createdAt: new Date(Date.now() - 7 * 86_400_000 + 60_000).toISOString(), chosen: false },
+      { id: 9103, week: 3, text: "Can a wallet hold the rewards for a quest?", project: "Living University Network", createdAt: new Date(Date.now() - 4 * 86_400_000).toISOString(), chosen: true },
+      { id: 9104, week: 3, text: "How do we register a rite of passage someone has already lived?", project: null, createdAt: new Date(Date.now() - 4 * 86_400_000 + 60_000).toISOString(), chosen: false },
     ],
   };
 }
@@ -769,6 +780,81 @@ const TREE_SCORES: CapitalScores = {
   cultural: 90, spiritual: 70, experiential: 110, healthVital: 95,
 };
 
+/**
+ * A player two steps into Land, one into Play and three into the Co-op,
+ * stored the way useProgressMap reads it ("regen-progress-map"), so the
+ * hook's own rules apply: the session joined on the Co-op path counts on
+ * Land and Ally too.
+ */
+const MAP_PROGRESS = { completedNodes: ["land-1", "land-2", "play-1", "fund-1", "fund-2", "fund-3"], visitedPages: [] as string[] };
+
+/** The map, and a line under it naming what was opened (the full map shows a card). */
+function ProgressMapStory() {
+  const progress = useProgressMap();
+  const [opened, setOpened] = useState<MapNode | null>(null);
+  return (
+    <div className="-m-6">
+      <div className="relative w-full aspect-[3/2]">
+        <ProgressMapSVG progress={progress} onNodeClick={setOpened} />
+      </div>
+      <p data-testid="map-opened" className="px-6 py-3 text-sm text-[#1a472a]">
+        {opened ? `Opened: ${opened.landmark}, ${opened.label}` : "Tap a landmark, or press Enter on it, to open it."}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * A Village profile in every state a steward meets (ADR-77): suggestions from
+ * the application and the boards, a name the stewards wrote, a confirmed
+ * block the boards have moved past, Village OS defaults, open launch
+ * decisions, and an earlier card to claim.
+ */
+const PROFILE_ROW = (id: number, block: string, text: string, projectId: number, createdAt = "2026-10-14T17:30:00Z") => ({ id, kind: "answer", block, text, projectId, createdAt });
+const PROFILE_SOURCES: ProfileSources = {
+  application: { id: 63, projectName: "Green Gulch Land Trust", location: "Marin, California", country: "United States", vision: "A land trust for twelve families", latitude: 37.9, intendedPeopleCount: 40, status: "approved" },
+  request: { villageName: "Green Gulch", tagline: null, memberWord: "Gulcher", timeZone: "America/Los_Angeles", preferredAddress: "green-gulch" },
+  tools: ["Hypha", "Hylo"],
+  weeks: [
+    { week: 2, cards: [{ id: 21, name: "Green Gulch Land Trust" }], rows: [], pains: ["Nobody owns the water schedule, so it slips every dry season"], opps: ["A seed library with the two farms down the road"], phase: "root", whereNow: "Land in sight, six of us living nearby, a lease being drafted.", nextMove: null },
+    { week: 3, cards: [{ id: 31, name: "Green Gulch Land Trust" }], rows: [
+      PROFILE_ROW(1, "needs", "vitality", 31), PROFILE_ROW(2, "needs", "love", 31), PROFILE_ROW(3, "needs", "growth", 31),
+      PROFILE_ROW(4, "top", "vitality", 31), PROFILE_ROW(5, "top", "love", 31),
+      PROFILE_ROW(6, "n-vitality", "unmet", 31), PROFILE_ROW(7, "g-vitality", "thriving", 31), PROFILE_ROW(8, "b-vitality", "100", 31),
+      PROFILE_ROW(9, "n-love", "alive", 31), PROFILE_ROW(10, "g-love", "satisfied", 31), PROFILE_ROW(11, "b-love", "75", 31),
+      PROFILE_ROW(12, "whole", "50", 31), PROFILE_ROW(13, "purpose", "twelve families living well on land we heal together", 31),
+      PROFILE_ROW(14, "rite", "A first season in a role, then a welcome circle", 31), PROFILE_ROW(15, "circles", "food", 31), PROFILE_ROW(16, "circles", "water", 31),
+    ], pains: [], opps: [], phase: null, whereNow: null, nextMove: null },
+    { week: 4, cards: [{ id: 41, name: "Green Gulch Land Trust" }], rows: [
+      PROFILE_ROW(17, "seat-1", cardText("seat", { name: "Water keeper", circle: "water", need: "vitality", aim: "Living water for every household", answersFor: "The spring, the catchment and the water schedule", heldBy: "open", who: "", contribution: "4 hours a week" }), 41, "2026-10-21T18:00:00Z"),
+      PROFILE_ROW(18, "seat-2", cardText("seat", { name: "Seed saver", circle: "food", need: "vitality", aim: "Seeds for every bed", answersFor: "The seed library", heldBy: "team", who: "Ana", contribution: "Two mornings a week" }), 41, "2026-10-21T18:05:00Z"),
+      PROFILE_ROW(19, "dec-1", cardText("decide", { circle: "water", decidesOn: "How the spring is shared in a dry year", how: "consent" }), 41, "2026-10-21T18:10:00Z"),
+      PROFILE_ROW(20, "quest-1", cardText("quest", { quest: "Map every seep and spring on the land with two neighbours", need: "vitality" }), 41, "2026-10-21T18:20:00Z"),
+      PROFILE_ROW(21, "entry", "Come to a work day, then a welcome circle", 41, "2026-10-21T18:25:00Z"),
+    ], pains: [], opps: [], phase: null, whereNow: null, nextMove: null },
+  ],
+  stored: {
+    "identity.name": { value: "Green Gulch", how: "answered", updatedAt: "2026-10-21T19:00:00Z" },
+    "seats.cards": { value: { seats: [] }, how: "confirmed", updatedAt: "2026-10-21T19:00:00Z" },
+    "economy.issuanceCap": { value: "declined", how: "answered", updatedAt: "2026-10-21T19:00:00Z" },
+  },
+};
+const PROFILE_FIXTURE = (() => {
+  const profile = buildProfile(PROFILE_SOURCES);
+  return {
+    profile,
+    claimable: [{ cardId: 88, week: 2, name: "Green Gulch", answers: 4, why: "yours" as const }],
+    claimed: [{ cardId: 21, week: 2, name: "Green Gulch Land Trust" }],
+    applicationStatus: "approved",
+    file: toVillageFile(profile, { now: new Date("2026-10-21T20:00:00Z") }),
+  };
+})();
+const PROFILE_SETUP = () => {
+  mockData["auth.me"] = SIGNED_IN;
+  mockData["villageProfile.mine"] = { projects: [{ applicationId: 63, projectName: "Green Gulch Land Trust", status: "approved" }] };
+  mockData["villageProfile.get"] = PROFILE_FIXTURE;
+};
+
 export const STORIES: Record<string, Story> = {
   /**
    * Meant to fail: one deliberately broken example per check, beside a good
@@ -789,7 +875,29 @@ export const STORIES: Record<string, Story> = {
           .audit-bg-slide { background: linear-gradient(90deg, #ffffff, #c8ecc8); background-size: 200% 100%; animation: audit-bg-slide 4s linear infinite; }
           @keyframes audit-blur-pulse { from { filter: blur(0); } to { filter: blur(2px); } }
           .audit-blur-pulse { animation: audit-blur-pulse 3s ease-in-out infinite alternate; }
+          .audit-svg-ring { display: none; }
+          .audit-svg-btn:focus-visible { outline: none; box-shadow: none; }
+          .audit-svg-btn:focus-visible .audit-svg-ring { display: inline; }
         `}</style>
+        {/* SVG buttons: Tab must reach them, and focus must show in what they
+            draw, since Safari paints no outline or box-shadow on a shape
+            inside an SVG. The second one leaves focus to the site's ring. */}
+        <svg width="240" height="60" viewBox="0 0 240 60" role="group" aria-label="SVG buttons" style={{ background: "#0a1a10" }}>
+          <g role="button" aria-label="Bad: an SVG button Tab never reaches">
+            <circle cx="30" cy="30" r="26" fill="#7dd87d" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Bad: SVG focus left to the outline">
+            <circle cx="90" cy="30" r="26" fill="#7dd87d" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Bad: a faint drawn ring" className="audit-svg-btn">
+            <circle cx="150" cy="30" r="22" fill="#7dd87d" />
+            <circle className="audit-svg-ring" cx="150" cy="30" r="27" fill="none" stroke="#1c2e22" strokeWidth="3" />
+          </g>
+          <g role="button" tabIndex={0} aria-label="Good: a drawn ring" className="audit-svg-btn">
+            <circle cx="210" cy="30" r="22" fill="#7dd87d" />
+            <circle className="audit-svg-ring" cx="210" cy="30" r="27" fill="none" stroke="#ffffff" strokeWidth="3" />
+          </g>
+        </svg>
         {/* Endless motion: the two bad ones run on the main thread, the good
             one (opacity on an ordinary element) runs on the compositor. */}
         <svg width="40" height="20" aria-hidden="true">
@@ -1392,6 +1500,33 @@ export const STORIES: Record<string, Story> = {
   },
 
   /**
+   * The progress map CommandPanel opens full screen (ProgressMapSVG), with
+   * landmarks done, open and locked on every path. The audit tabs to each
+   * open landmark and, on a phone, where the map is 390px wide and a
+   * landmark 23px, measures the hit disc each one carries.
+   */
+  "progress-map": {
+    title: "Progress map: landmarks done, open and locked on all four paths",
+    setup: () => {
+      localStorage.setItem("regen-progress-map", JSON.stringify(MAP_PROGRESS));
+    },
+    render: () => <ProgressMapStory />,
+  },
+
+  /**
+   * The same progress, full screen as CommandPanel opens it (ProgressMap),
+   * with The Great Terrace opened from the keyboard: its card takes focus,
+   * and "Close detail" hands focus back to the landmark.
+   */
+  "progress-map-open": {
+    title: "Progress map, full screen: The Great Terrace opened with Enter",
+    setup: () => {
+      localStorage.setItem("regen-progress-map", JSON.stringify(MAP_PROGRESS));
+    },
+    render: () => <ProgressMapOverlay onClose={() => {}} />,
+  },
+
+  /**
    * Week 3, stage 2 "Tap your project", as a guest on a phone: thirteen tiles
    * from this board, Week 2 and applications (so the filter shows), Toa
    * Hermitage picked. The audit taps "Change project" and opens "Add your
@@ -1623,77 +1758,104 @@ export const STORIES: Record<string, Story> = {
   /** Week 4, Your Week 3 card: last week's card, the gaps, last week's move, and Week 3's open questions. */
   "week4-carry": {
     title: "Week 4, Your Week 3 card: carried by application, gaps, did your move happen",
-    setup: () => week4Board(3),
+    setup: () => week4Board(4),
     render: () => <Week4Page />,
   },
 
   /** The same stage for the facilitator: a card found only by its name, waiting for a yes. */
   "week4-carry-host": {
     title: "Week 4, Your Week 3 card: the facilitator confirms a name match",
-    setup: () => week4Board(3, { facilitator: true, displayName: "Rye" }),
+    setup: () => week4Board(4, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 
   /** Your human needs: carried picks and seeds, an own human need, last week's other one to add, the copy. */
   "week4-needs": {
     title: "Week 4, Your human needs: carried picks, seeds with last week's answers, your own",
-    setup: () => week4Board(4),
+    setup: () => week4Board(5),
     render: () => <Week4Page />,
   },
 
   /** Circles for each human need, with last week's players under the row. */
   "week4-circles": {
     title: "Week 4, Circles for each human need: carried human needs, circles picked",
-    setup: () => week4Board(5),
+    setup: () => week4Board(6),
     render: () => <Week4Page />,
   },
 
   /** Seats in each circle: a seat held by the team, an open one, one held by a being; the add form open. */
   "week4-seats": {
     title: "Week 4, Seats in each circle: seats per human need, the add form open",
-    setup: () => week4Board(6),
+    setup: () => week4Board(7),
     render: () => <Week4Page />,
   },
 
   /** Who decides what: what a circle decides, what everyone decides, last week's way under the row. */
   "week4-decide": {
     title: "Week 4, Who decides what: circles and what they decide",
-    setup: () => week4Board(7),
+    setup: () => week4Board(8),
     render: () => <Week4Page />,
   },
 
   /** Your first quest: one saved, the form for another. */
   "week4-quests": {
     title: "Week 4, Your first quest",
-    setup: () => week4Board(8),
+    setup: () => week4Board(9),
     render: () => <Week4Page />,
   },
 
   /** Your Game, built: every project's card with Copy for Village OS, the card's text open. */
   "week4-built": {
     title: "Week 4, Your Game, built: the cards and Copy for Village OS",
-    setup: () => week4Board(9),
+    setup: () => week4Board(10),
     render: () => <Week4Page />,
   },
 
   /** The close with Week 4's numbers. */
   "week4-close": {
     title: "Week 4, Close: projects, human needs with a circle, seats, questions",
-    setup: () => week4Board(12),
+    setup: () => week4Board(13),
+    render: () => <Week4Page />,
+  },
+
+  /** Week 4 opens on every question from Week 3's board, oldest first (Rye, 2026-10-20). */
+  "week4-asks": {
+    title: "Week 4, Last week's questions: every Week 3 question, the notes, one asked today",
+    setup: () => {
+      week4Board(3, { rows: [...W4_ROWS, { id: 1201, kind: "ask", block: "s3", text: "Where do the quests live once our village is set up?", projectId: TOA, mine: true }] });
+      (mockData["sessionBoard.get"] as { notes: unknown[] }).notes = [
+        { topic: "How to practise this in our own context, and the legal structure for roles", displayName: "Justin Taylor", projectName: "Samara's Sanctuary Studios" },
+        { topic: "Peer review?", displayName: null, projectName: "Templeofroots.com" },
+      ];
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** The same stage for the facilitator: Answered on each Week 3 question. */
+  "week4-asks-host": {
+    title: "Week 4, Last week's questions: the facilitator marks each one Answered",
+    setup: () => week4Board(3, { facilitator: true, displayName: "Rye" }),
+    render: () => <Week4Page />,
+  },
+
+  /** The closing questions stage: today's wall, then what Week 3 still has open. */
+  "week4-questions": {
+    title: "Week 4, Your questions, and Week 5: Week 3's questions still open under today's",
+    setup: () => week4Board(11, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 
   /** A card found only by its name, before the facilitator's yes: the write stages wait (2026-10-15). */
   "week4-pending": {
     title: "Week 4, Seats in each circle: a card waiting on the facilitator, Start without Week 3",
-    setup: () => week4Board(6, { project: { cardId: LUPINE, name: "Lupine Hollow" } }),
+    setup: () => week4Board(7, { project: { cardId: LUPINE, name: "Lupine Hollow" } }),
     render: () => <Week4Page />,
   },
 
   /** The facilitator on a write stage: the cards found by name, confirmed wherever the room is. */
   "week4-seats-host": {
     title: "Week 4, Seats in each circle: the facilitator's cards found by name",
-    setup: () => week4Board(6, { facilitator: true, displayName: "Rye" }),
+    setup: () => week4Board(7, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 
@@ -1701,7 +1863,7 @@ export const STORIES: Record<string, Story> = {
   "week4-carry-two-same-name": {
     title: "Week 4, Your Week 3 card: the facilitator picks between two cards with one name",
     setup: () => {
-      week4Board(3, { facilitator: true, displayName: "Rye" });
+      week4Board(4, { facilitator: true, displayName: "Rye" });
       const carry = mockData["sessionBoard.carry"] as ReturnType<typeof w4Carry>;
       const lupine = carry.cards.find((c) => c.cardId === LUPINE)!;
       lupine.suggested = [
@@ -1715,14 +1877,14 @@ export const STORIES: Record<string, Story> = {
   /** A project new today: no "did last week's move happen", and a lede for starting fresh. */
   "week4-carry-fresh": {
     title: "Week 4, Your Week 3 card: a project new today",
-    setup: () => week4Board(3, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    setup: () => week4Board(4, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
     render: () => <Week4Page />,
   },
 
   /** Your human needs for a project new today: nothing named last week. */
   "week4-needs-fresh": {
     title: "Week 4, Your human needs: a project new today",
-    setup: () => week4Board(4, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
+    setup: () => week4Board(5, { fresh: true, project: { cardId: GULCH, name: "Green Gulch Land Trust" } }),
     render: () => <Week4Page />,
   },
 
@@ -1779,6 +1941,38 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="bg-[#f0ebe3] p-4">
         <SessionBoardExport />
+      </div>
+    ),
+  },
+  /** Your Village OS 1.0 (ADR-77): every decision's state, the file, a card to claim. Public, dark html. */
+  "village-profile": {
+    title: "Your Village OS 1.0: a steward's profile, every state",
+    setup: PROFILE_SETUP,
+    render: () => <VillageProfile />,
+  },
+
+  /** The same page with a steward writing their own answer. */
+  "village-profile-editing": {
+    title: "Your Village OS 1.0: writing your own answer",
+    setup: PROFILE_SETUP,
+    render: () => <VillageProfile />,
+  },
+
+  /** Admin > Events: every project's profile at a glance, after "See every project's profile". Light theme. */
+  "admin-village-profiles": {
+    title: "Admin > Events: Village profiles",
+    setup: () => {
+      mockData["villageProfile.adminList"] = {
+        profiles: [
+          { applicationId: 63, projectName: "Green Gulch Land Trust", status: "approved", weeks: [2, 3, 4], launch: { total: 9, ready: 3 }, yours: 3, suggested: 12 },
+          { applicationId: 64, projectName: "Casa Semilla", status: "under_review", weeks: [3], launch: { total: 9, ready: 1 }, yours: 0, suggested: 6 },
+          { applicationId: 68, projectName: "Hill Farm", status: "submitted", weeks: [], launch: { total: 9, ready: 1 }, yours: 0, suggested: 3 },
+        ],
+      };
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminVillageProfiles />
       </div>
     ),
   },

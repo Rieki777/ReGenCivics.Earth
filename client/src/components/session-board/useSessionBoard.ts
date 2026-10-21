@@ -1119,6 +1119,21 @@ export function useSessionBoard(week: number) {
           return r;
         });
       },
+      /**
+       * Facilitator: mark a question from an earlier week's board Answered (or
+       * not), on that week's board, from this one ("Last week's questions").
+       * Resolves true when it saved; the carry read follows.
+       */
+      answerEarlierAsk: async (input: { week: number; itemId: number; chosen: boolean }): Promise<boolean> => {
+        try {
+          await curateItemM.mutateAsync(input);
+          void utils.sessionBoard.carry.invalidate({ week });
+          return true;
+        } catch (err) {
+          toast.error(err instanceof Error && err.message ? err.message : "That didn't save. Try again.");
+          return false;
+        }
+      },
       promote: (itemId: number) => {
         writer.fifo(`promote:${itemId}`, () => {}, () => promoteM.mutateAsync({ week, itemId }));
       },

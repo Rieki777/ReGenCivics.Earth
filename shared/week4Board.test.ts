@@ -90,16 +90,21 @@ const SEAT: SeatCard = {
 describe("week 4's run of show", () => {
   const stages = boardStages(4);
 
-  it("runs 14 stages, 120 minutes, the seats stage the longest, Village OS last", () => {
+  it("runs 15 stages, 120 minutes, opening on last week's questions, the seats stage the longest, Village OS last", () => {
     expect(stages.map((s) => s.name)).toEqual([
-      "Welcome", "Tap your project", "Drop in", "Your Week 3 card", "Your human needs", "Circles for each human need",
+      "Welcome", "Tap your project", "Drop in", "Last week's questions", "Your Week 3 card", "Your human needs", "Circles for each human need",
       "Seats in each circle", "Who decides what", "Your first quest", "Your Game, built", "Your questions, and Week 5",
       "Tell us", "Close", VILLAGE_OS_OFFER.board.title,
     ]);
-    expect(stages.map((s) => s.min)).toEqual([4, 4, 5, 10, 12, 12, 30, 12, 7, 9, 8, 4, 2, 1]);
+    expect(stages.map((s) => s.min)).toEqual([3, 4, 5, 12, 7, 11, 11, 30, 10, 7, 7, 6, 4, 2, 1]);
     expect(sessionMinutes(defaultBoardState(4).plan, stages)).toBe(120);
-    expect(stages.filter((s) => s.kind === "needs").map((s) => s.step)).toEqual(["carry", "confirm", "circles", "seats", "decide", "quests", "room"]);
+    expect(stages.filter((s) => s.kind === "needs").map((s) => s.step)).toEqual(["asks", "carry", "confirm", "circles", "seats", "decide", "quests", "room"]);
     expect(Math.max(...stages.map((s) => s.min))).toBe(30);
+    // The closing questions stage also lists whatever Week 3 still has open.
+    expect(stages.find((s) => s.name === "Your questions, and Week 5")?.earlierAsks).toBe(true);
+    // The role questions are answered on the new stage, not on Your Week 3 card.
+    expect(stages[3].cues?.join(" ")).toMatch(/role questions/);
+    expect(stages[4].cues?.join(" ")).not.toMatch(/role questions/);
   });
 
   it("the welcome says Part 2 of 2, the practical half, and what each project leaves with", () => {

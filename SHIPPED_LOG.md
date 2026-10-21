@@ -20,6 +20,45 @@ Add new entries to the top. Format per entry:
 - **The older game tree** (`components/game/LivingTree.tsx` and its `tree-breathe` CSS), imported nowhere, is deleted.
 - The Campaign Details card is pixel-identical before and after, and the end-to-end run (Create, the coach's opening draft, template, import, the payload) and a currency and land status check pass on both builds.
 
+## 2026-10-20 (progress map): every landmark opens from the keyboard and takes a finger on a phone
+
+- **Keyboard**: each open or done landmark on the progress map (CommandPanel's "View Map") is a button. Tab reaches it, Enter or Space opens it, and focus draws a white ring in the map itself, since Safari paints no outline on a shape inside an SVG. Its name shows above every landmark on hover or keyboard focus. Opening one moves focus to its card, and "Close detail" hands focus back to the landmark (it used to fall to the page behind the map).
+- **Phones**: on a 390px phone a landmark is drawn 23px wide. Each open one carries an invisible hit disc 44px across at whatever size the map is drawn, cut where another landmark is nearer, so a tap goes to the nearest landmark (`ProgressMap/hitArea.ts`). Locked landmarks tell a screen reader they are locked, stay out of the tab order, and do nothing when tapped (they used to open a card offering "Go there").
+- **The audit learned three checks**, each proven by the self-test: a role=button that Tab can't reach, focus on an SVG shape that only an outline or box-shadow would show, and focus lost after "Close detail".
+- Stories: `progress-map` (Enter, Space and a phone tap beside a landmark all open it) and `progress-map-open` (the full-screen map and its card).
+- Carryover: on a phone the right side's landmarks sit 13 to 33px apart, so where two are open each keeps less than 44px of its own. Only a layout change fixes that: a phone map that fills the height and pans, or more room between those landmarks. `QuestArcMap` has the same SVG focus gap and animates SVG shapes forever.
+
+## 2026-10-20 (CI flake): a steward's draft save survives a deadlock
+
+- **What broke**: CI run 38711957492 failed once in `server/campaign-send-back.test.ts`. A draft save (`campaigns.updateDraft`) died with ER_LOCK_DEADLOCK on the Well pump's row and answered 500. It changed its needs in the order the page lists them (by category), so it held two of them when it asked for the pump, the lowest id. `campaign_items` has no campaignId index, so every lock "by campaign" (the close, a cancel, the example window, `recomputeCampaignValueTotals`, test teardowns) scans the whole table in id order.
+- **Lock order**: the save locks its needs by primary key, lowest id first, right after the campaign row.
+- **Runs again after a deadlock**: `server/lib/deadlock-retry.ts` (`withDeadlockRetry`) runs a transaction the database rolled back to end a deadlock again, three runs at most. The save checks everything again each run, so a co-steward who saved first still gets CONFLICT.
+- **The suite keeps to its own rows**: its teardown deletes needs by primary key, and its image test lands the image itself, so no timer is left running in the mock.
+- Two new DB tests hold a real lock from a second connection; on the old code both fail, the first with CI's exact error. On scratch: the suite passed in five parallel runs of all 37 campaign DB suites, and `pnpm test:integration` passed three runs in a row.
+- Carryover: other suites still tear down needs `WHERE campaignId ...`, which locks every suite's needs (an index on `campaign_items.campaignId` would end the whole class); `cancelCampaign`'s transaction has no retry, and on the scratch MariaDB it hit ER_CHECKREAD once in five runs.
+
+## 2026-10-20 (Village profiles): every episode builds one village, and each project's stewards keep what goes in
+
+- **One profile per land project** (ADR-77, Rye's six calls of 2026-10-20). It is keyed by the project's Season 2 application, and gathers its application, its hosting request, its tools and every weekly board's answers. The boards are merged with Week 4's rule (the latest week wins each question), and the profile follows Week 4's carry links back through the weeks.
+- **One list of every Village OS 1.0 decision** (`shared/villageDecisions.ts`): where each lands in Village OS, the weeks that ask it, Village OS's default, and whether launch waits on it. About fifteen decisions have no default; the rest show as "Village OS default". Week 5 hands each project a purpose drafted in Village OS's five parts from its own answers.
+- **Stewards keep what goes in**, at `/apply/village` (linked from `/apply/status`). Board answers are suggestions until a steward presses Keep this or writes their own. Keep this keeps exactly what the page showed. The page says when the boards move on, and every answer passes Village OS's own checks (80 words for the purpose, the address, currency and timezone formats).
+- **Earlier cards can be claimed**: one a steward wrote, or one with the project's name that nobody owns. A card a facilitator or admin made counts as nobody's (claimable by name only), and a steward's card named for another applicant is that project's. A guest's card waits for a facilitator. Every claim is recorded and can be given back.
+- Same evening, from the coordinator's review: the claim rule above (the first version offered a facilitator who is also a steward every facilitator-made card as "yours"); the 1.0 file's hint now says stewards send the file to their hosting team themselves, matching the hosting consent; the status page links the profile only for Season 2 applications; the token-name hint lost its contrast framing.
+- **The 1.0 file** (`regen-civics/village@1`, with Week 4's card inside) carries only the stewards' own answers, links only inside the human needs they kept, and notes for what founders set by hand. No money figure, and payments, exchange, redemption, stays and the crowdpool view start off. Admin, Events lists every project's profile.
+- Reviewed through three lenses before shipping (security and access, the real Week 2 and 3 data, Village OS main and the copy rules); every finding fixed. Migration 0301 (two tables).
+- Source: `docs/planning/village-profile/VILLAGE_PROFILE_PLAN.md`.
+- Carryover:
+  - the Village OS importer "Start from your ReGen Civics profile" (its own session, village-os repo);
+  - later weeks' boards asking only each project's open decisions;
+  - consent line for weekly answers travelling into a hosted village draft: for the Legal session to word before the hosting team drafts from a profile;
+  - quest progress that follows the player (proposed).
+
+## 2026-10-20 (Season 2 Week 4): the session opens on last week's questions
+
+- **"Last week's questions"**, a new stage right after Drop in (Rye: "start it off with answering all the questions added to last week's page"). Every question added to Week 3's board, oldest first, with its project; the facilitator's Answered marks it on Week 3's own board, and every screen shows the mark within 20 seconds. The notes people asked us to cover and anything asked today sit under it, with the box for new questions.
+- **12 minutes**, taken from Welcome, Your Week 3 card, Your human needs, Circles, Who decides what, Your Game built and the closing questions; the session stays 120 minutes. Week 4's board had never been saved (version 0), so no planned minutes moved.
+- The role questions cue moves to the new stage, and the closing questions stage also lists whatever Week 3 still has open.
+
 ## 2026-10-15 (Season 2 Week 4, second pass): two independent reviews folded in before Wednesday
 
 - **Half-written cards are kept**: a seat, own human need, decision or quest being written survives the room moving on, the rail, and opening another form (page memory only), and the screen holds on its stage while one is unsaved. Enter moves to the next field (a phone's key reads Next); only Save, or Enter on a card's last line, saves.

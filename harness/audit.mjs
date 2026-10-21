@@ -25,6 +25,10 @@ const VIEWPORTS = [
   { name: "mobile", width: 390, height: 844, touch: true },
 ];
 const ROOT = "[data-harness-story]";
+// How long a story may take to load. Other worktrees' typechecks can pin this
+// machine's CPU, and a 30 second load limit then failed every story with
+// nothing wrong in it (2026-10-20). AUDIT_LOAD_MS changes it.
+const LOAD_MS = Number(process.env.AUDIT_LOAD_MS ?? 120_000);
 
 const storySrc = fs.readFileSync(path.join(here, "stories.tsx"), "utf8");
 const block = storySrc.split("export const STORIES")[1] ?? "";
@@ -71,9 +75,9 @@ const BEFORE = {
     await page.getByRole("textbox", { name: "What it works toward" }).fill("Seeds for every bed");
     await page.getByRole("button", { name: "Someone on our team holds it" }).click();
     // A half-written seat survives leaving the stage and coming back (week3/drafts.ts).
-    await page.locator(".sb-rail-btn").nth(5).click();
-    await page.waitForTimeout(200);
     await page.locator(".sb-rail-btn").nth(6).click();
+    await page.waitForTimeout(200);
+    await page.locator(".sb-rail-btn").nth(7).click();
     await page.waitForTimeout(300);
     const kept = await page.getByRole("textbox", { name: "Seat name" }).inputValue().catch(() => "");
     const aim = await page.getByRole("textbox", { name: "What it works toward" }).inputValue().catch(() => "");
@@ -105,6 +109,17 @@ const BEFORE = {
     await page.getByRole("button", { name: /Add what a circle decides: Food & Fertility/ }).click();
     await page.waitForTimeout(200);
   },
+  // Village profile (ADR-77): a steward writing their own words, and the purpose with its word count.
+  "village-profile-editing": async (page) => {
+    await page.getByRole("listitem").filter({ hasText: "Its tagline" }).getByRole("button", { name: "Write your own" }).click();
+    await page.getByRole("textbox", { name: "Its tagline" }).fill("Twelve families living well on healed land");
+    await page.getByRole("listitem").filter({ hasText: "Your governing purpose" }).getByRole("button", { name: "Write your own" }).click();
+    await page.waitForTimeout(200);
+  },
+  "admin-village-profiles": async (page) => {
+    await page.getByRole("button", { name: "See every project's profile" }).click();
+    await page.getByRole("table").waitFor({ timeout: 5_000 });
+  },
   "week4-built": async (page) => {
     await page.getByText("Show what's in it").first().click();
     await page.waitForTimeout(200);
@@ -120,6 +135,38 @@ const BEFORE = {
   },
   "profile-guest-claim": async (page) => {
     await page.locator("[data-sonner-toast]").first().waitFor({ timeout: 5_000 });
+  },
+  // The progress map (2026-10-20): Enter and Space open a landmark, and a tap
+  // beside one, inside its 44px disc, opens it too. On a phone the Trailhead
+  // is drawn 23px wide, so 16px left of its centre is off the picture.
+  "progress-map": async (page) => {
+    const opened = page.getByTestId("map-opened");
+    await page.getByRole("button", { name: /^Seed Vault/ }).focus();
+    await page.keyboard.press("Enter");
+    if (!/Seed Vault/.test(await opened.innerText())) throw new Error("Enter on a landmark didn't open it");
+    await page.getByRole("button", { name: /^Gathering Grove/ }).focus();
+    await page.keyboard.press(" ");
+    if (!/Gathering Grove/.test(await opened.innerText())) throw new Error("Space on a landmark didn't open it");
+    const map = page.locator("[data-harness-story] svg").first();
+    await map.scrollIntoViewIfNeeded();
+    const box = await map.boundingBox();
+    const s = Math.min(box.width / 1200, box.height / 800);
+    const x = box.x + (box.width - 1200 * s) / 2 + 150 * s - 16;
+    const y = box.y + (box.height - 800 * s) / 2 + 650 * s;
+    if (await page.evaluate(() => matchMedia("(pointer: coarse)").matches)) await page.touchscreen.tap(x, y);
+    else await page.mouse.click(x, y);
+    if (!/Trailhead/.test(await opened.innerText())) throw new Error("a tap 16px beside the Trailhead, inside its disc, didn't open it");
+    await page.waitForTimeout(200);
+  },
+  "progress-map-open": async (page) => {
+    await page.getByRole("button", { name: /^The Great Terrace/ }).focus();
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(200);
+    const at = await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.tagName);
+    if (!/^The Great Terrace/.test(at ?? "")) throw new Error(`Enter on a landmark left focus on ${at}, not its card`);
+    await page.keyboard.press("Tab");
+    const next = await page.evaluate(() => document.activeElement?.getAttribute("aria-label"));
+    if (next !== "Close detail") throw new Error(`Tab from the card went to ${next}, not its Close`);
   },
   "admin-session-export": async (page) => {
     await page.getByRole("button", { name: /See each week's summary/ }).click();
@@ -142,8 +189,8 @@ for (const story of stories) {
     try {
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e)));
-    await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle" });
-    await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: 10_000, state: "attached" });
+    await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle", timeout: LOAD_MS });
+    await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: LOAD_MS, state: "attached" });
     // The app runs public pages with <html class="dark"> and admin light
     // (App.tsx ThemeProvider). Miss that taught this: shared components carry
     // dark: styles, so stories measured without the class passed while the
@@ -161,8 +208,8 @@ for (const story of stories) {
     // Then the controls that take themselves away, each on a fresh copy of the story.
     if (vp.name === "desktop") {
       failures.push(...(await runFocusReturnChecks(page, ROOT, async () => {
-        await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle" });
-        await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: 10_000, state: "attached" });
+        await page.goto(`http://localhost:${port}/?story=${story}`, { waitUntil: "networkidle", timeout: LOAD_MS });
+        await page.waitForSelector(`[data-harness-story="${story}"]`, { timeout: LOAD_MS, state: "attached" });
         if (!/^(admin|alliance-admin|alliance-inquiry)/.test(story)) await page.evaluate(() => document.documentElement.classList.add("dark"));
         await page.waitForTimeout(400);
         if (BEFORE[story]) await BEFORE[story](page);

@@ -371,7 +371,7 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 
 **Session board**. The live board for one weekly Season episode, at `/season2/week/:week` (weeks 2 to 13), linked under its week wherever the Season's schedule is listed. Shown on the facilitator's screen and open on everyone's own device at once. What lands on it stays as the week's record: the Season's memory. Defined in `shared/sessionBoard.ts`.
 
-**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, A Game we build together, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has ten of these; Week 3 has its own eighteen (check-in, prompt and needs stages, ADR-74); Week 4 its own fourteen (ADR-76); other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
+**Stage** (on a board). One screen the room moves through together, with planned minutes: welcome, drop in, the open season, Building in Village OS, A Game we build together, project circle, harvest, seed the game, roundtables ahead, close. Week 2 has ten of these; Week 3 has its own eighteen (check-in, prompt and needs stages, ADR-74); Week 4 its own fifteen (ADR-76); other weeks use a six-stage default until they get their own. Not a Season (Design, Resource, Build, Rest) and not a project phase.
 
 **Offer** (on a board). A hand raised on the "A Game we build together" stage to coach a village or build a module, stored as a board vote (`offer:coach`, `offer:build`). Everyone sees the counts; only the facilitator sees who, by account name, with guests as a count, folded until opened since their screen is the one shown on the stream. An offer is interest, not a commitment or a contract.
 
@@ -400,6 +400,8 @@ The hub-side pipeline (ADR-46, matching amended by ADR-47) that carries on-chain
 **Seat** (on a board, ADR-76). One role in a circle, written so someone could say yes to it: its name, what it works toward, the human need it meets, what it answers for, who holds it (someone on the team, open as an invitation, or a being with someone speaking for it), and what it asks (hours a week or a clear contribution). Ends with the season unless said otherwise, so a short-term role is just a seat.
 
 **Copy for Village OS** (ADR-76). The button that copies a project's card, Week 3 and Week 4 together, as JSON Village OS can read: its `needs` list is the body of Village OS's needs scope write, then the whole-project figure, circles, seats with their need links, decisions and quests.
+
+**Village profile** (ADR-77). One land project's Village OS 1.0 taking shape: everything it said on its application, its hosting request and every weekly board, gathered into the decisions its Village OS launches with (shared/villageDecisions.ts). Keyed by the project's Season 2 application. Board answers are suggestions until one of its stewards keeps them or writes their own; only those go into its **1.0 file** ("regen-civics/village@1"), which Village OS loads as a draft for the founders. Stewards open it at /apply/village. Not the person's player profile.
 
 **Weekly sessions** (under Submissions). The section of a signed-in person's profile, Submissions tab, that lists every board they wrote on, week by week, with their projects and answers. A guest's answers join it when they sign in on the same browser and say yes.
 
