@@ -83,6 +83,17 @@ Add new entries to the top. Format per entry:
   - consent line for weekly answers travelling into a hosted village draft: for the Legal session to word before the hosting team drafts from a profile;
   - quest progress that follows the player (proposed).
 
+## 2026-10-21 (Season 2 Week 4, after the session): every week's board on every last page, what you told us, one focus each, and Vision, Patterns and Legal for Week 5
+
+- **Every week's board** (Rye): the last page of every board, "Get your Village OS", now lists every week whose session has started, each a link to its board, with "You're here" on the board's own week. It grows on its own each week. Week 1 has no board (Selection Day ran before boards existed), so it isn't listed.
+
+- Rye approved five changes the night before; the request reached the board lane after the 09:00 freeze, so the room got them live from the facilitator, and the board gets them for the record after the session:
+  - **The welcome says back what Week 3's board told us** ("a lot to do", go deeper, most of all on roles), with a cue to say it aloud.
+  - **One focus per project**: "Your Week 3 card" asks each project to pick the one thing it most wants to leave with today and put its energy there.
+  - **Vision, Patterns and Legal** join "What do you want to work on in Week 5?" (asked for in the Season box by Samara's Sanctuary Studios and Living University Network). Legal structures still have their home in Weeks 10 and 11.
+- More room for roles (5 minutes from the quest to the seats) was made live with the run of show's minute buttons: Week 4's board had saved its plan, which code can't change.
+- Living University Network (99 Week 3 answers) carries by its Week 3 tile, and its five questions are among the 13 on "Last week's questions".
+
 ## 2026-10-20 (Season 2 Week 4): the session opens on last week's questions
 
 - **"Last week's questions"**, a new stage right after Drop in (Rye: "start it off with answering all the questions added to last week's page"). Every question added to Week 3's board, oldest first, with its project; the facilitator's Answered marks it on Week 3's own board, and every screen shows the mark within 20 seconds. The notes people asked us to cover and anything asked today sit under it, with the box for new questions.

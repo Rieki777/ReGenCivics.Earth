@@ -1036,6 +1036,9 @@ export const STORIES: Record<string, Story> = {
             <p className="text-[#7dd87d]">Good: light green words in it</p>
           </PopoverContent>
         </Popover>
+        {/* A bordered box: the bad one lost its padding, so its words sit on the border. */}
+        <div className="rounded-xl border border-[#1a472a]" style={{ padding: 0 }}><p>Bad: words on the border</p></div>
+        <div className="rounded-xl border border-[#1a472a] p-4"><p>Good: words with room</p></div>
       </div>
     ),
   },
@@ -1924,6 +1927,29 @@ export const STORIES: Record<string, Story> = {
   "week4-close": {
     title: "Week 4, Close: projects, human needs with a circle, seats, questions",
     setup: () => week4Board(13),
+    render: () => <Week4Page />,
+  },
+
+  /** The last page, with every week's board linked (Rye, 2026-10-21). */
+  "week4-village": {
+    title: "Week 4, Get your Village OS: the last page, with every week's board",
+    setup: () => {
+      week4Board(14);
+      // Weeks 2 and 3 have run; Week 5 hasn't, so it stays off the list.
+      const sched = mockData["seasonSchedule.state"] as { sessions: { week: number; title: null; startTime: string; endTime: string; status: string }[] };
+      const at = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+      sched.sessions.unshift(
+        { week: 2, title: null, startTime: at(14), endTime: at(14), status: "done" },
+        { week: 3, title: null, startTime: at(7), endTime: at(7), status: "done" },
+      );
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** Week 4's welcome, saying back what Week 3's board told us (Rye, 2026-10-21). */
+  "week4-welcome": {
+    title: "Week 4, Welcome: what you told us last week, then the run of show",
+    setup: () => week4Board(0, { facilitator: true, displayName: "Rye" }),
     render: () => <Week4Page />,
   },
 

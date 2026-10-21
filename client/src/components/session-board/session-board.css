@@ -371,6 +371,13 @@ button.sb-mic[data-listening="true"] { background: var(--sb-spring) !important; 
 .sb-vos-link { font-family: var(--sb-display); font-weight: 700; font-size: clamp(24px, 2.4vw + 6px, 44px); color: var(--sb-spring-ink); text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; overflow-wrap: anywhere; min-width: 0; }
 .sb-vos-link:hover { color: var(--sb-spring-hover); }
 .sb-vos-link:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 4px; border-radius: 4px; }
+/* Every week's board, under Open it on your own screen (2026-10-21). */
+.sb-board-weeks { display: grid; gap: 10px; }
+.sb-board-weeks-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.sb-week-link { display: inline-flex; align-items: center; min-height: 44px; color: var(--sb-spring-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; overflow-wrap: anywhere; }
+.sb-week-link:hover { color: var(--sb-spring-hover); }
+.sb-week-link:focus-visible { outline: 2px solid var(--sb-spring); outline-offset: 2px; border-radius: 4px; }
+.sb-week-here { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-height: 44px; font-weight: 700; color: var(--sb-ink); }
 
 /* ---------- foot ---------- */
 .sb-foot { display: flex; align-items: center; gap: 12px; padding-block: 10px; padding-inline: clamp(16px, 3vw, 40px); padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--sb-ground-2); border-top: 1px solid var(--sb-line); }
