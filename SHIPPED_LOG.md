@@ -13,6 +13,14 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-20 (progress map): every landmark opens from the keyboard and takes a finger on a phone
+
+- **Keyboard**: each open or done landmark on the progress map (CommandPanel's "View Map") is a button. Tab reaches it, Enter or Space opens it, and focus draws a white ring in the map itself, since Safari paints no outline on a shape inside an SVG. Its name shows above every landmark on hover or keyboard focus. Opening one moves focus to its card, and "Close detail" hands focus back to the landmark (it used to fall to the page behind the map).
+- **Phones**: on a 390px phone a landmark is drawn 23px wide. Each open one carries an invisible hit disc 44px across at whatever size the map is drawn, cut where another landmark is nearer, so a tap goes to the nearest landmark (`ProgressMap/hitArea.ts`). Locked landmarks tell a screen reader they are locked, stay out of the tab order, and do nothing when tapped (they used to open a card offering "Go there").
+- **The audit learned three checks**, each proven by the self-test: a role=button that Tab can't reach, focus on an SVG shape that only an outline or box-shadow would show, and focus lost after "Close detail".
+- Stories: `progress-map` (Enter, Space and a phone tap beside a landmark all open it) and `progress-map-open` (the full-screen map and its card).
+- Carryover: on a phone the right side's landmarks sit 13 to 33px apart, so where two are open each keeps less than 44px of its own. Only a layout change fixes that: a phone map that fills the height and pans, or more room between those landmarks. `QuestArcMap` has the same SVG focus gap and animates SVG shapes forever.
+
 ## 2026-10-20 (CI flake): a steward's draft save survives a deadlock
 
 - **What broke**: CI run 38711957492 failed once in `server/campaign-send-back.test.ts`. A draft save (`campaigns.updateDraft`) died with ER_LOCK_DEADLOCK on the Well pump's row and answered 500. It changed its needs in the order the page lists them (by category), so it held two of them when it asked for the pump, the lowest id. `campaign_items` has no campaignId index, so every lock "by campaign" (the close, a cancel, the example window, `recomputeCampaignValueTotals`, test teardowns) scans the whole table in id order.
