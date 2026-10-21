@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-20 (Season Wheel): the FALL label reads on every sky, and the audit sees what is behind words
+
+- **A lighter ember for small words**: the season palette gains `text` (`client/src/lib/seasonLook.ts`), the color for small dimmed words in a season's color. It is each season's own color except fall's, `#ffb980`. The wheel's corner labels and the season line above its panel use it; the palette everywhere else is unchanged. Measured from the real pixels behind the FALL label in every chosen season at 1280 and 390 wide, the old ember read 3.2:1 (summer sky) to 3.8:1 (winter); the new one reads 4.7:1 or more. In the fall season the panel's "· FALL" read 3.8:1, now over 4.5:1.
+- **The audit sees backdrops laid beside words**: `bgOf` in `harness/audit-checks.mjs` used to walk ancestors only and take a gradient's first colour. The wheel's skies are absolutely placed layers beside its words, so its story measured white on white (33 false findings), and /seasons measured the FALL label against the page's darkest green (4.38:1, really 3.2 to 3.9). It now counts a positioned sibling layer under the words (z-index, DOM order and its own opacity) and reads linear and radial gradients where the words sit, mixed the way the browser mixes them. Text that is only emoji is no longer measured, since emoji paint in their own colours (the 🌕 on /team's moon bar measured 1.00:1 once the bar was read where it sits).
+- Self-test: four bad cases, each beside a good one (dark words on a dark layer beside them, light words on a gradient's pale end, light words inside a glow, words the colour of their bar beside an emoji that is not measured).
+- Stories: `season-wheel-summer` (the sky where the dimmed FALL label is closest to the line) and `season-wheel-fall`.
+- **Every other story**, measured with main's check and this one on the same page loads: nothing changed except findings that were hidden before, all of them text on the lighter middle of a page-length gradient. They are on /tools (`tools-library-cards`, desktop), /team (`team-season-rhythm`), the profile's weekly sessions (`profile-weekly-sessions`, `profile-guest-claim`) and /interop's name field (`interop-paused`, phone). The progress map stories, whose focus check uses the same lookup, still pass.
+- Carryover: those findings, for their own session.
+
 ## 2026-10-20 (typing lag, part 3): a key in the campaign details re-renders only its own field
 
 - **Campaign details**: inside the card, each field is memoized with a stable change handler, and the template and import dialogs, the currency picker and the land status select are their own memoized pieces. Each field reads a dialog context and runs the IME composition hook when it renders, so before this all fourteen ran on every key.
