@@ -11,6 +11,7 @@ import { CROWDPOOL_READINESS, GAME_NEEDS, GAME_NEEDS_LABEL, GAME_NEEDS_LEAD } fr
 import { SEASON2_CURRICULUM } from "@shared/season2Curriculum";
 import {
   BOARD_LIMITS,
+  BOARD_WEEKS_COPY,
   BREATH_KEYS,
   BREATH_PATTERNS,
   BREATH_ROUNDS,
@@ -23,7 +24,10 @@ import {
   LAST_BOARD_WEEK,
   OPPORTUNITY_THEMES,
   PROJECT_PHASES,
+  boardWeekLabel,
+  boardWeeksFor,
   boardWelcome,
+  sessionBoardHref,
   type ProjectPhase,
   breathAt,
   sessionMinutes,
@@ -49,6 +53,8 @@ import { RaiseHand } from "./RaiseHandForm";
 import type { BoardActions, BoardCarry, BoardItem, BoardProject, Mine, MyProject, SessionBoardData } from "./useSessionBoard";
 import { phaseFromSpeech } from "./spokenStage";
 import { useBoardClock } from "./useBoardClock";
+import { useSeasonSchedule } from "@/hooks/useSeasonSchedule";
+import { Link } from "wouter";
 import { BoardMic, Chips, NEW_TAB, QuickAdd, SlideLine, SpokenLine, StageHead, plural, speakLabel } from "./week3/parts";
 
 export { CheckIn } from "./week3/CheckIn";
@@ -215,6 +221,7 @@ export function Welcome({ board, week, stages, index, facilitator, actions, go }
       <div className="sb-welcome-main">
         <p className="sb-kicker">Season 2 · Design Season · Week {week} of 13</p>
         <h1 className="sb-hero">{w.title}</h1>
+        {w.heard ? <p className="sb-lede">{w.heard}</p> : null}
         {w.lede ? <p className="sb-lede">{w.lede}</p> : null}
         <SlideLine week={week} stage={stages[index]} />
         <div>
@@ -1220,7 +1227,7 @@ export function Close({ board, week, stages, index, facilitator, canWrite, mine,
  * public and kept as the week's record, so this page names no money and no
  * gifts. Every word comes from shared/villageOsOffer.ts.
  */
-export function GetVillageOS({ stages, index }: StageProps) {
+export function GetVillageOS({ stages, index, week }: StageProps) {
   const b = VILLAGE_OS_OFFER.board;
   const url = `https://regencivics.earth${VILLAGE_OS_PATH}`;
   const cards = [
@@ -1244,6 +1251,39 @@ export function GetVillageOS({ stages, index }: StageProps) {
         <a className="sb-vos-link" href={VILLAGE_OS_PATH} target="_blank" rel="noopener noreferrer">{b.link}<span className="sr-only"> (opens in a new tab)</span></a>
         <CopyButton text={url} />
       </div>
+      <BoardWeeks week={week} />
     </>
+  );
+}
+
+/**
+ * Every week's board (Rye, 2026-10-21): each one stays open as its week's
+ * record, so the last page links the others. Weeks show once their session
+ * has started, so the card grows on its own and never lists a board that
+ * hasn't run.
+ */
+function BoardWeeks({ week }: { week: number }) {
+  const { sessions } = useSeasonSchedule();
+  const now = Date.now();
+  const weeks = boardWeeksFor(week, (w) => sessions.some((s) => s.week === w && s.start.getTime() <= now));
+  return (
+    <section className="sb-panel sb-board-weeks" aria-labelledby="sb-board-weeks-h">
+      <h3 id="sb-board-weeks-h" className="sb-h3">{BOARD_WEEKS_COPY.title}</h3>
+      <p className="sb-hint">{BOARD_WEEKS_COPY.lede}</p>
+      <ul className="sb-board-weeks-list">
+        {weeks.map((w) => (
+          <li key={w}>
+            {w === week ? (
+              <span className="sb-week-here" aria-current="page">
+                <span>{boardWeekLabel(w)}</span>
+                <span className="sb-badge">{BOARD_WEEKS_COPY.here}</span>
+              </span>
+            ) : (
+              <Link className="sb-week-link" href={sessionBoardHref(w)}>{boardWeekLabel(w)}</Link>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

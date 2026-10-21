@@ -67,6 +67,30 @@ export function sessionBoardHref(week: number): string {
   return `/season2/week/${week}`;
 }
 
+/** "Every week's board", on the last page of every board (Rye, 2026-10-21). */
+export const BOARD_WEEKS_COPY = {
+  title: "Every week's board",
+  lede: "Each week's board stays open as that week's record. Go back to any of them.",
+  here: "You're here",
+} as const;
+
+/**
+ * The boards a board's last page lists: every week with a board whose session
+ * has started by now, and always the board's own week. Week 1 (Selection Day)
+ * ran before boards existed and has none, so it never shows.
+ */
+export function boardWeeksFor(week: number, started: (w: number) => boolean): number[] {
+  const out: number[] = [];
+  for (let w = FIRST_BOARD_WEEK; w <= LAST_BOARD_WEEK; w++) if (w === week || started(w)) out.push(w);
+  return out;
+}
+
+/** "Week 4: Game & Organisation Co-Creation Part 2", or "Week 4" before an episode has a title. */
+export function boardWeekLabel(week: number): string {
+  const title = episodeByWeek(week)?.title;
+  return title ? `Week ${week}: ${title}` : `Week ${week}`;
+}
+
 /** The full https URL of that week's board, on the public site. */
 export function sessionBoardShareUrl(week: number): string {
   return absoluteSiteUrl(sessionBoardHref(week));
@@ -1087,6 +1111,7 @@ const WEEK_4: BoardStage[] = [
     kind: "welcome", name: "Welcome", short: "Welcome", min: 3, line: "Part 2 of 2: build it in Village OS",
     cues: [
       "Greet people by name. \"Open the board on your own screen and tap your project while we gather.\" Point to the QR.",
+      "Say back what they told us: \"Last week you told us there's a lot to do, and that you want to go deeper, most of all on roles. So today we go deeper on fewer things: your questions first, then the seats in your circles.\"",
       "Say it plainly: this is Part 2 of 2, the practical half. Last week each project named the human needs it is here to meet. Today we build its Game around them, and every project leaves with a card ready for its Village OS.",
       "When you go live, press Start session at the top. Moving between stages never starts the clock.",
     ],
@@ -1120,7 +1145,7 @@ const WEEK_4: BoardStage[] = [
   },
   {
     kind: "needs", step: "carry", name: WEEK4_COPY.carryTitle, short: "Week 3 card", min: 7, line: "What you said last week, and what's still open",
-    lede: "Here's what your project said last week. Read it with your people. Anything you change today replaces last week's answer, and anything you leave comes with you.",
+    lede: "Here's what your project said last week. Read it with your people. Anything you change today replaces last week's answer, and anything you leave comes with you. Then pick the one thing you most want to leave with today, and put your energy there.",
     prompts: [
       { key: "moved", title: "Did your move from last week happen?", mode: "pick", scope: "project", options: opts(MOVED_SCALE), max: 1 },
       {
@@ -1132,6 +1157,7 @@ const WEEK_4: BoardStage[] = [
     ],
     cues: [
       "Read one project's card aloud as the example, then give everyone three minutes with their own.",
+      "Each project names the one thing it most wants to leave with today, picked from its gaps: the circles that meet its human needs, a seat, who decides what, or a first quest. \"Put your energy there. The other stages are there if time allows.\"",
       "Point at \"Not answered yet\": each gap gets answered on today's stages.",
       "Ask each project: did your move happen?",
     ],
@@ -1515,7 +1541,11 @@ export function sessionElapsedMs(state: BoardState, plannedMs: number, now: numb
 }
 
 /** What a week's welcome says. Week 2 has its own words; the rest read the curriculum. */
-export function boardWelcome(week: number): { title: string; lede: string; leaveWith: string[] } {
+/**
+ * A week's welcome: its title, what it is, what we leave with, and (`heard`)
+ * what the room told us last time, said back before anything else.
+ */
+export function boardWelcome(week: number): { title: string; lede: string; leaveWith: string[]; heard?: string } {
   const ep = episodeByWeek(week);
   if (week === 2) {
     return {
@@ -1543,9 +1573,11 @@ export function boardWelcome(week: number): { title: string; lede: string; leave
   }
   if (week === 4) {
     // Rye, 2026-10-14: Part 2 of 2, the practical half, built from Week 3's answers.
+    // Rye, 2026-10-21: say back what Week 3's board told us (a lot to do, go deeper, most of all on roles).
     return {
       title: ep?.title ?? "Game & Organisation Co-Creation Part 2",
       lede: "This is Part 2 of 2, the practical half. Last week you named the human needs your project is here to meet. Today we build your Game around them: the circles that meet each one, the seats in each circle and who holds them, who decides what, and your first quest. You leave with a card ready for your Village OS.",
+      heard: "Last week you told us there's a lot to do, and that you want to go deeper, most of all on roles. So today we go deeper on fewer things: your questions first, then the seats in your circles.",
       leaveWith: [
         "Your human needs, checked and ready for Village OS",
         "The circles that meet each human need",

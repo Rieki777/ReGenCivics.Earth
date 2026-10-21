@@ -131,7 +131,8 @@ export default function SessionBoard() {
   const params = useParams<{ week: string }>();
   const week = Number(params.week);
   if (!hasSessionBoard(week)) return <NoBoard />;
-  return <Board week={week} />;
+  // A new week is a new board: it opens on its own first stage, nothing kept from the last one.
+  return <Board key={week} week={week} />;
 }
 
 function NoBoard() {
