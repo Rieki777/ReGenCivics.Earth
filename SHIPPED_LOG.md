@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-20 (CI flake): a steward's draft save survives a deadlock
+
+- **What broke**: CI run 38711957492 failed once in `server/campaign-send-back.test.ts`. A draft save (`campaigns.updateDraft`) died with ER_LOCK_DEADLOCK on the Well pump's row and answered 500. It changed its needs in the order the page lists them (by category), so it held two of them when it asked for the pump, the lowest id. `campaign_items` has no campaignId index, so every lock "by campaign" (the close, a cancel, the example window, `recomputeCampaignValueTotals`, test teardowns) scans the whole table in id order.
+- **Lock order**: the save locks its needs by primary key, lowest id first, right after the campaign row.
+- **Runs again after a deadlock**: `server/lib/deadlock-retry.ts` (`withDeadlockRetry`) runs a transaction the database rolled back to end a deadlock again, three runs at most. The save checks everything again each run, so a co-steward who saved first still gets CONFLICT.
+- **The suite keeps to its own rows**: its teardown deletes needs by primary key, and its image test lands the image itself, so no timer is left running in the mock.
+- Two new DB tests hold a real lock from a second connection; on the old code both fail, the first with CI's exact error. On scratch: the suite passed in five parallel runs of all 37 campaign DB suites, and `pnpm test:integration` passed three runs in a row.
+- Carryover: other suites still tear down needs `WHERE campaignId ...`, which locks every suite's needs (an index on `campaign_items.campaignId` would end the whole class); `cancelCampaign`'s transaction has no retry, and on the scratch MariaDB it hit ER_CHECKREAD once in five runs.
+
 ## 2026-10-20 (Village profiles): every episode builds one village, and each project's stewards keep what goes in
 
 - **One profile per land project** (ADR-77, Rye's six calls of 2026-10-20). It is keyed by the project's Season 2 application, and gathers its application, its hosting request, its tools and every weekly board's answers. The boards are merged with Week 4's rule (the latest week wins each question), and the profile follows Week 4's carry links back through the weeks.
