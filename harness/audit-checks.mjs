@@ -64,16 +64,183 @@ export function installAuditLib() {
   };
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   const WHITE = { r: 255, g: 255, b: 255, a: 1 };
-  const bgOf = (el) => {
-    const layers = [];
-    for (let n = el; n; n = n.parentElement) {
-      const cs = getComputedStyle(n);
-      let c = parse(cs.backgroundColor);
-      if ((!c || c.a === 0) && cs.backgroundImage && cs.backgroundImage !== "none") c = firstColour(cs.backgroundImage);
-      if (c && c.a > 0) {
-        layers.push(c);
-        if (c.a >= 0.99) break;
+  const CLEAR = { r: 0, g: 0, b: 0, a: 0 };
+
+  // Commas outside brackets: "linear-gradient(...), radial-gradient(...)".
+  const splitTop = (s) => {
+    const out = [];
+    let depth = 0;
+    let from = 0;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === "(") depth += 1;
+      else if (s[i] === ")") depth -= 1;
+      else if (s[i] === "," && depth === 0) {
+        out.push(s.slice(from, i).trim());
+        from = i + 1;
       }
+    }
+    out.push(s.slice(from).trim());
+    return out.filter(Boolean);
+  };
+  const STOP_RE = new RegExp(`^(?:${COLOUR_RE.source})`);
+  // Text that is only emoji: pictographs shown as emoji by default or by
+  // U+FE0F, with their joiners, skin tones and flag tags. A lone ★ or © is
+  // text and keeps being measured.
+  const EMOJI_ONLY = /^(?:\s|\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F|[\u200D\uFE0F\u{1F3FB}-\u{1F3FF}\u{E0020}-\u{E007F}])+$/u;
+  const px = (v, size) => (v.endsWith("%") ? (parseFloat(v) / 100) * size : parseFloat(v));
+  const PLACE = { left: "0%", top: "0%", center: "50%", right: "100%", bottom: "100%" };
+  /**
+   * The colour a linear or radial gradient paints at (x, y) in its box, so
+   * words are measured against the part of the gradient they sit on. The
+   * browser mixes the two stops either side (color-mix, in the gradient's own
+   * space: Tailwind's are oklab). A url() image is unknown (null); a conic
+   * gradient gives its first colour.
+   */
+  const gradientAt = (img, box, x, y) => {
+    const m = img.match(/^(repeating-)?(linear|radial)-gradient\((.*)\)$/s);
+    if (!m) return img.startsWith("url(") ? null : firstColour(img);
+    const args = splitTop(m[3]);
+    const head = args.length && !STOP_RE.test(args[0]) ? args.shift() : "";
+    const space = (head.match(/\bin ([a-z-]+(?: [a-z]+ hue)?)/) || [null, "srgb"])[1];
+    const shape = head.replace(/\bin [a-z-]+(?: [a-z]+ hue)?/, "");
+    const { width: w, height: h } = box;
+    const [bx, by] = [x - box.left, y - box.top];
+    let ray; // the gradient's length in px
+    let t; // where the point falls along it, 0 to 1
+    if (m[2] === "linear") {
+      let [dx, dy] = [0, 1];
+      const turn = shape.match(/(-?[\d.]+)(deg|grad|rad|turn)/);
+      const to = shape.match(/\bto ((?:top|bottom|left|right)(?: (?:top|bottom|left|right))?)/);
+      if (turn) {
+        const a = (parseFloat(turn[1]) * { deg: 1, grad: 0.9, rad: 180 / Math.PI, turn: 360 }[turn[2]] * Math.PI) / 180;
+        [dx, dy] = [Math.sin(a), -Math.cos(a)];
+      } else if (to) {
+        const sx = /right/.test(to[1]) ? 1 : /left/.test(to[1]) ? -1 : 0;
+        const sy = /bottom/.test(to[1]) ? 1 : /top/.test(to[1]) ? -1 : 0;
+        // Toward a corner, the line runs square to the other diagonal.
+        [dx, dy] = sx && sy ? [sx * h, sy * w] : [sx, sy];
+        const n = Math.hypot(dx, dy);
+        [dx, dy] = [dx / n, dy / n];
+      }
+      ray = Math.abs(w * dx) + Math.abs(h * dy);
+      t = ((bx - w / 2) * dx + (by - h / 2) * dy) / ray + 0.5;
+    } else {
+      const at = shape.match(/\bat (\S+)(?: (\S+))?/);
+      let [ax, ay] = at ? [at[1], at[2] || "center"] : ["center", "center"];
+      if (/^(top|bottom)$/.test(ax) || /^(left|right)$/.test(ay)) [ax, ay] = [ay, ax];
+      const [cx, cy] = [px(PLACE[ax] || ax, w), px(PLACE[ay] || ay, h)];
+      const size = shape.replace(/\bat .*/, "");
+      const lengths = size.match(/-?[\d.]+(?:px|%)/g) || [];
+      const circle = /\bcircle\b/.test(size) || lengths.length === 1;
+      let rx;
+      let ry;
+      if (lengths.length) {
+        rx = px(lengths[0], w);
+        ry = circle ? rx : px(lengths[1], h);
+      } else {
+        // closest-side, farthest-side, closest-corner, or farthest-corner (the default)
+        const near = /closest/.test(size);
+        const corner = !/side/.test(size);
+        const fx = near ? Math.min(cx, w - cx) : Math.max(cx, w - cx);
+        const fy = near ? Math.min(cy, h - cy) : Math.max(cy, h - cy);
+        if (circle) rx = ry = corner ? Math.hypot(fx, fy) : near ? Math.min(fx, fy) : Math.max(fx, fy);
+        else [rx, ry] = corner ? [fx * Math.SQRT2, fy * Math.SQRT2] : [fx, fy];
+      }
+      ray = rx;
+      t = ry > 0 ? Math.hypot((bx - cx) / rx, (by - cy) / ry) : Infinity;
+    }
+    if (!(ray > 0)) return firstColour(img);
+    // Stops: a colour and up to two places. A bare place is a midpoint hint,
+    // read here as halfway.
+    const stops = [];
+    for (const arg of args) {
+      const c = arg.match(STOP_RE);
+      if (!c) continue;
+      const places = arg.slice(c[0].length).trim().split(/\s+/).filter(Boolean);
+      for (const p of places.length ? places : [null]) stops.push({ c: c[0], at: p === null ? null : px(p, ray) / ray });
+    }
+    if (!stops.length) return null;
+    // Places never step back, and unplaced stops share the room between their neighbours.
+    stops[0].at ??= 0;
+    stops[stops.length - 1].at ??= 1;
+    let floor = -Infinity;
+    for (const s of stops) if (s.at !== null) floor = s.at = Math.max(s.at, floor);
+    for (let i = 1; i < stops.length; i++) {
+      if (stops[i].at !== null) continue;
+      let j = i;
+      while (stops[j].at === null) j += 1;
+      for (let k = i; k < j; k++) stops[k].at = stops[i - 1].at + ((stops[j].at - stops[i - 1].at) * (k - i + 1)) / (j - i + 1);
+    }
+    const [first, last] = [stops[0].at, stops[stops.length - 1].at];
+    if (m[1] && last > first) t = first + ((((t - first) % (last - first)) + (last - first)) % (last - first));
+    if (!(t > first)) return parse(stops[0].c) || CLEAR;
+    for (let i = 1; i < stops.length; i++) {
+      const [a, b] = [stops[i - 1], stops[i]];
+      if (t > b.at) continue;
+      const f = b.at > a.at ? (t - a.at) / (b.at - a.at) : 1;
+      return parse(`color-mix(in ${space}, ${a.c} ${((1 - f) * 100).toFixed(3)}%, ${b.c})`) || CLEAR;
+    }
+    return parse(stops[stops.length - 1].c) || CLEAR;
+  };
+
+  const zOf = (cs) => parseInt(cs.zIndex, 10) || 0;
+  /**
+   * The siblings of n that paint under it and cover the whole text box: an
+   * absolutely placed backdrop, a crossfading sky. Topmost first. Only the
+   * sibling itself counts, never its children, so a drifting particle never
+   * lands under a word by chance.
+   */
+  const layersUnder = (n, box) => {
+    const p = n.parentElement;
+    if (!p) return [];
+    const kids = [...p.children];
+    const at = kids.indexOf(n);
+    const zn = zOf(getComputedStyle(n));
+    const out = [];
+    kids.forEach((s, i) => {
+      if (i === at) return;
+      const cs = getComputedStyle(s);
+      if ((cs.position !== "absolute" && cs.position !== "fixed") || cs.display === "none" || cs.visibility === "hidden") return;
+      const z = zOf(cs);
+      if (i < at ? z > zn : z >= zn) return; // painted over n
+      const r = s.getBoundingClientRect();
+      if (r.left > box.left + 1 || r.top > box.top + 1 || r.right < box.right - 1 || r.bottom < box.bottom - 1) return;
+      out.push({ s, z, i, opacity: Number(cs.opacity) });
+    });
+    return out.sort((a, b) => b.z - a.z || b.i - a.i);
+  };
+
+  /**
+   * What is painted behind el, at its centre: each ancestor's background and
+   * the layers laid under each one, down to the first opaque paint, with
+   * gradients read where el sits on them. Miss that taught this: the season
+   * wheel's skies sit beside its words, not around them, and a gradient
+   * counted as its first colour, so the wheel's story measured white on white
+   * (33 false findings) and /seasons measured the FALL label against the
+   * page's darkest green instead of the lighter sky under it (2026-10-20).
+   */
+  const bgOf = (el) => {
+    const box = el.getBoundingClientRect();
+    const [x, y] = [box.left + box.width / 2, box.top + box.height / 2];
+    const layers = [];
+    // Pushes what n paints at the point, topmost first; true once opaque.
+    const paint = (n, opacity) => {
+      const cs = getComputedStyle(n);
+      if (cs.backgroundClip === "text") return false; // gradient words, not a backdrop
+      const own = cs.backgroundImage && cs.backgroundImage !== "none"
+        ? splitTop(cs.backgroundImage).map((img) => gradientAt(img, n.getBoundingClientRect(), x, y))
+        : [];
+      own.push(parse(cs.backgroundColor));
+      for (const c of own) {
+        if (!c || c.a * opacity <= 0) continue;
+        layers.push({ ...c, a: c.a * opacity });
+        if (c.a * opacity >= 0.99) return true;
+      }
+      return false;
+    };
+    walk: for (let n = el; n; n = n.parentElement) {
+      if (paint(n, 1)) break;
+      for (const l of layersUnder(n, box)) if (paint(l.s, l.opacity)) break walk;
     }
     let out = WHITE;
     for (let i = layers.length - 1; i >= 0; i--) out = blend(layers[i], out);
@@ -119,6 +286,11 @@ export function installAuditLib() {
       const box = el.getBoundingClientRect();
       if (box.width <= 2 && box.height <= 2) continue;
       if (el.closest("[aria-hidden='true']") || el.closest("svg") || el.closest("script,style,noscript")) continue;
+      // Emoji paint in their own colours, so their CSS colour says nothing.
+      // Miss that taught this: once gradients were read where words sit, the
+      // 🌕 on /team's moon bar measured 1.00:1 against the bar's pale middle.
+      const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join("");
+      if (EMOJI_ONLY.test(own)) continue;
       const cs = getComputedStyle(el);
       let fg = parse(cs.color);
       if (!fg) continue;

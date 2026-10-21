@@ -656,7 +656,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
                     >
                       <span
                         className="flex items-center gap-1.5 text-[0.7rem] sm:text-xs font-bold uppercase tracking-[0.18em]"
-                        style={{ color: LOOK[key].color }}
+                        style={{ color: LOOK[key].text }}
                       >
                         <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         {s.pattern}
@@ -758,7 +758,7 @@ export function SeasonWheel({ now }: { now?: Date }) {
 
               <p
                 className="text-sm font-bold uppercase tracking-[0.2em] mb-1"
-                style={{ color: look.color }}
+                style={{ color: look.text }}
               >
                 {season.title} <span className="opacity-70">· {season.pattern}</span>
               </p>
