@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-10-21 (audit): text cut off by a box that hides overflow fails the audit
+
+- **Why**: on phones `.tap-44` made the bioregion picker's rows inline-flex, so their realm notes ran past the popover's edge and were cut mid-word. Every check passed; only a phone screenshot showed it.
+- **The check** (`harness/audit-checks.mjs`, stories and live pages): words pushed past the edge of a box with overflow hidden, or lines below a fixed height, fail when nothing says there is more. Fine: a box that draws its own ellipsis or line clamp, text the reader can scroll to, text wholly outside its box (a closed panel), screen-reader-only text, a carousel's next slide. A line counts as cut only when over a third of it is outside, since a line's box is taller than its glyphs.
+- **Proven**: `audit-selftest` fails a cut name and lines below a fixed height, and passes their twins with an ellipsis and a clamp. With `.tap-44` put back on the picker rows, `bioregion-picker` fails on phones for all eight cut realm notes.
+- **Every story**: no new findings in this branch's 81 stories, whose other 147 findings matched the run before the check line for line, nor in main's six new stories run on the merged tree.
+
 ## 2026-10-21 (cooperative treasury): /opportunity brings back the fund's structure with a cooperative as its entity, and letters of intent return
 
 - **Rye's ruling (ADR-78)**: the cooperative is a cooperative treasury in formation, the way land projects and people pool their resources into the network of land projects and co-own each other's projects. It launches when $20 million in letters of intent are signed and will be formed to meet the legal and regulatory needs of the funders. He chose "structure, no return promises", so gate G5 stands.
