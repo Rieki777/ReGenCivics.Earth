@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error plain .mjs module, typed loosely on purpose
-import { FUND_WORDS_EXEMPT, GUARDED_FILES, OLD_PHRASES, PHRASE_GUARDED_FILES, PROFILE_GUARDED_FILES, buildRules, findBannedTerms, findForFile, findOldPhrases, guardedFiles, isCampaignSurface, loadModelBannedTerms, phraseGuardedFiles } from "../scripts/check-banned-terms.mjs";
+import { BOARD_GUARDED_DIRS, BOARD_GUARDED_FILES, FUND_WORDS_EXEMPT, GUARDED_FILES, OLD_PHRASES, PHRASE_GUARDED_FILES, PROFILE_GUARDED_FILES, boardGuardedFiles, buildRules, findBannedTerms, findBoardPhrases, findForBoardFile, findForFile, findOldPhrases, guardedFiles, isBoardFile, isCampaignSurface, loadModelBannedTerms, phraseGuardedFiles } from "../scripts/check-banned-terms.mjs";
 
 type Finding = { line: number; term: string; match: string; text: string };
 
@@ -236,6 +236,76 @@ describe("the old phrases (bundle 1, 2026-10-01)", () => {
     expect(missing).toEqual([]);
     const dirty = files
       .map((f: string) => [f, findForFile(f, readFileSync(f, "utf8")) as Finding[]] as const)
+      .filter(([, found]: readonly [string, Finding[]]) => found.length > 0);
+    expect(dirty).toEqual([]);
+  });
+});
+
+describe("the session board says role, never seat (Rye, 2026-10-21)", () => {
+  const board = (text: string): string[] => (findBoardPhrases(text) as Finding[]).map((f) => f.match);
+
+  it("flags the noun for a role", () => {
+    for (const line of [
+      'add: "Add a seat",',
+      '<h3 id="sb-seats-other" className="sb-seed-head">Other seats</h3>',
+      'short: "Seats",',
+      '"seat-help": "What would help most with your seats",',
+      'line: "Circles and seats: stages, capabilities, and appointments."',
+      "`, with seats like ${names}`",
+      '"Show the role cards: a seat\'s card, front and back"',
+      'name: "Seat name",',
+      "{ key: \"seats\", title: \"Seats\" },",
+    ]) {
+      expect(board(line).length, line).toBeGreaterThan(0);
+    }
+  });
+
+  it("leaves the verb and the code alone", () => {
+    for (const line of [
+      '"A sample role card: one place, nobody seated yet, a vote fills it"',
+      "const seats = rows.filter((r) => cardKindOfKey(r.block) === \"seat\").length;",
+      'seat: { prefix: "seat", count: 12 },',
+      "for (const e of cards.seats) lines.push(`Role: ${cardLine(\"seat\", e.card, own)}.`);",
+      "if (step === \"seats\") return <SeatsStage {...props} />;",
+      "kind === \"seat\" ? (c as SeatCard).name : null",
+      '{fillCopy(WEEK4_COPY.seatsPerNeed, { seats: plural(seats.length, "role", "roles"), held })}',
+      'seatsPerNeed: "{seats} · {held} held",',
+    ]) {
+      expect(board(line), line).toEqual([]);
+    }
+  });
+
+  it("knows which files are the board, and leaves the cohort and the Ship out", () => {
+    expect(isBoardFile("client/src/components/session-board/week4/SeatsStage.tsx")).toBe(true);
+    expect(isBoardFile("client/src/components/session-board/week4/cardForms.test.tsx")).toBe(false);
+    expect(isBoardFile("shared/sessionBoard.ts")).toBe(true);
+    expect(isBoardFile("client/src/pages/Season2.tsx")).toBe(false);
+    expect(isBoardFile("client/src/pages/ship/ShipTheme.tsx")).toBe(false);
+    expect(BOARD_GUARDED_DIRS).toEqual(["client/src/components/session-board"]);
+  });
+
+  it("checks a board file for the em-dash too, and not for the old campaign phrases", () => {
+    expect((findForBoardFile(`const a = "Roles ${DASH} and circles";`) as Finding[]).map((f) => f.term)).toEqual(["em-dash"]);
+    expect(findForBoardFile('const a = "say what earns tokens";')).toEqual([]);
+  });
+
+  it("reports a missing board path", () => {
+    const empty = mkdtempSync(path.join(tmpdir(), "board-words-"));
+    try {
+      const { files, missing } = boardGuardedFiles(empty);
+      expect(files).toEqual([]);
+      expect(missing).toEqual([...BOARD_GUARDED_FILES, "client/src/components/session-board/"]);
+    } finally {
+      rmSync(empty, { recursive: true, force: true });
+    }
+  });
+
+  it("every board file says role today", () => {
+    const { files, missing } = boardGuardedFiles();
+    expect(missing).toEqual([]);
+    expect(files.length).toBeGreaterThan(BOARD_GUARDED_FILES.length);
+    const dirty = files
+      .map((f: string) => [f, findForBoardFile(readFileSync(f, "utf8")) as Finding[]] as const)
       .filter(([, found]: readonly [string, Finding[]]) => found.length > 0);
     expect(dirty).toEqual([]);
   });

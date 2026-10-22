@@ -122,6 +122,25 @@ export const PHRASE_GUARDED_FILES = [
   "scripts/seed-demo-campaigns.ts",
 ];
 
+/**
+ * The weekly session board and the files it reads its words from (Rye,
+ * 2026-10-21: "use the word 'role' instead of 'seat'"). Checked for
+ * BOARD_PHRASES and the em-dash. Each must exist.
+ */
+export const BOARD_GUARDED_FILES = [
+  "shared/sessionBoard.ts",
+  "shared/boardCards.ts",
+  "shared/boardEntries.ts",
+  "shared/humanNeeds.ts",
+  "shared/villageDecisions.ts",
+  "shared/villageOsCard.ts",
+  "shared/villageOsOffer.ts",
+  "shared/projectProfile.ts",
+];
+
+/** Directories of the board whose every source file is checked the same way, tests excepted. */
+export const BOARD_GUARDED_DIRS = ["client/src/components/session-board"];
+
 const SOURCE_EXT = [".ts", ".tsx"];
 const TEST_FILE = /\.(test|spec)\.tsx?$/;
 
@@ -211,6 +230,22 @@ export const OLD_PHRASES = [
   { label: "Currency label", re: />\s*Currency\s*</g, profileOnly: true },
 ];
 
+/**
+ * A role on the board is a role (Rye, 2026-10-21). The NOUN is the rule; the
+ * verb stays ("seat someone", "seated"), and so does code: `seatId`,
+ * `seats.length`, a `"seat"` card kind. A line scan cannot parse, so the noun
+ * is found by the words around it: a determiner or a count before it, or a
+ * capitalised Seat opening a string or JSX text. A seat at a gathering, in the
+ * Season Two cohort or on the Ship is never on these files.
+ */
+export const BOARD_PHRASES = [
+  {
+    label: "seat (say role)",
+    re: /\b(?:a|an|the|this|that|each|every|your|their|its|our|open|one|no|other|new|more|which|any|some|two|three|twelve|\d+|and|or|with|of|for)\s+seats?\b(?!\s*[=(.])/gi,
+  },
+  { label: "seat (say role)", re: /(?:["'`>]|\s·\s)\s*Seats?\b/g },
+];
+
 // ── Skips ───────────────────────────────────────────────────────────────────
 
 const ALLOW = "banned-terms-allow:";
@@ -296,7 +331,30 @@ export function findOldPhrases(file, text) {
 export function findForFile(file, text, rules = buildRules()) {
   const found = isCampaignSurface(file) ? findBannedTerms(file, text, rules) : scanLines(text, [emDashRule()]);
   found.push(...findOldPhrases(file, text));
+  if (isBoardFile(file)) found.push(...findBoardPhrases(text));
   return found.sort((a, b) => a.line - b.line);
+}
+
+/** True for a board file: on BOARD_GUARDED_FILES, or a source file (not a test) under BOARD_GUARDED_DIRS. */
+export function isBoardFile(file) {
+  const rel = normalise(file);
+  if (BOARD_GUARDED_FILES.includes(rel)) return true;
+  if (TEST_FILE.test(rel) || !SOURCE_EXT.some((e) => rel.endsWith(e))) return false;
+  return BOARD_GUARDED_DIRS.some((dir) => rel.startsWith(`${dir}/`));
+}
+
+/** Every "seat" that means a role in one file's text (BOARD_PHRASES). Same skips and allow comment. */
+export function findBoardPhrases(text) {
+  return scanLines(text, BOARD_PHRASES);
+}
+
+/**
+ * What a board file that is on no other list is checked for: BOARD_PHRASES and
+ * the em-dash. The old phrases stay where they were guarded before; the board
+ * quotes a slide that says "what earns tokens", and that is a separate call.
+ */
+export function findForBoardFile(text) {
+  return [...scanLines(text, [emDashRule()]), ...findBoardPhrases(text)].sort((a, b) => a.line - b.line);
 }
 
 /** The shared line scan: comment lines, block comments and allow lines skipped. */
@@ -371,6 +429,25 @@ export function guardedFiles(root = REPO) {
   return { files: [...files].sort(), missing };
 }
 
+/** Every board file as a repo-relative path, plus the listed ones that are missing. */
+export function boardGuardedFiles(root = REPO) {
+  const missing = [];
+  const files = new Set();
+  for (const rel of BOARD_GUARDED_FILES) {
+    if (existsSync(path.join(root, rel))) files.add(rel);
+    else missing.push(rel);
+  }
+  for (const dir of BOARD_GUARDED_DIRS) {
+    const full = path.join(root, dir);
+    if (!existsSync(full)) {
+      missing.push(`${dir}/`);
+      continue;
+    }
+    for (const f of walk(full)) files.add(path.relative(root, f).split(path.sep).join("/"));
+  }
+  return { files: [...files].sort(), missing };
+}
+
 /** PROFILE_GUARDED_FILES and PHRASE_GUARDED_FILES as repo-relative paths, plus the listed ones that are missing. */
 export function phraseGuardedFiles(root = REPO) {
   const missing = [];
@@ -389,12 +466,17 @@ function main() {
   const rules = buildRules(terms);
   const { files, missing: missingSurfaces } = guardedFiles();
   const phrase = phraseGuardedFiles();
-  const missing = [...missingSurfaces, ...phrase.missing];
+  const board = boardGuardedFiles();
+  const missing = [...missingSurfaces, ...phrase.missing, ...board.missing];
   const extra = phrase.files.filter((rel) => !files.includes(rel));
+  const boardOnly = board.files.filter((rel) => !files.includes(rel) && !extra.includes(rel));
   const violations = [];
   for (const rel of [...files, ...extra]) {
     const text = readFileSync(path.join(REPO, rel), "utf8");
     for (const v of findForFile(rel, text, rules)) violations.push({ file: rel, ...v });
+  }
+  for (const rel of boardOnly) {
+    for (const v of findForBoardFile(readFileSync(path.join(REPO, rel), "utf8"))) violations.push({ file: rel, ...v });
   }
 
   let failed = false;
@@ -421,14 +503,16 @@ function main() {
       "\n  Say contribution or offer (never pledge or donation), complete (never funded),\n" +
         "  route (never earmark). Claim belongs to the token bridge. No em-dashes, and no fund\n" +
         "  copy on campaign pages. Help is recorded in a project's token, and money goes\n" +
-        "  through each project's own routes. If a line truly needs the word, add\n" +
+        "  through each project's own routes. On the session board a role is a role, never a\n" +
+        "  seat (the verb stays: seat someone). If a line truly needs the word, add\n" +
         "  `banned-terms-allow: <reason>` on it or on the line above.\n",
     );
   }
   if (failed) process.exit(1);
   console.log(
     `✓ banned-terms: ${files.length} campaign surface files clean of ${rules.length} banned words, ` +
-      `and ${extra.length} profile and copy files clean of the ${OLD_PHRASES.length} old phrases.`,
+      `${extra.length} profile and copy files clean of the ${OLD_PHRASES.length} old phrases, ` +
+      `and ${boardOnly.length} session board files that say role, never seat.`,
   );
 }
 

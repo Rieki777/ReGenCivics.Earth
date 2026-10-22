@@ -98,7 +98,7 @@ describe("week 4's run of show", () => {
   it("runs 15 stages, 120 minutes, opening on last week's questions, the seats stage the longest, Village OS last", () => {
     expect(stages.map((s) => s.name)).toEqual([
       "Welcome", "Tap your project", "Drop in", "Last week's questions", "Your Week 3 card", "Your human needs", "Circles for each human need",
-      "Seats in each circle", "Who decides what", "Your first quest", "Your Game, built", "Your questions, and Week 5",
+      "Roles in each circle", "Who decides what", "Your first quest", "Your Game, built", "Your questions, and Week 5",
       "Tell us", "Close", VILLAGE_OS_OFFER.board.title,
     ]);
     expect(stages.map((s) => s.min)).toEqual([3, 4, 5, 12, 7, 11, 11, 30, 10, 7, 7, 6, 4, 2, 1]);
@@ -140,7 +140,7 @@ describe("week 4's run of show", () => {
     expect(w.leaveWith).toEqual([
       "Your human needs, checked and ready for Village OS",
       "The circles that meet each human need",
-      "The seats in each circle, and who holds them",
+      "The roles in each circle, and who holds them",
       "Who decides what, and one first agreement",
       "A first quest that grows a seed",
     ]);
@@ -300,7 +300,7 @@ describe("cards", () => {
     const seats = cardsOf(rows, "seat", 7);
     expect(seats.map((s) => s.card.name)).toEqual(["Water keeper", "Initiation guide"]);
     const e = describeItem(4, rows[0]);
-    expect(e.label).toBe("A seat you wrote");
+    expect(e.label).toBe("A role you wrote");
     // Someone's words mid-sentence start lower case.
     expect(e.value).toBe("Water keeper (Living Water), meets Vitality; works toward living water for every household on the land; answers for the spring, the catchment, the water tests; held by Ana; asks 4 hours a week");
     expect(cardLine("decide", { circle: "own:Kitchen", decidesOn: "what we cook" })).toBe("Kitchen decides on what we cook");
@@ -525,7 +525,7 @@ describe("the card for Village OS", () => {
     const lines = gameLines(view, cards);
     expect(lines[0]).toBe("All this is for future generations.");
     expect(lines).toContain("Vitality is met by Living Water, Food & Fertility.");
-    expect(lines.some((l) => l.startsWith("Seat: Water keeper (Living Water)"))).toBe(true);
+    expect(lines.some((l) => l.startsWith("Role: Water keeper (Living Water)"))).toBe(true);
     expect(lines).toContain("Living Water decides on when we irrigate (by consent).");
     expect(lines).toContain("Quest: Clear the spring (grows Vitality).");
   });

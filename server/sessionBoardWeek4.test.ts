@@ -412,10 +412,10 @@ describe.skipIf(skipIfNoDb)("week 4 board: the database layer", () => {
     expect(view.villageOsCard?.needs.map((n) => n.needKey)).toEqual(["vitality"]);
     expect(view.villageOsCard?.variables).toEqual({ "needs.totality_target_pct": 75 });
     expect(view.villageOsCard?.seats.map((s) => s.name)).toEqual(["Water keeper"]);
-    expect(view.lines.some((l) => l.startsWith("Seat: Water keeper"))).toBe(true);
+    expect(view.lines.some((l) => l.startsWith("Role: Water keeper"))).toBe(true);
     // A seat row reads as words in the export, never as raw JSON.
     const seatRow = out.weeks[0].rows.find((x) => x.key === "seat-1" && x.projectId === r.cardId)!;
-    expect(seatRow.label).toBe("A seat you wrote");
+    expect(seatRow.label).toBe("A role you wrote");
     expect(seatRow.value.startsWith("Water keeper (Living Water)")).toBe(true);
     expect(JSON.stringify(out)).not.toMatch(/"k:w4/);
   });

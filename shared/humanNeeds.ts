@@ -282,8 +282,8 @@ export const TOGETHER_DECISIONS = [
 export const SEAT_HELP = [
   { key: "cards", label: "Role cards people can read" },
   { key: "count", label: "A way to count contribution" },
-  { key: "grow", label: "How someone grows in a seat" },
-  { key: "circle", label: "How a seat becomes a circle" },
+  { key: "grow", label: "How someone grows in a role" },
+  { key: "circle", label: "How a role becomes a circle" },
 ] as const;
 
 /** What a project wants to work on in Week 5 (Game Guides & Economic Systems). */

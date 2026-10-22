@@ -234,7 +234,7 @@ export function purposeDraft(src: ProfileSources, view: ProjectView, card: Villa
     part("Who it serves", `${name} serves ${people}${place ? `, in ${place}` : ""}.`),
     part("What they're up against", pain ? sentence(capital(pain.trim())) : null),
     part("From where to where", seeds.length ? `${capital(seeds.join("; "))}.` : null),
-    part("By what means", circles.length ? `${circles.join(", ")}${seats.length ? `, with seats like ${seats.slice(0, 4).join(", ")}` : ""}.` : null),
+    part("By what means", circles.length ? `${circles.join(", ")}${seats.length ? `, with roles like ${seats.slice(0, 4).join(", ")}` : ""}.` : null),
     part("What becomes true", first ? sentence(`All this is for ${first}`) : null),
   ];
   // The first part always fills, so a draft needs one more from the project's own answers.

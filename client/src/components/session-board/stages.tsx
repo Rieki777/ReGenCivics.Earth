@@ -462,7 +462,7 @@ export function OpenSeason({ stages, index, week }: StageProps) {
 const MODULES = [
   { t: "Quests", d: "People claim the work, and a person confirms it before credit lands." },
   { t: "Gratitude", d: "Thanks that carries weight, settled each lunar cycle." },
-  { t: "Stages & roles", d: "Circles and seats, so everyone can see who holds what." },
+  { t: "Stages & roles", d: "Circles and roles, so everyone can see who holds what." },
   { t: "Profiles", d: "Who's here, and what each person brings." },
 ];
 
@@ -496,15 +496,15 @@ function AmoraCircles() {
             height={1075}
             loading="lazy"
             decoding="async"
-            alt="Amora's circles map on 2 October: the village drawn as circles inside circles, from the General Coordinating Circle and the Development Circle to councils still forming, with open seats marked by a plus. Beside it: 17 circles, and 16 open calls waiting for someone."
+            alt="Amora's circles map on 2 October: the village drawn as circles inside circles, from the General Coordinating Circle and the Development Circle to councils still forming, with open roles marked by a plus. Beside it: 17 circles, and 16 open calls waiting for someone."
           />
           {NEW_TAB}
         </a>
       )}
       <p className="sb-hint">
         {live
-          ? "Live from Amora. Tap a circle to step inside it, or a seat to see who holds it."
-          : "A picture of Amora's map from 2 October. Open the map to tap a circle or a seat."}
+          ? "Live from Amora. Tap a circle to step inside it, or a role to see who holds it."
+          : "A picture of Amora's map from 2 October. Open the map to tap a circle or a role."}
       </p>
     </section>
   );
@@ -515,7 +515,7 @@ function RoleCardsPreview() {
   return (
     <section className="sb-panel sb-rolecards" aria-labelledby="sb-rolecards-h">
       <h3 id="sb-rolecards-h" className="sb-h3">Coming to Village OS: role cards</h3>
-      <p className="sb-hint">A first look at what's being built. Every seat in a Game gets a card, and a new role starts as a proposal the circle decides on. The seats and the person on them here are made-up examples.</p>
+      <p className="sb-hint">A first look at what's being built. Every role in a Game gets a card, and a new role starts as a proposal the circle decides on. The roles and the person on them here are made-up examples.</p>
       <div className="sb-rolecard-row">
         <figure className="sb-rolecard">
           <a href="/images/session-board/role-card-seat.webp" target="_blank" rel="noopener noreferrer">
@@ -525,11 +525,11 @@ function RoleCardsPreview() {
               height={1504}
               loading="lazy"
               decoding="async"
-              alt="A sample role card for a Water Steward seat, opened flat. On the left: its art, its aim (every household has clean water and the systems that carry it are cared for), a Raise your hand button, and who holds it: Mara, an agent, and one open place waiting for a hand. On the right: three places, two held and one open; five of its seven commitments written down; what it decides on, the four things it answers for, why it matters, a term ending 21 March 2027, and consent as its way of deciding."
+              alt="A sample role card for a Water Steward role, opened flat. On the left: its art, its aim (every household has clean water and the systems that carry it are cared for), a Raise your hand button, and who holds it: Mara, an agent, and one open place waiting for a hand. On the right: three places, two held and one open; five of its seven commitments written down; what it decides on, the four things it answers for, why it matters, a term ending 21 March 2027, and consent as its way of deciding."
             />
             {NEW_TAB}
           </a>
-          <figcaption>A seat's card, front and back side by side: who holds it, the open place waiting for a hand, and what the seat does.</figcaption>
+          <figcaption>A role's card, front and back side by side: who holds it, the open place waiting for a hand, and what the role does.</figcaption>
         </figure>
         <figure className="sb-rolecard">
           <a href="/images/session-board/role-card-proposal.webp" target="_blank" rel="noopener noreferrer">
@@ -570,7 +570,7 @@ export function VillageOS({ stages, index }: StageProps) {
         <div className="sb-q">
           <h3 className="sb-h3">How we build our Games this season</h3>
           <ol className="sb-path">
-            <li><span className="sb-path-n">1</span><div><span className="sb-path-weeks">Weeks 3 to 5</span><strong>Design the Game</strong><p>Purpose, roles, who decides, and your Game Guide. In Village OS they become your circles, your seats and your Guide.</p></div></li>
+            <li><span className="sb-path-n">1</span><div><span className="sb-path-weeks">Weeks 3 to 5</span><strong>Design the Game</strong><p>Purpose, roles, who decides, and your Game Guide. In Village OS they become your circles, your roles and your Guide.</p></div></li>
             <li><span className="sb-path-n">2</span><div><span className="sb-path-weeks">Week 6</span><strong>Grow the village</strong><p>How people find you, join and stay. In Village OS, your paths in and your onboarding.</p></div></li>
             <li><span className="sb-path-n">3</span><div><span className="sb-path-weeks">Weeks 8, 9 and 12</span><strong>Set the economy</strong><p>What flows between your players. In Village OS, your gratitude, your credits and the ledger that keeps them honest.</p></div></li>
             <li><span className="sb-path-n">4</span><div><span className="sb-path-weeks">Week 13</span><strong>Open the roster</strong><p>Every role your Game needs, with the hours a week it asks for.</p></div></li>

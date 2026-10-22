@@ -31,7 +31,7 @@ export const VILLAGE_MODULES = [
   { key: "purpose", title: "What it's all for" },
   { key: "needs", title: "Human needs" },
   { key: "circles", title: "Circles" },
-  { key: "seats", title: "Seats" },
+  { key: "seats", title: "Roles" },
   { key: "decide", title: "Who decides" },
   { key: "membership", title: "Coming in" },
   { key: "quests", title: "Quests and contribution" },
@@ -172,8 +172,8 @@ export const VILLAGE_DECISIONS: readonly VillageDecision[] = [
   { key: "circles.list", module: "circles", title: "Your circles", hint: "Each with the human needs it meets and how it decides. They replace the eight councils a new village starts with.", kind: "block", villageOs: "circles, circles.decides_by, need_links", lands: "setting", weeks: [3, 4], default: null, blocksLaunch: false },
 
   // Seats
-  { key: "seats.cards", module: "seats", title: "The seats in each circle", hint: "Each seat's card: its aim, the human need it meets, what it answers for, and who holds it.", kind: "block", villageOs: "org_roles, org_role_assignments, need_links", lands: "setting", weeks: [4], default: null, blocksLaunch: false },
-  { key: "seats.nextHolder", module: "seats", title: "How the next holder of most seats is chosen", hint: "Village OS sets this seat by seat. This is where your founders start.", kind: "choice", options: HOW_CHOSEN, villageOs: "org_roles.how_chosen", lands: "note", weeks: [6], default: null, blocksLaunch: false },
+  { key: "seats.cards", module: "seats", title: "The roles in each circle", hint: "Each role's card: its aim, the human need it meets, what it answers for, and who holds it.", kind: "block", villageOs: "org_roles, org_role_assignments, need_links", lands: "setting", weeks: [4], default: null, blocksLaunch: false },
+  { key: "seats.nextHolder", module: "seats", title: "How the next holder of most roles is chosen", hint: "Village OS sets this role by role. This is where your founders start.", kind: "choice", options: HOW_CHOSEN, villageOs: "org_roles.how_chosen", lands: "note", weeks: [6], default: null, blocksLaunch: false },
 
   // Who decides
   { key: "decide.together", module: "decide", title: "What the whole village decides together, and your first agreement", kind: "block", villageOs: "village brief, governance", lands: "note", weeks: [3, 4], default: null, blocksLaunch: false },
@@ -185,7 +185,7 @@ export const VILLAGE_DECISIONS: readonly VillageDecision[] = [
   { key: "membership.covenant", module: "membership", title: "What a member signs", hint: "Village OS starts with sample words. Week 6 drafts yours, and the legal weeks read it again.", kind: "longtext", max: 4000, villageOs: "covenant", lands: "editor", weeks: [6, 11], default: null, blocksLaunch: false },
   { key: "membership.entry", module: "membership", title: "The first step someone takes to come in", kind: "text", max: 300, villageOs: "training, welcome", lands: "note", weeks: [4, 6], default: null, blocksLaunch: false },
   { key: "membership.rite", module: "membership", title: "The rite that brings someone deeper in", kind: "text", max: 300, villageOs: "training, quests", lands: "note", weeks: [3, 6], default: null, blocksLaunch: false },
-  { key: "membership.greeter", module: "membership", title: "The seat that greets newcomers", kind: "text", max: 120, villageOs: "arrival.greeter_role", lands: "note", weeks: [6], default: null, blocksLaunch: false },
+  { key: "membership.greeter", module: "membership", title: "The role that greets newcomers", kind: "text", max: 120, villageOs: "arrival.greeter_role", lands: "note", weeks: [6], default: null, blocksLaunch: false },
   { key: "membership.joining", module: "membership", title: "How joining works", kind: "text", max: 200, villageOs: "membership.invite_only, membership.vouches_required", lands: "note", weeks: [6], default: "By invitation, with three vouches", blocksLaunch: false },
 
   // Quests and contribution

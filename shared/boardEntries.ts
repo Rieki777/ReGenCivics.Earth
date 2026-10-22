@@ -73,7 +73,7 @@ const ANSWER_LABELS: Record<string, string> = {
   "shape-line": "Your Game's structure in one line",
   moved: "Whether your move happened",
   "moved-line": "What moved, or what got in the way",
-  "seat-help": "What would help most with your seats",
+  "seat-help": "What would help most with your roles",
   together: "Something the whole project decides together",
   agreement: "Your first agreement",
   entry: "The first step someone takes to come in",
