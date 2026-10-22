@@ -996,6 +996,13 @@ export const STORIES: Record<string, Story> = {
         <div className="flex items-center gap-2 border-b border-[#1a472a] px-2">
           <input aria-label="Good: a search row with a clear line" placeholder="Search" className="h-11 flex-1 bg-transparent outline-none placeholder:text-[#1a472a]/80" />
         </div>
+        {/* Text cut off by a box that hides overflow: across, a long name
+            cut mid-word beside one that ends in an ellipsis; down, lines
+            below a fixed height beside lines clamped with an ellipsis. */}
+        <div className="w-56 overflow-hidden whitespace-nowrap rounded border border-[#1a472a] px-2 py-1">Bad: a long name cut off where its box ends, mid-word</div>
+        <div className="w-56 truncate rounded border border-[#1a472a] px-2 py-1">Good: a long name that ends in an ellipsis instead</div>
+        <div className="h-6 w-64 overflow-hidden rounded border border-[#1a472a] px-2 text-sm leading-5">Bad: several lines of words in a box one line tall, so all but the first are cut off where nobody can read them.</div>
+        <div className="w-64 line-clamp-1 rounded border border-[#1a472a] px-2 text-sm leading-5">Good: several lines of words clamped to one, so it ends in an ellipsis that says there is more.</div>
         {/* A hint under a field: the bad one isn't tied to its field, the good one is. */}
         <div>
           <label htmlFor="audit-hint-bad">Bad: who holds it</label>
