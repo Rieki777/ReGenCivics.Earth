@@ -1,6 +1,6 @@
 /**
  * Cooperative interest: people and land projects who told us they're
- * interested in the member-owned cooperative in design (server/routes/coop.ts).
+ * interested in the member-owned cooperative treasury (server/routes/coop.ts).
  * No amounts, no pledges: interest is a conversation starter, never a
  * membership or a contribution.
  */

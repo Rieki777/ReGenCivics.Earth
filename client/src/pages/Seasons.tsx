@@ -948,7 +948,7 @@ export default function Seasons() {
           <p className="text-center text-sm text-white/65 max-w-2xl mx-auto safe-prose">
             {COOP.statementShort}{" "}
             <Link href="/fund" className="underline underline-offset-4 hover:text-white">
-              How the cooperative is being designed
+              How the cooperative treasury works
             </Link>
           </p>
           <p className="mt-3 text-center text-xs text-white/60 max-w-2xl mx-auto safe-prose">

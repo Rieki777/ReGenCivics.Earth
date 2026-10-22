@@ -9,7 +9,7 @@
  * Rewritten 2026-09-27 (Phase 0, FUNDING_ENGINE_PLAN v1.2). This page used to
  * describe $RCivics as an investment: capital in, distributions out, liquidity
  * pools, secondary markets and a direct-investment route. None of it was true
- * or on offer, and the fund is now a cooperative in design. The old page is
+ * or on offer, and the fund is now a cooperative treasury in formation. The old page is
  * tagged archive/fund-pages-2026-09-27. Every sentence about the cooperative
  * or the fund-design tokens comes from COOP in shared/fund.ts.
  */
@@ -520,7 +520,7 @@ export default function Tokenomics() {
               </p>
             </div>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link href="/loi">
+              <Link href="/loi?path=interest">
                 <Button
                   size="lg"
                   className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-8"
@@ -650,7 +650,7 @@ export default function Tokenomics() {
               Much like planting mighty nut-bearing trees is a gift our descendants most benefit from, our efforts to create the foundations for new civilizations will be most enjoyed by those who come after us. The token system we are building keeps a record of who brought what, so the people doing the work hold the voice in where it goes.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link href="/loi">
+              <Link href="/loi?path=interest">
                 <Button
                   size="lg"
                   className="rounded-xl bg-[#7dd87d] hover:bg-[#9de89d] text-[#1a472a] font-bold px-8"

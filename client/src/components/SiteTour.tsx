@@ -72,7 +72,7 @@ export function SiteTour() {
           {
             role: "assistant",
             content:
-              "Hi! I'm your ReGen Civics guide. I can explain how the Game works, how to earn quest rewards, the cooperative we are designing, and anything else about the platform. What would you like to know?",
+              "Hi! I'm your ReGen Civics guide. I can explain how the Game works, how to earn quest rewards, the cooperative treasury we're forming, and anything else about the platform. What would you like to know?",
           },
         ]);
       }

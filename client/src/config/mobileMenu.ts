@@ -64,8 +64,8 @@ export const MOBILE_MENU_SECTIONS: MenuSection[] = [
     collapsed: true,
     cards: [
       { label: "Apply", sub: "Land projects and alliance partners", href: "/apply", icon: "Sprout" },
-      { label: "The Cooperative", sub: "Member-owned, now in design", href: "/fund", icon: "Users" },
-      { label: "Tell us you're interested", sub: "No money, no commitment", href: "/loi", icon: "FileText" },
+      { label: "The Cooperative Treasury", sub: "Member-owned, in formation", href: "/fund", icon: "Users" },
+      { label: "Sign a letter of intent", sub: "Any amount, not binding", href: "/loi", icon: "FileText" },
     ],
   },
 ];

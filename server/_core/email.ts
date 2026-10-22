@@ -696,9 +696,9 @@ function teamSignoff(): string {
  *
  * Until 2026-09-27 the reply was a deck link and a drip of four follow-ups
  * that described a fund with proposed terms and a distribution schedule. The
- * fund is now a cooperative in design that accepts no money, and a purchasing
- * cooperative keeps its "bought for use" footing only while nothing in the
- * funnel prices upside. The note fits inside the branded wrapper sendEmail
+ * fund is now a cooperative treasury in formation that accepts no money
+ * (ADR-78), and nothing in the funnel may price upside (gate G5). Since
+ * 2026-10-21 the note points to the non-binding letter of intent. The note fits inside the branded wrapper sendEmail
  * adds, so it carries the standard footer. The name is escaped: it comes
  * straight from a public form.
  */
@@ -708,14 +708,14 @@ function coopNote(recipientName: string): { subject: string; html: string } {
     subject: 'Thanks for getting in touch with ReGen Civics',
     html: `
       <h2 style="color: #1a472a; margin-top: 0;">Thank you${name ? `, ${name}` : ''}</h2>
-      <p style="color: #333; line-height: 1.6;">We received your note. Here is where the cooperative stands.</p>
+      <p style="color: #333; line-height: 1.6;">We received your note. Here is where the cooperative treasury stands.</p>
       <div style="background: #f0f7f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <p style="color: #1a472a; font-weight: bold; margin: 0 0 8px 0;">${textForEmail(COOP.name)}: ${textForEmail(COOP.statusLabel)}</p>
         <p style="color: #333; margin: 0; line-height: 1.6;">${textForEmail(COOP.statement)}</p>
       </div>
-      <p style="color: #333; line-height: 1.6;">${textForEmail(COOP.interestPromise)}</p>
-      <p style="color: #333; line-height: 1.6;">If you'd like to tell us which of the nine forms of capital you might bring, the interest form takes a couple of minutes.</p>
-      ${emailButton(toAbsoluteUrl('/loi', { campaign: 'coop-interest' }), "Tell us you're interested")}
+      <p style="color: #333; line-height: 1.6;">If you'd like to commit financial capital, a letter of intent takes a few minutes and has no minimum. ${textForEmail(COOP.loiPromise)}</p>
+      ${emailButton(toAbsoluteUrl('/loi', { campaign: 'coop-interest' }), 'Sign a letter of intent')}
+      <p style="color: #333; line-height: 1.6;">Bringing land, skills or time instead? <a href="${toAbsoluteUrl('/loi?path=interest', { campaign: 'coop-interest' })}" style="color: #1a472a;">Tell us here</a>.</p>
       <p style="color: #666; font-size: 12px; line-height: 1.6;">${textForEmail(COOP.notAnOffer)}</p>
       ${teamSignoff()}
     `,

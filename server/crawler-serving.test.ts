@@ -130,7 +130,8 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     // the control: if this breaks, the catch-all itself regressed rather than
     // the homepage specifically.
     const html = await (await fetch(`${base}/opportunity`)).text();
-    expect(html).toContain(`Help design the ${COOP.name}`);
+    expect(html).toContain(`The ${COOP.name}: `);
+    expect(html).toContain(COOP.loiPromise);
     expect(html).toContain(COOP.statement);
     expect(html).toContain(COOP.designPrinciplesNote);
     expect(agentVisibleText(html).length).toBeGreaterThan(1000);
@@ -218,7 +219,7 @@ describe.skipIf(!built)("crawler content over HTTP", () => {
     // drift between the page and the crawler, and a test carrying its own copy
     // of the sentences would reintroduce exactly that drift.
     const html = await (await fetch(`${base}/loi`)).text();
-    for (const claim of [COOP.statement, COOP.interestPromise, COOP.notAnOffer]) {
+    for (const claim of [COOP.statement, COOP.loiPromise, COOP.interestPromise, COOP.notAnOffer]) {
       expect(html, `/loi is missing a COOP disclaimer: ${claim.slice(0, 60)}`).toContain(
         escapeHtml(claim),
       );

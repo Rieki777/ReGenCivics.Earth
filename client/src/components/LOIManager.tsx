@@ -8,6 +8,7 @@ import { FileText, Mail, Building, TrendingUp, Calendar, DollarSign, Eye, Loader
 import { EmailTemplateSelector } from "@/components/EmailTemplateSelector";
 import { LoiAnswersPanel } from "@/components/admin/LoiAnswersPanel";
 import { toast } from "sonner";
+import { LOI_INVESTOR_TYPE_LABELS } from "@shared/loiFields";
 
 export function LOIManager() {
   const [selectedLOI, setSelectedLOI] = useState<any>(null);
@@ -40,14 +41,9 @@ export function LOIManager() {
     converted: "Converted",
   };
 
-  const investorTypeLabels: Record<string, string> = {
-    individual: "Individual",
-    family_office: "Family Office",
-    foundation: "Foundation",
-    impact_fund: "Impact Fund",
-    institutional: "Institutional",
-    other: "Other",
-  };
+  // One list with the form and the server (shared/loiFields.ts), so a new
+  // signer type (land_project, ADR-78) never shows up blank here.
+  const investorTypeLabels = LOI_INVESTOR_TYPE_LABELS;
 
   const timelineLabels: Record<string, string> = {
     immediate: "Immediate",

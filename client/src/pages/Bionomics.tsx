@@ -799,7 +799,7 @@ export default function Bionomics() {
               <SectionHeading
                 eyebrow="The Two Sides"
                 title="Two sides of one bridge"
-                blurb="Tokenomics covers the tokens and the cooperative we are designing to work within the current Games (capitalism and everything downstream of it). The Game grows the new economies we are moving toward. They need each other."
+                blurb="Tokenomics covers the tokens and the cooperative treasury we are forming to work within the current Games (capitalism and everything downstream of it). The Game grows the new economies we are moving toward. They need each other."
                 titleClassName="story-grow"
               />
 
@@ -826,7 +826,7 @@ export default function Bionomics() {
                       </h3>
                     </div>
                     <ul className="space-y-2 text-white/80 text-sm md:text-base">
-                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> The cooperative, in design</li>
+                      <li className="flex gap-2"><span className="text-[#d4a574]">•</span> The cooperative treasury, in formation</li>
                       <li className="flex gap-2"><span className="text-[#d4a574]">•</span> $RCivics and RCVoice, under review with counsel</li>
                       <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Tokens as records of contribution</li>
                       <li className="flex gap-2"><span className="text-[#d4a574]">•</span> Law, land and membership in the current systems</li>
@@ -905,7 +905,7 @@ export default function Bionomics() {
 
           {/* ════ 5. THE COOPERATIVE NETWORK ════════════════════════ */}
           {/* Until 2026-09-27 this section framed the work as an index fund
-              holding "positions". The fund is now the cooperative in design;
+              holding "positions". The fund is now the cooperative treasury in formation;
               its sentences come from COOP in shared/fund.ts. */}
           <section className="px-4 py-10 md:py-16" style={{ background: "rgba(0,0,0,0.18)" }}>
             <div className="container max-w-4xl">

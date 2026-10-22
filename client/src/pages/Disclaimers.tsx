@@ -2,7 +2,7 @@
  * Disclaimers page (/disclaimers)
  *
  * Rewritten 2026-09-27 (FUNDING_ENGINE_PLAN v1.2). The fund is now a
- * cooperative in design that accepts no money, so the accredited-investor,
+ * cooperative treasury in formation that accepts no money (ADR-78), so the accredited-investor,
  * offering, returns and liquidity language is gone. /risk-disclosure redirects
  * here, so this page carries the site's only notice: keep it complete and
  * plain. Every sentence about the cooperative and tokens comes from COOP in
@@ -43,11 +43,11 @@ export default function Disclaimers() {
         </section>
 
         <section>
-          <h2 className={H2} style={DISPLAY}>The cooperative is in design</h2>
+          <h2 className={H2} style={DISPLAY}>The cooperative treasury is in formation</h2>
           <p>{COOP.statement}</p>
-          <p className="mt-2">{COOP.interestPromise}</p>
+          <p className="mt-2">{COOP.loiPromise}</p>
           <p className="mt-2">
-            <Link href="/fund" className={LINK}>Read how the cooperative is being designed</Link>
+            <Link href="/opportunity" className={LINK}>Read how the cooperative treasury works</Link>
           </p>
         </section>
 

@@ -28,13 +28,13 @@ type PageEntry = {
 
 const PAGES: PageEntry[] = [
   // 4 Paths
-  { label: "Cooperative", description: "The ReGen Network Cooperative, in design", href: "/fund", icon: <Users className="w-4 h-4 text-[#ffd700]" />, group: "4 Paths", keywords: "cooperative co-op members fund" },
+  { label: "Cooperative", description: "The cooperative treasury, in formation", href: "/fund", icon: <Users className="w-4 h-4 text-[#ffd700]" />, group: "4 Paths", keywords: "cooperative co-op members fund" },
   { label: "Land Projects", description: "Apply as a regenerative land project", href: "/land", icon: <Sprout className="w-4 h-4 text-[#7dd87d]" />, group: "4 Paths" },
   { label: "Alliance Network", description: "Become an alliance partner", href: "/ally", icon: <Handshake className="w-4 h-4 text-cyan-400" />, group: "4 Paths" },
   { label: "ReGen Players", description: "Play the Infinite Game", href: "/play", icon: <Heart className="w-4 h-4 text-pink-400" />, group: "4 Paths" },
   // Cooperative
-  { label: "Help Design the Cooperative", description: "How the cooperative is being designed", href: "/opportunity", icon: <FileText className="w-4 h-4 text-[#ffd700]" />, group: "Cooperative", keywords: "cooperative co-op design principles opportunity" },
-  { label: "Cooperative Interest Form", description: "Tell us you're interested in the cooperative", href: "/loi", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Cooperative", keywords: "interest cooperative co-op" },
+  { label: "The Cooperative Treasury", description: "How land projects pool resources and co-own each other", href: "/opportunity", icon: <FileText className="w-4 h-4 text-[#ffd700]" />, group: "Cooperative", keywords: "cooperative co-op treasury co-ownership design principles opportunity" },
+  { label: "Sign a Letter of Intent", description: "Commit capital to the cooperative treasury, not binding", href: "/loi", icon: <FileText className="w-4 h-4 text-[#7dd87d]" />, group: "Cooperative", keywords: "letter of intent loi commit capital interest cooperative co-op treasury" },
   // Play
   { label: "Game Overview", description: "The Infinite Game explained", href: "/game", icon: <Map className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },
   { label: "Quests", description: "Start questing", href: "/quest", icon: <Scroll className="w-4 h-4 text-[#7dd87d]" />, group: "Play" },

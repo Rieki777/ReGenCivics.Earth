@@ -293,7 +293,7 @@ export function serveStatic(app: Express) {
     "time, things, skills, land and money. Money goes through outside partners each " +
     "project holds, never through ReGen Civics. The campaigns shown today are " +
     "examples; real campaigns open when Season 2 starts crowdpooling.";
-  const INTEREST_META = { title: "Tell Us You're Interested: ReGen Civics", description: COOP.interestPromise };
+  const INTEREST_META = { title: "Sign a Letter of Intent: ReGen Civics", description: COOP.loiPromise };
   const DISCLAIMERS_META = { title: "Disclaimers: ReGen Civics", description: "Legal disclaimers for the ReGen Civics website and platform." };
   const ROUTE_META: Record<string, { title: string; description: string; image?: string }> = {
     "/fund":        { title: `${COOP.name}: ${COOP.statusLabel}`, description: COOP.statementShort, image: `${BASE_URL}/og/fund.jpg` },
@@ -303,7 +303,7 @@ export function serveStatic(app: Express) {
     "/community":   { title: "Community: ReGen Civics", description: "A growing network of regenerators, land projects, and organizations building the ReGenerative Renaissance together.", image: `${BASE_URL}/og/community.jpg` },
     "/governance":  { title: "Governance: ReGen Civics", description: "Voice-based governance rooted in land and contribution. How ReGen Civics makes decisions, and who has a say.", image: `${BASE_URL}/og/governance.jpg` },
     "/map":         { title: "Regenerative Land Map: ReGen Civics", description: "Explore a living map of regenerative land projects and organizations across the globe.", image: `${BASE_URL}/og/map.jpg` },
-    "/opportunity": { title: `Help design the ${COOP.name} | ReGen Civics`, description: COOP.statementShort, image: `${BASE_URL}/og/opportunity.jpg` },
+    "/opportunity": { title: `The ${COOP.treasuryLabel}: ${COOP.name} | ReGen Civics`, description: COOP.statementShort, image: `${BASE_URL}/og/opportunity.jpg` },
     "/blog":        { title: "Blog: ReGen Civics", description: "Insights, stories, and updates from the ReGenerative Renaissance." },
     "/connect":     { title: "Connect: ReGen Civics", description: "Join the conversation. Find us on WhatsApp, Discord, and beyond.", image: `${BASE_URL}/og/connect.jpg` },
     "/apply":       { title: "Apply: ReGen Civics Incubator", description: "Apply to have your land project supported through the ReGen Civics incubator.", image: `${BASE_URL}/og/apply.jpg` },

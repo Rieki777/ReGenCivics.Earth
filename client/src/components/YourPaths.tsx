@@ -30,10 +30,10 @@ const PATH_META: Record<PathSlug, { label: string; tagline: string; Icon: React.
     Icon: Flame,
   },
   // The "investor" slug is stored in the database; since 2026-09-27 this path
-  // leads to the cooperative in design.
+  // leads to the cooperative, now a cooperative treasury in formation (ADR-78).
   investor: {
     label: "Cooperative",
-    tagline: "Help design the cooperative",
+    tagline: "Pool resources with land projects",
     Icon: Droplets,
   },
   land_project: {

@@ -667,7 +667,7 @@ export default function Team() {
             </h2>
           </div>
 
-          {/* The Narrative Story, always visible, explains how the Game and the cooperative in design weave together */}
+          {/* The Narrative Story, always visible, explains how the Game and the cooperative treasury weave together */}
           <div className="max-w-4xl mx-auto mb-10 space-y-5 text-white/85 leading-relaxed safe-prose">
             <p>
               ReGen Civics runs on two sides of one bridge. The{' '}
@@ -684,7 +684,7 @@ export default function Team() {
               >
                 {COOP.name}
               </button>{' '}
-              is being designed so land projects and people can buy and steward land together. It is in design today, it is not yet a legal entity, and it accepts no money. Each side has its own roles and its own rhythm. They hand things to each other across the middle.
+              is being formed so land projects and people can pool their resources and co-own each other's projects. It is in formation today, it is not yet a legal entity, and it accepts no money. Each side has its own roles and its own rhythm. They hand things to each other across the middle.
             </p>
 
             <p>

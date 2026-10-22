@@ -41,6 +41,11 @@ import {
   OPTION_KEY_RE,
   WEEK4_COPY,
   anonymousKeys,
+  SELECTION_DAY_HREF,
+  boardWeekLabel,
+  boardWeekLinks,
+  boardWeeksFor,
+  sessionBoardHref,
   applyBoardAction,
   boardStages,
   boardWelcome,
@@ -107,10 +112,31 @@ describe("week 4's run of show", () => {
     expect(stages[4].cues?.join(" ")).not.toMatch(/role questions/);
   });
 
+  it("every board's last page lists the boards whose session has started, its own always, never Week 1", () => {
+    const started = (upTo: number) => (w: number) => w <= upTo;
+    expect(boardWeeksFor(4, started(4))).toEqual([2, 3, 4]);
+    // An older board links forward to the weeks that have run since.
+    expect(boardWeeksFor(2, started(4))).toEqual([2, 3, 4]);
+    // A board opened before its week still shows itself, and no other week that hasn't run.
+    expect(boardWeeksFor(7, started(4))).toEqual([2, 3, 4, 7]);
+    expect(boardWeeksFor(4, started(13))).toHaveLength(12);
+    expect(boardWeekLabel(4)).toBe("Week 4: Game & Organisation Co-Creation Part 2");
+    // Week 1 (Selection Day) has no board: it always leads the card and links to the selection process on /season2.
+    const rows = boardWeekLinks(3, started(4));
+    expect(rows[0]).toEqual({ week: 1, label: "Week 1, Selection Day", href: "/season2#process", here: false });
+    expect(rows.map((r) => r.href)).not.toContain("/season2/week/1");
+    expect(rows.map((r) => [r.week, r.here])).toEqual([[1, false], [2, false], [3, true], [4, false]]);
+    expect(SELECTION_DAY_HREF).toBe("/season2#process");
+    expect(sessionBoardHref(3)).toBe("/season2/week/3");
+  });
+
   it("the welcome says Part 2 of 2, the practical half, and what each project leaves with", () => {
     const w = boardWelcome(4);
     expect(w.title).toBe("Game & Organisation Co-Creation Part 2");
     expect(w.lede).toMatch(/^This is Part 2 of 2, the practical half\./);
+    // Week 3's board said there was a lot to do and asked to go deeper, most of all on roles (2026-10-21).
+    expect(w.heard).toMatch(/^Last week you told us there's a lot to do/);
+    expect(w.heard).toMatch(/most of all on roles/);
     expect(w.leaveWith).toEqual([
       "Your human needs, checked and ready for Village OS",
       "The circles that meet each human need",

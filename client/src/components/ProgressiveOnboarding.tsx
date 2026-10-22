@@ -25,7 +25,7 @@ const pathCards = [
     id: "fund",
     title: "The Cooperative",
     tagline: COOP.statusLabel,
-    shortDesc: "A member-owned cooperative for land, now in design",
+    shortDesc: "Pool resources with land projects and co-own each other's projects",
     // The one disclaimer renders here, where this view describes the cooperative.
     details: `${COOP.statement} ${COOP.notAnOffer}`,
     href: "/fund",

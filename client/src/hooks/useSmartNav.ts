@@ -27,7 +27,7 @@ const PAGE_META: Record<string, { icon: string; label: string }> = {
   "/seasons": { icon: "Sun", label: "Seasons" },
   "/opportunity": { icon: "FileText", label: "Opportunity" },
   "/fund": { icon: "TrendingUp", label: "Fund" },
-  "/loi": { icon: "PenLine", label: "Co-op interest" },
+  "/loi": { icon: "PenLine", label: "Letter of intent" },
   "/apply": { icon: "Clipboard", label: "Apply" },
   "/ally": { icon: "Handshake", label: "Alliance" },
   // Connect uses Sparkles to differentiate from Forum/Community which
@@ -72,7 +72,7 @@ const PATH_DEFAULTS: Record<string, NavSlot[]> = {
     { path: "/quest", icon: "Scroll", label: "Quests" },
     { path: "/opportunity", icon: "FileText", label: "Opportunity" },
     { path: "/fund", icon: "TrendingUp", label: "Fund" },
-    { path: "/loi", icon: "PenLine", label: "Co-op interest" },
+    { path: "/loi", icon: "PenLine", label: "Letter of intent" },
   ],
   land_project: [
     { path: "/quest", icon: "Scroll", label: "Quests" },

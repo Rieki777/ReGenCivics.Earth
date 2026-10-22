@@ -57,8 +57,8 @@ const contextConfig: Record<PageContext, {
     icon: <FileText className="w-5 h-5 text-[#7dd87d]" />,
     headline: "Before you go",
     subline: `${COOP.name}: ${COOP.statusLabel}`,
-    body: `${COOP.statementShort} ${COOP.interestPromise}`,
-    cta: "Tell us you're interested",
+    body: `${COOP.statementShort} ${COOP.loiPromise}`,
+    cta: "Sign a letter of intent",
     successMessage: "",
   },
   land: {

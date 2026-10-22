@@ -292,6 +292,10 @@ export const WEEK5_PICKS = [
   { key: "economy", label: "Our economic system" },
   { key: "count", label: "Counting contribution" },
   { key: "gratitude", label: "Gratitude" },
+  // Asked for in the Season box (Samara's Sanctuary Studios, Living University Network), 2026-10-21.
+  { key: "vision", label: "Vision" },
+  { key: "patterns", label: "Patterns" },
+  { key: "legal", label: "Legal" },
   { key: "unsure", label: "Not sure yet" },
 ] as const;
 

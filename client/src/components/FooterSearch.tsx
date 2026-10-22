@@ -32,8 +32,8 @@ const searchItems: { group: string; items: SearchItem[] }[] = [
       { label: "Alliance Partners", href: "/ally", keywords: "alliance partner organization ngo", icon: <Users className="w-4 h-4" /> },
       { label: "Players", href: "/play", keywords: "play player game tokens", icon: <Map className="w-4 h-4" /> },
       { label: "Game Overview", href: "/game", keywords: "game infinite quests tokens mechanics", icon: <Map className="w-4 h-4" /> },
-      { label: "Help Design the Cooperative", href: "/opportunity", keywords: "cooperative co-op design principles opportunity", icon: <FileText className="w-4 h-4" /> },
-      { label: "Tell Us You're Interested", href: "/loi", keywords: "interest cooperative co-op form", icon: <FileText className="w-4 h-4" /> },
+      { label: "The Cooperative Treasury", href: "/opportunity", keywords: "cooperative co-op treasury co-ownership design principles opportunity", icon: <FileText className="w-4 h-4" /> },
+      { label: "Sign a Letter of Intent", href: "/loi", keywords: "letter of intent loi commit capital interest cooperative co-op form", icon: <FileText className="w-4 h-4" /> },
     ],
   },
   {

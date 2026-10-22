@@ -284,17 +284,18 @@ function buildCoCreatorSteps(
           actionLabel: "View Rites",
         },
       ];
-    // The "investor" path now leads to the cooperative in design (ADR-62).
+    // The "investor" path now leads to the cooperative (ADR-62), a cooperative
+    // treasury in formation since ADR-78.
     // Labels changed in Phase 0; the path id and the tier mechanics stay until
     // the cooperative's membership design is set with counsel. A legacy signed
     // letter of intent still counts as this step done.
     case "investor":
       return [
         {
-          label: "Tell us you're interested in the cooperative",
+          label: "Sign a letter of intent to the cooperative treasury",
           done: facts.loiSigned,
           actionRoute: "/loi",
-          actionLabel: "Tell us",
+          actionLabel: "Sign",
         },
       ];
     case "land_project":
@@ -346,10 +347,10 @@ function buildStewardSteps(
     case "investor":
       return [
         {
-          label: "Help design the cooperative",
+          label: "Read how the cooperative treasury works",
           done: facts.investmentSent,
           actionRoute: "/opportunity",
-          actionLabel: "Read the design",
+          actionLabel: "Read it",
         },
         {
           label: "Vote in a governance decision",

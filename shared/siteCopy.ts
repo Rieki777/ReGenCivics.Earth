@@ -23,7 +23,7 @@ export const SITE_TAGLINE =
  * under 160 characters so search results show all of it.
  */
 export const SITE_DESCRIPTION =
-  "An in-real-life game for regenerative land projects, built for any community that shares land or housing, from refugee camps to HOAs. A cooperative in design.";
+  "An in-real-life game for regenerative land projects, built for any community that shares land or housing, from refugee camps to HOAs.";
 
 /** The needs the games are for, in Rye's order. */
 export const LOCAL_NEEDS = ["Housing", "Food", "Water", "Air", "Joy", "Meaning", "Purpose"] as const;

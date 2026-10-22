@@ -125,9 +125,9 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
           <li><a href="/ally">Alliance partners</a> join the network of organizations co-creating the Regenerative Renaissance.</li>
           <li><a href="/quest">Players</a> complete quests that move healing into the world and earn $ReGen tokens.</li>
         </ul>
-        <h2>The cooperative, in design</h2>
+        <h2>The cooperative treasury, in formation</h2>
         <p>${escapeHtml(COOP.statement)}</p>
-        <p>Land projects, people and organizations can <a href="/loi">tell us they're interested</a>. ${escapeHtml(COOP.interestPromise)}</p>
+        <p>Anyone can <a href="/loi">sign a letter of intent</a> to commit financial capital, for any amount. ${escapeHtml(COOP.loiPromise)}</p>
         <p>${escapeHtml(COOP.notAnOffer)}</p>
         <p>Explore <a href="/fund">the cooperative</a>, <a href="/game">the game</a>, <a href="/community">the community forum</a>, and <a href="/glossary">the glossary</a>.</p>
       </article>
@@ -142,14 +142,14 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
         <p>${escapeHtml(COOP.designPrinciplesNote)}</p>
         ${COOP_PRINCIPLES_HTML}
         <h2>Where it stands</h2>
-        <p>${escapeHtml(COOP.whereItStands)}</p>
+        <p>${escapeHtml(COOP.launch)} ${escapeHtml(COOP.whereItStands)}</p>
         <p>${escapeHtml(COOP.entities)}</p>
         <h2>Tokens</h2>
         <p>${escapeHtml(COOP.tokensNote)} ${escapeHtml(COOP.coopTokens.rcivics)} ${escapeHtml(COOP.coopTokens.rcvoice)}</p>
-        <h2>Tell us you're interested</h2>
-        <p>Land projects, people, organizations and funders can <a href="/loi">tell us they're interested</a> and which of the nine forms of capital they might bring. ${escapeHtml(COOP.interestPromise)}</p>
+        <h2>Sign a letter of intent</h2>
+        <p>Land projects, people, organizations and funders can <a href="/loi">sign a letter of intent</a> to commit financial capital, for any amount. ${escapeHtml(COOP.loiPromise)} People bringing land, skills or time can <a href="/loi?path=interest">tell us they're interested</a>. ${escapeHtml(COOP.interestPromise)}</p>
         <p>${escapeHtml(COOP.notAnOffer)}</p>
-        <p>Read <a href="/opportunity">how you can help design it</a>, <a href="/learn/nine-forms-of-capital">the nine forms of capital</a>, and <a href="/disclaimers">the disclaimers</a>.</p>
+        <p>Read <a href="/opportunity">the full picture</a>, <a href="/learn/nine-forms-of-capital">the nine forms of capital</a>, and <a href="/disclaimers">the disclaimers</a>.</p>
       </article>
     `,
   },
@@ -173,9 +173,13 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
   "/opportunity": {
     html: `
       <article>
-        <h1>Help design the ${escapeHtml(COOP.name)}</h1>
+        <h1>The ${escapeHtml(COOP.name)}: ${escapeHtml(COOP_TAGLINE_LOWER)}</h1>
         <p>${escapeHtml(COOP.statement)}</p>
-        <p>${escapeHtml(COOP.whereItStands)} Land projects, people, organizations and funders can <a href="/loi">tell us they're interested</a>. ${escapeHtml(COOP.interestPromise)}</p>
+        <p>${escapeHtml(COOP.whereItStands)} Land projects, people, organizations and funders can <a href="/loi">sign a letter of intent</a> to commit financial capital, for any amount. ${escapeHtml(COOP.loiPromise)}</p>
+        <h2>How land projects co-own each other</h2>
+        <p>The cooperative treasury is how land projects and people pool their resources into the network of land projects. The treasury holds a shared stake in the land projects the members choose to back, and every member owns a share of the cooperative, so each land project in the network co-owns a piece of every other one.</p>
+        <h2>How the treasury would be used</h2>
+        <p>The proposed split is 60% to shared stakes in operating land projects, 30% to the alliance organizations that build what land projects need, and 10% to young companies building tools for the transition. The founding members set the real split. Land projects are chosen through a first look, a site visit, a financial review, an impact check, a council review and a member vote, one member one vote.</p>
         <h2>${escapeHtml(COOP_LINEAGE_HEADING)}</h2>
         <p>ReGen Civics grew out of the SEEDS regenerative economy movement. The Game's governance runs on Hypha DAO on the Base network. Season 1 was the first incubator, in ${SEASON_ONE.year}: ${SEASON_ONE.applied} land projects applied, ${SEASON_ONE.presented} presented, and ${SEASON_ONE.selected} were selected. Season 2 opened at the September 2026 equinox. The cooperative itself has no record yet, because it does not exist yet.</p>
         <h2>The design principles</h2>
@@ -322,9 +326,10 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
   "/loi": {
     html: `
       <article>
-        <h1>Tell us you're interested in the ${escapeHtml(COOP.name)}</h1>
+        <h1>Sign a letter of intent to the ${escapeHtml(COOP.name)}</h1>
         <p>${escapeHtml(COOP.statement)}</p>
-        <p>Land projects, people, organizations and funders can use this page to tell us they're interested and which of the nine forms of capital they might bring. ${escapeHtml(COOP.interestPromise)}</p>
+        <p>People, land projects, organizations and funders can use this page to sign a letter of intent to commit financial capital to the ${escapeHtml(COOP.treasuryName)}, for any amount. ${escapeHtml(COOP.loiPromise)}</p>
+        <p>People bringing land, skills or time can tell us they're interested and which of the nine forms of capital they might bring. ${escapeHtml(COOP.interestPromise)}</p>
         <p>${escapeHtml(COOP.notAnOffer)}</p>
         <p>Read about <a href="/fund">the cooperative</a>, <a href="/learn/nine-forms-of-capital">the nine forms of capital</a>, and <a href="/seasons">the seasons</a>.</p>
       </article>
@@ -481,7 +486,7 @@ const PAGE_CONTENT: Record<string, { html: string; jsonld?: object }> = {
           <li><strong>Role in ReGen Civics.</strong> Apply for a role directly.</li>
           <li><strong>Something else.</strong> A unique way to contribute.</li>
         </ul>
-        <p>If you already have an account you can continue an existing application. See also <a href="/apply">applying to the incubator</a>, <a href="/loi">the cooperative in design</a> and <a href="/schedule">the upcoming sessions</a>.</p>
+        <p>If you already have an account you can continue an existing application. See also <a href="/apply">applying to the incubator</a>, <a href="/loi">the cooperative treasury</a> and <a href="/schedule">the upcoming sessions</a>.</p>
       </article>
     `,
   },

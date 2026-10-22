@@ -53,6 +53,9 @@ import { cardText } from "@shared/boardCards";
 import { BioregionSelect } from "@/components/BioregionSelect";
 import { BioregionMultiSelect } from "@/components/BioregionMultiSelect";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import Opportunity from "@/pages/Opportunity";
+import LOI from "@/pages/LOI";
+import Fund from "@/pages/Fund";
 
 export type Story = {
   title: string;
@@ -1043,6 +1046,9 @@ export const STORIES: Record<string, Story> = {
             <p className="text-[#7dd87d]">Good: light green words in it</p>
           </PopoverContent>
         </Popover>
+        {/* A bordered box: the bad one lost its padding, so its words sit on the border. */}
+        <div className="rounded-xl border border-[#1a472a]" style={{ padding: 0 }}><p>Bad: words on the border</p></div>
+        <div className="rounded-xl border border-[#1a472a] p-4"><p>Good: words with room</p></div>
       </div>
     ),
   },
@@ -1934,6 +1940,29 @@ export const STORIES: Record<string, Story> = {
     render: () => <Week4Page />,
   },
 
+  /** The last page, with every week's board linked (Rye, 2026-10-21). */
+  "week4-village": {
+    title: "Week 4, Get your Village OS: the last page, with every week's board",
+    setup: () => {
+      week4Board(14);
+      // Weeks 2 and 3 have run; Week 5 hasn't, so it stays off the list.
+      const sched = mockData["seasonSchedule.state"] as { sessions: { week: number; title: null; startTime: string; endTime: string; status: string }[] };
+      const at = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+      sched.sessions.unshift(
+        { week: 2, title: null, startTime: at(14), endTime: at(14), status: "done" },
+        { week: 3, title: null, startTime: at(7), endTime: at(7), status: "done" },
+      );
+    },
+    render: () => <Week4Page />,
+  },
+
+  /** Week 4's welcome, saying back what Week 3's board told us (Rye, 2026-10-21). */
+  "week4-welcome": {
+    title: "Week 4, Welcome: what you told us last week, then the run of show",
+    setup: () => week4Board(0, { facilitator: true, displayName: "Rye" }),
+    render: () => <Week4Page />,
+  },
+
   /** Week 4 opens on every question from Week 3's board, oldest first (Rye, 2026-10-20). */
   "week4-asks": {
     title: "Week 4, Last week's questions: every Week 3 question, the notes, one asked today",
@@ -2135,6 +2164,51 @@ export const STORIES: Record<string, Story> = {
           <BioregionMultiDemo />
         </div>
       </ProfileGround>
+    ),
+  },
+
+  /** /opportunity: the cooperative treasury, long form (ADR-78). */
+  "opportunity-page": {
+    title: "/opportunity: the cooperative treasury",
+    render: () => (
+      <div className="-m-6">
+        <Opportunity />
+      </div>
+    ),
+  },
+
+  /** /loi: the letter of intent, filled in by the BEFORE step in audit.mjs. */
+  "loi-letter": {
+    title: "/loi: sign a letter of intent, mid-fill",
+    render: () => (
+      <div className="-m-6">
+        <LOI />
+      </div>
+    ),
+  },
+
+  /** /loi?path=interest: the second path, for land, skills and time. */
+  "loi-interest": {
+    title: "/loi?path=interest: tell us you're interested",
+    setup: () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set("path", "interest");
+      window.history.replaceState(null, "", url);
+    },
+    render: () => (
+      <div className="-m-6">
+        <LOI />
+      </div>
+    ),
+  },
+
+  /** /fund: the cooperative treasury overview. */
+  "fund-page": {
+    title: "/fund: the cooperative treasury overview",
+    render: () => (
+      <div className="-m-6">
+        <Fund />
+      </div>
     ),
   },
 };

@@ -612,6 +612,33 @@ export function installAuditLib() {
     const over = document.documentElement.scrollWidth - document.documentElement.clientWidth;
     if (over > 1) failures.push(`page scrolls sideways by ${over}px`);
 
+    // Words pressed against the inside of their own bordered box: a panel lost
+    // its padding. Miss that taught this: Week 4's "Every week's board" card
+    // reused a class another list had already given `padding: 0`, so its text
+    // sat on the panel's border, and every other check passed (2026-10-21).
+    for (const box of root.querySelectorAll("div, section, article, aside, li, ul, ol, form, fieldset")) {
+      const cs = getComputedStyle(box);
+      const bl = parseFloat(cs.borderLeftWidth);
+      if (bl < 1 || cs.borderLeftStyle === "none" || parseFloat(cs.paddingLeft) >= 4 || !visible(box)) continue;
+      const edge = parse(cs.borderLeftColor);
+      if (!edge || edge.a < 0.1 || parseFloat(cs.borderTopWidth) < 1) continue;
+      const left = box.getBoundingClientRect().left + bl;
+      const tw = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+      for (let t = tw.nextNode(); t; t = tw.nextNode()) {
+        if (!t.textContent.trim() || !t.parentElement || !visible(t.parentElement)) continue;
+        if (t.parentElement.closest("[aria-hidden='true']")) continue;
+        // A control inside the box carries its own padding: its words are judged against its own edge.
+        const ctl = t.parentElement.closest("button, a, input, select, textarea, label");
+        if (ctl && ctl !== box && box.contains(ctl)) continue;
+        const range = document.createRange();
+        range.selectNodeContents(t);
+        const r = range.getBoundingClientRect();
+        if (r.width > 0 && r.left - left < 3) {
+          failures.push(`text on its border: "${t.textContent.trim().slice(0, 40)}" touches the inside edge of its box (padding ${cs.paddingLeft})`);
+          break;
+        }
+      }
+    }
     // A hint under a field that the field doesn't point to (aria-describedby):
     // a screen reader reads the label and never the hint. Miss that taught
     // this: Week 4's seat form said "Ask them first: this board is public"
@@ -796,6 +823,21 @@ export async function revealAll(page) {
     window.scrollTo(0, 0);
   });
   await page.waitForTimeout(800);
+  // Let fades still running finish, so text is measured as it rests. Endless
+  // animations are left alone (the main-thread check reads those). Miss that
+  // taught this: /fund's hero waits on its background images, then fades its
+  // buttons in after 600ms; under load the audit read them mid-fade at 2.15:1
+  // and then 4.02:1, on buttons that rest at 6.3:1 (2026-10-21).
+  await page.evaluate(async () => {
+    const finite = (document.getAnimations ? document.getAnimations() : []).filter((a) => {
+      const end = a.effect?.getComputedTiming?.().endTime;
+      return typeof end === "number" && Number.isFinite(end);
+    });
+    await Promise.race([
+      Promise.all(finite.map((a) => a.finished.catch(() => {}))),
+      new Promise((r) => setTimeout(r, 3000)),
+    ]);
+  });
 }
 
 /**

@@ -111,14 +111,14 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   // now point at the cooperative pages instead (Phase 0, 2026-09-27).
   fund: {
     pages: [
-      { href: "/opportunity", title: "Help Design the Cooperative", description: "How the cooperative is being designed, and the principles we are working from." },
+      { href: "/opportunity", title: "The Cooperative Treasury", description: "How land projects pool their resources and co-own each other's projects." },
       { href: "/land", title: "Land Projects", description: "Meet the regenerative land projects in the ReGen Civics seasons." },
       { href: "/showcase", title: "Project Showcase", description: "See approved projects and their progress." },
     ],
   },
   land: {
     pages: [
-      { href: "/fund", title: "The Cooperative", description: "A member-owned cooperative for land, now in design." },
+      { href: "/fund", title: "The Cooperative Treasury", description: "Where land projects pool resources and co-own each other, in formation." },
       { href: "/game", title: "Play the Game", description: "Earn tokens and complete quests to support land projects." },
       { href: "/showcase", title: "Project Showcase", description: "See approved projects and their regenerative impact." },
     ],
@@ -142,7 +142,7 @@ export const relatedContentMap: Record<string, { pages: RelatedPage[]; blog?: Re
   opportunity: {
     pages: [
       { href: "/fund", title: "The Cooperative", description: "What the cooperative is and where it stands today." },
-      { href: "/loi", title: "Tell Us You're Interested", description: COOP.interestPromise },
+      { href: "/loi", title: "Sign a Letter of Intent", description: COOP.loiPromise },
       { href: "/schedule", title: "Book a Session", description: "Join an open session to ask questions and meet the team." },
     ],
     blog: { slug: "what-makes-regen-civics-different", title: "What Makes ReGen Civics Different", excerpt: "7 unique features that set our regenerative platform apart." },

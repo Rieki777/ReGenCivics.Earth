@@ -94,7 +94,8 @@ const TocEntry = memo(function TocEntry({
       onClick={() => onSelect(section.id)}
       className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 flex items-start gap-2 group ${
         active
-          ? 'bg-[#7dd87d]/20 text-[#7dd87d] font-semibold'
+          ? // Pale green: #7dd87d on its own 20% tint read 4.1:1 at 12px.
+            'bg-[#7dd87d]/20 text-[#c8f5c8] font-semibold'
           : 'text-white/70 hover:text-white hover:bg-white/5'
       }`}
     >

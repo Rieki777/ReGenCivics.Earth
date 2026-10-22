@@ -2,12 +2,12 @@
  * Governance Page - ReGen Civics
  *
  * Two spaces: the Game, governed today by RGVoice on Hypha, and the ReGen
- * Network Cooperative, in design, meant to vote one member, one vote.
+ * Network Cooperative, in formation, meant to vote one member, one vote.
  *
  * Rewritten 2026-09-27 (Phase 0, FUNDING_ENGINE_PLAN v1.2). The fund side of
  * this page described a weighted voice split with an investor seat, success
  * fees and profit shares to token holders, a fee split and a countdown to a
- * dashboard date that had passed. The fund is now a cooperative in design, so
+ * dashboard date that had passed. The fund is now a cooperative treasury in formation, so
  * every sentence about it comes from COOP in shared/fund.ts. The two fund token
  * logos were dropped too: both carry the old fund name baked into the art, and
  * one reads "Invest in Regenerative Futures". The old page is tagged
@@ -286,7 +286,7 @@ export default function Governance() {
       <div className="container max-w-4xl mx-auto px-4 mt-8">
         <TLDR points={[
           "RGVoice carries vote weight in the Game. Players earn it through quests, and it wanes 3% a month.",
-          `The ${COOP.name} is in design. It is designed to vote one member, one vote.`,
+          `The ${COOP.name} is a cooperative treasury ${COOP.statusLabel.toLowerCase()}. It is designed to vote one member, one vote.`,
           "Proposals start in the community forum, move to the ReGen Gov app for voting, then formalize on Hypha",
         ]} />
       </div>
@@ -326,7 +326,7 @@ export default function Governance() {
           <div className="max-w-5xl mx-auto">
             <h2 className="text-3xl font-bold text-[#7dd87d] mb-4 text-center">The Cooperative and the Game: Governance at a Glance</h2>
             <p className="text-white/80 text-lg leading-relaxed mb-4 text-center max-w-3xl mx-auto safe-prose">
-              Two spaces, two ways of deciding, one shared mission. The Game runs today. The cooperative is in design.
+              Two spaces, two ways of deciding, one shared mission. The Game runs today. The cooperative treasury is in formation.
             </p>
             <p className="text-white/60 text-sm leading-relaxed mb-10 text-center max-w-3xl mx-auto safe-prose">
               {COOP.designPrinciplesNote}
@@ -416,7 +416,7 @@ export default function Governance() {
                     },
                     {
                       dimension: 'Where It Stands',
-                      coop: 'In design. Not yet a legal entity, and it accepts no money.',
+                      coop: 'In formation. Not yet a legal entity, and it accepts no money.',
                       game: 'Running today, with binding votes on Hypha DHO (on-chain)',
                       coopColor: 'text-[#d4a574]',
                       gameColor: 'text-purple-300',
@@ -517,10 +517,10 @@ export default function Governance() {
               <p className="text-white/80 text-sm leading-relaxed mb-4 safe-prose">{COOP.whereItStands}</p>
               <Link href="/loi">
                 <Button className="bg-[#7dd87d] text-[#1a472a] hover:bg-[#9de89d] font-bold min-h-[44px]">
-                  Tell us you're interested
+                  Sign a letter of intent
                 </Button>
               </Link>
-              <p className="text-white/60 text-xs mt-3 max-w-xl mx-auto safe-prose">{COOP.interestPromise}</p>
+              <p className="text-white/60 text-xs mt-3 max-w-xl mx-auto safe-prose">{COOP.loiPromise}</p>
             </div>
 
             <p className="text-white/50 text-xs mt-6 text-center safe-prose">{COOP.notAnOffer}</p>

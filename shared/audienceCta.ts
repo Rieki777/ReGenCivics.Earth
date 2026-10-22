@@ -63,7 +63,7 @@ export function pickAudienceCta(event?: AudienceCtaEvent): AudienceCta {
   if (blob.includes("loi") || blob.includes("letter of intent")) {
     return {
       path: "/loi",
-      label: "Tell us you're interested",
+      label: "Sign a letter of intent",
       url: absoluteSiteUrl("/loi"),
     };
   }

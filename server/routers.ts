@@ -110,7 +110,8 @@ export const appRouter = router({
   investorInquiries: investorInquiriesRouter,
   generalInquiries: generalInquiriesRouter,
   loi: loiRouter,
-  // The member-owned cooperative in design: interest, never pledges (funding engine Phase 0)
+  // The member-owned cooperative treasury in formation: interest here (no amounts);
+  // letters of intent with an amount go through loi.submit (ADR-78)
   coop: coopRouter,
   reviewerEmails: reviewerEmailsRouter,
   contactNotes: contactNotesRouter,
