@@ -41,7 +41,9 @@ import {
   OPTION_KEY_RE,
   WEEK4_COPY,
   anonymousKeys,
+  SELECTION_DAY_HREF,
   boardWeekLabel,
+  boardWeekLinks,
   boardWeeksFor,
   sessionBoardHref,
   applyBoardAction,
@@ -119,6 +121,12 @@ describe("week 4's run of show", () => {
     expect(boardWeeksFor(7, started(4))).toEqual([2, 3, 4, 7]);
     expect(boardWeeksFor(4, started(13))).toHaveLength(12);
     expect(boardWeekLabel(4)).toBe("Week 4: Game & Organisation Co-Creation Part 2");
+    // Week 1 (Selection Day) has no board: it always leads the card and links to the selection process on /season2.
+    const rows = boardWeekLinks(3, started(4));
+    expect(rows[0]).toEqual({ week: 1, label: "Week 1, Selection Day", href: "/season2#process", here: false });
+    expect(rows.map((r) => r.href)).not.toContain("/season2/week/1");
+    expect(rows.map((r) => [r.week, r.here])).toEqual([[1, false], [2, false], [3, true], [4, false]]);
+    expect(SELECTION_DAY_HREF).toBe("/season2#process");
     expect(sessionBoardHref(3)).toBe("/season2/week/3");
   });
 

@@ -24,10 +24,8 @@ import {
   LAST_BOARD_WEEK,
   OPPORTUNITY_THEMES,
   PROJECT_PHASES,
-  boardWeekLabel,
-  boardWeeksFor,
+  boardWeekLinks,
   boardWelcome,
-  sessionBoardHref,
   type ProjectPhase,
   breathAt,
   sessionMinutes,
@@ -1265,21 +1263,21 @@ export function GetVillageOS({ stages, index, week }: StageProps) {
 function BoardWeeks({ week }: { week: number }) {
   const { sessions } = useSeasonSchedule();
   const now = Date.now();
-  const weeks = boardWeeksFor(week, (w) => sessions.some((s) => s.week === w && s.start.getTime() <= now));
+  const rows = boardWeekLinks(week, (w) => sessions.some((s) => s.week === w && s.start.getTime() <= now));
   return (
     <section className="sb-panel sb-board-weeks" aria-labelledby="sb-board-weeks-h">
       <h3 id="sb-board-weeks-h" className="sb-h3">{BOARD_WEEKS_COPY.title}</h3>
       <p className="sb-hint">{BOARD_WEEKS_COPY.lede}</p>
       <ul className="sb-board-weeks-list">
-        {weeks.map((w) => (
-          <li key={w}>
-            {w === week ? (
+        {rows.map((r) => (
+          <li key={r.week}>
+            {r.here ? (
               <span className="sb-week-here" aria-current="page">
-                <span>{boardWeekLabel(w)}</span>
+                <span>{r.label}</span>
                 <span className="sb-badge">{BOARD_WEEKS_COPY.here}</span>
               </span>
             ) : (
-              <Link className="sb-week-link" href={sessionBoardHref(w)}>{boardWeekLabel(w)}</Link>
+              <Link className="sb-week-link" href={r.href}>{r.label}</Link>
             )}
           </li>
         ))}

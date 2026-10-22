@@ -94,7 +94,7 @@ Add new entries to the top. Format per entry:
 
 ## 2026-10-21 (Season 2 Week 4, after the session): every week's board on every last page, what you told us, one focus each, and Vision, Patterns and Legal for Week 5
 
-- **Every week's board** (Rye): the last page of every board, "Get your Village OS", now lists every week whose session has started, each a link to its board, with "You're here" on the board's own week. It grows on its own each week. Week 1 has no board (Selection Day ran before boards existed), so it isn't listed.
+- **Every week's board** (Rye): the last page of every board, "Get your Village OS", now lists every week whose session has started, each a link to its board, with "You're here" on the board's own week. It grows on its own each week. Week 1 has no board (Selection Day ran before boards existed), so "Week 1, Selection Day" leads the list and goes to the selection process on /season2 (Rye, 2026-10-21); a link to a section of a lazy page now waits up to ten seconds for it to arrive.
 
 - Rye approved five changes the night before; the request reached the board lane after the 09:00 freeze, so the room got them live from the facilitator, and the board gets them for the record after the session:
   - **The welcome says back what Week 3's board told us** ("a lot to do", go deeper, most of all on roles), with a cue to say it aloud.

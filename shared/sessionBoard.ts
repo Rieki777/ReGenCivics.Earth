@@ -72,7 +72,23 @@ export const BOARD_WEEKS_COPY = {
   title: "Every week's board",
   lede: "Each week's board stays open as that week's record. Go back to any of them.",
   here: "You're here",
+  /** Week 1 ran before boards existed: it links to the selection process on /season2 (Rye, 2026-10-21). */
+  selectionDay: "Week 1, Selection Day",
 } as const;
+
+/** Where "Week 1, Selection Day" goes: the selection process section of /season2 (its `id="process"`). */
+export const SELECTION_DAY_HREF = "/season2#process";
+
+/**
+ * The card's rows, in order: Week 1, Selection Day, always first and never a
+ * board; then every board `boardWeeksFor` lists, the board's own week marked.
+ */
+export function boardWeekLinks(week: number, started: (w: number) => boolean): { week: number; label: string; href: string; here: boolean }[] {
+  return [
+    { week: 1, label: BOARD_WEEKS_COPY.selectionDay, href: SELECTION_DAY_HREF, here: false },
+    ...boardWeeksFor(week, started).map((w) => ({ week: w, label: boardWeekLabel(w), href: sessionBoardHref(w), here: w === week })),
+  ];
+}
 
 /**
  * The boards a board's last page lists: every week with a board whose session

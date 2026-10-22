@@ -13,7 +13,9 @@ export function ScrollToTop() {
   // Scroll to top on route change, UNLESS the URL carries a hash fragment.
   // When there's a hash (e.g. /bionomics#local-food-economies), scroll to that
   // section instead of clobbering the anchor with a jump to the top. Long pages
-  // mount sections asynchronously, so retry briefly until the target exists.
+  // mount sections asynchronously, and a lazy page (/season2) can take more
+  // than two seconds to arrive on a slow phone, so retry for up to ten seconds,
+  // and stop as soon as the person scrolls on their own.
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash : "";
     if (hash && hash.length > 1) {
@@ -28,11 +30,20 @@ export function ScrollToTop() {
       };
       if (scrollToHash()) return;
       let attempts = 0;
+      const stop = () => {
+        window.clearInterval(timer);
+        window.removeEventListener("wheel", stop);
+        window.removeEventListener("touchmove", stop);
+        window.removeEventListener("keydown", stop);
+      };
       const timer = window.setInterval(() => {
         attempts += 1;
-        if (scrollToHash() || attempts >= 20) window.clearInterval(timer);
+        if (scrollToHash() || attempts >= 100) stop();
       }, 100);
-      return () => window.clearInterval(timer);
+      window.addEventListener("wheel", stop, { passive: true });
+      window.addEventListener("touchmove", stop, { passive: true });
+      window.addEventListener("keydown", stop);
+      return stop;
     }
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [location]);
