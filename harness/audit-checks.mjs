@@ -11,6 +11,8 @@
  * Checks:
  *   contrast      text against the real background it sits on (WCAG 1.4.3)
  *   placeholder   placeholder text, 4.5:1
+ *   cut off       text a box that hides overflow cuts at its edge or below a
+ *                 fixed height, with no ellipsis or clamp to say so
  *   typed text    what people type, against the field's fill
  *   field edge    text fields' outline or fill (or the row line a bare search
  *                 box sits on), 3:1 (WCAG 1.4.11)
@@ -326,6 +328,117 @@ export function installAuditLib() {
       const r = ratio(fg, bg);
       const disabled = el.closest("button[disabled], [aria-disabled='true'], fieldset[disabled]");
       if (r < need && !disabled) failures.push(`contrast ${r.toFixed(2)} < ${need}: "${label(el)}" (${size}px)`);
+    }
+
+    // Text cut off by a box that hides overflow: words pushed past the edge
+    // of a box with overflow hidden, or lines below a fixed height, with
+    // nothing to say there is more. Miss that taught this (2026-10-21): on
+    // phones .tap-44 made the bioregion picker's rows inline-flex, so their
+    // realm notes ran past the popover's edge and were cut mid-word; every
+    // check passed and only a phone screenshot showed it. Fine: a box that
+    // draws its own ellipsis or line clamp, text the reader can scroll to,
+    // text wholly outside the box (a closed panel), a carousel's next slide.
+    // A line's box is taller than its glyphs, so a line counts as cut only
+    // when over a third of it is outside.
+    const SLACK = 2;
+    const clipInfo = new Map();
+    const clipOf = (a) => {
+      let s = clipInfo.get(a);
+      if (s) return s;
+      const cs = getComputedStyle(a);
+      s = {
+        x: cs.overflowX,
+        y: cs.overflowY,
+        pos: cs.position,
+        contents: cs.display === "contents",
+        contained: cs.transform !== "none" || cs.filter !== "none" || /paint|layout|strict|content/.test(cs.contain || ""),
+        ellipsis: cs.textOverflow === "ellipsis",
+        clamp: [cs.getPropertyValue("-webkit-line-clamp"), cs.getPropertyValue("line-clamp")].some((v) => v && v !== "none"),
+        hidden: (cs.clip && cs.clip !== "auto") || (cs.clipPath && cs.clipPath !== "none"),
+        slide: a.getAttribute("aria-roledescription") === "slide",
+      };
+      clipInfo.set(a, s);
+      return s;
+    };
+    const cutOf = (el, lines) => {
+      // An absolute box escapes the static boxes between it and its
+      // containing block; a fixed one escapes all but transformed ones.
+      let escape = null;
+      let inSlide = false;
+      for (let a = el; a && a !== document.body && a !== document.documentElement; a = a.parentElement) {
+        const s = clipOf(a);
+        if (s.contents) continue;
+        if (a !== el && escape) {
+          if (escape === "fixed" ? !s.contained : s.pos === "static" && !s.contained) continue;
+          escape = null;
+        }
+        const clipX = s.x === "hidden" || s.x === "clip", clipY = s.y === "hidden" || s.y === "clip";
+        const scrollX = s.x === "auto" || s.x === "scroll", scrollY = s.y === "auto" || s.y === "scroll";
+        if (clipX || clipY || scrollX || scrollY) {
+          if (s.hidden) return null;
+          if (inSlide && (clipX || clipY)) return null;
+          const b = a.getBoundingClientRect();
+          const L = b.left + a.clientLeft, T = b.top + a.clientTop, R = L + a.clientWidth, B = T + a.clientHeight;
+          if (clipX || clipY) {
+            const shown = lines.filter((r) => (!clipX || Math.min(r.right, R) > Math.max(r.left, L)) && (!clipY || Math.min(r.bottom, B) > Math.max(r.top, T)));
+            if (!shown.length) return null;
+            if (clipX && !s.ellipsis) {
+              const over = Math.max(...lines.map((r) => r.right - R)), under = Math.max(...lines.map((r) => L - r.left));
+              if (over > SLACK) return { a, edge: `${Math.round(over)}px past the right edge` };
+              if (under > SLACK) return { a, edge: `${Math.round(under)}px past the left edge` };
+            }
+            if (clipY && !s.clamp) {
+              for (const r of lines) {
+                const out = Math.max(0, r.bottom - B) + Math.max(0, T - r.top);
+                if (out > 0.35 * r.height) {
+                  return { a, edge: r.bottom > B ? `${Math.round(r.bottom - B)}px below the bottom edge` : `${Math.round(T - r.top)}px above the top edge` };
+                }
+              }
+            }
+          }
+          // From here up the reader sees only the part inside this box: past
+          // a box that scrolls, or draws its own ellipsis or clamp, the words
+          // are reachable or marked as cut on purpose.
+          const keepX = scrollX || (clipX && s.ellipsis), keepY = scrollY || (clipY && s.clamp);
+          if (keepX || keepY) {
+            lines = lines
+              .map((r) => ({
+                left: keepX ? Math.max(r.left, L) : r.left,
+                right: keepX ? Math.min(r.right, R) : r.right,
+                top: keepY ? Math.max(r.top, T) : r.top,
+                bottom: keepY ? Math.min(r.bottom, B) : r.bottom,
+                height: r.height,
+              }))
+              .filter((r) => r.right > r.left && r.bottom > r.top);
+            if (!lines.length) return null;
+          }
+        }
+        if (s.slide) inSlide = true;
+        if (s.pos === "fixed") escape = "fixed";
+        else if (s.pos === "absolute") escape = "absolute";
+      }
+      return null;
+    };
+    const cutSeen = new Set();
+    const clipWalker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let t = clipWalker.nextNode(); t; t = clipWalker.nextNode()) {
+      const text = t.textContent.trim();
+      if (!text) continue;
+      const el = t.parentElement;
+      if (!el || cutSeen.has(el) || !visible(el) || opacityOf(el) < 0.05) continue;
+      if (el.closest("[aria-hidden='true'], svg, script, style, noscript")) continue;
+      const box = el.getBoundingClientRect();
+      if (box.width <= 2 && box.height <= 2) continue;
+      const range = document.createRange();
+      range.selectNodeContents(t);
+      const lines = [...range.getClientRects()].filter((r) => r.width > 0.5 && r.height > 0.5);
+      if (!lines.length) continue;
+      const cut = cutOf(el, lines);
+      if (!cut) continue;
+      cutSeen.add(el);
+      const cls = cut.a.getAttribute("class");
+      const where = `${cut.a.tagName.toLowerCase()}${cls ? "." + cls.trim().split(/\s+/).slice(0, 2).join(".") : ""}`;
+      failures.push(`text cut off (${cut.edge} of ${where}): "${text.replace(/\s+/g, " ").slice(0, 60)}"`);
     }
 
     // Placeholders.
