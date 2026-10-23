@@ -165,10 +165,10 @@ export const CARD_LIMITS = {
 /** The words on the card forms and the refusals. */
 export const CARD_COPY = {
   seat: {
-    add: "Add a seat",
-    edit: "Change this seat",
-    save: "Save the seat",
-    name: "Seat name",
+    add: "Add a role",
+    edit: "Change this role",
+    save: "Save the role",
+    name: "Role name",
     namePlaceholder: "Water keeper",
     circle: "Which circle it sits in",
     need: "The human need it meets",
@@ -185,8 +185,8 @@ export const CARD_COPY = {
     contributionPlaceholder: "4 hours a week",
     contributionHint: "Hours a week, or a clear contribution.",
     open: "Open: an invitation someone could say yes to.",
-    none: "No seats for this human need yet.",
-    full: "That's twelve seats of yours for this project. Take one back to add another.",
+    none: "No roles for this human need yet.",
+    full: "That's twelve roles of yours for this project. Take one back to add another.",
   },
   own: {
     add: "Add a human need of your own",
@@ -230,7 +230,7 @@ export const CARD_COPY = {
   saved: "Saved: {title}.",
   takenBack: "Taken back: {title}.",
   bad: {
-    seat: "A seat takes a name, a circle and the human need it meets.",
+    seat: "A role takes a name, a circle and the human need it meets.",
     own: "Name the human need and where you want your people with it. One of the ten? Tick it above instead.",
     decide: "Pick the circle, and say what it decides on.",
     gloss: "Another way? Say how, in one line.",
@@ -496,7 +496,7 @@ export function cardLine(kind: CardKind, card: CardOf<CardKind>, own: ReadonlyMa
 
 /** The label a card row gets on the profile and in the export. */
 export const CARD_LABELS: Record<CardKind, string> = {
-  seat: "A seat you wrote",
+  seat: "A role you wrote",
   own: "A human need of your own",
   decide: "What a circle decides",
   quest: "A quest you wrote",

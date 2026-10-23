@@ -125,7 +125,7 @@ export function SeatsStage(props: StageProps) {
                     {game.view.seeds.includes(need as never) ? <span className="sb-seed-chip">Seed</span> : null}
                   </h3>
                   <span className="sb-seat-count">
-                    {fillCopy(WEEK4_COPY.seatsPerNeed, { seats: plural(seats.length, "seat", "seats"), held })}
+                    {fillCopy(WEEK4_COPY.seatsPerNeed, { seats: plural(seats.length, "role", "roles"), held })}
                   </span>
                 </header>
                 {circles.length ? (
@@ -157,7 +157,7 @@ export function SeatsStage(props: StageProps) {
           })}
           {elsewhere.length ? (
             <section className="sb-need-section" aria-labelledby="sb-seats-other">
-              <h3 id="sb-seats-other" className="sb-seed-head">Other seats</h3>
+              <h3 id="sb-seats-other" className="sb-seed-head">Other roles</h3>
               {seatList(elsewhere)}
             </section>
           ) : null}

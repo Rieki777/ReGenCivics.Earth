@@ -368,8 +368,8 @@ const WEEK_2: BoardStage[] = [
     kind: "villageos", name: "Building in Village OS", short: "Village OS", min: 10,
     line: "The tool we build our Games in, and the crowdpool that fills their rosters",
     cues: [
-      "Show, don't list. Walk Amora's circles map: tap a circle, then an open seat.",
-      "Show the role cards: a seat's card, front and back, and the card someone sees while proposing a role.",
+      "Show, don't list. Walk Amora's circles map: tap a circle, then an open role.",
+      "Show the role cards: a role's card, front and back, and the card someone sees while proposing a role.",
       "Tie each design week to what gets set up in the tool.",
       "Land the ending: the crowdpool at the March equinox fills each Game's roster.",
     ],
@@ -1063,7 +1063,7 @@ const cardPrompts = (kind: CardKind, title: string): BoardPrompt[] =>
 export const WEEK4_COPY = {
   carryTitle: "Your Week 3 card",
   needsTitle: "Your human needs",
-  seatsTitle: "Seats in each circle",
+  seatsTitle: "Roles in each circle",
   decideTitle: "Who decides what",
   questsTitle: "Your first quest",
   builtTitle: "Your Game, built",
@@ -1073,10 +1073,10 @@ export const WEEK4_COPY = {
   copyHint: "Everything your project said in Week 3 and today, as a card Village OS can read.",
   showCopy: "Show what's in it",
   seatsPerNeed: "{seats} · {held} held",
-  seatsCount: "Seats by human need",
+  seatsCount: "Roles by human need",
   noNeeds: "Name your project's human needs first, on {stage}.",
   ownCircles: "Your own circles",
-  close: ["Projects checked in", "Human needs with a circle", "Seats written", "Questions asked"],
+  close: ["Projects checked in", "Human needs with a circle", "Roles written", "Questions asked"],
   closeLine: "The board stays open. Come back any time to finish a stage.",
   /** The facilitator's list of cards found only by their name, on every Week 4 stage. */
   waitingTitle: "Cards found by name",
@@ -1127,7 +1127,7 @@ const WEEK_4: BoardStage[] = [
     kind: "welcome", name: "Welcome", short: "Welcome", min: 3, line: "Part 2 of 2: build it in Village OS",
     cues: [
       "Greet people by name. \"Open the board on your own screen and tap your project while we gather.\" Point to the QR.",
-      "Say back what they told us: \"Last week you told us there's a lot to do, and that you want to go deeper, most of all on roles. So today we go deeper on fewer things: your questions first, then the seats in your circles.\"",
+      "Say back what they told us: \"Last week you told us there's a lot to do, and that you want to go deeper, most of all on roles. So today we go deeper on fewer things: your questions first, then the roles in your circles.\"",
       "Say it plainly: this is Part 2 of 2, the practical half. Last week each project named the human needs it is here to meet. Today we build its Game around them, and every project leaves with a card ready for its Village OS.",
       "When you go live, press Start session at the top. Moving between stages never starts the clock.",
     ],
@@ -1154,7 +1154,7 @@ const WEEK_4: BoardStage[] = [
     lede: "We start with your questions. Every question added to Week 3's board is here, oldest first, and we answer each one before we build.",
     cues: [
       "Read each question aloud with its project, answer it, and tap Answered. The prep sheet has a suggested answer for each.",
-      "Answer the role questions together: inviting people into roles, counting contribution, what a role is worth. Today's seats stage is the long answer.",
+      "Answer the role questions together: inviting people into roles, counting contribution, what a role is worth. Today's roles stage is the long answer.",
       "Then the notes people asked us to cover: practising in your own context, and peer review.",
       "A new question comes up? It goes in the box below, and we answer it at the end.",
     ],
@@ -1173,7 +1173,7 @@ const WEEK_4: BoardStage[] = [
     ],
     cues: [
       "Read one project's card aloud as the example, then give everyone three minutes with their own.",
-      "Each project names the one thing it most wants to leave with today, picked from its gaps: the circles that meet its human needs, a seat, who decides what, or a first quest. \"Put your energy there. The other stages are there if time allows.\"",
+      "Each project names the one thing it most wants to leave with today, picked from its gaps: the circles that meet its human needs, a role, who decides what, or a first quest. \"Put your energy there. The other stages are there if time allows.\"",
       "Point at \"Not answered yet\": each gap gets answered on today's stages.",
       "Ask each project: did your move happen?",
     ],
@@ -1234,25 +1234,25 @@ const WEEK_4: BoardStage[] = [
     ],
   },
   {
-    kind: "needs", step: "seats", name: WEEK4_COPY.seatsTitle, short: "Seats", min: 30, line: "The seats that meet each human need, and who holds them",
-    lede: "A circle starts with seats. For each human need, add the seats that meet it. Write each one so someone could say yes to it: what it works toward, what it answers for, and what it asks of them. If someone on your team already holds it, name them.",
+    kind: "needs", step: "seats", name: WEEK4_COPY.seatsTitle, short: "Roles", min: 30, line: "The roles that meet each human need, and who holds them",
+    lede: "A circle starts with roles. For each human need, add the roles that meet it. Write each one so someone could say yes to it: what it works toward, what it answers for, and what it asks of them. If someone on your team already holds it, name them.",
     prompts: [
-      ...cardPrompts("seat", "A seat"),
-      { key: "seat-help", title: "What would help most with your seats?", mode: "pick", scope: "project", options: opts(SEAT_HELP), max: SEAT_HELP.length },
+      ...cardPrompts("seat", "A role"),
+      { key: "seat-help", title: "What would help most with your roles?", mode: "pick", scope: "project", options: opts(SEAT_HELP), max: SEAT_HELP.length },
       {
         key: "entry",
         title: "The first step someone takes to come in",
-        hint: "How a stranger finds an open seat and says yes to it.",
+        hint: "How a stranger finds an open role and says yes to it.",
         placeholder: "come to a work day, then a welcome circle",
         mode: "note", scope: "project", max: 1,
       },
     ],
     cues: [
       "This is the heart of today. Thirty minutes.",
-      "In Amora's Village OS, open Roles: a seat's card has its aim, what it answers for, and why it matters. Show one, front and back.",
-      "\"Need first: take your first seed, add the seats that meet it, then the next.\" Each seat names who holds it now, or stays open as an invitation. A being can hold a seat, with someone speaking for it.",
-      "Seats end with the season unless you say otherwise, so a short-term role is just a seat. One that grows can become a circle.",
-      "Read the count by human need back to the room: which human needs have seats, and which have nobody yet.",
+      "In Amora's Village OS, open Roles: a role's card has its aim, what it answers for, and why it matters. Show one, front and back.",
+      "\"Need first: take your first seed, add the roles that meet it, then the next.\" Each role names who holds it now, or stays open as an invitation. A being can hold a role, with someone speaking for it.",
+      "Roles end with the season unless you say otherwise, so a role can be short-term. One that grows can become a circle.",
+      "Read the count by human need back to the room: which human needs have roles, and which have nobody yet.",
       "Legal structures for roles come in Weeks 10 and 11.",
     ],
   },
@@ -1272,7 +1272,7 @@ const WEEK_4: BoardStage[] = [
       { key: "pulse-b", title: "How's this landing?", mode: "pick", scope: "room", anonymous: true, options: PULSE, max: 1 },
     ],
     cues: [
-      "In Amora's Village OS, open Governance. A seat's card also says what it decides on and its way of deciding.",
+      "In Amora's Village OS, open Governance. A role's card also says what it decides on and its way of deciding.",
       "\"Each circle decides what's its own. What's left for everyone?\"",
       "It takes a village: talking with others before deciding is exactly what a circle is for.",
     ],
@@ -1310,11 +1310,11 @@ const WEEK_4: BoardStage[] = [
     earlierAsks: true,
     lede: "Let's take your questions. Then each project names one move before Week 5, when we write your Game Guide and start your economic system.",
     prompts: [
-      { key: "ask", title: "Your questions on circles, seats and Village OS", placeholder: PROMPT_COPY.askPlaceholder, mode: "ask", scope: "project" },
+      { key: "ask", title: "Your questions on circles, roles and Village OS", placeholder: PROMPT_COPY.askPlaceholder, mode: "ask", scope: "project" },
       {
         key: "move",
         title: "One move before Week 5",
-        placeholder: "Ask Ana if she'll hold the water keeper seat",
+        placeholder: "Ask Ana if she'll hold the water keeper role",
         mode: "note", scope: "project", max: 1,
       },
       { key: "week5", title: "What do you want to work on in Week 5?", mode: "pick", scope: "project", options: opts(WEEK5_PICKS), max: 3 },
@@ -1592,12 +1592,12 @@ export function boardWelcome(week: number): { title: string; lede: string; leave
     // Rye, 2026-10-21: say back what Week 3's board told us (a lot to do, go deeper, most of all on roles).
     return {
       title: ep?.title ?? "Game & Organisation Co-Creation Part 2",
-      lede: "This is Part 2 of 2, the practical half. Last week you named the human needs your project is here to meet. Today we build your Game around them: the circles that meet each one, the seats in each circle and who holds them, who decides what, and your first quest. You leave with a card ready for your Village OS.",
-      heard: "Last week you told us there's a lot to do, and that you want to go deeper, most of all on roles. So today we go deeper on fewer things: your questions first, then the seats in your circles.",
+      lede: "This is Part 2 of 2, the practical half. Last week you named the human needs your project is here to meet. Today we build your Game around them: the circles that meet each one, the roles in each circle and who holds them, who decides what, and your first quest. You leave with a card ready for your Village OS.",
+      heard: "Last week you told us there's a lot to do, and that you want to go deeper, most of all on roles. So today we go deeper on fewer things: your questions first, then the roles in your circles.",
       leaveWith: [
         "Your human needs, checked and ready for Village OS",
         "The circles that meet each human need",
-        "The seats in each circle, and who holds them",
+        "The roles in each circle, and who holds them",
         "Who decides what, and one first agreement",
         "A first quest that grows a seed",
       ],

@@ -191,7 +191,7 @@ export function LiveSessionRunbook({
                 </div>
                 <div>
                   <label className="text-[10px] text-white/50 uppercase tracking-wide">
-                    Role seat (optional)
+                    Role (optional)
                   </label>
                   <Input
                     value={d.roleSlug}

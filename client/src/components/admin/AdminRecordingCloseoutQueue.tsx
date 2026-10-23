@@ -322,10 +322,10 @@ export function AdminRecordingCloseoutQueue() {
                           }}
                         >
                           <SelectTrigger className="h-8 text-[11px]" aria-label="Role holder">
-                            <SelectValue placeholder="Role seat…" />
+                            <SelectValue placeholder="Role…" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="__none__">No role seat</SelectItem>
+                            <SelectItem value="__none__">No role</SelectItem>
                             {roleOptions.map((r) => (
                               <SelectItem key={r.roleSlug} value={r.roleSlug}>
                                 {r.roleTitle}

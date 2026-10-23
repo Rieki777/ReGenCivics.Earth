@@ -301,7 +301,7 @@ describe("the 1.0 file", () => {
     expect(file.card.players).toEqual({ toStart: null, now: null });
     expect(file.economy.issuanceCap).toBe(CAP_KEEP_DEFAULT);
     expect(file.modules.on).toEqual(["map", "events"]);
-    expect(file.notes["seats.nextHolder"]).toEqual({ title: "How the next holder of most seats is chosen", text: "It rotates" });
+    expect(file.notes["seats.nextHolder"]).toEqual({ title: "How the next holder of most roles is chosen", text: "It rotates" });
     expect(file.status["identity.location"]).toEqual({ status: "suggested", from: "From your application" });
     expect(file.status["identity.name"]).toEqual({ status: "yours", from: "Your stewards" });
     expect(file.from).toMatchObject({ applicationId: 1231550, project: "Templeofroots.com", weeks: [3, 4] });

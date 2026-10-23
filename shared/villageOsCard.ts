@@ -376,7 +376,7 @@ export function gameLines(view: ProjectView, cards: ProjectCards): string[] {
     const names = keys.map((k) => (k === OWN_CIRCLE.key ? OWN_CIRCLE.label.toLowerCase() : circleLabel(k)));
     lines.push(`${needKeyLabel(need, own)} is met by ${names.join(", ")}.`);
   }
-  for (const e of cards.seats) lines.push(`Seat: ${cardLine("seat", e.card, own)}.`);
+  for (const e of cards.seats) lines.push(`Role: ${cardLine("seat", e.card, own)}.`);
   for (const e of cards.decide) lines.push(`${cardLine("decide", e.card, own)}.`);
   const together = TOGETHER_DECISIONS.filter((t) => (view.together[t.key] ?? 0) > 0).map((t) => t.label.toLowerCase());
   if (together.length) lines.push(`Decided together: ${together.join(", ")}.`);
@@ -408,7 +408,7 @@ export function cardGaps(view: ProjectView, cards: ProjectCards): CardGap[] {
   if (!Object.values(view.circles).some((n) => n > 0) && !view.circlesOwn.length) gaps.push({ key: "circles", label: "The circles you start with", step: "circles" });
   if (!view.players.value) gaps.push({ key: "players", label: "How many players your Game takes to start", step: "circles" });
   if (!view.shape.value) gaps.push({ key: "shape", label: "The shape of your Game", step: "circles" });
-  if (!cards.seats.length) gaps.push({ key: "seats", label: "The seats in each circle", step: "seats" });
+  if (!cards.seats.length) gaps.push({ key: "seats", label: "The roles in each circle", step: "seats" });
   if (!cards.decide.length && !Object.values(view.together).some((n) => n > 0)) gaps.push({ key: "decide", label: "Who decides what", step: "decide" });
   // Village OS keeps one way of deciding per circle: cards that name two need settling.
   const ways = new Map<string, Set<string>>();

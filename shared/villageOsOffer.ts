@@ -159,7 +159,7 @@ export const VILLAGE_OS_OFFER = {
   standardModules: [
     { name: "Quests", line: "Post work, claim it, submit it, and consent to release recognition." },
     { name: "Gratitude", line: "Recognition sends, lunar cycles, and the value pool distributed at each close." },
-    { name: "Stages & Roles", line: "Circles and seats: stages, capabilities, and appointed roles." },
+    { name: "Stages & Roles", line: "Circles and roles: stages, capabilities, and appointments." },
     { name: "Profiles", line: "Handles, balances, and each member's own ledger." },
   ],
 
