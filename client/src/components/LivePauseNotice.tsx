@@ -14,7 +14,11 @@ import { LIVE_PAUSE_NOTICE, type LivePauseStatus } from "@shared/livePause";
 const RUNNING: LivePauseStatus = { season2: false, open_access: false };
 
 export function useLivePause(): LivePauseStatus & { any: boolean } {
-  const q = trpc.events.livePause.useQuery(undefined, { staleTime: 5 * 60_000 });
+  // Its own request (main.tsx splitLink): batched, it waited on events.list.
+  const q = trpc.events.livePause.useQuery(undefined, {
+    staleTime: 5 * 60_000,
+    trpc: { context: { skipBatch: true } },
+  });
   const s = q.data ?? RUNNING;
   return { ...s, any: s.season2 || s.open_access };
 }

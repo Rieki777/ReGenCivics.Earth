@@ -67,7 +67,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, TRPCClientError } from "@trpc/client";
+import { httpBatchLink, httpLink, splitLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
@@ -148,23 +148,29 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+function trpcFetch(input: RequestInfo | URL, init?: RequestInit) {
+  const csrfToken = getCsrfToken();
+  const headers = new Headers(init?.headers as HeadersInit | undefined);
+  if (csrfToken) {
+    headers.set("x-csrf-token", csrfToken);
+  }
+  return globalThis.fetch(input, {
+    ...(init ?? {}),
+    credentials: "include",
+    headers,
+  });
+}
+
+// A query that passes `trpc: { context: { skipBatch: true } }` goes on its
+// own. A batch answers when its slowest member does, and events.list (which
+// runs the catalog sync) takes seconds; the live-pause flag riding with it
+// left /schedule showing calendar buttons for a paused series until then.
 const trpcClient = trpc.createClient({
   links: [
-    httpBatchLink({
-      url: "/api/trpc",
-      transformer: superjson,
-      fetch(input, init) {
-        const csrfToken = getCsrfToken();
-        const headers = new Headers(init?.headers as HeadersInit | undefined);
-        if (csrfToken) {
-          headers.set("x-csrf-token", csrfToken);
-        }
-        return globalThis.fetch(input, {
-          ...(init ?? {}),
-          credentials: "include",
-          headers,
-        });
-      },
+    splitLink({
+      condition: (op) => op.context.skipBatch === true,
+      true: httpLink({ url: "/api/trpc", transformer: superjson, fetch: trpcFetch }),
+      false: httpBatchLink({ url: "/api/trpc", transformer: superjson, fetch: trpcFetch }),
     }),
   ],
 });
