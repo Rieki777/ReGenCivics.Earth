@@ -113,6 +113,23 @@ export function verifyConfirmToken(token: string): TokenPayload | null {
   }
 }
 
+/**
+ * Fills {{name}}, {{email}} and {{projectName}} for one person at send. The composer tells
+ * Rye to use them, and until 2026-11-09 the send left them as typed, so a
+ * letter read "Hi {{name}}," (caught loading the Season 2 farewell). The
+ * preview keeps the tokens so Rye sees where they go. Markdown marks are
+ * dropped from a name so it cannot turn the rest of a line bold or into a
+ * link; a person with no name on file reads "friend".
+ */
+export function mergeOutboundFields(text: string, person: { email: string; name?: string | null }): string {
+  const name = String(person.name ?? "").replace(/[\\`*_[\]<>#|]/g, "").replace(/\s+/g, " ").trim() || "friend";
+  return text
+    .replace(/\{\{\s*name\s*\}\}/g, name)
+    .replace(/\{\{\s*email\s*\}\}/g, person.email)
+    // Outbound letters carry no project, so the composer's third token reads generically.
+    .replace(/\{\{\s*projectName\s*\}\}/g, "your project");
+}
+
 /** @deprecated Use managePreferencesUrl. Kept so older Outbound tests and tokens still resolve. */
 export async function buildUnsubscribeToken(email: string): Promise<string> {
   const { buildPrefsToken } = await import("./emailPrefs");
@@ -386,16 +403,18 @@ async function dispatchClaimedSend(params: {
       const extras: LetterDocumentExtras = listFooterReason != null
         ? { listFooter: { reason: listFooterReason, linkLabel: "Stop these emails", url: liveRow.unsubscribeUrl }, postalAddress }
         : { managePreferencesUrl: liveRow.unsubscribeUrl, postalAddress };
-      const html = emailDocumentFromMarkdown(params.issue.body, layout, extras);
+      const merge = { email, name: row.name ?? liveRow.name ?? null };
+      const html = emailDocumentFromMarkdown(mergeOutboundFields(params.issue.body, merge), layout, extras);
+      const subject = mergeOutboundFields(params.issue.subject, merge);
       const emailLogId = await createEmailLog({
         recipientEmail: email,
         recipientName: row.name ?? undefined,
-        subject: params.issue.subject,
+        subject,
         template: "newsletter_issue",
       });
       const result = await sendEmail({
         to: email,
-        subject: params.issue.subject,
+        subject,
         html,
         template: "newsletter_issue",
         emailLogId,

@@ -58,3 +58,18 @@ describe("the live-sessions list", () => {
     );
   });
 });
+
+describe("filling in each person's name at send", async () => {
+  const { mergeOutboundFields } = await import("./lib/newsletter-issue-email");
+
+  it("puts the name and email in place of the tokens", () => {
+    expect(mergeOutboundFields("Hi {{name}}, this went to {{ email }}.", { email: "ann@example.org", name: "Ann Lee" }))
+      .toBe("Hi Ann Lee, this went to ann@example.org.");
+  });
+
+  it("reads friend when there is no name, and drops markdown marks from a name", () => {
+    expect(mergeOutboundFields("Hi {{name}},", { email: "x@example.org", name: null })).toBe("Hi friend,");
+    expect(mergeOutboundFields("Hi {{name}},", { email: "x@example.org", name: "  " })).toBe("Hi friend,");
+    expect(mergeOutboundFields("Hi {{name}},", { email: "x@example.org", name: "**Bo** [x](y)" })).toBe("Hi Bo x(y),");
+  });
+});
