@@ -13,7 +13,7 @@ Status: **confirmed by Rye, 2026-09-24.** The four Season Organizers, their name
 | **Total base budget** | 11,700,000 $ReGen ($117,000) across 18 Game roles: the 14 carried from Season 1 (8,100,000) plus the four organizers (3,600,000) |
 | **Max budget (all bonuses)** | 15,210,000 $ReGen ($152,100) |
 
-**Live sessions paused, 2026-11-09 (Rye, ADR-80).** The weekly Season 2 calls ran Weeks 1 to 7 (Sept 26 to Nov 7). From Week 8 on, the Saturday calls and the monthly Open Access calls are paused, and Rye records how-to videos for each part of the season instead, sent by email. Admin > Events holds a pause switch per series; resuming brings back the weeks the pause cancelled.
+**Live sessions paused, 2026-11-09 (Rye, ADR-80).** The weekly Season 2 calls ran Weeks 1 to 6. From Week 7 (Wednesday Nov 11) on, the weekly calls and the monthly Open Access calls are paused, and Rye records how-to videos for each part of the season instead, sent by email. Admin > Events holds a pause switch per series; resuming brings back the weeks the pause cancelled.
 
 ---
 

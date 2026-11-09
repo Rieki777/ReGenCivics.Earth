@@ -43,7 +43,7 @@ A living index of every season's roles, characters, compensation, and lessons. F
 - **Roles:** 18 Game roles. The Season 1 roles re-mapped to the flow, the Assembly Steward added to /team, and four Season Organizers at Band 7: The Lantern-Keeper (Design), The Rainmaker (Resource), The Barn-Raiser (Build), The Hearth-Keeper (Rest)
 - **Key changes:** the incubator is the Design Season, and the Lantern-Keeper facilitates its weekly sessions; the Season Facilitator now holds the whole wheel across all four seasons; the Incubator Guide moved one season earlier with the incubator; each season has its own organizer, handing off at every solstice and equinox; anyone can follow along live, and the crowdpooling round is open to every community project that's ready, far more than the 13 in the cohort
 - **Total base budget:** 11,700,000 $ReGen ($117,000); max 15,210,000 with all bonuses
-- **Live sessions paused 2026-11-09** after Week 7 (ADR-80): the Saturday calls and the monthly Open Access calls stop, and Rye sends how-to videos by email instead
+- **Live sessions paused 2026-11-09** after Week 6 (ADR-80): the weekly calls and the monthly Open Access calls stop, and Rye sends how-to videos by email instead
 - **Full details:** [`seasons/season-2-the-first-turn.md`](seasons/season-2-the-first-turn.md)
 
 ---

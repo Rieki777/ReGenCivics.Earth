@@ -15,7 +15,7 @@ Add new entries to the top. Format per entry:
 
 ## 2026-11-09 (live pause): Season 2 and the Open Access calls get a pause switch like the Circle's, and both are paused
 
-- **Why**: Rye is moving from live calls to how-to videos sent by email (ADR-80). Season 2 ran Weeks 1 to 7.
+- **Why**: Rye is moving from live calls to how-to videos sent by email (ADR-80). Season 2 ran Weeks 1 to 6. Pausing in production cancelled 7 Season 2 weeks (Nov 11 to Dec 23) and 6 Open Access sessions (today's through April 2027); every one now goes out in the calendar feeds as STATUS:CANCELLED.
 - **The switch**: Admin > Events has a Season 2 card and an Open Access card beside the Interoperability Circle's. Pausing cancels the series' upcoming sessions, switches their reminders off, sends them to subscribed calendars as cancelled, deletes them from the public Google Calendar, and swaps the site's calendar buttons and next-session cards for the pause notice. Resume reopens exactly what the pause cancelled.
 - **Belt and braces**: the catalog sync and the five-minute reminder sweep both apply the pause, and the reminder job skips a paused series on its own, so nothing waits on a page load.
 - **Proven**: `server/livePause.test.ts` against a scratch database (pause, a week added while paused, the feed's STATUS:CANCELLED, resume, a hand-cancelled week staying cancelled, Open Access on its own switch); `shared/livePause.test.ts`; `Season2Calendar.test.tsx` for no calendar link while paused. Stories `admin-live-pause`, `admin-live-running`, `live-pause-notice`, `live-pause-one-series`, `live-pause-notice-alone`.

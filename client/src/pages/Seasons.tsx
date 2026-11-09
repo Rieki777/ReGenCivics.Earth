@@ -55,6 +55,8 @@ import {
 } from "@shared/sessionClock";
 import type { SeasonSlot } from "@shared/seasonSchedule";
 import { useSeasonSchedule, type SeasonSessionView } from "@/hooks/useSeasonSchedule";
+import { useLivePause } from "@/components/LivePauseNotice";
+import { LIVE_PAUSE_NOTICE } from "@shared/livePause";
 import { JOIN_PATH, SEEDS_YOUTUBE_URL } from "@shared/sessionLinks";
 import {
   REGEN_SEASONS,
@@ -332,6 +334,9 @@ export default function Seasons() {
   const weeks = useMemo(() => weeksFrom(sessions), [sessions]);
   const status = useMemo(() => season2Status(now, weeks), [now, weeks]);
   const voting = schedule ? !schedule.decided : false;
+  // Season 2 paused (Admin > Events, shared/livePause.ts): the "this week"
+  // card says so instead of naming a next session.
+  const livePause = useLivePause();
   const [curriculumOpen, setCurriculumOpen] = useState(false);
   const [selectionOpen, setSelectionOpen] = useState(false);
 
@@ -396,7 +401,15 @@ export default function Seasons() {
                     </p>
                   </>
                 )}
-                {status.phase === "during" && (
+                {status.phase === "during" && livePause.season2 && (
+                  <>
+                    <h3 className="text-xl md:text-2xl font-bold text-white mb-1" style={display}>
+                      {LIVE_PAUSE_NOTICE.heading}
+                    </h3>
+                    <p className="text-white/80 safe-prose">{LIVE_PAUSE_NOTICE.body}</p>
+                  </>
+                )}
+                {status.phase === "during" && !livePause.season2 && (
                   <>
                     <h3 className="text-xl md:text-2xl font-bold text-white mb-1" style={display}>
                       Week {status.week} of 13: {status.title}

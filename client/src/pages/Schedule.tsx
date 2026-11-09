@@ -259,8 +259,8 @@ export default function Schedule() {
   return (
     <PageWrapper>
     <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3d] to-[#1a472a]">
-      {/* Open Session Announcement Banner */}
-      {nextOpenAccessSession && nextOpenStart && (
+      {/* Open Session Announcement Banner. Gone while Open Access is paused. */}
+      {!pause.open_access && nextOpenAccessSession && nextOpenStart && (
         <div className="bg-[#7dd87d]/20 border-b border-[#7dd87d]/30 px-4 py-3 text-center">
           <p className="text-[#7dd87d] font-medium text-sm md:text-base">
             🌿 Next Open Access Session: {formatLocalDate(nextOpenStart)} at {formatStartWithReference(nextOpenStart)}.{" "}
