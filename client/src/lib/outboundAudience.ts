@@ -7,6 +7,7 @@ import {
   audienceToWriteList,
   audienceToWriteSource,
   summarizeAudienceList,
+  LIVE_SESSIONS_AUDIENCE_LABEL,
   type OutboundAudienceList,
 } from "@shared/outboundHistory";
 import { OUTBOUND_DIGEST } from "@shared/crowdpoolCopy";
@@ -99,6 +100,8 @@ export type ListAudienceCounts = {
   waitlists: Array<{ seasonNumber: number; count: number }>;
   /** The current season's digest and the next (build spec 2026-09-27, section 12.4). */
   seasonDigests?: Array<{ seasonNumber: number; count: number; countExcluding: number }>;
+  /** Season 2 members and the Open Access list (2026-11-09). */
+  liveSessions?: number;
 };
 
 export function audienceChoiceValue(choice: AudienceChoice): string {
@@ -106,6 +109,7 @@ export function audienceChoiceValue(choice: AudienceChoice): string {
   const l = choice.list;
   if (l.kind === "campaign") return `list:campaign:${l.campaignId}`;
   if (l.kind === "all_campaigns") return "list:all_campaigns";
+  if (l.kind === "live_sessions") return "list:live_sessions";
   if (l.kind === "season_digest") return `list:season_digest:${l.seasonNumber}`;
   return `list:waitlist:${l.seasonNumber}`;
 }
@@ -122,6 +126,7 @@ export function parseAudienceChoiceValue(
       : null;
   }
   if (value === "list:all_campaigns") return { kind: "list", list: { kind: "all_campaigns" } };
+  if (value === "list:live_sessions") return { kind: "list", list: { kind: "live_sessions" } };
   const m = value.match(/^list:(campaign|waitlist|season_digest):(\d+)$/);
   if (!m) return null;
   const n = parseInt(m[2], 10);
@@ -186,6 +191,7 @@ export function listChoiceCount(choice: AudienceChoice, counts?: ListAudienceCou
   const l = choice.list;
   if (!counts) return 0;
   if (l.kind === "all_campaigns") return counts.allCampaigns;
+  if (l.kind === "live_sessions") return counts.liveSessions ?? 0;
   if (l.kind === "campaign") return counts.campaigns.find((c) => c.id === l.campaignId)?.count ?? 0;
   if (l.kind === "season_digest") {
     const d = (counts.seasonDigests ?? []).find((s) => s.seasonNumber === l.seasonNumber);
@@ -247,5 +253,10 @@ export function listAudienceGroups(counts: ListAudienceCounts | null | undefined
   });
   if (waitOpts.length > 0) groups.push({ label: "Crowdpool waitlist", options: waitOpts });
   if (digestOpts.length > 0) groups.push({ label: OUTBOUND_DIGEST.group, options: digestOpts });
+  // Older servers send no liveSessions count; a duplicated live-sessions letter still shows it.
+  if (counts?.liveSessions !== undefined || (keep?.kind === "list" && keep.list.kind === "live_sessions")) groups.push({
+    label: "Live sessions",
+    options: [{ value: "list:live_sessions", label: LIVE_SESSIONS_AUDIENCE_LABEL, count: counts?.liveSessions ?? 0 }],
+  });
   return groups;
 }

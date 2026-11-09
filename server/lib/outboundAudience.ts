@@ -60,12 +60,15 @@ export function listUnsubscribeUrl(token: string, list?: OutboundAudienceList | 
 
 /** What previews show in place of a person's token. */
 export function previewListUnsubscribeUrl(list?: OutboundAudienceList | null): string {
+  // Live-sessions letters link to email preferences, like the session reminders did.
+  if (list?.kind === "live_sessions") return new URL("/email-preferences?token=preview", ENV.appUrl).toString();
   return listUnsubscribeUrl("preview", list);
 }
 
 export function listSource(list: OutboundAudienceList): string {
   if (list.kind === "campaign") return `campaign:${list.campaignId}`;
   if (list.kind === "all_campaigns") return "all_campaigns";
+  if (list.kind === "live_sessions") return "live_sessions";
   if (list.kind === "season_digest") return `season_digest:${list.seasonNumber}`;
   return `waitlist:${list.seasonNumber}`;
 }
@@ -73,6 +76,7 @@ export function listSource(list: OutboundAudienceList): string {
 /** The footer's reason line for a list, in plain words. */
 export async function listFooterReason(list: OutboundAudienceList): Promise<string> {
   if (list.kind === "waitlist") return "You asked us to tell you when crowdpooling opens.";
+  if (list.kind === "live_sessions") return "You took part in Season 2 or the Open Access sessions on regencivics.earth.";
   if (list.kind === "season_digest") return OUTBOUND_DIGEST.footer;
   if (list.kind === "all_campaigns") return "You asked for news about a campaign on regencivics.earth.";
   const campaign = await db.getCampaignById(list.campaignId);
@@ -102,6 +106,7 @@ function dedupe<T extends { email: string }>(rows: T[]): T[] {
 async function resolveList(list: OutboundAudienceList): Promise<OutboundRecipient[]> {
   const source = listSource(list);
   if (list.kind === "season_digest") return resolveSeasonDigest(list, source);
+  if (list.kind === "live_sessions") return resolveLiveSessions(source);
   const rows = list.kind === "campaign"
     ? await db.getEmailFollowers({ campaignId: list.campaignId })
     : list.kind === "all_campaigns"
@@ -142,6 +147,35 @@ async function resolveSeasonDigest(
     }));
 }
 
+/**
+ * Season 2 members and the Open Access list, from the resolver the session
+ * reminders used, so the same people hear and anyone who muted a topic
+ * stays muted. Season 2 rows come first; each link opens email
+ * preferences with that person's topic ready to mute.
+ */
+async function resolveLiveSessions(source: string): Promise<OutboundRecipient[]> {
+  const { resolveAutoReminderRecipients } = await import("../jobs/eventReminders");
+  const { managePreferencesUrl } = await import("./emailPrefs");
+  const [season2, openAccess] = await Promise.all([
+    resolveAutoReminderRecipients({ eventId: 0, audienceMode: "season2_approved" }),
+    resolveAutoReminderRecipients({ eventId: 0, audienceMode: "open_access" }),
+  ]);
+  const rows = [
+    ...season2.map((r) => ({ ...r, mute: "season2" as const })),
+    ...openAccess.map((r) => ({ ...r, mute: "open_access" as const })),
+  ].filter((r) => typeof r.email === "string" && r.email.includes("@"));
+  const out: OutboundRecipient[] = [];
+  for (const r of dedupe(rows)) {
+    out.push({
+      email: r.email.trim(),
+      name: r.name ?? null,
+      source,
+      unsubscribeUrl: await managePreferencesUrl(r.email.trim(), { mute: r.mute }),
+    });
+  }
+  return out;
+}
+
 export async function resolveOutboundRecipients(audience: OutboundAudienceInput): Promise<OutboundRecipient[]> {
   const list = audience.list ? parseAudienceList(audience.list) : null;
   if (list) return resolveList(list);
@@ -165,6 +199,7 @@ export async function listAudienceCounts(): Promise<{
   allCampaigns: number;
   waitlists: Array<{ seasonNumber: number; count: number }>;
   seasonDigests: Array<{ seasonNumber: number; count: number; countExcluding: number }>;
+  liveSessions: number;
 }> {
   const perCampaign = await db.getEmailFollowerCountsByCampaign();
   const campaigns: Array<{ id: number; title: string; isDemo: boolean; status: string; count: number }> = [];
@@ -191,5 +226,6 @@ export async function listAudienceCounts(): Promise<{
       countExcluding: (await resolveList({ kind: "season_digest", seasonNumber, excludeOffered: true })).length,
     });
   }
-  return { campaigns, allCampaigns, waitlists, seasonDigests };
+  const liveSessions = (await resolveList({ kind: "live_sessions" })).length;
+  return { campaigns, allCampaigns, waitlists, seasonDigests, liveSessions };
 }

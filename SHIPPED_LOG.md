@@ -13,6 +13,13 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-11-09 (live pause, farewell): Outbound can write to Season 2 members and the Open Access list
+
+- New Outbound list `live_sessions` ("Season 2 members and the Open Access list"): the people the session reminders reached (approved and active applications plus the Open Access topic), one letter per address, muted topics respected. Each "Stop these emails" link opens email preferences with the person's topic ready to mute. Code: `resolveLiveSessions` in `server/lib/outboundAudience.ts`.
+- The farewell letter is loaded there as a draft for Rye; the how-to video letters use the same list.
+- Outbound Write gets a harness story (`admin-outbound-live-sessions`). Fixes it found: email field outlines at 1.5:1 (now solid), the body hint tied to its field, and a long audience name now ends in an ellipsis on phones.
+- Source: `docs/planning/LIVE_SESSIONS_PAUSE_2026-11.md`.
+
 ## 2026-11-09 (live pause): Season 2 and the Open Access calls get a pause switch like the Circle's, and both are paused
 
 - **Why**: Rye is moving from live calls to how-to videos sent by email (ADR-80). Season 2 ran Weeks 1 to 6. Pausing in production cancelled 7 Season 2 weeks (Nov 11 to Dec 23) and 6 Open Access sessions (today's through April 2027); every one now goes out in the calendar feeds as STATUS:CANCELLED.

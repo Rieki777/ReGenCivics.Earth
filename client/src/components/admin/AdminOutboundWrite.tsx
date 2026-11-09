@@ -73,13 +73,25 @@ const AudienceSelect = memo(function AudienceSelect({
   listGroups: ReturnType<typeof listAudienceGroups>;
   onChange: (value: string) => void;
 }) {
+  const chosen = value === "nl:all"
+    ? "All active subscribers"
+    : value.startsWith("nl:")
+      ? newsletterSourceLabel(value.slice(3))
+      : listGroups.flatMap((g) => g.options).find((o) => o.value === value)?.label;
   return (
     <Select
       value={value}
       onValueChange={onChange}
     >
       <SelectTrigger className="bg-white min-w-[12rem] max-w-full border-[#1a472a]/60" aria-label="Audience">
-        <SelectValue />
+        {/* A long list name ends in an ellipsis on a phone; the line under the picker spells it out. */}
+        {chosen ? (
+          <SelectValue>
+            <span className="block min-w-0 truncate text-left">{chosen}</span>
+          </SelectValue>
+        ) : (
+          <SelectValue />
+        )}
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
@@ -364,7 +376,9 @@ export function AdminOutboundWrite({
           )}
           {choice.kind === "list" && (
             <p className="text-xs text-[#1a472a]/80">
-              {audienceLabel}. Each letter carries that person's own "Stop these emails" link in place of the newsletter preferences footer.
+              {audienceLabel}. {choice.list.kind === "live_sessions"
+                ? "Each letter's \"Stop these emails\" link opens that person's email preferences, with their session topic ready to mute."
+                : "Each letter carries that person's own \"Stop these emails\" link in place of the newsletter preferences footer."}
             </p>
           )}
 

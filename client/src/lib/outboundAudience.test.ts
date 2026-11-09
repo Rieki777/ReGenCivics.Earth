@@ -186,3 +186,32 @@ describe("the season digest in the Outbound picker", () => {
     expect(groups.at(-1)!.options.some((o) => o.value === "list:season_digest:1")).toBe(true);
   });
 });
+
+describe("the live-sessions list in the Outbound picker", () => {
+  const live = { kind: "list", list: { kind: "live_sessions" } } as const;
+  const counts = { campaigns: [], allCampaigns: 0, waitlists: [], liveSessions: 42 };
+
+  it("round-trips through the Select value", () => {
+    expect(audienceChoiceValue(live)).toBe("list:live_sessions");
+    expect(parseAudienceChoiceValue("list:live_sessions")).toEqual(live);
+  });
+
+  it("has its own group, last, with its count", () => {
+    const last = listAudienceGroups(counts).at(-1)!;
+    expect(last.label).toBe("Live sessions");
+    expect(last.options).toEqual([{ value: "list:live_sessions", label: "Season 2 members and the Open Access list", count: 42 }]);
+    expect(listChoiceCount(live, counts)).toBe(42);
+    expect(audienceChoiceLabel(live, counts)).toBe("Season 2 members and the Open Access list");
+  });
+
+  it("is saved as a list audience and comes back from a stored letter", () => {
+    expect(audienceFromChoice(live)).toEqual({ sources: [], activeOnly: true, list: { kind: "live_sessions" } });
+    expect(choiceFromStoredAudience({ sources: [], activeOnly: true, list: { kind: "live_sessions" } })).toEqual(live);
+  });
+
+  it("stays out of the picker when the server sends no count, unless a duplicate needs it", () => {
+    const old = { campaigns: [], allCampaigns: 0, waitlists: [] };
+    expect(listAudienceGroups(old).some((g) => g.label === "Live sessions")).toBe(false);
+    expect(listAudienceGroups(old, live).some((g) => g.label === "Live sessions")).toBe(true);
+  });
+});

@@ -52,6 +52,7 @@ const sourceZ = z.enum([
 const listZ = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("campaign"), campaignId: z.number().int().positive() }),
   z.object({ kind: z.literal("all_campaigns") }),
+  z.object({ kind: z.literal("live_sessions") }),
   z.object({ kind: z.literal("waitlist"), seasonNumber: z.number().int().min(1) }),
   z.object({
     kind: z.literal("season_digest"),

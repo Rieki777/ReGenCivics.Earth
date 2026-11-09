@@ -23,7 +23,7 @@ Admin > Events has a card for **Season 2** and one for **Open Access sessions**,
 
 ## The farewell email (draft for Rye)
 
-Send from Outbound. Audience: Season 2 approved members plus the Open Access list. People who muted those topics stay muted. Preview to Rye first.
+Send from Outbound. Audience: the list "Season 2 members and the Open Access list" (Outbound list `live_sessions`, added 2026-11-09). People who muted those topics stay muted. Loaded into Outbound as a draft for Rye; use Preview send, then Confirm. The how-to video letters go to the same list.
 
 **Subject:** Thank you for Season 2
 

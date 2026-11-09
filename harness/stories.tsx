@@ -38,6 +38,7 @@ import ToolSubmit from "@/pages/ToolSubmit";
 import InteropSessions from "@/pages/InteropSessions";
 import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
 import { AdminLivePause } from "@/components/admin/AdminLivePause";
+import { AdminOutboundWrite } from "@/components/admin/AdminOutboundWrite";
 import { Season2Calendar } from "@/components/Season2Calendar";
 import { LivePauseNotice } from "@/components/LivePauseNotice";
 import { Router, Route } from "wouter";
@@ -1180,6 +1181,28 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="bg-[#f0ebe3] p-4">
         <AdminLivePause />
+      </div>
+    ),
+  },
+
+  "admin-outbound-live-sessions": {
+    title: "Admin > Outbound Write: a letter to Season 2 members and the Open Access list",
+    setup: () => {
+      mockData["outbound.listAudiences"] = { campaigns: [], allCampaigns: 3, waitlists: [], seasonDigests: [], liveSessions: 57 };
+      mockData["newsletter.listActive"] = [];
+      mockData["email.getCustomTemplates"] = [];
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminOutboundWrite
+          prefill={{
+            subject: "Thank you for Season 2",
+            body: "Hi {name},\n\nThank you for being part of Season 2. We learned a ton together.",
+            layout: "plain",
+            source: "all",
+            list: { kind: "live_sessions" },
+          }}
+        />
       </div>
     ),
   },

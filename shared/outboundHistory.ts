@@ -34,7 +34,16 @@ export type OutboundAudienceList =
    * live real campaign is left out. How email-only followers hear, since
    * platform notices reach account holders only.
    */
-  | { kind: "season_digest"; seasonNumber: number; excludeOffered: boolean };
+  | { kind: "season_digest"; seasonNumber: number; excludeOffered: boolean }
+  /**
+   * Season 2 members (approved and active applications) and the Open Access
+   * list: the people the session reminders went to, one letter each. Added
+   * 2026-11-09 for the pause farewell and the how-to video letters (ADR-80).
+   */
+  | { kind: "live_sessions" };
+
+/** The live-sessions list in plain words. */
+export const LIVE_SESSIONS_AUDIENCE_LABEL = "Season 2 members and the Open Access list";
 
 export type HistoryAudience = {
   sources: string[];
@@ -49,6 +58,7 @@ export function parseAudienceList(raw: unknown): OutboundAudienceList | null {
   const positiveInt = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v > 0;
   if (rec.kind === "campaign" && positiveInt(rec.campaignId)) return { kind: "campaign", campaignId: rec.campaignId };
   if (rec.kind === "all_campaigns") return { kind: "all_campaigns" };
+  if (rec.kind === "live_sessions") return { kind: "live_sessions" };
   if (rec.kind === "waitlist" && positiveInt(rec.seasonNumber)) return { kind: "waitlist", seasonNumber: rec.seasonNumber };
   if (rec.kind === "season_digest" && positiveInt(rec.seasonNumber)) {
     // Leaving out people who already offered is the default.
@@ -153,6 +163,7 @@ export function summarizeAudienceList(list: OutboundAudienceList, campaignTitles
     return `Email followers of ${title ? title : `campaign ${list.campaignId}`}`;
   }
   if (list.kind === "all_campaigns") return "Everyone following a campaign by email";
+  if (list.kind === "live_sessions") return LIVE_SESSIONS_AUDIENCE_LABEL;
   if (list.kind === "season_digest") {
     return `Season ${list.seasonNumber} digest: email followers and the waitlist${list.excludeOffered ? ", leaving out people who already offered" : ""}`;
   }

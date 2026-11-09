@@ -47,7 +47,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { usePersistFn } from "@/hooks/usePersistFn";
 
 export const EMAIL_FIELD_CLASS =
-  "bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] placeholder:text-[#1a472a]/55 dark:placeholder:text-[#1a472a]/55 border-[#4a7c59]/30";
+  "bg-white dark:bg-white text-[#1a472a] dark:text-[#1a472a] placeholder:text-[#1a472a]/55 dark:placeholder:text-[#1a472a]/55 border-[#4a7c59]";
 
 const TOOLBAR_BTN =
   "inline-flex items-center justify-center h-8 min-w-8 px-2 rounded-md border border-[#4a7c59]/30 text-[#1a472a] bg-white hover:bg-[#f0f7f0] text-xs pointer-coarse:min-h-11 pointer-coarse:min-w-11";
@@ -515,9 +515,10 @@ export function EmailMarkdownComposer({
               value={body}
               onChange={(e) => onBodyChange(e.target.value)}
               className={`${EMAIL_FIELD_CLASS} ${minHeightClass} text-sm font-mono`}
+              aria-describedby={`${bodyId}-hint`}
               placeholder="Write markdown. Use {{name}}, {{email}}, and {{projectName}}."
             />
-            <p className="text-xs text-[#1a472a]/70 mt-1">
+            <p id={`${bodyId}-hint`} className="text-xs text-[#1a472a]/70 mt-1">
               {variant === "newsletter"
                 ? "Markdown: **bold**, *italic*, lists, [links](https://), ## headings, ![images](https://assets.regencivics.earth/...). Insert Button puts a CTA on its own line. Preview includes the email preferences footer. Open Features for the full catalog."
                 : "Markdown: **bold**, *italic*, lists, [links](https://), ## headings. Button inserts a CTA; a link on its own line becomes a button in announcement layout. Tokens stay as {{name}}. Open Features for the full catalog."}
