@@ -14,6 +14,7 @@ import { Link } from "wouter";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { CalendarCta, LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
 import { CalendarFeedUrls } from "@/components/CalendarFeedUrls";
+import { LivePauseNotice, useLivePause } from "@/components/LivePauseNotice";
 import {
   openAccessGoogleUrl,
   openAccessIcsUrl,
@@ -112,6 +113,19 @@ export function Season2Calendar() {
 
   const shownSessions = sessionsOpen ? sessions : sessions.slice(0, 1);
   const shownEpisodes = episodesOpen ? episodes : episodes.slice(0, 1);
+  // A paused series (Admin > Events, shared/livePause.ts) shows the pause
+  // notice in place of its dates and calendar buttons.
+  const pause = useLivePause();
+
+  if (pause.season2 && pause.open_access) {
+    return (
+      <AnimatedSection as="section" animation="slide-up" id="dates" className="py-16 md:py-24 px-4">
+        <div className="max-w-3xl mx-auto">
+          <LivePauseNotice />
+        </div>
+      </AnimatedSection>
+    );
+  }
 
   return (
     <AnimatedSection as="section" animation="slide-up" id="dates" className="py-16 md:py-24 px-4">
@@ -131,6 +145,8 @@ export function Season2Calendar() {
             this far has already decided they want the season; making them scroll
             past two sections of individual dates to find the one button that
             adds all of it was the wrong order. */}
+        {pause.any && <LivePauseNotice className="mb-12" />}
+        {!pause.any && (
         <div className="rounded-2xl border border-[#7dd87d]/40 bg-gradient-to-br from-[#7dd87d]/20 to-[#4a7c59]/10 p-5 md:p-6 mb-12">
           <div className="text-white font-semibold mb-1">Everything</div>
           <p className="text-white/70 text-sm mb-4">
@@ -139,6 +155,10 @@ export function Season2Calendar() {
           <SubscribeButtons feed={CALENDAR_FEEDS.all} />
           <LiveFeedNote />
         </div>
+        )}
+
+        {!pause.open_access && (
+        <>
 
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="w-5 h-5 text-[#7dd87d]" />
@@ -203,6 +223,11 @@ export function Season2Calendar() {
           label="sessions"
           onToggle={() => setSessionsOpen((v) => !v)}
         />
+        </>
+        )}
+
+        {!pause.season2 && (
+        <>
 
         <div className="flex items-center gap-2 mb-3 mt-12">
           <Calendar className="w-5 h-5 text-[#7dd87d]" />
@@ -217,7 +242,7 @@ export function Season2Calendar() {
             : "September through December 2026"}
           . Selection Day is open to anyone; the rest are cohort working sessions you can follow on the
           livestream. The land projects pick the weekly time on the{" "}
-          <Link href="/season-schedule" className="tap-44">
+          <Link href="/season-schedule" className="tap-44 underline underline-offset-2 decoration-[#7dd87d]">
             <span className="text-[#7dd87d] hover:text-[#9de89d] underline underline-offset-2">Season Schedule</span>
           </Link>
           , and every date here follows it.
@@ -237,7 +262,7 @@ export function Season2Calendar() {
             href={SEEDS_YOUTUBE_SUBSCRIBE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 min-h-[44px] mt-3 text-xs font-semibold text-white/80 hover:text-white bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] mt-3 text-xs font-semibold text-white hover:text-white bg-red-600/80 hover:bg-red-600 px-4 py-2 rounded-lg transition-colors"
           >
             <Youtube className="w-3.5 h-3.5" />
             Subscribe on YouTube to follow the season live
@@ -272,10 +297,14 @@ export function Season2Calendar() {
           label="episodes"
           onToggle={() => setEpisodesOpen((v) => !v)}
         />
+        </>
+        )}
 
-        <div className="mt-10">
-          <CalendarFeedUrls />
-        </div>
+        {!pause.any && (
+          <div className="mt-10">
+            <CalendarFeedUrls />
+          </div>
+        )}
 
         <div className="mt-10">
           <Link href="/schedule" className="tap-44">

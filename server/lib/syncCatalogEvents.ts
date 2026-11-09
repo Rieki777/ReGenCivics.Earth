@@ -34,6 +34,7 @@ import {
 } from "@shared/sessionClock";
 import { SEASON2_CURRICULUM, episodeTitle } from "@shared/season2Curriculum";
 import { openAccessDescription } from "@shared/openAccess";
+import { applyLivePause } from "./livePause";
 
 function sameInstant(a: Date | string | null | undefined, b: Date): boolean {
   if (!a) return false;
@@ -150,6 +151,10 @@ export async function syncCatalogEvents(): Promise<{ updated: number; inserted: 
       updated += 1;
     }
   }
+
+  // A paused series (Admin > Events, shared/livePause.ts) cancels whatever the
+  // loops above just inserted or left upcoming.
+  updated += await applyLivePause();
 
   return { updated, inserted };
 }

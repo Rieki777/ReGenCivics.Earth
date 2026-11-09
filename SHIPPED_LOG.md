@@ -13,6 +13,15 @@ Add new entries to the top. Format per entry:
 
 ---
 
+## 2026-11-09 (live pause): Season 2 and the Open Access calls get a pause switch like the Circle's, and both are paused
+
+- **Why**: Rye is moving from live calls to how-to videos sent by email (ADR-80). Season 2 ran Weeks 1 to 7.
+- **The switch**: Admin > Events has a Season 2 card and an Open Access card beside the Interoperability Circle's. Pausing cancels the series' upcoming sessions, switches their reminders off, sends them to subscribed calendars as cancelled, deletes them from the public Google Calendar, and swaps the site's calendar buttons and next-session cards for the pause notice. Resume reopens exactly what the pause cancelled.
+- **Belt and braces**: the catalog sync and the five-minute reminder sweep both apply the pause, and the reminder job skips a paused series on its own, so nothing waits on a page load.
+- **Proven**: `server/livePause.test.ts` against a scratch database (pause, a week added while paused, the feed's STATUS:CANCELLED, resume, a hand-cancelled week staying cancelled, Open Access on its own switch); `shared/livePause.test.ts`; `Season2Calendar.test.tsx` for no calendar link while paused. Stories `admin-live-pause`, `admin-live-running`, `live-pause-notice`, `live-pause-one-series`, `live-pause-notice-alone`.
+- **Farewell email and the transition checklist**: `docs/planning/LIVE_SESSIONS_PAUSE_2026-11.md`.
+- Carryover: single downloaded .ics copies cannot be reached (the farewell email covers it); Rye approves and sends the farewell email.
+
 ## 2026-10-21 (audit): text cut off by a box that hides overflow fails the audit
 
 - **Why**: on phones `.tap-44` made the bioregion picker's rows inline-flex, so their realm notes ran past the popover's edge and were cut mid-word. Every check passed; only a phone screenshot showed it.

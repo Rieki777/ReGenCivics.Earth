@@ -33,6 +33,8 @@ import {
   settleReminderRecipients,
 } from "../lib/reminderClaim";
 import { logger } from "../_core/logger";
+import { applyLivePause, livePauseStatus } from "../lib/livePause";
+import { liveSeriesOf } from "@shared/livePause";
 import { buildAutoReminderHtml, reminderJoinUrl, reminderUnsubscribeUrl } from "../lib/eventReminderEmail";
 import { audienceForTopic, buildPrefsToken, emailsBlockingTopic, managePreferencesUrl } from "../lib/emailPrefs";
 import type { EmailTopicKey } from "@shared/emailPrefs";
@@ -431,6 +433,12 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
   const database = await getDb();
   if (!database) return { ...report, ok: false, errors: ["database unavailable"] };
 
+  // Cancel paused sessions before scanning, so their rows and calendar entries
+  // change without anyone loading /schedule first. Best effort: a failure
+  // here must not stop reminders for events that are still on.
+  await applyLivePause(now).catch((err) => log.warn("live pause sync failed", { err: String(err) }));
+  const pausedSeries = await livePauseStatus().catch(() => ({ season2: false, open_access: false }));
+
   const configs = await database
     .select()
     .from(eventAutoReminders)
@@ -469,6 +477,13 @@ export async function runAutoEventReminders(now = new Date()): Promise<AutoRemin
       continue;
     }
     if (event.status === "cancelled" || event.status === "completed") {
+      report.skipped += 1;
+      continue;
+    }
+    // A paused series (shared/livePause.ts). Checked here as well as by the
+    // cancel above, so a failed cancel still sends nothing.
+    const series = liveSeriesOf(event);
+    if (series && pausedSeries[series]) {
       report.skipped += 1;
       continue;
     }

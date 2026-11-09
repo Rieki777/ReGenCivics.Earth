@@ -17,6 +17,8 @@
  * If either env var is missing, this function logs a warning and silently skips.
  */
 
+import { liveSeriesOfSummary, type LiveSeries } from "@shared/livePause";
+
 interface CalendarEvent {
   title: string;
   description: string;
@@ -114,4 +116,51 @@ export async function pushEventToGoogleCalendar(event: CalendarEvent): Promise<v
   } catch (err) {
     console.error("[googlecal] Error:", err);
   }
+}
+
+/**
+ * Remove a paused series' upcoming sessions from the public Google Calendar
+ * (shared/livePause.ts). Followers of that calendar are subscribers, not
+ * invited guests, so deleting sends nobody an email. Matching is by summary
+ * (liveSeriesOfSummary), because events pushed here never stored the Google id.
+ * Skips quietly without the service-account env vars, like the push above.
+ */
+export async function removeSeriesFromGoogleCalendar(
+  series: LiveSeries,
+  now: Date = new Date(),
+): Promise<{ deleted: number; skipped?: string }> {
+  const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON_B64;
+  const calendarId = process.env.GOOGLE_CALENDAR_ID;
+  if (!b64 || !calendarId) {
+    console.log("[googlecal] Cleanup skipped. GOOGLE_SERVICE_ACCOUNT_JSON_B64 or GOOGLE_CALENDAR_ID not set");
+    return { deleted: 0, skipped: "not configured" };
+  }
+  const token = await getGoogleAccessToken(Buffer.from(b64, "base64").toString("utf8"));
+  if (!token) return { deleted: 0, skipped: "no token" };
+
+  const base = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`;
+  let deleted = 0;
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({ timeMin: now.toISOString(), singleEvents: "true", maxResults: "250" });
+    if (pageToken) params.set("pageToken", pageToken);
+    const res = await fetch(`${base}?${params}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      console.warn("[googlecal] Cleanup list failed:", res.status, await res.text());
+      break;
+    }
+    const data = (await res.json()) as { items?: Array<{ id: string; summary?: string; status?: string }>; nextPageToken?: string };
+    for (const item of data.items ?? []) {
+      if (item.status === "cancelled" || liveSeriesOfSummary(item.summary) !== series) continue;
+      const del = await fetch(`${base}/${encodeURIComponent(item.id)}?sendUpdates=none`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (del.ok || del.status === 410) deleted += 1;
+      else console.warn("[googlecal] Cleanup delete failed:", item.id, del.status);
+    }
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  console.log(`[googlecal] Removed ${deleted} upcoming ${series} event(s)`);
+  return { deleted };
 }

@@ -61,6 +61,8 @@ import { pushEventToGoogleCalendar } from "../_core/googlecal";
 import * as db from "../db";
 import crypto from "crypto";
 import { syncCatalogEvents } from "../lib/syncCatalogEvents";
+import { isSeriesPaused, livePauseStatus, setSeriesPaused, upcomingSeriesSessions } from "../lib/livePause";
+import { LIVE_SERIES } from "@shared/livePause";
 import { leaveCircle, syncInteropCircle } from "../lib/interopCircle";
 import { syncSeasonSchedules } from "../lib/seasonSchedule";
 import { INTEROP_CIRCLE_SEASON } from "@shared/interopCircle";
@@ -274,6 +276,25 @@ export const toPublicEvent = (event: Event, includeRoomLinks: boolean): PublicEv
 // Router
 // ─────────────────────────────────────────────────────────────
 export const eventsRouter = router({
+  /** Which live series are paused (shared/livePause.ts). Public: the site hides calendar links on it. */
+  livePause: publicProcedure.query(() => livePauseStatus()),
+
+  /** Admin: the pause card for one series, same shape as the Circle's. */
+  adminLivePause: adminProcedure
+    .input(z.object({ series: z.enum(LIVE_SERIES) }))
+    .query(async ({ input }) => ({
+      paused: await isSeriesPaused(input.series),
+      sessions: await upcomingSeriesSessions(input.series),
+    })),
+
+  /** Admin: pause or resume one series. Pausing cancels its upcoming sessions; resuming reopens them. */
+  adminSetLivePause: adminProcedure
+    .input(z.object({ series: z.enum(LIVE_SERIES), paused: z.boolean() }))
+    .mutation(async ({ input }) => {
+      const result = await setSeriesPaused(input.series, input.paused);
+      return { ok: true as const, result };
+    }),
+
 
   // ── Public: list upcoming events for the Schedule page ────
   // Public projection: no check-in token, no meeting-room URLs.

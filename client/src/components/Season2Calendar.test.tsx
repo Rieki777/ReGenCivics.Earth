@@ -41,6 +41,14 @@ vi.mock("@/hooks/useSeasonSchedule", async () => {
   };
 });
 
+// The pause state comes from the server. Running by default; the pause tests
+// below flip it.
+const pauseState = vi.hoisted(() => ({ season2: false, open_access: false }));
+vi.mock("@/components/LivePauseNotice", () => ({
+  useLivePause: () => ({ ...pauseState, any: pauseState.season2 || pauseState.open_access }),
+  LivePauseNotice: () => <div role="note">Live sessions are on pause</div>,
+}));
+
 const WEEK_1 = episodeTitle(SEASON2_CURRICULUM[0]!);
 const WEEK_13 = episodeTitle(SEASON2_CURRICULUM[12]!);
 
@@ -51,6 +59,29 @@ describe("Season2Calendar", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    pauseState.season2 = false;
+    pauseState.open_access = false;
+  });
+
+  it("shows only the pause notice, with no calendar links, when both series are paused", () => {
+    pauseState.season2 = true;
+    pauseState.open_access = true;
+    const { container } = render(<Season2Calendar />);
+    expect(screen.getByRole("note")).toHaveTextContent("Live sessions are on pause");
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href") ?? "");
+    expect(hrefs.filter((h) => /calendar|webcal|\.ics/i.test(h))).toEqual([]);
+    expect(screen.queryByText(/NEXT SESSION/)).toBeNull();
+  });
+
+  it("hides only the paused series' dates and every feed link when one series is paused", () => {
+    pauseState.open_access = true;
+    const { container } = render(<Season2Calendar />);
+    expect(screen.getByRole("note")).toBeInTheDocument();
+    expect(screen.queryByText(/NEXT SESSION/)).toBeNull();
+    expect(screen.getByText("Season Two episodes")).toBeInTheDocument();
+    const hrefs = Array.from(container.querySelectorAll("a")).map((a) => a.getAttribute("href") ?? "");
+    expect(hrefs.some((h) => h.includes(CALENDAR_FEEDS.all.webcalUrl))).toBe(false);
+    expect(hrefs.some((h) => h.includes(CALENDAR_FEEDS.openAccess.webcalUrl))).toBe(false);
   });
 
   /** Both lists ship collapsed; open them so the sweeping assertions see every card. */

@@ -36,6 +36,8 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { CalendarCta } from "@/components/CalendarCta";
 import { CalendarFeedUrls } from "@/components/CalendarFeedUrls";
 import { CalendarOptions } from "@/components/CalendarOptions";
+import { LivePauseNotice, useLivePause } from "@/components/LivePauseNotice";
+import { liveSeriesOf } from "@shared/livePause";
 import {
   PastEventCollapsedMeta,
   PastEventCollapsedWatch,
@@ -116,6 +118,13 @@ export default function Schedule() {
   // Fetch events from DB (falls back gracefully while loading)
   // includeCompleted so historical tab has data
   const { data: dbEvents } = trpc.events.list.useQuery({ includeCompleted: true });
+  // A paused series (Admin > Events, shared/livePause.ts): its sessions leave
+  // the Upcoming list and the pause notice takes the next-session card's place.
+  const pause = useLivePause();
+  const isPausedEvent = (e: any) => {
+    const series = liveSeriesOf(e);
+    return series != null && pause[series];
+  };
   // #8. Signup counts for social proof
   const { data: signupCountsData } = trpc.events.publicSignupCounts.useQuery();
   const signupCountMap: Record<number, number> = Object.fromEntries(
@@ -144,7 +153,7 @@ export default function Schedule() {
   // appear as past cards (ICS CANCELLED emission is unchanged).
   const filteredEvents = activeTab === "upcoming"
     ? upcomingEvents
-        .filter((e) => !isScheduleEventPast(e as any))
+        .filter((e) => !isScheduleEventPast(e as any) && !isPausedEvent(e))
         .sort((a, b) => {
           const aTime = toMs(resolveEventStart(a as any)) ?? 0;
           const bTime = toMs(resolveEventStart(b as any)) ?? 0;
@@ -304,7 +313,14 @@ export default function Schedule() {
       </section>
 
       {/* The next open session, then the three ways to subscribe. */}
-      {nextOpenAccessSession && nextOpenStart && nextOpenEnd && (
+      {pause.any && (
+        <section className="py-8 px-4">
+          <div className="container mx-auto max-w-5xl">
+            <LivePauseNotice />
+          </div>
+        </section>
+      )}
+      {!pause.open_access && nextOpenAccessSession && nextOpenStart && nextOpenEnd && (
         <section className="py-8 px-4">
           <div className="container mx-auto max-w-5xl">
             <div className="bg-gradient-to-br from-[#7dd87d]/25 to-[#4a7c59]/15 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/40 ring-2 ring-[#7dd87d]/20">
@@ -355,9 +371,10 @@ export default function Schedule() {
         </section>
       )}
 
-      <CalendarOptions />
+      {!pause.any && <CalendarOptions />}
 
       {/* Live call join info */}
+      {!pause.season2 && (
       <section className="py-12 px-4">
         <div className="container mx-auto max-w-4xl">
           <div className="bg-gradient-to-r from-[#7dd87d]/20 to-[#4a7c59]/20 backdrop-blur-sm rounded-2xl p-6 border border-[#7dd87d]/30">
@@ -382,13 +399,17 @@ export default function Schedule() {
         </div>
       </section>
 
+      )}
+
       {/* The floor under every one-click subscribe path above. See the
           component for why a copyable URL has to exist alongside the buttons. */}
+      {!pause.any && (
       <section className="py-8 px-4">
         <div className="container mx-auto max-w-4xl">
           <CalendarFeedUrls />
         </div>
       </section>
+      )}
 
       {/* Episode Recordings are rendered inline on each completed event
           card in the Historical tab below (Watch Recording button). The

@@ -27,6 +27,7 @@ import { BackButton } from "@/components/BackButton";
 import { AnimatedSection } from "@/components/AnimatedSection";
 import { SessionBoardLink } from "@/components/SessionBoardLink";
 import { LiveFeedNote, SubscribeButtons } from "@/components/CalendarCta";
+import { LivePauseNotice, useLivePause } from "@/components/LivePauseNotice";
 import { CALENDAR_FEEDS, formatLocalDate, formatLocalDateShort, formatLocalTime, formatStartWithReference } from "@/lib/calendarLinks";
 import { trpc } from "@/lib/trpc";
 import { useSeasonSchedule, type SeasonSessionView } from "@/hooks/useSeasonSchedule";
@@ -591,6 +592,18 @@ const WeeksSection = memo(function WeeksSection({
   loadFailed: boolean;
   upcoming: SeasonSessionView[];
 }) {
+  // Season 2 paused (Admin > Events, shared/livePause.ts): no weeks ahead and
+  // no subscribe buttons, just the pause notice.
+  const pause = useLivePause();
+  if (pause.season2) {
+    return (
+      <AnimatedSection>
+        <section id="weeks" className="mb-8">
+          <LivePauseNotice />
+        </section>
+      </AnimatedSection>
+    );
+  }
   return (
     <AnimatedSection>
       <section id="weeks" className="bg-white/5 backdrop-blur-sm rounded-2xl border border-[#7dd87d]/30 p-6 md:p-8 mb-8">

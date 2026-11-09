@@ -37,6 +37,9 @@ import ApplyStatus from "@/pages/ApplyStatus";
 import ToolSubmit from "@/pages/ToolSubmit";
 import InteropSessions from "@/pages/InteropSessions";
 import { AdminInteropCircle } from "@/components/admin/AdminInteropCircle";
+import { AdminLivePause } from "@/components/admin/AdminLivePause";
+import { Season2Calendar } from "@/components/Season2Calendar";
+import { LivePauseNotice } from "@/components/LivePauseNotice";
 import { Router, Route } from "wouter";
 import { memoryLocation } from "wouter/memory-location";
 import { defaultBoardState } from "@shared/sessionBoard";
@@ -1161,6 +1164,67 @@ export const STORIES: Record<string, Story> = {
         <AdminInteropCircle />
       </div>
     ),
+  },
+
+  "admin-live-pause": {
+    title: "Admin > Events: Season 2 and Open Access pause cards, paused",
+    setup: () => {
+      mockData["events.adminLivePause"] = {
+        paused: true,
+        sessions: [
+          { id: 301, title: "Week 8: Tending the commons", startTime: "2026-11-14T19:00:00Z", status: "cancelled" },
+          { id: 302, title: "Week 9: Shared books", startTime: "2026-11-21T19:00:00Z", status: "cancelled" },
+        ],
+      };
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminLivePause />
+      </div>
+    ),
+  },
+
+  "admin-live-running": {
+    title: "Admin > Events: Season 2 and Open Access pause cards, running",
+    setup: () => {
+      mockData["events.adminLivePause"] = { paused: false, sessions: [] };
+    },
+    render: () => (
+      <div className="bg-[#f0ebe3] p-4">
+        <AdminLivePause />
+      </div>
+    ),
+  },
+
+  "live-pause-notice": {
+    title: "The pause notice on /season2, with both series paused",
+    setup: () => {
+      mockData["events.livePause"] = { season2: true, open_access: true };
+    },
+    // The page's own background (Season2.tsx); the section has none of its own.
+    render: () => (
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
+        <Season2Calendar />
+      </div>
+    ),
+  },
+
+  "live-pause-one-series": {
+    title: "The /season2 calendar section with only Open Access paused",
+    setup: () => {
+      mockData["events.livePause"] = { season2: false, open_access: true };
+    },
+    // The page's own background (Season2.tsx); the section has none of its own.
+    render: () => (
+      <div className="min-h-screen bg-gradient-to-b from-[#0d2818] via-[#1a472a] to-[#0d2818]">
+        <Season2Calendar />
+      </div>
+    ),
+  },
+
+  "live-pause-notice-alone": {
+    title: "The pause notice by itself",
+    render: () => <LivePauseNotice />,
   },
 
   "tools-library-cards": {
