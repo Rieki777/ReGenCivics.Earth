@@ -3,15 +3,9 @@
  * not empty for the first real crew (scripts/seed-ship-social-proof.ts and
  * scripts/seed-ship-example-crews.ts).
  *
- * They are marked by an openId prefix, and they are NEVER eligible to win a free
- * voyage. The drawing (ship.admin.drawFreeVoyageWinner) adds every demo account
- * to weightedDraw's excludeUserIds, so an example crew can never be selected: the
- * draw automatically lands on a real crew, and the audit log honestly records the
- * demo entries as excluded. That is why no manual "undo and redraw" is needed.
- *
- * Example crews still appear on the draw board and as crew cards, which is the
- * whole point of seeding them. Real entrants' true odds are therefore slightly
- * better than the displayed pool suggests, which errs in the real crews' favour.
+ * They are marked by an openId prefix. The free-voyage draw that excluded them was
+ * retired on 15 Nov 2026; example crews still appear on the quest board and as
+ * crew cards, which is the whole point of seeding them.
  *
  * This lives in shared/ (with no env or db imports) so the seed scripts and the
  * server can agree on one prefix and can never drift apart.

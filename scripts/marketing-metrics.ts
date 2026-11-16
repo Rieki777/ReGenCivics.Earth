@@ -5,13 +5,14 @@
  *
  * What it reads, and from where (see marketing/MEASUREMENT.md section 3):
  *   - Voyage weeks booked + meter %   ← ship_bookings (the live read path in
- *                                        server/routes/ship.ts loadFreeVoyageStatus)
- *   - Giveaway entries (total/verified) ← ship_giveaway_entries
+ *                                        server/routes/ship.ts loadBookingStatus)
+ *   - Giveaway entries (total/verified) ← ship_giveaway_entries (historic: the
+ *                                        giveaway was retired 15 Nov 2026)
  *   - Email list size                  ← EmailOctopus API (EMAILOCTOPUS_API_KEY)
  *   - Socials, Zeffy (MRR / members)   ← manual, not fetched here
  *
  * Seed rows: ship_bookings carries `notes = 'seed:social-proof'` demo voyages
- * that exist to keep the PUBLIC meter releasing free-voyage news beats. The
+ * that exist to keep the PUBLIC meter from reading empty. The
  * live read path counts them, so the public meter % includes them. This script
  * reports BOTH: `weeksBookedReal` (seed excluded — the true traction number the
  * tracker should trend) and `meterPublicPercent` (seed included — what the site
@@ -28,7 +29,6 @@
  * Output: a human summary, a JSON blob, and a paste-ready TRACKER.md row.
  */
 import mysql from "mysql2/promise";
-import { freeVoyagesUnlocked } from "../shared/shipFreeVoyage";
 
 // Source of truth: server/lib/ship-config.ts MAIDEN_YEAR_VOYAGE_TARGET. Inlined
 // here so this script stays runnable without dragging in server-only deps.
@@ -72,7 +72,6 @@ async function readBookings(conn: mysql.Connection) {
     bookingRequestsOpen: requested,
     meterPublicPercent: percentBooked(publicBooked, MAIDEN_YEAR_VOYAGE_TARGET),
     meterRealPercent: percentBooked(realBooked, MAIDEN_YEAR_VOYAGE_TARGET),
-    freeVoyagesUnlockedPublic: freeVoyagesUnlocked(percentBooked(publicBooked, MAIDEN_YEAR_VOYAGE_TARGET)),
   };
 }
 
@@ -148,7 +147,6 @@ async function main() {
   console.log(`weeks booked (public) ${bookings.weeksBookedPublic}   [+${bookings.seedBookings} seed social-proof]`);
   console.log(`open booking requests ${bookings.bookingRequestsOpen}`);
   console.log(`meter % (public) .... ${bookings.meterPublicPercent}%   (real: ${bookings.meterRealPercent}%)`);
-  console.log(`free voyages unlocked ${bookings.freeVoyagesUnlockedPublic}`);
   console.log(`giveaway entries .... ${giveaway.entriesVerified} verified / ${giveaway.entriesTotal} total`);
   console.log("manual (not fetched): apps/waitlist, monthly members, MRR, podcast, socials");
   console.log("\n=== JSON ===");

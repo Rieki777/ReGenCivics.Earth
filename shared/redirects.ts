@@ -61,6 +61,12 @@ export const ROUTE_REDIRECTS: RouteRedirect[] = [
   { from: "/local-food-economy", to: "/bionomics#local-food-economies" },
   { from: "/proposals", to: "/assembly" },
   { from: "/federation", to: "/network" },
+  // The Free Voyage Giveaway and the free-voyage draw were retired on
+  // 15 Nov 2026 (Rye: aboard by renting a voyage or buying in). The giveaway
+  // goes to booking; the draw's official rules go back to the quest.
+  { from: "/ship/giveaway", to: "/ship/book" },
+  { from: "/ship/giveaway/rules", to: "/ship/book" },
+  { from: "/ship/quest/rules", to: "/ship/quest" },
 ];
 
 const BY_PATH = new Map(ROUTE_REDIRECTS.map((r) => [r.from, r.to]));

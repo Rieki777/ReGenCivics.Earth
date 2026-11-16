@@ -42,14 +42,6 @@ const ACTION_LIMITS: Record<string, number> = {
   ship_galley_haul: 15,
   ship_galley_publish: 15,
 
-  // Free Voyage Giveaway public entry layer. Entry is idempotent (one email = one
-  // entry), so a slightly higher cap tolerates shared networks without letting a
-  // script farm the list. verify/tag/bonus act on an existing entry via its token.
-  ship_giveaway_enter: 12,
-  ship_giveaway_verify: 20,
-  ship_giveaway_tag: 20,
-  ship_giveaway_bonus: 20,
-
   // Funding application engine. Each run is one complex-tier LLM call, so the
   // cap bounds spend and stops an accidental regenerate loop. Admin-only and
   // deliberate work, so 10 per 15 minutes is well above a real working session.

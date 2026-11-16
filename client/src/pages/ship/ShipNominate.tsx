@@ -109,7 +109,7 @@ export default function ShipNominate() {
             stories make a place better while they pass through.
           </p>
           <p>
-            If you're nominated and approved by the ReGen Civics and CORE teams, you're in the draw, no quest required.
+            If you're nominated and approved by the ReGen Civics and CORE teams, you can raise a crew card for sponsors, no quest required.
             Tell us who they are and why they'd add something to the land and the crew.
           </p>
         </div>

@@ -1,8 +1,8 @@
 /**
- * Item 13: crew pooling for the Free Passage Quest.
+ * Item 13: crew pooling for the ship's quest.
  *
- * A qualified player (150+ points) can pool with others into a crew, raise their
- * shared odds, and voyage together if drawn. Each player marks the voyage weeks
+ * A qualified player (150+ points) can pool with others into a crew and voyage
+ * together when the crew's week is booked. Each player marks the voyage weeks
  * that will not work; matching only pools people whose still-open weeks overlap.
  * Open weeks come from the live voyage grid, so a week that books up drops off.
  */
@@ -62,7 +62,7 @@ export function CrewPooling() {
           <h3 className="text-lg font-bold">Pool with a crew</h3>
         </div>
         <p className="text-sm text-foreground/80">
-          Reach {s.threshold} points and you can pool with a crew: sail together and raise your shared odds. You have {s.points} so far.
+          Reach {s.threshold} points and you can pool with a crew and sail together. You have {s.points} so far.
         </p>
       </div>
     );
@@ -106,10 +106,10 @@ export function CrewPooling() {
   return (
     <div className="max-w-3xl">
       <ShipEyebrow>Pool with a crew</ShipEyebrow>
-      <h2 className="text-2xl font-bold mb-2">Sail together, raise your odds</h2>
+      <h2 className="text-2xl font-bold mb-2">Sail together</h2>
       <p className="text-foreground/80 mb-5">
-        You are qualified. Pool your points with up to three more mates (a family of five may sail together) and if your
-        crew is drawn, you all voyage together. Pooled points still count toward the crew's 5,000-point line.
+        You are qualified. Pool with up to three more mates (a family of five may sail together) and you all voyage
+        together when your crew's week is booked.
       </p>
 
       {/* Availability: the weeks that work for you. */}

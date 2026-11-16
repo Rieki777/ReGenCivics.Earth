@@ -17,9 +17,8 @@
  *    revenue is segmentable. This router never moves money.
  */
 import { z } from "zod";
-import { and, or, eq, desc, asc, inArray, notInArray, sql, gte, isNull, isNotNull, like } from "drizzle-orm";
+import { and, or, eq, desc, asc, inArray, notInArray, sql, gte, isNull, isNotNull } from "drizzle-orm";
 import { CREW_ONLY_SOURCES, isLocationVisible } from "@shared/shipVisibility";
-import { DEMO_ACCOUNT_OPENID_PREFIX } from "@shared/shipDemo";
 import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
@@ -31,7 +30,7 @@ import {
   shipSeedPlantings, shipLogEntries, shipPassportStamps, shipPositionPings,
   shipDatasetOffers, shipInventoryItems, shipKnowledgeChunks, shipMaintenanceCases,
   shipCrewListSignups, shipGearChecks,
-  shipCrewProfiles, shipGiveawayDrawings, shipGiveawayEntries, churchDonations,
+  shipCrewProfiles, shipGiveawayDrawings, churchDonations,
   galleyHauls, galleyHaulItems, galleyRemixes,
   users, questCompletions, applications,
 } from "../../drizzle/schema";
@@ -44,16 +43,15 @@ import { notifyOwner } from "../_core/notification";
 import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice, voyageNightsFromAnswers,
-  computeQuestStandings, countEntered, freeVoyagesUnlocked, percentBooked,
-  weightedDraw, sponsorshipProgress, enumerateVoyageWeeks,
-  cappedThresholdTickets, publicEntryTickets,
-  type QuestCompletionRow, type DrawEntry,
+  computeQuestStandings, countEntered, percentBooked,
+  sponsorshipProgress, enumerateVoyageWeeks,
+  type QuestCompletionRow,
 } from "../lib/ship-logic";
 import {
   MIN_GUESTS, MAX_GUESTS, MAX_GUESTS_WITH_KIDS, isValidCrewSize, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
-  MAX_FREE_VOYAGES, MAIDEN_YEAR_VOYAGE_TARGET,
+  MAIDEN_YEAR_VOYAGE_TARGET,
   SHIP_SEASON_START_YMD, SHIP_YEAR2_START_YMD, YEAR2_PRICE_MULTIPLIER, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
-  SHIP_ENTRY_THRESHOLD_POINTS, NOMINATION_TICKETS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
+  SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
   SEEDS_PLANTED_BASELINE, VOYAGES_SAILED_BASELINE,
 } from "../lib/ship-config";
 import { askShipwright, detectEscalation, type ShipSystem } from "../lib/ship-shipwright";
@@ -66,9 +64,9 @@ import type { Itinerary } from "../lib/ship-logic";
 import { getStripe, isStripeConfigured } from "../lib/stripe";
 import {
   emailBookingReceived, emailBookingApproved, emailBookingConfirmed,
-  emailQuestActionVerified, emailQuestWinner, emailApplicationReceived, emailNominationReceived,
+  emailQuestActionVerified, emailApplicationReceived, emailNominationReceived,
   emailDatasetOfferReceived,
-  emailEnteredTheDraw, emailCrewProfileInvite,
+  emailQuestQualified, emailCrewProfileInvite,
 } from "../lib/ship-emails";
 
 const YMD = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
@@ -156,9 +154,9 @@ async function assertConciergeAccess(
 }
 
 // ── Quest standings helper (verified completions -> standings) ────────────────
-// Entry is a points threshold now, not a checklist: a crew with at least
-// SHIP_ENTRY_THRESHOLD_POINTS verified points is in every draw, tickets equal to
-// its points. No single action is required.
+// A crew with at least SHIP_ENTRY_THRESHOLD_POINTS verified points has
+// qualified (its crew card can go public). No single action is required. The
+// free-voyage draw these standings once fed was retired on 15 Nov 2026.
 async function loadQuestStandings() {
   const d = await db();
   const actions = await d.select().from(shipQuestActions);
@@ -177,28 +175,20 @@ async function loadQuestStandings() {
   return { standings: computeQuestStandings(rows, SHIP_ENTRY_THRESHOLD_POINTS), actions };
 }
 
-// ── Free-voyage giveaway status (booking-volume driven) ───────────────────────
-// One free voyage is drawn at launch (the first draw). The rest release at
-// 40/60/75/85/95% of the first year booked, up to six. Each is drawn at random
-// from everyone in the draw.
-async function loadFreeVoyageStatus() {
+// ── Booking status (how much of the first year is booked) ─────────────────────
+// The free-voyage ladder that rode on this was retired with the giveaway on
+// 15 Nov 2026: people come aboard by renting a voyage or buying in.
+async function loadBookingStatus() {
   const d = await db();
   const booked = await d
     .select({ id: shipBookings.id })
     .from(shipBookings)
     .where(inArray(shipBookings.status, ["confirmed", "active", "completed"]));
   const bookedVoyages = booked.length;
-  const percent = percentBooked(bookedVoyages, MAIDEN_YEAR_VOYAGE_TARGET);
-  const unlocked = freeVoyagesUnlocked(percent);
-  const { standings } = await loadQuestStandings();
   return {
     bookedVoyages,
     target: MAIDEN_YEAR_VOYAGE_TARGET,
-    percentBooked: percent,
-    freeVoyagesUnlocked: unlocked,
-    freeVoyagesTotal: MAX_FREE_VOYAGES,
-    poolSize: countEntered(standings),
-    entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
+    percentBooked: percentBooked(bookedVoyages, MAIDEN_YEAR_VOYAGE_TARGET),
   };
 }
 
@@ -215,7 +205,7 @@ async function verifiedPointsForUser(userId: number): Promise<number> {
 
 // Credit the ReGen reward + notify when a completion is verified. When this
 // verification is the one that carries the crew across the entry threshold, send
-// the "you are in the draw, make your crew profile" email exactly once.
+// the "you qualified, make your crew card" email exactly once.
 async function rewardVerifiedCompletion(completionId: number) {
   const d = await db();
   const [c] = await d.select().from(shipQuestCompletions).where(eq(shipQuestCompletions.id, completionId)).limit(1);
@@ -243,7 +233,7 @@ async function rewardVerifiedCompletion(completionId: number) {
   const after = await verifiedPointsForUser(c.userId);
   const before = after - (action.points || 0);
   if (before < SHIP_ENTRY_THRESHOLD_POINTS && after >= SHIP_ENTRY_THRESHOLD_POINTS && u?.email) {
-    await emailEnteredTheDraw(u.email);
+    await emailQuestQualified(u.email);
   }
 }
 
@@ -412,7 +402,7 @@ export const shipRouter = router({
   // The collective-ownership story, live and provable. Cached client-side.
   stateOfShip: publicProcedure.query(async () => {
     const d = await db();
-    const free = await loadFreeVoyageStatus();
+    const free = await loadBookingStatus();
     const [seeds] = await d
       .select({ n: sql<number>`COUNT(*)` })
       .from(shipSeedPlantings)
@@ -436,9 +426,6 @@ export const shipRouter = router({
       percentBooked: free.percentBooked,
       bookedVoyages: free.bookedVoyages,
       target: free.target,
-      freeVoyagesUnlocked: free.freeVoyagesUnlocked,
-      freeVoyagesTotal: free.freeVoyagesTotal,
-      poolSize: free.poolSize,
       seedsPlanted: Number(seeds?.n ?? 0) + seedsBase,
       voyagesSailed: sailed.length + voyagesBase,
       assetValueUsd: assetValue,
@@ -855,14 +842,11 @@ export const shipRouter = router({
       return {
         completions,
         standing: mine,
-        inTheDraw: Boolean(mine?.isEntered),
+        qualified: Boolean(mine?.isEntered),
         entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
         crewProfile: crew ?? null,
       };
     }),
-
-    // The free-voyage meter: how many are unlocked by bookings so far.
-    freeVoyageStatus: publicProcedure.query(async () => loadFreeVoyageStatus()),
 
     submit: protectedProcedure
       .input(z.object({ actionId: z.number().int(), proofUrl: z.string().url().max(512).optional(), note: z.string().max(2000).optional() }))
@@ -920,7 +904,6 @@ export const shipRouter = router({
       return {
         poolSize: countEntered(standings),
         entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
-        freeVoyage: await loadFreeVoyageStatus(),
         standings: standings.slice(0, 100).map((s) => ({
           ...s,
           name: byId.get(s.userId)?.name ?? "A crew member",
@@ -1089,7 +1072,7 @@ export const shipRouter = router({
     }),
 
     // Create or update my crew profile. Publishing (a public card) is gated: a
-    // crew is only shown publicly once it is in the draw (threshold reached) or
+    // crew is only shown publicly once it has qualified (threshold reached) or
     // linked to an approved nomination. Passing a nominationId activates that
     // nomination for the signed-in account.
     upsert: protectedProcedure
@@ -1120,7 +1103,7 @@ export const shipRouter = router({
           }
         }
 
-        // Am I eligible for a public card? (in the draw or an approved nominee)
+        // Am I eligible for a public card? (qualified or an approved nominee)
         const { standings } = await loadQuestStandings();
         const mine = standings.find((s) => s.userId === ctx.user.id);
         let nominationApproved = false;
@@ -1160,9 +1143,8 @@ export const shipRouter = router({
         return { id: (res as { insertId?: number }).insertId ?? null, isPublic };
       }),
 
-    // Public crew cards for the quest page. Only crews that are truly in the
-    // draw appear (threshold entrants + approved nominees), so a public card
-    // always maps to a live draw entry.
+    // Public crew cards for the quest page. Only qualified crews appear
+    // (threshold entrants + approved nominees).
     listPublished: publicProcedure.query(async () => {
       const d = await db();
       const crews = await d
@@ -2477,131 +2459,8 @@ export const shipRouter = router({
         await d.update(shipQuestCompletions).set({ status: input.status, verifiedByUserId: ctx.user.id, verifiedAt: input.status === "verified" ? new Date() : null }).where(eq(shipQuestCompletions.id, input.id));
         if (input.status === "verified") {
           await rewardVerifiedCompletion(input.id);
-          // Completing the quest puts the crew in the draw. Free voyages are
-          // drawn at random at each booking milestone (admin.drawFreeVoyageWinner),
-          // not awarded by finish order, so there is nothing to notify here.
         }
         return { ok: true };
-      }),
-
-    // Draw a free-voyage winner, weighted by tickets, from everyone in the draw
-    // (threshold entrants + approved nominees) who has not already won. The draw
-    // is logged to ship_giveaway_drawings (eligible set, weights, seed, roll) so
-    // it is reproducible and auditable. Does not create the booking; the admin
-    // arranges it, then flags it a winner voyage.
-    drawFreeVoyageWinner: adminProcedure
-      .input(z.object({
-        // The counsel-approved ceiling on effort-earned draw weight (threshold
-        // quest points and nominations) for THIS draw. null = uncapped, which is
-        // how the pre-public milestone draws run. Public entries, whose weight the
-        // official rules define, are never lowered by it. Recorded on the audit row.
-        thresholdTicketCap: z.number().int().min(1).max(1_000_000).nullish(),
-      }).optional())
-      .mutation(async ({ ctx, input }) => {
-        const d = await db();
-        const cap = input?.thresholdTicketCap ?? null;
-        const { standings } = await loadQuestStandings();
-
-        // Prior winners: anyone holding a winner voyage, plus prior draw winners
-        // across all three entry kinds.
-        const priorBookings = await d.select({ userId: shipBookings.userId }).from(shipBookings).where(eq(shipBookings.isWinnerVoyage, true));
-        const priorDraws = await d.select({ winnerUserId: shipGiveawayDrawings.winnerUserId, winnerNominationId: shipGiveawayDrawings.winnerNominationId, winnerEntryId: shipGiveawayDrawings.winnerEntryId }).from(shipGiveawayDrawings);
-        // Demo accounts seeded for launch social proof (@shared/shipDemo) stay on the
-        // draw board but can never win: excluding them here means the draw simply
-        // lands on a real crew, and the audit records them as excluded. No redraw.
-        const demoAccounts = await d
-          .select({ userId: users.id })
-          .from(users)
-          .where(like(users.openId, `${DEMO_ACCOUNT_OPENID_PREFIX}%`));
-        const excludeUserIds = new Set<number>([
-          ...priorBookings.map((b) => b.userId),
-          ...priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null),
-          ...demoAccounts.map((u) => u.userId),
-        ]);
-        const wonNominationIds = new Set<number>(priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null));
-        const wonEntryIds = new Set<number>(priorDraws.map((p) => p.winnerEntryId).filter((n): n is number => n != null));
-
-        // Exclude prior winners by email as well, so a past winner who enters the
-        // public draw with no linked account is still caught.
-        const priorWinnerEmails = new Set<string>();
-        const priorUserIds = priorDraws.map((p) => p.winnerUserId).filter((n): n is number => n != null);
-        if (priorUserIds.length) {
-          const rows = await d.select({ email: users.email }).from(users).where(inArray(users.id, priorUserIds));
-          for (const r of rows) if (r.email) priorWinnerEmails.add(r.email.toLowerCase());
-        }
-        const priorNomIds = priorDraws.map((p) => p.winnerNominationId).filter((n): n is number => n != null);
-        if (priorNomIds.length) {
-          const rows = await d.select({ c: shipNominations.nomineeContact }).from(shipNominations).where(inArray(shipNominations.id, priorNomIds));
-          for (const r of rows) if (r.c && r.c.includes("@")) priorWinnerEmails.add(r.c.toLowerCase());
-        }
-        if (wonEntryIds.size) {
-          const rows = await d.select({ email: shipGiveawayEntries.email }).from(shipGiveawayEntries).where(inArray(shipGiveawayEntries.id, Array.from(wonEntryIds)));
-          for (const r of rows) if (r.email) priorWinnerEmails.add(r.email.toLowerCase());
-        }
-
-        // Threshold entrants: tickets equal to points, clamped to the draw cap.
-        const entries: DrawEntry[] = standings
-          .filter((s) => s.isEntered)
-          .map((s) => ({ userId: s.userId, tickets: cappedThresholdTickets(s.tickets, cap), kind: "threshold" as const, label: `user:${s.userId}` }));
-
-        // Approved nominees: a flat count, clamped to the same cap. Skip prior winners.
-        const approvedNoms = await d.select().from(shipNominations).where(eq(shipNominations.status, "approved_for_draw"));
-        for (const nom of approvedNoms) {
-          if (wonNominationIds.has(nom.id)) continue;
-          entries.push({ userId: nom.nomineeUserId ?? null, nominationId: nom.id, tickets: cappedThresholdTickets(NOMINATION_TICKETS, cap), kind: "nomination", label: `nomination:${nom.id} (${nom.nomineeName})` });
-        }
-
-        // Public entries: verified email entrants, weight 1 + capped bonuses (the
-        // official rules define this; the draw cap never lowers it). Skip prior
-        // public winners.
-        const publicEntries = await d.select().from(shipGiveawayEntries).where(isNotNull(shipGiveawayEntries.verifiedAt));
-        for (const pe of publicEntries) {
-          if (wonEntryIds.has(pe.id)) continue;
-          entries.push({ userId: pe.userId ?? null, entryId: pe.id, email: pe.email, tickets: publicEntryTickets(pe.bonusTickets), kind: "public", label: `entry:${pe.id}` });
-        }
-
-        const seed = Math.floor(Math.random() * 2_147_483_647);
-        const result = weightedDraw(entries, seed, excludeUserIds, priorWinnerEmails);
-        if (!result) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No one is in the draw yet." });
-        const { winner, audit } = result;
-
-        // Resolve the winner for notification + display. A linked public entry
-        // resolves through its account first (better contact); an email-only public
-        // entry resolves through the entry row.
-        let name: string | null = null;
-        let handle: string | null = null;
-        let winnerEmail: string | null = null;
-        if (winner.userId) {
-          const [u] = await d.select().from(users).where(eq(users.id, winner.userId)).limit(1);
-          name = u?.name ?? null;
-          handle = u?.handle ?? null;
-          winnerEmail = u?.email ?? null;
-        } else if (winner.nominationId) {
-          const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, winner.nominationId)).limit(1);
-          name = nom?.nomineeName ?? null;
-          winnerEmail = nom?.nomineeContact && nom.nomineeContact.includes("@") ? nom.nomineeContact : null;
-        } else if (winner.entryId) {
-          const [pe] = await d.select().from(shipGiveawayEntries).where(eq(shipGiveawayEntries.id, winner.entryId)).limit(1);
-          winnerEmail = pe?.email ?? null;
-        }
-
-        const eligibleCount = audit.entries.filter((e) => !e.excluded).length;
-        await d.insert(shipGiveawayDrawings).values({
-          drawnByUserId: ctx.user.id,
-          seed,
-          totalTickets: audit.totalTickets,
-          roll: audit.roll.toFixed(4),
-          eligibleCount,
-          winnerUserId: winner.userId ?? null,
-          winnerNominationId: winner.nominationId ?? null,
-          winnerEntryId: winner.entryId ?? null,
-          thresholdCap: cap,
-          winnerLabel: winner.label ?? null,
-          audit: audit as unknown as object,
-        });
-
-        if (winnerEmail) await emailQuestWinner(winnerEmail);
-        return { userId: winner.userId ?? null, nominationId: winner.nominationId ?? null, entryId: winner.entryId ?? null, name, handle, poolSize: eligibleCount, totalTickets: audit.totalTickets, thresholdCap: cap };
       }),
 
     // Referral auto-verification: called when a referred application is shortlisted.
@@ -2631,10 +2490,11 @@ export const shipRouter = router({
     }),
 
     listNominations: adminProcedure.query(async () => (await db()).select().from(shipNominations).orderBy(desc(shipNominations.createdAt)).limit(500)),
-    // Approving a nomination for the draw (joint ReGen Civics + CORE review)
-    // creates a draw entry at NOMINATION_TICKETS. If the nominee has no account,
-    // link one by email if it exists and send the profile invite so they can
-    // activate their entry and become reachable if drawn.
+    // Approving a nomination (joint ReGen Civics + CORE review) lets the nominee
+    // raise a public crew card without the quest. The status keeps its historic
+    // name "approved_for_draw"; the free-voyage draw itself was retired on
+    // 15 Nov 2026. If the nominee has no account, link one by email if it exists
+    // and send the crew-card invite.
     reviewNomination: adminProcedure
       .input(z.object({ id: z.number().int(), status: z.enum(["submitted", "shortlisted", "selected", "approved_for_draw"]) }))
       .mutation(async ({ input }) => {
@@ -2674,6 +2534,7 @@ export const shipRouter = router({
         await d.update(shipCrewProfiles).set({ status: input.status }).where(eq(shipCrewProfiles.id, input.id));
         return { ok: true };
       }),
+    // Read-only history of the retired free-voyage draws (no new draws are made).
     listDrawings: adminProcedure.query(async () => {
       const d = await db();
       return d.select().from(shipGiveawayDrawings).orderBy(desc(shipGiveawayDrawings.createdAt)).limit(100);

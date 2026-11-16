@@ -1,10 +1,10 @@
 /**
- * Crew profiles + sponsorship for the Free Passage Quest.
+ * Crew profiles + sponsorship for the ship's quest.
  *
  * Two pieces:
  *  - CrewProfileEditor: the signed-in crew fills in a card (name, photo, bio,
  *    what they intend to do, an optional video). It publishes only once the crew
- *    is in the draw. This is the prompt shown on entering the draw.
+ *    has qualified (150 points or an approved nomination).
  *  - CrewsSection: the public band of crew cards, each with a progress bar and a
  *    Sponsor button. Anyone can put money toward a crew's voyage so they can book
  *    their week. Goal is the full voyage ask; partial contributions are welcome.
@@ -36,11 +36,11 @@ function usd(cents: number): string {
 
 // ── The editor (shown to the signed-in crew) ──────────────────────────────────
 export function CrewProfileEditor({
-  inTheDraw,
+  qualified,
   existing,
   onSaved,
 }: {
-  inTheDraw: boolean;
+  qualified: boolean;
   existing: { displayName?: string | null; bio?: string | null; intent?: string | null; photoUrl?: string | null; videoUrl?: string | null; isPublic?: boolean } | null;
   onSaved: () => void;
 }) {
@@ -123,15 +123,15 @@ export function CrewProfileEditor({
           </div>
         </div>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-2">
-          <Button onClick={() => save(true)} disabled={upsert.isPending || !inTheDraw} className="bg-[#2f5d3a] hover:bg-[#264a2f] min-h-11 w-full sm:w-auto">
-            {inTheDraw ? "Publish my crew card" : "Reach 150 points to publish"}
+          <Button onClick={() => save(true)} disabled={upsert.isPending || !qualified} className="bg-[#2f5d3a] hover:bg-[#264a2f] min-h-11 w-full sm:w-auto">
+            {qualified ? "Publish my crew card" : "Reach 150 points to publish"}
           </Button>
           <Button onClick={() => save(false)} disabled={upsert.isPending} variant="outline" className="min-h-11 w-full sm:w-auto">
             Save draft
           </Button>
         </div>
-        {!inTheDraw && (
-          <p className="text-xs text-muted-foreground">You can save a draft now. Your card goes public once you reach 150 points and enter the draw.</p>
+        {!qualified && (
+          <p className="text-xs text-muted-foreground">You can save a draft now. Your card goes public once you reach 150 points.</p>
         )}
       </DialogContent>
     </Dialog>
@@ -263,7 +263,7 @@ export function CrewsSection({ sponsorEnabled }: { sponsorEnabled: boolean }) {
     <>
       <ShipEyebrow>The crews</ShipEyebrow>
       <h2 className="text-2xl font-bold mb-2">Meet the crews sailing for a voyage</h2>
-      <p className="text-foreground/80 mb-6 max-w-2xl">Everyone in the draw can raise a crew card. Sponsor a crew and you help them book their week outright, no waiting on the draw.</p>
+      <p className="text-foreground/80 mb-6 max-w-2xl">Every crew past 150 points can raise a crew card. Sponsor a crew and you help them book their week.</p>
       {list.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#4a7c59]/40 bg-[#4a7c59]/5 p-8 text-center">
           <p className="text-muted-foreground">Reach 150 points and your crew card sails here.</p>

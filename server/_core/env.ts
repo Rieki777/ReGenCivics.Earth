@@ -220,10 +220,6 @@ export const ENV = {
   shipOutdoorsyListingUrl: process.env.SHIP_OUTDOORSY_LISTING_URL ?? "",
   shipGpsTrackerApiUrl: process.env.SHIP_GPS_TRACKER_API_URL ?? "",
   shipGpsTrackerApiKey: process.env.SHIP_GPS_TRACKER_API_KEY ?? "",
-  // Free Voyage Giveaway official-rules gate. The rules page and the public entry
-  // button stay disabled until Oregon counsel signs off and this is "1"/"true" on
-  // Railway, so the whole entry layer can deploy ahead of the legal review.
-  giveawayRulesApproved: /^(1|true)$/i.test(process.env.GIVEAWAY_RULES_APPROVED ?? ""),
 
   // Get your Village OS (/village-os, ADR-69). Both default off.
   //  - VILLAGE_OS_SHOW_REPO "1"/"true" shows the "See the code" link, once the

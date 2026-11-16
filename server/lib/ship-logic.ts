@@ -282,9 +282,9 @@ export type QuestStanding = {
   userId: number;
   verifiedPoints: number;
   verifiedCount: number;
-  /** Raffle tickets for the draw: your verified points once you are in, else 0. */
+  /** Verified points once qualified, else 0 (name kept from the retired draw). */
   tickets: number;
-  /** True once verified points reach the threshold: this crew is in every draw. */
+  /** True once verified points reach the threshold: this crew has qualified. */
   isEntered: boolean;
   /** ms timestamp when cumulative verified points first crossed the threshold. */
   enteredAt: number | null;
@@ -299,10 +299,10 @@ function toMs(v: Date | string | null): number | null {
 /**
  * Compute per-user standings from verified completions. Entry is a points
  * threshold, not a checklist: a crew with at least `thresholdPoints` verified
- * points is in every future drawing, with tickets equal to its points (every
- * point above the line raises its odds). `enteredAt` records the moment
- * cumulative points first crossed the line; it is informational only, since the
- * draws are weighted-random rather than first-come. No single action is mandatory.
+ * points has qualified (its crew card can go public). `tickets` and `isEntered`
+ * keep their historic names from the retired free-voyage draw (15 Nov 2026).
+ * `enteredAt` records the moment cumulative points first crossed the line. No
+ * single action is mandatory.
  */
 export function computeQuestStandings(
   completions: QuestCompletionRow[],
@@ -338,7 +338,6 @@ export function computeQuestStandings(
   }
 
   // Order for display only: entered crews first, everyone by points descending.
-  // The draws are weighted-random, so this order carries no prize meaning.
   standings.sort((a, b) => {
     if (a.isEntered !== b.isEntered) return a.isEntered ? -1 : 1;
     return b.verifiedPoints - a.verifiedPoints;
@@ -347,129 +346,17 @@ export function computeQuestStandings(
   return standings;
 }
 
-/** How many crews are in the draw (verified points at or above the threshold). */
+/** How many crews have qualified (verified points at or above the threshold). */
 export function countEntered(standings: QuestStanding[]): number {
   return standings.filter((s) => s.isEntered).length;
 }
 
-// ── Weighted draw (auditable) ────────────────────────────────────────────────
-export type DrawEntry = {
-  /** The account, when the entrant has one. Null for a not-yet-activated nominee
-   *  or a public entry that entered without signing in. */
-  userId: number | null;
-  /** Set for nomination entries. */
-  nominationId?: number | null;
-  /** Set for public entries: the ship_giveaway_entries row id. */
-  entryId?: number | null;
-  /** Set for public entries: the entry email, so a prior winner is excluded by
-   *  email even when the entry has no linked account. */
-  email?: string | null;
-  /** Draw weight (points for threshold entrants, a flat count for nominees,
-   *  1 + capped bonuses for public entries). Internal name; never shown publicly. */
-  tickets: number;
-  /** Human label for the audit log. */
-  label?: string;
-  kind: "threshold" | "nomination" | "public";
-};
-
-export type DrawAudit = {
-  seed: number;
-  totalTickets: number;
-  roll: number;
-  winnerIndex: number;
-  entries: Array<DrawEntry & { cumulative: number; excluded: boolean }>;
-};
-
-/** Deterministic PRNG (mulberry32) so a stored seed reproduces the draw exactly. */
-function mulberry32(seed: number): () => number {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/**
- * Weighted-random draw. Each entry's odds are proportional to its tickets.
- * Entries whose account is in `excludeUserIds`, whose email is in
- * `excludeEmails` (both cover prior winners, the email set catching a public
- * entrant who won before without a linked account), or that hold no tickets are
- * ineligible. Deterministic in `seed`, and returns a full audit (eligible set,
- * per-entry cumulative weight, seed, roll) so a drawing can be logged and
- * re-checked. Returns null when no one is eligible.
- */
-export function weightedDraw(
-  entries: DrawEntry[],
-  seed: number,
-  excludeUserIds: Iterable<number> = [],
-  excludeEmails: Iterable<string> = [],
-): { winner: DrawEntry; audit: DrawAudit } | null {
-  const excluded = new Set<number>(excludeUserIds);
-  const excludedEmails = new Set<string>();
-  for (const em of excludeEmails) {
-    if (em) excludedEmails.add(em.trim().toLowerCase());
-  }
-  let cumulative = 0;
-  const annotated = entries.map((e) => {
-    const isExcluded =
-      (e.userId != null && excluded.has(e.userId)) ||
-      (e.email != null && excludedEmails.has(e.email.trim().toLowerCase())) ||
-      e.tickets <= 0;
-    if (!isExcluded) cumulative += e.tickets;
-    return { ...e, cumulative, excluded: isExcluded };
-  });
-  const totalTickets = cumulative;
-  if (totalTickets <= 0) return null;
-
-  const roll = mulberry32(seed)() * totalTickets;
-  let winnerIndex = -1;
-  for (let i = 0; i < annotated.length; i++) {
-    if (annotated[i].excluded) continue;
-    if (roll < annotated[i].cumulative) {
-      winnerIndex = i;
-      break;
-    }
-  }
-  if (winnerIndex < 0) {
-    // Floating-point edge: fall back to the last eligible entry.
-    for (let i = annotated.length - 1; i >= 0; i--) {
-      if (!annotated[i].excluded) { winnerIndex = i; break; }
-    }
-  }
-  const { cumulative: _c, excluded: _e, ...winner } = annotated[winnerIndex];
-  return { winner, audit: { seed, totalTickets, roll, winnerIndex, entries: annotated } };
-}
-
-// ── Free-voyage giveaway (booking-volume driven, random selection) ────────────
+// ── Booking volume ────────────────────────────────────────────────────────────
 /** Percent of the first year booked, from booked voyages against the target. */
 export function percentBooked(bookedVoyages: number, target: number): number {
   if (target <= 0) return 0;
   return Math.max(0, Math.min(100, Math.round((bookedVoyages / target) * 100)));
 }
-
-/**
- * How many free voyages are unlocked at a given percent booked. One is drawn at
- * launch; the rest release on the FREE_VOYAGE_RELEASE_MILESTONES schedule
- * (40/60/75/85/95% booked), capped at MAX_FREE_VOYAGES. Re-exported from
- * @shared/shipFreeVoyage so the client ladder preview uses the same math.
- */
-export { freeVoyagesUnlocked } from "@shared/shipFreeVoyage";
-
-// ── Public giveaway entries (email base + capped bonuses) ─────────────────────
-// The public sweepstakes weight math lives in @shared/shipGiveaway so the draw,
-// the router credit math, and the client preview never drift. Re-exported here so
-// the ship router pulls all of its draw helpers from one module.
-export {
-  publicEntryTickets,
-  cappedThresholdTickets,
-  REFERRAL_CREDIT_CAP,
-  GIVEAWAY_BONUS,
-  emptyBonus,
-  type PublicEntryBonus,
-} from "@shared/shipGiveaway";
 
 // ── Crew sponsorship (accumulation toward the voyage goal) ────────────────────
 export type SponsorshipProgress = {

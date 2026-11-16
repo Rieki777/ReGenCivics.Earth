@@ -134,17 +134,13 @@ export const SHIP_SEASONAL_BANDS: ShipSeasonalBand[] = [
 /** Flat Ship Keeper pay per turnover. */
 export const KEEPER_PAY_USD = 200;
 
-// ── Entry model (points threshold, weighted draw) ────────────────────────────
-// Entry is a points threshold, not a checklist. Reach SHIP_ENTRY_THRESHOLD_POINTS
-// verified points and you are in every future drawing. No single action is
-// mandatory. Draws are weighted-random: your points are your raffle tickets, so
-// every point above the threshold raises your odds. Approved nominations enter
-// at NOMINATION_TICKETS, the same footing as a threshold entrant. Every free
-// voyage is drawn weighted-random, so there is no first-crew prize.
-/** Verified points that put a crew in every future drawing. */
+// ── Quest threshold ──────────────────────────────────────────────────────────
+// Reach SHIP_ENTRY_THRESHOLD_POINTS verified points and the crew has qualified:
+// its crew card can go public for sponsors. No single action is mandatory. The
+// weighted free-voyage draw this once fed was retired on 15 Nov 2026 (Rye: the
+// ship is rented or bought into, never given away).
+/** Verified points that qualify a crew for a public crew card. */
 export const SHIP_ENTRY_THRESHOLD_POINTS = 150;
-/** Raffle tickets an approved nomination enters with (same as the threshold). */
-export const NOMINATION_TICKETS = SHIP_ENTRY_THRESHOLD_POINTS;
 
 // ── Crew profiles + sponsorship ──────────────────────────────────────────────
 /** The full voyage ask a crew can be sponsored toward, in cents ($2,100). */
@@ -152,20 +148,7 @@ export const CREW_SPONSOR_GOAL_CENTS = 210_000;
 /** churchDonations program tag for crew sponsorships (same as gifted voyages). */
 export const CREW_SPONSOR_PROGRAM_TAG = "regen_ship_gift";
 
-// ── Free-voyage giveaway model (booking-volume driven) ───────────────────────
-// One free voyage is drawn at launch (the first draw, on August 16). The rest
-// release as the first year books up, on the non-uniform, later-weighted
-// schedule in FREE_VOYAGE_RELEASE_MILESTONES (40/60/75/85/95% booked), up to
-// MAX_FREE_VOYAGES total at a fully booked year. Each free voyage is drawn
-// weighted at random from everyone in the draw (threshold entrants + approved
-// nominees), and winners pick their own dates. The schedule lives in
-// @shared/shipFreeVoyage so the server truth and the client preview never drift.
-export {
-  MAIDEN_FREE_VOYAGES,
-  MAX_FREE_VOYAGES,
-  FREE_VOYAGE_RELEASE_MILESTONES,
-} from "@shared/shipFreeVoyage";
-/** Voyages that count as 100% booked for the first year. Edit to pace giveaways. */
+/** Voyages that count as 100% booked for the first year. */
 export const MAIDEN_YEAR_VOYAGE_TARGET = 40;
 /** Suggested winter host income share (church council sets per agreement). */
 export const WINTER_HOST_SHARE_DEFAULT_PCT = 25;
@@ -185,32 +168,6 @@ export const OVERAGE_PER_MILE_USD = 0.5;
 // ship.voyages_sailed_base (no deploy needed) once the ledger catches up.
 export const SEEDS_PLANTED_BASELINE = 489;
 export const VOYAGES_SAILED_BASELINE = 1;
-
-// ── Free Voyage Giveaway (public entry layer) ────────────────────────────────
-// The public sweepstakes constants live in @shared/shipGiveaway so the draw, the
-// router credit math, and the client preview cannot drift. The rules gate below
-// is server-only (it reads a Railway var).
-export {
-  GIVEAWAY_BONUS,
-  REFERRAL_CREDIT_CAP,
-  REFERRAL_MILESTONE_STICKERS,
-  REFERRAL_MILESTONE_LEADERBOARD,
-  GIVEAWAY_ENTRIES_OPEN_YMD,
-  GIVEAWAY_ENTRIES_CLOSE_YMD,
-  GIVEAWAY_DRAW_YMD,
-  GIVEAWAY_ENTRIES_CLOSE_ISO,
-  GIVEAWAY_ARV_USD,
-} from "@shared/shipGiveaway";
-
-/**
- * The official-rules gate. The rules page and the public entry button stay off
- * until Oregon counsel signs off and GIVEAWAY_RULES_APPROVED is set on Railway.
- * Lets the whole entry layer deploy ahead of the legal review (the page shows a
- * "rules publish before entries open" placeholder and the enter button disables).
- */
-export function isGiveawayRulesApproved(): boolean {
-  return ENV.giveawayRulesApproved;
-}
 
 /** churchDonations program tags so Transparency/Reconciliation segments ship revenue. */
 export const SHIP_PROGRAM_TAG = "regen_ship";

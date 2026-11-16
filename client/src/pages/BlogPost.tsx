@@ -24,7 +24,7 @@ import remarkGfm from 'remark-gfm';
 import { BlurImage } from "@/components/BlurImage";
 import { ShareButton } from "@/components/ShareButton";
 import { NineFormsOfCapital, FraudWarningCallout, ClaimSeedsCTA } from "@/components/blog/SeedsContributionBlocks";
-import { FreeVoyageLadder, ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
+import { ShipQuestSteps, ShipArticleCTA, ShipPullQuote } from "@/components/blog/ShipArticleBlocks";
 import { WatchTgsCurrie, WatchTgsHamant, SteeringEmotions, ArticleQuestCTA } from "@/components/blog/PlaysArticleBlocks";
 import { ReadingProgressRing, type ReadingProgressRingHandle } from "@/components/blog/ReadingProgressRing";
 import { useThrottledScroll } from "@/hooks/useThrottledScroll";
@@ -35,7 +35,6 @@ const SPECIAL_MARKERS: Record<string, React.ReactElement> = {
   '[CLAIM_SEEDS_BUTTON]': <ClaimSeedsCTA />,
   '[NINE_FORMS_OF_CAPITAL]': <NineFormsOfCapital />,
   '[FRAUD_WARNING]': <FraudWarningCallout />,
-  '[SHIP_FREE_VOYAGE_LADDER]': <FreeVoyageLadder />,
   '[SHIP_QUEST_STEPS]': <ShipQuestSteps />,
   '[SHIP_PULLQUOTE]': <ShipPullQuote />,
   '[SHIP_CTA]': <ShipArticleCTA />,

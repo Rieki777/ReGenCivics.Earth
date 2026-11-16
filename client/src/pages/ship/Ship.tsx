@@ -99,9 +99,6 @@ export default function Ship() {
           <p data-reveal data-reveal-delay="80" className="text-lg md:text-2xl mb-4 text-white drop-shadow">Come visit the most beautiful places on earth in reverence and regeneration.</p>
           <p data-reveal data-reveal-delay="160" className="uppercase tracking-widest text-sm font-semibold text-white mb-8">A partnership of ReGen Civics and CORE (Church of the Regenerative Earth) presenting:</p>
           <div data-reveal data-reveal-delay="240" className="flex flex-wrap gap-4 justify-center">
-            <Button asChild size="lg" className="bg-[#ffd700] text-[#1a472a] font-bold text-base px-7 shadow-[0_0_28px_rgba(255,215,0,0.55)] hover:bg-[#ffe14d] hover:shadow-[0_0_40px_rgba(255,215,0,0.85)] animate-glow transition-shadow">
-              <Link href="/ship/quest">Win a free voyage</Link>
-            </Button>
             <BookNowButton size="lg" className="text-base px-7" />
           </div>
         </div>
@@ -272,10 +269,10 @@ export default function Ship() {
           {/* The quest, as a glowing gold callout */}
           <div data-reveal className="quest-card-gold flex flex-col rounded-2xl p-6 bg-gradient-to-br from-[#ffd700]/20 to-[#d4a574]/10 border border-[#ffd700]/50">
             <Map className="w-10 h-10 text-[#ffd700] mb-3 animate-float" aria-hidden="true" />
-            <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">Win a free voyage</p>
-            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">Qualify by August 16. Win a week-long voyage on your own dates.</h2>
-            <p className="text-white/90 mb-4 flex-1">Reach {threshold} points by August 16 and you are in the drawing. Every point above raises your odds. On August 16 we draw the first free voyage, and more unlock as she books up, up to six. Winners pick their own open week.</p>
-            <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Enter the quest</Link></Button>
+            <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">The quest</p>
+            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">Grow the movement and raise your crew card.</h2>
+            <p className="text-white/90 mb-4 flex-1">Share the story, plant a seed on the map, cook in the Galley, refer a land project. Reach {threshold} points and your crew card goes public, where sponsors can back your week aboard.</p>
+            <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Play the quest</Link></Button>
           </div>
           <div data-reveal data-reveal-delay="120" className="flex flex-col">
             <Anchor className="w-10 h-10 text-[#ffd700] mb-3" aria-hidden="true" />

@@ -4,7 +4,7 @@
  * "She belongs to the movement, and here is the proof, live."
  */
 import { trpc } from "@/lib/trpc";
-import { Sprout, Anchor, Users, Ticket, TreePine, HeartHandshake } from "lucide-react";
+import { Sprout, Anchor, TreePine, HeartHandshake } from "lucide-react";
 
 function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
@@ -35,14 +35,12 @@ export function StateOfShip() {
             style={{ width: `${Math.max(2, data.percentBooked)}%` }}
           />
         </div>
-        <p className="text-xs text-muted-foreground mt-1">Every booked week rises the tide and unlocks the next free voyage. {data.freeVoyagesUnlocked} of {data.freeVoyagesTotal} unlocked.</p>
+        <p className="text-xs text-muted-foreground mt-1">Every booked week rises the tide.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Tile icon={<Sprout className="w-6 h-6" />} value={data.seedsPlanted.toLocaleString()} label="Seeds planted, verified" />
         <Tile icon={<Anchor className="w-6 h-6" />} value={data.voyagesSailed.toLocaleString()} label="Voyages sailed" />
-        <Tile icon={<Ticket className="w-6 h-6" />} value={data.freeVoyagesUnlocked.toLocaleString()} label="Free voyages unlocked" />
-        <Tile icon={<Users className="w-6 h-6" />} value={data.poolSize.toLocaleString()} label="Crews in the draw" />
         {(data.treesPlanted ?? 0) > 0 && (
           <Tile icon={<TreePine className="w-6 h-6" />} value={(data.treesPlanted ?? 0).toLocaleString()} label="Trees planted for carbon" />
         )}

@@ -85,38 +85,29 @@ export async function emailQuestActionVerified(to: string, actionTitle: string, 
   const html =
     h("Verified") +
     p(`Your quest action is verified: ${actionTitle}.`) +
-    p(`That is ${points} points toward your voyage, and ${creditedRegen} ReGen credited to you.`) +
+    p(`That is ${points} points on the quest board, and ${creditedRegen} ReGen credited to you.`) +
     btn(`${SHIP_URL}/quest`, "See the leaderboard");
   await send(to, "A ReGen Ship quest action is verified", html);
 }
 
-export async function emailQuestWinner(to: string): Promise<void> {
+// Sent when a crew crosses the points threshold: their crew card can now go
+// public, so sponsors can find them and back their week.
+export async function emailQuestQualified(to: string): Promise<void> {
   const html =
-    h("Your name was drawn. You sail free.") +
-    p("You were in the draw, and your name came up. You have won a free voyage aboard the ReGen Ship.") +
-    p("A crew member will reach out to arrange your week and your platform booking. Winners pay nothing and no offering is expected.") +
-    btn(`${SHIP_URL}/book`, "Choose your week");
-  await send(to, "You won a free ReGen Ship voyage", html);
-}
-
-// Sent when a crew crosses the points threshold: they are in every draw, and
-// now they can fill in a crew profile so sponsors can find them.
-export async function emailEnteredTheDraw(to: string): Promise<void> {
-  const html =
-    h("You are in the draw") +
-    p("You reached the points threshold, so you are in every free-voyage drawing from here on. Every point above the line raises your odds.") +
-    p("Now make your crew profile. Add a photo, a short bio, what you intend to do on your voyage, and a 60 second video if you can. Your card sails on the quest page, where anyone can sponsor your week.") +
+    h("You reached the points line") +
+    p("You reached the points threshold, so your crew card can now go public on the quest page.") +
+    p("Make your crew profile. Add a photo, a short bio, what you intend to do on your voyage, and a 60 second video if you can. Your card sails on the quest page, where anyone can sponsor your week.") +
     btn(`${SHIP_URL}/quest`, "Make your crew profile");
-  await send(to, "You are in the ReGen Ship draw", html);
+  await send(to, "Your ReGen Ship crew card can go public", html);
 }
 
-// Sent to an approved nominee who does not yet have an account: they are in the
-// draw once they create their profile.
+// Sent to an approved nominee: they can raise a public crew card without the
+// quest once they create their profile.
 export async function emailCrewProfileInvite(to: string, nomineeName: string): Promise<void> {
   const html =
     h("You were nominated, and approved") +
-    p(`${nomineeName}, the ReGen Civics and CORE teams reviewed your nomination and welcomed you into the draw for a free voyage aboard the ReGen Ship. No quest required.`) +
-    p("Create your profile to activate your entry and add your crew card, so sponsors can find you and back your week. You need an account to be reachable if your name is drawn.") +
+    p(`${nomineeName}, the ReGen Civics and CORE teams reviewed your nomination and approved it. No quest required.`) +
+    p("Create your profile and add your crew card, so sponsors can find you and back your week aboard the ReGen Ship.") +
     btn(`${SHIP_URL}/quest`, "Create your profile");
   await send(to, "You are invited aboard the ReGen Ship", html);
 }
@@ -143,7 +134,7 @@ export async function emailSponsorGoalReached(to: string, crewName: string): Pro
   const html =
     h("The goal is met. This crew sails.") +
     p(`${crewName} reached the full voyage goal of ${usd(210000)}. Sponsors covered the week.`) +
-    p("A crew member will book the voyage and reach out with the details. The church covers the platform booking, the same as a winner voyage.") +
+    p("A crew member will book the voyage and reach out with the details. The church covers the platform booking.") +
     btn(`${SHIP_URL}/quest`, "See the crew");
   await send(to, "A ReGen Ship crew reached its goal", html);
 }
@@ -168,39 +159,9 @@ export async function emailDatasetOfferReceived(to: string, orgName: string): Pr
 export async function emailNominationReceived(to: string, nomineeName: string): Promise<void> {
   const html =
     h("Nomination received") +
-    p(`Thank you for nominating ${nomineeName}. The ReGen Civics and CORE teams review nominations together. If it is approved, ${nomineeName} enters the draw, no quest required.`) +
+    p(`Thank you for nominating ${nomineeName}. The ReGen Civics and CORE teams review nominations together. If it is approved, ${nomineeName} can raise a crew card for sponsors, no quest required.`) +
     btn(`${SHIP_URL}/quest`, "See the quest");
   await send(to, "Your ReGen Ship nomination", html);
-}
-
-// ── Free Voyage Giveaway (public entry layer) ─────────────────────────────────
-// Word discipline: these say "entries" and "the draw", never "raffle" or
-// "tickets". Free sweepstakes, not a paid raffle (campaign brief section 3).
-
-// Sent on enter(): confirm the email before the entry counts. Also re-sent once by
-// the nightly sweep at day 3 if still unconfirmed.
-export async function emailVerifyGiveawayEntry(to: string, opts: { verifyUrl: string }): Promise<void> {
-  const html =
-    h("Confirm your entry") +
-    p("You entered the draw for a free week aboard the ReGen Ship. Confirm your email and you are in.") +
-    btn(opts.verifyUrl, "Confirm my entry") +
-    p("The ReGen Ship is a solar vessel that makes far more power than she needs, so we point the surplus at real work on the land: water pumps, power tools, light and sound for gatherings off the grid. To launch her first sailing year, one crew sails a week free.") +
-    p("Entries close September 6, 2026. No purchase or donation is ever needed to enter or win. If you did not enter, you can ignore this message.");
-  await send(to, "Confirm your ReGen Ship entry", html);
-}
-
-// Sent on verify(): the entry is live. Carries the referral link, one story
-// paragraph, and the countdown line.
-export async function emailGiveawayWelcome(to: string, opts: { referralUrl: string }): Promise<void> {
-  const html =
-    h("You are in the draw") +
-    p("Your entry is confirmed. One crew sails a free week aboard the ReGen Ship this year, and your name is in for it.") +
-    p("She is a solar vessel that makes far more power than she needs, so we point the surplus at real work on the land: water pumps, power tools, light and sound for gatherings off the grid.") +
-    p("Want better odds? Share your link. Every friend who enters through it and confirms their email adds five entries, up to forty. Bring five crewmates and we mail you the ship's colors.") +
-    p(`Your link: <a href="${opts.referralUrl}">${opts.referralUrl}</a>`) +
-    btn(opts.referralUrl, "Open your entry page") +
-    p("Entries close September 6, 2026. The draw is on or about September 8. One crew sails free, and every entry helps chart where she sails next.");
-  await send(to, "You are in the ReGen Ship draw", html);
 }
 
 // ── The Ship's Manifest sequence (time-triggered; dispatched by a job) ────────

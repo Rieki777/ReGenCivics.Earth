@@ -5,24 +5,14 @@
  * article background, so text is light with green and gold accents.
  */
 import { Link } from "wouter";
-import { Anchor, Sparkles, Share2, ClipboardCheck, Dice5, ArrowRight } from "lucide-react";
-import { FreeVoyageLadder as SharedFreeVoyageLadder } from "@/components/ship/FreeVoyageLadder";
+import { Anchor, Sparkles, Share2, ClipboardCheck, Users, ArrowRight } from "lucide-react";
 
-/** The interactive ladder, on the dark article background, with article spacing. */
-export function FreeVoyageLadder() {
-  return (
-    <div className="my-10">
-      <SharedFreeVoyageLadder onDark />
-    </div>
-  );
-}
-
-/** Three active cards: reach 150 points, you're in the draw, bookings unlock more. */
+/** Three active cards: reach 150 points, raise your crew card, sponsors back your week. */
 export function ShipQuestSteps() {
   const steps = [
     { icon: ClipboardCheck, title: "Reach 150 points", body: "Real regenerative actions, each worth points, each one verified. No single action is required." },
-    { icon: Dice5, title: "You're in the draw", body: "Reach 150 points and you're in every draw. Your points are your raffle tickets, so every point above raises your odds." },
-    { icon: Share2, title: "Bookings unlock more", body: "Help fill the calendar. More free voyages release as she books up, and you're in every single draw." },
+    { icon: Users, title: "Raise your crew card", body: "Past 150 points, your crew card goes public on the quest page, with your story and what you'll do aboard." },
+    { icon: Share2, title: "Sponsors back your week", body: "Anyone can put money toward a crew's week aboard until the voyage is covered." },
   ];
   return (
     <div className="my-8 grid gap-3 sm:grid-cols-3">
@@ -43,15 +33,15 @@ export function ShipQuestSteps() {
 /** Closing call to action, a glowing gold panel. */
 export function ShipArticleCTA() {
   const links: Array<{ href: string; label: string; primary?: boolean }> = [
-    { href: "/ship/quest", label: "Enter the quest", primary: true },
-    { href: "/ship/quest/rules", label: "Read the rules" },
+    { href: "/ship/book", label: "Book a voyage", primary: true },
+    { href: "/ship/quest", label: "Play the quest" },
     { href: "/ship", label: "See the ship" },
   ];
   return (
     <div className="my-10 quest-card-gold rounded-2xl border border-[#ffd700]/50 bg-gradient-to-br from-[#ffd700]/15 to-[#d4a574]/10 p-6 text-center">
       <Anchor className="h-8 w-8 mx-auto text-[#ffd700] mb-2" />
-      <h3 className="text-xl font-bold text-white mb-1">Free voyages, drawn as she books up</h3>
-      <p className="text-white/80 mb-5">The more of us who help her fill the calendar, the more of us sail free.</p>
+      <h3 className="text-xl font-bold text-white mb-1">Come aboard</h3>
+      <p className="text-white/80 mb-5">Book your week and sail Cascadia.</p>
       <div className="flex flex-wrap justify-center gap-3">
         {links.map((l) => (
           <Link
@@ -77,7 +67,7 @@ export function ShipPullQuote() {
     <blockquote className="my-10 border-l-4 border-[#ffd700] pl-5">
       <p className="text-xl sm:text-2xl font-semibold text-white leading-snug flex items-start gap-2">
         <Sparkles className="h-6 w-6 text-[#ffd700] flex-shrink-0 mt-1" />
-        The more the fleet sails, the more of us sail free.
+        A food forest grows from every crew that ever sailed.
       </p>
     </blockquote>
   );

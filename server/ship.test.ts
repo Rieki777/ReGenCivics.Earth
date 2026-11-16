@@ -9,16 +9,16 @@ import {
 import {
   rangesOverlap, overlapsAny, isValidVoyageLength, nightsBetween,
   computeVoyagePrice, computeQuestStandings, countEntered,
-  freeVoyagesUnlocked, percentBooked, weightedDraw, sponsorshipProgress, applySponsorship,
+  percentBooked, sponsorshipProgress, applySponsorship,
   invalidItineraryLocationIds, sanitizeItinerary, programTagForBooking,
   addDaysYmd, enumerateVoyageWeeks, voyageNightsFromAnswers, type SeasonalBand,
-  type QuestCompletionRow, type DrawEntry,
+  type QuestCompletionRow,
 } from "./lib/ship-logic";
 import {
   SUGGESTED_VOYAGES, MAX_VOYAGE_WEEKS, buildRoughChart, firstMateSeedAnswers, suggestedVoyageById,
 } from "@shared/shipVoyages";
 import {
-  SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG, MAX_FREE_VOYAGES,
+  SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG,
   SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, isValidCrewSize,
 } from "./lib/ship-config";
 import { detectEscalation, makeSafeMessage } from "./lib/ship-shipwright";
@@ -351,9 +351,9 @@ describe("ship-logic: quest standings (points threshold)", () => {
 
   it("enters a crew at 150 points, not at 149, tickets equal to points", () => {
     const rows: QuestCompletionRow[] = [
-      // user 10: 150 exactly -> in the draw
+      // user 10: 150 exactly -> qualified
       c(10, 1, "2026-08-01T09:00:00Z", 100), c(10, 2, "2026-08-01T09:30:00Z", 50),
-      // user 20: 149 -> not in the draw
+      // user 20: 149 -> not qualified
       c(20, 1, "2026-08-01T07:00:00Z", 100), c(20, 2, "2026-08-01T07:30:00Z", 49),
     ];
     const standings = computeQuestStandings(rows, 150);
@@ -385,77 +385,13 @@ describe("ship-logic: quest standings (points threshold)", () => {
       c(20, 1, "2026-08-01T07:00:00Z", 100), c(20, 2, "2026-08-01T08:00:00Z", 100),
     ];
     const standings = computeQuestStandings(rows, 150);
-    // No first-crew prize: the higher-points crew sorts first even though it
-    // crossed the threshold later. The draws are weighted-random.
+    // The higher-points crew sorts first even though it crossed the threshold later.
     expect(standings[0].userId).toBe(10);
     expect(standings[0].verifiedPoints).toBe(250);
   });
 });
 
-describe("ship-logic: weighted draw (auditable)", () => {
-  const entries: DrawEntry[] = [
-    { userId: 1, tickets: 100, kind: "threshold" },
-    { userId: 2, tickets: 300, kind: "threshold" },
-    { userId: 3, nominationId: 9, tickets: 150, kind: "nomination" }, // a nominee
-  ];
-
-  it("is deterministic in the seed and logs a full audit", () => {
-    const r1 = weightedDraw(entries, 12345);
-    const r2 = weightedDraw(entries, 12345);
-    expect(r1).not.toBeNull();
-    expect(r1!.winner).toEqual(r2!.winner); // same seed -> same winner
-    expect(r1!.audit.totalTickets).toBe(550);
-    expect(r1!.audit.entries).toHaveLength(3);
-    expect(r1!.audit.seed).toBe(12345);
-    expect(r1!.audit.roll).toBeGreaterThanOrEqual(0);
-    expect(r1!.audit.roll).toBeLessThan(550);
-  });
-
-  it("includes an approved nominee (no account yet) as a live entry", () => {
-    // A seed that lands the roll in the nominee's slice ([400,550)).
-    let seenNominee = false;
-    for (let seed = 1; seed < 50 && !seenNominee; seed++) {
-      const r = weightedDraw(entries, seed);
-      if (r?.winner.nominationId === 9) seenNominee = true;
-    }
-    expect(seenNominee).toBe(true);
-  });
-
-  it("excludes prior winners and zero-ticket entries", () => {
-    const r = weightedDraw(entries, 7, new Set([1, 2]));
-    // Only the nominee remains eligible.
-    expect(r!.winner.nominationId).toBe(9);
-    expect(r!.audit.entries.filter((e) => !e.excluded)).toHaveLength(1);
-  });
-
-  it("returns null when no one is eligible", () => {
-    expect(weightedDraw([{ userId: 1, tickets: 0, kind: "threshold" }], 1)).toBeNull();
-    expect(weightedDraw(entries, 1, new Set([1, 2, 3]))).toBeNull();
-  });
-
-  // Fix 8 (2026-07-16): example crews seeded for launch social proof sit on the
-  // draw board but must never win. drawFreeVoyageWinner puts every demo account
-  // into excludeUserIds, so the draw lands on a real crew with no manual redraw.
-  it("never draws a seeded demo crew, however the roll falls", () => {
-    const demoUserId = 99;
-    const withDemo: DrawEntry[] = [
-      ...entries,
-      // A demo crew with overwhelming tickets: it would win nearly every seed.
-      { userId: demoUserId, tickets: 100_000, kind: "threshold", label: "demo" },
-    ];
-    for (let seed = 1; seed <= 200; seed++) {
-      const r = weightedDraw(withDemo, seed, new Set([demoUserId]));
-      expect(r).not.toBeNull();
-      expect(r!.winner.userId).not.toBe(demoUserId);
-    }
-    // The demo entry is still recorded in the audit, marked excluded.
-    const audit = weightedDraw(withDemo, 1, new Set([demoUserId]))!.audit;
-    expect(audit.entries.find((e) => e.userId === demoUserId)?.excluded).toBe(true);
-    expect(audit.totalTickets).toBe(550); // demo tickets carry no weight
-  });
-});
-
-describe("ship demo accounts: seeded crews are marked and never eligible", () => {
+describe("ship demo accounts: seeded crews are marked", () => {
   it("recognises seeded openIds and leaves real accounts alone", () => {
     expect(isDemoOpenId(`${DEMO_CREW_OPENID_PREFIX}1`)).toBe(true);
     expect(isDemoOpenId(`${DEMO_BOOKING_OPENID_PREFIX}3`)).toBe(true);
@@ -464,9 +400,9 @@ describe("ship demo accounts: seeded crews are marked and never eligible", () =>
     expect(isDemoOpenId(undefined)).toBe(false);
   });
 
-  it("keeps both seed prefixes under the one prefix the drawing excludes", () => {
-    // drawFreeVoyageWinner excludes `LIKE 'demo-ship-%'`, so both seed scripts
-    // must stay under it or a demo crew could slip into the draw.
+  it("keeps both seed prefixes under the one demo prefix", () => {
+    // Every seeded account is found by `LIKE 'demo-ship-%'`, so both seed
+    // scripts must stay under it.
     expect(DEMO_CREW_OPENID_PREFIX.startsWith(DEMO_ACCOUNT_OPENID_PREFIX)).toBe(true);
     expect(DEMO_BOOKING_OPENID_PREFIX.startsWith(DEMO_ACCOUNT_OPENID_PREFIX)).toBe(true);
   });
@@ -492,23 +428,7 @@ describe("ship-logic: crew sponsorship (accumulation + goal flip)", () => {
   });
 });
 
-describe("ship-logic: free-voyage giveaway (booking-volume driven)", () => {
-  it("draws one at launch and releases the rest at 40/60/75/85/95% booked, capped at six", () => {
-    expect(freeVoyagesUnlocked(0)).toBe(1);    // the first draw (launch)
-    expect(freeVoyagesUnlocked(39)).toBe(1);
-    expect(freeVoyagesUnlocked(40)).toBe(2);
-    expect(freeVoyagesUnlocked(59)).toBe(2);
-    expect(freeVoyagesUnlocked(60)).toBe(3);
-    expect(freeVoyagesUnlocked(74)).toBe(3);
-    expect(freeVoyagesUnlocked(75)).toBe(4);
-    expect(freeVoyagesUnlocked(84)).toBe(4);
-    expect(freeVoyagesUnlocked(85)).toBe(5);
-    expect(freeVoyagesUnlocked(94)).toBe(5);
-    expect(freeVoyagesUnlocked(95)).toBe(MAX_FREE_VOYAGES); // 6 at 95%
-    expect(freeVoyagesUnlocked(100)).toBe(MAX_FREE_VOYAGES);
-    expect(freeVoyagesUnlocked(140)).toBe(MAX_FREE_VOYAGES);  // never exceeds the cap
-  });
-
+describe("ship-logic: booking volume", () => {
   it("computes percent booked against the year target", () => {
     expect(percentBooked(0, 30)).toBe(0);
     expect(percentBooked(6, 30)).toBe(20);
@@ -613,7 +533,6 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
   const root = join(__dirname, "..");
   const files = [
     "client/src/pages/ship/ShipQuest.tsx",
-    "client/src/pages/ship/ShipQuestRules.tsx",
     "client/src/pages/ship/Ship.tsx",
     "client/src/components/blog/ShipArticleBlocks.tsx",
     "client/src/data/blogPosts.ts",
@@ -621,7 +540,6 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
   const banned = [
     /complete the quest to enter/i, /complete all 7/i, /everyone who completes the quest/i, /Seven actions to earn/i,
     // Fix 5 (2026-07-16): the maiden voyage is a scheduled sailing, not the prize.
-    // Free voyages are drawn (first draw Aug 16); winners pick their own dates.
     /win the maiden voyage/i, /maiden voyage sails free/i, /first crew across/i, /across the 150-point line/i,
   ];
 
@@ -629,6 +547,38 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
     for (const rel of files) {
       const text = readFileSync(join(root, rel), "utf8");
       for (const re of banned) {
+        expect(re.test(text), `${rel} still contains ${re}`).toBe(false);
+      }
+    }
+  });
+
+  // 15 Nov 2026 (Rye): the Free Voyage Giveaway and the free-voyage draw are
+  // retired. The ship is rented or bought into, so no public surface may promise
+  // a free voyage, a draw or a giveaway again.
+  it("promises no free voyage, draw or giveaway on any public ship surface", () => {
+    const surfaces = [
+      "client/src/pages/ship/Ship.tsx",
+      "client/src/pages/ship/ShipQuest.tsx",
+      "client/src/pages/ship/ShipTheme.tsx",
+      "client/src/pages/ship/ShipNominate.tsx",
+      "client/src/components/ship/CrewProfiles.tsx",
+      "client/src/components/ship/CrewPooling.tsx",
+      "client/src/components/ship/StateOfShip.tsx",
+      "client/src/components/blog/ShipArticleBlocks.tsx",
+      "client/src/data/blogPosts.ts",
+      "client/src/config/mobileMenu.ts",
+      "client/src/pages/core/Programs.tsx",
+      "server/lib/ship-emails.ts",
+      "server/_core/crawler-content.ts",
+      "scripts/prerender-blog.mjs",
+    ];
+    const promises = [
+      /free[ -]voyage/i, /win a (free )?voyage/i, /\bsails? (her )?free\b/i, /raffle/i,
+      /\bin the draw(ing)?\b/i, /\bthe drawing\b/i, /giveaway/i, /drawn August/i,
+    ];
+    for (const rel of surfaces) {
+      const text = readFileSync(join(root, rel), "utf8");
+      for (const re of promises) {
         expect(re.test(text), `${rel} still contains ${re}`).toBe(false);
       }
     }

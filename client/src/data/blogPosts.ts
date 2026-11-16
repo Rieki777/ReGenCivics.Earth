@@ -196,7 +196,7 @@ The ReGen Ship is a program of the Church of the Regenerative Earth, and this ar
 
 ## When is your next honeymoon?
 
-Her trial year is now: one-week voyages at $300 a night, half her full $600 rate (the full rate returns in April 2027, so early crews get the sweetest deal). And if you want to sail free, the Free Passage Quest is open to everyone; qualify by August 16 and you are in the drawing for a free voyage, and more free voyages are drawn as the year books up. Winners pick their own dates.
+Her trial year is now: one-week voyages at $300 a night, half her full $600 rate (the full rate returns in April 2027, so early crews get the sweetest deal).
 
 Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, tenth one. You're allowed.
 
@@ -212,8 +212,8 @@ Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, te
   {
     id: 'the-regen-ship',
     slug: 'the-regen-ship',
-    title: 'The ReGen Ship: A Pirate Ship, a Chest of Seeds, and a Voyage You Can Win',
-    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Reach 150 points by August 16 and you are in the drawing for a free voyage. Winners pick their own dates, and more free voyages unlock as the year books up, up to six.',
+    title: 'The ReGen Ship: A Pirate Ship, a Chest of Seeds, and a Voyage You Can Book',
+    excerpt: 'She is a regenerative pirate ship with a treasure chest of seeds. Book a week aboard and sail Cascadia, visiting the most beautiful places on earth in reverence and regeneration.',
     content: `The ReGen Ship has raised her flag.
 
 She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.
@@ -242,31 +242,17 @@ Ten percent of every voyage buys the ship herself into community ownership over 
 
 ![Resting barefoot by a calm forest river in the pines](/images/ship/ship-riverbank-rest.jpg)
 
-## The first free voyage is drawn August 16. You can be in it.
+## Come aboard
 
-Her first crews are not chosen. They are earned. The Free Passage Quest is open to everyone, and here is the part worth reading closely, because it is designed so that all of our interests point the same direction.
+You come aboard by booking a voyage. Pick your week on [the booking page](/ship/book). She boards on a Monday and comes home the following Monday.
 
-![A hand drawing a folded name from the seed chest](/images/ship/ship-free-voyage-draw.jpg)
-
-Here is how it works, and it is built so that all of our interests point the same direction.
+The ship's quest is open to everyone too. Real regenerative actions, each worth points, each one verified.
 
 [SHIP_QUEST_STEPS]
 
-The first free voyage is drawn on August 16, from everyone who has qualified by then. After that, the free voyages grow with the bookings: more are drawn at 40%, 60%, 75%, 85%, and 95% of the first year booked, up to six at a fully booked year. Winners pick their own dates. Drag the ladder to see how it grows.
-
-[SHIP_FREE_VOYAGE_LADDER]
-
-Every draw is weighted by points, and every crew in the draw has a shot at every draw. Your points are your raffle tickets, so every point above 150 raises your odds. A crew can win once. You can also enter by nomination: if the ReGen Civics and CORE teams approve you, you are in the draw with no quest required.
-
 [SHIP_PULLQUOTE]
 
-## Why it works this way
-
-![Community gathered around a table and campfire at a land project at golden hour](/images/ship/ship-community-share.jpg)
-
-This is the whole idea. Reach 150 points and you are in every draw, and every voyage that books brings the next free one closer for everyone in the pool. The prizes grow with the fleet.
-
-So share it. Bring a friend. Refer a land project. Plant a seed on the map. The ship sets sail this summer, the first free voyage is drawn August 16, and the more the fleet sails, the more of us sail free.
+So share it. Bring a friend. Refer a land project. Plant a seed on the map.
 
 [SHIP_CTA]`,
     author: 'CORE Team',

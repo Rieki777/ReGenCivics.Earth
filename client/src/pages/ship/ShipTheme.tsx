@@ -236,11 +236,11 @@ export default function ShipTheme() {
         </div>
       </ShipSection>
 
-      {/* Sail free: themed quest actions */}
+      {/* Themed quest actions */}
       <ShipSection className="bg-[#4a7c59]/8">
-        <ShipEyebrow>Sail her free</ShipEyebrow>
+        <ShipEyebrow>The quest at this docking</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-3">The Sanctuary of Love actions</h2>
-        <p className="text-foreground/80 max-w-2xl mb-6">The Free Passage Quest enters you in the drawing for a free week when you reach the points line. This docking adds its own ways to earn, and every one of them is an act of love you can do from where you already are, before you ever board.</p>
+        <p className="text-foreground/80 max-w-2xl mb-6">The ship's quest earns points toward your crew card. This docking adds its own ways to earn, and every one of them is an act of love you can do from where you already are, before you ever board.</p>
         <div className="grid sm:grid-cols-2 gap-4">
           {LOVE_ACTIONS.map((a, i) => (
             <div key={a.title} data-reveal data-reveal-delay={(i % 2) * 80} className="rounded-2xl border bg-card p-5">
@@ -309,7 +309,6 @@ export default function ShipTheme() {
         <p className="text-white/85 max-w-2xl mx-auto mb-7">She is docked at The Sanctuary through her first sailing year. Her weeks board Monday and return the following Monday. The trial year rate is the sweetest she will ever be, and the crew who get there first get her at it.</p>
         <div className="flex flex-wrap gap-4 justify-center">
           <BookNowButton size="lg" />
-          <Button asChild size="lg" variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/quest">Win a free voyage</Link></Button>
         </div>
       </ShipSection>
     </PageWrapper>
