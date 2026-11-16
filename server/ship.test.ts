@@ -569,6 +569,9 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
     const quest = readFileSync(join(root, "client/src/pages/ship/ShipQuest.tsx"), "utf8");
     expect(quest).toContain("There is no prize.");
     expect(/150|threshold|nominat/i.test(quest)).toBe(false);
+    for (const rel of ["client/src/components/blog/ShipArticleBlocks.tsx", "scripts/prerender-blog.mjs", "client/src/pages/ship/Ship.tsx"]) {
+      expect(/150 points|Past 150/i.test(readFileSync(join(root, rel), "utf8")), rel).toBe(false);
+    }
     const ship = readFileSync(join(root, "server/routes/ship.ts"), "utf8");
     expect(ship).not.toContain("SHIP_ENTRY_THRESHOLD_POINTS");
     expect(ship).not.toMatch(/\n  nominate: publicProcedure/);

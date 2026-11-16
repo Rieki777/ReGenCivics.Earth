@@ -170,9 +170,9 @@ const SPECIAL_MARKER_MARKDOWN = {
   "[FRAUD_WARNING]":
     "**Zero tolerance for fraud.** Our ecosystem is rooted in trust. Without that we have nothing. If your claim isn't verified on chain, or you attempt to misrepresent your contributions, your claim will be denied, you'll lose your opportunity to claim again, and you'll be banned from participating in ReGen Civics.",
   "[SHIP_QUEST_STEPS]": [
-    "**Reach 150 points.** Real regenerative actions, each worth points, each one verified. No single action is required.",
-    "**Raise your crew card.** Past 150 points, your crew card goes public on the quest page.",
-    "**Sponsors back your week.** Anyone can put money toward a crew's week aboard until the voyage is covered.",
+    "**Earn points.** Real regenerative actions, each worth points on a public board, each one verified. No single action is required.",
+    "**Raise your crew card.** Publish it on the quest page whenever you like.",
+    "**Friends gift your week.** Anyone can put money toward a crew's rented week aboard until the week is covered.",
   ].join("\n\n"),
   "[SHIP_PULLQUOTE]": "> A food forest grows from every crew that ever sailed.",
   "[SHIP_CTA]": "**[Book a voyage](/ship/book)** or [play the quest](/ship/quest).",

@@ -7,12 +7,12 @@
 import { Link } from "wouter";
 import { Anchor, Sparkles, Share2, ClipboardCheck, Users, ArrowRight } from "lucide-react";
 
-/** Three active cards: reach 150 points, raise your crew card, sponsors back your week. */
+/** Three active cards: earn points, raise your crew card, friends gift your week. */
 export function ShipQuestSteps() {
   const steps = [
-    { icon: ClipboardCheck, title: "Reach 150 points", body: "Real regenerative actions, each worth points, each one verified. No single action is required." },
-    { icon: Users, title: "Raise your crew card", body: "Past 150 points, your crew card goes public on the quest page, with your story and what you'll do aboard." },
-    { icon: Share2, title: "Sponsors back your week", body: "Anyone can put money toward a crew's week aboard until the voyage is covered." },
+    { icon: ClipboardCheck, title: "Earn points", body: "Real regenerative actions, each worth points on a public board, each one verified. No single action is required." },
+    { icon: Users, title: "Raise your crew card", body: "Publish your crew card on the quest page whenever you like, with your story and what you'll do aboard." },
+    { icon: Share2, title: "Friends gift your week", body: "Anyone can put money toward a crew's rented week aboard until the week is covered." },
   ];
   return (
     <div className="my-8 grid gap-3 sm:grid-cols-3">
