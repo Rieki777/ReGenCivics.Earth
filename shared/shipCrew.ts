@@ -12,8 +12,8 @@
 
 /** Paths on the village that the door links to (Village OS public routes). */
 export const CREW_VILLAGE_PATHS = {
-  /** The village's public welcome. */
-  welcome: "/",
+  /** The village's designed pirates welcome (its bare "/" is the generic platform page). */
+  welcome: "/welcome",
   /** Asking to come aboard without an invitation link. */
   hail: "/request-membership",
 } as const;
@@ -38,6 +38,5 @@ export function cleanCrewDoorUrl(raw: string | null | undefined): string | null 
 /** A link into the village, or null when the door is shut. */
 export function crewDoorLink(origin: string | null, path: keyof typeof CREW_VILLAGE_PATHS): string | null {
   if (!origin) return null;
-  const p = CREW_VILLAGE_PATHS[path];
-  return p === "/" ? `${origin}/` : `${origin}${p}`;
+  return `${origin}${CREW_VILLAGE_PATHS[path]}`;
 }

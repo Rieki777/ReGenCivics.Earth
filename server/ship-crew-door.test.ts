@@ -41,7 +41,7 @@ describe("crewDoorLink", () => {
   });
 
   it("builds the welcome and hail links from the origin", () => {
-    expect(crewDoorLink("https://pirates.regencivics.earth", "welcome")).toBe("https://pirates.regencivics.earth/");
+    expect(crewDoorLink("https://pirates.regencivics.earth", "welcome")).toBe("https://pirates.regencivics.earth/welcome");
     expect(crewDoorLink("https://pirates.regencivics.earth", "hail")).toBe("https://pirates.regencivics.earth/request-membership");
   });
 });
