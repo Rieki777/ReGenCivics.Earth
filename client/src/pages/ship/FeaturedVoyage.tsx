@@ -308,7 +308,7 @@ export function FeaturedVoyage() {
         <div className="mt-8 rounded-2xl border border-[#2f5d3a]/30 bg-[#2f5d3a]/5 p-5 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div>
             <h3 className="text-lg font-bold">Make it yours</h3>
-            <p className="text-sm text-foreground/80">Keep the grand loop or reshape it. The First Mate charts your exact days, stops, and soaks from the real places on the treasure map, then it becomes your voyage.</p>
+            <p className="text-sm text-foreground/80">Keep the grand loop or reshape it. The First Mate charts your exact days, stops, and soaks from the real places on the Sea Chart, then it becomes your voyage.</p>
           </div>
           <Link href={bookHref} className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-[#2f5d3a] hover:bg-[#264a2f] text-white px-4 py-2.5 text-sm font-semibold">
             <Compass className="w-4 h-4" aria-hidden="true" /> Customize this voyage

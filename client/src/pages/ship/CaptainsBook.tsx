@@ -26,7 +26,7 @@ import { LiveText, useTextStore } from "@/components/ship/ShipFields";
 
 const ROLES = [
   { key: "captain", label: "The Captain", desc: "The driver, head of the ship, fully responsible for her under way." },
-  { key: "navigator", label: "The Navigator", desc: "Right seat. Charts the route, works the treasure map, keeps good order." },
+  { key: "navigator", label: "The Navigator", desc: "Right seat. Charts the route, works the Sea Chart, keeps good order." },
   { key: "quartermaster", label: "The Quartermaster", desc: "Provisions, water levels, tanks, the inventory bag. Crews of three or more." },
   { key: "bosun", label: "The Bosun", desc: "Setup and breakdown: slides, jacks, hookups, awning, securing the deck. Crews of three or more." },
   { key: "seedKeeper", label: "The Seed Keeper", desc: "Guards the treasure chest, logs every planting, stamps the passport. Often a kid." },

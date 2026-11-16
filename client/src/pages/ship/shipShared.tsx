@@ -197,24 +197,26 @@ export function ShipEyebrow({ children }: { children: ReactNode }) {
 /**
  * The ship's sub-page navigation as image cards. Each destination carries a
  * picture, like the ReGen Civics landing cards. Three across on mobile, a
- * single row of eight on desktop. Cards zoom on hover and reveal on scroll.
+ * single row of nine on desktop. Cards zoom on hover and reveal on scroll.
  */
 const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string; primary?: boolean }> = [
   { href: "/ship", label: "The Ship", image: "ship-cascadia-forest.jpg", alt: "The ship in the forest." },
   { href: "/ship/theme", label: "The Theme", image: "ship-double-rainbow.jpg", alt: "A double rainbow over the ship." },
   // The main event: the booking card wears the bright green shimmer (the CTA).
   { href: "/ship/book", label: "Book Now", image: "ship-lake-powell-overlook.jpg", alt: "A lake vista.", primary: true },
-  { href: "/ship/map", label: "Treasure Map", image: "ship-treasure-map-hero.jpg", alt: "A treasure map." },
+  { href: "/ship/map", label: "Sea Chart", image: "ship-treasure-map-hero.jpg", alt: "An old sea chart." },
   { href: "/ship/galley", label: "The Galley", image: "ship-galley-table.webp", alt: "A galley table of ripe fruit and greens." },
   { href: "/ship/quest", label: "The Quest", image: "ship-quest-banner.jpg", alt: "A trail under a rainbow." },
   { href: "/ship/fleet", label: "The Fleet", image: "ship-fleet-caravan.jpg", alt: "A caravan of ships." },
   { href: "/ship/log", label: "Voyage Log", image: "ship-campfire-dusk.jpg", alt: "A campfire at dusk." },
+  // The crew's door: the way into the ReGen Pirates village.
+  { href: "/ship/crew", label: "Join the Crew", image: "ship-forest-camp-guitar.jpg", alt: "The ship camped in the pines, someone playing guitar." },
 ];
 
 export function ShipNavRow({ current }: { current?: string }) {
   return (
     <nav aria-label="ReGen Ship pages" className="max-w-5xl mx-auto px-4 py-5">
-      <div className="grid grid-cols-3 md:grid-cols-8 gap-2 sm:gap-3">
+      <div className="grid grid-cols-3 md:grid-cols-9 gap-2 sm:gap-3">
         {NAV_CARDS.map((c, i) => {
           const active = current === c.href;
           return (
@@ -271,6 +273,16 @@ export function ShipNavRow({ current }: { current?: string }) {
         >
           Voyage Covenant &amp; Rental Terms
         </Link>
+        <Link
+          href="/ship/shipwright"
+          aria-current={current === "/ship/shipwright" ? "page" : undefined}
+          className={cn(
+            "inline-flex min-h-6 pointer-coarse:min-h-11 items-center underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd700] rounded",
+            current === "/ship/shipwright" ? "text-[#2f5d3a] dark:text-[#7dd87d] font-medium underline" : "hover:text-foreground",
+          )}
+        >
+          Ask the Shipwright
+        </Link>
       </div>
     </nav>
   );
@@ -291,6 +303,27 @@ export function useShipFlags() {
       tracker: false,
       sponsor: false,
       sponsorGoalCents: 210000,
+      crewDoorUrl: null as string | null,
     }
+  );
+}
+
+/**
+ * The fleet's sigil: a seed sprouting from a compass rose (placeholder art from
+ * the onboarding design, until the crew designs its own flag). Drawn in
+ * currentColor, so it takes the gold or ink of whatever holds it.
+ */
+export function ShipSigil({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className={className}>
+      <circle cx="32" cy="32" r="27" />
+      <circle cx="32" cy="32" r="22" strokeWidth="1" opacity=".55" />
+      <path d="M32 2v9M32 53v9M2 32h9M53 32h9" />
+      <path d="M12 12l5 5M52 12l-5 5M12 52l5-5M52 52l-5-5" strokeWidth="1.4" opacity=".7" />
+      <ellipse cx="32" cy="41" rx="6.5" ry="5" fill="currentColor" stroke="none" />
+      <path d="M32 37V25" />
+      <path d="M32 29c-1-5-5-8-10-8 0 5 4 8 10 8z" fill="currentColor" stroke="none" />
+      <path d="M32 26c1-6 5-9 11-9 0 6-5 9-11 9z" fill="currentColor" stroke="none" />
+    </svg>
   );
 }

@@ -278,6 +278,8 @@ const ShipHomecoming = lazy(() => import("./pages/ship/ShipHomecoming"));
 const ShipAdmin = lazy(() => import("./pages/ship/ShipAdmin"));
 const ShipTerms = lazy(() => import("./pages/ship/ShipTerms"));
 const ShipManifest = lazy(() => import("./pages/ship/ShipManifest"));
+const ShipCrew = lazy(() => import("./pages/ship/ShipCrew"));
+const ShipShipwright = lazy(() => import("./pages/ship/ShipShipwright"));
 
 // Loading spinner component using Seed of Life
 function PageLoader() {
@@ -325,6 +327,8 @@ function Router() {
       {/* Nominations were retired on 15 Nov 2026 (Rye, Q-RG1). */}
       <Route path={"/ship/nominate"}><Redirect to="/ship/quest" /></Route>
       <Route path={"/ship/fleet"}><EB><ShipFleet /></EB></Route>
+      <Route path={"/ship/crew"}><EB><ShipCrew /></EB></Route>
+      <Route path={"/ship/shipwright"}><EB><ShipShipwright /></EB></Route>
       <Route path={"/ship/keeper"}><EB><ShipKeeper /></EB></Route>
       <Route path={"/ship/winter"}><EB><ShipWinter /></EB></Route>
       <Route path={"/ship/log"}><EB><ShipLog /></EB></Route>

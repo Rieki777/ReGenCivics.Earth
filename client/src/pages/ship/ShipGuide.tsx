@@ -104,7 +104,7 @@ const SECTIONS: Section[] = [
     body: (
       <p>
         The ship carries an intake pump that fills your tanks straight from a living spring up to 50 feet away. Your
-        treasure map marks springs along the route. The orientation shows you how to run the pump, keep the intake
+        Sea Chart marks springs along the route. The orientation shows you how to run the pump, keep the intake
         clean, and top off your tanks so you can sail off-grid for days.
       </p>
     ),

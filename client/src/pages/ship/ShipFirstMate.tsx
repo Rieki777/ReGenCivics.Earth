@@ -22,7 +22,7 @@ export const FIRST_MATE_GREETING =
 
 /** The whole treasure map is community-grown, so the intro says so. */
 export const FIRST_MATE_INTRO =
-  "Answer a few questions and I will chart a voyage for you, drawn only from the real places on the treasure map. The map is community-grown and always growing, so there is more here every week: springs, food forests, land projects, events, and the new kinds of places crews keep adding.";
+  "Answer a few questions and I will chart a voyage for you, drawn only from the real places on the Sea Chart. The chart is community-grown and always growing, so there is more here every week: springs, food forests, land projects, events, and the new kinds of places crews keep adding.";
 
 export type ItineraryDay = { day: number; title?: string; notes?: string; locationIds?: number[] };
 export type Itinerary = { summary?: string; days?: ItineraryDay[] };
@@ -166,7 +166,7 @@ export function FirstMateQuickCustomize({
     return (
       <div className="rounded-2xl border bg-card p-5">
         <p className="text-sm text-foreground/80 animate-pulse motion-reduce:animate-none">
-          Your First Mate is charting your voyage from the treasure map…
+          Your First Mate is charting your voyage from the Sea Chart…
         </p>
       </div>
     );
@@ -252,7 +252,7 @@ export function FirstMatePlanner({
       const res = await generate.mutateAsync({ sessionId: sid, token: s.token ?? undefined });
       setItinerary(res.itinerary as Itinerary);
       onItinerary?.(res.itinerary as Itinerary);
-      toast.success("Your treasure map is charted.");
+      toast.success("Your voyage is charted.");
     } catch (err: any) {
       toast.error(err?.message ?? "The First Mate could not chart the map just now.");
     }
@@ -298,7 +298,7 @@ export function FirstMatePlanner({
       {itinerary && (
         <div className="space-y-6">
           <div>
-            <h3 className="text-xl font-bold mb-3">Your treasure map</h3>
+            <h3 className="text-xl font-bold mb-3">Your voyage chart</h3>
             <ItineraryView itinerary={itinerary} />
           </div>
           <div className="rounded-2xl border bg-card p-5">

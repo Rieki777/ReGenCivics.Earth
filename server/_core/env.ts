@@ -220,6 +220,12 @@ export const ENV = {
   shipOutdoorsyListingUrl: process.env.SHIP_OUTDOORSY_LISTING_URL ?? "",
   shipGpsTrackerApiUrl: process.env.SHIP_GPS_TRACKER_API_URL ?? "",
   shipGpsTrackerApiKey: process.env.SHIP_GPS_TRACKER_API_KEY ?? "",
+  // The ReGen Pirates village (its own Village OS instance). Empty keeps the
+  // "Join the crew" door on "opening soon"; set it to the village's https
+  // origin (https://pirates.regencivics.earth) once the village is up and the
+  // door's links turn on. Only a clean https origin is ever shown
+  // (cleanCrewDoorUrl in shared/shipCrew.ts).
+  piratesVillageUrl: process.env.PIRATES_VILLAGE_URL ?? "",
 
   // Get your Village OS (/village-os, ADR-69). Both default off.
   //  - VILLAGE_OS_SHOW_REPO "1"/"true" shows the "See the code" link, once the

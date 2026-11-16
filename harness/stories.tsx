@@ -60,6 +60,8 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover"
 import Opportunity from "@/pages/Opportunity";
 import LOI from "@/pages/LOI";
 import Fund from "@/pages/Fund";
+import ShipCrew from "@/pages/ship/ShipCrew";
+import ShipShipwright from "@/pages/ship/ShipShipwright";
 
 export type Story = {
   title: string;
@@ -2295,6 +2297,58 @@ export const STORIES: Record<string, Story> = {
     render: () => (
       <div className="-m-6">
         <Fund />
+      </div>
+    ),
+  },
+
+  /** /ship/crew before the village is up: the door reads "opening soon". */
+  "ship-crew-shut": {
+    title: "/ship/crew: Join the Crew, door shut",
+    setup: () => {
+      mockData["ship.featureFlags"] = { concierge: true, offering: false, offeringUrl: null, gift: false, giftUrl: null, platformListing: false, platformListingUrl: null, tracker: false, sponsor: false, entryThreshold: 150, sponsorGoalCents: 210000, crewDoorUrl: null };
+    },
+    render: () => (
+      <div className="-m-6">
+        <ShipCrew />
+      </div>
+    ),
+  },
+
+  /** /ship/crew once PIRATES_VILLAGE_URL is set: Hail the ship and the crew's home. */
+  "ship-crew-open": {
+    title: "/ship/crew: Join the Crew, door open",
+    setup: () => {
+      mockData["ship.featureFlags"] = { concierge: true, offering: false, offeringUrl: null, gift: false, giftUrl: null, platformListing: false, platformListingUrl: null, tracker: false, sponsor: false, entryThreshold: 150, sponsorGoalCents: 210000, crewDoorUrl: "https://pirates.regencivics.earth" };
+    },
+    render: () => (
+      <div className="-m-6">
+        <ShipCrew />
+      </div>
+    ),
+  },
+
+  /** /ship/shipwright signed out: a sign-in card, no question box. */
+  "ship-shipwright-signed-out": {
+    title: "/ship/shipwright: signed out",
+    setup: () => {
+      mockData["auth.me"] = null;
+    },
+    render: () => (
+      <div className="-m-6">
+        <ShipShipwright />
+      </div>
+    ),
+  },
+
+  /** /ship/shipwright signed in: the Shipwright's question box. */
+  "ship-shipwright-signed-in": {
+    title: "/ship/shipwright: signed in",
+    setup: () => {
+      mockData["auth.me"] = SIGNED_IN;
+    },
+    render: () => (
+      <div className="-m-6">
+        <ShipShipwright />
       </div>
     ),
   },

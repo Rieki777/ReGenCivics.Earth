@@ -227,14 +227,14 @@ export default function ShipMap() {
 
   return (
     <PageWrapper>
-      <SEO title="The Treasure Map" description="Springs, waterfalls, food forests, free boondocks, and the land projects regenerating Cascadia. Chart your voyage." url="/ship/map" />
+      <SEO title="The Sea Chart" description="Springs, waterfalls, food forests, free boondocks, and the land projects regenerating Cascadia. Chart your voyage." url="/ship/map" />
       <ShipNavRow current="/ship/map" />
 
       {/* The first fully-built featured voyage, above the interactive board. */}
       <FeaturedVoyage />
 
       <ShipSection>
-        <ShipEyebrow>The treasure map</ShipEyebrow>
+        <ShipEyebrow>The Sea Chart</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Chart your voyage through Cascadia</h1>
         <p className="text-foreground/80 mb-5">The board shows everything within a {VOYAGE_DAYS}-day sail of the anchorage. The compass rose marks home port, the gold rings mark each day of reach, and past the horizon lies fog. Every token is a place a crew can serve, drink from, rest at, or plant seeds. Solid tokens are verified treasure; faded ones wait for a crew to confirm them. The ship pin shows where she sails now.</p>
 
@@ -398,7 +398,7 @@ export default function ShipMap() {
         <div className="max-w-3xl">
           <ShipEyebrow>Grow the map</ShipEyebrow>
           <h2 className="text-2xl font-bold mb-2">Have a project or network in the Regenerative Renaissance? Add your database to the map.</h2>
-          <p className="text-foreground/80 mb-3">If you hold a dataset of places that belong on the treasure map, offer it here. Accepted datasets flow onto the map through our source-stamped importer, and every partner dataset carries a credit line to you on its pins.</p>
+          <p className="text-foreground/80 mb-3">If you hold a dataset of places that belong on the Sea Chart, offer it here. Accepted datasets flow onto the map through our source-stamped importer, and every partner dataset carries a credit line to you on its pins.</p>
           <Button onClick={() => setDatasetOpen(true)} className="bg-[#b5762f] hover:brightness-95">Add your database</Button>
         </div>
       </ShipSection>
@@ -761,7 +761,7 @@ function DatasetOfferDialog({ onClose }: { onClose: () => void }) {
           </div>
           <label className="flex items-start gap-2 text-sm cursor-pointer">
             <input type="checkbox" checked={f.license} onChange={(e) => setF({ ...f, license: e.target.checked })} className="mt-1" />
-            <span>We have the right to share this data and welcome its use on the treasure map, with attribution.</span>
+            <span>We have the right to share this data and welcome its use on the Sea Chart, with attribution.</span>
           </label>
           <p className="text-xs text-muted-foreground">Partner datasets get a credit line on their pins and in the map legend.</p>
           <div className="flex gap-2 pt-1">

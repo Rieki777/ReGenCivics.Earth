@@ -13,6 +13,7 @@
 import { ENV } from "../_core/env";
 import { isZeffyConfigured } from "./zeffy";
 import { isStripeConfigured } from "./stripe";
+import { cleanCrewDoorUrl } from "@shared/shipCrew";
 
 // ── Pricing (trial year) ─────────────────────────────────────────────────────
 // Pricing is PER VOYAGE, not nightly (confirmed by Rye 2026-07-11). The nightly
@@ -217,5 +218,7 @@ export function shipFeatureFlags() {
     // "Gift a crew their rented week" checkout is live when Stripe is configured.
     sponsor: isStripeConfigured(),
     sponsorGoalCents: CREW_SPONSOR_GOAL_CENTS,
+    // The ReGen Pirates village origin, or null while the crew's door is shut.
+    crewDoorUrl: cleanCrewDoorUrl(ENV.piratesVillageUrl),
   };
 }

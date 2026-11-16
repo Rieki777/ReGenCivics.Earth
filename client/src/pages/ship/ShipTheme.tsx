@@ -49,7 +49,7 @@ const FOUR_LOVES = [
   {
     icon: Mountain,
     title: "Love of the Beautiful",
-    body: "Waterfalls, hot springs, old growth, a summit at sunset. Beauty taken in reverence is a nutrient. The treasure map is drawn to put the most beautiful places on earth in front of you, one day at a time.",
+    body: "Waterfalls, hot springs, old growth, a summit at sunset. Beauty taken in reverence is a nutrient. The Sea Chart is drawn to put the most beautiful places on earth in front of you, one day at a time.",
   },
 ];
 
@@ -89,7 +89,7 @@ const RITES: Array<{
     icon: Sprout,
     title: "The Rite of Hands",
     subtitle: "Give a day to the land",
-    body: "Serve a land project on your treasure map. Whatever they need doing, do it. Plant something together before you leave, and put your hands in the same hole.",
+    body: "Serve a land project on your voyage chart. Whatever they need doing, do it. Plant something together before you leave, and put your hands in the same hole.",
   },
   {
     day: "Friday",
@@ -176,7 +176,7 @@ export default function ShipTheme() {
       <ShipSection className="bg-[#d4a574]/10">
         <ShipEyebrow>What the season is built on</ShipEyebrow>
         <h2 className="text-3xl font-bold mb-3">The four loves aboard</h2>
-        <p className="text-foreground/80 max-w-2xl mb-8">Every quest, every meal, every mile of the treasure map serves one of these four. Tend all four for a week and the fifth one arrives on its own, which is love of the whole thing: the crew, the community, the land, and the world that holds all of it.</p>
+        <p className="text-foreground/80 max-w-2xl mb-8">Every quest, every meal, every mile of the Sea Chart serves one of these four. Tend all four for a week and the fifth one arrives on its own, which is love of the whole thing: the crew, the community, the land, and the world that holds all of it.</p>
         <div className="grid md:grid-cols-2 gap-6">
           {FOUR_LOVES.map((l, i) => (
             <div key={l.title} data-reveal data-reveal-delay={(i % 2) * 100} className="flex gap-4">

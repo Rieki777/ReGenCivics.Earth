@@ -23,7 +23,7 @@ const PERKS = [
   { icon: Wifi, title: "Fully off-grid, fully connected", body: "Generator and electrical system meet 100% of your energy needs. Starlink internet anywhere on earth. Propane cooking and hot water. A full-size washing machine with drying stand." },
   { icon: Bike, title: "The adventure pack", body: "Stand-up paddleboard. Hammocks. Cascadia field guides, instruments, and games. A Love Your Body kit for tending yourselves aboard. The electric bike and paddle ball come aboard in year two." },
   { icon: ShipIcon, title: "Room to live", body: "Forty feet, three slide-outs, two bedrooms, two bathrooms, and a living room big enough for morning yoga. Designed for a couple; up to four aboard in comfort, or five when at least three are children." },
-  { icon: Sprout, title: "The treasure", body: "A chest of seeds, a personalized treasure map, and a First Mate who plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
+  { icon: Sprout, title: "The treasure", body: "A chest of seeds, your own voyage chart, and a First Mate who plots your voyage through springs, waterfalls, food forests, and the land projects regenerating Cascadia." },
 ];
 
 const GALLERY: CarouselPhoto[] = [
@@ -129,7 +129,7 @@ export default function Ship() {
         <h2 className="text-3xl font-bold mb-6">A regenerative pirate ship, complete with your treasure chest of seeds</h2>
         <div className="prose prose-lg max-w-none text-foreground/90 space-y-4">
           <p>She is a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.</p>
-          <p>You do not just rent her. You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.</p>
+          <p>You do not just rent her. You take her on a voyage. Your voyage is charted for you by the ship herself, from the Sea Chart: land projects to serve, springs to drink from, waterfalls and food forests. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.</p>
         </div>
         <div className="mt-5">
           <a href="/blog/the-regen-ship" className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read her full story <span aria-hidden="true">→</span></a>
