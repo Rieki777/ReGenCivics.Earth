@@ -125,7 +125,7 @@ export const applications = mysqlTable("applications", {
   videoUrl: varchar("videoUrl", { length: 512 }),
   documentsUrl: text("documentsUrl"), // JSON array of S3 URLs
 
-  // ReGen Ship quest referral attribution (Free Passage Quest action #3).
+  // ReGen Ship quest referral attribution (ReGen Ship Quest action #3).
   // Set from /apply?ref=<handle>. When this application reaches a shortlisted
   // status, the matching ship_quest_completions row auto-verifies. Nullable so
   // ordinary applications are unaffected.
@@ -5196,7 +5196,7 @@ export const shipPricingWindows = mysqlTable("ship_pricing_windows", {
 ]));
 export type ShipPricingWindow = typeof shipPricingWindows.$inferSelect;
 
-// The Free Passage Quest checklist definitions (seeded, admin-editable order).
+// The ReGen Ship Quest checklist definitions (seeded, admin-editable order).
 export const shipQuestActions = mysqlTable("ship_quest_actions", {
   id: int("id").autoincrement().primaryKey(),
   slug: varchar("slug", { length: 120 }).notNull().unique(),

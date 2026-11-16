@@ -80,60 +80,40 @@ export async function emailBookingConfirmed(to: string, booking: Booking): Promi
 }
 
 export async function emailQuestActionVerified(to: string, actionTitle: string, points: number, creditedRegen: number): Promise<void> {
-  // Points (voyage/draw progress) and $ReGen (points x ship.regen_per_quest_point)
-  // are distinct quantities the moment the rate is tuned away from 1.
+  // Points are a public game score. $ReGen (points x ship.regen_per_quest_point)
+  // is paused at 0 since 15 Nov 2026, so the line names it only when credited.
   const html =
     h("Verified") +
     p(`Your quest action is verified: ${actionTitle}.`) +
-    p(`That is ${points} points on the quest board, and ${creditedRegen} ReGen credited to you.`) +
+    p(creditedRegen > 0
+      ? `That is ${points} points on the quest board, and ${creditedRegen} ReGen credited to you.`
+      : `That is ${points} points on the quest board.`) +
     btn(`${SHIP_URL}/quest`, "See the leaderboard");
   await send(to, "A ReGen Ship quest action is verified", html);
-}
-
-// Sent when a crew crosses the points threshold: their crew card can now go
-// public, so sponsors can find them and back their week.
-export async function emailQuestQualified(to: string): Promise<void> {
-  const html =
-    h("You reached the points line") +
-    p("You reached the points threshold, so your crew card can now go public on the quest page.") +
-    p("Make your crew profile. Add a photo, a short bio, what you intend to do on your voyage, and a 60 second video if you can. Your card sails on the quest page, where anyone can sponsor your week.") +
-    btn(`${SHIP_URL}/quest`, "Make your crew profile");
-  await send(to, "Your ReGen Ship crew card can go public", html);
-}
-
-// Sent to an approved nominee: they can raise a public crew card without the
-// quest once they create their profile.
-export async function emailCrewProfileInvite(to: string, nomineeName: string): Promise<void> {
-  const html =
-    h("You were nominated, and approved") +
-    p(`${nomineeName}, the ReGen Civics and CORE teams reviewed your nomination and approved it. No quest required.`) +
-    p("Create your profile and add your crew card, so sponsors can find you and back your week aboard the ReGen Ship.") +
-    btn(`${SHIP_URL}/quest`, "Create your profile");
-  await send(to, "You are invited aboard the ReGen Ship", html);
 }
 
 function usd(cents: number): string {
   return (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-// Sent to a crew when someone sponsors part of their voyage.
+// Sent to a crew when a friend gifts part of their rented week.
 export async function emailSponsorshipReceived(
   to: string,
   opts: { amountCents: number; sponsoredCents: number; goalCents: number },
 ): Promise<void> {
   const html =
-    h("Someone sponsored your voyage") +
-    p(`A supporter put ${usd(opts.amountCents)} toward your week aboard the ReGen Ship.`) +
+    h("Someone gifted toward your week") +
+    p(`A friend of the ship put ${usd(opts.amountCents)} toward your rented week aboard the ReGen Ship.`) +
     p(`You are at ${usd(opts.sponsoredCents)} of ${usd(opts.goalCents)}. When the goal is met, the church books your week and you sail.`) +
     btn(`${SHIP_URL}/quest`, "See your crew card");
-  await send(to, "A sponsor backed your ReGen Ship voyage", html);
+  await send(to, "A gift toward your ReGen Ship week", html);
 }
 
-// Sent to the crew (and Rye) when a crew's sponsorship goal is met.
+// Sent to the crew (and Rye) when a crew's gifted week is fully covered.
 export async function emailSponsorGoalReached(to: string, crewName: string): Promise<void> {
   const html =
     h("The goal is met. This crew sails.") +
-    p(`${crewName} reached the full voyage goal of ${usd(210000)}. Sponsors covered the week.`) +
+    p(`${crewName} reached the full week of ${usd(210000)}. Friends of the ship gifted their rented week.`) +
     p("A crew member will book the voyage and reach out with the details. The church covers the platform booking.") +
     btn(`${SHIP_URL}/quest`, "See the crew");
   await send(to, "A ReGen Ship crew reached its goal", html);
@@ -156,13 +136,6 @@ export async function emailDatasetOfferReceived(to: string, orgName: string): Pr
   await send(to, "Your ReGen Ship dataset offer", html);
 }
 
-export async function emailNominationReceived(to: string, nomineeName: string): Promise<void> {
-  const html =
-    h("Nomination received") +
-    p(`Thank you for nominating ${nomineeName}. The ReGen Civics and CORE teams review nominations together. If it is approved, ${nomineeName} can raise a crew card for sponsors, no quest required.`) +
-    btn(`${SHIP_URL}/quest`, "See the quest");
-  await send(to, "Your ReGen Ship nomination", html);
-}
 
 // ── The Ship's Manifest sequence (time-triggered; dispatched by a job) ────────
 

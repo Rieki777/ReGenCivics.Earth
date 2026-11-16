@@ -3,7 +3,7 @@
  *
  * A regenerative pirate ship + the ReGen Fleet. Bookings (our calendar is the
  * source of truth; the insured rental is a separate legal charge), the treasure
- * map, the AI concierge, the Free Passage Quest, seed plantings, the public
+ * map, the AI concierge, the ReGen Ship Quest, seed plantings, the public
  * voyage log, the digital passport, and live position pings.
  *
  * Security posture (BUILD-PLAYBOOK + AI-AUTOMATION-RISKS):
@@ -43,7 +43,7 @@ import { notifyOwner } from "../_core/notification";
 import { creditPrivateTokens } from "../db/tokens";
 import {
   isValidVoyageLength, nightsBetween, overlapsAny, computeVoyagePrice, voyageNightsFromAnswers,
-  computeQuestStandings, countEntered, percentBooked,
+  computeQuestStandings, percentBooked,
   sponsorshipProgress, enumerateVoyageWeeks,
   type QuestCompletionRow,
 } from "../lib/ship-logic";
@@ -51,7 +51,7 @@ import {
   MIN_GUESTS, MAX_GUESTS, MAX_GUESTS_WITH_KIDS, isValidCrewSize, SHIP_QUEST_SOURCE, shipFeatureFlags, isConciergeConfigured,
   MAIDEN_YEAR_VOYAGE_TARGET,
   SHIP_SEASON_START_YMD, SHIP_YEAR2_START_YMD, YEAR2_PRICE_MULTIPLIER, SHIP_BOOKING_HORIZON_WEEKS, SHIP_SEASONAL_BANDS,
-  SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
+  CREW_SPONSOR_GOAL_CENTS, CREW_SPONSOR_PROGRAM_TAG,
   SEEDS_PLANTED_BASELINE, VOYAGES_SAILED_BASELINE,
 } from "../lib/ship-config";
 import { askShipwright, detectEscalation, type ShipSystem } from "../lib/ship-shipwright";
@@ -64,9 +64,8 @@ import type { Itinerary } from "../lib/ship-logic";
 import { getStripe, isStripeConfigured } from "../lib/stripe";
 import {
   emailBookingReceived, emailBookingApproved, emailBookingConfirmed,
-  emailQuestActionVerified, emailApplicationReceived, emailNominationReceived,
+  emailQuestActionVerified, emailApplicationReceived,
   emailDatasetOfferReceived,
-  emailQuestQualified, emailCrewProfileInvite,
 } from "../lib/ship-emails";
 
 const YMD = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD");
@@ -154,9 +153,8 @@ async function assertConciergeAccess(
 }
 
 // ── Quest standings helper (verified completions -> standings) ────────────────
-// A crew with at least SHIP_ENTRY_THRESHOLD_POINTS verified points has
-// qualified (its crew card can go public). No single action is required. The
-// free-voyage draw these standings once fed was retired on 15 Nov 2026.
+// Points are a public game score with no prize and no line to cross (Rye,
+// 15 Nov 2026). The free-voyage draw and its 150-point line were retired.
 async function loadQuestStandings() {
   const d = await db();
   const actions = await d.select().from(shipQuestActions);
@@ -172,7 +170,7 @@ async function loadQuestStandings() {
     verifiedAt: c.verifiedAt,
     points: pointsById.get(c.actionId) ?? 0,
   }));
-  return { standings: computeQuestStandings(rows, SHIP_ENTRY_THRESHOLD_POINTS), actions };
+  return { standings: computeQuestStandings(rows), actions };
 }
 
 // ── Booking status (how much of the first year is booked) ─────────────────────
@@ -192,7 +190,7 @@ async function loadBookingStatus() {
   };
 }
 
-// A user's total verified quest points (used to detect a threshold crossing).
+// A user's total verified quest points (their public game score).
 async function verifiedPointsForUser(userId: number): Promise<number> {
   const d = await db();
   const [row] = await d
@@ -203,9 +201,9 @@ async function verifiedPointsForUser(userId: number): Promise<number> {
   return Number(row?.total ?? 0);
 }
 
-// Credit the ReGen reward + notify when a completion is verified. When this
-// verification is the one that carries the crew across the entry threshold, send
-// the "you qualified, make your crew card" email exactly once.
+// Credit the ReGen reward (when the rate is above 0) and notify when a
+// completion is verified. ship.regen_per_quest_point is paused at 0 since
+// 15 Nov 2026 (unify decision 5), so by default no token is credited.
 async function rewardVerifiedCompletion(completionId: number) {
   const d = await db();
   const [c] = await d.select().from(shipQuestCompletions).where(eq(shipQuestCompletions.id, completionId)).limit(1);
@@ -215,9 +213,9 @@ async function rewardVerifiedCompletion(completionId: number) {
   // The points→$ReGen conversion was an implicit 1:1; now a registry dial so
   // ship quests can be repriced without editing every action row.
   const { getGameVariableOr } = await import("../game");
-  const rate = await getGameVariableOr("ship.regen_per_quest_point", 1);
-  const credited = Math.round(action.points * rate);
-  await creditPrivateTokens({
+  const rate = await getGameVariableOr("ship.regen_per_quest_point", 0);
+  const credited = Math.max(0, Math.round(action.points * rate));
+  if (credited > 0) await creditPrivateTokens({
     userId: c.userId,
     tokenType: "regen",
     amount: credited,
@@ -228,13 +226,6 @@ async function rewardVerifiedCompletion(completionId: number) {
   });
   const [u] = await d.select().from(users).where(eq(users.id, c.userId)).limit(1);
   if (u?.email) await emailQuestActionVerified(u.email, action.title, action.points, credited);
-
-  // Threshold crossing: after includes this action, before excludes it.
-  const after = await verifiedPointsForUser(c.userId);
-  const before = after - (action.points || 0);
-  if (before < SHIP_ENTRY_THRESHOLD_POINTS && after >= SHIP_ENTRY_THRESHOLD_POINTS && u?.email) {
-    await emailQuestQualified(u.email);
-  }
 }
 
 // ── Galley helpers ────────────────────────────────────────────────────────────
@@ -262,7 +253,7 @@ async function assertHaulOwner(d: ShipDb, haulId: number, userId: number) {
 
 // Auto-verify a Galley quest action (logging a haul, trying the Deeper Reset) and
 // credit the ReGen reward, once. No-ops when the action is not seeded yet, so it
-// is always safe to call. A nudge into the Free Passage Quest, never a gate.
+// is always safe to call. A nudge into the ReGen Ship Quest, never a gate.
 async function awardGalleyQuest(userId: number, slug: string, note: string): Promise<void> {
   const d = await db();
   const [action] = await d.select().from(shipQuestActions).where(eq(shipQuestActions.slug, slug)).limit(1);
@@ -285,7 +276,7 @@ async function awardGalleyQuest(userId: number, slug: string, note: string): Pro
 }
 
 /**
- * Item 16: award a Free Passage Quest action when a player posts in its forum
+ * Item 16: award a ReGen Ship Quest action when a player posts in its forum
  * thread. Auto actions verify and credit immediately; crew actions record a
  * pending completion for the reviewer to approve. Honors the action's submission
  * cap (counting the player's non-rejected completions). No-ops when the post is
@@ -398,26 +389,21 @@ export const shipRouter = router({
       .select({ id: shipBookings.id })
       .from(shipBookings)
       .where(eq(shipBookings.status, "completed"));
-    // Admin-editable game variables (asset value, community-owned so far, trees).
+    // Admin-editable game variables (trees, pre-ledger baselines). The
+    // community-ownership tile was retired on 15 Nov 2026 (unify decision 6).
     // Absent variables fall back to 0 so the tiles degrade gracefully.
     const { getGameVariables } = await import("../game");
-    const vars = await getGameVariables(["ship.asset_value_usd", "ship.community_owned_usd", "ship.trees_planted", "ship.seeds_planted_base", "ship.voyages_sailed_base"]).catch(() => ({} as Record<string, number>));
+    const vars = await getGameVariables(["ship.trees_planted", "ship.seeds_planted_base", "ship.voyages_sailed_base"]).catch(() => ({} as Record<string, number>));
     // Real-world totals from before the ledger existed, added on top of live
     // counts. Overridable at runtime via game variables (no deploy needed).
     const seedsBase = vars["ship.seeds_planted_base"] ?? SEEDS_PLANTED_BASELINE;
     const voyagesBase = vars["ship.voyages_sailed_base"] ?? VOYAGES_SAILED_BASELINE;
-    const assetValue = vars["ship.asset_value_usd"] ?? 0;
-    const communityOwned = vars["ship.community_owned_usd"] ?? 0;
-    const communityOwnedPct = assetValue > 0 ? Math.max(0, Math.min(100, Math.round((communityOwned / assetValue) * 100))) : 0;
     return {
       percentBooked: free.percentBooked,
       bookedVoyages: free.bookedVoyages,
       target: free.target,
       seedsPlanted: Number(seeds?.n ?? 0) + seedsBase,
       voyagesSailed: sailed.length + voyagesBase,
-      assetValueUsd: assetValue,
-      communityOwnedUsd: communityOwned,
-      communityOwnedPct,
       treesPlanted: vars["ship.trees_planted"] ?? 0,
     };
   }),
@@ -815,7 +801,7 @@ export const shipRouter = router({
     }),
   }),
 
-  // ── Free Passage Quest ─────────────────────────────────────────────────────
+  // ── ReGen Ship Quest ─────────────────────────────────────────────────────
   quest: router({
     actions: publicProcedure.query(async () => {
       const d = await db();
@@ -831,8 +817,6 @@ export const shipRouter = router({
       return {
         completions,
         standing: mine,
-        qualified: Boolean(mine?.isEntered),
-        entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
         crewProfile: crew ?? null,
       };
     }),
@@ -891,8 +875,6 @@ export const shipRouter = router({
         : [];
       const byId = new Map(profiles.map((p) => [p.id, p]));
       return {
-        poolSize: countEntered(standings),
-        entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
         standings: standings.slice(0, 100).map((s) => ({
           ...s,
           name: byId.get(s.userId)?.name ?? "A crew member",
@@ -933,8 +915,7 @@ export const shipRouter = router({
         };
       }
       return {
-        eligible: points >= SHIP_ENTRY_THRESHOLD_POINTS,
-        points, threshold: SHIP_ENTRY_THRESHOLD_POINTS,
+        points,
         openWeeks: open, myOpenWeeks: myOpen, blockedWeeks: blocked,
         seekingCrew: Boolean(avail?.seekingCrew), crew,
       };
@@ -973,7 +954,6 @@ export const shipRouter = router({
       .input(z.object({ name: z.string().min(1).max(120), isFamily: z.boolean().optional() }))
       .mutation(async ({ ctx, input }) => {
         const d = await db();
-        if (await verifiedPointsForUser(ctx.user.id) < SHIP_ENTRY_THRESHOLD_POINTS) throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Reach ${SHIP_ENTRY_THRESHOLD_POINTS} points before you pool with a crew.` });
         if (await getUserCrew(ctx.user.id)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "You are already in a crew. Leave it first." });
         const [res] = await d.insert(shipQuestCrews).values({ name: sanitizeInput(input.name), createdByUserId: ctx.user.id, isFamily: input.isFamily ? 1 : 0 });
         const crewId = (res as { insertId?: number }).insertId ?? 0;
@@ -985,7 +965,6 @@ export const shipRouter = router({
       .input(z.object({ crewId: z.number().int() }))
       .mutation(async ({ ctx, input }) => {
         const d = await db();
-        if (await verifiedPointsForUser(ctx.user.id) < SHIP_ENTRY_THRESHOLD_POINTS) throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Reach ${SHIP_ENTRY_THRESHOLD_POINTS} points before you pool with a crew.` });
         if (await getUserCrew(ctx.user.id)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "You are already in a crew." });
         const [crew] = await d.select().from(shipQuestCrews).where(eq(shipQuestCrews.id, input.crewId)).limit(1);
         if (!crew) throw new TRPCError({ code: "NOT_FOUND", message: "That crew does not exist." });
@@ -1009,7 +988,6 @@ export const shipRouter = router({
     // with other seekers whose availability overlaps mine, up to a group of four.
     matchMe: protectedProcedure.mutation(async ({ ctx }) => {
       const d = await db();
-      if (await verifiedPointsForUser(ctx.user.id) < SHIP_ENTRY_THRESHOLD_POINTS) throw new TRPCError({ code: "PRECONDITION_FAILED", message: `Reach ${SHIP_ENTRY_THRESHOLD_POINTS} points before you pool with a crew.` });
       if (await getUserCrew(ctx.user.id)) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "You are already in a crew." });
       await markSeekingCrew(ctx.user.id);
       const open = await openVoyageWeekStarts();
@@ -1034,7 +1012,6 @@ export const shipRouter = router({
       for (const s of seekers) {
         if (s.userId === ctx.user.id || partners.length >= 3) continue;
         if (await getUserCrew(s.userId)) continue;
-        if (await verifiedPointsForUser(s.userId) < SHIP_ENTRY_THRESHOLD_POINTS) continue;
         const sBlocked = Array.isArray(s.blockedWeeks) ? (s.blockedWeeks as unknown[]).filter((x): x is string => typeof x === "string") : [];
         if (open.filter((w) => !sBlocked.includes(w)).some((w) => myOpen.has(w))) partners.push(s.userId);
       }
@@ -1060,10 +1037,8 @@ export const shipRouter = router({
       return crew ?? null;
     }),
 
-    // Create or update my crew profile. Publishing (a public card) is gated: a
-    // crew is only shown publicly once it has qualified (threshold reached) or
-    // linked to an approved nomination. Passing a nominationId activates that
-    // nomination for the signed-in account.
+    // Create or update my crew profile. The crew chooses when its card goes
+    // public (Rye, 15 Nov 2026: the old 150-point line is gone).
     upsert: protectedProcedure
       .input(
         z.object({
@@ -1073,36 +1048,13 @@ export const shipRouter = router({
           photoUrl: z.string().url().max(512).optional(),
           videoUrl: z.string().url().max(512).optional(),
           isPublic: z.boolean().optional(),
-          nominationId: z.number().int().optional(),
         }),
       )
       .mutation(async ({ ctx, input }) => {
         await checkRateLimit(ctx, "ship_crew_upsert");
         const d = await db();
 
-        // Activate a nomination for this account, if one was passed.
-        let nominationId: number | null = null;
-        if (input.nominationId) {
-          const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, input.nominationId)).limit(1);
-          if (nom && (nom.nomineeUserId == null || nom.nomineeUserId === ctx.user.id)) {
-            nominationId = nom.id;
-            if (nom.nomineeUserId == null) {
-              await d.update(shipNominations).set({ nomineeUserId: ctx.user.id }).where(eq(shipNominations.id, nom.id));
-            }
-          }
-        }
-
-        // Am I eligible for a public card? (qualified or an approved nominee)
-        const { standings } = await loadQuestStandings();
-        const mine = standings.find((s) => s.userId === ctx.user.id);
-        let nominationApproved = false;
-        if (nominationId) {
-          const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, nominationId)).limit(1);
-          nominationApproved = nom?.status === "approved_for_draw";
-        }
-        const eligibleForPublic = Boolean(mine?.isEntered) || nominationApproved;
-        const isPublic = Boolean(input.isPublic) && eligibleForPublic;
-
+        const isPublic = Boolean(input.isPublic);
         const values = {
           displayName: sanitizeInput(input.displayName),
           bio: input.bio ? sanitizeInput(input.bio) : null,
@@ -1119,21 +1071,19 @@ export const shipRouter = router({
           const keepStatus = existing.status === "sponsored" || existing.status === "sailed";
           await d
             .update(shipCrewProfiles)
-            .set({ ...values, ...(keepStatus ? { status: existing.status } : {}), ...(nominationId ? { nominationId } : {}) })
+            .set({ ...values, ...(keepStatus ? { status: existing.status } : {}) })
             .where(eq(shipCrewProfiles.id, existing.id));
           return { id: existing.id, isPublic };
         }
         const [res] = await d.insert(shipCrewProfiles).values({
           userId: ctx.user.id,
-          nominationId,
           sponsorGoalCents: CREW_SPONSOR_GOAL_CENTS,
           ...values,
         });
         return { id: (res as { insertId?: number }).insertId ?? null, isPublic };
       }),
 
-    // Public crew cards for the quest page. Only qualified crews appear
-    // (threshold entrants + approved nominees).
+    // Public crew cards for the quest page: every crew that chose to go public.
     listPublished: publicProcedure.query(async () => {
       const d = await db();
       const crews = await d
@@ -1144,16 +1094,7 @@ export const shipRouter = router({
         .limit(200);
       if (crews.length === 0) return [];
 
-      const { standings } = await loadQuestStandings();
-      const enteredIds = new Set(standings.filter((s) => s.isEntered).map((s) => s.userId));
-      const nomIds = crews.map((c) => c.nominationId).filter((n): n is number => n != null);
-      const approvedNoms = nomIds.length
-        ? await d.select({ id: shipNominations.id }).from(shipNominations).where(and(inArray(shipNominations.id, nomIds), eq(shipNominations.status, "approved_for_draw")))
-        : [];
-      const approvedNomSet = new Set(approvedNoms.map((n) => n.id));
-
       return crews
-        .filter((c) => (c.userId != null && enteredIds.has(c.userId)) || (c.nominationId != null && approvedNomSet.has(c.nominationId)))
         .map((c) => ({
           id: c.id,
           displayName: c.displayName,
@@ -1166,7 +1107,8 @@ export const shipRouter = router({
         }));
     }),
 
-    // Sponsor a crew's voyage. Creates a hosted Stripe Checkout tagged with the
+    // Gift a crew their rented week (the renting door, paid by a friend). The
+    // procedure keeps its name "sponsor". Creates a hosted Stripe Checkout tagged with the
     // ship-gift program + crewProfileId so the succeeded donation reconciles onto
     // the crew (see server/lib/ship-sponsorship.ts, called by the Stripe webhook).
     sponsor: publicProcedure
@@ -1187,7 +1129,7 @@ export const shipRouter = router({
         const successUrl = `https://regencivics.earth/ship/quest?sponsored=${crew.id}&session_id={CHECKOUT_SESSION_ID}`;
         const session = await stripe.checkout.sessions.create({
           mode: "payment",
-          line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: input.amountCents, product_data: { name: `Sponsor a ReGen Ship voyage: ${crew.displayName}` } } }],
+          line_items: [{ quantity: 1, price_data: { currency: "usd", unit_amount: input.amountCents, product_data: { name: `Gift a crew their rented week: ${crew.displayName}` } } }],
           success_url: successUrl,
           cancel_url: "https://regencivics.earth/ship/quest",
           metadata,
@@ -1208,31 +1150,9 @@ export const shipRouter = router({
       }),
   }),
 
-  // ── Nominations + applications (public forms) ───────────────────────────────
-  nominate: publicProcedure
-    .input(
-      z.object({
-        nomineeName: z.string().min(2).max(200),
-        nomineeContact: z.string().max(320).optional(),
-        reason: z.string().min(10).max(2000),
-        isSelfNomination: z.boolean().default(false),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      await checkRateLimit(ctx, "ship_nominate");
-      const d = await db();
-      await d.insert(shipNominations).values({
-        nominatorUserId: ctx.user?.id ?? null,
-        nomineeName: sanitizeInput(input.nomineeName),
-        nomineeContact: input.nomineeContact ? sanitizeInput(input.nomineeContact) : null,
-        reason: sanitizeInput(input.reason),
-        isSelfNomination: input.isSelfNomination,
-      });
-      const notify = ctx.user?.email ?? (input.nomineeContact?.includes("@") ? input.nomineeContact : null);
-      if (notify) await emailNominationReceived(notify, input.nomineeName);
-      return { ok: true };
-    }),
-
+  // ── Applications (public forms) ─────────────────────────────────────────────
+  // Nominations were retired on 15 Nov 2026 (Rye, Q-RG1); old rows stay, and
+  // admin.listNominations keeps them readable.
   applyKeeper: publicProcedure
     .input(
       z.object({
@@ -1523,12 +1443,12 @@ export const shipRouter = router({
       .input(
         z.object({
           species: z.string().max(200).optional(),
-          lat: z.number().min(-90).max(90).optional(),
-          lng: z.number().min(-180).max(180).optional(),
+          // No lat/lng: regencivics.earth never records where a seed went
+          // (15 Nov 2026, unify plan 3.8). Extra keys are stripped by zod.
           locationId: z.number().int().optional(),
           bookingId: z.number().int().optional(),
           photoUrl: z.string().url().max(512).optional(),
-          notes: z.string().max(1000).optional(),
+          notes: z.string().max(1200).optional(), // the named place plus up to 1,000 typed
         }),
       )
       .mutation(async ({ ctx, input }) => {
@@ -1538,8 +1458,8 @@ export const shipRouter = router({
           userId: ctx.user.id,
           bookingId: input.bookingId ?? null,
           locationId: input.locationId ?? null,
-          lat: input.lat ?? null,
-          lng: input.lng ?? null,
+          lat: null,
+          lng: null,
           species: input.species ? sanitizeInput(input.species) : null,
           photoUrl: input.photoUrl ?? null,
           notes: input.notes ? sanitizeInput(input.notes) : null,
@@ -2004,7 +1924,7 @@ export const shipRouter = router({
           title: input.title ? sanitizeInput(input.title) : null,
           visibility: input.visibility,
         });
-        // Logging a haul is a Free Passage Quest nudge (never blocks the haul).
+        // Logging a haul is a ReGen Ship Quest nudge (never blocks the haul).
         await awardGalleyQuest(ctx.user.id, "galley-log-haul", "Logged a market haul in the Galley").catch(() => {});
         return { id: (res as { insertId?: number }).insertId ?? null, bookingId };
       }),
@@ -2089,7 +2009,7 @@ export const shipRouter = router({
         }
 
         const result = remixHaul(haulItems, input.track as GalleyTrack, 3);
-        // Trying the Deeper Reset is a Free Passage Quest nudge.
+        // Trying the Deeper Reset is a ReGen Ship Quest nudge.
         if (input.track === "reset") {
           await awardGalleyQuest(ctx.user.id, "galley-deeper-reset", "Tried the Deeper Reset in the Galley").catch(() => {});
         }
@@ -2460,37 +2380,6 @@ export const shipRouter = router({
     }),
 
     listNominations: adminProcedure.query(async () => (await db()).select().from(shipNominations).orderBy(desc(shipNominations.createdAt)).limit(500)),
-    // Approving a nomination (joint ReGen Civics + CORE review) lets the nominee
-    // raise a public crew card without the quest. The status keeps its historic
-    // name "approved_for_draw"; the free-voyage draw itself was retired on
-    // 15 Nov 2026. If the nominee has no account, link one by email if it exists
-    // and send the crew-card invite.
-    reviewNomination: adminProcedure
-      .input(z.object({ id: z.number().int(), status: z.enum(["submitted", "shortlisted", "selected", "approved_for_draw"]) }))
-      .mutation(async ({ input }) => {
-        const d = await db();
-        const [nom] = await d.select().from(shipNominations).where(eq(shipNominations.id, input.id)).limit(1);
-        if (!nom) throw new TRPCError({ code: "NOT_FOUND", message: "Nomination not found." });
-
-        const patch: Partial<typeof shipNominations.$inferInsert> = { status: input.status };
-        if (input.status === "approved_for_draw") {
-          // Link an existing account by contact email, when we can.
-          let nomineeUserId = nom.nomineeUserId;
-          const email = nom.nomineeContact && nom.nomineeContact.includes("@") ? nom.nomineeContact : null;
-          if (!nomineeUserId && email) {
-            const [u] = await d.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
-            if (u) nomineeUserId = u.id;
-          }
-          if (nomineeUserId) patch.nomineeUserId = nomineeUserId;
-          if (!nom.inviteEmailSentAt && email) {
-            await emailCrewProfileInvite(email, nom.nomineeName);
-            patch.inviteEmailSentAt = new Date();
-          }
-        }
-        await d.update(shipNominations).set(patch).where(eq(shipNominations.id, input.id));
-        return { ok: true };
-      }),
-
     // Crew profiles admin surface: list all, and mark a sponsored crew sailed
     // once the church books the week (isGifted, like a winner voyage).
     listCrewProfiles: adminProcedure.query(async () => {

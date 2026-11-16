@@ -64,7 +64,7 @@ export async function runElderForumJob(): Promise<{ commented: number; replied: 
     ? (await database.select({ id: forumCategories.id }).from(forumCategories).where(inArray(forumCategories.slug, EXCLUDED_CATEGORY_SLUGS))).map((c) => c.id)
     : [];
 
-  // The ReGen Ship "Free Passage Quest" threads are curated (item 17): each
+  // The ReGen Ship Quest threads are curated (item 17): each
   // carries exactly one comment from each elder, seeded and human-reviewed. The
   // general best-fit-elder routing must never add, double, or one-sidedly claim
   // top-level comments on them, so exclude every ship-quest-linked post from the

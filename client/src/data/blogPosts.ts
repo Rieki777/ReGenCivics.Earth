@@ -238,8 +238,6 @@ The ReGen Fleet is a caravan of ships that moves from land project to land proje
 
 ![A caravan of ships gathered together at a land project](/images/ship/ship-fleet-caravan.jpg)
 
-Ten percent of every voyage buys the ship herself into community ownership over time, a model that repeats for every future ship. As a ship joins the fleet, that 10% goes to work buying out the owner and every existing token holder, through open purchases on the open market. The owner is the dominant token holder, so the owner effectively sets the market rate. Community ownership grows by buying in at a fair price, voyage by voyage, and the person who brought the ship is made whole for her full value.
-
 ![Resting barefoot by a calm forest river in the pines](/images/ship/ship-riverbank-rest.jpg)
 
 ## Come aboard

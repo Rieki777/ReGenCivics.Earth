@@ -282,7 +282,6 @@ export default function ShipTheme() {
             <h2 className="text-3xl font-bold mb-4">The Church of the Regenerative Earth holds the ship</h2>
             <p className="text-foreground/90 mb-4">The church exists to regenerate the Earth and to spread love-based civilization. The Sanctuary of Love is one of its first programs, and CORE now runs the ship's operations: her upkeep, her crew, her offerings, her log.</p>
             <p className="text-foreground/90 mb-4">Every ship after her joins the same body. The fleet needs an organization that can hold vessels for the long term, in service to the Regenerative Renaissance rather than to a return. That organization is the church.</p>
-            <p className="text-foreground/90 mb-4">Ten percent of every voyage buys the ship herself back into community ownership.</p>
             <div className="flex flex-wrap gap-3">
               <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><a href={CURRENT_THEME.coreUrl}>See the church programs</a></Button>
               <Button asChild variant="outline"><Link href="/ship/fleet">Join the fleet</Link></Button>

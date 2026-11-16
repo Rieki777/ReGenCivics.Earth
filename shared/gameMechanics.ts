@@ -178,7 +178,9 @@ export const MECHANICS_VARIABLE_FALLBACKS: Record<string, number> = {
   // Promoted hardcodes (0221)
   "events.attendance_reward_regen": 33,
   "quests.attested_bonus_fraction": 0.25,
-  "ship.regen_per_quest_point": 1,
+  // Paused at 0 on 15 Nov 2026 (unify decision 5): ship quest points no
+  // longer credit $ReGen.
+  "ship.regen_per_quest_point": 0,
   // Path-tier ladder (questPools constants are the fallbacks; live values
   // are registry rows read by the tier detector)
   "paths.player.steward.quest_count": PLAYER_STEWARD_QUEST_COUNT,

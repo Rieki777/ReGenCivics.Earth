@@ -134,16 +134,8 @@ export const SHIP_SEASONAL_BANDS: ShipSeasonalBand[] = [
 /** Flat Ship Keeper pay per turnover. */
 export const KEEPER_PAY_USD = 200;
 
-// ── Quest threshold ──────────────────────────────────────────────────────────
-// Reach SHIP_ENTRY_THRESHOLD_POINTS verified points and the crew has qualified:
-// its crew card can go public for sponsors. No single action is mandatory. The
-// weighted free-voyage draw this once fed was retired on 15 Nov 2026 (Rye: the
-// ship is rented or bought into, never given away).
-/** Verified points that qualify a crew for a public crew card. */
-export const SHIP_ENTRY_THRESHOLD_POINTS = 150;
-
-// ── Crew profiles + sponsorship ──────────────────────────────────────────────
-/** The full voyage ask a crew can be sponsored toward, in cents ($2,100). */
+// ── Crew profiles + "gift a crew their rented week" ──────────────────────────
+/** The full rented week friends can gift a crew, in cents ($2,100). */
 export const CREW_SPONSOR_GOAL_CENTS = 210_000;
 /** churchDonations program tag for crew sponsorships (same as gifted voyages). */
 export const CREW_SPONSOR_PROGRAM_TAG = "regen_ship_gift";
@@ -152,8 +144,6 @@ export const CREW_SPONSOR_PROGRAM_TAG = "regen_ship_gift";
 export const MAIDEN_YEAR_VOYAGE_TARGET = 40;
 /** Suggested winter host income share (church council sets per agreement). */
 export const WINTER_HOST_SHARE_DEFAULT_PCT = 25;
-/** Share of church ship revenue routed to RV token buyback. */
-export const FLEET_BUYBACK_PCT = 10;
 /** Minimum driver age policy default. */
 export const MIN_DRIVER_AGE = 25;
 /** Included miles per voyage, then per-mile overage. */
@@ -224,10 +214,8 @@ export function shipFeatureFlags() {
     platformListing: isPlatformListingConfigured(),
     platformListingUrl: getPlatformListingUrl(),
     tracker: isTrackerConfigured(),
-    // Crew sponsorship checkout is live when Stripe is configured.
+    // "Gift a crew their rented week" checkout is live when Stripe is configured.
     sponsor: isStripeConfigured(),
-    // The quest entry model, so copy can read one source of truth.
-    entryThreshold: SHIP_ENTRY_THRESHOLD_POINTS,
     sponsorGoalCents: CREW_SPONSOR_GOAL_CENTS,
   };
 }

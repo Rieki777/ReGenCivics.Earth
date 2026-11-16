@@ -1,5 +1,5 @@
 /**
- * /ship/fleet - The ReGen Fleet vision, the RV DAO / token model, the Regatta,
+ * /ship/fleet - The ReGen Fleet vision, the Regatta,
  * and the "raise your flag" application for RV owners to join.
  *
  * Raise-your-flag is conversation-first: the Flagkeeper (a FormCompanion
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Anchor, Coins, Flag, Sprout, Tent, HandCoins } from "lucide-react";
+import { Flag, Tent } from "lucide-react";
 import { ShipImage, ShipSection, ShipEyebrow, ShipNavRow } from "./shipShared";
 import FormCompanion from "@/components/companion/FormCompanion";
 import { ShipField } from "@/components/ship/ShipFields";
@@ -213,47 +213,6 @@ export default function ShipFleet() {
               alt="A caravan of ships parked together at a land project."
               className="h-full"
             />
-          </div>
-        </div>
-      </ShipSection>
-
-      {/* The RV DAO / token model */}
-      <ShipSection className="bg-[#4a7c59]/8">
-        <ShipEyebrow>How the fleet owns itself</ShipEyebrow>
-        <h2 className="text-3xl font-bold mb-6">The RV DAO and the token model</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div data-reveal className="flex flex-col gap-2">
-            <Anchor className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
-            <h3 className="font-semibold text-lg">One DAO per ship</h3>
-            <p className="text-foreground/80">
-              Each ship has its own DAO that reflects total ownership of the asset. The DAO is the ship, held in common
-              by the people who sail her and fund her.
-            </p>
-          </div>
-          <div data-reveal data-reveal-delay="60" className="flex flex-col gap-2">
-            <Coins className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
-            <h3 className="font-semibold text-lg">10% of every voyage</h3>
-            <p className="text-foreground/80">
-              Ten percent of every voyage buys RV tokens. Those tokens are fractional shares that buy the asset into
-              community ownership over time, voyage by voyage.
-            </p>
-          </div>
-          <div data-reveal data-reveal-delay="120" className="flex flex-col gap-2">
-            <Sprout className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
-            <h3 className="font-semibold text-lg">A model that replicates</h3>
-            <p className="text-foreground/80">
-              The same structure repeats for every future ship. Each one funds its own path into community hands, so the
-              fleet grows without leaving ownership behind.
-            </p>
-          </div>
-          <div data-reveal data-reveal-delay="180" className="flex flex-col gap-2">
-            <HandCoins className="w-8 h-8 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
-            <h3 className="font-semibold text-lg">The owner, made whole</h3>
-            <p className="text-foreground/80">
-              As a ship joins the fleet, that 10% buys out the owner and existing token holders through open purchases
-              on the open market. The owner is the dominant token holder, so the owner effectively sets the market
-              rate. Community ownership grows by buying in at a fair price, voyage by voyage.
-            </p>
           </div>
         </div>
       </ShipSection>

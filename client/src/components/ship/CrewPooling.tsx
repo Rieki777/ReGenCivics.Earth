@@ -1,8 +1,8 @@
 /**
  * Item 13: crew pooling for the ship's quest.
  *
- * A qualified player (150+ points) can pool with others into a crew and voyage
- * together when the crew's week is booked. Each player marks the voyage weeks
+ * Any signed-in player can pool with others into a crew and voyage together
+ * when the crew's week is booked (the old 150-point line went on 15 Nov 2026). Each player marks the voyage weeks
  * that will not work; matching only pools people whose still-open weeks overlap.
  * Open weeks come from the live voyage grid, so a week that books up drops off.
  */
@@ -54,19 +54,6 @@ export function CrewPooling() {
     void utils.ship.pool.openCrews.invalidate();
   }
 
-  if (!s.eligible) {
-    return (
-      <div className="rounded-2xl border bg-card p-5 max-w-3xl">
-        <div className="flex items-center gap-2 mb-2">
-          <Users className="w-5 h-5 text-[#4a7c59] dark:text-[#7dd87d]" aria-hidden="true" />
-          <h3 className="text-lg font-bold">Pool with a crew</h3>
-        </div>
-        <p className="text-sm text-foreground/80">
-          Reach {s.threshold} points and you can pool with a crew and sail together. You have {s.points} so far.
-        </p>
-      </div>
-    );
-  }
 
   function toggleWeek(w: string) {
     setBlocked((b) => (b.includes(w) ? b.filter((x) => x !== w) : [...b, w]));
@@ -108,7 +95,7 @@ export function CrewPooling() {
       <ShipEyebrow>Pool with a crew</ShipEyebrow>
       <h2 className="text-2xl font-bold mb-2">Sail together</h2>
       <p className="text-foreground/80 mb-5">
-        You are qualified. Pool with up to three more mates (a family of five may sail together) and you all voyage
+        Pool with up to three more mates (a family of five may sail together) and you all voyage
         together when your crew's week is booked.
       </p>
 

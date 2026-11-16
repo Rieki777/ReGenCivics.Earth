@@ -290,7 +290,6 @@ export function useShipFlags() {
       platformListingUrl: null as string | null,
       tracker: false,
       sponsor: false,
-      entryThreshold: 150,
       sponsorGoalCents: 210000,
     }
   );

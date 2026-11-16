@@ -1,7 +1,7 @@
 /**
  * seed-ship-quest-elder-comments.ts — item 17, part 2 of 2.
  *
- * The ReGen Ship "Free Passage Quest" threads should each carry exactly one
+ * The ReGen Ship Quest threads should each carry exactly one
  * comment from each AI Elder. On three of them Anastasia had commented (the
  * duplicates were removed in migration 0214) but Yeshua had not, so the two
  * elders were unbalanced. This adds the missing Yeshua comment to those three

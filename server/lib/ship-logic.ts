@@ -269,7 +269,10 @@ export function sanitizeItinerary(itinerary: Itinerary, allowedIds: Iterable<num
   };
 }
 
-// ── Quest standings (points threshold + weighted draw) ───────────────────────
+// ── Quest standings (a public game score, no prize) ──────────────────────────
+// Rye, 15 Nov 2026: points and the leaderboard stay as a public score with no
+// prize and no line to cross. The free-voyage draw and its 150-point line were
+// retired.
 export type QuestCompletionRow = {
   userId: number;
   actionId: number;
@@ -282,73 +285,19 @@ export type QuestStanding = {
   userId: number;
   verifiedPoints: number;
   verifiedCount: number;
-  /** Verified points once qualified, else 0 (name kept from the retired draw). */
-  tickets: number;
-  /** True once verified points reach the threshold: this crew has qualified. */
-  isEntered: boolean;
-  /** ms timestamp when cumulative verified points first crossed the threshold. */
-  enteredAt: number | null;
 };
 
-function toMs(v: Date | string | null): number | null {
-  if (v == null) return null;
-  const t = typeof v === "string" ? Date.parse(v) : v.getTime();
-  return Number.isNaN(t) ? null : t;
-}
-
-/**
- * Compute per-user standings from verified completions. Entry is a points
- * threshold, not a checklist: a crew with at least `thresholdPoints` verified
- * points has qualified (its crew card can go public). `tickets` and `isEntered`
- * keep their historic names from the retired free-voyage draw (15 Nov 2026).
- * `enteredAt` records the moment cumulative points first crossed the line. No
- * single action is mandatory.
- */
-export function computeQuestStandings(
-  completions: QuestCompletionRow[],
-  thresholdPoints: number,
-): QuestStanding[] {
-  const byUser = new Map<number, Array<{ ts: number; points: number }>>();
+/** Per-user standings from verified completions, highest score first. */
+export function computeQuestStandings(completions: QuestCompletionRow[]): QuestStanding[] {
+  const byUser = new Map<number, QuestStanding>();
   for (const c of completions) {
     if (c.status !== "verified") continue;
-    const list = byUser.get(c.userId) ?? [];
-    list.push({ ts: toMs(c.verifiedAt) ?? 0, points: c.points || 0 });
-    byUser.set(c.userId, list);
+    const row = byUser.get(c.userId) ?? { userId: c.userId, verifiedPoints: 0, verifiedCount: 0 };
+    row.verifiedPoints += c.points || 0;
+    row.verifiedCount += 1;
+    byUser.set(c.userId, row);
   }
-
-  const standings: QuestStanding[] = [];
-  for (const [userId, rows] of byUser) {
-    // Accumulate in verification order to find the crossing moment.
-    rows.sort((a, b) => a.ts - b.ts);
-    let running = 0;
-    let enteredAt: number | null = null;
-    for (const r of rows) {
-      running += r.points;
-      if (enteredAt == null && running >= thresholdPoints) enteredAt = r.ts;
-    }
-    const isEntered = running >= thresholdPoints;
-    standings.push({
-      userId,
-      verifiedPoints: running,
-      verifiedCount: rows.length,
-      tickets: isEntered ? running : 0,
-      isEntered,
-      enteredAt,
-    });
-  }
-
-  // Order for display only: entered crews first, everyone by points descending.
-  standings.sort((a, b) => {
-    if (a.isEntered !== b.isEntered) return a.isEntered ? -1 : 1;
-    return b.verifiedPoints - a.verifiedPoints;
-  });
-
-  return standings;
-}
-
-/** How many crews have qualified (verified points at or above the threshold). */
-export function countEntered(standings: QuestStanding[]): number {
-  return standings.filter((s) => s.isEntered).length;
+  return [...byUser.values()].sort((a, b) => b.verifiedPoints - a.verifiedPoints);
 }
 
 // ── Booking volume ────────────────────────────────────────────────────────────

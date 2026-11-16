@@ -1,8 +1,8 @@
 /**
- * /ship/quest - the ship's quest. Ways to earn points toward the 150-point
- * line, the quest board, the crew cards you can sponsor, and the nomination
- * track. Since 15 Nov 2026 the ship is rented (book a voyage) or bought into,
- * and this page promises no prize.
+ * /ship/quest - The ReGen Ship Quest. Ways to earn points, the quest board (a
+ * public score with no prize), crew cards friends can gift a rented week to,
+ * and crew pooling. Rye, 15 Nov 2026: the ship is rented (book a voyage) or
+ * bought into; the old points line and the old crew-pick track are retired.
  */
 import { useState } from "react";
 import { Link } from "wouter";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PageWrapper } from "@/components/PageWrapper";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Anchor, Check, Share2 } from "lucide-react";
+import { Check, Share2 } from "lucide-react";
 import { ShipSection, ShipEyebrow, ShipNavRow, ShipImage, useShipFlags } from "./shipShared";
 import { CrewProfileEditor, CrewsSection } from "@/components/ship/CrewProfiles";
 import { CrewPooling } from "@/components/ship/CrewPooling";
@@ -138,9 +138,7 @@ export default function ShipQuest() {
   const utils = trpc.useUtils();
 
   const myByAction = new Map<number, string>((myProgress.data?.completions ?? []).map((c: any) => [c.actionId, c.status]));
-  const threshold = leaderboard.data?.entryThreshold ?? myProgress.data?.entryThreshold ?? 150;
   const myPoints = myProgress.data?.standing?.verifiedPoints ?? 0;
-  const qualified = Boolean(myProgress.data?.qualified);
   const signedIn = !myProgress.isError && myProgress.data != null;
 
   function refresh() {
@@ -151,7 +149,7 @@ export default function ShipQuest() {
 
   return (
     <PageWrapper>
-      <SEO title="The ReGen Ship Quest" description="Earn points with actions that grow the movement. Reach 150 points and your crew card goes public, where sponsors can back your week aboard the ReGen Ship." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
+      <SEO title="The ReGen Ship Quest" description="Earn points with actions that grow the movement, climb the quest board, and raise a crew card so friends can gift your rented week aboard the ReGen Ship." url="/ship/quest" image="/images/ship/ship-quest-banner.jpg" />
       <ShipNavRow current="/ship/quest" />
 
       {/* Hero */}
@@ -160,35 +158,28 @@ export default function ShipQuest() {
         <div className="absolute inset-0 -z-10 bg-black/45" />
         <div className="max-w-3xl mx-auto px-4 py-16 text-white">
           <p data-reveal className="uppercase tracking-widest text-sm font-semibold text-[#ffd700] mb-3">The ReGen Ship Quest</p>
-          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Reach {threshold} points and raise your crew card.</h1>
-          <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Every action grows the movement. Past the line, your crew card goes public, where sponsors can back your week aboard.</p>
+          <h1 data-reveal data-reveal-delay="80" className="text-4xl md:text-5xl font-bold mb-4 drop-shadow-lg">Grow the movement. Climb the board.</h1>
+          <p data-reveal data-reveal-delay="160" className="text-lg text-white drop-shadow">Every action earns points on a public board. Raise your crew card whenever you like, and friends can gift you your rented week aboard.</p>
         </div>
       </section>
 
-      {/* Your progress toward the threshold (signed in) */}
+      {/* Your score and crew card (signed in) */}
       {signedIn && (
         <ShipSection className="py-8">
           <div data-reveal className="rounded-2xl border bg-card p-5 max-w-3xl">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
-              <h2 className="text-lg font-bold">{qualified ? "You are past the line" : "Your points so far"}</h2>
-              <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{myPoints} / {threshold} points</span>
+              <h2 className="text-lg font-bold">Your points so far</h2>
+              <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{myPoints} points</span>
             </div>
-            <div className="h-2 rounded-full bg-[#4a7c59]/15 overflow-hidden">
-              <div className="h-full bg-[#ffd700]" style={{ width: `${Math.min(100, Math.round((myPoints / threshold) * 100))}%` }} />
-            </div>
-            <p className="text-sm text-muted-foreground mt-3">
-              {qualified
-                ? "You are past the line. Now make your crew card so sponsors can find you."
-                : `${Math.max(0, threshold - myPoints)} more points and your crew card can go public. Any mix of the actions below gets you there.`}
-            </p>
+            <p className="text-sm text-muted-foreground">Make your crew card and publish it when you are ready, so friends can find you and gift your week.</p>
             <div className="mt-4">
-              <CrewProfileEditor qualified={qualified} existing={myProgress.data?.crewProfile ?? null} onSaved={refresh} />
+              <CrewProfileEditor existing={myProgress.data?.crewProfile ?? null} onSaved={refresh} />
             </div>
           </div>
         </ShipSection>
       )}
 
-      {/* Crew pooling (item 13): qualified crews pool + get matched by open weeks. */}
+      {/* Crew pooling (item 13): pool into a crew and get matched by open weeks. */}
       {isAuthenticated && (
         <ShipSection className="py-8">
           <CrewPooling />
@@ -197,18 +188,18 @@ export default function ShipQuest() {
 
       {/* Story */}
       <ShipSection>
-        <p data-reveal className="text-foreground/90 text-lg max-w-3xl">The ship sets sail on her maiden voyage the last full week of July, through Cascadia, anchored at The Sanctuary in Ashland. The quest is open to everyone, and every action in it grows the movement. It announces ReGen Civics, launches Season 2, and fills the treasure map. No single action is required. Reach {threshold} points any way you like.</p>
+        <p data-reveal className="text-foreground/90 text-lg max-w-3xl">The quest is open to everyone, and every action in it grows the movement. Points are a public score: no prize, just the board and the story you leave. No single action is required. To sail, book your week.</p>
         <div data-reveal data-reveal-delay="80" className="mt-4 flex flex-wrap gap-3">
-          <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/blog/the-regen-ship">Read the full story</Link></Button>
-          <Button asChild variant="outline"><Link href="/ship/nominate">Nominate a crew member</Link></Button>
+          <Button asChild className="bg-[#2f5d3a] hover:bg-[#264a2f]"><Link href="/ship/book">Book a voyage</Link></Button>
+          <Button asChild variant="outline"><Link href="/blog/the-regen-ship">Read the full story</Link></Button>
         </div>
       </ShipSection>
 
-      {/* The seven ways to earn points */}
+      {/* The ways to earn points */}
       <ShipSection className="bg-[#4a7c59]/8">
         <ShipEyebrow>The ways to earn</ShipEyebrow>
         <h2 className="text-2xl font-bold mb-2">{(actions.data?.length ?? 0) > 0 ? `${actions.data?.length} ways to earn points` : "Ways to earn points"}</h2>
-        <p className="text-foreground/80 mb-5 max-w-3xl">Reach {threshold} points and your crew card can go public. No single action is required, so pick the ones that fit you. Six of them come from her current docking, <Link href="/ship/theme" className="underline decoration-2 underline-offset-4 font-semibold">The Sanctuary of Love</Link>.</p>
+        <p className="text-foreground/80 mb-5 max-w-3xl">No single action is required, so pick the ones that fit you. Six of them come from her current docking, <Link href="/ship/theme" className="underline decoration-2 underline-offset-4 font-semibold">The Sanctuary of Love</Link>.</p>
         {!isAuthenticated && <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">Sign in to track your progress and submit proofs.</p>}
         <div className="space-y-3">
           {(actions.data ?? []).map((a) => (
@@ -219,51 +210,28 @@ export default function ShipQuest() {
         </div>
       </ShipSection>
 
-      {/* The quest board (threshold line) */}
+      {/* The quest board: a public score, no prize */}
       <ShipSection>
         <ShipEyebrow>The quest board</ShipEyebrow>
-        <h2 className="text-2xl font-bold mb-1">Reach {threshold} points and your crew card can go public</h2>
-        <p className="text-sm text-muted-foreground mb-5">The line marks {threshold} points.</p>
+        <h2 className="text-2xl font-bold mb-1">Who is growing the movement</h2>
+        <p className="text-sm text-muted-foreground mb-5">A public score. There is no prize.</p>
         <div className="space-y-2">
-          {(() => {
-            const standings = (leaderboard.data?.standings ?? []) as any[];
-            const firstBelow = standings.findIndex((s) => !s.isEntered);
-            return standings.map((s: any, i: number) => (
-              <div key={s.userId}>
-                {i === firstBelow && (
-                  <div className="flex items-center gap-3 my-3" aria-hidden="true">
-                    <div className="h-px flex-1 bg-[#ffd700]" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-[#b8860b] dark:text-[#ffd700]">{threshold}-point line</span>
-                    <div className="h-px flex-1 bg-[#ffd700]" />
-                  </div>
-                )}
-                <div data-reveal data-reveal-delay={Math.min(i, 8) * 40} className="flex items-center gap-3 rounded-lg border p-3">
-                  <span className="w-8 text-center font-bold text-muted-foreground">{i + 1}</span>
-                  <div className="flex-1">
-                    <span className="font-medium">{s.handle ? `@${s.handle}` : s.name}</span>
-                    {s.isEntered
-                      ? <span className="ml-2 inline-flex items-center gap-1 text-xs bg-[#ffd700]/40 rounded-full px-2 py-0.5"><Anchor className="w-3 h-3" /> Past the line</span>
-                      : <span className="ml-2 text-xs bg-[#4a7c59]/15 rounded-full px-2 py-0.5 text-muted-foreground">On the way</span>}
-                  </div>
-                  <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{s.verifiedPoints} pts</span>
-                </div>
+          {((leaderboard.data?.standings ?? []) as any[]).map((s: any, i: number) => (
+            <div key={s.userId} data-reveal data-reveal-delay={Math.min(i, 8) * 40} className="flex items-center gap-3 rounded-lg border p-3">
+              <span className="w-8 text-center font-bold text-muted-foreground">{i + 1}</span>
+              <div className="flex-1">
+                <span className="font-medium">{s.handle ? `@${s.handle}` : s.name}</span>
               </div>
-            ));
-          })()}
+              <span className="text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]">{s.verifiedPoints} pts</span>
+            </div>
+          ))}
           {(leaderboard.data?.standings?.length ?? 0) === 0 && <p className="text-sm text-muted-foreground">No crews yet. Be the first on the board.</p>}
         </div>
       </ShipSection>
 
-      {/* The crews (sponsorable cards) */}
+      {/* The crews (cards friends can gift a rented week to) */}
       <ShipSection className="bg-[#4a7c59]/8">
         <CrewsSection sponsorEnabled={Boolean(flags.sponsor)} />
-      </ShipSection>
-
-      {/* Nomination callout */}
-      <ShipSection className="bg-[#2f5d3a] text-white">
-        <h2 className="text-2xl font-bold mb-2">The nomination track</h2>
-        <p className="text-white/85 mb-4 max-w-2xl">Anyone can nominate anyone, including themselves, who would be a vital resource touring a bioregion: builders, mediators, food forest designers, storytellers. If you are nominated and approved by the ReGen Civics and CORE teams, you can raise a crew card for sponsors, no quest required.</p>
-        <Button asChild variant="outline" className="bg-white/10 text-white border-white/40 hover:bg-white/20"><Link href="/ship/nominate">Nominate someone</Link></Button>
       </ShipSection>
     </PageWrapper>
   );

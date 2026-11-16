@@ -4,7 +4,9 @@
  *  - default: intake (~10 questions) -> generates a 7-day itinerary from
  *    verified map locations -> refine by chat. The planner is shared with the
  *    compact drawer on the treasure map (ShipFirstMate.tsx).
- *  - ?mode=log: the seed-chest QR flow. Log a planting (species, GPS, photo).
+ *  - ?mode=log: the seed-chest QR flow. Log a planting (species, a named place,
+ *    photo). No GPS: since 15 Nov 2026 regencivics.earth never records where a
+ *    seed went (unify plan section 3.8); only the count is public.
  *
  * The route path and the ship.concierge tRPC namespace are unchanged; only the
  * persona name changed to the First Mate (2026-07-10).
@@ -23,34 +25,27 @@ import { FirstMatePlanner, FIRST_MATE_INTRO } from "./ShipFirstMate";
 import { LiveText, useTextStore } from "@/components/ship/ShipFields";
 
 const SPECIES = ["Chestnut", "Oak / acorn", "Apple", "Pear", "Plum", "Walnut", "Hazelnut", "Elderberry", "Other saved fruit seed"];
+// Named places only, never coordinates. The healing hole at the home anchorage
+// is where most crews plant their harvest.
+const PLACES = ["The healing hole at The Sanctuary", "A land project we visited", "Somewhere along the voyage"];
 
 function SeedLogMode() {
   const log = trpc.ship.seeds.log.useMutation();
   const [species, setSpecies] = useState(SPECIES[0]);
   // Typed text kept out of state, so a keystroke re-renders only its field.
   const notes = useTextStore();
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [place, setPlace] = useState(PLACES[0]);
   const photoUrl = useTextStore();
-
-  function getLocation() {
-    if (!navigator.geolocation) return toast.error("Location is not available on this device.");
-    navigator.geolocation.getCurrentPosition(
-      (p) => { setCoords({ lat: p.coords.latitude, lng: p.coords.longitude }); toast.success("Location captured."); },
-      () => toast.error("Could not read your location."),
-    );
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     try {
       await log.mutateAsync({
         species,
-        lat: coords?.lat,
-        lng: coords?.lng,
         photoUrl: photoUrl.get() || undefined,
-        notes: notes.get() || undefined,
+        notes: [`Where: ${place}`, notes.get()].filter(Boolean).join("\n"),
       });
-      toast.success("Planting logged. It joins the map once verified.");
+      toast.success("Planting logged. It counts once a crew member verifies it.");
       notes.set(""); photoUrl.set("");
     } catch (err: any) {
       toast.error(err?.message ?? "Please sign in to log a planting.");
@@ -61,7 +56,7 @@ function SeedLogMode() {
     <ShipSection>
       <ShipEyebrow>Log a planting</ShipEyebrow>
       <h1 className="text-3xl font-bold mb-3">You planted something. Tell the ship.</h1>
-      <p className="text-foreground/80 mb-5">One card, one log. Every verified planting joins the treasure map for the crews who follow.</p>
+      <p className="text-foreground/80 mb-5">One card, one log. Every verified planting adds to the count of seeds the crews have planted.</p>
       <form onSubmit={submit} className="space-y-4 max-w-lg">
         <div>
           <Label htmlFor="species">What did you plant?</Label>
@@ -70,11 +65,10 @@ function SeedLogMode() {
           </select>
         </div>
         <div>
-          <Label>Where?</Label>
-          <div className="flex items-center gap-3">
-            <Button type="button" variant="outline" onClick={getLocation}>Use my location</Button>
-            {coords && <span className="text-sm text-muted-foreground">{coords.lat.toFixed(4)}, {coords.lng.toFixed(4)}</span>}
-          </div>
+          <Label htmlFor="place">Where?</Label>
+          <select id="place" value={place} onChange={(e) => setPlace(e.target.value)} className="w-full h-10 rounded-md border bg-background px-3">
+            {PLACES.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
         </div>
         <div>
           <Label htmlFor="photo">Photo URL (optional)</Label>

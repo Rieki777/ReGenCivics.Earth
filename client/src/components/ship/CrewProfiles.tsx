@@ -1,13 +1,13 @@
 /**
- * Crew profiles + sponsorship for the ship's quest.
+ * Crew profiles + "gift a crew their rented week" for The ReGen Ship Quest.
  *
  * Two pieces:
  *  - CrewProfileEditor: the signed-in crew fills in a card (name, photo, bio,
- *    what they intend to do, an optional video). It publishes only once the crew
- *    has qualified (150 points or an approved nomination).
+ *    what they intend to do, an optional video) and publishes it whenever they
+ *    choose (Rye, 15 Nov 2026: the old 150-point line is gone).
  *  - CrewsSection: the public band of crew cards, each with a progress bar and a
- *    Sponsor button. Anyone can put money toward a crew's voyage so they can book
- *    their week. Goal is the full voyage ask; partial contributions are welcome.
+ *    gift button. Friends put money toward a crew's rented week (the renting
+ *    door, paid by a friend). Partial gifts are welcome.
  */
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -36,11 +36,9 @@ function usd(cents: number): string {
 
 // ── The editor (shown to the signed-in crew) ──────────────────────────────────
 export function CrewProfileEditor({
-  qualified,
   existing,
   onSaved,
 }: {
-  qualified: boolean;
   existing: { displayName?: string | null; bio?: string | null; intent?: string | null; photoUrl?: string | null; videoUrl?: string | null; isPublic?: boolean } | null;
   onSaved: () => void;
 }) {
@@ -88,7 +86,7 @@ export function CrewProfileEditor({
           <DialogTitle>Your crew profile</DialogTitle>
         </DialogHeader>
         <p className="text-sm text-muted-foreground">
-          Who you are and what you intend to do on your voyage. A short video is the strongest pitch: 60 seconds on who you are and what you will bring to the Renaissance. Sponsors read these to choose a crew to back.
+          Who you are and what you intend to do on your voyage. A short video is the strongest pitch: 60 seconds on who you are and what you will bring to the Renaissance. Friends read these when they gift a crew its week.
         </p>
         <FormCompanion
           formId="crew-profile"
@@ -123,22 +121,19 @@ export function CrewProfileEditor({
           </div>
         </div>
         <div className="flex flex-col sm:flex-row flex-wrap gap-2 mt-2">
-          <Button onClick={() => save(true)} disabled={upsert.isPending || !qualified} className="bg-[#2f5d3a] hover:bg-[#264a2f] min-h-11 w-full sm:w-auto">
-            {qualified ? "Publish my crew card" : "Reach 150 points to publish"}
+          <Button onClick={() => save(true)} disabled={upsert.isPending} className="bg-[#2f5d3a] hover:bg-[#264a2f] min-h-11 w-full sm:w-auto">
+            Publish my crew card
           </Button>
           <Button onClick={() => save(false)} disabled={upsert.isPending} variant="outline" className="min-h-11 w-full sm:w-auto">
             Save draft
           </Button>
         </div>
-        {!qualified && (
-          <p className="text-xs text-muted-foreground">You can save a draft now. Your card goes public once you reach 150 points.</p>
-        )}
       </DialogContent>
     </Dialog>
   );
 }
 
-// ── Sponsor button + dialog ───────────────────────────────────────────────────
+// ── Gift button + dialog ("gift a crew their rented week") ────────────────────
 const PRESETS = [2500, 10000, 25000, 50000];
 
 function SponsorButton({ crew, sponsorEnabled }: { crew: { id: number; displayName: string }; sponsorEnabled: boolean }) {
@@ -151,26 +146,26 @@ function SponsorButton({ crew, sponsorEnabled }: { crew: { id: number; displayNa
       const res = await sponsor.mutateAsync({ crewProfileId: crew.id, amountCents: amount });
       if (res.url) window.location.href = res.url;
     } catch (err: any) {
-      toast.error(err?.message ?? "Sponsorship is not live yet.");
+      toast.error(err?.message ?? "Gifting is not live yet.");
     }
   }
 
   if (!sponsorEnabled) {
-    return <Button size="sm" variant="outline" disabled className="w-full">Sponsorship opens soon</Button>;
+    return <Button size="sm" variant="outline" disabled className="w-full">Gifting opens soon</Button>;
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="w-full bg-[#ffd700] text-[#2f5d3a] hover:bg-[#ffcc00]">
-          <Heart className="w-4 h-4 mr-1" /> Sponsor this voyage
+          <Heart className="w-4 h-4 mr-1" /> Gift this crew their week
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Sponsor {crew.displayName}</DialogTitle>
+          <DialogTitle>Gift {crew.displayName} their rented week</DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground -mt-2">Put anything toward this crew's week. When the goal is met, the church books their voyage.</p>
+        <p className="text-sm text-muted-foreground -mt-2">Put anything toward this crew's rented week. When the week is covered, the church books it for them.</p>
         <div className="grid grid-cols-4 gap-2 mt-1">
           {PRESETS.map((p) => (
             <button
@@ -245,7 +240,7 @@ function CrewCard({ crew, sponsorEnabled }: { crew: Crew; sponsorEnabled: boolea
         </div>
         <div className="mt-auto pt-3">
           {crew.goalReached ? (
-            <div className="inline-flex items-center gap-1 text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]"><Anchor className="w-4 h-4" /> Fully sponsored. This crew sails.</div>
+            <div className="inline-flex items-center gap-1 text-sm font-semibold text-[#2f5d3a] dark:text-[#9de89d]"><Anchor className="w-4 h-4" /> Week fully gifted. This crew sails.</div>
           ) : (
             <SponsorButton crew={crew} sponsorEnabled={sponsorEnabled} />
           )}
@@ -262,11 +257,11 @@ export function CrewsSection({ sponsorEnabled }: { sponsorEnabled: boolean }) {
   return (
     <>
       <ShipEyebrow>The crews</ShipEyebrow>
-      <h2 className="text-2xl font-bold mb-2">Meet the crews sailing for a voyage</h2>
-      <p className="text-foreground/80 mb-6 max-w-2xl">Every crew past 150 points can raise a crew card. Sponsor a crew and you help them book their week.</p>
+      <h2 className="text-2xl font-bold mb-2">Gift a crew their rented week</h2>
+      <p className="text-foreground/80 mb-6 max-w-2xl">Any crew can raise a card. Put something toward their rented week and help them sail.</p>
       {list.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#4a7c59]/40 bg-[#4a7c59]/5 p-8 text-center">
-          <p className="text-muted-foreground">Reach 150 points and your crew card sails here.</p>
+          <p className="text-muted-foreground">No crew cards yet. Publish yours and it sails here.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

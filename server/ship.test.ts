@@ -8,7 +8,7 @@ import {
 } from "@shared/shipDemo";
 import {
   rangesOverlap, overlapsAny, isValidVoyageLength, nightsBetween,
-  computeVoyagePrice, computeQuestStandings, countEntered,
+  computeVoyagePrice, computeQuestStandings,
   percentBooked, sponsorshipProgress, applySponsorship,
   invalidItineraryLocationIds, sanitizeItinerary, programTagForBooking,
   addDaysYmd, enumerateVoyageWeeks, voyageNightsFromAnswers, type SeasonalBand,
@@ -19,7 +19,7 @@ import {
 } from "@shared/shipVoyages";
 import {
   SHIP_PROGRAM_TAG, SHIP_GIFT_PROGRAM_TAG,
-  SHIP_ENTRY_THRESHOLD_POINTS, CREW_SPONSOR_GOAL_CENTS, isValidCrewSize,
+  CREW_SPONSOR_GOAL_CENTS, isValidCrewSize,
 } from "./lib/ship-config";
 import { detectEscalation, makeSafeMessage } from "./lib/ship-shipwright";
 
@@ -344,50 +344,30 @@ describe("ship-shipwright: safety-rail escalation detection", () => {
   });
 });
 
-describe("ship-logic: quest standings (points threshold)", () => {
-  function c(userId: number, actionId: number, verifiedAt: string | null, points: number): QuestCompletionRow {
-    return { userId, actionId, status: "verified", verifiedAt, points };
+describe("ship-logic: quest standings (a public score, no prize)", () => {
+  function c(userId: number, actionId: number, verifiedAt: string | null, points: number, status: QuestCompletionRow["status"] = "verified"): QuestCompletionRow {
+    return { userId, actionId, status, verifiedAt, points };
   }
 
-  it("enters a crew at 150 points, not at 149, tickets equal to points", () => {
+  it("sums verified points per player and ignores pending or rejected ones", () => {
     const rows: QuestCompletionRow[] = [
-      // user 10: 150 exactly -> qualified
       c(10, 1, "2026-08-01T09:00:00Z", 100), c(10, 2, "2026-08-01T09:30:00Z", 50),
-      // user 20: 149 -> not qualified
-      c(20, 1, "2026-08-01T07:00:00Z", 100), c(20, 2, "2026-08-01T07:30:00Z", 49),
+      c(10, 3, null, 70, "pending"), c(20, 1, "2026-08-01T07:00:00Z", 100), c(20, 2, null, 49, "rejected"),
     ];
-    const standings = computeQuestStandings(rows, 150);
-    const u10 = standings.find((s) => s.userId === 10)!;
-    const u20 = standings.find((s) => s.userId === 20)!;
-    expect(u10.isEntered).toBe(true);
-    expect(u10.tickets).toBe(150); // points are tickets
-    expect(u20.isEntered).toBe(false);
-    expect(u20.tickets).toBe(0); // not entered -> no tickets
-    expect(countEntered(standings)).toBe(1);
+    const standings = computeQuestStandings(rows);
+    expect(standings.find((s) => s.userId === 10)).toEqual({ userId: 10, verifiedPoints: 150, verifiedCount: 2 });
+    expect(standings.find((s) => s.userId === 20)).toEqual({ userId: 20, verifiedPoints: 100, verifiedCount: 1 });
   });
 
-  it("uses the configured threshold and records the crossing time", () => {
+  it("orders the board by points, highest first, with no line to cross", () => {
     const rows: QuestCompletionRow[] = [
-      c(10, 1, "2026-08-01T09:00:00Z", 100), // crosses here (150) at 09:30
-      c(10, 2, "2026-08-01T09:30:00Z", 50),
-      c(10, 3, "2026-08-01T10:00:00Z", 50), // 200 total
-    ];
-    const standings = computeQuestStandings(rows, SHIP_ENTRY_THRESHOLD_POINTS);
-    expect(standings[0].verifiedPoints).toBe(200);
-    expect(standings[0].enteredAt).toBe(Date.parse("2026-08-01T09:30:00Z"));
-  });
-
-  it("orders entered crews by points, not by who crossed the line first", () => {
-    const rows: QuestCompletionRow[] = [
-      // user 10 crosses later but ends with more points (250)
-      c(10, 1, "2026-08-01T09:00:00Z", 150), c(10, 2, "2026-08-01T10:00:00Z", 100),
-      // user 20 crosses earlier but ends with fewer points (200)
       c(20, 1, "2026-08-01T07:00:00Z", 100), c(20, 2, "2026-08-01T08:00:00Z", 100),
+      c(10, 1, "2026-08-01T09:00:00Z", 150), c(10, 2, "2026-08-01T10:00:00Z", 100),
+      c(30, 1, "2026-08-01T09:00:00Z", 5),
     ];
-    const standings = computeQuestStandings(rows, 150);
-    // The higher-points crew sorts first even though it crossed the threshold later.
-    expect(standings[0].userId).toBe(10);
-    expect(standings[0].verifiedPoints).toBe(250);
+    const standings = computeQuestStandings(rows);
+    expect(standings.map((s) => s.userId)).toEqual([10, 20, 30]);
+    expect(Object.keys(standings[0]).sort()).toEqual(["userId", "verifiedCount", "verifiedPoints"]);
   });
 });
 
@@ -520,10 +500,10 @@ describe("ship router guards (reject before any DB call)", () => {
     await expect(caller.ship.crew.mine()).rejects.toBeTruthy();
   });
 
-  it("featureFlags reports the entry threshold and sponsor state", async () => {
+  it("featureFlags reports the sponsor state and no points line", async () => {
     const caller = appRouter.createCaller(makeCtx(null));
     const flags = await caller.ship.featureFlags();
-    expect(flags.entryThreshold).toBe(SHIP_ENTRY_THRESHOLD_POINTS);
+    expect("entryThreshold" in flags).toBe(false); // the 150-point line is gone
     expect(flags.sponsorGoalCents).toBe(CREW_SPONSOR_GOAL_CENTS);
     expect(flags.sponsor).toBe(false); // no Stripe key in the test env
   });
@@ -560,7 +540,6 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
       "client/src/pages/ship/Ship.tsx",
       "client/src/pages/ship/ShipQuest.tsx",
       "client/src/pages/ship/ShipTheme.tsx",
-      "client/src/pages/ship/ShipNominate.tsx",
       "client/src/components/ship/CrewProfiles.tsx",
       "client/src/components/ship/CrewPooling.tsx",
       "client/src/components/ship/StateOfShip.tsx",
@@ -584,8 +563,15 @@ describe("ship copy: the old complete-all-quest framing is gone", () => {
     }
   });
 
-  it("states the 150-point entry model on the quest page", () => {
+  // 15 Nov 2026 (Rye, Q-RG1): points are a public score with no prize, crew
+  // cards go public when the crew chooses, and nominations are retired.
+  it("keeps the quest a score with no points line and no nomination track", () => {
     const quest = readFileSync(join(root, "client/src/pages/ship/ShipQuest.tsx"), "utf8");
-    expect(/150 points/.test(quest) || /\{threshold\}/.test(quest)).toBe(true);
+    expect(quest).toContain("There is no prize.");
+    expect(/150|threshold|nominat/i.test(quest)).toBe(false);
+    const ship = readFileSync(join(root, "server/routes/ship.ts"), "utf8");
+    expect(ship).not.toContain("SHIP_ENTRY_THRESHOLD_POINTS");
+    expect(ship).not.toMatch(/\n  nominate: publicProcedure/);
+    expect(ship).not.toContain("reviewNomination:");
   });
 });

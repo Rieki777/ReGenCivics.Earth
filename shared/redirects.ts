@@ -67,6 +67,8 @@ export const ROUTE_REDIRECTS: RouteRedirect[] = [
   { from: "/ship/giveaway", to: "/ship/book" },
   { from: "/ship/giveaway/rules", to: "/ship/book" },
   { from: "/ship/quest/rules", to: "/ship/quest" },
+  // Nominations were retired on 15 Nov 2026 (Rye, Q-RG1).
+  { from: "/ship/nominate", to: "/ship/quest" },
 ];
 
 const BY_PATH = new Map(ROUTE_REDIRECTS.map((r) => [r.from, r.to]));

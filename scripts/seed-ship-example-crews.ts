@@ -1,5 +1,5 @@
 /**
- * Seed example crews for the Free Passage Quest draw board, so the first real
+ * Seed example crews for the ReGen Ship Quest draw board, so the first real
  * person to reach the points line does not feel like the first person aboard.
  *
  * What it does:
@@ -38,7 +38,14 @@ dotenv.config();
 const DRY_RUN = process.argv.includes("--dry-run");
 const UNDO = process.argv.includes("--undo");
 
-// One shared prefix, so the drawing's exclusion can never drift from the seed.
+// Retired 15 Nov 2026 (Rye, unify decision 9): demo records shown as real come
+// down, and they are never seeded again. Only --undo (or a --dry-run) runs.
+if (!UNDO && !DRY_RUN) {
+  console.error("Retired: this demo seed is no longer run. Use --undo to remove any demo rows.");
+  process.exit(1);
+}
+
+// One shared prefix, so the seed and its undo can never drift apart.
 const CREW_OPENID_PREFIX = DEMO_CREW_OPENID_PREFIX;
 const FULLY_SPONSORED = true;
 

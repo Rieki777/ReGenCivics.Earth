@@ -219,22 +219,17 @@ function PlantingsTab({ utils, err, ok }: Common) {
   );
 }
 
-function NominationsTab({ utils, err, ok }: Common) {
+// Nominations were retired on 15 Nov 2026 (Rye, Q-RG1). Old rows stay readable.
+function NominationsTab(_: Common) {
   const q = trpc.ship.admin.listNominations.useQuery();
-  const review = trpc.ship.admin.reviewNomination.useMutation();
-  const refresh = () => utils.ship.admin.listNominations.invalidate();
   if (q.isError) return <p className="text-amber-700 dark:text-amber-400">Admin access required.</p>;
   return (
-    <Section title="Nominations">
+    <Section title="Nominations (retired, read-only)">
       <div className="space-y-2">
         {(q.data ?? []).map((n: any) => (
           <div key={n.id} className="border rounded p-3 text-sm">
             <div className="font-medium">{n.nomineeName} {n.isSelfNomination ? "(self)" : ""} · {n.status}</div>
             <p className="text-muted-foreground">{n.reason}</p>
-            <div className="flex gap-2 mt-2">
-              <Button size="sm" variant="outline" onClick={() => review.mutateAsync({ id: n.id, status: "shortlisted" }).then(() => ok("Shortlisted")(refresh)).catch(err)}>Shortlist</Button>
-              <Button size="sm" variant="outline" onClick={() => review.mutateAsync({ id: n.id, status: "selected" }).then(() => ok("Selected")(refresh)).catch(err)}>Select</Button>
-            </div>
           </div>
         ))}
         {(q.data?.length ?? 0) === 0 && <p className="text-muted-foreground">No nominations yet.</p>}

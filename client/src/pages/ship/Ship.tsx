@@ -15,7 +15,6 @@ import {
 import { ShipInteriorCarousel, ShipPhotoCarousel, type CarouselPhoto } from "@/components/ship/ShipInteriorCarousel";
 import { ShipInventory } from "@/components/ship/ShipInventory";
 import { StateOfShip } from "@/components/ship/StateOfShip";
-import { trpc } from "@/lib/trpc";
 import AutoplayVideo from "@/components/AutoplayVideo";
 
 const PERKS = [
@@ -77,10 +76,6 @@ function ShipManifest() {
 }
 
 export default function Ship() {
-  // The entry threshold is admin-tunable server-side; read it live so the hero
-  // callout never drifts from the real points line.
-  const flags = trpc.ship.featureFlags.useQuery();
-  const threshold = flags.data?.entryThreshold ?? 150;
   return (
     <PageWrapper>
       <SEO
@@ -250,7 +245,6 @@ export default function Ship() {
               <li>The insured rental charge, paid on the platform. It activates the coverage the ship sails under.</li>
               <li>A suggested voyage offering to the church. Culturally this is how crews keep the ship sailing. It is a gift, never required, and your booking never depends on it.</li>
             </ul>
-            <p className="text-sm text-muted-foreground mt-3">Ten percent of every voyage buys the ship herself back into community ownership.</p>
           </div>
         </div>
       </ShipSection>
@@ -270,8 +264,8 @@ export default function Ship() {
           <div data-reveal className="quest-card-gold flex flex-col rounded-2xl p-6 bg-gradient-to-br from-[#ffd700]/20 to-[#d4a574]/10 border border-[#ffd700]/50">
             <Map className="w-10 h-10 text-[#ffd700] mb-3 animate-float" aria-hidden="true" />
             <p className="uppercase tracking-widest text-xs font-semibold text-[#ffd700] mb-1">The quest</p>
-            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">Grow the movement and raise your crew card.</h2>
-            <p className="text-white/90 mb-4 flex-1">Share the story, plant a seed on the map, cook in the Galley, refer a land project. Reach {threshold} points and your crew card goes public, where sponsors can back your week aboard.</p>
+            <h2 className="text-2xl font-bold mb-2 text-[#ffd700]">Grow the movement and climb the board.</h2>
+            <p className="text-white/90 mb-4 flex-1">Share the story, plant a seed, cook in the Galley, refer a land project. Every action scores on a public board, and your crew card lets friends gift you your rented week aboard.</p>
             <Button asChild className="bg-[#ffd700] text-[#1a472a] font-bold hover:bg-[#ffe14d] shadow-[0_0_20px_rgba(255,215,0,0.5)] self-start"><Link href="/ship/quest">Play the quest</Link></Button>
           </div>
           <div data-reveal data-reveal-delay="120" className="flex flex-col">

@@ -1,5 +1,5 @@
 /**
- * Seed the Free Passage Quest checklist and its verification model (item 16).
+ * Seed the ReGen Ship Quest checklist and its verification model (item 16).
  *
  * Each action carries:
  *   - verificationType: "auto" (points on a forum post, for writing quests, or on
@@ -30,7 +30,7 @@ dotenv.config({ quiet: true } as never);
 const DRY_RUN = process.argv.includes("--dry-run");
 
 const QUEST_CATEGORY_ID = 5; // "Quests & Gameplay"
-// Free Passage Quest threads are authored by the non-personal CORE + ReGen Ship
+// ReGen Ship Quest threads are authored by the non-personal CORE + ReGen Ship
 // identity (item 17), not a person's account. Created idempotently in main().
 const SHIP_FORUM_AUTHOR_OPENID = "system:core-regen-ship";
 const SHIP_FORUM_AUTHOR_NAME = "CORE + ReGen Ship";
@@ -59,13 +59,13 @@ const ACTIONS: Action[] = [
     slug: "share-announcement", title: "Share the ReGen Ship announcement",
     description: "Share the announcement on a social channel, then post the link in this thread. A crew member confirms it.",
     points: 25, proofType: "forum", verificationType: "crew", maxSubmissions: 1, sortOrder: 1,
-    thread: { title: "Free Passage Quest: Share the ReGen Ship announcement", body: "Shared the ship with your people? Drop the link to your post here and a crew member will confirm it. Tell us where you shared it and what you said." },
+    thread: { title: "ReGen Ship Quest: Share the ReGen Ship announcement", body: "Shared the ship with your people? Drop the link to your post here and a crew member will confirm it. Tell us where you shared it and what you said." },
   },
   {
     slug: "origin-story", title: "Write your regenerative origin story",
     description: "Post your regenerative origin story in this thread. Points are awarded the moment you post.",
     points: 25, proofType: "forum", verificationType: "auto", maxSubmissions: 1, sortOrder: 2,
-    thread: { title: "Free Passage Quest: Your regenerative origin story", body: "What brought you to this work? Tell the story of how you found your way toward regeneration. Post it here and your points are yours." },
+    thread: { title: "ReGen Ship Quest: Your regenerative origin story", body: "What brought you to this work? Tell the story of how you found your way toward regeneration. Post it here and your points are yours." },
   },
   {
     slug: "refer-land-project", title: "Refer a land project that gets shortlisted",
@@ -76,7 +76,7 @@ const ACTIONS: Action[] = [
     slug: "refer-event-partner", title: "Refer an event or workshop partner",
     description: "Introduce an event or workshop partner for the treasure map, then post who they are here. A crew member confirms each one. You can do this twice.",
     points: 25, proofType: "forum", verificationType: "crew", maxSubmissions: 2, sortOrder: 4,
-    thread: { title: "Free Passage Quest: Refer an event or workshop partner", body: "Know an event or workshop partner who belongs on the treasure map? Introduce them and post the details here. A crew member confirms each referral. Worth 25 points each, up to two." },
+    thread: { title: "ReGen Ship Quest: Refer an event or workshop partner", body: "Know an event or workshop partner who belongs on the treasure map? Introduce them and post the details here. A crew member confirms each referral. Worth 25 points each, up to two." },
   },
   {
     slug: "food-foresting", title: "Complete the Food Foresting quest",
@@ -87,7 +87,7 @@ const ACTIONS: Action[] = [
     slug: "attend-partner-event", title: "Attend or host a partner event",
     description: "Attend or host a partner event or land project workshop, then post a photo or the story here. A crew member confirms it.",
     points: 50, proofType: "forum", verificationType: "crew", maxSubmissions: 1, sortOrder: 7,
-    thread: { title: "Free Passage Quest: Attend or host a partner event", body: "Show up for a partner event or a land project workshop, then post a photo and a few words here. A crew member confirms it." },
+    thread: { title: "ReGen Ship Quest: Attend or host a partner event", body: "Show up for a partner event or a land project workshop, then post a photo and a few words here. A crew member confirms it." },
   },
   {
     slug: "love-letter-to-a-landscape", title: "Write a love letter to a landscape",
@@ -99,25 +99,25 @@ const ACTIONS: Action[] = [
     slug: "cook-for-your-beloved", title: "Cook a local meal for someone you love",
     description: "One meal, sourced as close to your home ground as you can get it. Post the photo and the story here. A crew member confirms it.",
     points: 25, proofType: "forum", verificationType: "crew", maxSubmissions: 1, sortOrder: 10,
-    thread: { title: "Free Passage Quest: Cook a local meal for someone you love", body: "Cook one meal, sourced as close to home as you can, for someone you love. Post the photo and the story here. A crew member confirms it." },
+    thread: { title: "ReGen Ship Quest: Cook a local meal for someone you love", body: "Cook one meal, sourced as close to home as you can, for someone you love. Post the photo and the story here. A crew member confirms it." },
   },
   {
     slug: "plant-together", title: "Plant something with another person",
     description: "Two pairs of hands, one hole. Post a photo of both of you planting here. A crew member confirms it.",
     points: 50, proofType: "forum", verificationType: "crew", maxSubmissions: 1, sortOrder: 11,
-    thread: { title: "Free Passage Quest: Plant something with another person", body: "Two pairs of hands, one hole. Plant something with another person and post a photo of you both here. A crew member confirms it." },
+    thread: { title: "ReGen Ship Quest: Plant something with another person", body: "Two pairs of hands, one hole. Plant something with another person and post a photo of you both here. A crew member confirms it." },
   },
   {
     slug: "give-a-day-to-the-land", title: "Give a day to a land project near you",
     description: "A full day of whatever they need doing at a land project near you. Post what you did and a photo here. A crew member confirms it.",
     points: 50, proofType: "forum", verificationType: "crew", maxSubmissions: 1, sortOrder: 12,
-    thread: { title: "Free Passage Quest: Give a day to a land project", body: "Give a full day to a land project near you, whatever they need doing. Post what you did and a photo here. A crew member confirms it." },
+    thread: { title: "ReGen Ship Quest: Give a day to a land project", body: "Give a full day to a land project near you, whatever they need doing. Post what you did and a photo here. A crew member confirms it." },
   },
   {
     slug: "bring-a-couple-aboard", title: "Bring a couple onto the crew list",
     description: "Send the honeymoon story to a couple who needs their next honeymoon and get them onto the crew list. Post their names or the link here. A crew member confirms it.",
     points: 50, proofType: "forum", verificationType: "crew", maxSubmissions: 1, sortOrder: 13,
-    thread: { title: "Free Passage Quest: Bring a couple onto the crew list", body: "Know a couple who needs their next honeymoon? Send them the story and get them onto the crew list. Post their names or the link here. A crew member confirms it." },
+    thread: { title: "ReGen Ship Quest: Bring a couple onto the crew list", body: "Know a couple who needs their next honeymoon? Send them the story and get them onto the crew list. Post their names or the link here. A crew member confirms it." },
   },
 
   // ── Loving Service (item 11, replaces moon-of-honey): two crew-verified paths ──
@@ -125,13 +125,13 @@ const ACTIONS: Action[] = [
     slug: "loving-service-land-project", title: "Loving Service: add a land project ready to visit",
     description: "Add a land project you have contacted and who has confirmed the ship can visit. Post their name and what you arranged here. A crew member confirms each one. Worth 25 points each, up to two.",
     points: 25, proofType: "forum", verificationType: "crew", maxSubmissions: 2, sortOrder: 14,
-    thread: { title: "Free Passage Quest: Loving Service, land projects to visit", body: "Reach out to a land project, confirm the ship is welcome to visit, and add them here with what you arranged. A crew member confirms each one. 25 points each, up to two." },
+    thread: { title: "ReGen Ship Quest: Loving Service, land projects to visit", body: "Reach out to a land project, confirm the ship is welcome to visit, and add them here with what you arranged. A crew member confirms each one. 25 points each, up to two." },
   },
   {
     slug: "loving-service-food-forest-spring", title: "Loving Service: add a food forest or verified spring",
     description: "Add a food forest site or a verified spring to the treasure map. Post the location and how you know it here. A crew member confirms each one. Worth 10 points each, up to five.",
     points: 10, proofType: "forum", verificationType: "crew", maxSubmissions: 5, sortOrder: 15,
-    thread: { title: "Free Passage Quest: Loving Service, food forests and springs", body: "Add a food forest site or a verified spring to the treasure map. Post the location and how you know it is real here. A crew member confirms each one. 10 points each, up to five." },
+    thread: { title: "ReGen Ship Quest: Loving Service, food forests and springs", body: "Add a food forest site or a verified spring to the treasure map. Post the location and how you know it is real here. A crew member confirms each one. 10 points each, up to five." },
   },
 
   // ── The Galley (auto-verified from Galley activity, no thread) ──

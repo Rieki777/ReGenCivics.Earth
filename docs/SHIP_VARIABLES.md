@@ -22,7 +22,6 @@ All of these are constants in `server/lib/ship-config.ts`. Change them there and
 | `YEAR2_PRICE_MULTIPLIER` | 2 | Year-two weeks bill at double the trial (~$4,200, her full rate). |
 | `SHIP_YEAR2_START_YMD` | 2027-07-26 | First Monday of year two; weeks on/after it bill at the full rate. |
 | `KEEPER_PAY_USD` | $200 | Flat Ship Keeper pay per turnover. |
-| `FLEET_BUYBACK_PCT` | 10% | Share of church ship revenue routed to RV token buyback. |
 
 **Voyage cycle (confirmed 2026-07-11):** each voyage boards **Monday 3pm** and returns the following **Sunday 11am**; turnover runs Sunday afternoon into Monday morning. The grid anchors on Monday `SHIP_SEASON_START_YMD` (2026-07-27) and runs `SHIP_BOOKING_HORIZON_WEEKS` (104, through the end of year two). All in `server/lib/ship-config.ts`.
 

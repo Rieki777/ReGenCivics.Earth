@@ -107,7 +107,7 @@ export default function Programs() {
           <p className="lead center">
             A regenerative pirate ship with a chest of seeds. Crews sail Cascadia visiting the most beautiful
             places on earth in reverence and regeneration, planting food forests as they go. Voyage offerings
-            support the church, and ten percent of every voyage buys the ship into community ownership.
+            support the church.
           </p>
           <div className="btn-row">
             <a className="btn btn-primary" href="https://regencivics.earth/ship">Board the ship</a>

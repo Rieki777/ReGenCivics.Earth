@@ -267,7 +267,6 @@ const ShipMap = lazy(() => import("./pages/ship/ShipMap"));
 const Galley = lazy(() => import("./pages/ship/Galley"));
 const ShipConcierge = lazy(() => import("./pages/ship/ShipConcierge"));
 const ShipQuest = lazy(() => import("./pages/ship/ShipQuest"));
-const ShipNominate = lazy(() => import("./pages/ship/ShipNominate"));
 const ShipFleet = lazy(() => import("./pages/ship/ShipFleet"));
 const ShipKeeper = lazy(() => import("./pages/ship/ShipKeeper"));
 const ShipWinter = lazy(() => import("./pages/ship/ShipWinter"));
@@ -323,7 +322,8 @@ function Router() {
       <Route path={"/ship/quest"}><EB><ShipQuest /></EB></Route>
       <Route path={"/ship/giveaway/rules"}><Redirect to="/ship/book" /></Route>
       <Route path={"/ship/giveaway"}><Redirect to="/ship/book" /></Route>
-      <Route path={"/ship/nominate"}><EB><ShipNominate /></EB></Route>
+      {/* Nominations were retired on 15 Nov 2026 (Rye, Q-RG1). */}
+      <Route path={"/ship/nominate"}><Redirect to="/ship/quest" /></Route>
       <Route path={"/ship/fleet"}><EB><ShipFleet /></EB></Route>
       <Route path={"/ship/keeper"}><EB><ShipKeeper /></EB></Route>
       <Route path={"/ship/winter"}><EB><ShipWinter /></EB></Route>
