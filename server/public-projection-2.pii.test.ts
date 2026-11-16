@@ -16,7 +16,7 @@
  *   govProposals.list          draft and withdrawn bodies
  *   govProposals.listVotes     voterId, delegatedFromId, weight
  *   plays.getBySlug            creator/submitter/approver ids, pending rows
- *   ship.seeds.listVerified    userId, bookingId, notes, exact coordinates
+ *   ship.seeds.verifiedCount   everything but the count (no place, photo or planter)
  *
  * Same discipline as round one: assert the field lists, assert withheld
  * columns are ABSENT, and assert each withheld column still exists on its
@@ -50,7 +50,8 @@ import {
 import { PUBLIC_CAMPAIGN_FIELDS, canSeeCampaign, toPublicCampaign } from "./routes/campaigns";
 import { PUBLIC_GOV_VOTE_COLUMNS, UNPUBLISHED_PROPOSAL_STATUSES } from "./routes/govProposals";
 import { PUBLIC_PLAY_FIELDS } from "./routes/plays";
-import { coarsenSeedCoordinate } from "./routes/ship";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 type Sess = TrpcContext["user"];
 const asUser = (id: number, role = "user") => ({ id, role }) as unknown as Sess;
@@ -260,29 +261,26 @@ describe("plays projection", () => {
 });
 
 // ── ship seed plantings ─────────────────────────────────────────────────────
-describe("ship.seeds.listVerified", () => {
-  it("drops precision below about 110 m", () => {
-    expect(coarsenSeedCoordinate(12.3456789)).toBe(12.346);
-    expect(coarsenSeedCoordinate(-4.00001)).toBe(-4);
-    expect(coarsenSeedCoordinate(0)).toBe(0);
+describe("ship.seeds.verifiedCount", () => {
+  // Rye, 15 Nov 2026 (unify decision 3): the plantings' places are hidden and
+  // only the count is public. The public seeds router may select COUNT(*) and
+  // nothing else from ship_seed_plantings.
+  const shipSrc = readFileSync(join(__dirname, "routes", "ship.ts"), "utf8");
+  const seedsRouter = shipSrc.slice(shipSrc.indexOf("  seeds: router({"), shipSrc.indexOf("  // ── Voyage log"));
+
+  it("has no public list of plantings left", () => {
+    expect(seedsRouter).toContain("verifiedCount: publicProcedure");
+    expect(seedsRouter).not.toContain("listVerified");
   });
 
-  it("leaves a missing coordinate missing rather than turning it into 0", () => {
-    // ShipMap filters on `p.lat != null`; a 0 here would drop a marker in
-    // the Gulf of Guinea.
-    expect(coarsenSeedCoordinate(null)).toBeNull();
+  it("never selects a planting's place, photo, species, notes or planter", () => {
+    for (const col of ["lat", "lng", "photoUrl", "species", "notes", "userId", "bookingId", "locationId", "plantedAt"]) {
+      expect(seedsRouter, `seeds router selects ${col}`).not.toContain(`${col}: shipSeedPlantings.${col}`);
+    }
   });
 
-  it("keeps enough precision that ShipMap's max zoom shows no lattice", () => {
-    // 0.001 degrees is roughly 23 px at zoom 15, which reads as scatter.
-    expect(coarsenSeedCoordinate(51.507412)).toBe(51.507);
-    expect(coarsenSeedCoordinate(51.5074)).not.toBe(coarsenSeedCoordinate(51.5084));
-  });
-
-  it("names userId, bookingId and notes as columns it must not publish", () => {
-    // The projection is inline in the resolver, so this asserts against the
-    // table rather than a list: these three exist and are the ones withheld.
+  it("names the columns it withholds, which still exist on the table", () => {
     const real = Object.keys(getTableColumns(shipSeedPlantings));
-    for (const col of ["userId", "bookingId", "notes"]) expect(real).toContain(col);
+    for (const col of ["userId", "bookingId", "notes", "lat", "lng", "photoUrl"]) expect(real).toContain(col);
   });
 });

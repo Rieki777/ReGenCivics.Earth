@@ -65,18 +65,6 @@ function shipPositionIcon() {
   }
   return shipPositionIconOnce;
 }
-let plantingIconOnce: L.DivIcon | null = null;
-function plantingIcon() {
-  if (!plantingIconOnce) {
-    plantingIconOnce = L.divIcon({
-      className: "ship-planting",
-      html: `<div style="font-size:16px;line-height:24px;width:24px;height:24px;text-align:center">🌱</div>`,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-    });
-  }
-  return plantingIconOnce;
-}
 
 const ADD_TYPES: ShipLocationType[] = ["spring", "waterfall", "boondock", "commercial_boondock", "food_forest", "land_project", "lake", "geology", "forest", "seed_site", "event_venue"];
 
@@ -104,13 +92,11 @@ export default function ShipMap() {
   }, [pinsQuery.data]);
 
   const position = trpc.ship.map.position.useQuery();
-  const plantings = trpc.ship.seeds.listVerified.useQuery();
 
   // Filters.
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
   const [boolFilters, setBoolFilters] = useState<Set<MapBoolFilter>>(new Set());
   const [showBoundary, setShowBoundary] = useState(true);
-  const [showPlantings, setShowPlantings] = useState(false);
   const [showChakras, setShowChakras] = useState(true);
   const [legendOpen, setLegendOpen] = useState(false);
 
@@ -281,9 +267,6 @@ export default function ShipMap() {
           ))}
           <span className="mx-1 h-4 w-px bg-border" aria-hidden />
           <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showBoundary} onChange={(e) => setShowBoundary(e.target.checked)} /> Bioregion</label>
-          {(plantings.data?.length ?? 0) > 0 && (
-            <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showPlantings} onChange={(e) => setShowPlantings(e.target.checked)} /> Seed plantings</label>
-          )}
           <label className="flex items-center gap-1.5 text-xs cursor-pointer"><input type="checkbox" checked={showChakras} onChange={(e) => setShowChakras(e.target.checked)} /> Chakra points</label>
           <button
             onClick={() => { setInnerCompassOpen((v) => !v); setVoyageOpen(false); }}
@@ -318,11 +301,6 @@ export default function ShipMap() {
             <ClusterLayer pins={filtered} onSelect={onSelect} />
             {voyage.length > 0 && <VoyageRoute stops={voyageStops} />}
             <CrosshairPicker active={adding} onPick={onPick} />
-            {showPlantings && (plantings.data ?? []).filter((p) => p.lat != null && p.lng != null).map((p) => (
-              <Marker key={`seed-${p.id}`} position={[p.lat as number, p.lng as number]} icon={plantingIcon()}>
-                <Popup><strong>A crew planted here</strong>{p.species && <div style={{ fontSize: 13 }}>{p.species}</div>}</Popup>
-              </Marker>
-            ))}
             {pos && (
               <Marker position={[pos.lat, pos.lng]} icon={shipPositionIcon()} zIndexOffset={1000}>
                 <Popup><strong>She sails here</strong>{pos.note && <div style={{ fontSize: 13 }}>{pos.note}</div>}</Popup>
