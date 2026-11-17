@@ -236,7 +236,7 @@ export default function ShipMap() {
       <ShipSection>
         <ShipEyebrow>The Sea Chart</ShipEyebrow>
         <h1 className="text-3xl font-bold mb-3">Chart your voyage through Cascadia</h1>
-        <p className="text-foreground/80 mb-5">The board shows everything within a {VOYAGE_DAYS}-day sail of the anchorage. The compass rose marks home port, the gold rings mark each day of reach, and past the horizon lies fog. Every token is a place a crew can serve, drink from, rest at, or plant seeds. Solid tokens are verified treasure; faded ones wait for a crew to confirm them. The ship pin shows where she sails now.</p>
+        <p className="text-foreground/80 mb-5">The board shows everything within a {VOYAGE_DAYS}-day sail of the anchorage. The compass rose marks home port, the gold rings mark each day of reach, and past the horizon lies fog. Every pin is a place a crew can serve, drink from or rest at. Solid pins are verified; faded ones wait for a crew to confirm them. The ship pin shows where she sails now.</p>
 
         {/* Type filters */}
         <div className="flex flex-wrap gap-2 mb-3">

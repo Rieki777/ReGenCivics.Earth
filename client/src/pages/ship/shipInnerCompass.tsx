@@ -157,7 +157,7 @@ export function buildPosterSvg(o: PosterOptions): string {
   });
   const legendRows = Math.ceil(legendTypes.length / 2);
   const noteY = legendTop + legendRows * lineH + Math.round(lineH * 0.6);
-  parts.push(`<text x="${margin}" y="${noteY}" font-family="Georgia, serif" font-size="${f(W * 0.011)}" fill="${ink}" opacity="0.8">Solid tokens are verified treasure. Dashed tokens wait for a crew to confirm them in the field.</text>`);
+  parts.push(`<text x="${margin}" y="${noteY}" font-family="Georgia, serif" font-size="${f(W * 0.011)}" fill="${ink}" opacity="0.8">Solid pins are verified. Dashed pins wait for a crew to confirm them in the field.</text>`);
   if (o.includeChakras) {
     parts.push(`<text x="${margin}" y="${noteY + lineH * 0.8}" font-family="Georgia, serif" font-size="${f(W * 0.011)}" fill="${ink}" opacity="0.8">Chakra points are symbolic energy centers of the region. Focus, release, clear, and heal as you visit each one.</text>`);
   }

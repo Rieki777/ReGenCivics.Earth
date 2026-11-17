@@ -84,6 +84,9 @@ export default function ShipHomecoming() {
           <p className="text-xs text-muted-foreground mt-3">
             <Link href="/ship/log" className="underline">See every voyage that has sailed her</Link>
           </p>
+          <p className="text-sm text-foreground/80 mt-3">
+            Want to keep sailing with her? <Link href="/ship/crew" className="underline font-medium">Join the crew</Link>.
+          </p>
         </div>
       </ShipSection>
     </PageWrapper>

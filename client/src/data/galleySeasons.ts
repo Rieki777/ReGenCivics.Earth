@@ -42,7 +42,7 @@ export const GATHER_SPOTS: GatherSpot[] = [
   {
     name: "Farm stands and food forests",
     detail:
-      "Stands along the valley, plus the food forests already marked on the ship's treasure map.",
+      "Stands along the valley, plus the food forests already marked on the ship's Sea Chart.",
   },
 ];
 

@@ -210,7 +210,7 @@ const NAV_CARDS: Array<{ href: string; label: string; image: string; alt: string
   { href: "/ship/fleet", label: "The Fleet", image: "ship-fleet-caravan.jpg", alt: "A caravan of ships." },
   { href: "/ship/log", label: "Voyage Log", image: "ship-campfire-dusk.jpg", alt: "A campfire at dusk." },
   // The crew's door: the way into the ReGen Pirates village.
-  { href: "/ship/crew", label: "Join the Crew", image: "ship-forest-camp-guitar.jpg", alt: "The ship camped in the pines, someone playing guitar." },
+  { href: "/ship/crew", label: "Join the crew", image: "ship-forest-camp-guitar.jpg", alt: "The ship camped in the pines, someone playing guitar." },
 ];
 
 export function ShipNavRow({ current }: { current?: string }) {

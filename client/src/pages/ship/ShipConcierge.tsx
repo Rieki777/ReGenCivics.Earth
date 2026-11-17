@@ -113,7 +113,7 @@ export default function ShipConcierge() {
             <ShipEyebrow>The First Mate</ShipEyebrow>
             <h1 className="text-3xl font-bold mb-2">Ahoy. I'm your First Mate.</h1>
             <p className="text-foreground/80">{FIRST_MATE_INTRO}</p>
-            {!flags.concierge && <p className="text-sm text-amber-700 dark:text-amber-400 mt-2">The First Mate is not aboard yet. Check back soon, or explore the <a href="/ship/map" className="underline">treasure map</a>.</p>}
+            {!flags.concierge && <p className="text-sm text-amber-700 dark:text-amber-400 mt-2">The First Mate is not aboard yet. Check back soon, or explore the <a href="/ship/map" className="underline">Sea Chart</a>.</p>}
           </div>
         </div>
 

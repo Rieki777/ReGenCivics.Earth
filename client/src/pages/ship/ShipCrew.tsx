@@ -1,5 +1,5 @@
 /**
- * /ship/crew - Join the Crew: the public door into the ReGen Pirates village
+ * /ship/crew - Join the crew: the public door into the ReGen Pirates village
  * (SHIP_UNIFIED_GAME_PLAN.md, lane U1).
  *
  * The village runs on its own Village OS instance with its own accounts, so
@@ -43,7 +43,7 @@ export default function ShipCrew() {
   return (
     <PageWrapper>
       <SEO
-        title="Join the Crew: the ReGen Pirates"
+        title="Join the crew: the ReGen Pirates"
         description="The ReGen Ship has a crew. They travel to regenerate and plant treasure wherever they sail. Here's the road aboard."
         url="/ship/crew"
       />
@@ -60,7 +60,7 @@ export default function ShipCrew() {
               The ReGen Ship has a crew. We travel to regenerate, and we plant treasure wherever we sail.
             </p>
             <p className="text-foreground/85">
-              Pirate crews of old wrote their own Articles, chose their captains by vote and shared the take. We do the
+              Pirate crews of old wrote their own Articles, chose their captains by vote and shared what they had. We do the
               same on land.
             </p>
           </div>
@@ -131,8 +131,8 @@ export default function ShipCrew() {
           <>
             <h2 className="text-3xl font-bold mb-3">Come find us</h2>
             <p className="text-foreground/80 mb-6 max-w-2xl">
-              The crew lives in its own village, with its own sign-in. Read the Ship's Articles there, and hail the ship
-              when you're ready.
+              The crew lives in its own village, with its own sign-in. Hail the ship when you're ready, and a pirate will
+              answer.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg" className="bg-[#e9b84a] hover:bg-[#f6d27d] text-[#2a1a05] font-bold">

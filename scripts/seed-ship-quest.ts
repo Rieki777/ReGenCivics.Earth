@@ -74,9 +74,9 @@ const ACTIONS: Action[] = [
   },
   {
     slug: "refer-event-partner", title: "Refer an event or workshop partner",
-    description: "Introduce an event or workshop partner for the treasure map, then post who they are here. A crew member confirms each one. You can do this twice.",
+    description: "Introduce an event or workshop partner for the Sea Chart, then post who they are here. A crew member confirms each one. You can do this twice.",
     points: 25, proofType: "forum", verificationType: "crew", maxSubmissions: 2, sortOrder: 4,
-    thread: { title: "ReGen Ship Quest: Refer an event or workshop partner", body: "Know an event or workshop partner who belongs on the treasure map? Introduce them and post the details here. A crew member confirms each referral. Worth 25 points each, up to two." },
+    thread: { title: "ReGen Ship Quest: Refer an event or workshop partner", body: "Know an event or workshop partner who belongs on the Sea Chart? Introduce them and post the details here. A crew member confirms each referral. Worth 25 points each, up to two." },
   },
   {
     slug: "food-foresting", title: "Complete the Food Foresting quest",
@@ -129,9 +129,9 @@ const ACTIONS: Action[] = [
   },
   {
     slug: "loving-service-food-forest-spring", title: "Loving Service: add a food forest or verified spring",
-    description: "Add a food forest site or a verified spring to the treasure map. Post the location and how you know it here. A crew member confirms each one. Worth 10 points each, up to five.",
+    description: "Add a food forest site or a verified spring to the Sea Chart. Post the location and how you know it here. A crew member confirms each one. Worth 10 points each, up to five.",
     points: 10, proofType: "forum", verificationType: "crew", maxSubmissions: 5, sortOrder: 15,
-    thread: { title: "ReGen Ship Quest: Loving Service, food forests and springs", body: "Add a food forest site or a verified spring to the treasure map. Post the location and how you know it is real here. A crew member confirms each one. 10 points each, up to five." },
+    thread: { title: "ReGen Ship Quest: Loving Service, food forests and springs", body: "Add a food forest site or a verified spring to the Sea Chart. Post the location and how you know it is real here. A crew member confirms each one. 10 points each, up to five." },
   },
 
   // ── The Galley (auto-verified from Galley activity, no thread) ──

@@ -180,7 +180,7 @@ We think you should get to take that week as many times as your love needs it.
 
 The ReGen Ship is a regenerative pirate ship, complete with your treasure chest of SEEDS. She is also a 40-foot land yacht with real wood and stone inside, spring water in her tanks, organic everything, and a living room big enough for morning yoga when the rain comes. Everything aboard was chosen for your health: no off-gassing plastics, filtered showers, the only soaps and body products aboard are ones we'd put on a newborn. She was built for a couple.
 
-Here's what a week aboard looks like. The ship's concierge draws you a treasure map through Cascadia: springs to drink from, waterfalls to swim under, food forests to harvest, land projects to serve. You plant seeds from the treasure chest everywhere you go. You eat local fruit and save the seeds. You put your hands in soil next to the person you love, building something that will outlive you both. And when you sail home to her anchorage, you plant your saved seeds in the healing hole and watch a food forest grow from every crew that ever sailed.
+Here's what a week aboard looks like. The ship's concierge draws you a voyage chart through Cascadia: springs to drink from, waterfalls to swim under, food forests to harvest, land projects to serve. You plant seeds from the treasure chest everywhere you go. You eat local fruit and save the seeds. You put your hands in soil next to the person you love, building something that will outlive you both. And when you sail home to her anchorage, you plant your saved seeds in the healing hole and watch a food forest grow from every crew that ever sailed.
 
 This is the part we've come to trust: healing together heals the relationship. When two people spend a week caring for their own bodies, for each other, for a piece of land, and for a community, old wounds between them start to close on their own. Love grows in the direction of what you tend. Couples who are struggling and want to deepen, this week is for you too. Not a last resort. A place to fall back in.
 
@@ -218,7 +218,7 @@ Book your honeymoon at [regencivics.earth/ship](/ship). First one, third one, te
 
 She is a regenerative pirate ship, complete with your treasure chest of seeds. She is also a 40-foot land yacht, a 2006 Fleetwood Revolution LE: all wood and stone trim inside, two bedrooms, two bathrooms, a galley that cooks real food, a living room big enough for morning yoga, a full washing machine, Starlink overhead, and spring water in her tanks. Built for a couple. Up to four aboard in comfort, or five when at least three are children.
 
-You take her on a voyage. Your treasure map is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls, food forests, and the places where past crews planted their seeds. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
+You take her on a voyage. Your voyage chart is drawn for you by the ship herself: land projects to serve, springs to drink from, waterfalls and food forests. You sail Cascadia visiting the most beautiful places on earth in reverence and regeneration.
 
 ![Feet resting over a canyon river at a Cascadia overlook](/images/ship/ship-canyon-overlook.jpg)
 

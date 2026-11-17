@@ -743,6 +743,13 @@ export default function ShipBook() {
               </ol>
             </div>
             <div className="rounded-2xl border bg-card p-6">
+              <h3 className="font-semibold text-lg mb-2">More than a week?</h3>
+              <p className="text-foreground/80 text-sm">
+                The ship has a crew, the ReGen Pirates. Renting a voyage is one of the two doors aboard.{" "}
+                <Link href="/ship/crew" className="underline text-[#2f5d3a] dark:text-[#7dd87d] font-medium">Join the crew</Link>
+              </p>
+            </div>
+            <div className="rounded-2xl border bg-card p-6">
               <h3 className="font-semibold text-lg mb-2">Why the trial year is a discount</h3>
               <p className="text-sm text-foreground/80">
                 She is a <strong>2006 Fleetwood Revolution</strong>, and she carries her years honestly. You are sailing her as she is, with the quirks any twenty-year-old vehicle has. We would rather you hear them from us than find them at dusk: right now the <strong>leveling jacks are not fully working, and one has to be lowered by hand</strong>. You do not need them to drive her, sleep in her, or love the voyage. Nothing we know of stands between you and an epic trip.

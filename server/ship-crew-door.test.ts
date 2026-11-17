@@ -59,9 +59,10 @@ describe("the crew's door on /ship", () => {
     expect(matchesAppRoute("/ship/shipwright")).toBe(true);
   });
 
-  it("the nav carries Join the Crew, the Sea Chart and the Shipwright", () => {
+  it("the nav carries Join the crew, the Sea Chart and the Shipwright", () => {
     const nav = read("client/src/pages/ship/shipShared.tsx");
     expect(nav).toContain('href: "/ship/crew"');
+    expect(nav).toContain('label: "Join the crew"');
     expect(nav).toContain('label: "Sea Chart"');
     expect(nav).toContain('href="/ship/shipwright"');
     expect(nav).not.toContain('label: "Treasure Map"');
@@ -111,5 +112,15 @@ describe("the crew's door on /ship", () => {
       expect(words).not.toMatch(/[\u2013\u2014]/);
     }
     expect(card).not.toMatch(/\bpeople\b/i);
+  });
+
+  it("the Sea Chart names no tokens and no planting, and renters find the crew", () => {
+    const map = read("client/src/pages/ship/ShipMap.tsx");
+    expect(map).not.toMatch(/every token/i);
+    expect(map).not.toMatch(/verified treasure/i);
+    expect(map).not.toMatch(/plant seeds/i);
+    expect(read("client/src/data/blogPosts.ts")).not.toMatch(/past crews planted/i);
+    expect(read("client/src/pages/ship/ShipBook.tsx")).toContain('href="/ship/crew"');
+    expect(read("client/src/pages/ship/ShipHomecoming.tsx")).toContain('href="/ship/crew"');
   });
 });
