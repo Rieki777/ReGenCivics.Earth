@@ -22,7 +22,7 @@ const PIRATE_WORK = [
   { icon: Trees, title: "Grows food forests", body: "Food forests and gardens on the land projects that call us in." },
   { icon: Hammer, title: "Raises natural buildings", body: "Earth, wood and stone, built by many hands." },
   { icon: Caravan, title: "Sails with the fleet", body: "A traveling village festival, rolling onto a land project together." },
-  { icon: Package, title: "Keeps the Treasure Chest", body: "The fleet's chest of seeds, saved and shared." },
+  { icon: Package, title: "Keeps the Treasure Chest", body: "The ship's seed bank, kept whole and grown out again." },
   { icon: Compass, title: "Takes the ship's quests", body: "The mural, the sauna, the jacks, and any quest a pirate proposes." },
 ];
 

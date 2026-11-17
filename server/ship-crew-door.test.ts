@@ -96,4 +96,20 @@ describe("the crew's door on /ship", () => {
       expect(page, String(banned)).not.toMatch(banned);
     }
   });
+
+  it("the treasure chest says seed bank, with no numbers or collapse promise yet", () => {
+    const ship = read("client/src/pages/ship/Ship.tsx");
+    const start = ship.indexOf("{/* The seeds */}");
+    const card = ship.slice(start, ship.indexOf("{/* The table", start));
+    const crew = read("client/src/pages/ship/ShipCrew.tsx");
+    expect(card).toContain("Every ship is a seed bank");
+    expect(crew).toContain("The ship's seed bank, kept whole and grown out again.");
+    for (const words of [card, crew]) {
+      expect(words).not.toMatch(/seed library/i);
+      expect(words).not.toMatch(/chest of seeds, saved and shared/i);
+      expect(words).not.toMatch(/calorie|systems? (we rely on )?fail/i);
+      expect(words).not.toMatch(/[\u2013\u2014]/);
+    }
+    expect(card).not.toMatch(/\bpeople\b/i);
+  });
 });

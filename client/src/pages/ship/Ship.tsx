@@ -166,8 +166,9 @@ export default function Ship() {
           <div data-reveal="left" className="aspect-[4/3]"><ShipImage name="ship-seed-chest.jpg" alt="A wooden chest overflowing with labeled seed packets and chestnuts." className="h-full" /></div>
           <div data-reveal="right">
             <ShipEyebrow>The treasure chest</ShipEyebrow>
-            <h2 className="text-3xl font-bold mb-4">Everywhere you go, you plant</h2>
-            <p className="text-foreground/90 mb-4">The chest holds seeds chosen to turn pine plantations back into the food forests they once were, the great abundance this land knew before. Eat local fruit, save the seeds, and when you sail home to her anchorage at The Sanctuary in Ashland, plant your harvest in the healing hole and watch a food forest grow from every crew that ever sailed.</p>
+            <h2 className="text-3xl font-bold mb-4">Every ship is a seed bank</h2>
+            <p className="text-foreground/90 mb-4">Wherever we are, we carry the seed to feed ourselves: staple crops for the first year, and a food forest for the years after. Every seed is open-pollinated and saved with care, so what we plant can be grown again, anywhere.</p>
+            <p className="text-foreground/90 mb-4">Everywhere you go, you plant. The chest holds seeds chosen to turn pine plantations back into the food forests they once were. Eat local fruit, save the seeds, and when you sail home to her anchorage at The Sanctuary in Ashland, plant your harvest in the healing hole and watch a food forest grow from every crew that ever sailed.</p>
             <a href={CHESTNUT_URL} className="inline-flex items-center gap-1 text-[#2f5d3a] dark:text-[#ffd700] font-semibold underline decoration-2 underline-offset-4 hover:text-[#1a472a] dark:hover:text-[#ffe14d] transition-colors">Read The Great American Chestnut Abundance <span aria-hidden="true">→</span></a>
           </div>
         </div>
